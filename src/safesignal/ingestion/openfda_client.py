@@ -178,7 +178,7 @@ def _build_query(
     end_date: str | None,
 ) -> str:
     """Build the openFDA ``search`` parameter for product + date range."""
-    clauses = [f"device.openfda.product_code:{product_code}"]
+    clauses = [f"device.device_report_product_code:{product_code}"]
     if start_date and end_date:
         clauses.append(f"date_received:[{start_date}+TO+{end_date}]")
     elif start_date:

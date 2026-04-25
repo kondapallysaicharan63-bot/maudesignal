@@ -12,7 +12,7 @@ description = "Open-source AI postmarket surveillance toolkit for FDA-cleared AI
 readme = "README.md"
 license = {file = "LICENSE"}
 authors = [
-    {name = "[Your Name]", email = "[your-email]"}
+    {name = "Sai Charan Kondapally", email = "kondapallysaicharan63@gmail.com"}
 ]
 requires-python = ">=3.11"
 keywords = ["fda", "medical-devices", "maude", "ai-safety", "postmarket-surveillance", "regulatory"]
