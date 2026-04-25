@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RegulatoryCitationVerifierOutput",
+  "description": "Output schema for skills/regulatory-citation-verifier v1.0.0",
+  "type": "object",
+  "required": [
+    "verification_ts",
+    "skill_version",
+    "citations_found",
+    "overall_verdict",
+    "safe_to_emit",
+    "redacted_text"
+  ],
+  "properties": {
+    "verification_ts": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 UTC timestamp when verification ran"
+    },
+    "skill_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of the Skill that produced this output"
+    },
+    "citations_found": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "citation_type",
+          "raw_text",
+          "start_char",
+          "end_char",
+          "verified",
+          "verification_source",
+          "action"
+        ],
+        "properties": {
+          "citation_type": {
+            "type": "string",
+            "enum": [
+              "k_number",
+              "de_novo",
+              "pma",
+              "cfr",
+              "guidance_title",
+              "unknown"
+            ]
+          },
+          "raw_text": {
+            "type": "string",
+            "description": "Exact substring as it appeared in the input"
+          },
+          "start_char": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "end_char": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "verified": {
+            "type": "boolean"
+          },
+          "verification_source": {
+            "type": "string",
+            "enum": [
+              "openfda_510k",
+              "openfda_de_novo",
+              "openfda_pma",
+              "cfr_regex",
+              "guidance_index",
+              "none"
+            ]
+          },
+          "verification_details": {
+            "type": ["string", "null"],
+            "description": "Optional human-readable detail, e.g., device name for K-number"
+          },
+          "action": {
+            "type": "string",
+            "enum": ["keep", "flag", "redact"]
+          }
+        }
+      }
+    },
+    "overall_verdict": {
+      "type": "string",
+      "enum": ["clean", "contains_unverified", "contains_fabricated"]
+    },
+    "safe_to_emit": {
+      "type": "boolean",
+      "description": "If false, output must not be shown to end user until reviewed"
+    },
+    "redacted_text": {
+      "type": "string",
+      "description": "Input with fabricated citations replaced by [UNVERIFIED CITATION: <type>]"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,82 @@
+{
+  "name": "SafeSignal Dev Container",
+
+  // Base image: Python 3.11 on Debian Bookworm. Official Microsoft dev container image.
+  "image": "mcr.microsoft.com/devcontainers/python:3.11-bookworm",
+
+  // Additional features layered on top
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": false
+    }
+  },
+
+  // VS Code extensions and settings applied to the Codespace
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.mypy-type-checker",
+        "charliermarsh.ruff",
+        "ms-python.black-formatter",
+        "tamasfe.even-better-toml",
+        "redhat.vscode-yaml",
+        "yzhang.markdown-all-in-one",
+        "ms-toolsai.jupyter",
+        "github.vscode-pull-request-github",
+        "GitHub.copilot-chat"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": ["tests"],
+        "[python]": {
+          "editor.defaultFormatter": "ms-python.black-formatter",
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+          }
+        },
+        "ruff.lint.enable": true,
+        "files.exclude": {
+          "**/__pycache__": true,
+          "**/.pytest_cache": true,
+          "**/.mypy_cache": true,
+          "**/.ruff_cache": true,
+          "**/*.egg-info": true
+        }
+      }
+    }
+  },
+
+  // Install the SafeSignal package and dev dependencies after the container builds
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+
+  // Streamlit runs on 8501; forward it so the user can open the dashboard
+  "forwardPorts": [8501],
+  "portsAttributes": {
+    "8501": {
+      "label": "SafeSignal Dashboard",
+      "onAutoForward": "notify"
+    }
+  },
+
+  // Tell users when the container is ready
+  "postAttachCommand": "echo '\\n✅ SafeSignal Codespace ready. Run: pytest tests/unit -v\\n'",
+
+  // Use the non-root vscode user (safer, and already has sudo)
+  "remoteUser": "vscode",
+
+  // Persist the project directory across Codespace rebuilds
+  "mounts": [],
+
+  // Resources: 2-core machine is fine (and free-tier friendly)
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "4gb",
+    "storage": "32gb"
+  }
+}

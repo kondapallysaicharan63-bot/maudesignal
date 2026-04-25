@@ -1,0 +1,92 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MaudeNarrativeExtractorOutput",
+  "description": "Output schema for skills/maude-narrative-extractor v1.0.0 (implements DR-03)",
+  "type": "object",
+  "required": [
+    "maude_report_id",
+    "extraction_ts",
+    "skill_name",
+    "skill_version",
+    "model_used",
+    "severity",
+    "ai_related_flag",
+    "ai_related_rationale",
+    "confidence_score",
+    "requires_human_review",
+    "narrative_excerpt",
+    "narrative_truncated"
+  ],
+  "properties": {
+    "maude_report_id": {
+      "type": "string",
+      "description": "Unique MAUDE MDR identifier; matches the input id"
+    },
+    "extraction_ts": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 UTC timestamp when extraction completed"
+    },
+    "skill_name": {
+      "type": "string",
+      "const": "maude-narrative-extractor"
+    },
+    "skill_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "model_used": {
+      "type": "string",
+      "description": "Full model identifier, e.g., claude-sonnet-4-6"
+    },
+    "failure_mode": {
+      "type": ["string", "null"],
+      "maxLength": 200,
+      "description": "Short noun phrase describing the proximate failure, or null if not extractable"
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["death", "serious_injury", "malfunction", "other", "unknown"]
+    },
+    "patient_outcome": {
+      "type": ["string", "null"],
+      "maxLength": 200
+    },
+    "device_problem": {
+      "type": ["string", "null"],
+      "maxLength": 200
+    },
+    "ai_related_flag": {
+      "type": ["boolean", "null"],
+      "description": "true/false/null — null means insufficient evidence to determine"
+    },
+    "ai_related_rationale": {
+      "type": "string",
+      "maxLength": 200,
+      "description": "Must always be populated, even when ai_related_flag is null"
+    },
+    "confidence_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 0.95,
+      "description": "Self-assessed extraction confidence. Capped at 0.95 — never claim certainty."
+    },
+    "requires_human_review": {
+      "type": "boolean"
+    },
+    "narrative_excerpt": {
+      "type": "string",
+      "maxLength": 500,
+      "description": "First 500 characters of combined preprocessed narrative for traceability"
+    },
+    "narrative_truncated": {
+      "type": "boolean",
+      "description": "True if the input narrative was truncated to fit context window"
+    },
+    "extraction_notes": {
+      "type": ["string", "null"],
+      "description": "Caveats, ambiguities, or cross-referencing notes. null if nothing notable."
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,107 @@
+# ===========================
+# SafeSignal .gitignore
+# ===========================
+# Purpose: Prevent secrets, local data, and build artifacts from
+# entering version control. First-commit file per Doc 5 §11.
+
+# --- Secrets (NFR-07) ---
+# Never commit API keys, .env files, or credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+secrets.yaml
+
+# --- Local data (gitignored per Doc 5 §6) ---
+data/
+!data/.gitkeep
+*.db
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+
+# --- Logs ---
+logs/
+*.log
+llm_audit_log.jsonl
+
+# --- Reports (locally generated per run) ---
+reports/
+*.pdf
+!docs/**/*.pdf
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# --- Testing & type checking ---
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.mypy_cache/
+.dmypy.json
+.pyre/
+.ruff_cache/
+
+# --- Virtual environments ---
+.venv/
+venv/
+ENV/
+env/
+.env/
+
+# --- IDE / editors ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# --- Jupyter ---
+.ipynb_checkpoints
+*.ipynb
+
+# --- OS ---
+Thumbs.db
+.DS_Store
+
+# --- Large data downloads (cache) ---
+*.csv.gz
+*.json.gz
+openfda_cache/
+
+# --- Temporary files ---
+tmp/
+temp/
+*.tmp
+*.bak
