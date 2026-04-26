@@ -1,0 +1,110 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AiFailureModeClassifierOutput",
+  "description": "Output schema for skills/ai-failure-mode-classifier v1.0.0",
+  "type": "object",
+  "required": [
+    "maude_report_id",
+    "classification_ts",
+    "skill_name",
+    "skill_version",
+    "model_used",
+    "failure_mode_category",
+    "category_rationale",
+    "evidence_quotes",
+    "secondary_modes_observed",
+    "is_multi_mode",
+    "confidence_score",
+    "requires_human_review"
+  ],
+  "properties": {
+    "maude_report_id": {
+      "type": "string"
+    },
+    "classification_ts": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "skill_name": {
+      "type": "string",
+      "const": "ai-failure-mode-classifier"
+    },
+    "skill_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "model_used": {
+      "type": "string"
+    },
+    "failure_mode_category": {
+      "type": "string",
+      "enum": [
+        "false_negative_clinical",
+        "false_positive_clinical",
+        "algorithm_drift",
+        "data_pipeline_error",
+        "automation_bias",
+        "software_bug",
+        "output_validation_error",
+        "integration_failure",
+        "bias_or_fairness",
+        "other_ai_related",
+        "not_ai_related"
+      ]
+    },
+    "category_rationale": {
+      "type": "string",
+      "maxLength": 300,
+      "description": "Must reference narrative evidence supporting the chosen category"
+    },
+    "evidence_quotes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 200
+      },
+      "maxItems": 2,
+      "description": "Up to 2 verbatim narrative substrings"
+    },
+    "secondary_modes_observed": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "false_negative_clinical",
+          "false_positive_clinical",
+          "algorithm_drift",
+          "data_pipeline_error",
+          "automation_bias",
+          "software_bug",
+          "output_validation_error",
+          "integration_failure",
+          "bias_or_fairness",
+          "other_ai_related",
+          "not_ai_related"
+        ]
+      },
+      "maxItems": 2,
+      "uniqueItems": true,
+      "description": "Up to 2 additional categories observed; must not contain the primary category"
+    },
+    "is_multi_mode": {
+      "type": "boolean",
+      "description": "True iff secondary_modes_observed is non-empty"
+    },
+    "confidence_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 0.95
+    },
+    "requires_human_review": {
+      "type": "boolean"
+    },
+    "classification_notes": {
+      "type": ["string", "null"],
+      "maxLength": 300,
+      "description": "Caveats, extractor disagreement, multi-mode reasoning. null if nothing notable."
+    }
+  },
+  "additionalProperties": false
+}

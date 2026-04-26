@@ -69,7 +69,7 @@ It is the foundation on which every downstream Skill depends. Extraction quality
   "model_used": "string (e.g., claude-sonnet-4-6)",
 
   "failure_mode": "string | null (≤200 chars; short noun phrase)",
-  "severity": "death | serious_injury | malfunction | other | unknown",
+  "severity": "death | serious_injury | malfunction | other | unknown | insufficient_information",
   "patient_outcome": "string | null (≤200 chars)",
   "device_problem": "string | null (≤200 chars; distinct from failure_mode)",
 
@@ -123,7 +123,7 @@ It is the foundation on which every downstream Skill depends. Extraction quality
      - `serious_injury` — significant injury, hospitalization, or permanent impairment
      - `malfunction` — device failed but no injury (mapped to MAUDE `event_type == "malfunction"`)
      - `other` — MAUDE `event_type == "other"`
-     - `unknown` — narrative is ambiguous AND MAUDE `event_type` is missing
+     - `unknown` / `insufficient_information` — narrative is ambiguous AND MAUDE `event_type` is missing. `insufficient_information` is the **preferred** value (matches `severity-triage` v1.0.0); `unknown` is retained as a backward-compatible alias for v1.0 extractions already in storage. Downstream consumers MUST treat the two as equivalent.
    - Prefer explicit narrative evidence over MAUDE's `event_type` field when they disagree; note the disagreement in `extraction_notes`.
 
 5. **Extract `patient_outcome`.**
@@ -151,7 +151,7 @@ It is the foundation on which every downstream Skill depends. Extraction quality
 9. **Set `requires_human_review`.**
    - `true` if `confidence_score < 0.60`
    - `true` if `failure_mode == null`
-   - `true` if `severity == "unknown"` AND `event_type` was also missing
+   - `true` if `severity` is `"unknown"` or `"insufficient_information"` AND `event_type` was also missing
    - `true` if `ai_related_flag == null` AND the product code is a known AI/ML code
    - `false` otherwise
 
@@ -376,6 +376,7 @@ This Skill is validated against the gold standard test set at `tests/gold_set/go
 ## 11. Changelog
 
 - **v1.0.0** (2026-04-23) — Initial release. Supports 6 extracted fields, confidence scoring, human-review flagging, mandatory citation verification.
+- **v1.0.0+alias** (2026-04-26) — Severity enum extended to accept `insufficient_information` as a backward-compatible alias for `unknown`, aligning vocabulary with `severity-triage` v1.0.0. No breaking change: existing extractions emitting `unknown` remain valid and equivalent. Schema, field doc, and procedure step 4 updated accordingly. No version bump because the change is additive and behaviorally equivalent.
 
 ### Planned for v1.1.0 (deferred per Charter §4 cap)
 - Language detection for non-English narratives with automatic translation

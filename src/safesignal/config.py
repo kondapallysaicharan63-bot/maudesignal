@@ -8,7 +8,8 @@ Per NFR-07 (Doc 3 §4.3): API keys are loaded from env vars only, never
 hardcoded, never logged, never committed.
 
 SafeSignal is provider-agnostic (Doc 5 D4): the ``LLM_PROVIDER`` env var
-selects between Groq (default, free), Anthropic (Claude), or OpenAI (GPT).
+selects between Groq (default, free), Anthropic (Claude), OpenAI (GPT),
+or Gemini (Google, free tier).
 """
 
 from __future__ import annotations
@@ -29,7 +30,7 @@ class ConfigError(Exception):
     """Raised when required configuration is missing or invalid."""
 
 
-_SUPPORTED_PROVIDERS = {"groq", "anthropic", "openai"}
+_SUPPORTED_PROVIDERS = {"groq", "anthropic", "openai", "gemini"}
 
 
 @dataclass(frozen=True)
@@ -50,6 +51,10 @@ class Config:
     # OpenAI
     openai_api_key: str | None
     openai_model: str
+
+    # Gemini (Google)
+    gemini_api_key: str | None
+    gemini_model: str
 
     # Data & ops
     openfda_api_key: str | None
@@ -81,21 +86,26 @@ class Config:
 
         openai_api_key = os.environ.get("OPENAI_API_KEY", "").strip() or None
 
+        gemini_api_key = os.environ.get("GEMINI_API_KEY", "").strip() or None
+
         provider_keys = {
             "groq": groq_api_key,
             "anthropic": anthropic_api_key,
             "openai": openai_api_key,
+            "gemini": gemini_api_key,
         }
         if not provider_keys[provider]:
             env_name = {
                 "groq": "GROQ_API_KEY",
                 "anthropic": "ANTHROPIC_API_KEY",
                 "openai": "OPENAI_API_KEY",
+                "gemini": "GEMINI_API_KEY",
             }[provider]
             signup_url = {
                 "groq": "https://console.groq.com",
                 "anthropic": "https://console.anthropic.com",
                 "openai": "https://platform.openai.com",
+                "gemini": "https://aistudio.google.com/apikey",
             }[provider]
             raise ConfigError(
                 f"LLM_PROVIDER={provider} but {env_name} is missing. "
@@ -128,6 +138,8 @@ class Config:
             ),
             openai_api_key=openai_api_key,
             openai_model=os.environ.get("OPENAI_MODEL", "gpt-4o-mini"),
+            gemini_api_key=gemini_api_key,
+            gemini_model=os.environ.get("GEMINI_MODEL", "gemini-1.5-flash"),
             openfda_api_key=openfda_api_key,
             db_path=db_path,
             log_level=os.environ.get("SAFESIGNAL_LOG_LEVEL", "INFO").upper(),
@@ -145,6 +157,8 @@ class Config:
             "claude_model_extraction": self.claude_model_extraction,
             "openai_api_key": _mask_secret(self.openai_api_key),
             "openai_model": self.openai_model,
+            "gemini_api_key": _mask_secret(self.gemini_api_key),
+            "gemini_model": self.gemini_model,
             "openfda_api_key": _mask_secret(self.openfda_api_key),
             "db_path": str(self.db_path),
             "log_level": self.log_level,

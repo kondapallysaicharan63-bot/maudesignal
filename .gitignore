@@ -87,6 +87,9 @@ env/
 *~
 .DS_Store
 
+# --- Claude Code per-machine settings ---
+.claude/settings.local.json
+
 # --- Jupyter ---
 .ipynb_checkpoints
 *.ipynb

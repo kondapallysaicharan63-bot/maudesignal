@@ -6,7 +6,7 @@ Usage:
     response = provider.complete(system_prompt=..., messages=[...])
 
 The provider returned depends on ``config.llm_provider`` ("groq",
-"anthropic", or "openai").
+"anthropic", "openai", or "gemini").
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ def get_provider(config: Config) -> LLMProvider:
 
     Raises:
         UnknownProviderError: If ``config.llm_provider`` is not one of
-            ``"groq"``, ``"anthropic"``, or ``"openai"``.
+            ``"groq"``, ``"anthropic"``, ``"openai"``, or ``"gemini"``.
         ConfigError: If the required API key for the chosen provider is missing.
     """
     provider = config.llm_provider.lower().strip()
@@ -81,9 +81,22 @@ def get_provider(config: Config) -> LLMProvider:
             model=config.openai_model,
         )
 
+    if provider == "gemini":
+        from safesignal.extraction.llm_providers.gemini_provider import GeminiProvider
+
+        if not config.gemini_api_key:
+            raise SafeSignalError(
+                "LLM_PROVIDER=gemini but GEMINI_API_KEY is not set. "
+                "Get a free key at https://aistudio.google.com/apikey"
+            )
+        return GeminiProvider(
+            api_key=config.gemini_api_key,
+            model=config.gemini_model,
+        )
+
     raise UnknownProviderError(
         f"Unknown LLM_PROVIDER: {provider!r}. "
-        f"Supported: 'groq', 'anthropic', 'openai'."
+        f"Supported: 'groq', 'anthropic', 'openai', 'gemini'."
     )
 
 

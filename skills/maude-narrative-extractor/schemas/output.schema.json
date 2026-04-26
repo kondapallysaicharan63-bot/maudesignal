@@ -46,7 +46,15 @@
     },
     "severity": {
       "type": "string",
-      "enum": ["death", "serious_injury", "malfunction", "other", "unknown"]
+      "enum": [
+        "death",
+        "serious_injury",
+        "malfunction",
+        "other",
+        "unknown",
+        "insufficient_information"
+      ],
+      "description": "FDA MDR severity. 'insufficient_information' (preferred since severity-triage v1.0.0) is an alias for 'unknown' — both mean the narrative + event_type lack the evidence to assign a category. Existing extractions emitting 'unknown' remain valid and should be treated as equivalent."
     },
     "patient_outcome": {
       "type": ["string", "null"],
