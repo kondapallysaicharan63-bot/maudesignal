@@ -1,19 +1,22 @@
 """Gemini (Google) provider for SafeSignal.
 
-Implements the LLMProvider interface using Google's google-generativeai
-SDK. Default model is ``gemini-1.5-flash`` — Gemini's free tier is
-generous (~1,500 requests/day at the time of writing), making it the
-second free option alongside Groq for the SafeSignal project budget.
+Implements the LLMProvider interface using Google's google-genai SDK
+(the successor to google-generativeai, which is deprecated). Default
+model is ``gemini-2.5-flash`` — Gemini's free tier is generous
+(~1,500 requests/day at the time of writing), making it the second free
+option alongside Groq for the SafeSignal project budget.
 
 We treat Gemini as $0.00 cost for budgeting purposes while on the free
 tier. The pricing table at top of file exists so the in-app cost ceiling
 has a non-zero number to track if the project ever migrates to paid.
 
-Note: Gemini's API uses "system_instruction" rather than a system role in
-the message list. We translate from our normalized LLMMessage shape
-inside ``complete()``.
+Note: Gemini's API uses ``system_instruction`` (passed via
+``GenerateContentConfig``) rather than a system role in the message
+list. We translate from our normalized LLMMessage shape inside
+``complete()``.
 
 Docs: https://ai.google.dev/gemini-api/docs
+Migration guide: https://ai.google.dev/gemini-api/docs/migrate
 Get a free key: https://aistudio.google.com/apikey
 """
 
@@ -36,11 +39,11 @@ class GeminiProviderError(SafeSignalError):
 # Gemini free tier — $0.00 for budgeting purposes. If migrating to paid,
 # update from https://ai.google.dev/pricing.
 _GEMINI_PRICING_USD_PER_MTOK = {
-    "gemini-1.5-flash": {"input": 0.0, "output": 0.0},
-    "gemini-1.5-flash-8b": {"input": 0.0, "output": 0.0},
-    "gemini-1.5-pro": {"input": 0.0, "output": 0.0},
+    "gemini-2.5-flash": {"input": 0.0, "output": 0.0},
+    "gemini-2.5-flash-lite": {"input": 0.0, "output": 0.0},
+    "gemini-2.5-pro": {"input": 0.0, "output": 0.0},
     "gemini-2.0-flash": {"input": 0.0, "output": 0.0},
-    "gemini-2.0-flash-exp": {"input": 0.0, "output": 0.0},
+    "gemini-2.0-flash-lite": {"input": 0.0, "output": 0.0},
 }
 
 
@@ -55,22 +58,23 @@ class GeminiProvider(LLMProvider):
     def __init__(
         self,
         api_key: str | None = None,
-        model: str = "gemini-1.5-flash",
+        model: str = "gemini-2.5-flash",
     ) -> None:
         """Create a Gemini provider.
 
         Args:
             api_key: Gemini API key. If None, falls back to the
                 ``GEMINI_API_KEY`` environment variable.
-            model: Model identifier. Default is ``gemini-1.5-flash`` —
+            model: Model identifier. Default is ``gemini-2.5-flash`` —
                 fast, cheap, and free-tier eligible.
         """
         try:
-            import google.generativeai as genai
+            from google import genai
+            from google.genai import types as genai_types
         except ImportError as exc:  # pragma: no cover
             raise GeminiProviderError(
-                "google-generativeai package not installed. "
-                "Run: pip install google-generativeai"
+                "google-genai package not installed. "
+                "Run: pip install google-genai"
             ) from exc
 
         resolved_key = api_key if api_key else os.environ.get("GEMINI_API_KEY", "")
@@ -81,8 +85,8 @@ class GeminiProvider(LLMProvider):
                 "at https://aistudio.google.com/apikey"
             )
 
-        genai.configure(api_key=resolved_key)
-        self._genai = genai
+        self._client = genai.Client(api_key=resolved_key)
+        self._types = genai_types
         self._model = model
 
     @property
@@ -110,23 +114,29 @@ class GeminiProvider(LLMProvider):
         also ask for JSON output via ``response_mime_type`` to match the
         structured-output behavior of the other providers.
         """
-        gemini_messages: list[dict[str, object]] = []
+        types = self._types
+        gemini_contents: list[object] = []
         for msg in messages:
             # Gemini uses "user" / "model" rather than "user" / "assistant".
             role = "model" if msg.role == "assistant" else "user"
-            gemini_messages.append({"role": role, "parts": [msg.content]})
+            gemini_contents.append(
+                types.Content(
+                    role=role,
+                    parts=[types.Part.from_text(text=msg.content)],
+                )
+            )
 
         try:
-            model = self._genai.GenerativeModel(
-                model_name=self._model,
-                system_instruction=system_prompt,
-                generation_config={
-                    "temperature": temperature,
-                    "max_output_tokens": max_tokens,
-                    "response_mime_type": "application/json",
-                },
+            response = self._client.models.generate_content(
+                model=self._model,
+                contents=gemini_contents,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_prompt,
+                    temperature=temperature,
+                    max_output_tokens=max_tokens,
+                    response_mime_type="application/json",
+                ),
             )
-            response = model.generate_content(gemini_messages)
         except Exception as exc:  # pragma: no cover - network errors
             raise GeminiProviderError(f"Gemini API call failed: {exc}") from exc
 

@@ -139,7 +139,7 @@ class Config:
             openai_api_key=openai_api_key,
             openai_model=os.environ.get("OPENAI_MODEL", "gpt-4o-mini"),
             gemini_api_key=gemini_api_key,
-            gemini_model=os.environ.get("GEMINI_MODEL", "gemini-1.5-flash"),
+            gemini_model=os.environ.get("GEMINI_MODEL", "gemini-2.5-flash"),
             openfda_api_key=openfda_api_key,
             db_path=db_path,
             log_level=os.environ.get("SAFESIGNAL_LOG_LEVEL", "INFO").upper(),

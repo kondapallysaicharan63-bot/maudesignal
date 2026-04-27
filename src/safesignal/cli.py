@@ -260,6 +260,8 @@ def _print_startup(config: Config) -> None:
         model = config.groq_model
     elif config.llm_provider == "anthropic":
         model = config.claude_model_extraction
+    elif config.llm_provider == "gemini":
+        model = config.gemini_model
     else:
         model = config.openai_model
 
