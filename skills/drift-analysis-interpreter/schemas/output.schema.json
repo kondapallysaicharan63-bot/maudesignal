@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DriftAnalysisInterpreterOutput",
+  "description": "Output schema for skills/drift-analysis-interpreter v1.0.0",
+  "type": "object",
+  "required": [
+    "interpretation_ts",
+    "skill_name",
+    "skill_version",
+    "model_used",
+    "verdict",
+    "headline",
+    "narrative",
+    "recommended_action",
+    "evidence",
+    "confidence_score",
+    "requires_human_review"
+  ],
+  "properties": {
+    "interpretation_ts": {"type": "string", "format": "date-time"},
+    "skill_name": {"type": "string", "const": "drift-analysis-interpreter"},
+    "skill_version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"},
+    "model_used": {"type": "string"},
+    "verdict": {
+      "type": "string",
+      "enum": ["stable", "drift_suspected", "drift_confirmed", "insufficient_data"]
+    },
+    "headline": {"type": "string", "maxLength": 200},
+    "narrative": {"type": "string", "maxLength": 800},
+    "recommended_action": {
+      "type": "string",
+      "enum": ["monitor", "investigate", "escalate", "none"]
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["delta_pct", "ks_statistic", "ks_p_value", "psi"],
+      "properties": {
+        "delta_pct": {"type": ["number", "null"]},
+        "ks_statistic": {"type": ["number", "null"]},
+        "ks_p_value": {"type": ["number", "null"]},
+        "psi": {"type": ["number", "null"]}
+      },
+      "additionalProperties": false
+    },
+    "confidence_score": {"type": "number", "minimum": 0.0, "maximum": 0.95},
+    "requires_human_review": {"type": "boolean"},
+    "interpretation_notes": {"type": ["string", "null"], "maxLength": 300}
+  },
+  "additionalProperties": false
+}

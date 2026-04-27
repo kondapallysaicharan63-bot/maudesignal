@@ -258,12 +258,12 @@ MaudeSignal does not handle PHI under any circumstances.
 | `maude-narrative-extractor` | ✅ v1.0.0 | Foundation extraction; produces the records every other Skill consumes |
 | `severity-triage` | ✅ v1.0.0 | Standardizes severity for downstream cohort analysis |
 | `ai-failure-mode-classifier` | ✅ v1.0.0 | Assigns the AI taxonomy MAUDE cannot |
-| `drift-analysis-interpreter` | 📋 planned | Translates KS/PSI stats into regulator language |
+| `drift-analysis-interpreter` | ✅ v1.0.0 (skeleton) | Translates KS/PSI stats into regulator language; not wired into pipeline yet |
 | `fda-guidance-retriever` | 📋 planned | Grounded retrieval over FDA guidance corpus |
 | `psur-report-drafter` | 📋 planned | Final composer; consumes everything |
 
-If you need to add a new Skill, follow the structure of the four built
-Skills and update the table above.
+If you need to add a new Skill, follow the structure of the existing
+five Skills and update the table above.
 
 ---
 
@@ -279,10 +279,34 @@ Required keys (depending on `LLM_PROVIDER`):
 | `anthropic` | `ANTHROPIC_API_KEY` |
 | `openai` | `OPENAI_API_KEY` |
 | `gemini` | `GEMINI_API_KEY` |
+| `pool` | `PROVIDER_FALLBACK_ORDER` + at least one resolved key |
+
+### Multi-key fallback pool (`LLM_PROVIDER=pool`)
+
+When set to `pool`, the factory returns a `ProviderPool` that rotates
+across multiple (provider, key) slots configured via
+`PROVIDER_FALLBACK_ORDER`. Tokens map to env-var keys:
+
+| Token | Env var | Provider |
+|---|---|---|
+| `gemini` | `GEMINI_API_KEY` | gemini |
+| `gemini2` | `GEMINI_API_KEY_2` | gemini |
+| `gemini3` | `GEMINI_API_KEY_3` | gemini |
+| `groq` | `GROQ_API_KEY` | groq |
+| `groq2` | `GROQ_API_KEY_2` | groq |
+| `openai` | `OPENAI_API_KEY` | openai |
+| `anthropic` | `ANTHROPIC_API_KEY` | anthropic |
+
+On a 429 / quota / rate-limit error, the active slot is marked
+exhausted and the pool rotates to the next slot. Non-rate-limit
+errors propagate. When every slot is exhausted, raises
+`PoolExhaustedError`. Slots with missing env-var keys are silently
+skipped at construction with a warning. Pool config errors raise
+`PoolConfigError`. See [src/maudesignal/extraction/llm_providers/provider_pool.py](src/maudesignal/extraction/llm_providers/provider_pool.py).
 
 Other useful env vars: `LLM_PROVIDER`, `GROQ_MODEL`, `OPENAI_MODEL`,
-`CLAUDE_MODEL_EXTRACTION`. See `maudesignal/config.py` for the
-authoritative list.
+`CLAUDE_MODEL_EXTRACTION`, `GEMINI_MODEL`, `PROVIDER_FALLBACK_ORDER`.
+See `maudesignal/config.py` for the authoritative list.
 
 ---
 

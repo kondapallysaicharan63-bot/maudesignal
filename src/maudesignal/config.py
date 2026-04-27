@@ -30,7 +30,7 @@ class ConfigError(Exception):
     """Raised when required configuration is missing or invalid."""
 
 
-_SUPPORTED_PROVIDERS = {"groq", "anthropic", "openai", "gemini"}
+_SUPPORTED_PROVIDERS = {"groq", "anthropic", "openai", "gemini", "pool"}
 
 
 @dataclass(frozen=True)
@@ -55,6 +55,10 @@ class Config:
     # Gemini (Google)
     gemini_api_key: str | None
     gemini_model: str
+
+    # Pool (multi-key fallback). Comma-separated tokens; resolved against
+    # env-var keys (e.g. "gemini" -> GEMINI_API_KEY, "gemini2" -> GEMINI_API_KEY_2).
+    provider_fallback_order: str
 
     # Data & ops
     openfda_api_key: str | None
@@ -88,28 +92,37 @@ class Config:
 
         gemini_api_key = os.environ.get("GEMINI_API_KEY", "").strip() or None
 
-        provider_keys = {
-            "groq": groq_api_key,
-            "anthropic": anthropic_api_key,
-            "openai": openai_api_key,
-            "gemini": gemini_api_key,
-        }
-        if not provider_keys[provider]:
-            env_name = {
-                "groq": "GROQ_API_KEY",
-                "anthropic": "ANTHROPIC_API_KEY",
-                "openai": "OPENAI_API_KEY",
-                "gemini": "GEMINI_API_KEY",
-            }[provider]
-            signup_url = {
-                "groq": "https://console.groq.com",
-                "anthropic": "https://console.anthropic.com",
-                "openai": "https://platform.openai.com",
-                "gemini": "https://aistudio.google.com/apikey",
-            }[provider]
+        provider_fallback_order = os.environ.get("PROVIDER_FALLBACK_ORDER", "gemini,groq").strip()
+
+        if provider != "pool":
+            provider_keys = {
+                "groq": groq_api_key,
+                "anthropic": anthropic_api_key,
+                "openai": openai_api_key,
+                "gemini": gemini_api_key,
+            }
+            if not provider_keys[provider]:
+                env_name = {
+                    "groq": "GROQ_API_KEY",
+                    "anthropic": "ANTHROPIC_API_KEY",
+                    "openai": "OPENAI_API_KEY",
+                    "gemini": "GEMINI_API_KEY",
+                }[provider]
+                signup_url = {
+                    "groq": "https://console.groq.com",
+                    "anthropic": "https://console.anthropic.com",
+                    "openai": "https://platform.openai.com",
+                    "gemini": "https://aistudio.google.com/apikey",
+                }[provider]
+                raise ConfigError(
+                    f"LLM_PROVIDER={provider} but {env_name} is missing. "
+                    f"Sign up at {signup_url} and add the key to .env"
+                )
+        elif not provider_fallback_order:
             raise ConfigError(
-                f"LLM_PROVIDER={provider} but {env_name} is missing. "
-                f"Sign up at {signup_url} and add the key to .env"
+                "LLM_PROVIDER=pool but PROVIDER_FALLBACK_ORDER is empty. "
+                "Set it to a comma-separated list like "
+                "'gemini,gemini2,groq,groq2'."
             )
 
         openfda_api_key = os.environ.get("OPENFDA_API_KEY", "").strip() or None
@@ -134,6 +147,7 @@ class Config:
             openai_model=os.environ.get("OPENAI_MODEL", "gpt-4o-mini"),
             gemini_api_key=gemini_api_key,
             gemini_model=os.environ.get("GEMINI_MODEL", "gemini-2.5-flash"),
+            provider_fallback_order=provider_fallback_order,
             openfda_api_key=openfda_api_key,
             db_path=db_path,
             log_level=os.environ.get("MAUDESIGNAL_LOG_LEVEL", "INFO").upper(),
@@ -153,6 +167,7 @@ class Config:
             "openai_model": self.openai_model,
             "gemini_api_key": _mask_secret(self.gemini_api_key),
             "gemini_model": self.gemini_model,
+            "provider_fallback_order": self.provider_fallback_order,
             "openfda_api_key": _mask_secret(self.openfda_api_key),
             "db_path": str(self.db_path),
             "log_level": self.log_level,

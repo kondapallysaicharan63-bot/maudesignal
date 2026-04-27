@@ -5,8 +5,9 @@ Usage:
     provider = get_provider(config)
     response = provider.complete(system_prompt=..., messages=[...])
 
-The provider returned depends on ``config.llm_provider`` ("groq",
-"anthropic", "openai", or "gemini").
+The provider returned depends on ``config.llm_provider`` — one of
+``"groq"``, ``"anthropic"``, ``"openai"``, ``"gemini"``, or ``"pool"``
+(multi-key fallback driven by ``PROVIDER_FALLBACK_ORDER``).
 """
 
 from __future__ import annotations
@@ -94,9 +95,22 @@ def get_provider(config: Config) -> LLMProvider:
             model=config.gemini_model,
         )
 
+    if provider == "pool":
+        from maudesignal.extraction.llm_providers.provider_pool import ProviderPool
+
+        return ProviderPool.from_env(
+            order=config.provider_fallback_order,
+            models={
+                "gemini": config.gemini_model,
+                "groq": config.groq_model,
+                "openai": config.openai_model,
+                "anthropic": config.claude_model_extraction,
+            },
+        )
+
     raise UnknownProviderError(
         f"Unknown LLM_PROVIDER: {provider!r}. "
-        f"Supported: 'groq', 'anthropic', 'openai', 'gemini'."
+        f"Supported: 'groq', 'anthropic', 'openai', 'gemini', 'pool'."
     )
 
 
