@@ -12,7 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from maudesignal.common.logging import get_logger, truncate_for_log
+from maudesignal.common.logging import get_logger
 from maudesignal.ingestion.openfda_client import OpenFDAClient
 from maudesignal.storage.database import Database
 
@@ -73,9 +73,7 @@ def ingest_product_code(
         fetched += 1
         maude_id = _extract_report_id(raw)
         if not maude_id:
-            skip_reasons["missing_report_id"] = (
-                skip_reasons.get("missing_report_id", 0) + 1
-            )
+            skip_reasons["missing_report_id"] = skip_reasons.get("missing_report_id", 0) + 1
             continue
 
         inserted = db.upsert_raw_report(
@@ -94,9 +92,7 @@ def ingest_product_code(
             # Per DR-08 — skip extraction-wise but still keep raw.
             # We DO still store the normalized row (empty narratives)
             # so queries show it exists; the extractor will skip it.
-            skip_reasons["missing_narrative"] = (
-                skip_reasons.get("missing_narrative", 0) + 1
-            )
+            skip_reasons["missing_narrative"] = skip_reasons.get("missing_narrative", 0) + 1
 
         db.upsert_normalized_event(
             maude_report_id=maude_id,

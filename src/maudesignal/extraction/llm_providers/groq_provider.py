@@ -56,9 +56,7 @@ class GroqProvider(LLMProvider):
         try:
             from groq import Groq
         except ImportError as exc:  # pragma: no cover
-            raise GroqProviderError(
-                "groq package not installed. Run: pip install groq"
-            ) from exc
+            raise GroqProviderError("groq package not installed. Run: pip install groq") from exc
 
         if not api_key:
             raise GroqProviderError("Groq API key is empty")
@@ -93,7 +91,7 @@ class GroqProvider(LLMProvider):
             chat_messages.append({"role": msg.role, "content": msg.content})
 
         try:
-            response = self._client.chat.completions.create(
+            response = self._client.chat.completions.create(  # type: ignore[call-overload]
                 model=self._model,
                 messages=chat_messages,
                 max_tokens=max_tokens,
@@ -123,10 +121,7 @@ class GroqProvider(LLMProvider):
 
         If Groq ever starts charging, update the pricing table at top of file.
         """
-        pricing = _GROQ_PRICING_USD_PER_MTOK.get(
-            self._model, {"input": 0.0, "output": 0.0}
-        )
-        return (
-            (input_tokens / 1_000_000) * pricing["input"]
-            + (output_tokens / 1_000_000) * pricing["output"]
-        )
+        pricing = _GROQ_PRICING_USD_PER_MTOK.get(self._model, {"input": 0.0, "output": 0.0})
+        return (input_tokens / 1_000_000) * pricing["input"] + (
+            output_tokens / 1_000_000
+        ) * pricing["output"]

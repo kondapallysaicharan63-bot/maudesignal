@@ -60,9 +60,7 @@ class SkillLoader:
             skills_root: Path to the project's ``skills/`` folder.
         """
         if not skills_root.exists() or not skills_root.is_dir():
-            raise SkillLoadError(
-                f"Skills root does not exist or is not a directory: {skills_root}"
-            )
+            raise SkillLoadError(f"Skills root does not exist or is not a directory: {skills_root}")
         self._root = skills_root
 
     def load(self, skill_name: str) -> LoadedSkill:
@@ -93,18 +91,14 @@ class SkillLoader:
             raise SkillLoadError(f"Missing VERSION file in {skill_dir}")
         version = version_path.read_text(encoding="utf-8").strip()
         if not _looks_like_semver(version):
-            raise SkillLoadError(
-                f"Invalid semver in {version_path}: {version!r}"
-            )
+            raise SkillLoadError(f"Invalid semver in {version_path}: {version!r}")
 
         # --- Output schema (required) ---
         schema_path = skill_dir / "schemas" / "output.schema.json"
         if not schema_path.is_file():
             raise SkillLoadError(f"Missing output schema at {schema_path}")
         try:
-            output_schema: dict[str, Any] = json.loads(
-                schema_path.read_text(encoding="utf-8")
-            )
+            output_schema: dict[str, Any] = json.loads(schema_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as exc:
             raise SkillLoadError(f"Invalid JSON schema in {schema_path}: {exc}") from exc
 
@@ -152,7 +146,5 @@ def _load_jsonl(path: Path) -> list[dict[str, Any]]:
             try:
                 records.append(json.loads(line))
             except json.JSONDecodeError as exc:
-                raise SkillLoadError(
-                    f"Invalid JSON on line {line_num} of {path}: {exc}"
-                ) from exc
+                raise SkillLoadError(f"Invalid JSON on line {line_num} of {path}: {exc}") from exc
     return records

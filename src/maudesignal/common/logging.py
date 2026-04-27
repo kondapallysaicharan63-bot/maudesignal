@@ -61,7 +61,8 @@ def get_logger(name: str) -> structlog.stdlib.BoundLogger:
         A structlog BoundLogger. Call ``.info()``, ``.warning()``, etc.,
         passing key=value pairs for structured fields.
     """
-    return structlog.get_logger(name)
+    logger: structlog.stdlib.BoundLogger = structlog.get_logger(name)
+    return logger
 
 
 def truncate_for_log(text: str | None, max_chars: int = 100) -> str:
