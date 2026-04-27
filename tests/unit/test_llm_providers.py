@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from safesignal.common.exceptions import SafeSignalError
-from safesignal.config import Config, ConfigError
-from safesignal.extraction.llm_providers import UnknownProviderError, get_provider
+from maudesignal.common.exceptions import MaudeSignalError
+from maudesignal.config import Config, ConfigError
+from maudesignal.extraction.llm_providers import UnknownProviderError, get_provider
 
 
 def _make_config(
@@ -72,7 +72,7 @@ def test_get_provider_openai_returns_openai() -> None:
 def test_get_provider_missing_key_raises() -> None:
     """Picking a provider whose key is missing raises an actionable error."""
     config = _make_config(provider="anthropic", groq_key=None, anthropic_key=None)
-    with pytest.raises(SafeSignalError, match="ANTHROPIC_API_KEY"):
+    with pytest.raises(MaudeSignalError, match="ANTHROPIC_API_KEY"):
         get_provider(config)
 
 

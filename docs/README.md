@@ -1,4 +1,4 @@
-# SafeSignal — Project Documentation
+# MaudeSignal — Project Documentation
 
 **Project:** Open-source AI postmarket surveillance toolkit for FDA-cleared AI/ML medical devices
 **Owner:** [Your Name]

@@ -1,18 +1,18 @@
-"""Exception hierarchy for SafeSignal.
+"""Exception hierarchy for MaudeSignal.
 
-All SafeSignal exceptions inherit from ``SafeSignalError`` so callers can
+All MaudeSignal exceptions inherit from ``MaudeSignalError`` so callers can
 catch all-of-our-errors without catching arbitrary library exceptions.
 """
 
 
-class SafeSignalError(Exception):
-    """Base exception for all SafeSignal errors."""
+class MaudeSignalError(Exception):
+    """Base exception for all MaudeSignal errors."""
 
 
 # --- Ingestion layer ---
 
 
-class IngestionError(SafeSignalError):
+class IngestionError(MaudeSignalError):
     """Raised for errors during MAUDE data ingestion."""
 
 
@@ -27,7 +27,7 @@ class OpenFDARateLimitError(OpenFDAAPIError):
 # --- Extraction layer ---
 
 
-class ExtractionError(SafeSignalError):
+class ExtractionError(MaudeSignalError):
     """Raised for errors during LLM-based extraction."""
 
 
@@ -46,7 +46,7 @@ class BudgetExceededError(ExtractionError):
 # --- Verification layer ---
 
 
-class CitationVerificationError(SafeSignalError):
+class CitationVerificationError(MaudeSignalError):
     """Raised when citation verification fails unexpectedly.
 
     Note: a citation being *fake* is not an error — it's a valid result
@@ -58,5 +58,5 @@ class CitationVerificationError(SafeSignalError):
 # --- Storage layer ---
 
 
-class StorageError(SafeSignalError):
+class StorageError(MaudeSignalError):
     """Raised for database errors."""

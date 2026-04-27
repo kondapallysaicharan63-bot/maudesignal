@@ -12,7 +12,7 @@
 
 This Skill assigns each MAUDE record (post-extraction) to **one of 11
 mutually-exclusive AI failure mode categories**. It is the central act that
-makes SafeSignal worth building: MAUDE's native `event_type` field has 4
+makes MaudeSignal worth building: MAUDE's native `event_type` field has 4
 options (death / injury / malfunction / other), none of which describe *how
 the AI failed*. This Skill produces the AI-specific taxonomy MAUDE cannot.
 

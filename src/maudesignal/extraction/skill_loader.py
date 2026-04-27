@@ -21,8 +21,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from safesignal.common.exceptions import SkillLoadError
-from safesignal.common.logging import get_logger
+from maudesignal.common.exceptions import SkillLoadError
+from maudesignal.common.logging import get_logger
 
 logger = get_logger(__name__)
 

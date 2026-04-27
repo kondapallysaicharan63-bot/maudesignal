@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Runs once when the Codespace is first created.
-# Installs SafeSignal in editable mode with dev dependencies.
+# Installs MaudeSignal in editable mode with dev dependencies.
 
 set -euo pipefail
 
 echo ""
 echo "========================================="
-echo "  SafeSignal Codespace — Post-Create"
+echo "  MaudeSignal Codespace — Post-Create"
 echo "========================================="
 echo ""
 
@@ -14,8 +14,8 @@ echo ""
 echo "→ Upgrading pip..."
 pip install --upgrade pip --quiet
 
-# Install SafeSignal in editable mode with dev extras
-echo "→ Installing SafeSignal (this may take 2–3 min)..."
+# Install MaudeSignal in editable mode with dev extras
+echo "→ Installing MaudeSignal (this may take 2–3 min)..."
 pip install -e ".[dev]" --quiet
 
 # Create a .env file from the template if one doesn't exist yet
@@ -28,7 +28,7 @@ fi
 
 # Verify the install worked
 echo "→ Verifying install..."
-python -c "import safesignal; print(f'  SafeSignal {safesignal.__version__} installed OK')"
+python -c "import maudesignal; print(f'  MaudeSignal {maudesignal.__version__} installed OK')"
 
 echo ""
 echo "========================================="
@@ -44,10 +44,10 @@ echo "  2. Run the tests (no API cost):"
 echo "     → pytest tests/unit -v"
 echo ""
 echo "  3. Pull real MAUDE data (free, no API cost):"
-echo "     → safesignal ingest --product-code QIH --limit 5"
+echo "     → maudesignal ingest --product-code QIH --limit 5"
 echo ""
 echo "  4. Run Claude extraction (~\$0.05 cost):"
-echo "     → safesignal extract --product-code QIH --limit 3"
+echo "     → maudesignal extract --product-code QIH --limit 3"
 echo ""
 echo "See README.md for full documentation."
 echo ""

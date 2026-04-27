@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from safesignal.storage.database import Database
+from maudesignal.storage.database import Database
 
 
 @pytest.fixture

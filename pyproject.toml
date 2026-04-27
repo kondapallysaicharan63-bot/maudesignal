@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 # Project metadata
 # ==========================================
 [project]
-name = "safesignal"
+name = "maudesignal"
 version = "0.1.0"
 description = "Open-source AI postmarket surveillance toolkit for FDA-cleared AI/ML medical devices"
 readme = "README.md"
@@ -85,13 +85,13 @@ dev = [
 # CLI entry points (Doc 5 §6 folder structure)
 # ==========================================
 [project.scripts]
-safesignal = "safesignal.cli:app"
+maudesignal = "maudesignal.cli:app"
 
 # ==========================================
 # Package discovery
 # ==========================================
 [tool.hatch.build.targets.wheel]
-packages = ["src/safesignal"]
+packages = ["src/maudesignal"]
 
 # ==========================================
 # mypy (NFR-11)
@@ -169,7 +169,7 @@ addopts = [
     "-ra",
     "--strict-markers",
     "--strict-config",
-    "--cov=src/safesignal",
+    "--cov=src/maudesignal",
     "--cov-report=term-missing",
     "--cov-report=html",
     "--cov-fail-under=70",
@@ -186,7 +186,7 @@ markers = [
 # coverage (NFR-13)
 # ==========================================
 [tool.coverage.run]
-source = ["src/safesignal"]
+source = ["src/maudesignal"]
 branch = true
 
 [tool.coverage.report]

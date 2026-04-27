@@ -1,4 +1,4 @@
-"""SafeSignal — open-source AI postmarket surveillance toolkit.
+"""MaudeSignal — open-source AI postmarket surveillance toolkit.
 
 See README.md and docs/ for full project documentation.
 """

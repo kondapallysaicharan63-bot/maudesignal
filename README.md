@@ -1,15 +1,15 @@
-# SafeSignal
+# MaudeSignal
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/[your-username]/safesignal)
-[![CI](https://github.com/[your-username]/safesignal/actions/workflows/ci.yml/badge.svg)](https://github.com/[your-username]/safesignal/actions/workflows/ci.yml)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/[your-username]/maudesignal)
+[![CI](https://github.com/[your-username]/maudesignal/actions/workflows/ci.yml/badge.svg)](https://github.com/[your-username]/maudesignal/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 
 **Open-source AI postmarket surveillance toolkit for FDA-cleared AI/ML medical devices.**
 
-SafeSignal ingests FDA MAUDE adverse event data, uses Claude with versioned Skills to extract AI-specific failure signals that MAUDE's native schema does not capture, and produces regulator-style safety reports with verified citations.
+MaudeSignal ingests FDA MAUDE adverse event data, uses Claude with versioned Skills to extract AI-specific failure signals that MAUDE's native schema does not capture, and produces regulator-style safety reports with verified citations.
 
-> ⚠️ **SafeSignal is a research and signal-surfacing tool. It is NOT an FDA-cleared medical device, NOT a substitute for human regulatory judgment, and NOT legal or regulatory advice. Every finding requires human review before any regulatory action.**
+> ⚠️ **MaudeSignal is a research and signal-surfacing tool. It is NOT an FDA-cleared medical device, NOT a substitute for human regulatory judgment, and NOT legal or regulatory advice. Every finding requires human review before any regulatory action.**
 
 ---
 
@@ -19,7 +19,7 @@ The FDA has cleared over 1,000 AI/ML-enabled medical devices. These devices are 
 
 QMSR (effective Feb 2, 2026) mandates real-world performance monitoring for every medical device manufacturer — yet the open-source tooling to do this properly does not exist.
 
-SafeSignal is that tooling.
+MaudeSignal is that tooling.
 
 ---
 
@@ -45,7 +45,7 @@ See [`docs/07_roadmap.md`](docs/07_roadmap.md) for the week-by-week build plan.
 
 ## Project documentation
 
-SafeSignal follows a documentation-first methodology. Before any code, we wrote 8 interlinked documents that define the vision, scope, requirements, architecture, risks, and roadmap:
+MaudeSignal follows a documentation-first methodology. Before any code, we wrote 8 interlinked documents that define the vision, scope, requirements, architecture, risks, and roadmap:
 
 | # | Document | What it defines |
 |---|---|---|
@@ -62,7 +62,7 @@ SafeSignal follows a documentation-first methodology. Before any code, we wrote 
 
 ## Claude Skills
 
-All LLM behavior in SafeSignal is defined in versioned `SKILL.md` files, not inline prompts. This enforces reproducibility, auditability (ALCOA+), and clean separation of behavior from orchestration.
+All LLM behavior in MaudeSignal is defined in versioned `SKILL.md` files, not inline prompts. This enforces reproducibility, auditability (ALCOA+), and clean separation of behavior from orchestration.
 
 | Skill | Purpose | Status |
 |---|---|---|
@@ -94,24 +94,24 @@ Once the Codespace loads:
 
 3. **Ingest real MAUDE data** (free):
    ```bash
-   safesignal ingest --product-code QIH --limit 5
+   maudesignal ingest --product-code QIH --limit 5
    ```
 
 4. **Run Claude extraction** (~$0.05):
    ```bash
-   safesignal extract --product-code QIH --limit 3
+   maudesignal extract --product-code QIH --limit 3
    ```
 
 5. **Check what happened:**
    ```bash
-   safesignal status
+   maudesignal status
    ```
 
 ## Quickstart (local laptop)
 
 ```bash
-git clone https://github.com/[username]/safesignal.git
-cd safesignal
+git clone https://github.com/[username]/maudesignal.git
+cd maudesignal
 
 python -m venv .venv
 source .venv/bin/activate      # or .venv\Scripts\activate on Windows
@@ -121,9 +121,9 @@ cp .env.example .env
 # Edit .env and add your ANTHROPIC_API_KEY
 
 pytest tests/unit -v
-safesignal ingest --product-code QIH --limit 5
-safesignal extract --product-code QIH --limit 3
-safesignal status
+maudesignal ingest --product-code QIH --limit 5
+maudesignal extract --product-code QIH --limit 3
+maudesignal status
 ```
 
 ---
@@ -150,7 +150,7 @@ safesignal status
 
 ## Contributing
 
-SafeSignal is built in the open as a portfolio project, but community contributions are welcome. See [`CONTRIBUTING.md`](CONTRIBUTING.md) (coming soon) for guidance.
+MaudeSignal is built in the open as a portfolio project, but community contributions are welcome. See [`CONTRIBUTING.md`](CONTRIBUTING.md) (coming soon) for guidance.
 
 **For feedback from regulatory affairs or post-market quality professionals:** this project is actively seeking your input. Please open an issue with the label `feedback-ra` or reach out via LinkedIn.
 

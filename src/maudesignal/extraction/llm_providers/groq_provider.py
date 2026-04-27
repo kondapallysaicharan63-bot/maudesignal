@@ -1,8 +1,8 @@
-"""Groq provider for SafeSignal.
+"""Groq provider for MaudeSignal.
 
 Groq hosts Llama and Mixtral models via an OpenAI-compatible API.
 Their **free tier** gives ~30 requests/minute and ~14,400/day — plenty for
-the SafeSignal project scope.
+the MaudeSignal project scope.
 
 We use ``llama-3.3-70b-versatile`` as the default model. It's Groq's
 strongest reasoning model at the time of writing, and handles structured
@@ -13,15 +13,15 @@ Docs: https://console.groq.com/docs
 
 from __future__ import annotations
 
-from safesignal.common.exceptions import SafeSignalError
-from safesignal.extraction.llm_providers.base import (
+from maudesignal.common.exceptions import MaudeSignalError
+from maudesignal.extraction.llm_providers.base import (
     LLMMessage,
     LLMProvider,
     LLMResponse,
 )
 
 
-class GroqProviderError(SafeSignalError):
+class GroqProviderError(MaudeSignalError):
     """Raised when Groq API calls fail."""
 
 

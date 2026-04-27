@@ -1,4 +1,4 @@
-"""OpenAI (GPT) provider for SafeSignal.
+"""OpenAI (GPT) provider for MaudeSignal.
 
 Implements the LLMProvider interface using the official OpenAI SDK.
 Supports GPT-4o, GPT-4o-mini, and the o1 reasoning models.
@@ -12,15 +12,15 @@ Docs: https://platform.openai.com/docs
 
 from __future__ import annotations
 
-from safesignal.common.exceptions import SafeSignalError
-from safesignal.extraction.llm_providers.base import (
+from maudesignal.common.exceptions import MaudeSignalError
+from maudesignal.extraction.llm_providers.base import (
     LLMMessage,
     LLMProvider,
     LLMResponse,
 )
 
 
-class OpenAIProviderError(SafeSignalError):
+class OpenAIProviderError(MaudeSignalError):
     """Raised when OpenAI API calls fail."""
 
 

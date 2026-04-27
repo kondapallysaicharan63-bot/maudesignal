@@ -1,6 +1,6 @@
 # Document 7: Roadmap & Milestone Plan
 
-**Project Name:** SafeSignal
+**Project Name:** MaudeSignal
 **Owner:** [Your Name]
 **Version:** 1.0 (Draft)
 **Date:** [Today's Date]
@@ -50,7 +50,7 @@ Week 9–10 — Buffer (do not plan into this)
 - [ ] Pick start date (write it in the Charter)
 - [ ] Put 20–40 hrs/week blocks on calendar through Week 10
 - [ ] Finalize all 8 documents (1 through 8) in a Git repo
-- [ ] Create GitHub repo: `github.com/[username]/safesignal` (public, MIT license)
+- [ ] Create GitHub repo: `github.com/[username]/maudesignal` (public, MIT license)
 - [ ] Install: Python 3.11+, VS Code/Cursor, Git, Docker (optional)
 - [ ] Create Anthropic account, get API key, add $20 credit
 - [ ] Create `.env` file with keys (gitignored)
@@ -136,7 +136,7 @@ Week 9–10 — Buffer (do not plan into this)
 | Documentation updates | 1 |
 
 ### Milestones
-- [ ] `safesignal ingest --product-code QIH --months 12` works end-to-end
+- [ ] `maudesignal ingest --product-code QIH --months 12` works end-to-end
 - [ ] SQLite DB has `raw_reports` and `normalized_events` tables populated
 - [ ] Pagination, retry, caching all implemented (FR-03, FR-04, FR-05)
 - [ ] Unit tests for ingestion at ≥50% coverage
@@ -176,7 +176,7 @@ Week 9–10 — Buffer (do not plan into this)
 - [ ] LLM audit log populated (FR-12)
 
 ### Gate 1 → 2 Check (Sunday)
-- [ ] Can run `safesignal ingest` + `safesignal process` end-to-end? ✅ / ❌
+- [ ] Can run `maudesignal ingest` + `maudesignal process` end-to-end? ✅ / ❌
 - [ ] Extraction hits ≥80% on gold set? ✅ / ❌
 - [ ] Zero hallucinated citations in 50-sample audit? ✅ / ❌
 - [ ] ≥1 more customer discovery call this week? ✅ / ❌
@@ -427,7 +427,7 @@ Copy this template to `docs/weekly_reviews/week_XX.md` every Sunday.
 
 By end of Week 8, these things exist in the world:
 
-- A public GitHub repo (`github.com/[username]/safesignal`)
+- A public GitHub repo (`github.com/[username]/maudesignal`)
 - A README that makes sense to a stranger
 - A 5-minute demo video on YouTube
 - A LinkedIn post with the project announcement

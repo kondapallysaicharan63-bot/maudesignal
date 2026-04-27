@@ -1,4 +1,4 @@
-"""SQLAlchemy 2.0 models for SafeSignal.
+"""SQLAlchemy 2.0 models for MaudeSignal.
 
 Implements the database schema defined in Document 5 §8. These models are
 intentionally minimal — just enough to demonstrate the data flow end-to-end.
@@ -14,7 +14,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
 class Base(DeclarativeBase):
-    """Base class for all SafeSignal SQLAlchemy models."""
+    """Base class for all MaudeSignal SQLAlchemy models."""
 
 
 class RawReportRecord(Base):

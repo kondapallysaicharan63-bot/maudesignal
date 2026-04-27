@@ -18,11 +18,11 @@ from tenacity import (
     wait_exponential,
 )
 
-from safesignal.common.exceptions import (
+from maudesignal.common.exceptions import (
     OpenFDAAPIError,
     OpenFDARateLimitError,
 )
-from safesignal.common.logging import get_logger
+from maudesignal.common.logging import get_logger
 
 logger = get_logger(__name__)
 

@@ -1,6 +1,6 @@
 # Document 1: Vision & Mission
 
-**Project Name:** SafeSignal — Open-Source AI Postmarket Surveillance Toolkit
+**Project Name:** MaudeSignal — Open-Source AI Postmarket Surveillance Toolkit
 **Owner:** [Your Name]
 **Version:** 1.0 (Draft)
 **Date:** [Today's Date]

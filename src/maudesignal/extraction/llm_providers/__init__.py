@@ -1,7 +1,7 @@
-"""LLM provider abstraction for SafeSignal.
+"""LLM provider abstraction for MaudeSignal.
 
 Usage:
-    from safesignal.extraction.llm_providers import get_provider
+    from maudesignal.extraction.llm_providers import get_provider
     provider = get_provider(config)
     response = provider.complete(system_prompt=..., messages=[...])
 
@@ -11,16 +11,16 @@ The provider returned depends on ``config.llm_provider`` ("groq",
 
 from __future__ import annotations
 
-from safesignal.common.exceptions import SafeSignalError
-from safesignal.config import Config
-from safesignal.extraction.llm_providers.base import (
+from maudesignal.common.exceptions import MaudeSignalError
+from maudesignal.config import Config
+from maudesignal.extraction.llm_providers.base import (
     LLMMessage,
     LLMProvider,
     LLMResponse,
 )
 
 
-class UnknownProviderError(SafeSignalError):
+class UnknownProviderError(MaudeSignalError):
     """Raised when ``LLM_PROVIDER`` env var names an unsupported provider."""
 
 
@@ -28,7 +28,7 @@ def get_provider(config: Config) -> LLMProvider:
     """Return an LLMProvider instance based on configuration.
 
     Args:
-        config: Loaded SafeSignal Config.
+        config: Loaded MaudeSignal Config.
 
     Returns:
         A concrete LLMProvider subclass ready to call ``complete()``.
@@ -41,10 +41,10 @@ def get_provider(config: Config) -> LLMProvider:
     provider = config.llm_provider.lower().strip()
 
     if provider == "groq":
-        from safesignal.extraction.llm_providers.groq_provider import GroqProvider
+        from maudesignal.extraction.llm_providers.groq_provider import GroqProvider
 
         if not config.groq_api_key:
-            raise SafeSignalError(
+            raise MaudeSignalError(
                 "LLM_PROVIDER=groq but GROQ_API_KEY is not set. "
                 "Get a free key at https://console.groq.com"
             )
@@ -54,12 +54,12 @@ def get_provider(config: Config) -> LLMProvider:
         )
 
     if provider == "anthropic":
-        from safesignal.extraction.llm_providers.anthropic_provider import (
+        from maudesignal.extraction.llm_providers.anthropic_provider import (
             AnthropicProvider,
         )
 
         if not config.anthropic_api_key:
-            raise SafeSignalError(
+            raise MaudeSignalError(
                 "LLM_PROVIDER=anthropic but ANTHROPIC_API_KEY is not set. "
                 "Get a key at https://console.anthropic.com"
             )
@@ -69,10 +69,10 @@ def get_provider(config: Config) -> LLMProvider:
         )
 
     if provider == "openai":
-        from safesignal.extraction.llm_providers.openai_provider import OpenAIProvider
+        from maudesignal.extraction.llm_providers.openai_provider import OpenAIProvider
 
         if not config.openai_api_key:
-            raise SafeSignalError(
+            raise MaudeSignalError(
                 "LLM_PROVIDER=openai but OPENAI_API_KEY is not set. "
                 "Get a key at https://platform.openai.com"
             )
@@ -82,10 +82,10 @@ def get_provider(config: Config) -> LLMProvider:
         )
 
     if provider == "gemini":
-        from safesignal.extraction.llm_providers.gemini_provider import GeminiProvider
+        from maudesignal.extraction.llm_providers.gemini_provider import GeminiProvider
 
         if not config.gemini_api_key:
-            raise SafeSignalError(
+            raise MaudeSignalError(
                 "LLM_PROVIDER=gemini but GEMINI_API_KEY is not set. "
                 "Get a free key at https://aistudio.google.com/apikey"
             )

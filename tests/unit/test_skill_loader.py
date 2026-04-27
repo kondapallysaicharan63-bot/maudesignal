@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from safesignal.common.exceptions import SkillLoadError
-from safesignal.extraction.skill_loader import SkillLoader
+from maudesignal.common.exceptions import SkillLoadError
+from maudesignal.extraction.skill_loader import SkillLoader
 
 
 @pytest.fixture

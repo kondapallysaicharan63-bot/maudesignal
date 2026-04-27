@@ -1,4 +1,4 @@
-# SafeSignal — Pilot Findings (Day 2)
+# MaudeSignal — Pilot Findings (Day 2)
 
 **Date:** 2026-04-26 00:25 UTC
 **LLM:** Groq Llama-3.3-70B-Versatile (free tier)
@@ -18,7 +18,7 @@
 
 50% of randomly sampled MAUDE records for imaging and stroke-triage AI devices
 contain AI-related failure signals — invisible to MAUDE's native categorization
-schema. This empirically validates the regulatory gap SafeSignal addresses.
+schema. This empirically validates the regulatory gap MaudeSignal addresses.
 
 The discrimination is balanced (11 AI / 11 non-AI), suggesting the extraction
 Skill correctly distinguishes software/algorithm failures from hardware/mechanical
@@ -133,7 +133,7 @@ These were correctly classified as non-AI to demonstrate the model's discriminat
 
 ## Reproducibility
 
-- **Code:** github.com/kondapallysaicharan63-bot/safesignal
+- **Code:** github.com/kondapallysaicharan63-bot/maudesignal
 - **Skill:** `skills/maude-narrative-extractor/SKILL.md` v1.0.0
 - **Data source:** openFDA (https://api.fda.gov)
 - **Provider:** Groq Llama-3.3-70B-Versatile (free tier)
@@ -148,5 +148,5 @@ These were correctly classified as non-AI to demonstrate the model's discriminat
 ## Important Disclaimer
 
 This tool surfaces signals; humans decide actions. Every output requires human
-regulatory review before any regulatory action. SafeSignal is a computational
+regulatory review before any regulatory action. MaudeSignal is a computational
 signal-surfacing aid, not a clinical decision support tool.

@@ -11,7 +11,7 @@ fast way to ramp.
 
 ---
 
-## 1. What SafeSignal Is
+## 1. What MaudeSignal Is
 
 Open-source AI postmarket surveillance toolkit for FDA-cleared AI/ML
 medical devices. Pipeline: ingest MAUDE adverse event reports from
@@ -58,7 +58,7 @@ python3.12 -m pip install -e .
 python3.12 -m pip install <some-package>
 ```
 
-### 2.3 The `safesignal` CLI is not on PATH
+### 2.3 The `maudesignal` CLI is not on PATH
 
 The Microsoft Store Python 3.12 installs console scripts to:
 
@@ -66,7 +66,7 @@ The Microsoft Store Python 3.12 installs console scripts to:
 C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\Scripts
 ```
 
-This directory is **not** on `PATH` by default, so typing `safesignal`
+This directory is **not** on `PATH` by default, so typing `maudesignal`
 in a fresh shell will fail with "command not found."
 
 Two ways to invoke the CLI:
@@ -75,22 +75,22 @@ Two ways to invoke the CLI:
 
 ```powershell
 $env:Path = "C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\Scripts;" + $env:Path
-safesignal --help
+maudesignal --help
 ```
 
 **(b) Call as a module (works from any shell, no PATH change needed):**
 
 ```bash
-python3.12 -m safesignal --help
+python3.12 -m maudesignal --help
 ```
 
 Option (b) is preferred for one-off / scripted invocations because it
 needs no setup. Option (a) is preferred for an interactive session
-where you'll run many `safesignal` commands in a row.
+where you'll run many `maudesignal` commands in a row.
 
 ---
 
-## 3. What SafeSignal Is NOT (Hard Boundaries)
+## 3. What MaudeSignal Is NOT (Hard Boundaries)
 
 These are not aesthetic preferences — they are constraints that shape
 what is acceptable code.
@@ -127,7 +127,7 @@ Full list: [docs/01_vision_mission.md §6](docs/01_vision_mission.md).
 | Storage | SQLite via SQLAlchemy 2 | Zero-config, sufficient for MVP |
 | Drift | Evidently + SciPy | KS, PSI |
 | Dashboard | Streamlit | Minimal frontend overhead |
-| CLI | Typer | `safesignal` entry point |
+| CLI | Typer | `maudesignal` entry point |
 | Reports | Jinja2 → WeasyPrint | Markdown/HTML → PDF |
 | Tests | pytest + coverage | ≥70% coverage target on core extraction |
 | Lint | ruff + black | Configured in `pyproject.toml` |
@@ -139,7 +139,7 @@ The exact pin set lives in [pyproject.toml](pyproject.toml).
 ## 5. Repository Layout
 
 ```
-safesignal/
+maudesignal/
 ├── docs/                       # Documentation-first source of truth
 │   ├── 00_master_plan.md       # Single-page index of everything
 │   ├── 00_pilot_findings.md    # Day 1 + Day 2 empirical results
@@ -160,7 +160,7 @@ safesignal/
 │   #     SKILL.md, VERSION,
 │   #     schemas/output.schema.json,
 │   #     examples/good.jsonl, examples/bad.jsonl
-├── src/safesignal/             # Code lives here (src layout)
+├── src/maudesignal/             # Code lives here (src layout)
 │   ├── cli.py                  # Typer entry point
 │   ├── config.py               # Env / .env loading
 │   ├── common/                 # Exceptions, shared types
@@ -215,7 +215,7 @@ guidance index file count as primary sources.
 
 Never import `anthropic`, `openai`, `groq`, or `google.generativeai`
 directly in extraction / classification code. Go through
-`safesignal.extraction.llm_providers.get_provider(config)` which returns
+`maudesignal.extraction.llm_providers.get_provider(config)` which returns
 an `LLMProvider`. Each concrete provider only handles vendor SDK
 translation; retries, audit logging, and JSON validation live above the
 provider layer.
@@ -224,7 +224,7 @@ provider layer.
 
 `pyproject.toml` enforces `mypy --strict`. Every public function has
 typed params and return; no implicit `Any`. Optional is explicit. Run
-`mypy src/safesignal` before committing.
+`mypy src/maudesignal` before committing.
 
 ### 6.5 Style
 
@@ -242,7 +242,7 @@ it. The whole point of the gold-set evaluation loop is reproducibility.
 
 MAUDE is already de-identified. If you find what looks like a name, MRN,
 or date of birth in the data, log a CRITICAL and skip the record.
-SafeSignal does not handle PHI under any circumstances.
+MaudeSignal does not handle PHI under any circumstances.
 
 ---
 
@@ -265,7 +265,7 @@ Skills and update the table above.
 
 ## 8. Configuration
 
-Config is loaded from environment / `.env` via `safesignal.config.Config`.
+Config is loaded from environment / `.env` via `maudesignal.config.Config`.
 
 Required keys (depending on `LLM_PROVIDER`):
 
@@ -277,7 +277,7 @@ Required keys (depending on `LLM_PROVIDER`):
 | `gemini` | `GEMINI_API_KEY` |
 
 Other useful env vars: `LLM_PROVIDER`, `GROQ_MODEL`, `OPENAI_MODEL`,
-`CLAUDE_MODEL_EXTRACTION`. See `safesignal/config.py` for the
+`CLAUDE_MODEL_EXTRACTION`. See `maudesignal/config.py` for the
 authoritative list.
 
 ---
@@ -314,7 +314,7 @@ pytest tests/ -v
 
 ### Type-check
 ```bash
-mypy src/safesignal
+mypy src/maudesignal
 ```
 
 ### Lint
@@ -324,14 +324,14 @@ ruff check . && black --check .
 
 ### Ingest + extract a small batch (free, no cost)
 ```bash
-safesignal ingest --product-code QIH --limit 5
-safesignal extract --product-code QIH --limit 3
-safesignal status
+maudesignal ingest --product-code QIH --limit 5
+maudesignal extract --product-code QIH --limit 3
+maudesignal status
 ```
 
 ### Switch LLM provider
 ```bash
-LLM_PROVIDER=gemini GEMINI_API_KEY=xxxx safesignal extract --limit 3
+LLM_PROVIDER=gemini GEMINI_API_KEY=xxxx maudesignal extract --limit 3
 ```
 
 ---
@@ -346,12 +346,12 @@ LLM_PROVIDER=gemini GEMINI_API_KEY=xxxx safesignal extract --limit 3
 | What does each requirement mean? | [docs/03_requirements_spec.md](docs/03_requirements_spec.md) |
 | How is the system designed? | [docs/05_architecture.md](docs/05_architecture.md) |
 | What does an LLM Skill look like? | [skills/maude-narrative-extractor/SKILL.md](skills/maude-narrative-extractor/SKILL.md) |
-| How do I add a provider? | [src/safesignal/extraction/llm_providers/base.py](src/safesignal/extraction/llm_providers/base.py) + the existing four providers |
+| How do I add a provider? | [src/maudesignal/extraction/llm_providers/base.py](src/maudesignal/extraction/llm_providers/base.py) + the existing four providers |
 | What did the pilot find? | [docs/00_pilot_findings.md](docs/00_pilot_findings.md) |
 
 ---
 
-**Bottom line:** SafeSignal is a regulatory-rigorous, narrowly-scoped,
+**Bottom line:** MaudeSignal is a regulatory-rigorous, narrowly-scoped,
 documentation-first project. Stay inside the boundaries above and the
 work compounds. Step outside them and you create rework that the
 8-week budget cannot absorb.

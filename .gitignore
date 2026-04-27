@@ -1,5 +1,5 @@
 # ===========================
-# SafeSignal .gitignore
+# MaudeSignal .gitignore
 # ===========================
 # Purpose: Prevent secrets, local data, and build artifacts from
 # entering version control. First-commit file per Doc 5 §11.

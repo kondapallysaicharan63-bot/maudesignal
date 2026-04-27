@@ -1,6 +1,6 @@
 # Document 8: Glossary
 
-**Project Name:** SafeSignal
+**Project Name:** MaudeSignal
 **Owner:** [Your Name]
 **Version:** 1.0 (Draft)
 **Date:** [Today's Date]
@@ -10,7 +10,7 @@
 
 ## 1. Purpose of This Document
 
-Regulated industries live and die by precise terminology. Using "approval" when you mean "clearance," or confusing "510(k)" with "PMA," signals amateur in any conversation with RA professionals. This glossary defines every domain, technical, and project-specific term used anywhere in SafeSignal's documentation, code, or outputs.
+Regulated industries live and die by precise terminology. Using "approval" when you mean "clearance," or confusing "510(k)" with "PMA," signals amateur in any conversation with RA professionals. This glossary defines every domain, technical, and project-specific term used anywhere in MaudeSignal's documentation, code, or outputs.
 
 **Use this document three ways:**
 1. As study material — read it once in Week 1
@@ -70,7 +70,7 @@ Specific clinical conditions, populations, and settings in which the device is i
 The general purpose or function of the device. Broader than indications for use.
 
 ### **MAUDE (Manufacturer and User Facility Device Experience)**
-FDA's publicly searchable database of medical device adverse event reports from 1991 onward. Updated monthly. Does not currently support AI-specific failure fields. The central data source for SafeSignal.
+FDA's publicly searchable database of medical device adverse event reports from 1991 onward. Updated monthly. Does not currently support AI-specific failure fields. The central data source for MaudeSignal.
 
 ### **MDR (Medical Device Report)**
 The individual adverse event report filed under 21 CFR Part 803 that populates MAUDE.
@@ -88,16 +88,16 @@ FDA mechanism (introduced 2019, formalized in guidance 2023+) allowing manufactu
 Most stringent FDA review pathway — applies to Class III (high-risk, life-sustaining) devices. Requires independent demonstration of safety and effectiveness through clinical trials.
 
 ### **Postmarket Surveillance**
-Monitoring of medical devices after they enter the market. Includes MDR reporting, registries, literature monitoring, and real-world performance assessment. Focus of SafeSignal.
+Monitoring of medical devices after they enter the market. Includes MDR reporting, registries, literature monitoring, and real-world performance assessment. Focus of MaudeSignal.
 
 ### **Predicate Device**
 A legally marketed device used to establish substantial equivalence in a 510(k) submission.
 
 ### **PSUR (Periodic Safety Update Report)**
-Structured periodic safety report. The term originates in EU MDR and pharma; FDA uses similar "Periodic Safety" concepts under Section 522 and the Quality System. SafeSignal produces PSUR-style reports from MAUDE data.
+Structured periodic safety report. The term originates in EU MDR and pharma; FDA uses similar "Periodic Safety" concepts under Section 522 and the Quality System. MaudeSignal produces PSUR-style reports from MAUDE data.
 
 ### **QMSR (Quality Management System Regulation)**
-FDA rule (effective February 2, 2026) that replaces 21 CFR Part 820 by incorporating ISO 13485:2016 by reference. Aligns U.S. medical device quality system requirements with international standards. **Key driver for SafeSignal's timing.**
+FDA rule (effective February 2, 2026) that replaces 21 CFR Part 820 by incorporating ISO 13485:2016 by reference. Aligns U.S. medical device quality system requirements with international standards. **Key driver for MaudeSignal's timing.**
 
 ### **QSR (Quality System Regulation)**
 The existing U.S. medical device quality system rule (21 CFR Part 820). Being superseded by QMSR.
@@ -143,7 +143,7 @@ Change in the distribution of input features (X) while the mapping from X to y i
 Umbrella term covering both concept drift and covariate shift.
 
 ### **Drift Detection**
-Statistical techniques for identifying when model inputs or outputs diverge from expected/training distribution. SafeSignal uses Kolmogorov-Smirnov (KS) test and Population Stability Index (PSI).
+Statistical techniques for identifying when model inputs or outputs diverge from expected/training distribution. MaudeSignal uses Kolmogorov-Smirnov (KS) test and Population Stability Index (PSI).
 
 ### **False Negative / False Positive**
 - **False Negative:** Model says "negative" when ground truth is "positive" (missed detection — potentially deadly in medical AI)
@@ -155,13 +155,13 @@ Statistical techniques for identifying when model inputs or outputs diverge from
 The reference standard against which model predictions are evaluated. In medical AI, typically expert-annotated or derived from pathology/follow-up.
 
 ### **Hallucination**
-LLM output that is confident but unsupported by source data or reality. In regulated contexts, includes fabricated 510(k) numbers, fake CFR citations, or invented guidance document titles. **Zero-tolerance in SafeSignal** (FR-24).
+LLM output that is confident but unsupported by source data or reality. In regulated contexts, includes fabricated 510(k) numbers, fake CFR citations, or invented guidance document titles. **Zero-tolerance in MaudeSignal** (FR-24).
 
 ### **KS Test (Kolmogorov-Smirnov Test)**
-Non-parametric statistical test for whether two samples come from the same distribution. Used in SafeSignal to detect covariate shift.
+Non-parametric statistical test for whether two samples come from the same distribution. Used in MaudeSignal to detect covariate shift.
 
 ### **LLM (Large Language Model)**
-Foundation model trained on large text corpora. Claude is an LLM. Used in SafeSignal for structured extraction and classification of MAUDE narratives.
+Foundation model trained on large text corpora. Claude is an LLM. Used in MaudeSignal for structured extraction and classification of MAUDE narratives.
 
 ### **Model Card**
 Structured document (per Mitchell et al. 2019; adopted by FDA in 2024–25 AI/ML guidance, Appendix F) describing an AI model: intended use, performance, limitations, training data, evaluation data, bias considerations.
@@ -170,7 +170,7 @@ Structured document (per Mitchell et al. 2019; adopted by FDA in 2024–25 AI/ML
 Metric for measuring how much a distribution has shifted between two time periods. Used for drift monitoring.
 
 ### **RAG (Retrieval-Augmented Generation)**
-LLM architecture pattern that retrieves relevant documents before generating output, grounding responses in verifiable sources. SafeSignal's `fda-guidance-retriever` Skill uses RAG.
+LLM architecture pattern that retrieves relevant documents before generating output, grounding responses in verifiable sources. MaudeSignal's `fda-guidance-retriever` Skill uses RAG.
 
 ### **Subgroup Degradation**
 Performance drop for a specific demographic subgroup (sex, age, race, equipment type) while overall aggregate performance appears stable. Classic case of Simpson's Paradox in medical AI.
@@ -179,19 +179,19 @@ Performance drop for a specific demographic subgroup (sex, age, race, equipment 
 
 ---
 
-## 4. SafeSignal Project-Specific Terms
+## 4. MaudeSignal Project-Specific Terms
 
 ### **AI Failure Taxonomy**
-SafeSignal's classification of AI-specific failure modes not captured by MAUDE's native schema. Minimum 5 categories: `concept_drift`, `covariate_shift`, `subgroup_degradation`, `false_negative_pattern`, `false_positive_pattern`, `automation_bias`, `not_ai_related`.
+MaudeSignal's classification of AI-specific failure modes not captured by MAUDE's native schema. Minimum 5 categories: `concept_drift`, `covariate_shift`, `subgroup_degradation`, `false_negative_pattern`, `false_positive_pattern`, `automation_bias`, `not_ai_related`.
 
 ### **Citation Verifier**
-SafeSignal's module (`verifier/`) and Skill (`regulatory-citation-verifier`) that validates every regulatory citation in every output against primary sources. Mandatory pre-output gate.
+MaudeSignal's module (`verifier/`) and Skill (`regulatory-citation-verifier`) that validates every regulatory citation in every output against primary sources. Mandatory pre-output gate.
 
 ### **Drift Simulator**
-SafeSignal's synthetic performance-data generator that injects known drift patterns to validate the drift detector.
+MaudeSignal's synthetic performance-data generator that injects known drift patterns to validate the drift detector.
 
 ### **Extraction**
-SafeSignal's process of converting unstructured MAUDE narratives into structured JSON records via Claude + Skill.
+MaudeSignal's process of converting unstructured MAUDE narratives into structured JSON records via Claude + Skill.
 
 ### **Gate (Go / No-Go Gate)**
 A binary checkpoint at the end of each project phase. Gates cannot be skipped. Failing a gate triggers re-scope or pause.
@@ -200,7 +200,7 @@ A binary checkpoint at the end of each project phase. Gates cannot be skipped. F
 100 hand-labeled MAUDE records used to measure extraction and classification accuracy (FR-08, §5 of Doc 3).
 
 ### **Phase 0–4**
-SafeSignal's 4 execution phases:
+MaudeSignal's 4 execution phases:
 - **Phase 0** — Documentation + Discovery (Week 1)
 - **Phase 1** — Ingestion + Extraction (Weeks 2–3)
 - **Phase 2** — Classification + Drift (Weeks 4–5)
@@ -208,7 +208,7 @@ SafeSignal's 4 execution phases:
 - **Phase 4** — Launch + Outreach (Week 8+)
 
 ### **SKILL.md**
-Versioned Markdown file defining a Claude Skill — the prompt, procedure, inputs, outputs, examples, and rules for one specific LLM task. SafeSignal has 7 Skills.
+Versioned Markdown file defining a Claude Skill — the prompt, procedure, inputs, outputs, examples, and rules for one specific LLM task. MaudeSignal has 7 Skills.
 
 ### **Skill (Claude Skill)**
 A structured, versioned behavior contract that Claude follows for a specific task. Stored as `SKILL.md` files in `skills/<name>/`. Distinct from human skills (Document 4).
@@ -221,7 +221,7 @@ The target MVP release, due end of Week 8. No features will be added post-v1.0 d
 ## 5. Tech Stack Terms (Quick Reference)
 
 ### **Anthropic Claude API**
-Anthropic's LLM inference service. SafeSignal uses Claude Sonnet (bulk extraction) and Claude Opus (complex reasoning).
+Anthropic's LLM inference service. MaudeSignal uses Claude Sonnet (bulk extraction) and Claude Opus (complex reasoning).
 
 ### **Evidently**
 Open-source Python library for ML monitoring and drift detection. Used for KS test and PSI computation.
@@ -233,16 +233,16 @@ FDA's public API platform exposing device adverse events, recalls, 510(k)s, and 
 Python library for data validation using type hints. Used for validating Claude's JSON outputs against schemas.
 
 ### **SQLAlchemy (Core)**
-Explicit, SQL-first Python database toolkit. Used for SafeSignal's storage layer (not the ORM mode — Core only).
+Explicit, SQL-first Python database toolkit. Used for MaudeSignal's storage layer (not the ORM mode — Core only).
 
 ### **SQLite**
-File-based relational database built into Python's standard library. SafeSignal's v1 database.
+File-based relational database built into Python's standard library. MaudeSignal's v1 database.
 
 ### **Streamlit**
-Python framework for building data dashboards with minimal frontend code. SafeSignal's dashboard UI.
+Python framework for building data dashboards with minimal frontend code. MaudeSignal's dashboard UI.
 
 ### **Typer**
-Python library for building typed CLIs from regular functions. SafeSignal's CLI entry points.
+Python library for building typed CLIs from regular functions. MaudeSignal's CLI entry points.
 
 ---
 
@@ -300,7 +300,7 @@ Keep this list open during customer discovery calls and FDA document reading. Ev
 ## 9. What This Document Is and Is Not
 
 **IS:**
-- The authoritative term reference for all SafeSignal artifacts
+- The authoritative term reference for all MaudeSignal artifacts
 - Training material for the builder
 - A credibility signal for readers who audit the docs
 

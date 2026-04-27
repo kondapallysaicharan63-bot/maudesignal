@@ -1,4 +1,4 @@
-"""Configuration loading for SafeSignal.
+"""Configuration loading for MaudeSignal.
 
 All configuration comes from environment variables (or a local .env file).
 This module is the single source of truth — no other module should call
@@ -7,7 +7,7 @@ os.environ directly.
 Per NFR-07 (Doc 3 §4.3): API keys are loaded from env vars only, never
 hardcoded, never logged, never committed.
 
-SafeSignal is provider-agnostic (Doc 5 D4): the ``LLM_PROVIDER`` env var
+MaudeSignal is provider-agnostic (Doc 5 D4): the ``LLM_PROVIDER`` env var
 selects between Groq (default, free), Anthropic (Claude), OpenAI (GPT),
 or Gemini (Google, free tier).
 """
@@ -114,15 +114,15 @@ class Config:
 
         openfda_api_key = os.environ.get("OPENFDA_API_KEY", "").strip() or None
 
-        db_path_str = os.environ.get("SAFESIGNAL_DB_PATH", "data/safesignal.db")
+        db_path_str = os.environ.get("MAUDESIGNAL_DB_PATH", "data/maudesignal.db")
         db_path = (_PROJECT_ROOT / db_path_str).resolve()
         db_path.parent.mkdir(parents=True, exist_ok=True)
 
         try:
-            cost_ceiling = float(os.environ.get("SAFESIGNAL_COST_CEILING_USD", "150.0"))
+            cost_ceiling = float(os.environ.get("MAUDESIGNAL_COST_CEILING_USD", "150.0"))
         except ValueError as exc:
             raise ConfigError(
-                "SAFESIGNAL_COST_CEILING_USD must be a number"
+                "MAUDESIGNAL_COST_CEILING_USD must be a number"
             ) from exc
 
         return cls(
@@ -142,7 +142,7 @@ class Config:
             gemini_model=os.environ.get("GEMINI_MODEL", "gemini-2.5-flash"),
             openfda_api_key=openfda_api_key,
             db_path=db_path,
-            log_level=os.environ.get("SAFESIGNAL_LOG_LEVEL", "INFO").upper(),
+            log_level=os.environ.get("MAUDESIGNAL_LOG_LEVEL", "INFO").upper(),
             cost_ceiling_usd=cost_ceiling,
             project_root=_PROJECT_ROOT,
         )

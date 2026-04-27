@@ -1,6 +1,6 @@
 # Document 0: Master Plan
 
-**Project Name:** SafeSignal — Open-Source AI Postmarket Surveillance Toolkit
+**Project Name:** MaudeSignal — Open-Source AI Postmarket Surveillance Toolkit
 **Owner:** Sai Charan Kondapally
 **Version:** 1.0
 **Date:** 2026-04-26
@@ -11,7 +11,7 @@
 
 ## 1. Purpose of This Document
 
-This is the single page that explains SafeSignal end-to-end: what it does, why it
+This is the single page that explains MaudeSignal end-to-end: what it does, why it
 exists, how the pieces fit together, what is built and what is not, and how the
 remaining 8 weeks unfold.
 
@@ -30,7 +30,7 @@ The FDA has cleared over 1,000 AI/ML-enabled medical devices. They are monitored
 through MAUDE — a 1990s reporting system with **no fields** for AI-specific
 failures (drift, covariate shift, automation bias, subgroup performance loss).
 QMSR (effective **February 2, 2026**) mandates real-world performance monitoring
-for every device manufacturer. SafeSignal is the open-source toolkit that fills
+for every device manufacturer. MaudeSignal is the open-source toolkit that fills
 this gap: it ingests MAUDE adverse event narratives, uses LLMs guided by versioned
 Skills to extract AI-specific failure signals, verifies every regulatory citation,
 and produces auditable regulator-style reports.
@@ -41,7 +41,7 @@ Detailed problem framing: see [01_vision_mission.md](01_vision_mission.md).
 
 ## 3. Multi-Provider LLM Strategy
 
-SafeSignal is **provider-agnostic by design**. The same pipeline runs against any
+MaudeSignal is **provider-agnostic by design**. The same pipeline runs against any
 of four LLM providers, selected via the `LLM_PROVIDER` environment variable.
 
 | Provider | Default model | Cost | When to use |
@@ -51,7 +51,7 @@ of four LLM providers, selected via the `LLM_PROVIDER` environment variable.
 | **OpenAI** | `gpt-4o-mini` | ~$0.15/$0.60 per Mtok | Cost-efficient mid-quality fallback |
 | **Gemini** | `gemini-1.5-flash` | $0.00 (free tier, ~1,500 req/day) | Second free option for redundancy and head-to-head comparison |
 
-The abstraction lives in [src/safesignal/extraction/llm_providers/](../src/safesignal/extraction/llm_providers/).
+The abstraction lives in [src/maudesignal/extraction/llm_providers/](../src/maudesignal/extraction/llm_providers/).
 Every concrete provider implements the `LLMProvider` ABC in `base.py` and returns
 a normalized `LLMResponse`. The Extractor never sees a vendor-specific type. This
 gives the project three properties that matter for regulatory work:
@@ -69,7 +69,7 @@ See [05_architecture.md §7](05_architecture.md) for the full provider design.
 ## 4. Seven Core Features (F1–F7)
 
 The full requirements specification is [03_requirements_spec.md](03_requirements_spec.md).
-At the headline level, SafeSignal is seven features composed into one pipeline.
+At the headline level, MaudeSignal is seven features composed into one pipeline.
 
 | # | Feature | What it does | Status |
 |---|---|---|---|
@@ -166,11 +166,11 @@ compliance expectations:
    surveillance, not just reactive complaint handling.
 2. **Real-world signal detection** — monitoring must be capable of detecting
    degradation that does not look like a discrete malfunction (the exact gap
-   SafeSignal addresses).
+   MaudeSignal addresses).
 3. **Documented quality processes** — every signal must trace to a verifiable
    source artifact, with a reviewable audit trail.
 
-SafeSignal is **not a QMSR-compliant eQMS**. It is a signal-surfacing tool that
+MaudeSignal is **not a QMSR-compliant eQMS**. It is a signal-surfacing tool that
 produces the kind of artifacts a QMSR-compliant program needs: structured
 extractions, verified citations, and reproducible reports. It is intended to
 sit alongside an existing quality system, not replace one.
@@ -180,15 +180,15 @@ preamble (2024).
 
 ---
 
-## 9. Disclaimer — What SafeSignal Is Not
+## 9. Disclaimer — What MaudeSignal Is Not
 
-> ⚠️ **SafeSignal is a research and signal-surfacing tool. It is NOT an
+> ⚠️ **MaudeSignal is a research and signal-surfacing tool. It is NOT an
 > FDA-cleared medical device. It is NOT clinical decision support. It is NOT
 > a substitute for human regulatory judgment, and it is NOT legal or
 > regulatory advice. Every finding requires human review before any
 > regulatory action.**
 
-Specifically, SafeSignal:
+Specifically, MaudeSignal:
 
 - ❌ Does **not** advise patient care or recommend clinical decisions
 - ❌ Does **not** require its own 510(k) or De Novo authorization
@@ -221,7 +221,7 @@ The full non-goals list lives in [01_vision_mission.md §6](01_vision_mission.md
 | Regulatory + technical glossary | [08_glossary.md](08_glossary.md) |
 | Empirical pilot results | [00_pilot_findings.md](00_pilot_findings.md) |
 | LLM behavior contracts | [skills/](../skills/) |
-| Code | [src/safesignal/](../src/safesignal/) |
+| Code | [src/maudesignal/](../src/maudesignal/) |
 | Repo conventions for AI assistants | [CLAUDE.md](../CLAUDE.md) |
 
 ---

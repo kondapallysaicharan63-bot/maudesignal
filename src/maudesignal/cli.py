@@ -1,9 +1,9 @@
-"""SafeSignal command-line interface.
+"""MaudeSignal command-line interface.
 
-Entry point for the ``safesignal`` command. Provides subcommands for
+Entry point for the ``maudesignal`` command. Provides subcommands for
 ingestion, extraction, dashboard launching, and reporting.
 
-Run ``safesignal --help`` for usage.
+Run ``maudesignal --help`` for usage.
 """
 
 from __future__ import annotations
@@ -15,18 +15,18 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from safesignal import __version__
-from safesignal.common.exceptions import SafeSignalError
-from safesignal.common.logging import configure_logging, get_logger
-from safesignal.config import Config, ConfigError
-from safesignal.extraction.extractor import Extractor
-from safesignal.extraction.skill_loader import SkillLoader
-from safesignal.ingestion.openfda_client import OpenFDAClient
-from safesignal.ingestion.pipeline import ingest_product_code
-from safesignal.storage.database import Database
+from maudesignal import __version__
+from maudesignal.common.exceptions import MaudeSignalError
+from maudesignal.common.logging import configure_logging, get_logger
+from maudesignal.config import Config, ConfigError
+from maudesignal.extraction.extractor import Extractor
+from maudesignal.extraction.skill_loader import SkillLoader
+from maudesignal.ingestion.openfda_client import OpenFDAClient
+from maudesignal.ingestion.pipeline import ingest_product_code
+from maudesignal.storage.database import Database
 
 app = typer.Typer(
-    name="safesignal",
+    name="maudesignal",
     help="Open-source AI postmarket surveillance toolkit for FDA-cleared "
     "AI/ML medical devices.",
     add_completion=False,
@@ -44,17 +44,17 @@ logger = get_logger(__name__)
 @app.callback()
 def _main(
     version: bool = typer.Option(
-        False, "--version", help="Show SafeSignal version and exit."
+        False, "--version", help="Show MaudeSignal version and exit."
     ),
 ) -> None:
-    """SafeSignal CLI root."""
+    """MaudeSignal CLI root."""
     if version:
-        console.print(f"safesignal {__version__}")
+        console.print(f"maudesignal {__version__}")
         raise typer.Exit()
 
 
 # ----------------------------------------------------------------------
-# safesignal ingest
+# maudesignal ingest
 # ----------------------------------------------------------------------
 
 
@@ -79,9 +79,9 @@ def ingest(
     """Pull MAUDE adverse event reports from openFDA and store them locally.
 
     Examples:
-        safesignal ingest --product-code QIH --limit 5
+        maudesignal ingest --product-code QIH --limit 5
 
-        safesignal ingest --product-code QIH --start-date 20250101 --end-date 20251231
+        maudesignal ingest --product-code QIH --start-date 20250101 --end-date 20251231
     """
     try:
         config = Config.load()
@@ -103,7 +103,7 @@ def ingest(
                 end_date=end_date,
                 limit=limit,
             )
-        except SafeSignalError as exc:
+        except MaudeSignalError as exc:
             console.print(f"[red]Ingestion failed:[/red] {exc}")
             raise typer.Exit(code=1) from exc
 
@@ -119,7 +119,7 @@ def ingest(
 
 
 # ----------------------------------------------------------------------
-# safesignal extract
+# maudesignal extract
 # ----------------------------------------------------------------------
 
 
@@ -140,7 +140,7 @@ def extract(
     Requires ingestion to have been run first for the given product code.
 
     Example:
-        safesignal extract --product-code QIH --limit 3
+        maudesignal extract --product-code QIH --limit 3
     """
     try:
         config = Config.load()
@@ -156,7 +156,7 @@ def extract(
 
     try:
         skill = loader.load("maude-narrative-extractor")
-    except SafeSignalError as exc:
+    except MaudeSignalError as exc:
         console.print(f"[red]Skill load failed:[/red] {exc}")
         raise typer.Exit(code=1) from exc
 
@@ -168,7 +168,7 @@ def extract(
     if not events:
         console.print(
             f"[yellow]No ingested events found for {product_code}. "
-            f"Run `safesignal ingest --product-code {product_code}` first.[/yellow]"
+            f"Run `maudesignal ingest --product-code {product_code}` first.[/yellow]"
         )
         raise typer.Exit(code=1)
 
@@ -192,7 +192,7 @@ def extract(
         }
         try:
             result = extractor.run(skill=skill, input_record=input_record)
-        except SafeSignalError as exc:
+        except MaudeSignalError as exc:
             failures += 1
             logger.warning(
                 "extraction_failed",
@@ -224,7 +224,7 @@ def extract(
 
 
 # ----------------------------------------------------------------------
-# safesignal status
+# maudesignal status
 # ----------------------------------------------------------------------
 
 
@@ -266,7 +266,7 @@ def _print_startup(config: Config) -> None:
         model = config.openai_model
 
     console.print(
-        f"[dim]safesignal {__version__} — "
+        f"[dim]maudesignal {__version__} — "
         f"provider={config.llm_provider}, model={model} — "
         f"db={config.db_path.name}[/dim]"
     )

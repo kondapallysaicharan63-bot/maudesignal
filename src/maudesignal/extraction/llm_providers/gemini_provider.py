@@ -1,10 +1,10 @@
-"""Gemini (Google) provider for SafeSignal.
+"""Gemini (Google) provider for MaudeSignal.
 
 Implements the LLMProvider interface using Google's google-genai SDK
 (the successor to google-generativeai, which is deprecated). Default
 model is ``gemini-2.5-flash`` — Gemini's free tier is generous
 (~1,500 requests/day at the time of writing), making it the second free
-option alongside Groq for the SafeSignal project budget.
+option alongside Groq for the MaudeSignal project budget.
 
 We treat Gemini as $0.00 cost for budgeting purposes while on the free
 tier. The pricing table at top of file exists so the in-app cost ceiling
@@ -24,15 +24,15 @@ from __future__ import annotations
 
 import os
 
-from safesignal.common.exceptions import SafeSignalError
-from safesignal.extraction.llm_providers.base import (
+from maudesignal.common.exceptions import MaudeSignalError
+from maudesignal.extraction.llm_providers.base import (
     LLMMessage,
     LLMProvider,
     LLMResponse,
 )
 
 
-class GeminiProviderError(SafeSignalError):
+class GeminiProviderError(MaudeSignalError):
     """Raised when Gemini API calls fail."""
 
 
@@ -51,7 +51,7 @@ class GeminiProvider(LLMProvider):
     """LLMProvider backed by Google's Gemini API.
 
     Reads ``GEMINI_API_KEY`` from the environment if no key is passed
-    explicitly. The SafeSignal Config layer normally supplies the key,
+    explicitly. The MaudeSignal Config layer normally supplies the key,
     but environment fallback is supported for ad-hoc CLI use.
     """
 

@@ -14,7 +14,7 @@ This Skill inspects text for regulatory citations (FDA 510(k) numbers, FDA guida
 
 **The core mandate: never let a hallucinated citation reach the user.**
 
-In regulated domains, a fabricated citation is not a minor error — it is a reputational and potentially legal failure. This Skill exists so the rest of SafeSignal can confidently emit regulator-facing output without fear of invented references.
+In regulated domains, a fabricated citation is not a minor error — it is a reputational and potentially legal failure. This Skill exists so the rest of MaudeSignal can confidently emit regulator-facing output without fear of invented references.
 
 ---
 
@@ -28,7 +28,7 @@ In regulated domains, a fabricated citation is not a minor error — it is a rep
 
 ### Do NOT activate this Skill when:
 - Citing MAUDE report IDs (different system — use `maude-narrative-extractor`'s validation)
-- Citing internal SafeSignal document sections (e.g., "Doc 3 §5") — these are self-references
+- Citing internal MaudeSignal document sections (e.g., "Doc 3 §5") — these are self-references
 - The input is pure data (no textual claims)
 - Generating citations from scratch — this Skill verifies existing ones, it does not invent them
 

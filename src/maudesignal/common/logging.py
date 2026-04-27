@@ -1,4 +1,4 @@
-"""Structured logging for SafeSignal.
+"""Structured logging for MaudeSignal.
 
 Per NFR-08 (Doc 3 §4.3): logs contain no API keys, no PHI, and no full
 narrative text. Use structlog for consistent, structured JSON output.

@@ -1,4 +1,4 @@
-"""Database facade for SafeSignal.
+"""Database facade for MaudeSignal.
 
 Exposes a small, typed API for persistence. Callers never see SQLAlchemy
 sessions or SQL directly.
@@ -18,8 +18,8 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session, sessionmaker
 
-from safesignal.common.logging import get_logger
-from safesignal.storage.models import (
+from maudesignal.common.logging import get_logger
+from maudesignal.storage.models import (
     Base,
     ExtractionRecord,
     LLMAuditLogRecord,
@@ -31,7 +31,7 @@ logger = get_logger(__name__)
 
 
 class Database:
-    """Thin facade over SQLAlchemy for SafeSignal's SQLite backend.
+    """Thin facade over SQLAlchemy for MaudeSignal's SQLite backend.
 
     All writes are idempotent where the domain allows (raw_reports and
     normalized_events use INSERT OR IGNORE; extractions append new rows

@@ -12,9 +12,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from safesignal.common.logging import get_logger, truncate_for_log
-from safesignal.ingestion.openfda_client import OpenFDAClient
-from safesignal.storage.database import Database
+from maudesignal.common.logging import get_logger, truncate_for_log
+from maudesignal.ingestion.openfda_client import OpenFDAClient
+from maudesignal.storage.database import Database
 
 logger = get_logger(__name__)
 

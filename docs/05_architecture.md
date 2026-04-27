@@ -1,6 +1,6 @@
 # Document 5: Technical Architecture
 
-**Project Name:** SafeSignal
+**Project Name:** MaudeSignal
 **Owner:** [Your Name]
 **Version:** 1.0 (Draft)
 **Date:** [Today's Date]
@@ -27,7 +27,7 @@ This document is the technical blueprint. It defines:
 
 ## 2. System Context Diagram
 
-**Who/what interacts with SafeSignal:**
+**Who/what interacts with MaudeSignal:**
 
 ```
                          ┌─────────────────────┐
@@ -40,7 +40,7 @@ This document is the technical blueprint. It defines:
                          ┌─────────▼───────────┐
                          │                     │
    ┌──────────────┐      │                     │      ┌──────────────┐
-   │  User (RA /  │◄────►│     SafeSignal      │◄────►│  Anthropic   │
+   │  User (RA /  │◄────►│     MaudeSignal      │◄────►│  Anthropic   │
    │  QA analyst) │      │   (local system)    │      │  Claude API  │
    └──────────────┘      │                     │      └──────────────┘
      CLI + Browser       │                     │
@@ -61,19 +61,19 @@ This document is the technical blueprint. It defines:
 - User — single operator, local machine
 
 **Boundaries:**
-- SafeSignal does NOT talk to any cloud storage
-- SafeSignal does NOT send user data to any third party other than Claude (input narratives only)
-- SafeSignal does NOT receive or store PHI (MAUDE is already de-identified)
+- MaudeSignal does NOT talk to any cloud storage
+- MaudeSignal does NOT send user data to any third party other than Claude (input narratives only)
+- MaudeSignal does NOT receive or store PHI (MAUDE is already de-identified)
 
 ---
 
 ## 3. Component Architecture
 
-SafeSignal is a monolith with clearly separated modules. Each module corresponds to one or more features from Documents 2 and 3.
+MaudeSignal is a monolith with clearly separated modules. Each module corresponds to one or more features from Documents 2 and 3.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        SafeSignal                           │
+│                        MaudeSignal                           │
 │                                                             │
 │  ┌──────────────┐   ┌──────────────┐   ┌────────────────┐   │
 │  │  ingestion/  │──►│  storage/    │◄──│  extraction/   │   │
@@ -128,7 +128,7 @@ SafeSignal is a monolith with clearly separated modules. Each module corresponds
 The happy path: raw MAUDE report → structured, classified, verified output in dashboard.
 
 ```
-1. User runs:  safesignal ingest --product-code QIH --months 12
+1. User runs:  maudesignal ingest --product-code QIH --months 12
          │
          ▼
 2. ingestion/ calls openFDA API (paginated)
@@ -137,7 +137,7 @@ The happy path: raw MAUDE report → structured, classified, verified output in 
 3. Raw JSON stored in  storage.raw_reports  (SQLite)
          │
          ▼
-4. User runs:  safesignal process
+4. User runs:  maudesignal process
          │
          ▼
 5. extraction/ loads each narrative from  raw_reports
@@ -170,13 +170,13 @@ The happy path: raw MAUDE report → structured, classified, verified output in 
 14. drift/ emits alerts to  storage.drift_alerts
          │
          ▼
-15. User runs:  safesignal dashboard
+15. User runs:  maudesignal dashboard
          │
          ▼
 16. dashboard/ reads from storage and renders 5 Streamlit views
          │
          ▼
-17. User runs:  safesignal report --period 2024-Q4
+17. User runs:  maudesignal report --period 2024-Q4
          │
          ▼
 18. report/ builds PSUR-style Markdown/PDF, citations verified
@@ -236,7 +236,7 @@ Model choice is recorded per extraction for audit (FR-12).
 ## 6. Folder Structure
 
 ```
-safesignal/
+maudesignal/
 ├── README.md
 ├── LICENSE                          # MIT
 ├── pyproject.toml
@@ -284,7 +284,7 @@ safesignal/
 │   └── drift_alert.schema.json
 │
 ├── src/
-│   └── safesignal/
+│   └── maudesignal/
 │       ├── __init__.py
 │       ├── cli.py                   # typer CLI entry points
 │       ├── config.py
@@ -306,7 +306,7 @@ safesignal/
 │   └── gold_set/                    # hand-labeled 100-record test set
 │
 ├── data/                            # gitignored — local DB, logs, reports
-│   ├── safesignal.db
+│   ├── maudesignal.db
 │   ├── logs/
 │   └── reports/
 │

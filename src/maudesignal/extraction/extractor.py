@@ -23,19 +23,19 @@ from typing import Any
 
 import jsonschema
 
-from safesignal.common.exceptions import (
+from maudesignal.common.exceptions import (
     BudgetExceededError,
     LLMOutputError,
 )
-from safesignal.common.logging import get_logger, truncate_for_log
-from safesignal.config import Config
-from safesignal.extraction.llm_providers import (
+from maudesignal.common.logging import get_logger, truncate_for_log
+from maudesignal.config import Config
+from maudesignal.extraction.llm_providers import (
     LLMMessage,
     LLMProvider,
     get_provider,
 )
-from safesignal.extraction.skill_loader import LoadedSkill
-from safesignal.storage.database import Database
+from maudesignal.extraction.skill_loader import LoadedSkill
+from maudesignal.storage.database import Database
 
 logger = get_logger(__name__)
 

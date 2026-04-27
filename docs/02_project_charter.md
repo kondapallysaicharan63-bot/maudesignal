@@ -1,6 +1,6 @@
 # Document 2: Project Charter & Scope
 
-**Project Name:** SafeSignal — Open-Source AI Postmarket Surveillance Toolkit
+**Project Name:** MaudeSignal — Open-Source AI Postmarket Surveillance Toolkit
 **Owner:** [Your Name] (solo)
 **Version:** 1.0 (Draft)
 **Date:** [Today's Date]
@@ -21,8 +21,8 @@ When those two versions of you disagree, **this document wins.**
 
 | Field | Value |
 |---|---|
-| Project Name | SafeSignal |
-| Public Repo | `github.com/[your-username]/safesignal` |
+| Project Name | MaudeSignal |
+| Public Repo | `github.com/[your-username]/maudesignal` |
 | Owner / Lead | [Your Name] |
 | Role | Solo builder (designer, engineer, writer, marketer) |
 | Project Type | Open-source portfolio project |
@@ -124,11 +124,11 @@ Items that will almost certainly come up during the build as "it would only take
 Concrete, shippable artifacts that must exist on the target completion date. Use this as your final checklist.
 
 ### 6.1 Code Deliverables
-- [ ] Public GitHub repo at `github.com/[username]/safesignal`
+- [ ] Public GitHub repo at `github.com/[username]/maudesignal`
 - [ ] MIT license, contribution guide, code of conduct
 - [ ] Python package installable via `pip install -e .`
-- [ ] CLI entry point: `safesignal ingest --product-code QIH --months 12`
-- [ ] Streamlit app entry point: `safesignal dashboard`
+- [ ] CLI entry point: `maudesignal ingest --product-code QIH --months 12`
+- [ ] Streamlit app entry point: `maudesignal dashboard`
 - [ ] Tests passing, CI green (GitHub Actions)
 - [ ] Type checking passing (`mypy`)
 - [ ] Linting passing (`ruff`, `black`)
@@ -194,7 +194,7 @@ The 8 weeks are structured into 4 phases. Each phase ends with a **go/no-go gate
 - Gold standard test set of 100 hand-labeled records
 
 **Gate 1 → 2 (MUST PASS to proceed):**
-- [ ] Can run `safesignal ingest --product-code QIH --months 12` end-to-end
+- [ ] Can run `maudesignal ingest --product-code QIH --months 12` end-to-end
 - [ ] Extraction hits ≥80% accuracy on gold set (90% by end of Phase 2)
 - [ ] Zero hallucinated citations in 50 sampled outputs
 - [ ] 3 additional outreach messages sent; 1 more interview completed

@@ -1,5 +1,5 @@
 {
-  "name": "SafeSignal Dev Container",
+  "name": "MaudeSignal Dev Container",
 
   // Base image: Python 3.11 on Debian Bookworm. Official Microsoft dev container image.
   "image": "mcr.microsoft.com/devcontainers/python:3.11-bookworm",
@@ -52,20 +52,20 @@
     }
   },
 
-  // Install the SafeSignal package and dev dependencies after the container builds
+  // Install the MaudeSignal package and dev dependencies after the container builds
   "postCreateCommand": "bash .devcontainer/post-create.sh",
 
   // Streamlit runs on 8501; forward it so the user can open the dashboard
   "forwardPorts": [8501],
   "portsAttributes": {
     "8501": {
-      "label": "SafeSignal Dashboard",
+      "label": "MaudeSignal Dashboard",
       "onAutoForward": "notify"
     }
   },
 
   // Tell users when the container is ready
-  "postAttachCommand": "echo '\\n✅ SafeSignal Codespace ready. Run: pytest tests/unit -v\\n'",
+  "postAttachCommand": "echo '\\n✅ MaudeSignal Codespace ready. Run: pytest tests/unit -v\\n'",
 
   // Use the non-root vscode user (safer, and already has sudo)
   "remoteUser": "vscode",

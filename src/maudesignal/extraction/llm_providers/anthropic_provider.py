@@ -1,7 +1,7 @@
-"""Anthropic (Claude) provider for SafeSignal.
+"""Anthropic (Claude) provider for MaudeSignal.
 
 Implements the LLMProvider interface using the official Anthropic SDK.
-Claude was SafeSignal's original reference provider — the SKILL.md format
+Claude was MaudeSignal's original reference provider — the SKILL.md format
 was designed with Claude's prompt style in mind — but the abstraction
 layer means we're no longer locked in.
 
@@ -10,15 +10,15 @@ Docs: https://docs.claude.com
 
 from __future__ import annotations
 
-from safesignal.common.exceptions import SafeSignalError
-from safesignal.extraction.llm_providers.base import (
+from maudesignal.common.exceptions import MaudeSignalError
+from maudesignal.extraction.llm_providers.base import (
     LLMMessage,
     LLMProvider,
     LLMResponse,
 )
 
 
-class AnthropicProviderError(SafeSignalError):
+class AnthropicProviderError(MaudeSignalError):
     """Raised when Anthropic API calls fail."""
 
 
@@ -46,7 +46,7 @@ class AnthropicProvider(LLMProvider):
         Args:
             api_key: Anthropic API key (from https://console.anthropic.com).
             model: Claude model identifier. Sonnet is the default — good
-                balance of quality and cost for SafeSignal's use case.
+                balance of quality and cost for MaudeSignal's use case.
         """
         try:
             from anthropic import Anthropic

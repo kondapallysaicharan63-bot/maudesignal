@@ -1,11 +1,11 @@
-"""SQLite storage layer for SafeSignal.
+"""SQLite storage layer for MaudeSignal.
 
 All persistence goes through this module. Other modules do not touch
 SQLAlchemy or sqlite3 directly.
 """
 
-from safesignal.storage.database import Database
-from safesignal.storage.models import (
+from maudesignal.storage.database import Database
+from maudesignal.storage.models import (
     ExtractionRecord,
     LLMAuditLogRecord,
     NormalizedEventRecord,

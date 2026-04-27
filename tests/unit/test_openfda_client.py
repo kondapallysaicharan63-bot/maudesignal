@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from safesignal.ingestion.openfda_client import _build_query
+from maudesignal.ingestion.openfda_client import _build_query
 
 
 def test_build_query_product_only() -> None:

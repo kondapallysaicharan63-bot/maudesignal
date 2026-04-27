@@ -1,6 +1,6 @@
 # Document 3: Requirements Specification (SRS-lite)
 
-**Project Name:** SafeSignal
+**Project Name:** MaudeSignal
 **Owner:** [Your Name]
 **Version:** 1.0 (Draft)
 **Date:** [Today's Date]
@@ -225,7 +225,7 @@ Each requirement includes:
 #### FR-25: Dashboard Entry Point
 - **Priority:** Must
 - **Feature:** F6
-- **Requirement:** The dashboard shall launch via the command `streamlit run app.py` (or `safesignal dashboard`) and be accessible at `http://localhost:8501`.
+- **Requirement:** The dashboard shall launch via the command `streamlit run app.py` (or `maudesignal dashboard`) and be accessible at `http://localhost:8501`.
 - **Acceptance Test:** Fresh clone + install + command = working dashboard in <15 min total.
 
 #### FR-26: Required Dashboard Views
@@ -264,7 +264,7 @@ Each requirement includes:
 #### FR-30: Report Generation Command
 - **Priority:** Must
 - **Feature:** F7
-- **Requirement:** The system shall generate a periodic safety report via `safesignal report --product-code QIH --period 2024-Q4`.
+- **Requirement:** The system shall generate a periodic safety report via `maudesignal report --product-code QIH --period 2024-Q4`.
 - **Output:** Markdown file + PDF file in `reports/` directory
 - **Acceptance Test:** Command succeeds; both files exist; PDF opens correctly.
 
@@ -340,7 +340,7 @@ Each requirement includes:
 
 #### NFR-09: CLI Clarity
 - **Requirement:** All CLI commands shall support `--help` with clear usage examples. Errors shall be human-readable, not raw stack traces.
-- **Acceptance Test:** `safesignal --help` and `safesignal ingest --help` display useful content.
+- **Acceptance Test:** `maudesignal --help` and `maudesignal ingest --help` display useful content.
 
 #### NFR-10: Time-to-First-Result
 - **Requirement:** A new user following the README shall be able to go from `git clone` to seeing their first dashboard view in ≤15 minutes, excluding API key provisioning.
@@ -445,7 +445,7 @@ Defined in `schemas/extraction_output.schema.json`:
 ### 5.3 Storage
 
 #### DR-06: Storage Layer
-- **Database:** SQLite (file-based, `safesignal.db`)
+- **Database:** SQLite (file-based, `maudesignal.db`)
 - **Tables (minimum):** `raw_reports`, `normalized_events`, `extractions`, `classifications`, `drift_alerts`, `llm_audit_log`
 
 #### DR-07: Data Retention
