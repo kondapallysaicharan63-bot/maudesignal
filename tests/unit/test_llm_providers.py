@@ -18,6 +18,7 @@ def _make_config(
     anthropic_key: str | None = None,
     openai_key: str | None = None,
     gemini_key: str | None = None,
+    provider_fallback_order: str = "gemini,groq",
 ) -> Config:
     """Construct a Config directly for tests, bypassing env loading."""
     return Config(
@@ -31,6 +32,7 @@ def _make_config(
         openai_model="gpt-4o-mini",
         gemini_api_key=gemini_key,
         gemini_model="gemini-2.5-flash",
+        provider_fallback_order=provider_fallback_order,
         openfda_api_key=None,
         db_path=Path("/tmp/test.db"),
         log_level="INFO",
