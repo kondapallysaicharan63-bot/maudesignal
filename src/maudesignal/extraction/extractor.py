@@ -148,9 +148,7 @@ class Extractor:
                 f"validation via {response.provider}: {exc.message}"
             ) from exc
 
-        cost = self._provider.estimate_cost_usd(
-            response.input_tokens, response.output_tokens
-        )
+        cost = self._provider.estimate_cost_usd(response.input_tokens, response.output_tokens)
 
         call_id = str(uuid.uuid4())
         self._db.insert_audit_log(
@@ -200,9 +198,7 @@ class Extractor:
             example_output = example.get("expected_output")
             if not example_input or not example_output:
                 continue
-            messages.append(
-                LLMMessage(role="user", content=_format_example_input(example_input))
-            )
+            messages.append(LLMMessage(role="user", content=_format_example_input(example_input)))
             messages.append(
                 LLMMessage(
                     role="assistant",
@@ -210,9 +206,7 @@ class Extractor:
                 )
             )
 
-        messages.append(
-            LLMMessage(role="user", content=_format_example_input(input_record))
-        )
+        messages.append(LLMMessage(role="user", content=_format_example_input(input_record)))
         return messages
 
 
@@ -238,9 +232,7 @@ def _extract_json_object(raw: str) -> dict[str, Any]:
 
     start = text.find("{")
     if start < 0:
-        raise LLMOutputError(
-            f"No JSON object found in LLM output. Raw: {text[:500]!r}"
-        )
+        raise LLMOutputError(f"No JSON object found in LLM output. Raw: {text[:500]!r}")
     depth = 0
     end = -1
     for i in range(start, len(text)):

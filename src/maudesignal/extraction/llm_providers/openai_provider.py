@@ -95,11 +95,11 @@ class OpenAIProvider(LLMProvider):
             extra_kwargs["max_tokens"] = max_tokens
 
         try:
-            response = self._client.chat.completions.create(
+            response = self._client.chat.completions.create(  # type: ignore[call-overload]
                 model=self._model,
-                messages=chat_messages,  # type: ignore[arg-type]
+                messages=chat_messages,
                 response_format={"type": "json_object"},
-                **extra_kwargs,  # type: ignore[arg-type]
+                **extra_kwargs,
             )
         except Exception as exc:  # pragma: no cover - network errors
             raise OpenAIProviderError(f"OpenAI API call failed: {exc}") from exc
@@ -120,10 +120,7 @@ class OpenAIProvider(LLMProvider):
 
     def estimate_cost_usd(self, input_tokens: int, output_tokens: int) -> float:
         """Return a conservative USD estimate for billing observability."""
-        pricing = _OPENAI_PRICING_USD_PER_MTOK.get(
-            self._model, {"input": 5.0, "output": 15.0}
-        )
-        return (
-            (input_tokens / 1_000_000) * pricing["input"]
-            + (output_tokens / 1_000_000) * pricing["output"]
-        )
+        pricing = _OPENAI_PRICING_USD_PER_MTOK.get(self._model, {"input": 5.0, "output": 15.0})
+        return (input_tokens / 1_000_000) * pricing["input"] + (
+            output_tokens / 1_000_000
+        ) * pricing["output"]

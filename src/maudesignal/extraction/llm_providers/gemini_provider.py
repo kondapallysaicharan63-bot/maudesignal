@@ -73,8 +73,7 @@ class GeminiProvider(LLMProvider):
             from google.genai import types as genai_types
         except ImportError as exc:  # pragma: no cover
             raise GeminiProviderError(
-                "google-genai package not installed. "
-                "Run: pip install google-genai"
+                "google-genai package not installed. " "Run: pip install google-genai"
             ) from exc
 
         resolved_key = api_key if api_key else os.environ.get("GEMINI_API_KEY", "")
@@ -129,7 +128,7 @@ class GeminiProvider(LLMProvider):
         try:
             response = self._client.models.generate_content(
                 model=self._model,
-                contents=gemini_contents,
+                contents=gemini_contents,  # type: ignore[arg-type]
                 config=types.GenerateContentConfig(
                     system_instruction=system_prompt,
                     temperature=temperature,
@@ -168,10 +167,7 @@ class GeminiProvider(LLMProvider):
         If Gemini ever leaves the free tier, update the pricing table at
         the top of this file.
         """
-        pricing = _GEMINI_PRICING_USD_PER_MTOK.get(
-            self._model, {"input": 0.0, "output": 0.0}
-        )
-        return (
-            (input_tokens / 1_000_000) * pricing["input"]
-            + (output_tokens / 1_000_000) * pricing["output"]
-        )
+        pricing = _GEMINI_PRICING_USD_PER_MTOK.get(self._model, {"input": 0.0, "output": 0.0})
+        return (input_tokens / 1_000_000) * pricing["input"] + (
+            output_tokens / 1_000_000
+        ) * pricing["output"]

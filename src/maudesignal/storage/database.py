@@ -95,7 +95,7 @@ class Database:
             stmt = stmt.on_conflict_do_nothing(index_elements=["maude_report_id"])
             result = session.execute(stmt)
             session.commit()
-            return (result.rowcount or 0) > 0
+            return (result.rowcount or 0) > 0  # type: ignore[attr-defined]
 
     def upsert_normalized_event(
         self,

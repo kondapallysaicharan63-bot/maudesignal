@@ -8,7 +8,8 @@ Caching (FR-05) is handled at the database layer — this client is stateless.
 
 from __future__ import annotations
 
-from typing import Any, Iterator
+from collections.abc import Iterator
+from typing import Any
 
 import httpx
 from tenacity import (
@@ -157,14 +158,11 @@ class OpenFDAClient:
             raise OpenFDARateLimitError("openFDA returned 429")
 
         if response.status_code >= 500:
-            raise OpenFDAAPIError(
-                f"openFDA server error {response.status_code}"
-            )
+            raise OpenFDAAPIError(f"openFDA server error {response.status_code}")
 
         if response.status_code != 200:
             raise OpenFDAAPIError(
-                f"Unexpected openFDA status {response.status_code}: "
-                f"{response.text[:200]}"
+                f"Unexpected openFDA status {response.status_code}: " f"{response.text[:200]}"
             )
 
         payload = response.json()

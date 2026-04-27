@@ -37,12 +37,10 @@ def test_load_maude_extractor(skills_root: Path) -> None:
     assert skill.name == "maude-narrative-extractor"
     assert skill.version == "1.0.0"
     assert skill.output_schema["title"] == "MaudeNarrativeExtractorOutput"
-    assert len(skill.good_examples) >= 3, (
-        "Every Skill must ship with ≥3 good examples per Doc 5 §7.2"
-    )
-    assert len(skill.bad_examples) >= 2, (
-        "Every Skill must ship with ≥2 bad examples per Doc 5 §7.2"
-    )
+    assert (
+        len(skill.good_examples) >= 3
+    ), "Every Skill must ship with ≥3 good examples per Doc 5 §7.2"
+    assert len(skill.bad_examples) >= 2, "Every Skill must ship with ≥2 bad examples per Doc 5 §7.2"
 
 
 def test_missing_skill_raises(skills_root: Path) -> None:

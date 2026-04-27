@@ -17,9 +17,10 @@ from rich.table import Table
 
 from maudesignal import __version__
 from maudesignal.common.exceptions import MaudeSignalError
-from maudesignal.common.logging import configure_logging, get_logger
+from maudesignal.common.logging import configure_logging
 from maudesignal.config import Config, ConfigError
 from maudesignal.extraction.extractor import Extractor
+from maudesignal.extraction.pipeline import extract_record
 from maudesignal.extraction.skill_loader import SkillLoader
 from maudesignal.ingestion.openfda_client import OpenFDAClient
 from maudesignal.ingestion.pipeline import ingest_product_code
@@ -27,13 +28,11 @@ from maudesignal.storage.database import Database
 
 app = typer.Typer(
     name="maudesignal",
-    help="Open-source AI postmarket surveillance toolkit for FDA-cleared "
-    "AI/ML medical devices.",
+    help="Open-source AI postmarket surveillance toolkit for FDA-cleared " "AI/ML medical devices.",
     add_completion=False,
     no_args_is_help=True,
 )
 console = Console()
-logger = get_logger(__name__)
 
 
 # ----------------------------------------------------------------------
@@ -43,9 +42,7 @@ logger = get_logger(__name__)
 
 @app.callback()
 def _main(
-    version: bool = typer.Option(
-        False, "--version", help="Show MaudeSignal version and exit."
-    ),
+    version: bool = typer.Option(False, "--version", help="Show MaudeSignal version and exit."),
 ) -> None:
     """MaudeSignal CLI root."""
     if version:
@@ -155,13 +152,18 @@ def extract(
     loader = SkillLoader(config.project_root / "skills")
 
     try:
-        skill = loader.load("maude-narrative-extractor")
+        skill_extractor = loader.load("maude-narrative-extractor")
+        skill_severity = loader.load("severity-triage")
+        skill_classifier = loader.load("ai-failure-mode-classifier")
     except MaudeSignalError as exc:
         console.print(f"[red]Skill load failed:[/red] {exc}")
         raise typer.Exit(code=1) from exc
 
     console.print(
-        f"[green]Loaded Skill:[/green] {skill.name} v{skill.version}"
+        f"[green]Loaded Skills:[/green] "
+        f"{skill_extractor.name} v{skill_extractor.version}, "
+        f"{skill_severity.name} v{skill_severity.version}, "
+        f"{skill_classifier.name} v{skill_classifier.version}"
     )
 
     events = db.list_normalized_events(product_code=product_code, limit=limit)
@@ -173,52 +175,44 @@ def extract(
         raise typer.Exit(code=1)
 
     extractor = Extractor(config=config, db=db)
-    console.print(f"Extracting {len(events)} record(s)...")
+    console.print(f"Extracting {len(events)} record(s) through 3-Skill chain...")
 
-    successes = 0
-    failures = 0
+    extractor_successes = 0
+    severity_successes = 0
+    classifier_successes = 0
+    classifier_skipped = 0
+    skill_failures = 0
+
     for event in events:
         if not event.narrative and not event.mfr_narrative:
             continue
-        input_record = {
-            "maude_report_id": event.maude_report_id,
-            "event_description": event.narrative or "",
-            "mfr_narrative": event.mfr_narrative or "",
-            "event_type": event.event_type or "",
-            "product_code": event.product_code,
-            "device_problem_codes": [],
-            "brand_name": event.brand_name or "",
-            "manufacturer": event.manufacturer or "",
-        }
-        try:
-            result = extractor.run(skill=skill, input_record=input_record)
-        except MaudeSignalError as exc:
-            failures += 1
-            logger.warning(
-                "extraction_failed",
-                maude_report_id=event.maude_report_id,
-                error=str(exc),
-            )
-            continue
-
-        db.insert_extraction(
-            extraction_id=result.extraction_id,
-            maude_report_id=event.maude_report_id,
-            skill_name=skill.name,
-            skill_version=skill.version,
-            model_used=result.model_used,
-            output_payload=result.output,
-            confidence_score=result.output.get("confidence_score", 0.0),
-            requires_review=result.output.get("requires_human_review", True),
+        record_result = extract_record(
+            extractor=extractor,
+            db=db,
+            event=event,
+            skill_extractor=skill_extractor,
+            skill_severity=skill_severity,
+            skill_classifier=skill_classifier,
         )
-        successes += 1
+        if record_result.extractor_result is not None:
+            extractor_successes += 1
+        if record_result.severity_result is not None:
+            severity_successes += 1
+        if record_result.classifier_result is not None:
+            classifier_successes += 1
+        if record_result.classifier_skipped_reason is not None:
+            classifier_skipped += 1
+        skill_failures += len(record_result.errors)
 
     total_spend = db.total_llm_cost_usd()
     table = Table(title="Extraction Summary")
     table.add_column("Metric")
     table.add_column("Value", justify="right")
-    table.add_row("Successes", str(successes))
-    table.add_row("Failures", str(failures))
+    table.add_row("Skill #1 (extractor) successes", str(extractor_successes))
+    table.add_row("Skill #3 (severity) successes", str(severity_successes))
+    table.add_row("Skill #4 (classifier) successes", str(classifier_successes))
+    table.add_row("Skill #4 skipped (non-AI per extractor)", str(classifier_skipped))
+    table.add_row("Skill failures (any Skill)", str(skill_failures))
     table.add_row("Cumulative LLM spend (USD)", f"${total_spend:.4f}")
     console.print(table)
 

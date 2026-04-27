@@ -121,21 +121,15 @@ class Config:
         try:
             cost_ceiling = float(os.environ.get("MAUDESIGNAL_COST_CEILING_USD", "150.0"))
         except ValueError as exc:
-            raise ConfigError(
-                "MAUDESIGNAL_COST_CEILING_USD must be a number"
-            ) from exc
+            raise ConfigError("MAUDESIGNAL_COST_CEILING_USD must be a number") from exc
 
         return cls(
             llm_provider=provider,
             groq_api_key=groq_api_key,
             groq_model=groq_model,
             anthropic_api_key=anthropic_api_key,
-            claude_model_extraction=os.environ.get(
-                "CLAUDE_MODEL_EXTRACTION", "claude-sonnet-4-6"
-            ),
-            claude_model_reasoning=os.environ.get(
-                "CLAUDE_MODEL_REASONING", "claude-opus-4-7"
-            ),
+            claude_model_extraction=os.environ.get("CLAUDE_MODEL_EXTRACTION", "claude-sonnet-4-6"),
+            claude_model_reasoning=os.environ.get("CLAUDE_MODEL_REASONING", "claude-opus-4-7"),
             openai_api_key=openai_api_key,
             openai_model=os.environ.get("OPENAI_MODEL", "gpt-4o-mini"),
             gemini_api_key=gemini_api_key,

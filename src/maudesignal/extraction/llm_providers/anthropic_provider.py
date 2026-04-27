@@ -109,10 +109,7 @@ class AnthropicProvider(LLMProvider):
 
     def estimate_cost_usd(self, input_tokens: int, output_tokens: int) -> float:
         """Return a conservative USD estimate for billing observability."""
-        pricing = _ANTHROPIC_PRICING_USD_PER_MTOK.get(
-            self._model, {"input": 10.0, "output": 50.0}
-        )
-        return (
-            (input_tokens / 1_000_000) * pricing["input"]
-            + (output_tokens / 1_000_000) * pricing["output"]
-        )
+        pricing = _ANTHROPIC_PRICING_USD_PER_MTOK.get(self._model, {"input": 10.0, "output": 50.0})
+        return (input_tokens / 1_000_000) * pricing["input"] + (
+            output_tokens / 1_000_000
+        ) * pricing["output"]
