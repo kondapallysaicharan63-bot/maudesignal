@@ -29,7 +29,68 @@ confidence, $0.00 LLM cost (Groq free tier). See
 
 ---
 
-## 2. What SafeSignal Is NOT (Hard Boundaries)
+## 2. Local Development Setup Notes
+
+Laptop-specific quirks that future Claude Code sessions need to know
+**before** running any Python command in this repo.
+
+### 2.1 Two Python versions are installed — `python` is the wrong one
+
+This laptop has both:
+
+- **Python 3.6** at `C:\Python\Python36-64\` (legacy, do not use)
+- **Python 3.12** (Microsoft Store install)
+
+The bare `python` command resolves to **Python 3.6**, which is too old
+for this project (`Python 3.11+` is required — see §4 Tech Stack).
+
+**Always invoke Python 3.12 explicitly as `python3.12`.** Never use bare
+`python` or `py` — they pick up the 3.6 install and imports / installs
+will silently target the wrong interpreter.
+
+### 2.2 Installing packages
+
+Use `python3.12 -m pip install ...` for every install. Do not use bare
+`pip` — it is bound to the 3.6 install.
+
+```bash
+python3.12 -m pip install -e .
+python3.12 -m pip install <some-package>
+```
+
+### 2.3 The `safesignal` CLI is not on PATH
+
+The Microsoft Store Python 3.12 installs console scripts to:
+
+```
+C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\Scripts
+```
+
+This directory is **not** on `PATH` by default, so typing `safesignal`
+in a fresh shell will fail with "command not found."
+
+Two ways to invoke the CLI:
+
+**(a) Prepend the Scripts dir to PATH for the current session (PowerShell):**
+
+```powershell
+$env:Path = "C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\Scripts;" + $env:Path
+safesignal --help
+```
+
+**(b) Call as a module (works from any shell, no PATH change needed):**
+
+```bash
+python3.12 -m safesignal --help
+```
+
+Option (b) is preferred for one-off / scripted invocations because it
+needs no setup. Option (a) is preferred for an interactive session
+where you'll run many `safesignal` commands in a row.
+
+---
+
+## 3. What SafeSignal Is NOT (Hard Boundaries)
 
 These are not aesthetic preferences — they are constraints that shape
 what is acceptable code.
@@ -55,7 +116,7 @@ Full list: [docs/01_vision_mission.md §6](docs/01_vision_mission.md).
 
 ---
 
-## 3. Tech Stack
+## 4. Tech Stack
 
 | Layer | Choice | Notes |
 |---|---|---|
@@ -75,7 +136,7 @@ The exact pin set lives in [pyproject.toml](pyproject.toml).
 
 ---
 
-## 4. Repository Layout
+## 5. Repository Layout
 
 ```
 safesignal/
@@ -126,9 +187,9 @@ safesignal/
 
 ---
 
-## 5. Conventions That Are Not Optional
+## 6. Conventions That Are Not Optional
 
-### 5.1 LLM behavior lives in Skills, not inline strings
+### 6.1 LLM behavior lives in Skills, not inline strings
 
 Every prompt or LLM behavior contract goes in `skills/<skill-name>/SKILL.md`
 with a corresponding `VERSION`, JSON Schema, and good/bad example pairs.
@@ -139,7 +200,7 @@ gold-set evaluation loop.
 When changing a Skill: bump `VERSION`, update the changelog at the bottom
 of `SKILL.md`, and ensure the schema and examples still match.
 
-### 5.2 The citation verifier is a HARD GATE
+### 6.2 The citation verifier is a HARD GATE
 
 `regulatory-citation-verifier` runs on every string field of every output
 before that output is emitted to a user-facing surface. If you see code
@@ -150,7 +211,7 @@ The verifier MUST NOT use LLM training-data knowledge as a verification
 source. Only openFDA, the curated CFR Parts list, and the local FDA
 guidance index file count as primary sources.
 
-### 5.3 The pipeline is provider-agnostic
+### 6.3 The pipeline is provider-agnostic
 
 Never import `anthropic`, `openai`, `groq`, or `google.generativeai`
 directly in extraction / classification code. Go through
@@ -159,25 +220,25 @@ an `LLMProvider`. Each concrete provider only handles vendor SDK
 translation; retries, audit logging, and JSON validation live above the
 provider layer.
 
-### 5.4 Type discipline
+### 6.4 Type discipline
 
 `pyproject.toml` enforces `mypy --strict`. Every public function has
 typed params and return; no implicit `Any`. Optional is explicit. Run
 `mypy src/safesignal` before committing.
 
-### 5.5 Style
+### 6.5 Style
 
 `ruff` + `black` are authoritative. Line length 100. Docstrings are
 Google-style (`pyproject.toml [tool.ruff.lint.pydocstyle]`). Run
 `ruff check . && black --check .` before committing.
 
-### 5.6 Determinism for reproducibility
+### 6.6 Determinism for reproducibility
 
 Default LLM `temperature=0.0`. Never set a non-zero temperature in
 extraction or classification code without an explicit comment justifying
 it. The whole point of the gold-set evaluation loop is reproducibility.
 
-### 5.7 No PHI, ever
+### 6.7 No PHI, ever
 
 MAUDE is already de-identified. If you find what looks like a name, MRN,
 or date of birth in the data, log a CRITICAL and skip the record.
@@ -185,7 +246,7 @@ SafeSignal does not handle PHI under any circumstances.
 
 ---
 
-## 6. The Skills (Build Order Matters)
+## 7. The Skills (Build Order Matters)
 
 | Skill | Status | Why this order |
 |---|---|---|
@@ -202,7 +263,7 @@ Skills and update the table above.
 
 ---
 
-## 7. Configuration
+## 8. Configuration
 
 Config is loaded from environment / `.env` via `safesignal.config.Config`.
 
@@ -221,7 +282,7 @@ authoritative list.
 
 ---
 
-## 8. What NOT to Do
+## 9. What NOT to Do
 
 - ❌ Do not write inline prompt strings in Python. Use a Skill.
 - ❌ Do not bypass `regulatory-citation-verifier` for any user-facing
@@ -244,7 +305,7 @@ authoritative list.
 
 ---
 
-## 9. Common Tasks
+## 10. Common Tasks
 
 ### Run the test suite
 ```bash
@@ -275,7 +336,7 @@ LLM_PROVIDER=gemini GEMINI_API_KEY=xxxx safesignal extract --limit 3
 
 ---
 
-## 10. Where to Look First
+## 11. Where to Look First
 
 | Question | File |
 |---|---|
