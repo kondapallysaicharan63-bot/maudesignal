@@ -232,3 +232,30 @@ class Database:
         with self._session() as session:
             records = session.execute(select(LLMAuditLogRecord)).scalars().all()
             return sum(r.cost_estimate_usd for r in records)
+
+    def list_extractions(
+        self,
+        *,
+        product_code: str | None = None,
+        skill_name: str | None = None,
+    ) -> list[ExtractionRecord]:
+        """Return extraction rows, optionally filtered by product_code/skill."""
+        with self._session() as session:
+            stmt = select(ExtractionRecord)
+            if skill_name:
+                stmt = stmt.where(ExtractionRecord.skill_name == skill_name)
+            if product_code:
+                ids = (
+                    session.execute(
+                        select(NormalizedEventRecord.maude_report_id).where(
+                            NormalizedEventRecord.product_code == product_code
+                        )
+                    )
+                    .scalars()
+                    .all()
+                )
+                if not ids:
+                    return []
+                stmt = stmt.where(ExtractionRecord.maude_report_id.in_(ids))
+            stmt = stmt.order_by(ExtractionRecord.extraction_ts)
+            return list(session.execute(stmt).scalars().all())

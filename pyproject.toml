@@ -87,6 +87,7 @@ dev = [
 # ==========================================
 [project.scripts]
 maudesignal = "maudesignal.cli:app"
+maudesignal-dashboard = "maudesignal.dashboard.app:main"
 
 # ==========================================
 # Package discovery
@@ -115,6 +116,7 @@ module = [
     "streamlit.*",
     "evidently.*",
     "weasyprint.*",
+    "scipy.*",
 ]
 ignore_missing_imports = true
 

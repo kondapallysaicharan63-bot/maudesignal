@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import sys
+from datetime import UTC, datetime, timedelta
 
 import typer
 from rich.console import Console
@@ -19,6 +20,7 @@ from maudesignal import __version__
 from maudesignal.common.exceptions import MaudeSignalError
 from maudesignal.common.logging import configure_logging
 from maudesignal.config import Config, ConfigError
+from maudesignal.drift.interpreter import build_runtime, interpret_drift
 from maudesignal.extraction.extractor import Extractor
 from maudesignal.extraction.pipeline import extract_record
 from maudesignal.extraction.skill_loader import SkillLoader
@@ -220,6 +222,80 @@ def extract(
 # ----------------------------------------------------------------------
 # maudesignal status
 # ----------------------------------------------------------------------
+
+
+@app.command()
+def drift(
+    product_code: str = typer.Option(..., "--product-code", "-p"),
+    baseline_window: int = typer.Option(30, "--baseline-window"),
+    current_window: int = typer.Option(7, "--current-window"),
+    metric: str = typer.Option("confidence_score", "--metric"),
+) -> None:
+    """Compute drift on extracted records and run Skill #5 interpretation."""
+    try:
+        config = Config.load()
+    except ConfigError as exc:
+        console.print(f"[red]Configuration error:[/red] {exc}")
+        raise typer.Exit(code=2) from exc
+
+    configure_logging(config.log_level)
+    _print_startup(config)
+    extractor, db, skills_root = build_runtime(config)
+
+    rows = db.list_extractions(product_code=product_code, skill_name="maude-narrative-extractor")
+    if not rows:
+        console.print(f"[yellow]No extractions found for product_code={product_code}.[/yellow]")
+        raise typer.Exit(code=1)
+
+    now = datetime.now(UTC)
+    cur_start = now - timedelta(days=current_window)
+    base_start = cur_start - timedelta(days=baseline_window)
+
+    def _ts(r: object) -> datetime:
+        ts: datetime = r.extraction_ts  # type: ignore[attr-defined]
+        return ts if ts.tzinfo else ts.replace(tzinfo=UTC)
+
+    baseline = [getattr(r, metric) for r in rows if base_start <= _ts(r) < cur_start]
+    current = [getattr(r, metric) for r in rows if _ts(r) >= cur_start]
+
+    if len(baseline) < 2 or len(current) < 2:
+        # Fallback: split all rows in half by index for MVP demos with sparse data.
+        half = len(rows) // 2 or 1
+        baseline = [getattr(r, metric) for r in rows[:half]]
+        current = [getattr(r, metric) for r in rows[half:]]
+        console.print(
+            f"[yellow]Insufficient data in time windows; falling back to "
+            f"index-split (n_baseline={len(baseline)}, n_current={len(current)}).[/yellow]"
+        )
+
+    try:
+        result = interpret_drift(
+            metric_name=metric,
+            baseline_values=baseline,
+            current_values=current,
+            cohort_label=f"{product_code} {metric} drift run",
+            extractor=extractor,
+            skills_root=skills_root,
+        )
+    except MaudeSignalError as exc:
+        console.print(f"[red]Drift interpretation failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    table = Table(title=f"Drift verdict — {product_code}")
+    table.add_column("Field")
+    table.add_column("Value")
+    for k in (
+        "verdict",
+        "headline",
+        "recommended_action",
+        "confidence_score",
+        "requires_human_review",
+    ):
+        if k in result:
+            table.add_row(k, str(result[k]))
+    console.print(table)
+    console.print("\n[dim]Full output:[/dim]")
+    console.print(json.dumps(result, indent=2, default=str))
 
 
 @app.command()

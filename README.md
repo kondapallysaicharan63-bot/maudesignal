@@ -94,6 +94,18 @@ LLM_PROVIDER=pool PROVIDER_FALLBACK_ORDER=gemini,gemini2,groq,groq2 \
 
 ---
 
+## Dashboard
+
+Launch the local Streamlit dashboard against the SQLite database:
+
+```bash
+maudesignal-dashboard
+```
+
+Three pages: **Records** (filterable extractions table), **Drift** (confidence-score line chart over time), **Summary** (KPI cards: total extractions, % AI-related, average confidence, total LLM cost). Reads from `MAUDESIGNAL_DB_PATH` (defaults to `data/maudesignal.db`); no extra config needed.
+
+---
+
 ## Documentation
 
 | | |
