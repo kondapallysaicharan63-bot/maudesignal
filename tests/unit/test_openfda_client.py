@@ -8,13 +8,13 @@ from safesignal.ingestion.openfda_client import _build_query
 def test_build_query_product_only() -> None:
     """Product code alone produces a clean query."""
     q = _build_query("QIH", start_date=None, end_date=None)
-    assert q == "device.openfda.product_code:QIH"
+    assert q == "device.device_report_product_code:QIH"
 
 
 def test_build_query_full_range() -> None:
     """Both dates produce a bracketed date_received clause."""
     q = _build_query("QAS", start_date="20240101", end_date="20241231")
-    assert "device.openfda.product_code:QAS" in q
+    assert "device.device_report_product_code:QAS" in q
     assert "date_received:[20240101+TO+20241231]" in q
     assert q.count("+AND+") == 1
 
