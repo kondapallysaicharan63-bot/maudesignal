@@ -81,8 +81,12 @@ maudesignal --help
 **(b) Call as a module (works from any shell, no PATH change needed):**
 
 ```bash
-python3.12 -m maudesignal --help
+python3.12 -m maudesignal.cli --help
 ```
+
+Note: `python3.12 -m maudesignal` (without `.cli`) does **not** work —
+the `maudesignal` package has no `__main__.py`. The runnable module is
+`maudesignal.cli`, which has the `if __name__ == "__main__":` guard.
 
 Option (b) is preferred for one-off / scripted invocations because it
 needs no setup. Option (a) is preferred for an interactive session

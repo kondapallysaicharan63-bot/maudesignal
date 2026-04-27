@@ -135,6 +135,12 @@ class GeminiProvider(LLMProvider):
                     temperature=temperature,
                     max_output_tokens=max_tokens,
                     response_mime_type="application/json",
+                    # Gemini 2.5 enables "thinking" tokens by default, which
+                    # appear in response.text alongside the structured JSON
+                    # and break our brace-balance parser. Disable them — for
+                    # extraction the model just needs to follow the schema,
+                    # not reason out loud.
+                    thinking_config=types.ThinkingConfig(thinking_budget=0),
                 ),
             )
         except Exception as exc:  # pragma: no cover - network errors
