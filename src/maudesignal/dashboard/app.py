@@ -127,9 +127,7 @@ def _page_records(db: Database) -> None:
     cols[0].markdown(f"**Event type:** {event.event_type or '—'}")
     cols[1].markdown(f"**Event date:** {event.event_date or '—'}")
     cols[1].markdown(f"**Product code:** {event.product_code}")
-    cols[1].markdown(
-        f"**Official FDA record:** [open ↗]({_maude_url(selected_id)})"
-    )
+    cols[1].markdown(f"**Official FDA record:** [open ↗]({_maude_url(selected_id)})")
 
     if event.narrative:
         with st.expander("Patient / reporter narrative", expanded=True):
