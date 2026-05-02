@@ -299,6 +299,72 @@ def drift(
 
 
 @app.command()
+def report(
+    product_code: str = typer.Option(
+        ...,
+        "--product-code",
+        "-p",
+        help="FDA 3-character product code (e.g. QIH).",
+    ),
+    start: str = typer.Option(
+        ...,
+        "--start",
+        help="Start of extraction window, YYYY-MM-DD (inclusive).",
+    ),
+    end: str = typer.Option(
+        ...,
+        "--end",
+        help="End of extraction window, YYYY-MM-DD (inclusive).",
+    ),
+    output_dir: str = typer.Option(
+        "reports",
+        "--output-dir",
+        help="Directory to write report files (created if absent).",
+    ),
+) -> None:
+    """Generate a PSUR-style periodic safety report from extraction data.
+
+    Example:
+        maudesignal report --product-code QIH --start 2025-01-01 --end 2025-12-31
+    """
+    try:
+        config = Config.load()
+    except ConfigError as exc:
+        console.print(f"[red]Configuration error:[/red] {exc}")
+        raise typer.Exit(code=2) from exc
+
+    configure_logging(config.log_level)
+    db = Database(config.db_path)
+
+    from maudesignal.report.generator import PSURGenerator
+
+    generator = PSURGenerator(db)
+
+    try:
+        result = generator.generate(
+            product_code=product_code,
+            start_date=start,
+            end_date=end,
+            output_dir=output_dir,
+        )
+    except ValueError as exc:
+        console.print(f"[red]Report generation failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    table = Table(title=f"PSUR — {product_code}")
+    table.add_column("Field")
+    table.add_column("Value")
+    table.add_row("Records in report", str(result["record_count"]))
+    table.add_row("AI-related events", str(result["ai_related_count"]))
+    table.add_row("Markdown", result["markdown_path"])
+    if result.get("pdf_path"):
+        table.add_row("PDF", result["pdf_path"])
+    else:
+        table.add_row("PDF", "[dim]skipped (weasyprint not installed)[/dim]")
+    console.print(table)
+
+
+@app.command()
 def status() -> None:
     """Print current config, database contents, and LLM spend."""
     try:

@@ -25,8 +25,8 @@ The FDA has cleared **1,000+ AI/ML-enabled medical devices** (295 in 2025 alone)
 3. **Triages severity** to FDA MDR categories with explicit decision rules
 4. **Classifies** events into an 11-category AI failure taxonomy MAUDE cannot capture
 5. **Verifies** every regulatory citation against primary sources — zero hallucinated K-numbers, CFR sections, or guidance titles
-6. **Detects drift** with KS / PSI tests on labeled cohorts *(planned, Week 5)*
-7. **Generates** PSUR-style periodic safety reports with full source traceability *(planned, Week 6–7)*
+6. **Detects drift** with KS / PSI tests on labeled cohorts
+7. **Generates** PSUR-style periodic safety reports (Markdown + PDF) with full source traceability
 
 ### What's different
 
@@ -43,7 +43,7 @@ The FDA has cleared **1,000+ AI/ML-enabled medical devices** (295 in 2025 alone)
 
 ## Status
 
-🚧 **Pre-alpha — under active development.** Pilot results: **22 extractions, 50% AI-related signal rate, 0.90 average confidence, $0.00 LLM cost** (Groq free tier). Multi-key fallback pool exercised live with real free-tier 429 rotation. See [docs/00_pilot_findings.md](docs/00_pilot_findings.md) and [docs/00_pilot_findings_v2.md](docs/00_pilot_findings_v2.md).
+🚧 **Pre-alpha — under active development.** Pilot v3 results (2026-05-02): **43 extractions across 8 product codes, 32.6% AI-related signal rate (100% for QIH radiology CAD), 0.890 average confidence, $0.00 LLM cost** (Gemini + Groq free tier). PSUR report generator live — see [pilot findings v3](docs/00_pilot_findings_v3.md).
 
 ---
 
@@ -69,13 +69,13 @@ LLM behavior lives entirely in versioned `skills/<name>/SKILL.md` files — neve
 | [`maude-narrative-extractor`](skills/maude-narrative-extractor/SKILL.md) | ✅ v1.0.0 |
 | [`severity-triage`](skills/severity-triage/SKILL.md) | ✅ v1.0.0 |
 | [`ai-failure-mode-classifier`](skills/ai-failure-mode-classifier/SKILL.md) | ✅ v1.0.0 |
-| [`drift-analysis-interpreter`](skills/drift-analysis-interpreter/SKILL.md) | ✅ v1.0.0 (skeleton) |
+| [`drift-analysis-interpreter`](skills/drift-analysis-interpreter/SKILL.md) | ✅ v1.0.0 |
 | `fda-guidance-retriever` | 📋 planned |
 | `psur-report-drafter` | 📋 planned |
 
 ---
 
-## Quickstart (5 commands)
+## Quickstart (6 commands)
 
 ```bash
 git clone https://github.com/kondapallysaicharan63-bot/safesignal.git && cd safesignal
@@ -83,6 +83,7 @@ python3.12 -m pip install -e ".[dev]"
 cp .env.example .env  # add at least one provider key (Groq is free)
 python3.12 -m maudesignal.cli ingest --product-code QIH --limit 5
 python3.12 -m maudesignal.cli extract --product-code QIH --limit 3
+python3.12 -m maudesignal.cli report --product-code QIH --start 2026-01-01 --end 2026-12-31
 ```
 
 **Multi-key fallback pool** (extends free-tier capacity by rotating across 5+ keys on 429):
@@ -102,7 +103,21 @@ Launch the local Streamlit dashboard against the SQLite database:
 maudesignal-dashboard
 ```
 
-Three pages: **Records** (filterable extractions table), **Drift** (confidence-score line chart over time), **Summary** (KPI cards: total extractions, % AI-related, average confidence, total LLM cost). Reads from `MAUDESIGNAL_DB_PATH` (defaults to `data/maudesignal.db`); no extra config needed.
+Four views: **Records** (filterable extractions table + FDA report detail panel), **Drift** (confidence-score line chart over time), **Summary** (KPI cards: total extractions, % AI-related, average confidence, total LLM cost). Reads from `MAUDESIGNAL_DB_PATH` (defaults to `data/maudesignal.db`); no extra config needed.
+
+---
+
+## Reports
+
+Generate a PSUR-style regulatory report from extraction data:
+
+```bash
+maudesignal report --product-code QIH --start 2026-01-01 --end 2026-12-31
+```
+
+Outputs:
+- `reports/QIH_PSUR_<dates>.md` — 8-section Markdown report with disclaimer, severity breakdown, AI failure mode categories, and recommendations
+- `reports/QIH_PSUR_<dates>.pdf` — PDF via WeasyPrint (requires system GTK/Cairo libs)
 
 ---
 
@@ -115,7 +130,7 @@ Three pages: **Records** (filterable extractions table), **Drift** (confidence-s
 | Requirements (FRs / NFRs) | [docs/03_requirements_spec.md](docs/03_requirements_spec.md) |
 | System design | [docs/05_architecture.md](docs/05_architecture.md) |
 | Roadmap | [docs/07_roadmap.md](docs/07_roadmap.md) |
-| Pilot findings | [docs/00_pilot_findings.md](docs/00_pilot_findings.md), [v2](docs/00_pilot_findings_v2.md) |
+| Pilot findings | [v1](docs/00_pilot_findings.md), [v2](docs/00_pilot_findings_v2.md), [v3](docs/00_pilot_findings_v3.md) |
 | Repo conventions for AI assistants | [CLAUDE.md](CLAUDE.md) |
 
 ---

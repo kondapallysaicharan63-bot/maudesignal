@@ -16,6 +16,15 @@ from maudesignal.storage.database import Database
 EXTRACTOR_SKILL = "maude-narrative-extractor"
 CLASSIFIER_SKILL = "ai-failure-mode-classifier"
 
+_MAUDE_DETAIL_URL = (
+    "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id={}"
+)
+
+
+def _maude_url(report_id: str) -> str:
+    """Return the official FDA MAUDE detail URL for a given report ID."""
+    return _MAUDE_DETAIL_URL.format(report_id)
+
 
 def _load_db() -> Database:
     config = Config.load()
@@ -96,6 +105,36 @@ def _page_records(db: Database) -> None:
         "skill_name",
     ]
     st.dataframe(filtered[display_cols], use_container_width=True)
+
+    st.divider()
+    st.subheader("Record detail")
+    report_ids = filtered["maude_report_id"].dropna().unique().tolist()
+    if not report_ids:
+        st.info("No records match current filter.")
+        return
+    selected_id = st.selectbox("Select a maude_report_id to view full FDA report", report_ids)
+    if not selected_id:
+        return
+
+    event = db.get_normalized_event(selected_id)
+    if event is None:
+        st.warning(f"No normalized event found for {selected_id}.")
+        return
+
+    cols = st.columns(2)
+    cols[0].markdown(f"**Manufacturer:** {event.manufacturer or '—'}")
+    cols[0].markdown(f"**Brand / Device:** {event.brand_name or '—'}")
+    cols[0].markdown(f"**Event type:** {event.event_type or '—'}")
+    cols[1].markdown(f"**Event date:** {event.event_date or '—'}")
+    cols[1].markdown(f"**Product code:** {event.product_code}")
+    cols[1].markdown(f"**Official FDA record:** [open ↗]({_maude_url(selected_id)})")
+
+    if event.narrative:
+        with st.expander("Patient / reporter narrative", expanded=True):
+            st.text(event.narrative)
+    if event.mfr_narrative:
+        with st.expander("Manufacturer narrative"):
+            st.text(event.mfr_narrative)
 
 
 def _page_drift(db: Database) -> None:

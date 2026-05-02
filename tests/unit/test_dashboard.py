@@ -64,6 +64,15 @@ def test_extractions_dataframe_has_expected_columns(tmp_path: Path) -> None:
     assert bool(df.iloc[0]["ai_related_flag"]) is True
 
 
+def test_maude_url_format() -> None:
+    url = app._maude_url("1234567")  # noqa: SLF001
+    assert url == (
+        "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm"
+        "?mdrfoi__id=1234567"
+    )
+    assert app._maude_url("0000001").endswith("mdrfoi__id=0000001")  # noqa: SLF001
+
+
 @pytest.fixture(autouse=True)
 def _no_streamlit_calls(monkeypatch: pytest.MonkeyPatch) -> None:
     """Ensure no test accidentally triggers a streamlit render."""

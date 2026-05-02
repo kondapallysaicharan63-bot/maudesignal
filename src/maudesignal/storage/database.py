@@ -147,6 +147,14 @@ class Database:
                 stmt = stmt.where(RawReportRecord.product_code == product_code)
             return len(session.execute(stmt).scalars().all())
 
+    def get_normalized_event(self, maude_report_id: str) -> NormalizedEventRecord | None:
+        """Return a single normalized event by report ID, or None if not found."""
+        with self._session() as session:
+            stmt = select(NormalizedEventRecord).where(
+                NormalizedEventRecord.maude_report_id == maude_report_id
+            )
+            return session.execute(stmt).scalars().first()
+
     def list_normalized_events(
         self,
         product_code: str | None = None,
