@@ -13,7 +13,6 @@ from maudesignal.report.generator import PSURGenerator, _calculate_stats
 from maudesignal.storage.database import Database
 from maudesignal.storage.models import ExtractionRecord, NormalizedEventRecord
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -76,21 +75,70 @@ def populated_db(tmp_path: Path) -> Database:
             )
         # Skill #1 extractions — QIH records
         rows = [
-            _make_row("E001", "R001", datetime(2025, 1, 15, tzinfo=UTC), True, "malfunction", "missed lesion", 0.92),
-            _make_row("E002", "R002", datetime(2025, 3, 10, tzinfo=UTC), True, "serious_injury", None, 0.88, True),
-            _make_row("E003", "R003", datetime(2025, 5, 20, tzinfo=UTC), False, "other", None, 0.75),
+            _make_row(
+                "E001",
+                "R001",
+                datetime(2025, 1, 15, tzinfo=UTC),
+                True,
+                "malfunction",
+                "missed lesion",
+                0.92,
+            ),
+            _make_row(
+                "E002",
+                "R002",
+                datetime(2025, 3, 10, tzinfo=UTC),
+                True,
+                "serious_injury",
+                None,
+                0.88,
+                True,
+            ),
+            _make_row(
+                "E003",
+                "R003",
+                datetime(2025, 5, 20, tzinfo=UTC),
+                False,
+                "other",
+                None,
+                0.75,
+            ),
             # DQA record
-            _make_row("E004", "R004", datetime(2025, 2, 1, tzinfo=UTC), True, "malfunction", None, 0.80),
+            _make_row(
+                "E004",
+                "R004",
+                datetime(2025, 2, 1, tzinfo=UTC),
+                True,
+                "malfunction",
+                None,
+                0.80,
+            ),
         ]
         for r in rows:
             session.add(r)
         # Skill #4 classifier rows for R001 and R002
-        session.add(_make_row("C001", "R001", datetime(2025, 1, 15, tzinfo=UTC),
-                               True, "malfunction", skill_name="ai-failure-mode-classifier",
-                               failure_mode_category="false_negative_clinical"))
-        session.add(_make_row("C002", "R002", datetime(2025, 3, 10, tzinfo=UTC),
-                               True, "serious_injury", skill_name="ai-failure-mode-classifier",
-                               failure_mode_category="automation_bias"))
+        session.add(
+            _make_row(
+                "C001",
+                "R001",
+                datetime(2025, 1, 15, tzinfo=UTC),
+                True,
+                "malfunction",
+                skill_name="ai-failure-mode-classifier",
+                failure_mode_category="false_negative_clinical",
+            )
+        )
+        session.add(
+            _make_row(
+                "C002",
+                "R002",
+                datetime(2025, 3, 10, tzinfo=UTC),
+                True,
+                "serious_injury",
+                skill_name="ai-failure-mode-classifier",
+                failure_mode_category="automation_bias",
+            )
+        )
         session.commit()
     return db
 
@@ -102,9 +150,27 @@ def populated_db(tmp_path: Path) -> Database:
 
 def test_calculate_stats_basic() -> None:
     records = [
-        {"ai_related_flag": True, "severity": "malfunction", "confidence_score": 0.9, "requires_review": False, "failure_mode_category": "algorithm_drift"},
-        {"ai_related_flag": True, "severity": "serious_injury", "confidence_score": 0.8, "requires_review": True, "failure_mode_category": "false_negative_clinical"},
-        {"ai_related_flag": False, "severity": "other", "confidence_score": 0.7, "requires_review": False, "failure_mode_category": None},
+        {
+            "ai_related_flag": True,
+            "severity": "malfunction",
+            "confidence_score": 0.9,
+            "requires_review": False,
+            "failure_mode_category": "algorithm_drift",
+        },
+        {
+            "ai_related_flag": True,
+            "severity": "serious_injury",
+            "confidence_score": 0.8,
+            "requires_review": True,
+            "failure_mode_category": "false_negative_clinical",
+        },
+        {
+            "ai_related_flag": False,
+            "severity": "other",
+            "confidence_score": 0.7,
+            "requires_review": False,
+            "failure_mode_category": None,
+        },
     ]
     stats = _calculate_stats(records)
     assert stats["total"] == 3
@@ -172,9 +238,7 @@ def test_generate_filters_by_date_range(populated_db: Database, tmp_path: Path) 
     assert result["record_count"] == 1
 
 
-def test_generate_includes_failure_mode_categories(
-    populated_db: Database, tmp_path: Path
-) -> None:
+def test_generate_includes_failure_mode_categories(populated_db: Database, tmp_path: Path) -> None:
     gen = PSURGenerator(populated_db)
     result = gen.generate("QIH", "2025-01-01", "2025-12-31", tmp_path / "out")
     content = Path(result["markdown_path"]).read_text()
@@ -193,9 +257,7 @@ def test_generate_raises_on_empty(populated_db: Database, tmp_path: Path) -> Non
 # ---------------------------------------------------------------------------
 
 
-def test_generate_pdf_when_weasyprint_available(
-    populated_db: Database, tmp_path: Path
-) -> None:
+def test_generate_pdf_when_weasyprint_available(populated_db: Database, tmp_path: Path) -> None:
     mock_wp = MagicMock()
     mock_instance = MagicMock()
     mock_instance.write_pdf.return_value = b"%PDF-fake"
@@ -209,10 +271,7 @@ def test_generate_pdf_when_weasyprint_available(
     assert Path(result["pdf_path"]).read_bytes() == b"%PDF-fake"
 
 
-def test_generate_pdf_none_when_weasyprint_missing(
-    populated_db: Database, tmp_path: Path
-) -> None:
-    import sys
+def test_generate_pdf_none_when_weasyprint_missing(populated_db: Database, tmp_path: Path) -> None:
 
     with patch.dict("sys.modules", {"weasyprint": None}):
         gen = PSURGenerator(populated_db)
