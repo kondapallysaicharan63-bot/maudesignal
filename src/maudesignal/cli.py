@@ -34,6 +34,12 @@ app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
 )
+catalog_app = typer.Typer(
+    name="catalog",
+    help="Manage the FDA AI/ML device catalog.",
+    no_args_is_help=True,
+)
+app.add_typer(catalog_app, name="catalog")
 console = Console()
 
 
@@ -59,11 +65,16 @@ def _main(
 
 @app.command()
 def ingest(
-    product_code: str = typer.Option(
-        ...,
+    product_code: str | None = typer.Option(
+        None,
         "--product-code",
         "-p",
         help="FDA 3-character product code (e.g., QIH, QAS, QFM).",
+    ),
+    all_ai: bool = typer.Option(
+        False,
+        "--all-ai",
+        help="Ingest MAUDE records for every product code in the AI/ML catalog.",
     ),
     start_date: str | None = typer.Option(
         None, "--start-date", help="Earliest date_received in YYYYMMDD format."
@@ -72,7 +83,7 @@ def ingest(
         None, "--end-date", help="Latest date_received in YYYYMMDD format."
     ),
     limit: int | None = typer.Option(
-        None, "--limit", help="Maximum records to ingest (omit for all)."
+        None, "--limit", help="Maximum records per product code (omit for all)."
     ),
 ) -> None:
     """Pull MAUDE adverse event reports from openFDA and store them locally.
@@ -80,8 +91,14 @@ def ingest(
     Examples:
         maudesignal ingest --product-code QIH --limit 5
 
+        maudesignal ingest --all-ai --limit 20
+
         maudesignal ingest --product-code QIH --start-date 20250101 --end-date 20251231
     """
+    if not product_code and not all_ai:
+        console.print("[red]Error:[/red] Provide --product-code or --all-ai.")
+        raise typer.Exit(code=2)
+
     try:
         config = Config.load()
     except ConfigError as exc:
@@ -92,6 +109,12 @@ def ingest(
     _print_startup(config)
 
     db = Database(config.db_path)
+
+    if all_ai:
+        _ingest_all_catalog(db, config, start_date=start_date, end_date=end_date, limit=limit)
+        return
+
+    assert product_code is not None  # narrowing — guarded above
     with OpenFDAClient(api_key=config.openfda_api_key) as client:
         try:
             result = ingest_product_code(
@@ -114,6 +137,57 @@ def ingest(
     table.add_row("Records skipped", str(result.records_skipped))
     for reason, count in result.skip_reasons.items():
         table.add_row(f"  ...{reason}", str(count))
+    console.print(table)
+
+
+def _ingest_all_catalog(
+    db: Database,
+    config: Config,
+    *,
+    start_date: str | None,
+    end_date: str | None,
+    limit: int | None,
+) -> None:
+    """Ingest MAUDE records for every product code stored in the catalog."""
+    devices = db.list_catalog_devices()
+    if not devices:
+        console.print("[yellow]Catalog is empty. Run `maudesignal catalog update` first.[/yellow]")
+        return
+
+    console.print(f"[green]Bulk ingesting {len(devices)} catalog product codes...[/green]")
+    total_fetched = total_new = 0
+    errors: list[str] = []
+
+    with OpenFDAClient(api_key=config.openfda_api_key) as client:
+        for device in devices:
+            try:
+                result = ingest_product_code(
+                    client=client,
+                    db=db,
+                    product_code=device.product_code,
+                    start_date=start_date,
+                    end_date=end_date,
+                    limit=limit,
+                )
+                total_fetched += result.records_fetched
+                total_new += result.records_new
+                if result.records_fetched:
+                    console.print(
+                        f"  [dim]{device.product_code}[/dim] "
+                        f"fetched={result.records_fetched} new={result.records_new}"
+                    )
+            except MaudeSignalError as exc:
+                msg = f"{device.product_code}: {exc}"
+                errors.append(msg)
+                console.print(f"  [yellow]skip {device.product_code} — {exc}[/yellow]")
+
+    table = Table(title="Bulk Ingest Summary")
+    table.add_column("Metric")
+    table.add_column("Value", justify="right")
+    table.add_row("Product codes attempted", str(len(devices)))
+    table.add_row("Total records fetched", str(total_fetched))
+    table.add_row("Total records new", str(total_new))
+    table.add_row("Errors", str(len(errors)))
     console.print(table)
 
 
@@ -361,6 +435,100 @@ def report(
         table.add_row("PDF", result["pdf_path"])
     else:
         table.add_row("PDF", "[dim]skipped (weasyprint not installed)[/dim]")
+    console.print(table)
+
+
+# ----------------------------------------------------------------------
+# maudesignal catalog
+# ----------------------------------------------------------------------
+
+
+@catalog_app.command("update")
+def catalog_update(
+    api_key: str | None = typer.Option(
+        None, "--api-key", help="openFDA API key (optional — improves rate limit)."
+    ),
+) -> None:
+    """Discover and store all FDA-cleared AI/ML device product codes.
+
+    Queries the openFDA 510k API with a battery of AI/ML keyword searches
+    and upserts results into the local device_catalog table.
+
+    Example:
+        maudesignal catalog update
+    """
+    try:
+        config = Config.load()
+    except ConfigError as exc:
+        console.print(f"[red]Configuration error:[/red] {exc}")
+        raise typer.Exit(code=2) from exc
+
+    configure_logging(config.log_level)
+    db = Database(config.db_path)
+
+    from maudesignal.catalog.fetcher import CatalogFetcher
+
+    key = api_key or config.openfda_api_key
+    fetcher = CatalogFetcher(db, api_key=key)
+    console.print("[green]Scanning openFDA 510k API for AI/ML devices...[/green]")
+    result = fetcher.update()
+
+    table = Table(title="Catalog Update Summary")
+    table.add_column("Metric")
+    table.add_column("Value", justify="right")
+    table.add_row("Keywords searched", str(result.keywords_searched))
+    table.add_row("Unique devices found", str(result.devices_found))
+    table.add_row("Product codes new", str(result.product_codes_new))
+    table.add_row("Product codes updated", str(result.product_codes_updated))
+    table.add_row("Errors", str(len(result.errors)))
+    console.print(table)
+
+    if result.errors:
+        console.print("[yellow]Errors:[/yellow]")
+        for err in result.errors:
+            console.print(f"  {err}")
+
+
+@catalog_app.command("list")
+def catalog_list(
+    limit: int = typer.Option(50, "--limit", help="Maximum rows to display."),
+) -> None:
+    """List all device product codes in the local catalog.
+
+    Example:
+        maudesignal catalog list
+    """
+    try:
+        config = Config.load()
+    except ConfigError as exc:
+        console.print(f"[red]Configuration error:[/red] {exc}")
+        raise typer.Exit(code=2) from exc
+
+    db = Database(config.db_path)
+    devices = db.list_catalog_devices()
+
+    if not devices:
+        console.print("[yellow]Catalog is empty. Run `maudesignal catalog update` first.[/yellow]")
+        return
+
+    table = Table(title=f"AI/ML Device Catalog ({len(devices)} product codes)")
+    table.add_column("Code", style="bold cyan")
+    table.add_column("Device Name")
+    table.add_column("Company")
+    table.add_column("Specialty")
+    table.add_column("Source")
+
+    for device in devices[:limit]:
+        table.add_row(
+            device.product_code,
+            (device.device_name or "")[:50],
+            (device.company_name or "")[:30],
+            (device.specialty or "")[:25],
+            device.source_keyword or "",
+        )
+
+    if len(devices) > limit:
+        console.print(f"[dim]... and {len(devices) - limit} more. Use --limit to see more.[/dim]")
     console.print(table)
 
 

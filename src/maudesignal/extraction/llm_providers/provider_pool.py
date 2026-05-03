@@ -14,7 +14,8 @@ from __future__ import annotations
 
 import logging
 import os
-from dataclasses import dataclass
+import time
+from dataclasses import dataclass, field
 
 from maudesignal.common.exceptions import MaudeSignalError
 from maudesignal.extraction.llm_providers.base import (
@@ -45,6 +46,9 @@ _TOKEN_TO_ENV: dict[str, tuple[str, str]] = {
     "anthropic": ("anthropic", "ANTHROPIC_API_KEY"),
 }
 
+
+BACKOFF_SECONDS: int = 60
+"""Seconds a rate-limited slot stays in backoff before it is retried."""
 
 _RATE_LIMIT_MARKERS = (
     "429",
@@ -93,8 +97,13 @@ class _Slot:
     provider_name: str
     api_key: str
     model: str
-    exhausted: bool = False
-    _instance: LLMProvider | None = None
+    exhausted_at: float = 0.0
+    _instance: LLMProvider | None = field(default=None, repr=False)
+
+    @property
+    def in_backoff(self) -> bool:
+        """True when the slot is still within its cooldown window."""
+        return self.exhausted_at > 0.0 and (time.monotonic() - self.exhausted_at) < BACKOFF_SECONDS
 
     def get(self) -> LLMProvider:
         if self._instance is None:
@@ -208,7 +217,7 @@ class ProviderPool(LLMProvider):
                     "token": s.token,
                     "provider": s.provider_name,
                     "key": _mask_key(s.api_key),
-                    "exhausted": s.exhausted,
+                    "in_backoff": s.in_backoff,
                 }
                 for s in self._slots
             ],
@@ -222,39 +231,62 @@ class ProviderPool(LLMProvider):
         max_tokens: int = 2048,
         temperature: float = 0.0,
     ) -> LLMResponse:
-        """Complete via the active slot, rotating on rate-limit errors."""
-        attempts = 0
+        """Complete via the active slot, rotating on rate-limit errors.
+
+        When every slot is in backoff, sleeps until the earliest slot cools
+        and retries rather than raising immediately.
+        """
         last_exc: BaseException | None = None
-        while attempts < len(self._slots):
-            slot = self._slots[self._idx]
-            if slot.exhausted:
-                self._advance()
-                attempts += 1
-                continue
-            try:
-                return slot.get().complete(
-                    system_prompt=system_prompt,
-                    messages=messages,
-                    max_tokens=max_tokens,
-                    temperature=temperature,
-                )
-            except Exception as exc:
-                last_exc = exc
-                if _is_rate_limit_error(exc):
-                    _LOGGER.warning(
-                        "Pool slot rate-limited: token=%s provider=%s key=%s — rotating",
-                        slot.token,
-                        slot.provider_name,
-                        _mask_key(slot.api_key),
-                    )
-                    slot.exhausted = True
+
+        for _outer in range(2):  # at most one sleep-and-retry cycle
+            attempts = 0
+            while attempts < len(self._slots):
+                slot = self._slots[self._idx]
+                if slot.in_backoff:
                     self._advance()
                     attempts += 1
                     continue
-                raise
+                try:
+                    return slot.get().complete(
+                        system_prompt=system_prompt,
+                        messages=messages,
+                        max_tokens=max_tokens,
+                        temperature=temperature,
+                    )
+                except Exception as exc:
+                    last_exc = exc
+                    if _is_rate_limit_error(exc):
+                        _LOGGER.warning(
+                            "Pool slot rate-limited: token=%s provider=%s key=%s — rotating",
+                            slot.token,
+                            slot.provider_name,
+                            _mask_key(slot.api_key),
+                        )
+                        slot.exhausted_at = time.monotonic()
+                        self._advance()
+                        attempts += 1
+                        continue
+                    raise
+
+            # All slots are in backoff — compute minimum remaining wait.
+            now = time.monotonic()
+            waits = [
+                max(0.0, BACKOFF_SECONDS - (now - s.exhausted_at))
+                for s in self._slots
+                if s.exhausted_at > 0.0
+            ]
+            if not waits or _outer >= 1:
+                break
+            wait = min(waits)
+            _LOGGER.warning(
+                "All %d pool slots in backoff — sleeping %.1fs then retrying",
+                len(self._slots),
+                wait,
+            )
+            time.sleep(wait)
+
         raise PoolExhaustedError(
-            f"All {len(self._slots)} pool slots exhausted by rate limits. "
-            f"Last error: {last_exc}"
+            f"All {len(self._slots)} pool slots rate-limited. " f"Last error: {last_exc}"
         ) from last_exc
 
     def estimate_cost_usd(self, input_tokens: int, output_tokens: int) -> float:

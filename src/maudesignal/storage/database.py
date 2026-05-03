@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from maudesignal.common.logging import get_logger
 from maudesignal.storage.models import (
     Base,
+    DeviceCatalogRecord,
     ExtractionRecord,
     LLMAuditLogRecord,
     NormalizedEventRecord,
@@ -267,3 +268,74 @@ class Database:
                 stmt = stmt.where(ExtractionRecord.maude_report_id.in_(ids))
             stmt = stmt.order_by(ExtractionRecord.extraction_ts)
             return list(session.execute(stmt).scalars().all())
+
+    # ------------------------------------------------------------------
+    # Device catalog
+    # ------------------------------------------------------------------
+
+    def upsert_catalog_device(
+        self,
+        *,
+        product_code: str,
+        device_name: str,
+        company_name: str | None,
+        specialty: str | None,
+        decision_date: str | None,
+        k_number: str | None,
+        source_keyword: str | None,
+    ) -> bool:
+        """Insert or update a device catalog entry.
+
+        Returns True if a new row was inserted, False if updated.
+        """
+        with self._session() as session:
+            # Pre-check for existence: SQLite's on_conflict_do_update always
+            # returns rowcount=1 regardless of insert vs update, so we detect
+            # new rows with a SELECT before the upsert.
+            existing = (
+                session.execute(
+                    select(DeviceCatalogRecord).where(
+                        DeviceCatalogRecord.product_code == product_code
+                    )
+                )
+                .scalars()
+                .first()
+            )
+            is_new = existing is None
+
+            stmt = sqlite_insert(DeviceCatalogRecord).values(
+                product_code=product_code,
+                device_name=device_name,
+                company_name=company_name,
+                specialty=specialty,
+                decision_date=decision_date,
+                k_number=k_number,
+                source_keyword=source_keyword,
+                fetched_at=datetime.now(UTC),
+            )
+            stmt = stmt.on_conflict_do_update(
+                index_elements=["product_code"],
+                set_={
+                    "device_name": stmt.excluded.device_name,
+                    "company_name": stmt.excluded.company_name,
+                    "specialty": stmt.excluded.specialty,
+                    "decision_date": stmt.excluded.decision_date,
+                    "k_number": stmt.excluded.k_number,
+                    "source_keyword": stmt.excluded.source_keyword,
+                    "fetched_at": stmt.excluded.fetched_at,
+                },
+            )
+            session.execute(stmt)
+            session.commit()
+            return is_new
+
+    def list_catalog_devices(self) -> list[DeviceCatalogRecord]:
+        """Return all devices in the catalog, ordered by product_code."""
+        with self._session() as session:
+            stmt = select(DeviceCatalogRecord).order_by(DeviceCatalogRecord.product_code)
+            return list(session.execute(stmt).scalars().all())
+
+    def count_catalog_devices(self) -> int:
+        """Return count of unique product codes in the catalog."""
+        with self._session() as session:
+            return len(session.execute(select(DeviceCatalogRecord)).scalars().all())

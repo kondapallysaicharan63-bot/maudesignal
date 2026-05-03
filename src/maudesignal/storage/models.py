@@ -74,6 +74,25 @@ class ExtractionRecord(Base):
     requires_review: Mapped[bool] = mapped_column(Boolean, index=True)
 
 
+class DeviceCatalogRecord(Base):
+    """FDA-cleared AI/ML device registry.
+
+    Populated by ``maudesignal catalog update`` from the openFDA 510k API.
+    One row per unique product_code; re-running update is idempotent.
+    """
+
+    __tablename__ = "device_catalog"
+
+    product_code: Mapped[str] = mapped_column(String, primary_key=True)
+    device_name: Mapped[str] = mapped_column(String)
+    company_name: Mapped[str | None] = mapped_column(String)
+    specialty: Mapped[str | None] = mapped_column(String)
+    decision_date: Mapped[str | None] = mapped_column(String)
+    k_number: Mapped[str | None] = mapped_column(String)
+    source_keyword: Mapped[str | None] = mapped_column(String)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime)
+
+
 class LLMAuditLogRecord(Base):
     """ALCOA+ audit trail: one row per LLM API call.
 
