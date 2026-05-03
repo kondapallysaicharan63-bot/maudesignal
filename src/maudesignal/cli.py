@@ -26,6 +26,8 @@ from maudesignal.drift.interpreter import build_runtime, interpret_drift
 from maudesignal.extraction.extractor import Extractor
 from maudesignal.extraction.pipeline import extract_record
 from maudesignal.extraction.skill_loader import SkillLoader
+from maudesignal.forecasting.trend_detector import VALID_METRICS as TREND_METRICS
+from maudesignal.forecasting.trend_detector import TrendDetector
 from maudesignal.ingestion.openfda_client import OpenFDAClient
 from maudesignal.ingestion.pipeline import ingest_product_code
 from maudesignal.storage.database import Database
@@ -51,9 +53,15 @@ alert_app = typer.Typer(
     help="Phase 2: configure and check alert rules.",
     no_args_is_help=True,
 )
+forecast_app = typer.Typer(
+    name="forecast",
+    help="Phase 3: trend detection and forecasting.",
+    no_args_is_help=True,
+)
 app.add_typer(catalog_app, name="catalog")
 app.add_typer(analyze_app, name="analyze")
 app.add_typer(alert_app, name="alert")
+app.add_typer(forecast_app, name="forecast")
 console = Console()
 
 
@@ -855,6 +863,115 @@ def alert_delete(
     else:
         console.print(f"[red]Rule {rule_id!r} not found.[/red]")
         raise typer.Exit(code=1)
+
+
+# ----------------------------------------------------------------------
+# maudesignal forecast trends
+# ----------------------------------------------------------------------
+
+
+_NO_METRICS: list[str] = []
+
+
+@forecast_app.command("trends")
+def forecast_trends(
+    product_code: str = typer.Argument(..., help="FDA product code to analyze."),
+    metrics: list[str] = typer.Option(  # noqa: B008
+        _NO_METRICS,
+        "--metric",
+        "-m",
+        help="Metric to analyze. Repeat for multiple. Default: all.",
+    ),
+    window: int = typer.Option(90, "--window", "-w", help="Lookback window in days."),
+    bucket: int = typer.Option(7, "--bucket", "-b", help="Bucket size in days."),
+    min_periods: int = typer.Option(4, "--min-periods", help="Minimum non-empty buckets."),
+) -> None:
+    """Detect metric trends for a product code and store results.
+
+    Example:
+        maudesignal forecast trends QIH --metric ai_rate --window 90
+    """
+    try:
+        config = Config.load()
+    except ConfigError as exc:
+        console.print(f"[red]Configuration error:[/red] {exc}")
+        raise typer.Exit(code=2) from exc
+
+    chosen = list(metrics) if metrics else sorted(TREND_METRICS)
+    for m in chosen:
+        if m not in TREND_METRICS:
+            console.print(f"[red]Unknown metric {m!r}. Choose from: {sorted(TREND_METRICS)}[/red]")
+            raise typer.Exit(code=2)
+
+    configure_logging(config.log_level)
+    _print_startup(config)
+    db = Database(config.db_path)
+    extractor = Extractor(config=config, db=db)
+    detector = TrendDetector(extractor=extractor, db=db, skills_root=config.project_root / "skills")
+
+    console.print(
+        f"[bold]Trend detection:[/bold] product={product_code} "
+        f"metrics={chosen} window={window}d bucket={bucket}d"
+    )
+
+    results = detector.run(
+        product_code=product_code,
+        metrics=chosen,
+        window_days=window,
+        bucket_size_days=bucket,
+        min_periods=min_periods,
+    )
+
+    table = Table(title=f"Trend Results — {product_code}", show_header=True)
+    table.add_column("Metric")
+    table.add_column("Direction")
+    table.add_column("Strength")
+    table.add_column("Signal")
+    table.add_column("Sig?")
+    table.add_column("Slope/period")
+    table.add_column("Recent")
+    table.add_column("Baseline")
+    table.add_column("Status")
+
+    for r in results:
+        if r.skipped:
+            table.add_row(
+                r.metric_name,
+                "-",
+                "-",
+                "-",
+                "-",
+                "-",
+                "-",
+                "-",
+                f"[yellow]SKIPPED: {r.skip_reason}[/yellow]",
+            )
+            continue
+        sig = "[green]Yes[/green]" if r.output.get("is_statistically_significant") else "No"
+        direction = r.output.get("trend_direction", "?")
+        strength = r.output.get("trend_strength", "?")
+        signal = r.output.get("signal_level", "?")
+        color = {"critical": "red", "elevated": "yellow", "routine": "cyan", "low": "dim"}.get(
+            signal, "white"
+        )
+        table.add_row(
+            r.metric_name,
+            direction,
+            strength,
+            f"[{color}]{signal}[/{color}]",
+            sig,
+            f"{r.stats.slope_per_period:+.4f}",
+            f"{r.stats.recent_value:.3f}",
+            f"{r.stats.baseline_value:.3f}",
+            f"[green]OK[/green] ({r.snapshot_id})",
+        )
+
+    console.print(table)
+
+    for r in results:
+        if not r.skipped and r.output.get("regulatory_narrative"):
+            console.print(f"\n[bold]{r.metric_name} narrative:[/bold]")
+            console.print(r.output["regulatory_narrative"])
 
 
 @app.command()

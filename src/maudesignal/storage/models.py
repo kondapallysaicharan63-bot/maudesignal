@@ -2,6 +2,7 @@
 
 Implements the database schema defined in Document 5 §8.
 Phase 2 adds: root_cause_reports, alert_rules, alert_events.
+Phase 3 adds: trend_snapshots.
 """
 
 from __future__ import annotations
@@ -180,3 +181,37 @@ class AlertEventRecord(Base):
     threshold: Mapped[float] = mapped_column(Float)
     message: Mapped[str] = mapped_column(Text)
     delivered: Mapped[bool] = mapped_column(Boolean)
+
+
+# ---------------------------------------------------------------------------
+# Phase 3: trend detection + forecasting
+# ---------------------------------------------------------------------------
+
+
+class TrendSnapshotRecord(Base):
+    """Point-in-time trend analysis for one (product_code, metric_name).
+
+    One row per analysis run. Stores the raw stats and the Skill output JSON.
+    Multiple snapshots coexist — the latest is retrieved by analysis_ts DESC.
+    """
+
+    __tablename__ = "trend_snapshots"
+
+    snapshot_id: Mapped[str] = mapped_column(String, primary_key=True)
+    product_code: Mapped[str] = mapped_column(String, index=True)
+    metric_name: Mapped[str] = mapped_column(String, index=True)
+    analysis_ts: Mapped[datetime] = mapped_column(DateTime)
+    window_days: Mapped[int] = mapped_column(Integer)
+    period_count: Mapped[int] = mapped_column(Integer)
+    slope_per_period: Mapped[float] = mapped_column(Float)
+    mk_tau: Mapped[float] = mapped_column(Float)
+    mk_p_value: Mapped[float] = mapped_column(Float)
+    mean_value: Mapped[float] = mapped_column(Float)
+    recent_value: Mapped[float] = mapped_column(Float)
+    baseline_value: Mapped[float] = mapped_column(Float)
+    trend_direction: Mapped[str] = mapped_column(String)
+    signal_level: Mapped[str] = mapped_column(String)
+    skill_version: Mapped[str] = mapped_column(String)
+    model_used: Mapped[str] = mapped_column(String)
+    output_json: Mapped[str] = mapped_column(Text)
+    confidence_score: Mapped[float] = mapped_column(Float)

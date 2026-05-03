@@ -660,6 +660,107 @@ def _page_root_cause(db: Database) -> None:
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# Page: Trends & Forecasting (Phase 3)
+# ──────────────────────────────────────────────────────────────────────────────
+
+
+def _page_trends(db: Database) -> None:
+    """Render the Trends & Forecasting page."""
+    st.subheader("Trends & Forecasting")
+
+    snapshots = db.list_trend_snapshots(limit=200)
+    if not snapshots:
+        st.info(
+            "No trend snapshots found. Run `maudesignal forecast trends <product_code>` "
+            "to generate trend analysis."
+        )
+        return
+
+    rows = []
+    for s in snapshots:
+        try:
+            out = json.loads(s.output_json)
+        except json.JSONDecodeError:
+            out = {}
+        rows.append(
+            {
+                "Product Code": s.product_code,
+                "Metric": s.metric_name,
+                "Direction": out.get("trend_direction", s.trend_direction),
+                "Strength": out.get("trend_strength", "?"),
+                "Signal Level": s.signal_level,
+                "Significant": out.get("is_statistically_significant", False),
+                "MK Tau": round(s.mk_tau, 3),
+                "p-value": round(s.mk_p_value, 4),
+                "Slope/period": round(s.slope_per_period, 5),
+                "Recent": round(s.recent_value, 3),
+                "Baseline": round(s.baseline_value, 3),
+                "Window (days)": s.window_days,
+                "Confidence": round(s.confidence_score, 2),
+                "Analyzed At": s.analysis_ts,
+            }
+        )
+    df = pd.DataFrame(rows)
+
+    tab_summary, tab_detail, tab_narratives = st.tabs(
+        ["Summary Table", "Signal Distribution", "Regulatory Narratives"]
+    )
+
+    with tab_summary:
+        st.caption(f"**{len(df)}** trend snapshot(s)")
+
+        product_codes = sorted(df["Product Code"].unique())
+        selected_pc = st.selectbox("Filter by product code", ["All"] + product_codes)
+        view = df if selected_pc == "All" else df[df["Product Code"] == selected_pc]
+
+        def _color_signal(val: str) -> str:
+            colors = {
+                "critical": "background-color: #fadbd8",
+                "elevated": "background-color: #fdebd0",
+                "routine": "background-color: #d5f5e3",
+                "low": "background-color: #ebedef",
+            }
+            return colors.get(val, "")
+
+        styled = view.style.applymap(_color_signal, subset=["Signal Level"])
+        st.dataframe(styled, use_container_width=True, hide_index=True)
+
+    with tab_detail:
+        signal_counts = df["Signal Level"].value_counts().reset_index()
+        signal_counts.columns = ["Signal Level", "Count"]
+        st.caption("Signal level distribution across all snapshots")
+        if not signal_counts.empty:
+            st.bar_chart(signal_counts.set_index("Signal Level")["Count"])
+
+        metric_counts = df["Metric"].value_counts().reset_index()
+        metric_counts.columns = ["Metric", "Snapshots"]
+        st.caption("Snapshot count by metric")
+        st.dataframe(metric_counts, use_container_width=True, hide_index=True)
+
+    with tab_narratives:
+        st.caption("Regulatory narratives from the trend-interpreter Skill")
+        for s in snapshots[:20]:
+            try:
+                out = json.loads(s.output_json)
+            except json.JSONDecodeError:
+                continue
+            narrative = out.get("regulatory_narrative")
+            if not narrative:
+                continue
+            signal = s.signal_level
+            icon = {"critical": "🔴", "elevated": "🟡", "routine": "🔵", "low": "⚪"}.get(
+                signal, "⚫"
+            )
+            with st.expander(
+                f"{icon} {s.product_code} — {s.metric_name} " f"({s.trend_direction}, {signal})"
+            ):
+                st.write(narrative)
+                action = out.get("recommended_action")
+                if action:
+                    st.info(f"**Recommended action:** {action}")
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # App shell
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -680,7 +781,14 @@ def _render_app(db: Database) -> None:
         st.divider()
         page = st.radio(
             "Navigation",
-            ["Overview", "Records", "Signals & Drift", "Root Cause & Alerts", "Device Catalog"],
+            [
+                "Overview",
+                "Records",
+                "Signals & Drift",
+                "Root Cause & Alerts",
+                "Trends & Forecasting",
+                "Device Catalog",
+            ],
             label_visibility="collapsed",
         )
         st.divider()
@@ -699,6 +807,7 @@ def _render_app(db: Database) -> None:
         "Records": "Structured extraction results per MAUDE report",
         "Signals & Drift": "Temporal signal trends and confidence drift",
         "Root Cause & Alerts": "Root-cause hypotheses and alert rule management",
+        "Trends & Forecasting": "Statistical trend detection (Mann-Kendall + linear regression)",
         "Device Catalog": "FDA-cleared AI/ML device registry",
     }
     st.markdown(
@@ -720,6 +829,8 @@ def _render_app(db: Database) -> None:
         _page_drift(db)
     elif page == "Root Cause & Alerts":
         _page_root_cause(db)
+    elif page == "Trends & Forecasting":
+        _page_trends(db)
     elif page == "Device Catalog":
         _page_catalog(db)
 

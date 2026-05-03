@@ -29,6 +29,7 @@ from maudesignal.storage.models import (
     NormalizedEventRecord,
     RawReportRecord,
     RootCauseReportRecord,
+    TrendSnapshotRecord,
 )
 
 logger = get_logger(__name__)
@@ -572,3 +573,155 @@ class Database:
             1 for r in in_window if json.loads(r.output_json).get("severity") in severity_levels
         )
         return count / len(in_window)
+
+    # ------------------------------------------------------------------
+    # Trend snapshots  (Phase 3)
+    # ------------------------------------------------------------------
+
+    def insert_trend_snapshot(
+        self,
+        *,
+        snapshot_id: str,
+        product_code: str,
+        metric_name: str,
+        window_days: int,
+        period_count: int,
+        slope_per_period: float,
+        mk_tau: float,
+        mk_p_value: float,
+        mean_value: float,
+        recent_value: float,
+        baseline_value: float,
+        trend_direction: str,
+        signal_level: str,
+        skill_version: str,
+        model_used: str,
+        output_payload: dict[str, Any],
+        confidence_score: float,
+    ) -> None:
+        """Insert a trend snapshot record."""
+        with self._session() as session:
+            record = TrendSnapshotRecord(
+                snapshot_id=snapshot_id,
+                product_code=product_code,
+                metric_name=metric_name,
+                analysis_ts=datetime.now(UTC).replace(tzinfo=None),
+                window_days=window_days,
+                period_count=period_count,
+                slope_per_period=slope_per_period,
+                mk_tau=mk_tau,
+                mk_p_value=mk_p_value,
+                mean_value=mean_value,
+                recent_value=recent_value,
+                baseline_value=baseline_value,
+                trend_direction=trend_direction,
+                signal_level=signal_level,
+                skill_version=skill_version,
+                model_used=model_used,
+                output_json=json.dumps(output_payload),
+                confidence_score=confidence_score,
+            )
+            session.add(record)
+            session.commit()
+            logger.info(
+                "trend_snapshot_inserted",
+                snapshot_id=snapshot_id,
+                product_code=product_code,
+                metric_name=metric_name,
+            )
+
+    def list_trend_snapshots(
+        self,
+        *,
+        product_code: str | None = None,
+        metric_name: str | None = None,
+        limit: int = 50,
+    ) -> list[TrendSnapshotRecord]:
+        """Return trend snapshots, most recent first."""
+        with self._session() as session:
+            stmt = select(TrendSnapshotRecord).order_by(TrendSnapshotRecord.analysis_ts.desc())
+            if product_code:
+                stmt = stmt.where(TrendSnapshotRecord.product_code == product_code)
+            if metric_name:
+                stmt = stmt.where(TrendSnapshotRecord.metric_name == metric_name)
+            stmt = stmt.limit(limit)
+            return list(session.execute(stmt).scalars().all())
+
+    def get_metric_time_series(
+        self,
+        *,
+        product_code: str | None,
+        metric_name: str,
+        window_days: int,
+        bucket_size_days: int = 7,
+    ) -> list[tuple[datetime, float]]:
+        """Return (bucket_start, metric_value) pairs for the given window.
+
+        Buckets are aligned to calendar weeks (or `bucket_size_days`).
+        metric_name: "ai_rate" | "severity_rate" | "report_volume"
+        """
+        from datetime import timedelta
+
+        since = datetime.now(UTC) - timedelta(days=window_days)
+        since_naive = since.replace(tzinfo=None)
+        now_naive = datetime.now(UTC).replace(tzinfo=None)
+
+        buckets: list[tuple[datetime, float]] = []
+        cursor = since_naive
+        while cursor < now_naive:
+            bucket_end = min(cursor + timedelta(days=bucket_size_days), now_naive)
+            value = self._compute_metric_in_range(
+                product_code=product_code,
+                metric_name=metric_name,
+                start=cursor,
+                end=bucket_end,
+            )
+            buckets.append((cursor, value))
+            cursor = bucket_end
+        return buckets
+
+    def _compute_metric_in_range(
+        self,
+        *,
+        product_code: str | None,
+        metric_name: str,
+        start: datetime,
+        end: datetime,
+    ) -> float:
+        """Compute a single metric value for a time range."""
+        if metric_name == "report_volume":
+            rows = self.list_extractions(
+                product_code=product_code,
+                skill_name="maude-narrative-extractor",
+            )
+            return float(sum(1 for r in rows if start <= r.extraction_ts < end))
+
+        if metric_name == "ai_rate":
+            rows = self.list_extractions(
+                product_code=product_code,
+                skill_name="maude-narrative-extractor",
+            )
+            in_range = [r for r in rows if start <= r.extraction_ts < end]
+            if not in_range:
+                return 0.0
+            ai_count = sum(
+                1 for r in in_range if json.loads(r.output_json).get("ai_related_flag") is True
+            )
+            return ai_count / len(in_range)
+
+        if metric_name == "severity_rate":
+            rows = self.list_extractions(
+                product_code=product_code,
+                skill_name="severity-triage",
+            )
+            in_range = [r for r in rows if start <= r.extraction_ts < end]
+            if not in_range:
+                return 0.0
+            count = sum(
+                1
+                for r in in_range
+                if json.loads(r.output_json).get("severity") in ("death", "serious_injury")
+            )
+            return count / len(in_range)
+
+        return 0.0
