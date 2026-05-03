@@ -1,8 +1,7 @@
 """SQLAlchemy 2.0 models for MaudeSignal.
 
-Implements the database schema defined in Document 5 §8. These models are
-intentionally minimal — just enough to demonstrate the data flow end-to-end.
-Additional tables (classifications, drift_alerts) will be added in Phase 2.
+Implements the database schema defined in Document 5 §8.
+Phase 2 adds: root_cause_reports, alert_rules, alert_events.
 """
 
 from __future__ import annotations
@@ -113,3 +112,71 @@ class LLMAuditLogRecord(Base):
     input_tokens: Mapped[int] = mapped_column(Integer)
     output_tokens: Mapped[int] = mapped_column(Integer)
     cost_estimate_usd: Mapped[float] = mapped_column(Float)
+
+
+# ---------------------------------------------------------------------------
+# Phase 2: root cause analysis + alerting
+# ---------------------------------------------------------------------------
+
+
+class RootCauseReportRecord(Base):
+    """Root-cause analysis output for a cluster of extractions.
+
+    One row per (product_code, failure_mode_category, analysis run).
+    Multiple runs for the same cluster coexist (new run = new report_id).
+    """
+
+    __tablename__ = "root_cause_reports"
+
+    report_id: Mapped[str] = mapped_column(String, primary_key=True)
+    product_code: Mapped[str] = mapped_column(String, index=True)
+    failure_mode_category: Mapped[str] = mapped_column(String)
+    analysis_ts: Mapped[datetime] = mapped_column(DateTime)
+    cluster_size: Mapped[int] = mapped_column(Integer)
+    skill_version: Mapped[str] = mapped_column(String)
+    model_used: Mapped[str] = mapped_column(String)
+    output_json: Mapped[str] = mapped_column(Text)
+    confidence_score: Mapped[float] = mapped_column(Float)
+    requires_review: Mapped[bool] = mapped_column(Boolean, index=True)
+
+
+class AlertRuleRecord(Base):
+    """User-configured alert rule (threshold + delivery).
+
+    Metrics: new_reports | ai_rate | severity_rate | new_failure_mode
+    Delivery: console | slack | email
+    delivery_config stores JSON with delivery-specific fields (webhook_url, etc.).
+    """
+
+    __tablename__ = "alert_rules"
+
+    rule_id: Mapped[str] = mapped_column(String, primary_key=True)
+    product_code: Mapped[str | None] = mapped_column(String, index=True)
+    metric: Mapped[str] = mapped_column(String)
+    threshold: Mapped[float] = mapped_column(Float)
+    window_days: Mapped[int] = mapped_column(Integer)
+    delivery: Mapped[str] = mapped_column(String)
+    delivery_config: Mapped[str | None] = mapped_column(Text)  # JSON
+    description: Mapped[str | None] = mapped_column(String)
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+    active: Mapped[bool] = mapped_column(Boolean, index=True)
+
+
+class AlertEventRecord(Base):
+    """Fired alert instance (one row per rule × fire time).
+
+    Append-only. delivered=True when the notification was dispatched
+    successfully; False means it fired but delivery failed.
+    """
+
+    __tablename__ = "alert_events"
+
+    event_id: Mapped[str] = mapped_column(String, primary_key=True)
+    rule_id: Mapped[str] = mapped_column(String, index=True)
+    fired_at: Mapped[datetime] = mapped_column(DateTime)
+    product_code: Mapped[str | None] = mapped_column(String)
+    metric: Mapped[str] = mapped_column(String)
+    metric_value: Mapped[float] = mapped_column(Float)
+    threshold: Mapped[float] = mapped_column(Float)
+    message: Mapped[str] = mapped_column(Text)
+    delivered: Mapped[bool] = mapped_column(Boolean)

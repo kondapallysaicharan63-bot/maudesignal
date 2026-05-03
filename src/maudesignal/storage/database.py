@@ -20,12 +20,15 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from maudesignal.common.logging import get_logger
 from maudesignal.storage.models import (
+    AlertEventRecord,
+    AlertRuleRecord,
     Base,
     DeviceCatalogRecord,
     ExtractionRecord,
     LLMAuditLogRecord,
     NormalizedEventRecord,
     RawReportRecord,
+    RootCauseReportRecord,
 )
 
 logger = get_logger(__name__)
@@ -339,3 +342,233 @@ class Database:
         """Return count of unique product codes in the catalog."""
         with self._session() as session:
             return len(session.execute(select(DeviceCatalogRecord)).scalars().all())
+
+    # ------------------------------------------------------------------
+    # Root cause reports  (Phase 2)
+    # ------------------------------------------------------------------
+
+    def insert_root_cause_report(
+        self,
+        *,
+        report_id: str,
+        product_code: str,
+        failure_mode_category: str,
+        cluster_size: int,
+        skill_version: str,
+        model_used: str,
+        output_payload: dict[str, Any],
+        confidence_score: float,
+        requires_review: bool,
+    ) -> None:
+        """Append a root-cause analysis result (append-only)."""
+        with self._session() as session:
+            record = RootCauseReportRecord(
+                report_id=report_id,
+                product_code=product_code,
+                failure_mode_category=failure_mode_category,
+                analysis_ts=datetime.now(UTC),
+                cluster_size=cluster_size,
+                skill_version=skill_version,
+                model_used=model_used,
+                output_json=json.dumps(output_payload),
+                confidence_score=confidence_score,
+                requires_review=requires_review,
+            )
+            session.add(record)
+            session.commit()
+
+    def list_root_cause_reports(
+        self,
+        product_code: str | None = None,
+    ) -> list[RootCauseReportRecord]:
+        """Return root cause reports, newest first."""
+        with self._session() as session:
+            stmt = select(RootCauseReportRecord)
+            if product_code:
+                stmt = stmt.where(RootCauseReportRecord.product_code == product_code)
+            stmt = stmt.order_by(RootCauseReportRecord.analysis_ts.desc())
+            return list(session.execute(stmt).scalars().all())
+
+    # ------------------------------------------------------------------
+    # Alert rules  (Phase 2)
+    # ------------------------------------------------------------------
+
+    def insert_alert_rule(
+        self,
+        *,
+        rule_id: str,
+        product_code: str | None,
+        metric: str,
+        threshold: float,
+        window_days: int,
+        delivery: str,
+        delivery_config: dict[str, Any] | None,
+        description: str | None,
+    ) -> None:
+        """Insert a new alert rule."""
+        with self._session() as session:
+            record = AlertRuleRecord(
+                rule_id=rule_id,
+                product_code=product_code,
+                metric=metric,
+                threshold=threshold,
+                window_days=window_days,
+                delivery=delivery,
+                delivery_config=json.dumps(delivery_config) if delivery_config else None,
+                description=description,
+                created_at=datetime.now(UTC),
+                active=True,
+            )
+            session.add(record)
+            session.commit()
+
+    def list_alert_rules(self, active_only: bool = True) -> list[AlertRuleRecord]:
+        """Return alert rules, optionally filtered to active ones."""
+        with self._session() as session:
+            stmt = select(AlertRuleRecord)
+            if active_only:
+                stmt = stmt.where(AlertRuleRecord.active == True)  # noqa: E712
+            stmt = stmt.order_by(AlertRuleRecord.created_at)
+            return list(session.execute(stmt).scalars().all())
+
+    def deactivate_alert_rule(self, rule_id: str) -> bool:
+        """Mark a rule as inactive. Returns True if found and updated."""
+        with self._session() as session:
+            record = (
+                session.execute(select(AlertRuleRecord).where(AlertRuleRecord.rule_id == rule_id))
+                .scalars()
+                .first()
+            )
+            if record is None:
+                return False
+            record.active = False
+            session.commit()
+            return True
+
+    # ------------------------------------------------------------------
+    # Alert events  (Phase 2)
+    # ------------------------------------------------------------------
+
+    def insert_alert_event(
+        self,
+        *,
+        event_id: str,
+        rule_id: str,
+        product_code: str | None,
+        metric: str,
+        metric_value: float,
+        threshold: float,
+        message: str,
+        delivered: bool,
+    ) -> None:
+        """Append a fired alert event (append-only)."""
+        with self._session() as session:
+            record = AlertEventRecord(
+                event_id=event_id,
+                rule_id=rule_id,
+                fired_at=datetime.now(UTC),
+                product_code=product_code,
+                metric=metric,
+                metric_value=metric_value,
+                threshold=threshold,
+                message=message,
+                delivered=delivered,
+            )
+            session.add(record)
+            session.commit()
+
+    def list_alert_events(
+        self,
+        rule_id: str | None = None,
+        limit: int = 100,
+    ) -> list[AlertEventRecord]:
+        """Return alert events, newest first."""
+        with self._session() as session:
+            stmt = select(AlertEventRecord)
+            if rule_id:
+                stmt = stmt.where(AlertEventRecord.rule_id == rule_id)
+            stmt = stmt.order_by(AlertEventRecord.fired_at.desc()).limit(limit)
+            return list(session.execute(stmt).scalars().all())
+
+    # ------------------------------------------------------------------
+    # Metric queries for alerting  (Phase 2)
+    # ------------------------------------------------------------------
+
+    def count_extractions_in_window(
+        self,
+        *,
+        product_code: str | None,
+        skill_name: str,
+        since: datetime,
+    ) -> int:
+        """Count extractions for a product code after `since`."""
+        since_naive = since.replace(tzinfo=None) if since.tzinfo else since
+        with self._session() as session:
+            stmt = select(ExtractionRecord).where(
+                ExtractionRecord.skill_name == skill_name,
+                ExtractionRecord.extraction_ts >= since_naive,
+            )
+            if product_code:
+                ids = (
+                    session.execute(
+                        select(NormalizedEventRecord.maude_report_id).where(
+                            NormalizedEventRecord.product_code == product_code
+                        )
+                    )
+                    .scalars()
+                    .all()
+                )
+                if not ids:
+                    return 0
+                stmt = stmt.where(ExtractionRecord.maude_report_id.in_(ids))
+            return len(session.execute(stmt).scalars().all())
+
+    def ai_rate_in_window(
+        self,
+        *,
+        product_code: str | None,
+        since: datetime,
+    ) -> float:
+        """Return fraction of extractor outputs flagged ai_related_flag=true since `since`.
+
+        Returns 0.0 if no records in window.
+        """
+        # SQLite stores datetimes without timezone; strip tzinfo for comparison.
+        since_naive = since.replace(tzinfo=None) if since.tzinfo else since
+        rows = self.list_extractions(
+            product_code=product_code,
+            skill_name="maude-narrative-extractor",
+        )
+        in_window = [r for r in rows if r.extraction_ts >= since_naive]
+        if not in_window:
+            return 0.0
+        ai_count = sum(
+            1 for r in in_window if json.loads(r.output_json).get("ai_related_flag") is True
+        )
+        return ai_count / len(in_window)
+
+    def severity_rate_in_window(
+        self,
+        *,
+        product_code: str | None,
+        since: datetime,
+        severity_levels: list[str] | None = None,
+    ) -> float:
+        """Return fraction of severity-triage outputs at or above given levels.
+
+        Defaults to counting death + serious_injury.
+        """
+        if severity_levels is None:
+            severity_levels = ["death", "serious_injury"]
+        since_naive = since.replace(tzinfo=None) if since.tzinfo else since
+        rows = self.list_extractions(
+            product_code=product_code,
+            skill_name="severity-triage",
+        )
+        in_window = [r for r in rows if r.extraction_ts >= since_naive]
+        if not in_window:
+            return 0.0
+        count = sum(
+            1 for r in in_window if json.loads(r.output_json).get("severity") in severity_levels
+        )
+        return count / len(in_window)

@@ -17,6 +17,8 @@ from rich.console import Console
 from rich.table import Table
 
 from maudesignal import __version__
+from maudesignal.alerting.checker import AlertChecker
+from maudesignal.alerting.rules import VALID_DELIVERY, VALID_METRICS
 from maudesignal.common.exceptions import MaudeSignalError
 from maudesignal.common.logging import configure_logging
 from maudesignal.config import Config, ConfigError
@@ -39,7 +41,19 @@ catalog_app = typer.Typer(
     help="Manage the FDA AI/ML device catalog.",
     no_args_is_help=True,
 )
+analyze_app = typer.Typer(
+    name="analyze",
+    help="Phase 2: root-cause analysis commands.",
+    no_args_is_help=True,
+)
+alert_app = typer.Typer(
+    name="alert",
+    help="Phase 2: configure and check alert rules.",
+    no_args_is_help=True,
+)
 app.add_typer(catalog_app, name="catalog")
+app.add_typer(analyze_app, name="analyze")
+app.add_typer(alert_app, name="alert")
 console = Console()
 
 
@@ -530,6 +544,317 @@ def catalog_list(
     if len(devices) > limit:
         console.print(f"[dim]... and {len(devices) - limit} more. Use --limit to see more.[/dim]")
     console.print(table)
+
+
+# ----------------------------------------------------------------------
+# maudesignal analyze
+# ----------------------------------------------------------------------
+
+
+@analyze_app.command("root-cause")
+def analyze_root_cause(
+    product_code: str = typer.Option(..., "--product-code", "-p", help="FDA product code."),
+    min_cluster: int = typer.Option(
+        3, "--min-cluster", help="Minimum extractions per failure-mode cluster to analyze."
+    ),
+    device_name: str = typer.Option(
+        "", "--device-name", help="Device brand name (cosmetic, used in LLM prompt)."
+    ),
+) -> None:
+    """Run root-cause analysis on all failure-mode clusters for a product code.
+
+    Requires that `extract` has already been run so classifier extractions exist.
+
+    Example:
+        maudesignal analyze root-cause --product-code QIH
+    """
+    try:
+        config = Config.load()
+    except ConfigError as exc:
+        console.print(f"[red]Configuration error:[/red] {exc}")
+        raise typer.Exit(code=2) from exc
+
+    configure_logging(config.log_level)
+    db = Database(config.db_path)
+    _print_startup(config)
+
+    from maudesignal.analysis.root_cause import RootCauseAnalyzer
+
+    extractor = Extractor(config=config, db=db)
+    analyzer = RootCauseAnalyzer(
+        extractor=extractor,
+        db=db,
+        skills_root=config.project_root / "skills",
+    )
+
+    console.print(
+        f"[green]Running root-cause analysis for {product_code} "
+        f"(min_cluster={min_cluster})...[/green]"
+    )
+    try:
+        runs = analyzer.run(
+            product_code=product_code,
+            device_name=device_name,
+            min_cluster_size=min_cluster,
+        )
+    except MaudeSignalError as exc:
+        console.print(f"[red]Error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    if not runs:
+        console.print(
+            f"[yellow]No clusters found for {product_code} with "
+            f"min_cluster_size={min_cluster}. "
+            "Run `extract` first or lower --min-cluster.[/yellow]"
+        )
+        return
+
+    table = Table(title=f"Root Cause Analysis — {product_code}")
+    table.add_column("Failure Mode", style="cyan")
+    table.add_column("Cluster", justify="right")
+    table.add_column("Confidence", justify="right")
+    table.add_column("Review?")
+    table.add_column("Hypothesis (truncated)")
+
+    for run in runs:
+        out = run.output
+        hypothesis = (out.get("root_cause_hypothesis") or "")[:70]
+        review = "[yellow]YES[/yellow]" if out.get("requires_human_review") else "[green]no[/green]"
+        table.add_row(
+            run.cluster.failure_mode_category,
+            str(run.cluster.cluster_size),
+            f"{out.get('confidence_score', 0.0):.2f}",
+            review,
+            hypothesis,
+        )
+
+    console.print(table)
+    console.print(f"\n[dim]{len(runs)} cluster(s) analyzed. Results saved to DB.[/dim]")
+
+
+# ----------------------------------------------------------------------
+# maudesignal alert
+# ----------------------------------------------------------------------
+
+
+@alert_app.command("add")
+def alert_add(
+    metric: str = typer.Option(
+        ...,
+        "--metric",
+        "-m",
+        help=f"Metric to monitor. One of: {', '.join(sorted(VALID_METRICS))}",
+    ),
+    threshold: float = typer.Option(
+        ..., "--threshold", "-t", help="Alert fires when metric >= threshold."
+    ),
+    window: int = typer.Option(30, "--window", help="Look-back window in days."),
+    delivery: str = typer.Option(
+        "console",
+        "--delivery",
+        "-d",
+        help=f"Delivery channel. One of: {', '.join(sorted(VALID_DELIVERY))}",
+    ),
+    product_code: str | None = typer.Option(
+        None, "--product-code", "-p", help="Scope to one product code (omit for all)."
+    ),
+    webhook_url: str | None = typer.Option(
+        None, "--webhook-url", help="Slack webhook URL (required when --delivery=slack)."
+    ),
+    email_to: str | None = typer.Option(
+        None, "--email-to", help="Recipient email (required when --delivery=email)."
+    ),
+    smtp_host: str = typer.Option("smtp.gmail.com", "--smtp-host"),
+    smtp_port: int = typer.Option(465, "--smtp-port"),
+    email_from: str | None = typer.Option(None, "--email-from"),
+    smtp_user: str | None = typer.Option(None, "--smtp-user"),
+    smtp_pass: str | None = typer.Option(None, "--smtp-pass"),
+    description: str | None = typer.Option(None, "--description", help="Human-readable note."),
+) -> None:
+    r"""Add a new alert rule.
+
+    Examples:
+        maudesignal alert add --metric ai_rate --threshold 0.6 --window 30
+        maudesignal alert add --metric new_reports --threshold 10 --window 7 \
+            --delivery slack --webhook-url https://hooks.slack.com/...
+    """
+    import uuid as _uuid
+
+    if metric not in VALID_METRICS:
+        console.print(f"[red]Unknown metric {metric!r}. Choose from: {sorted(VALID_METRICS)}[/red]")
+        raise typer.Exit(code=2)
+    if delivery not in VALID_DELIVERY:
+        console.print(
+            f"[red]Unknown delivery {delivery!r}. Choose from: {sorted(VALID_DELIVERY)}[/red]"
+        )
+        raise typer.Exit(code=2)
+    if delivery == "slack" and not webhook_url:
+        console.print("[red]--webhook-url is required when --delivery=slack[/red]")
+        raise typer.Exit(code=2)
+    if delivery == "email" and not email_to:
+        console.print("[red]--email-to is required when --delivery=email[/red]")
+        raise typer.Exit(code=2)
+
+    try:
+        config = Config.load()
+    except ConfigError as exc:
+        console.print(f"[red]Configuration error:[/red] {exc}")
+        raise typer.Exit(code=2) from exc
+
+    db = Database(config.db_path)
+    rule_id = str(_uuid.uuid4())[:8]
+
+    delivery_cfg: dict[str, str] | None = None
+    if delivery == "slack" and webhook_url:
+        delivery_cfg = {"webhook_url": webhook_url}
+    elif delivery == "email" and email_to:
+        delivery_cfg = {
+            "recipient": email_to,
+            "sender": email_from or "maudesignal@localhost",
+            "smtp_host": smtp_host,
+            "smtp_port": str(smtp_port),
+        }
+        if smtp_user:
+            delivery_cfg["username"] = smtp_user
+        if smtp_pass:
+            delivery_cfg["password"] = smtp_pass
+
+    db.insert_alert_rule(
+        rule_id=rule_id,
+        product_code=product_code,
+        metric=metric,
+        threshold=threshold,
+        window_days=window,
+        delivery=delivery,
+        delivery_config=delivery_cfg,
+        description=description,
+    )
+    scope = product_code or "all products"
+    console.print(f"[green]Alert rule {rule_id!r} created.[/green]")
+    console.print(
+        f"  metric={metric}, threshold={threshold}, window={window}d, "
+        f"delivery={delivery}, scope={scope}"
+    )
+
+
+@alert_app.command("list")
+def alert_list() -> None:
+    """List all active alert rules.
+
+    Example:
+        maudesignal alert list
+    """
+    try:
+        config = Config.load()
+    except ConfigError as exc:
+        console.print(f"[red]Configuration error:[/red] {exc}")
+        raise typer.Exit(code=2) from exc
+
+    db = Database(config.db_path)
+    rules = db.list_alert_rules(active_only=False)
+
+    if not rules:
+        console.print("[yellow]No alert rules defined. Use `alert add` to create one.[/yellow]")
+        return
+
+    table = Table(title="Alert Rules")
+    table.add_column("ID", style="cyan")
+    table.add_column("Metric")
+    table.add_column("Threshold", justify="right")
+    table.add_column("Window", justify="right")
+    table.add_column("Delivery")
+    table.add_column("Scope")
+    table.add_column("Active")
+    table.add_column("Description")
+
+    for rule in rules:
+        active_str = "[green]yes[/green]" if rule.active else "[red]no[/red]"
+        table.add_row(
+            rule.rule_id,
+            rule.metric,
+            str(rule.threshold),
+            f"{rule.window_days}d",
+            rule.delivery,
+            rule.product_code or "all",
+            active_str,
+            rule.description or "",
+        )
+    console.print(table)
+
+
+@alert_app.command("check")
+def alert_check(
+    product_code: str | None = typer.Option(
+        None, "--product-code", "-p", help="Scope check to one product code."
+    ),
+) -> None:
+    """Evaluate all active rules and fire notifications for any that trip.
+
+    Example:
+        maudesignal alert check
+        maudesignal alert check --product-code QIH
+    """
+    try:
+        config = Config.load()
+    except ConfigError as exc:
+        console.print(f"[red]Configuration error:[/red] {exc}")
+        raise typer.Exit(code=2) from exc
+
+    configure_logging(config.log_level)
+    db = Database(config.db_path)
+    checker = AlertChecker(db)
+
+    console.print("[green]Checking alert rules...[/green]")
+    result = checker.check_all(product_code=product_code)
+
+    console.print(
+        f"Rules evaluated: {result.rules_evaluated} | "
+        f"Fired: {result.alerts_fired} | "
+        f"Delivered: {result.alerts_delivered}"
+    )
+    if result.details:
+        table = Table(title="Fired Alerts")
+        table.add_column("Rule ID")
+        table.add_column("Metric")
+        table.add_column("Value", justify="right")
+        table.add_column("Threshold", justify="right")
+        table.add_column("Delivered")
+        for d in result.details:
+            delivered_str = "[green]yes[/green]" if d["delivered"] else "[red]no[/red]"
+            table.add_row(
+                d["rule_id"],
+                d["metric"],
+                f"{d['metric_value']:.3f}",
+                f"{d['threshold']:.3f}",
+                delivered_str,
+            )
+        console.print(table)
+    else:
+        console.print("[dim]No rules fired.[/dim]")
+
+
+@alert_app.command("delete")
+def alert_delete(
+    rule_id: str = typer.Argument(..., help="Rule ID to deactivate."),
+) -> None:
+    """Deactivate an alert rule (soft-delete — history is preserved).
+
+    Example:
+        maudesignal alert delete abc12345
+    """
+    try:
+        config = Config.load()
+    except ConfigError as exc:
+        console.print(f"[red]Configuration error:[/red] {exc}")
+        raise typer.Exit(code=2) from exc
+
+    db = Database(config.db_path)
+    found = db.deactivate_alert_rule(rule_id)
+    if found:
+        console.print(f"[green]Rule {rule_id!r} deactivated.[/green]")
+    else:
+        console.print(f"[red]Rule {rule_id!r} not found.[/red]")
+        raise typer.Exit(code=1)
 
 
 @app.command()

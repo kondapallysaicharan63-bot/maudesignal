@@ -15,6 +15,7 @@ from maudesignal.storage.database import Database
 
 EXTRACTOR_SKILL = "maude-narrative-extractor"
 CLASSIFIER_SKILL = "ai-failure-mode-classifier"
+ROOT_CAUSE_SKILL = "root-cause-analyzer"
 
 _MAUDE_DETAIL_URL = (
     "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id={}"
@@ -549,6 +550,116 @@ def _page_catalog(db: Database) -> None:
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# Page: Root Cause & Alerts  (Phase 2)
+# ──────────────────────────────────────────────────────────────────────────────
+
+
+def _page_root_cause(db: Database) -> None:
+    tab_rc, tab_alerts, tab_events = st.tabs(["Root Cause Reports", "Alert Rules", "Alert History"])
+
+    # ── Root cause reports ───────────────────────────────────────────────────
+    with tab_rc:
+        reports = db.list_root_cause_reports()
+        if not reports:
+            st.info(
+                "No root-cause reports yet.  \n"
+                "Run `maudesignal analyze root-cause --product-code <code>` after extraction."
+            )
+        else:
+            rows = []
+            for r in reports:
+                out = json.loads(r.output_json)
+                rows.append(
+                    {
+                        "product_code": r.product_code,
+                        "failure_mode": r.failure_mode_category,
+                        "cluster_size": r.cluster_size,
+                        "confidence": r.confidence_score,
+                        "review": r.requires_review,
+                        "hypothesis": (out.get("root_cause_hypothesis") or "")[:120],
+                        "factors": ", ".join(out.get("contributing_factors") or []),
+                        "recommendation": (out.get("recommended_investigation") or "")[:120],
+                        "analysis_ts": r.analysis_ts,
+                    }
+                )
+            df_rc = pd.DataFrame(rows)
+            st.caption(f"**{len(df_rc)}** root-cause report(s) on record")
+
+            needs_review = df_rc[df_rc["review"] == True]  # noqa: E712
+            if not needs_review.empty:
+                st.warning(
+                    f"⚠️ **{len(needs_review)} report(s) require human review** "
+                    "(low confidence or small cluster)."
+                )
+
+            pc_opts = ["(all)"] + sorted(df_rc["product_code"].unique())
+            pc_sel = st.selectbox("Filter by product code", pc_opts, key="rc_pc")
+            filtered_rc = df_rc if pc_sel == "(all)" else df_rc[df_rc["product_code"] == pc_sel]
+
+            for _, row in filtered_rc.iterrows():
+                review_badge = "🔴 Review required" if row["review"] else "🟢 Auto-accepted"
+                with st.expander(
+                    f"**{row['product_code']}** — {row['failure_mode']} "
+                    f"(cluster={row['cluster_size']}, conf={row['confidence']:.2f})"
+                ):
+                    st.markdown(f"**Status:** {review_badge}")
+                    st.markdown(f"**Hypothesis:** {row['hypothesis']}")
+                    st.markdown(f"**Contributing factors:** {row['factors']}")
+                    st.markdown(f"**Recommended investigation:** {row['recommendation']}")
+                    st.caption(f"Analyzed: {row['analysis_ts']}")
+
+    # ── Alert rules ───────────────────────────────────────────────────────────
+    with tab_alerts:
+        rules = db.list_alert_rules(active_only=False)
+        if not rules:
+            st.info(
+                "No alert rules configured.  \n"
+                "Use `maudesignal alert add` from the CLI to create one."
+            )
+        else:
+            rule_rows = [
+                {
+                    "ID": r.rule_id,
+                    "Metric": r.metric,
+                    "Threshold": r.threshold,
+                    "Window (days)": r.window_days,
+                    "Delivery": r.delivery,
+                    "Scope": r.product_code or "all",
+                    "Active": "✅" if r.active else "❌",
+                    "Description": r.description or "",
+                }
+                for r in rules
+            ]
+            st.dataframe(
+                pd.DataFrame(rule_rows),
+                use_container_width=True,
+                hide_index=True,
+            )
+
+    # ── Alert history ─────────────────────────────────────────────────────────
+    with tab_events:
+        events = db.list_alert_events(limit=200)
+        if not events:
+            st.info("No alerts have fired yet.")
+        else:
+            event_rows = [
+                {
+                    "Fired At": e.fired_at,
+                    "Rule ID": e.rule_id,
+                    "Metric": e.metric,
+                    "Value": round(e.metric_value, 4),
+                    "Threshold": e.threshold,
+                    "Scope": e.product_code or "all",
+                    "Delivered": "✅" if e.delivered else "❌",
+                }
+                for e in events
+            ]
+            df_ev = pd.DataFrame(event_rows)
+            st.caption(f"**{len(df_ev)}** alert event(s) in history")
+            st.dataframe(df_ev, use_container_width=True, hide_index=True)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # App shell
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -569,14 +680,16 @@ def _render_app(db: Database) -> None:
         st.divider()
         page = st.radio(
             "Navigation",
-            ["Overview", "Records", "Signals & Drift", "Device Catalog"],
+            ["Overview", "Records", "Signals & Drift", "Root Cause & Alerts", "Device Catalog"],
             label_visibility="collapsed",
         )
         st.divider()
         n_cat = db.count_catalog_devices()
         n_raw = db.count_raw_reports()
+        n_rules = len(db.list_alert_rules(active_only=True))
         st.caption(f"📦 Catalog: {n_cat} devices")
         st.caption(f"📄 MAUDE reports: {n_raw:,}")
+        st.caption(f"🔔 Alert rules: {n_rules} active")
         cost = db.total_llm_cost_usd()
         st.caption(f"💵 LLM cost: ${cost:.4f}")
 
@@ -585,6 +698,7 @@ def _render_app(db: Database) -> None:
         "Overview": "Executive summary of postmarket signal activity",
         "Records": "Structured extraction results per MAUDE report",
         "Signals & Drift": "Temporal signal trends and confidence drift",
+        "Root Cause & Alerts": "Root-cause hypotheses and alert rule management",
         "Device Catalog": "FDA-cleared AI/ML device registry",
     }
     st.markdown(
@@ -604,6 +718,8 @@ def _render_app(db: Database) -> None:
         _page_records(db)
     elif page == "Signals & Drift":
         _page_drift(db)
+    elif page == "Root Cause & Alerts":
+        _page_root_cause(db)
     elif page == "Device Catalog":
         _page_catalog(db)
 
