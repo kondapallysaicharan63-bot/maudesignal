@@ -177,11 +177,7 @@ addopts = [
     "--cov=src/maudesignal",
     "--cov-report=term-missing",
     "--cov-report=html",
-    # Floor reflects current package-wide coverage with buffer.
-    # CLAUDE.md §5 / NFR-13 target of "≥70% on core extraction" is
-    # aspirational — raise this as tests for cli.py, ingestion/pipeline.py,
-    # and the LLM provider call paths land.
-    "--cov-fail-under=40",
+    "--cov-fail-under=55",
 ]
 testpaths = ["tests"]
 pythonpath = ["src"]
