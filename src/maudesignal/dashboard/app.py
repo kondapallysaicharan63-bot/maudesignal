@@ -761,6 +761,93 @@ def _page_trends(db: Database) -> None:
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# Page: External Sources (Phase 4)
+# ──────────────────────────────────────────────────────────────────────────────
+
+
+def _page_sources(db: Database) -> None:
+    """Render the External Sources page."""
+    st.subheader("External Sources")
+
+    all_sources = db.list_external_sources(limit=500)
+    if not all_sources:
+        st.info(
+            "No external sources found. Run `maudesignal sources fetch pubmed --query ...` "
+            "or `maudesignal sources fetch clinicaltrials --query ...` to populate."
+        )
+        return
+
+    pubmed_count = sum(1 for s in all_sources if s.source_type == "pubmed")
+    ct_count = sum(1 for s in all_sources if s.source_type == "clinicaltrials")
+
+    col1, col2 = st.columns(2)
+    col1.metric("PubMed Articles", pubmed_count)
+    col2.metric("Clinical Trials", ct_count)
+
+    tab_pubmed, tab_trials = st.tabs(["PubMed Publications", "ClinicalTrials.gov"])
+
+    with tab_pubmed:
+        pubmed = [s for s in all_sources if s.source_type == "pubmed"]
+        if not pubmed:
+            st.info("No PubMed records. Run `sources fetch pubmed --query ...`")
+        else:
+            product_codes = sorted({s.product_code for s in pubmed if s.product_code})
+            filter_pc = st.selectbox(
+                "Filter by product code (PubMed)", ["All"] + product_codes, key="pm_pc"
+            )
+            view = (
+                pubmed
+                if filter_pc == "All"
+                else [s for s in pubmed if s.product_code == filter_pc]
+            )
+            rows = [
+                {
+                    "PMID": s.source_id,
+                    "Title": s.title or "",
+                    "Authors": s.authors or "",
+                    "Date": s.publication_date or "",
+                    "Product": s.product_code or "—",
+                    "URL": s.url or "",
+                }
+                for s in view
+            ]
+            df_pm = pd.DataFrame(rows)
+            st.caption(f"**{len(df_pm)}** PubMed article(s)")
+            st.dataframe(df_pm, use_container_width=True, hide_index=True)
+
+    with tab_trials:
+        trials = [s for s in all_sources if s.source_type == "clinicaltrials"]
+        if not trials:
+            st.info("No ClinicalTrials records. Run `sources fetch clinicaltrials --query ...`")
+        else:
+            product_codes_ct = sorted({s.product_code for s in trials if s.product_code})
+            filter_pc_ct = st.selectbox(
+                "Filter by product code (ClinicalTrials)",
+                ["All"] + product_codes_ct,
+                key="ct_pc",
+            )
+            view_ct = (
+                trials
+                if filter_pc_ct == "All"
+                else [s for s in trials if s.product_code == filter_pc_ct]
+            )
+            rows_ct = [
+                {
+                    "NCT ID": s.source_id,
+                    "Title": s.title or "",
+                    "Summary": (s.abstract or "")[:100],
+                    "Date": s.publication_date or "",
+                    "Product": s.product_code or "—",
+                    "URL": s.url or "",
+                }
+                for s in view_ct
+            ]
+            df_ct = pd.DataFrame(rows_ct)
+            st.caption(f"**{len(df_ct)}** ClinicalTrials record(s)")
+            st.dataframe(df_ct, use_container_width=True, hide_index=True)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # App shell
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -787,6 +874,7 @@ def _render_app(db: Database) -> None:
                 "Signals & Drift",
                 "Root Cause & Alerts",
                 "Trends & Forecasting",
+                "External Sources",
                 "Device Catalog",
             ],
             label_visibility="collapsed",
@@ -808,6 +896,7 @@ def _render_app(db: Database) -> None:
         "Signals & Drift": "Temporal signal trends and confidence drift",
         "Root Cause & Alerts": "Root-cause hypotheses and alert rule management",
         "Trends & Forecasting": "Statistical trend detection (Mann-Kendall + linear regression)",
+        "External Sources": "PubMed publications and ClinicalTrials.gov studies",
         "Device Catalog": "FDA-cleared AI/ML device registry",
     }
     st.markdown(
@@ -831,6 +920,8 @@ def _render_app(db: Database) -> None:
         _page_root_cause(db)
     elif page == "Trends & Forecasting":
         _page_trends(db)
+    elif page == "External Sources":
+        _page_sources(db)
     elif page == "Device Catalog":
         _page_catalog(db)
 

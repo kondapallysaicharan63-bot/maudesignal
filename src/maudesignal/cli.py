@@ -30,6 +30,8 @@ from maudesignal.forecasting.trend_detector import VALID_METRICS as TREND_METRIC
 from maudesignal.forecasting.trend_detector import TrendDetector
 from maudesignal.ingestion.openfda_client import OpenFDAClient
 from maudesignal.ingestion.pipeline import ingest_product_code
+from maudesignal.sources.clinicaltrials import ClinicalTrialsFetcher
+from maudesignal.sources.pubmed import PubMedFetcher
 from maudesignal.storage.database import Database
 
 app = typer.Typer(
@@ -58,10 +60,16 @@ forecast_app = typer.Typer(
     help="Phase 3: trend detection and forecasting.",
     no_args_is_help=True,
 )
+sources_app = typer.Typer(
+    name="sources",
+    help="Phase 4: fetch external publications and trials.",
+    no_args_is_help=True,
+)
 app.add_typer(catalog_app, name="catalog")
 app.add_typer(analyze_app, name="analyze")
 app.add_typer(alert_app, name="alert")
 app.add_typer(forecast_app, name="forecast")
+app.add_typer(sources_app, name="sources")
 console = Console()
 
 
@@ -972,6 +980,115 @@ def forecast_trends(
         if not r.skipped and r.output.get("regulatory_narrative"):
             console.print(f"\n[bold]{r.metric_name} narrative:[/bold]")
             console.print(r.output["regulatory_narrative"])
+
+
+# ----------------------------------------------------------------------
+# maudesignal sources fetch
+# ----------------------------------------------------------------------
+
+
+@sources_app.command("fetch")
+def sources_fetch(
+    source: str = typer.Argument(..., help="Source to fetch: 'pubmed' or 'clinicaltrials'."),
+    query: str = typer.Option(..., "--query", "-q", help="Search query string."),
+    product_code: str | None = typer.Option(
+        None, "--product-code", "-p", help="Tag fetched records with this product code."
+    ),
+    limit: int = typer.Option(20, "--limit", "-n", help="Maximum records to fetch."),
+) -> None:
+    """Fetch external publications or clinical trials and store them.
+
+    Examples:
+        maudesignal sources fetch pubmed --query "AI radiology adverse event" --product-code QIH
+        maudesignal sources fetch clinicaltrials --query "artificial intelligence FDA cleared"
+    """
+    if source not in ("pubmed", "clinicaltrials"):
+        console.print("[red]source must be 'pubmed' or 'clinicaltrials'[/red]")
+        raise typer.Exit(code=2)
+
+    try:
+        config = Config.load()
+    except ConfigError as exc:
+        console.print(f"[red]Configuration error:[/red] {exc}")
+        raise typer.Exit(code=2) from exc
+
+    configure_logging(config.log_level)
+    db = Database(config.db_path)
+
+    if source == "pubmed":
+        import os
+
+        api_key = os.environ.get("NCBI_API_KEY")
+        fetcher = PubMedFetcher(db=db, api_key=api_key)
+        console.print(f"[bold]Fetching PubMed:[/bold] query={query!r} limit={limit}")
+        articles = fetcher.fetch(query=query, product_code=product_code, max_results=limit)
+        fetcher.close()
+
+        table = Table(title=f"PubMed Results ({len(articles)} articles)", show_header=True)
+        table.add_column("PMID")
+        table.add_column("Title", max_width=60)
+        table.add_column("Authors", max_width=35)
+        table.add_column("Date")
+        for a in articles:
+            table.add_row(a.pmid, a.title[:60], a.authors[:35], a.publication_date)
+        console.print(table)
+
+    else:
+        fetcher_ct = ClinicalTrialsFetcher(db=db)
+        console.print(f"[bold]Fetching ClinicalTrials.gov:[/bold] query={query!r} limit={limit}")
+        trials = fetcher_ct.fetch(query=query, product_code=product_code, max_results=limit)
+        fetcher_ct.close()
+
+        table = Table(title=f"ClinicalTrials Results ({len(trials)} studies)", show_header=True)
+        table.add_column("NCT ID")
+        table.add_column("Title", max_width=50)
+        table.add_column("Status")
+        table.add_column("Phase")
+        table.add_column("Start Date")
+        for t in trials:
+            table.add_row(t.nct_id, t.title[:50], t.status, t.phase, t.start_date)
+        console.print(table)
+
+
+@sources_app.command("list")
+def sources_list(
+    source_type: str | None = typer.Option(
+        None, "--type", "-t", help="Filter by source type: pubmed or clinicaltrials."
+    ),
+    product_code: str | None = typer.Option(None, "--product-code", "-p"),
+    limit: int = typer.Option(50, "--limit", "-n"),
+) -> None:
+    """List stored external source records."""
+    try:
+        config = Config.load()
+    except ConfigError as exc:
+        console.print(f"[red]Configuration error:[/red] {exc}")
+        raise typer.Exit(code=2) from exc
+
+    db = Database(config.db_path)
+    records = db.list_external_sources(
+        source_type=source_type, product_code=product_code, limit=limit
+    )
+
+    if not records:
+        console.print("[yellow]No external source records found.[/yellow]")
+        return
+
+    table = Table(title=f"External Sources ({len(records)} records)", show_header=True)
+    table.add_column("Type")
+    table.add_column("Source ID")
+    table.add_column("Product")
+    table.add_column("Title", max_width=55)
+    table.add_column("Date")
+    for r in records:
+        table.add_row(
+            r.source_type,
+            r.source_id,
+            r.product_code or "—",
+            (r.title or "")[:55],
+            r.publication_date or "—",
+        )
+    console.print(table)
 
 
 @app.command()

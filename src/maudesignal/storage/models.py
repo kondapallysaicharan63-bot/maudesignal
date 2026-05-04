@@ -3,6 +3,7 @@
 Implements the database schema defined in Document 5 §8.
 Phase 2 adds: root_cause_reports, alert_rules, alert_events.
 Phase 3 adds: trend_snapshots.
+Phase 4 adds: external_sources.
 """
 
 from __future__ import annotations
@@ -215,3 +216,32 @@ class TrendSnapshotRecord(Base):
     model_used: Mapped[str] = mapped_column(String)
     output_json: Mapped[str] = mapped_column(Text)
     confidence_score: Mapped[float] = mapped_column(Float)
+
+
+# ---------------------------------------------------------------------------
+# Phase 4: multi-source integration
+# ---------------------------------------------------------------------------
+
+
+class ExternalSourceRecord(Base):
+    """Publication or clinical trial record fetched from an external API.
+
+    source_type: "pubmed" | "clinicaltrials"
+    source_id: PubMed PMID or ClinicalTrials NCT number (unique per source_type)
+    product_code: linked FDA product code (best-match, may be None)
+    Idempotent: re-fetching the same source_id + source_type replaces the row.
+    """
+
+    __tablename__ = "external_sources"
+
+    record_id: Mapped[str] = mapped_column(String, primary_key=True)
+    source_type: Mapped[str] = mapped_column(String, index=True)
+    source_id: Mapped[str] = mapped_column(String, index=True)
+    product_code: Mapped[str | None] = mapped_column(String, index=True)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime)
+    title: Mapped[str | None] = mapped_column(String)
+    authors: Mapped[str | None] = mapped_column(String)
+    publication_date: Mapped[str | None] = mapped_column(String)
+    abstract: Mapped[str | None] = mapped_column(Text)
+    url: Mapped[str | None] = mapped_column(String)
+    raw_json: Mapped[str] = mapped_column(Text)

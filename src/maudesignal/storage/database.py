@@ -24,6 +24,7 @@ from maudesignal.storage.models import (
     AlertRuleRecord,
     Base,
     DeviceCatalogRecord,
+    ExternalSourceRecord,
     ExtractionRecord,
     LLMAuditLogRecord,
     NormalizedEventRecord,
@@ -725,3 +726,77 @@ class Database:
             return count / len(in_range)
 
         return 0.0
+
+    # ------------------------------------------------------------------
+    # External sources  (Phase 4)
+    # ------------------------------------------------------------------
+
+    def upsert_external_source(
+        self,
+        *,
+        record_id: str,
+        source_type: str,
+        source_id: str,
+        product_code: str | None,
+        title: str | None,
+        authors: str | None,
+        publication_date: str | None,
+        abstract: str | None,
+        url: str | None,
+        raw_payload: dict[str, Any],
+    ) -> None:
+        """Insert or replace an external source record (idempotent by record_id)."""
+        with self._session() as session:
+            existing = session.get(ExternalSourceRecord, record_id)
+            if existing:
+                existing.fetched_at = datetime.now(UTC).replace(tzinfo=None)
+                existing.title = title
+                existing.authors = authors
+                existing.publication_date = publication_date
+                existing.abstract = abstract
+                existing.url = url
+                existing.raw_json = json.dumps(raw_payload)
+            else:
+                session.add(
+                    ExternalSourceRecord(
+                        record_id=record_id,
+                        source_type=source_type,
+                        source_id=source_id,
+                        product_code=product_code,
+                        fetched_at=datetime.now(UTC).replace(tzinfo=None),
+                        title=title,
+                        authors=authors,
+                        publication_date=publication_date,
+                        abstract=abstract,
+                        url=url,
+                        raw_json=json.dumps(raw_payload),
+                    )
+                )
+            session.commit()
+            logger.info(
+                "external_source_upserted",
+                record_id=record_id,
+                source_type=source_type,
+                source_id=source_id,
+            )
+
+    def list_external_sources(
+        self,
+        *,
+        source_type: str | None = None,
+        product_code: str | None = None,
+        limit: int = 100,
+    ) -> list[ExternalSourceRecord]:
+        """Return external source records, most recent first."""
+        with self._session() as session:
+            stmt = select(ExternalSourceRecord).order_by(ExternalSourceRecord.fetched_at.desc())
+            if source_type:
+                stmt = stmt.where(ExternalSourceRecord.source_type == source_type)
+            if product_code:
+                stmt = stmt.where(ExternalSourceRecord.product_code == product_code)
+            stmt = stmt.limit(limit)
+            return list(session.execute(stmt).scalars().all())
+
+    def count_external_sources(self, *, source_type: str | None = None) -> int:
+        """Return count of external source records."""
+        return len(self.list_external_sources(source_type=source_type, limit=100_000))
