@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import sys
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import typer
 from rich.console import Console
@@ -1108,11 +1109,14 @@ def psur_generate(
     product_code: str = typer.Argument(..., help="FDA product code to generate PSUR for."),
     device_name: str = typer.Option("", "--device-name", help="Human-readable device name."),
     window: int = typer.Option(180, "--window", "-w", help="Reporting window in days."),
+    output: Path | None = typer.Option(  # noqa: B008
+        None, "--output", "-o", help="Write PDF to this path."
+    ),
 ) -> None:
     """Generate a PSUR draft for a product code using all pipeline outputs.
 
     Example:
-        maudesignal psur generate QIH --device-name "AI Radiology System" --window 180
+        maudesignal psur generate QIH --device-name "AI Radiology System" --output report.pdf
     """
     try:
         config = Config.load()
@@ -1162,6 +1166,15 @@ def psur_generate(
         console.print("\n[bold]Recommended Actions:[/bold]")
         for i, action in enumerate(draft.recommended_actions, 1):
             console.print(f"  {i}. {action}")
+
+    if output is not None:
+        from maudesignal.report.psur_generator import render_pdf
+
+        pdf_path = render_pdf(draft, output)
+        if pdf_path:
+            console.print(f"\n[green]PDF written:[/green] {pdf_path}")
+        else:
+            console.print("[yellow]PDF export skipped (WeasyPrint unavailable).[/yellow]")
 
 
 @psur_app.command("list")

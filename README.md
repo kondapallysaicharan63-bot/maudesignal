@@ -1,8 +1,10 @@
 # MaudeSignal
 
-[![CI](https://github.com/kondapallysaicharan63-bot/safesignal/actions/workflows/ci.yml/badge.svg)](https://github.com/kondapallysaicharan63-bot/safesignal/actions/workflows/ci.yml)
+[![CI](https://github.com/kondapallysaicharan63-bot/maudesignal/actions/workflows/ci.yml/badge.svg)](https://github.com/kondapallysaicharan63-bot/maudesignal/actions/workflows/ci.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-189%20passing-brightgreen.svg)]()
+[![Coverage](https://img.shields.io/badge/coverage-58%25-yellow.svg)]()
 
 **Open-source AI postmarket surveillance toolkit for FDA-cleared AI/ML medical devices.**
 
@@ -20,30 +22,64 @@ The FDA has cleared **1,000+ AI/ML-enabled medical devices** (295 in 2025 alone)
 
 ## What MaudeSignal does
 
-1. **Ingests** MAUDE adverse event reports for any product code via openFDA
-2. **Extracts** structured fields from unstructured narratives via versioned LLM Skills
-3. **Triages severity** to FDA MDR categories with explicit decision rules
-4. **Classifies** events into an 11-category AI failure taxonomy MAUDE cannot capture
-5. **Verifies** every regulatory citation against primary sources — zero hallucinated K-numbers, CFR sections, or guidance titles
-6. **Detects drift** with KS / PSI tests on labeled cohorts
-7. **Generates** PSUR-style periodic safety reports (Markdown + PDF) with full source traceability
+```
+openFDA MAUDE API
+       │
+       ▼
+┌──────────────────┐    ┌───────────────────┐    ┌──────────────────────┐
+│  1. Ingest       │───▶│  2. Extract        │───▶│  3. Triage severity  │
+│  openFDA fetcher │    │  maude-narrative-  │    │  severity-triage     │
+│  + FDA catalog   │    │  extractor Skill   │    │  Skill               │
+└──────────────────┘    └───────────────────┘    └──────────────────────┘
+                                                           │
+                        ┌───────────────────┐             ▼
+                        │  5. Root cause    │    ┌──────────────────────┐
+                        │  root-cause-      │◀───│  4. Classify         │
+                        │  analyzer Skill   │    │  ai-failure-mode-    │
+                        └───────────────────┘    │  classifier Skill    │
+                                │                └──────────────────────┘
+                                ▼
+┌──────────────────┐    ┌───────────────────┐    ┌──────────────────────┐
+│  8. PSUR Report  │◀───│  7. Trend detect  │◀───│  6. Alerting         │
+│  psur-report-    │    │  Mann-Kendall +   │    │  4 metrics, 3 chan-  │
+│  drafter Skill   │    │  linear regression│    │  nels (console/      │
+│  → PDF export    │    └───────────────────┘    │  Slack/email)        │
+└──────────────────┘                             └──────────────────────┘
+         │
+         ▼
+  External sources
+  PubMed + ClinicalTrials.gov
+```
 
-### What's different
+| Step | What it produces |
+|---|---|
+| **Ingest** | Raw MAUDE reports + FDA AI/ML Device Catalog in SQLite |
+| **Extract** | Structured fields: AI flag, device type, failure description, citations |
+| **Severity triage** | Death / serious injury / malfunction / other — with justification |
+| **Classify** | 11-category AI failure taxonomy (drift, automation bias, data quality…) |
+| **Root cause** | Hypothesis + confidence for each failure-mode cluster |
+| **Alert** | Threshold-based alerts on new reports, AI rate, severity rate, new failure modes |
+| **Trend detect** | Mann-Kendall + linear regression; `trend-interpreter` Skill translates stats to regulatory language |
+| **External sources** | PubMed citations + ClinicalTrials.gov trials fetched and stored |
+| **PSUR draft** | 8-section periodic safety update report — Markdown + PDF, signal assessment, recommended actions |
 
-|  | DeviceWatch | Legacy eQMS (MasterControl, Veeva) | **MaudeSignal** |
-|---|---|---|---|
-| Open-source | ❌ | ❌ | ✅ MIT |
-| AI-specific failure taxonomy | ❌ | ❌ | ✅ 11 categories |
-| Versioned, auditable LLM Skills | ❌ | ❌ | ✅ ALCOA+ aligned |
-| Citation verification (zero-hallucination gate) | ? | ❌ | ✅ Hard gate |
-| Multi-provider, free-tier capable | ❌ | ❌ | ✅ Groq + Gemini + paid options |
-| Reproducible methodology | partial | ❌ | ✅ Gold-set evaluated |
+### Citation hard-gate
+
+Every string field in every Skill output is verified against **primary sources only** (openFDA, curated CFR Parts list, FDA guidance index) before reaching any user-facing surface. Hallucinated K-numbers, CFR citations, or guidance titles are **blocked** — not flagged, not warned — blocked.
 
 ---
 
 ## Status
 
-🚧 **Pre-alpha — under active development.** Pilot v3 results (2026-05-02): **43 extractions across 8 product codes, 32.6% AI-related signal rate (100% for QIH radiology CAD), 0.890 average confidence, $0.00 LLM cost** (Gemini + Groq free tier). PSUR report generator live — see [pilot findings v3](docs/00_pilot_findings_v3.md).
+**Alpha — all 5 pipeline phases complete.** Pilot v3 results (2026-05-02):
+
+| Metric | Result |
+|---|---|
+| Extractions | 43 across 8 product codes |
+| AI-related signal rate | 32.6% overall (100% for QIH radiology CAD) |
+| Average confidence | 0.890 |
+| LLM cost | **$0.00** (Gemini + Groq free tier) |
+| Test suite | **189 passing**, 58% coverage |
 
 ---
 
@@ -51,73 +87,152 @@ The FDA has cleared **1,000+ AI/ML-enabled medical devices** (295 in 2025 alone)
 
 | Layer | Choice |
 |---|---|
-| Language | Python 3.11+, mypy --strict, ruff + black |
-| LLM | **Provider-agnostic** — Groq (default, free), Anthropic, OpenAI, Gemini (free), or `pool` (multi-key fallback) |
+| Language | Python 3.11+, `mypy --strict`, `ruff` + `black` |
+| LLM | Provider-agnostic — Groq (default, free), Anthropic, OpenAI, Gemini (free), or `pool` (multi-key rotation on 429) |
 | Validation | Pydantic 2 + JSON Schema |
 | Storage | SQLite via SQLAlchemy 2 |
 | Drift | Evidently + SciPy (KS, PSI) |
+| Statistics | Mann-Kendall trend test + linear regression (SciPy) |
+| External APIs | NCBI E-utilities (PubMed), ClinicalTrials.gov v2 REST |
 | Dashboard | Streamlit |
 | CLI | Typer (`maudesignal` entry point) |
-| Reports | Jinja2 → WeasyPrint (Markdown / HTML → PDF) |
-| Tests | pytest + coverage (≥70% on core extraction) |
+| Reports | Jinja2 → WeasyPrint (HTML → PDF) |
+| CI | GitHub Actions (Python 3.11 + 3.12, ruff, black, mypy, pytest) |
 
-LLM behavior lives entirely in versioned `skills/<name>/SKILL.md` files — never inline strings. Every Skill ships with a JSON Schema, good + bad example pairs, and a changelog.
+### Skills (versioned LLM behavior contracts)
 
-| Skill | Status |
-|---|---|
-| [`regulatory-citation-verifier`](skills/regulatory-citation-verifier/SKILL.md) | ✅ v1.0.0 |
-| [`maude-narrative-extractor`](skills/maude-narrative-extractor/SKILL.md) | ✅ v1.0.0 |
-| [`severity-triage`](skills/severity-triage/SKILL.md) | ✅ v1.0.0 |
-| [`ai-failure-mode-classifier`](skills/ai-failure-mode-classifier/SKILL.md) | ✅ v1.0.0 |
-| [`drift-analysis-interpreter`](skills/drift-analysis-interpreter/SKILL.md) | ✅ v1.0.0 |
-| `fda-guidance-retriever` | 📋 planned |
-| `psur-report-drafter` | 📋 planned |
+LLM behavior lives entirely in `skills/<name>/SKILL.md` — never inline strings. Each Skill ships with a JSON Schema, good + bad example pairs, and a version changelog.
+
+| Skill | Version | Purpose |
+|---|---|---|
+| [`regulatory-citation-verifier`](skills/regulatory-citation-verifier/SKILL.md) | v1.0.0 | Hard gate — blocks hallucinated citations |
+| [`maude-narrative-extractor`](skills/maude-narrative-extractor/SKILL.md) | v1.0.0 | Structured field extraction from MAUDE narratives |
+| [`severity-triage`](skills/severity-triage/SKILL.md) | v1.0.0 | Death / serious injury / malfunction / other |
+| [`ai-failure-mode-classifier`](skills/ai-failure-mode-classifier/SKILL.md) | v1.0.0 | 11-category AI failure taxonomy |
+| [`root-cause-analyzer`](skills/root-cause-analyzer/SKILL.md) | v1.0.0 | Root cause hypothesis per failure-mode cluster |
+| [`drift-analysis-interpreter`](skills/drift-analysis-interpreter/SKILL.md) | v1.0.0 | KS/PSI statistics → regulatory language |
+| [`trend-interpreter`](skills/trend-interpreter/SKILL.md) | v1.0.0 | Trend stats → regulatory narrative + signal level |
+| [`psur-report-drafter`](skills/psur-report-drafter/SKILL.md) | v1.0.0 | 8-section PSUR draft with signal assessment |
 
 ---
 
-## Quickstart (6 commands)
+## Quickstart
+
+### Requirements
+
+- Python 3.11 or 3.12
+- At least one LLM API key (Groq and Gemini both have free tiers)
+- Optional: system GTK/Cairo libraries for PDF export via WeasyPrint
+
+### Install
 
 ```bash
-git clone https://github.com/kondapallysaicharan63-bot/safesignal.git && cd safesignal
+git clone https://github.com/kondapallysaicharan63-bot/maudesignal.git
+cd maudesignal
 python3.12 -m pip install -e ".[dev]"
-cp .env.example .env  # add at least one provider key (Groq is free)
-python3.12 -m maudesignal.cli ingest --product-code QIH --limit 5
-python3.12 -m maudesignal.cli extract --product-code QIH --limit 3
-python3.12 -m maudesignal.cli report --product-code QIH --start 2026-01-01 --end 2026-12-31
+cp .env.example .env          # add your API key(s)
 ```
 
-**Multi-key fallback pool** (extends free-tier capacity by rotating across 5+ keys on 429):
+### `.env` minimum
+
+```env
+LLM_PROVIDER=groq
+GROQ_API_KEY=gsk_your_key_here
+```
+
+For the multi-key pool (extends free-tier capacity):
+
+```env
+LLM_PROVIDER=pool
+PROVIDER_FALLBACK_ORDER=gemini,gemini2,groq,groq2
+GEMINI_API_KEY=...
+GEMINI_API_KEY_2=...
+GROQ_API_KEY=...
+GROQ_API_KEY_2=...
+```
+
+### Run the full pipeline
 
 ```bash
-LLM_PROVIDER=pool PROVIDER_FALLBACK_ORDER=gemini,gemini2,groq,groq2 \
-  python3.12 -m maudesignal.cli extract --product-code QIH --limit 50
+# 1. Ingest MAUDE reports and FDA AI/ML catalog
+python3.12 -m maudesignal.cli ingest --product-code QIH --limit 20
+python3.12 -m maudesignal.cli catalog fetch
+
+# 2. Extract + classify + triage
+python3.12 -m maudesignal.cli extract --product-code QIH --limit 10
+python3.12 -m maudesignal.cli classify --product-code QIH
+python3.12 -m maudesignal.cli triage --product-code QIH
+
+# 3. Root cause analysis + alerting
+python3.12 -m maudesignal.cli root-cause --product-code QIH
+python3.12 -m maudesignal.cli alert check --product-code QIH
+
+# 4. Trend detection + external sources
+python3.12 -m maudesignal.cli forecast trends --product-code QIH
+python3.12 -m maudesignal.cli sources fetch --query "AI radiology device failure" --product-code QIH
+
+# 5. Generate PSUR draft + PDF
+python3.12 -m maudesignal.cli psur generate QIH --device-name "AI Radiology CAD" --output reports/QIH_psur.pdf
+
+# Check pipeline status
+python3.12 -m maudesignal.cli status
 ```
 
 ---
 
 ## Dashboard
 
-Launch the local Streamlit dashboard against the SQLite database:
-
 ```bash
-maudesignal-dashboard
+python3.12 -m streamlit run src/maudesignal/dashboard/app.py
 ```
 
-Four views: **Records** (filterable extractions table + FDA report detail panel), **Drift** (confidence-score line chart over time), **Summary** (KPI cards: total extractions, % AI-related, average confidence, total LLM cost). Reads from `MAUDESIGNAL_DB_PATH` (defaults to `data/maudesignal.db`); no extra config needed.
+Seven views:
+- **Records** — filterable extraction table with FDA report detail panel
+- **Severity** — severity distribution and breakdown
+- **Failure Modes** — AI failure taxonomy across events
+- **Drift** — confidence-score trend over time (KS / PSI)
+- **Trends** — Mann-Kendall signal detection, regulatory narratives
+- **Sources** — PubMed citations + ClinicalTrials.gov trials
+- **PSUR Reports** — browse and view stored PSUR drafts
 
 ---
 
-## Reports
+## CLI reference
 
-Generate a PSUR-style regulatory report from extraction data:
-
-```bash
-maudesignal report --product-code QIH --start 2026-01-01 --end 2026-12-31
+```
+maudesignal ingest          Fetch MAUDE reports from openFDA
+maudesignal catalog fetch   Fetch FDA AI/ML Device Catalog
+maudesignal extract         Run maude-narrative-extractor Skill
+maudesignal classify        Run ai-failure-mode-classifier Skill
+maudesignal triage          Run severity-triage Skill
+maudesignal root-cause      Run root-cause-analyzer Skill
+maudesignal alert add       Add an alert rule
+maudesignal alert check     Evaluate alert rules and notify
+maudesignal alert list      List configured alert rules
+maudesignal forecast trends Run Mann-Kendall trend detection
+maudesignal sources fetch   Fetch PubMed + ClinicalTrials sources
+maudesignal sources list    List stored external sources
+maudesignal psur generate   Generate PSUR draft (+ optional PDF)
+maudesignal psur list       List stored PSUR drafts
+maudesignal report          Generate legacy PSUR-style report (Markdown/PDF)
+maudesignal drift           Run drift detection (KS + PSI)
+maudesignal status          Show pipeline status summary
 ```
 
-Outputs:
-- `reports/QIH_PSUR_<dates>.md` — 8-section Markdown report with disclaimer, severity breakdown, AI failure mode categories, and recommendations
-- `reports/QIH_PSUR_<dates>.pdf` — PDF via WeasyPrint (requires system GTK/Cairo libs)
+---
+
+## Development
+
+```bash
+# Run tests
+python3.12 -m pytest tests/ -v
+
+# Type check
+python3.12 -m mypy src/maudesignal
+
+# Lint + format
+python3.12 -m ruff check . && python3.12 -m black --check .
+```
 
 ---
 
@@ -130,7 +245,7 @@ Outputs:
 | Requirements (FRs / NFRs) | [docs/03_requirements_spec.md](docs/03_requirements_spec.md) |
 | System design | [docs/05_architecture.md](docs/05_architecture.md) |
 | Roadmap | [docs/07_roadmap.md](docs/07_roadmap.md) |
-| Pilot findings | [v1](docs/00_pilot_findings.md), [v2](docs/00_pilot_findings_v2.md), [v3](docs/00_pilot_findings_v3.md) |
+| Pilot findings | [v1](docs/00_pilot_findings.md) · [v2](docs/00_pilot_findings_v2.md) · [v3](docs/00_pilot_findings_v3.md) |
 | Repo conventions for AI assistants | [CLAUDE.md](CLAUDE.md) |
 
 ---
@@ -143,5 +258,5 @@ Outputs:
 
 ## Author
 
-**Sai Charan Kondapally** — M.S. Biomedical Engineering, San Jose State University
+**Sai Charan Kondapally** — M.S. Biomedical Engineering, San Jose State University  
 [GitHub](https://github.com/kondapallysaicharan63-bot) · open to regulatory affairs / post-market AI quality roles
