@@ -761,6 +761,106 @@ def _page_trends(db: Database) -> None:
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# Page: PSUR Reports (Phase 5)
+# ──────────────────────────────────────────────────────────────────────────────
+
+
+def _page_psur(db: Database) -> None:
+    """Render the PSUR Reports page."""
+    st.subheader("PSUR Report Drafts")
+
+    reports = db.list_psur_reports(limit=100)
+    if not reports:
+        st.info(
+            "No PSUR reports found. Run `maudesignal psur generate <product_code>` "
+            "to generate a PSUR draft."
+        )
+        return
+
+    rows = []
+    for r in reports:
+        try:
+            out = json.loads(r.output_json)
+        except json.JSONDecodeError:
+            out = {}
+        rows.append(
+            {
+                "Report ID": r.report_id,
+                "Product": r.product_code,
+                "Period Start": r.reporting_period_start,
+                "Period End": r.reporting_period_end,
+                "Signal": r.signal_assessment,
+                "Confidence": round(r.confidence_score, 2),
+                "Drafted At": r.drafted_at,
+                "_out": out,
+            }
+        )
+    df = pd.DataFrame(rows)
+
+    # Summary metrics
+    n_confirmed = sum(1 for r in reports if r.signal_assessment == "confirmed_signal")
+    n_potential = sum(1 for r in reports if r.signal_assessment == "potential_signal")
+    n_none = sum(1 for r in reports if r.signal_assessment == "no_signal")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Confirmed Signals", n_confirmed)
+    c2.metric("Potential Signals", n_potential)
+    c3.metric("No Signal", n_none)
+
+    tab_table, tab_detail = st.tabs(["All Drafts", "View Draft"])
+
+    with tab_table:
+
+        def _color_signal(val: str) -> str:
+            colors = {
+                "confirmed_signal": "background-color: #fadbd8",
+                "potential_signal": "background-color: #fdebd0",
+                "no_signal": "background-color: #d5f5e3",
+            }
+            return colors.get(val, "")
+
+        display_cols = [c for c in df.columns if c != "_out"]
+        styled = df[display_cols].style.applymap(_color_signal, subset=["Signal"])
+        st.dataframe(styled, use_container_width=True, hide_index=True)
+
+    with tab_detail:
+        if not reports:
+            return
+        report_ids = [r.report_id for r in reports]
+        selected_id = st.selectbox("Select report to view", report_ids)
+        selected = next((r for r in rows if r["Report ID"] == selected_id), None)
+        if selected is None:
+            return
+
+        out = selected["_out"]
+        st.markdown(f"**Report:** `{selected_id}`")
+        st.markdown(
+            f"**Product:** {selected['Product']}  |  "
+            f"**Period:** {selected['Period Start']} → {selected['Period End']}  |  "
+            f"**Signal:** {selected['Signal']}  |  "
+            f"**Confidence:** {selected['Confidence']}"
+        )
+        st.divider()
+
+        exec_sum = out.get("executive_summary", "")
+        if exec_sum:
+            st.markdown("**Executive Summary**")
+            st.write(exec_sum)
+
+        sections = out.get("sections", [])
+        for sec in sections:
+            with st.expander(sec.get("title", "Section")):
+                st.write(sec.get("content", ""))
+
+        actions = out.get("recommended_actions", [])
+        if actions:
+            st.markdown("**Recommended Actions**")
+            for i, action in enumerate(actions, 1):
+                st.markdown(f"{i}. {action}")
+
+        st.caption("⚠️ DRAFT — REQUIRES HUMAN REVIEW BEFORE SUBMISSION TO ANY REGULATORY BODY")
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # Page: External Sources (Phase 4)
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -796,9 +896,7 @@ def _page_sources(db: Database) -> None:
                 "Filter by product code (PubMed)", ["All"] + product_codes, key="pm_pc"
             )
             view = (
-                pubmed
-                if filter_pc == "All"
-                else [s for s in pubmed if s.product_code == filter_pc]
+                pubmed if filter_pc == "All" else [s for s in pubmed if s.product_code == filter_pc]
             )
             rows = [
                 {
@@ -875,6 +973,7 @@ def _render_app(db: Database) -> None:
                 "Root Cause & Alerts",
                 "Trends & Forecasting",
                 "External Sources",
+                "PSUR Reports",
                 "Device Catalog",
             ],
             label_visibility="collapsed",
@@ -897,6 +996,7 @@ def _render_app(db: Database) -> None:
         "Root Cause & Alerts": "Root-cause hypotheses and alert rule management",
         "Trends & Forecasting": "Statistical trend detection (Mann-Kendall + linear regression)",
         "External Sources": "PubMed publications and ClinicalTrials.gov studies",
+        "PSUR Reports": "Automated periodic safety update report drafts",
         "Device Catalog": "FDA-cleared AI/ML device registry",
     }
     st.markdown(
@@ -922,6 +1022,8 @@ def _render_app(db: Database) -> None:
         _page_trends(db)
     elif page == "External Sources":
         _page_sources(db)
+    elif page == "PSUR Reports":
+        _page_psur(db)
     elif page == "Device Catalog":
         _page_catalog(db)
 

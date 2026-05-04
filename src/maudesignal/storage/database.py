@@ -28,6 +28,7 @@ from maudesignal.storage.models import (
     ExtractionRecord,
     LLMAuditLogRecord,
     NormalizedEventRecord,
+    PsurReportRecord,
     RawReportRecord,
     RootCauseReportRecord,
     TrendSnapshotRecord,
@@ -800,3 +801,58 @@ class Database:
     def count_external_sources(self, *, source_type: str | None = None) -> int:
         """Return count of external source records."""
         return len(self.list_external_sources(source_type=source_type, limit=100_000))
+
+    # ------------------------------------------------------------------
+    # PSUR reports  (Phase 5)
+    # ------------------------------------------------------------------
+
+    def insert_psur_report(
+        self,
+        *,
+        report_id: str,
+        product_code: str,
+        reporting_period_start: str,
+        reporting_period_end: str,
+        signal_assessment: str,
+        skill_version: str,
+        model_used: str,
+        output_payload: dict[str, Any],
+        confidence_score: float,
+    ) -> None:
+        """Insert a new PSUR report draft."""
+        with self._session() as session:
+            session.add(
+                PsurReportRecord(
+                    report_id=report_id,
+                    product_code=product_code,
+                    reporting_period_start=reporting_period_start,
+                    reporting_period_end=reporting_period_end,
+                    drafted_at=datetime.now(UTC).replace(tzinfo=None),
+                    signal_assessment=signal_assessment,
+                    skill_version=skill_version,
+                    model_used=model_used,
+                    output_json=json.dumps(output_payload),
+                    confidence_score=confidence_score,
+                )
+            )
+            session.commit()
+            logger.info(
+                "psur_report_inserted",
+                report_id=report_id,
+                product_code=product_code,
+                signal_assessment=signal_assessment,
+            )
+
+    def list_psur_reports(
+        self,
+        *,
+        product_code: str | None = None,
+        limit: int = 20,
+    ) -> list[PsurReportRecord]:
+        """Return PSUR reports, most recent first."""
+        with self._session() as session:
+            stmt = select(PsurReportRecord).order_by(PsurReportRecord.drafted_at.desc())
+            if product_code:
+                stmt = stmt.where(PsurReportRecord.product_code == product_code)
+            stmt = stmt.limit(limit)
+            return list(session.execute(stmt).scalars().all())

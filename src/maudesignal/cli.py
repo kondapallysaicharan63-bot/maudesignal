@@ -30,6 +30,7 @@ from maudesignal.forecasting.trend_detector import VALID_METRICS as TREND_METRIC
 from maudesignal.forecasting.trend_detector import TrendDetector
 from maudesignal.ingestion.openfda_client import OpenFDAClient
 from maudesignal.ingestion.pipeline import ingest_product_code
+from maudesignal.report.psur_generator import PsurGenerator
 from maudesignal.sources.clinicaltrials import ClinicalTrialsFetcher
 from maudesignal.sources.pubmed import PubMedFetcher
 from maudesignal.storage.database import Database
@@ -65,11 +66,17 @@ sources_app = typer.Typer(
     help="Phase 4: fetch external publications and trials.",
     no_args_is_help=True,
 )
+psur_app = typer.Typer(
+    name="psur",
+    help="Phase 5: automated PSUR regulatory response generation.",
+    no_args_is_help=True,
+)
 app.add_typer(catalog_app, name="catalog")
 app.add_typer(analyze_app, name="analyze")
 app.add_typer(alert_app, name="alert")
 app.add_typer(forecast_app, name="forecast")
 app.add_typer(sources_app, name="sources")
+app.add_typer(psur_app, name="psur")
 console = Console()
 
 
@@ -1087,6 +1094,115 @@ def sources_list(
             r.product_code or "—",
             (r.title or "")[:55],
             r.publication_date or "—",
+        )
+    console.print(table)
+
+
+# ----------------------------------------------------------------------
+# maudesignal psur generate / list
+# ----------------------------------------------------------------------
+
+
+@psur_app.command("generate")
+def psur_generate(
+    product_code: str = typer.Argument(..., help="FDA product code to generate PSUR for."),
+    device_name: str = typer.Option("", "--device-name", help="Human-readable device name."),
+    window: int = typer.Option(180, "--window", "-w", help="Reporting window in days."),
+) -> None:
+    """Generate a PSUR draft for a product code using all pipeline outputs.
+
+    Example:
+        maudesignal psur generate QIH --device-name "AI Radiology System" --window 180
+    """
+    try:
+        config = Config.load()
+    except ConfigError as exc:
+        console.print(f"[red]Configuration error:[/red] {exc}")
+        raise typer.Exit(code=2) from exc
+
+    configure_logging(config.log_level)
+    _print_startup(config)
+    db = Database(config.db_path)
+    extractor = Extractor(config=config, db=db)
+    generator = PsurGenerator(
+        extractor=extractor,
+        db=db,
+        skills_root=config.project_root / "skills",
+    )
+
+    console.print(f"[bold]Generating PSUR draft:[/bold] product={product_code} window={window}d")
+    draft = generator.generate(
+        product_code=product_code,
+        device_name=device_name,
+        window_days=window,
+    )
+
+    signal_color = {
+        "confirmed_signal": "red",
+        "potential_signal": "yellow",
+        "no_signal": "green",
+    }.get(draft.signal_assessment, "white")
+
+    console.print(
+        f"\n[bold]Report ID:[/bold] {draft.report_id}\n"
+        f"[bold]Period:[/bold] {draft.reporting_period_start} to {draft.reporting_period_end}\n"
+        f"[bold]Signal:[/bold] [{signal_color}]{draft.signal_assessment}[/{signal_color}]\n"
+        f"[bold]Confidence:[/bold] {draft.confidence_score:.2f}\n"
+    )
+    console.print("[bold]Executive Summary:[/bold]")
+    console.print(draft.executive_summary)
+
+    if draft.sections:
+        console.print("\n[bold]Sections:[/bold]")
+        for sec in draft.sections:
+            console.print(f"\n[dim]{sec.get('title', '')}[/dim]")
+            console.print(sec.get("content", ""))
+
+    if draft.recommended_actions:
+        console.print("\n[bold]Recommended Actions:[/bold]")
+        for i, action in enumerate(draft.recommended_actions, 1):
+            console.print(f"  {i}. {action}")
+
+
+@psur_app.command("list")
+def psur_list(
+    product_code: str | None = typer.Option(None, "--product-code", "-p"),
+    limit: int = typer.Option(10, "--limit", "-n"),
+) -> None:
+    """List stored PSUR report drafts."""
+    try:
+        config = Config.load()
+    except ConfigError as exc:
+        console.print(f"[red]Configuration error:[/red] {exc}")
+        raise typer.Exit(code=2) from exc
+
+    db = Database(config.db_path)
+    reports = db.list_psur_reports(product_code=product_code, limit=limit)
+
+    if not reports:
+        console.print("[yellow]No PSUR reports found.[/yellow]")
+        return
+
+    table = Table(title=f"PSUR Reports ({len(reports)} found)", show_header=True)
+    table.add_column("Report ID")
+    table.add_column("Product")
+    table.add_column("Period")
+    table.add_column("Signal")
+    table.add_column("Confidence")
+    table.add_column("Drafted At")
+    for r in reports:
+        signal_color = {
+            "confirmed_signal": "red",
+            "potential_signal": "yellow",
+            "no_signal": "green",
+        }.get(r.signal_assessment, "white")
+        table.add_row(
+            r.report_id,
+            r.product_code,
+            f"{r.reporting_period_start} → {r.reporting_period_end}",
+            f"[{signal_color}]{r.signal_assessment}[/{signal_color}]",
+            f"{r.confidence_score:.2f}",
+            str(r.drafted_at)[:16],
         )
     console.print(table)
 
