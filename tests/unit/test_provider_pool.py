@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from unittest.mock import patch
 
 import pytest
@@ -99,14 +100,14 @@ def test_rotates_on_rate_limit_then_succeeds() -> None:
     resp = pool.complete(system_prompt="sp", messages=_msgs())
     assert resp.provider == "b"
     assert a.calls == 1 and b.calls == 1
-    # Slot a is now marked exhausted.
-    assert pool._slots[0].exhausted is True
+    # Slot a is now in backoff.
+    assert pool._slots[0].in_backoff is True
 
 
 def test_skips_already_exhausted_slot() -> None:
     a, b, c = _FakeProvider("a"), _FakeProvider("b"), _FakeProvider("c")
     sa, sb, sc = _slot("a", a), _slot("b", b), _slot("c", c)
-    sa.exhausted = True
+    sa.exhausted_at = time.monotonic()  # put slot a in backoff
     pool = ProviderPool([sa, sb, sc])
     pool.complete(system_prompt="sp", messages=_msgs())
     assert a.calls == 0 and b.calls == 1 and c.calls == 0
@@ -117,7 +118,10 @@ def test_all_slots_exhausted_raises() -> None:
     a.behavior = [RuntimeError("rate limit")]
     b.behavior = [RuntimeError("RESOURCE_EXHAUSTED")]
     pool = ProviderPool([_slot("a", a), _slot("b", b)])
-    with pytest.raises(PoolExhaustedError):
+    with (
+        patch("maudesignal.extraction.llm_providers.provider_pool.time.sleep"),
+        pytest.raises(PoolExhaustedError),
+    ):
         pool.complete(system_prompt="sp", messages=_msgs())
 
 
@@ -128,7 +132,7 @@ def test_non_rate_limit_error_is_reraised_immediately() -> None:
     with pytest.raises(ValueError, match="schema mismatch"):
         pool.complete(system_prompt="sp", messages=_msgs())
     assert b.calls == 0
-    assert pool._slots[0].exhausted is False  # not marked exhausted on non-quota error
+    assert pool._slots[0].in_backoff is False  # not marked exhausted on non-quota error
 
 
 def test_is_rate_limit_error_detection() -> None:

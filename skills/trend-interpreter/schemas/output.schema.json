@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TrendInterpreterOutput",
+  "description": "Structured regulatory interpretation of a statistical trend analysis.",
+  "type": "object",
+  "required": [
+    "product_code",
+    "metric_name",
+    "analysis_ts",
+    "skill_name",
+    "skill_version",
+    "model_used",
+    "trend_direction",
+    "trend_strength",
+    "is_statistically_significant",
+    "regulatory_narrative",
+    "signal_level",
+    "recommended_action",
+    "confidence_score"
+  ],
+  "properties": {
+    "product_code": {
+      "type": "string",
+      "minLength": 1
+    },
+    "metric_name": {
+      "type": "string",
+      "enum": ["ai_rate", "severity_rate", "report_volume"]
+    },
+    "analysis_ts": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "skill_name": {
+      "type": "string",
+      "const": "trend-interpreter"
+    },
+    "skill_version": {
+      "type": "string"
+    },
+    "model_used": {
+      "type": "string"
+    },
+    "trend_direction": {
+      "type": "string",
+      "enum": ["increasing", "decreasing", "stable"]
+    },
+    "trend_strength": {
+      "type": "string",
+      "enum": ["strong", "moderate", "weak", "none"]
+    },
+    "is_statistically_significant": {
+      "type": "boolean"
+    },
+    "regulatory_narrative": {
+      "type": "string",
+      "minLength": 50,
+      "maxLength": 600
+    },
+    "signal_level": {
+      "type": "string",
+      "enum": ["critical", "elevated", "routine", "low"]
+    },
+    "recommended_action": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "confidence_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 0.95
+    },
+    "analysis_notes": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

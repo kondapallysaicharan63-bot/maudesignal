@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RootCauseAnalyzerOutput",
+  "description": "Output schema for skills/root-cause-analyzer v1.0.0",
+  "type": "object",
+  "required": [
+    "product_code",
+    "analysis_ts",
+    "skill_name",
+    "skill_version",
+    "model_used",
+    "failure_mode_category",
+    "cluster_size",
+    "root_cause_hypothesis",
+    "contributing_factors",
+    "affected_population",
+    "recommended_investigation",
+    "confidence_score",
+    "requires_human_review"
+  ],
+  "properties": {
+    "product_code": {
+      "type": "string",
+      "description": "FDA 3-character product code"
+    },
+    "analysis_ts": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 UTC timestamp when analysis completed"
+    },
+    "skill_name": {
+      "type": "string",
+      "const": "root-cause-analyzer"
+    },
+    "skill_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "model_used": {
+      "type": "string"
+    },
+    "failure_mode_category": {
+      "type": "string",
+      "enum": [
+        "false_negative_clinical",
+        "false_positive_clinical",
+        "algorithm_drift",
+        "data_pipeline_error",
+        "automation_bias",
+        "software_bug",
+        "output_validation_error",
+        "integration_failure",
+        "bias_or_fairness",
+        "other_ai_related"
+      ]
+    },
+    "cluster_size": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "root_cause_hypothesis": {
+      "type": "string",
+      "maxLength": 500,
+      "description": "Concise mechanistic explanation of why the failures occur"
+    },
+    "contributing_factors": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 200
+      },
+      "minItems": 1,
+      "maxItems": 4,
+      "description": "Ordered list of causal factors, most likely first"
+    },
+    "affected_population": {
+      "type": "string",
+      "maxLength": 300,
+      "description": "Patient type or clinical context most at risk"
+    },
+    "recommended_investigation": {
+      "type": "string",
+      "maxLength": 500,
+      "description": "Concrete next steps referencing FDA guidance actions"
+    },
+    "confidence_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 0.95
+    },
+    "requires_human_review": {
+      "type": "boolean"
+    },
+    "analysis_notes": {
+      "type": ["string", "null"],
+      "maxLength": 300,
+      "description": "Caveats, contradictions, or data-quality flags. null if none."
+    }
+  },
+  "additionalProperties": false
+}
