@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import math
 import sys
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -138,15 +140,41 @@ _SEVERITY_ORDER = [
     "other",
     "no answer provided",
 ]
-_FAILURE_MODE_COLORS = {
-    "performance_degradation": "#2874a6",
-    "false_positive": "#1abc9c",
-    "false_negative": "#e74c3c",
-    "software_failure": "#9b59b6",
-    "user_interface_failure": "#f39c12",
-    "hardware_sensor_failure": "#16a085",
-    "unknown": "#95a5a6",
+
+SEVERITY_COLORS: dict[str, str] = {
+    "death": "#b91c1c",
+    "serious injury": "#ea580c",
+    "injury": "#ca8a04",
+    "malfunction": "#1d4ed8",
+    "other": "#64748b",
+    "no answer provided": "#94a3b8",
+    "unknown": "#94a3b8",
 }
+
+_FAILURE_MODE_COLORS = {
+    "performance_degradation": "#2563eb",
+    "false_positive": "#0891b2",
+    "false_negative": "#dc2626",
+    "software_failure": "#7c3aed",
+    "user_interface_failure": "#d97706",
+    "hardware_sensor_failure": "#059669",
+    "unknown": "#94a3b8",
+}
+
+_ASSETS_DIR = Path(__file__).parent / "assets"
+_LOGO_PATH = _ASSETS_DIR / "logo.svg"
+
+
+def _nan_to_dash(val: Any) -> str:
+    """Normalise None / NaN / 'nan' / 'None' to the em-dash placeholder."""
+    if val is None:
+        return "—"
+    if isinstance(val, float) and math.isnan(val):
+        return "—"
+    s = str(val)
+    if s.lower() in ("nan", "none", ""):
+        return "—"
+    return s
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -181,14 +209,19 @@ def _extractions_dataframe(db: Database) -> pd.DataFrame:
                 "skill_version": r.skill_version,
                 "confidence_score": r.confidence_score,
                 "requires_review": r.requires_review,
-                "severity": payload.get("severity"),
+                "severity": _nan_to_dash(payload.get("severity")),
                 "ai_related_flag": payload.get("ai_related_flag"),
-                "ai_failure_mode": payload.get("failure_mode_category"),
-                "failure_mode": payload.get("failure_mode"),
+                "ai_failure_mode": _nan_to_dash(payload.get("failure_mode_category")),
+                "failure_mode": _nan_to_dash(payload.get("failure_mode")),
                 "model_used": r.model_used,
             }
         )
-    return pd.DataFrame.from_records(records)
+    df = pd.DataFrame.from_records(records)
+    # Belt-and-suspenders: collapse any remaining nan strings that survive JSON decode
+    for col in ("severity", "ai_failure_mode", "failure_mode"):
+        if col in df.columns:
+            df[col] = df[col].apply(_nan_to_dash)
+    return df
 
 
 def _product_code_lookup(db: Database) -> dict[str, str]:
@@ -299,7 +332,10 @@ def _page_summary(db: Database) -> None:
         )
         sev_df = sev_counts[sev_counts > 0].reset_index()
         sev_df.columns = pd.Index(["Severity", "Count"])
-        st.bar_chart(sev_df.set_index("Severity"), use_container_width=True, height=230)
+        if sev_df.empty:
+            st.info("No severity data yet.")
+        else:
+            st.bar_chart(sev_df.set_index("Severity"), use_container_width=True, height=230)
 
     with col_right:
         st.markdown('<p class="ms-section">AI Failure Mode Breakdown</p>', unsafe_allow_html=True)
@@ -310,7 +346,10 @@ def _page_summary(db: Database) -> None:
             fm_counts = df_cls["ai_failure_mode"].fillna("unknown").value_counts().head(8)
             fm_df = fm_counts.reset_index()
             fm_df.columns = pd.Index(["Failure Mode", "Count"])
-            st.bar_chart(fm_df.set_index("Failure Mode"), use_container_width=True, height=230)
+            if fm_df.empty:
+                st.caption("No failure mode classifications yet.")
+            else:
+                st.bar_chart(fm_df.set_index("Failure Mode"), use_container_width=True, height=230)
 
     st.markdown('<p class="ms-section">Requires Human Review</p>', unsafe_allow_html=True)
     col_r1, col_r2, col_r3 = st.columns(3)
@@ -387,6 +426,18 @@ def _page_records(db: Database) -> None:
         filtered[display_cols].sort_values("extraction_ts", ascending=False),
         use_container_width=True,
         height=320,
+        column_config={
+            "maude_report_id": st.column_config.TextColumn("Report ID"),
+            "product_code": st.column_config.TextColumn("Code"),
+            "device_name": st.column_config.TextColumn("Device Name"),
+            "severity": st.column_config.TextColumn("Severity"),
+            "ai_related_flag": st.column_config.CheckboxColumn("AI-Related"),
+            "ai_failure_mode": st.column_config.TextColumn("Failure Mode"),
+            "confidence_score": st.column_config.NumberColumn("Confidence", format="%.2f"),
+            "requires_review": st.column_config.CheckboxColumn("Needs Review"),
+            "skill_name": st.column_config.TextColumn("Skill"),
+            "extraction_ts": st.column_config.DatetimeColumn("Extracted At"),
+        },
     )
 
     st.divider()
@@ -418,17 +469,16 @@ def _page_records(db: Database) -> None:
 
     if not detail_row.empty:
         row = detail_row.iloc[0]
-        sev = row.get("severity") or "—"
+        sev = _nan_to_dash(row.get("severity"))
         conf = row.get("confidence_score")
         ai_flag = row.get("ai_related_flag")
-        fm = row.get("ai_failure_mode") or "—"
+        fm = _nan_to_dash(row.get("ai_failure_mode"))
+        conf_str = f"{conf:.3f}" if conf is not None else "—"
         col_c.markdown(
             f"**Severity:** {sev}  \n"
             f"**AI-related:** {'✅' if ai_flag else '❌'}  \n"
             f"**Failure mode:** {fm}  \n"
-            f"**Confidence:** {conf:.3f}"
-            if conf is not None
-            else ""
+            f"**Confidence:** {conf_str}"
         )
 
     if event.narrative:
@@ -818,16 +868,15 @@ def _page_trends(db: Database) -> None:
     """Render the Trends & Forecasting page."""
     st.subheader("Trends & Forecasting")
 
-    with st.expander("Run Trend Detection", expanded=False):
+    with st.expander("Trend detection (CLI command)", expanded=False):
+        st.caption("This panel builds the CLI command. Run it from your terminal.")
         trend_pc = st.text_input("Product code", key="trend_pc_input", placeholder="e.g. QIH")
-        if st.button("Detect Trends", key="trend_run_btn"):
+        if st.button("Show CLI command", key="trend_run_btn"):
             if not trend_pc.strip():
                 st.error("Product code is required.")
             else:
-                st.info(
-                    f"Run this CLI command:\n\n"
-                    f"```\nmaudesignal forecast trends {trend_pc.strip()}\n```"
-                )
+                cmd = f"maudesignal forecast trends {trend_pc.strip()}"
+                st.code(cmd, language="bash")
 
     snapshots = db.list_trend_snapshots(limit=200)
     if not snapshots:
@@ -934,7 +983,8 @@ def _page_psur(db: Database) -> None:
     """Render the PSUR Reports page."""
     st.subheader("PSUR Report Drafts")
 
-    with st.expander("Generate New PSUR Draft", expanded=False):
+    with st.expander("PSUR generation (CLI command)", expanded=False):
+        st.caption("This panel builds the CLI command. Run it from your terminal.")
         gen_pc = st.text_input("Product code", key="psur_gen_pc", placeholder="e.g. QIH")
         gen_device = st.text_input("Device name (optional)", key="psur_gen_device")
         gen_window = st.number_input(
@@ -944,18 +994,15 @@ def _page_psur(db: Database) -> None:
             max_value=730,
             key="psur_gen_window",
         )
-        if st.button("Generate PSUR Draft", key="psur_gen_btn"):
+        if st.button("Show CLI command", key="psur_gen_btn"):
             if not gen_pc.strip():
                 st.error("Product code is required.")
             else:
-                st.info(
-                    f"Run this CLI command to generate:\n\n"
-                    f"```\nmaudesignal psur generate {gen_pc.strip()} "
-                    f'--device-name "{gen_device}" --window {gen_window}\n```'
+                cmd = (
+                    f"maudesignal psur generate {gen_pc.strip()}"
+                    f' --device-name "{gen_device}" --window {gen_window}'
                 )
-                st.warning(
-                    "Dashboard-triggered generation coming soon. " "Use the CLI command above."
-                )
+                st.code(cmd, language="bash")
 
     reports = db.list_psur_reports(limit=100)
     if not reports:
@@ -1060,22 +1107,21 @@ def _page_sources(db: Database) -> None:
     """Render the External Sources page."""
     st.subheader("External Sources")
 
-    with st.expander("Fetch New Sources", expanded=False):
+    with st.expander("Source fetch (CLI command)", expanded=False):
+        st.caption("This panel builds the CLI command. Run it from your terminal.")
         src_query = st.text_input(
             "Search query",
             key="src_query",
             placeholder="e.g. AI radiology device failure",
         )
         src_pc = st.text_input("Product code (optional)", key="src_pc_input")
-        if st.button("Fetch Sources", key="src_fetch_btn"):
+        if st.button("Show CLI command", key="src_fetch_btn"):
             if not src_query.strip():
                 st.error("Search query is required.")
             else:
                 pc_flag = f"--product-code {src_pc.strip()}" if src_pc.strip() else ""
-                st.info(
-                    f"Run these CLI commands:\n\n"
-                    f'```\nmaudesignal sources fetch --query "{src_query}" {pc_flag}\n```'
-                )
+                cmd = f'maudesignal sources fetch --query "{src_query}" {pc_flag}'.strip()
+                st.code(cmd, language="bash")
 
     all_sources = db.list_external_sources(limit=500)
     if not all_sources:
@@ -1161,7 +1207,7 @@ def _page_sources(db: Database) -> None:
 def _render_app(db: Database) -> None:
     st.set_page_config(
         page_title="MaudeSignal",
-        page_icon="🔬",
+        page_icon="📡",
         layout="wide",
         initial_sidebar_state="expanded",
     )
@@ -1169,33 +1215,101 @@ def _render_app(db: Database) -> None:
 
     # ── Sidebar ──────────────────────────────────────────────────────────────
     with st.sidebar:
-        st.markdown("## 🔬 MaudeSignal")
+        if _LOGO_PATH.exists():
+            st.image(str(_LOGO_PATH), width=180)
+        else:
+            st.markdown("## MaudeSignal")
         st.caption("FDA AI/ML Postmarket Surveillance")
         st.divider()
-        page = st.radio(
-            "Navigation",
-            [
-                "Overview",
-                "Records",
-                "Severity",
-                "Signals & Drift",
-                "Root Cause & Alerts",
-                "Trends & Forecasting",
-                "External Sources",
-                "PSUR Reports",
-                "Device Catalog",
-            ],
+
+        # ── Global date-range filter (P2-1) ──────────────────────────────────
+        st.markdown("**Date range**")
+        date_preset = st.selectbox(
+            "Date range",
+            ["Last 30 days", "Last 90 days", "Last 12 months", "All time"],
+            index=2,
+            key="global_date_preset",
             label_visibility="collapsed",
         )
+        now = datetime.now(UTC)
+        _preset_map = {
+            "Last 30 days": now - timedelta(days=30),
+            "Last 90 days": now - timedelta(days=90),
+            "Last 12 months": now - timedelta(days=365),
+            "All time": datetime(2000, 1, 1, tzinfo=UTC),
+        }
+        global_since: datetime = _preset_map[date_preset]
+        st.session_state["global_since"] = global_since
+
         st.divider()
+
+        # ── Grouped navigation (P2-6) ─────────────────────────────────────────
+        st.markdown("**Monitor**")
+        _monitor_pages = ["Overview", "Records", "Severity"]
+        _analyze_pages = ["Signals & Drift", "Root Cause & Alerts", "Trends & Forecasting"]
+        _configure_pages = ["External Sources", "PSUR Reports", "Device Catalog"]
+        _all_pages = _monitor_pages + _analyze_pages + _configure_pages
+
+        page = st.radio(
+            "Monitor",
+            _monitor_pages,
+            label_visibility="collapsed",
+            key="nav_monitor",
+        )
+        st.markdown("**Analyze**")
+        _nav_analyze = st.radio(
+            "Analyze",
+            _analyze_pages,
+            label_visibility="collapsed",
+            key="nav_analyze",
+            index=None,
+        )
+        st.markdown("**Configure**")
+        _nav_configure = st.radio(
+            "Configure",
+            _configure_pages,
+            label_visibility="collapsed",
+            key="nav_configure",
+            index=None,
+        )
+
+        # Last click wins — clear the others when a section is picked
+        if _nav_analyze is not None:
+            page = _nav_analyze
+            st.session_state["nav_monitor"] = None
+            st.session_state["nav_configure"] = None
+        elif _nav_configure is not None:
+            page = _nav_configure
+            st.session_state["nav_monitor"] = None
+            st.session_state["nav_analyze"] = None
+
+        st.divider()
+
+        # ── Sidebar footer (P2-7) ─────────────────────────────────────────────
         n_cat = db.count_catalog_devices()
         n_raw = db.count_raw_reports()
         n_rules = len(db.list_alert_rules(active_only=True))
+        cost = db.total_llm_cost_usd()
+        last_ext = db.list_extractions()
+        if last_ext:
+            last_ts = max(r.extraction_ts for r in last_ext)
+            delta = datetime.now() - last_ts
+            freshness = f"{delta.seconds // 3600}h ago" if delta.days == 0 else f"{delta.days}d ago"
+        else:
+            freshness = "never"
         st.caption(f"📦 Catalog: {n_cat} devices")
         st.caption(f"📄 MAUDE reports: {n_raw:,}")
         st.caption(f"🔔 Alert rules: {n_rules} active")
-        cost = db.total_llm_cost_usd()
         st.caption(f"💵 LLM cost: ${cost:.4f}")
+        st.caption(f"🕐 Last extraction: {freshness}")
+
+    # ── Catalog-empty warning for device names (P1-3) ─────────────────────────
+    if n_cat == 0:
+        st.warning(
+            "Device names not populated. "
+            "Run **`maudesignal catalog fetch`** to discover all FDA-cleared AI/ML devices.",
+            icon="⚠️",
+        )
 
     # ── Header banner ─────────────────────────────────────────────────────────
     page_subtitles = {
@@ -1219,25 +1333,21 @@ def _render_app(db: Database) -> None:
         unsafe_allow_html=True,
     )
 
-    # ── Route ─────────────────────────────────────────────────────────────────
-    if page == "Overview":
-        _page_summary(db)
-    elif page == "Records":
-        _page_records(db)
-    elif page == "Severity":
-        _page_severity(db)
-    elif page == "Signals & Drift":
-        _page_drift(db)
-    elif page == "Root Cause & Alerts":
-        _page_root_cause(db)
-    elif page == "Trends & Forecasting":
-        _page_trends(db)
-    elif page == "External Sources":
-        _page_sources(db)
-    elif page == "PSUR Reports":
-        _page_psur(db)
-    elif page == "Device Catalog":
-        _page_catalog(db)
+    # ── Route (P1-4: spinner on transition) ──────────────────────────────────
+    _page_fn = {
+        "Overview": _page_summary,
+        "Records": _page_records,
+        "Severity": _page_severity,
+        "Signals & Drift": _page_drift,
+        "Root Cause & Alerts": _page_root_cause,
+        "Trends & Forecasting": _page_trends,
+        "External Sources": _page_sources,
+        "PSUR Reports": _page_psur,
+        "Device Catalog": _page_catalog,
+    }
+    fn = _page_fn.get(page or "Overview", _page_summary)
+    with st.spinner("Loading…"):
+        fn(db)
 
     st.markdown(
         '<div class="ms-footer">MaudeSignal — open-source FDA AI/ML postmarket surveillance '
