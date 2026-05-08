@@ -9,6 +9,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+import altair as alt
 import pandas as pd
 import streamlit as st
 
@@ -120,6 +121,22 @@ section[data-testid="stSidebar"] .stRadio label {
     font-weight: 600;
 }
 
+/* ── Sidebar nav buttons ───────────────────────────────────────────────── */
+section[data-testid="stSidebar"] .stButton > button {
+    background: transparent !important;
+    border: none !important;
+    text-align: left !important;
+    padding: 3px 8px !important;
+    font-size: 0.88rem !important;
+    color: #d4e6f1 !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    border-radius: 4px !important;
+}
+section[data-testid="stSidebar"] .stButton > button:hover {
+    background: rgba(255,255,255,0.1) !important;
+}
+
 /* ── Footer ─────────────────────────────────────────────────────────────  */
 .ms-footer {
     margin-top: 40px;
@@ -163,6 +180,12 @@ _FAILURE_MODE_COLORS = {
 
 _ASSETS_DIR = Path(__file__).parent / "assets"
 _LOGO_PATH = _ASSETS_DIR / "logo.svg"
+
+_PAGE_GROUPS: dict[str, list[str]] = {
+    "Monitor": ["Overview", "Records", "Severity"],
+    "Analyze": ["Signals & Drift", "Root Cause & Alerts", "Trends & Forecasting"],
+    "Configure": ["External Sources", "PSUR Reports", "Device Catalog"],
+}
 
 
 def _nan_to_dash(val: Any) -> str:
@@ -335,7 +358,25 @@ def _page_summary(db: Database) -> None:
         if sev_df.empty:
             st.info("No severity data yet.")
         else:
-            st.bar_chart(sev_df.set_index("Severity"), use_container_width=True, height=230)
+            sev_chart = (
+                alt.Chart(sev_df)
+                .mark_bar()
+                .encode(
+                    x=alt.X("Severity:N", sort=list(_SEVERITY_ORDER), axis=alt.Axis(labelAngle=0)),
+                    y=alt.Y("Count:Q"),
+                    color=alt.Color(
+                        "Severity:N",
+                        scale=alt.Scale(
+                            domain=list(SEVERITY_COLORS.keys()),
+                            range=list(SEVERITY_COLORS.values()),
+                        ),
+                        legend=None,
+                    ),
+                    tooltip=["Severity", "Count"],
+                )
+                .properties(height=230)
+            )
+            st.altair_chart(sev_chart, use_container_width=True)
 
     with col_right:
         st.markdown('<p class="ms-section">AI Failure Mode Breakdown</p>', unsafe_allow_html=True)
@@ -349,7 +390,25 @@ def _page_summary(db: Database) -> None:
             if fm_df.empty:
                 st.caption("No failure mode classifications yet.")
             else:
-                st.bar_chart(fm_df.set_index("Failure Mode"), use_container_width=True, height=230)
+                fm_chart = (
+                    alt.Chart(fm_df)
+                    .mark_bar(color="#2563eb")
+                    .encode(
+                        x=alt.X("Failure Mode:N", axis=alt.Axis(labelAngle=-30)),
+                        y=alt.Y("Count:Q"),
+                        color=alt.Color(
+                            "Failure Mode:N",
+                            scale=alt.Scale(
+                                domain=list(_FAILURE_MODE_COLORS.keys()),
+                                range=list(_FAILURE_MODE_COLORS.values()),
+                            ),
+                            legend=None,
+                        ),
+                        tooltip=["Failure Mode", "Count"],
+                    )
+                    .properties(height=230)
+                )
+                st.altair_chart(fm_chart, use_container_width=True)
 
     st.markdown('<p class="ms-section">Requires Human Review</p>', unsafe_allow_html=True)
     col_r1, col_r2, col_r3 = st.columns(3)
@@ -610,7 +669,26 @@ def _page_severity(db: Database) -> None:
     sev_counts = sev_filled.value_counts().reindex(_SEVERITY_ORDER + ["unknown"], fill_value=0)
     sev_df = sev_counts[sev_counts > 0].reset_index()
     sev_df.columns = pd.Index(["Severity", "Count"])
-    st.bar_chart(sev_df.set_index("Severity"), use_container_width=True, height=260)
+    if not sev_df.empty:
+        sev_chart = (
+            alt.Chart(sev_df)
+            .mark_bar()
+            .encode(
+                x=alt.X("Severity:N", sort=list(_SEVERITY_ORDER), axis=alt.Axis(labelAngle=0)),
+                y=alt.Y("Count:Q"),
+                color=alt.Color(
+                    "Severity:N",
+                    scale=alt.Scale(
+                        domain=list(SEVERITY_COLORS.keys()),
+                        range=list(SEVERITY_COLORS.values()),
+                    ),
+                    legend=None,
+                ),
+                tooltip=["Severity", "Count"],
+            )
+            .properties(height=260)
+        )
+        st.altair_chart(sev_chart, use_container_width=True)
 
     # Breakdown by product code
     st.markdown(
@@ -1213,10 +1291,14 @@ def _render_app(db: Database) -> None:
     )
     st.markdown(_CSS, unsafe_allow_html=True)
 
+    # Single source-of-truth nav key — must be initialised before any widget renders
+    if "nav_active_page" not in st.session_state:
+        st.session_state["nav_active_page"] = "Overview"
+
     # ── Sidebar ──────────────────────────────────────────────────────────────
     with st.sidebar:
         if _LOGO_PATH.exists():
-            st.image(str(_LOGO_PATH), width=180)
+            st.image(str(_LOGO_PATH), width=150)
         else:
             st.markdown("## MaudeSignal")
         st.caption("FDA AI/ML Postmarket Surveillance")
@@ -1243,45 +1325,15 @@ def _render_app(db: Database) -> None:
 
         st.divider()
 
-        # ── Grouped navigation (P2-6) ─────────────────────────────────────────
-        st.markdown("**Monitor**")
-        _monitor_pages = ["Overview", "Records", "Severity"]
-        _analyze_pages = ["Signals & Drift", "Root Cause & Alerts", "Trends & Forecasting"]
-        _configure_pages = ["External Sources", "PSUR Reports", "Device Catalog"]
-        _all_pages = _monitor_pages + _analyze_pages + _configure_pages
-
-        page = st.radio(
-            "Monitor",
-            _monitor_pages,
-            label_visibility="collapsed",
-            key="nav_monitor",
-        )
-        st.markdown("**Analyze**")
-        _nav_analyze = st.radio(
-            "Analyze",
-            _analyze_pages,
-            label_visibility="collapsed",
-            key="nav_analyze",
-            index=None,
-        )
-        st.markdown("**Configure**")
-        _nav_configure = st.radio(
-            "Configure",
-            _configure_pages,
-            label_visibility="collapsed",
-            key="nav_configure",
-            index=None,
-        )
-
-        # Last click wins — clear the others when a section is picked
-        if _nav_analyze is not None:
-            page = _nav_analyze
-            st.session_state["nav_monitor"] = None
-            st.session_state["nav_configure"] = None
-        elif _nav_configure is not None:
-            page = _nav_configure
-            st.session_state["nav_monitor"] = None
-            st.session_state["nav_analyze"] = None
+        # ── Grouped navigation — button-based, no post-widget state mutation ──
+        for group_name, pages in _PAGE_GROUPS.items():
+            st.markdown(f"**{group_name}**")
+            for p in pages:
+                is_active = st.session_state["nav_active_page"] == p
+                label = f"● {p}" if is_active else f"○ {p}"
+                if st.button(label, key=f"nav_btn_{p}", use_container_width=True):
+                    st.session_state["nav_active_page"] = p
+                    st.rerun()
 
         st.divider()
 
@@ -1302,6 +1354,8 @@ def _render_app(db: Database) -> None:
         st.caption(f"🔔 Alert rules: {n_rules} active")
         st.caption(f"💵 LLM cost: ${cost:.4f}")
         st.caption(f"🕐 Last extraction: {freshness}")
+
+    page: str = st.session_state["nav_active_page"]
 
     # ── Catalog-empty warning for device names (P1-3) ─────────────────────────
     if n_cat == 0:
@@ -1327,7 +1381,7 @@ def _render_app(db: Database) -> None:
         f'<div class="ms-banner">'
         f"<div>"
         f"<h1>MaudeSignal</h1>"
-        f'<p>{page_subtitles.get(page or "Overview", "")}</p>'
+        f'<p>{page_subtitles.get(page, "")}</p>'
         f"</div>"
         f"</div>",
         unsafe_allow_html=True,
@@ -1345,7 +1399,7 @@ def _render_app(db: Database) -> None:
         "PSUR Reports": _page_psur,
         "Device Catalog": _page_catalog,
     }
-    fn = _page_fn.get(page or "Overview", _page_summary)
+    fn = _page_fn.get(page, _page_summary)
     with st.spinner("Loading…"):
         fn(db)
 

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" width="200" height="48">
+  <!-- Signal arc icon -->
+  <g transform="translate(6, 24)">
+    <!-- Outer arc -->
+    <path d="M-14,0 A14,14 0 0,1 14,0" fill="none" stroke="#93c5fd" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Middle arc -->
+    <path d="M-9,0 A9,9 0 0,1 9,0" fill="none" stroke="#93c5fd" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>
+    <!-- Center dot -->
+    <circle cx="0" cy="0" r="2.5" fill="#93c5fd"/>
+    <!-- Stem -->
+    <line x1="0" y1="0" x2="0" y2="8" stroke="#93c5fd" stroke-width="2" stroke-linecap="round"/>
+  </g>
+  <!-- Wordmark -->
+  <text x="32" y="30" font-family="'Segoe UI', Inter, system-ui, sans-serif"
+        font-size="20" font-weight="700" fill="#f1f5f9" letter-spacing="-0.5">Maude</text>
+  <text x="101" y="30" font-family="'Segoe UI', Inter, system-ui, sans-serif"
+        font-size="20" font-weight="700" fill="#93c5fd" letter-spacing="-0.5">Signal</text>
+</svg>
