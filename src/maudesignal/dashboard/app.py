@@ -390,18 +390,16 @@ def _page_summary(db: Database) -> None:
             if fm_df.empty:
                 st.caption("No failure mode classifications yet.")
             else:
+                # Use a scheme so any actual DB values render regardless of key name
                 fm_chart = (
                     alt.Chart(fm_df)
-                    .mark_bar(color="#2563eb")
+                    .mark_bar()
                     .encode(
                         x=alt.X("Failure Mode:N", axis=alt.Axis(labelAngle=-30)),
                         y=alt.Y("Count:Q"),
                         color=alt.Color(
                             "Failure Mode:N",
-                            scale=alt.Scale(
-                                domain=list(_FAILURE_MODE_COLORS.keys()),
-                                range=list(_FAILURE_MODE_COLORS.values()),
-                            ),
+                            scale=alt.Scale(scheme="tableau10"),
                             legend=None,
                         ),
                         tooltip=["Failure Mode", "Count"],

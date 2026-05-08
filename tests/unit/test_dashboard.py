@@ -73,6 +73,57 @@ def test_maude_url_format() -> None:
     assert app._maude_url("0000001").endswith("mdrfoi__id=0000001")  # noqa: SLF001
 
 
+def test_page_groups_contain_all_nine_pages() -> None:
+    """_PAGE_GROUPS must cover every routable page — regression guard for nav crashes."""
+    all_pages = [p for pages in app._PAGE_GROUPS.values() for p in pages]  # noqa: SLF001
+    assert len(all_pages) == 9
+    assert "Overview" in all_pages
+    assert "Trends & Forecasting" in all_pages
+    assert "External Sources" in all_pages
+    assert "Device Catalog" in all_pages
+    # No duplicates
+    assert len(all_pages) == len(set(all_pages))
+
+
+def test_failure_mode_chart_data_non_empty(tmp_path: Path) -> None:
+    """Regression: failure-mode bar chart must get non-empty data when classifier records exist."""
+    db_path = tmp_path / "fm_test.db"
+    db = Database(db_path)
+
+    payload = json.dumps(
+        {
+            "failure_mode_category": "software_bug",
+            "failure_mode": "software bug",
+            "ai_related_flag": True,
+            "severity": "malfunction",
+        }
+    )
+    with db._session() as session:  # noqa: SLF001
+        for i in range(3):
+            session.add(
+                ExtractionRecord(
+                    extraction_id=f"cls{i}",
+                    maude_report_id=f"MW-{i}",
+                    extraction_ts=datetime.now(UTC),
+                    skill_name="ai-failure-mode-classifier",
+                    skill_version="1.0.0",
+                    model_used="fake",
+                    output_json=payload,
+                    confidence_score=0.9,
+                    requires_review=False,
+                )
+            )
+        session.commit()
+
+    df = app._extractions_dataframe(db)  # noqa: SLF001
+    df_cls = df[df["skill_name"] == "ai-failure-mode-classifier"]
+    assert not df_cls.empty, "classifier records must appear in the extractions frame"
+    fm_counts = df_cls["ai_failure_mode"].value_counts()
+    assert fm_counts.sum() > 0, "failure mode chart data must be non-empty when records exist"
+    # The value must survive the nan-to-dash normalisation unchanged
+    assert "software_bug" in fm_counts.index, "actual DB values must pass through unchanged"
+
+
 @pytest.fixture(autouse=True)
 def _no_streamlit_calls(monkeypatch: pytest.MonkeyPatch) -> None:
     """Ensure no test accidentally triggers a streamlit render."""
