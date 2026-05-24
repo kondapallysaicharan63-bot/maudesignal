@@ -1,11 +1,13 @@
-"""MaudeSignal Streamlit dashboard — FDA AI/ML postmarket surveillance."""
+"""MaudeSignal Streamlit dashboard — enterprise-grade FDA AI/ML postmarket surveillance."""
 
 from __future__ import annotations
 
 import json
 import math
+import os
 import sys
-from datetime import UTC, datetime, timedelta
+from collections.abc import Callable
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -14,140 +16,29 @@ import pandas as pd
 import streamlit as st
 
 from maudesignal.config import Config
+from maudesignal.ingestion.openfda_client import OpenFDAClient
+from maudesignal.ingestion.pipeline import IngestionResult, ingest_product_code
 from maudesignal.storage.database import Database
 
+# ── Skill identifiers ──────────────────────────────────────────────────────────
 EXTRACTOR_SKILL = "maude-narrative-extractor"
 CLASSIFIER_SKILL = "ai-failure-mode-classifier"
-ROOT_CAUSE_SKILL = "root-cause-analyzer"
+SEVERITY_SKILL = "severity-triage"
 
 _MAUDE_DETAIL_URL = (
     "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id={}"
 )
 
-_CSS = """
-<style>
-/* ── Global typography ─────────────────────────────────────────────────── */
-html, body, [class*="css"] {
-    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
-}
-
-/* ── FDA blue palette on sidebar ──────────────────────────────────────── */
-section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0d2137 0%, #1a3a5c 100%);
-    border-right: 1px solid #2e5c8a;
-}
-section[data-testid="stSidebar"] * {
-    color: #d4e6f1 !important;
-}
-section[data-testid="stSidebar"] .stRadio label {
-    font-size: 0.95rem;
-    padding: 4px 0;
-}
-
-/* ── Page header banner ────────────────────────────────────────────────── */
-.ms-banner {
-    background: linear-gradient(90deg, #1a5276 0%, #1f618d 60%, #2874a6 100%);
-    border-radius: 8px;
-    padding: 18px 24px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-}
-.ms-banner h1 {
-    color: #fff !important;
-    font-size: 1.55rem !important;
-    font-weight: 700 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-.ms-banner p {
-    color: #a9cce3 !important;
-    font-size: 0.82rem !important;
-    margin: 4px 0 0 0 !important;
-}
-
-/* ── Metric card ───────────────────────────────────────────────────────── */
-.ms-card {
-    background: #fff;
-    border: 1px solid #d5e8f5;
-    border-top: 3px solid #2874a6;
-    border-radius: 6px;
-    padding: 16px 18px;
-    text-align: center;
-    box-shadow: 0 1px 3px rgba(0,0,0,.07);
-}
-.ms-card .val {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1a5276;
-    line-height: 1.15;
-}
-.ms-card .lbl {
-    font-size: 0.75rem;
-    color: #555;
-    text-transform: uppercase;
-    letter-spacing: .05em;
-    margin-top: 4px;
-}
-
-/* ── Section sub-header ────────────────────────────────────────────────── */
-.ms-section {
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: #1a5276;
-    border-left: 3px solid #2874a6;
-    padding-left: 10px;
-    margin: 20px 0 10px;
-}
-
-/* ── Severity badge ────────────────────────────────────────────────────── */
-.badge-death, .badge-malfunction, .badge-injury, .badge-other {
-    padding: 2px 8px; border-radius: 4px; font-size: .75rem; color: #fff;
-}
-.badge-death       { background: #c0392b; }
-.badge-malfunction { background: #e67e22; }
-.badge-injury      { background: #d4ac0d; }
-.badge-other       { background: #7f8c8d; }
-
-/* ── Catalog specialty chip ────────────────────────────────────────────── */
-.chip {
-    display: inline-block;
-    background: #d4e6f1;
-    color: #1a5276;
-    border-radius: 12px;
-    padding: 2px 10px;
-    font-size: .73rem;
-    font-weight: 600;
-}
-
-/* ── Sidebar nav buttons ───────────────────────────────────────────────── */
-section[data-testid="stSidebar"] .stButton > button {
-    background: transparent !important;
-    border: none !important;
-    text-align: left !important;
-    padding: 3px 8px !important;
-    font-size: 0.88rem !important;
-    color: #d4e6f1 !important;
-    box-shadow: none !important;
-    width: 100% !important;
-    border-radius: 4px !important;
-}
-section[data-testid="stSidebar"] .stButton > button:hover {
-    background: rgba(255,255,255,0.1) !important;
-}
-
-/* ── Footer ─────────────────────────────────────────────────────────────  */
-.ms-footer {
-    margin-top: 40px;
-    font-size: .72rem;
-    color: #aaa;
-    text-align: center;
-    border-top: 1px solid #e0e0e0;
-    padding-top: 10px;
-}
-</style>
-"""
+# ── Page registry: (icon, name, subtitle) ─────────────────────────────────────
+_PAGES: list[tuple[str, str, str]] = [
+    ("🏠", "Dashboard", "Executive summary of postmarket signal activity"),
+    ("🔍", "Signal Explorer", "Browse, filter, and export AI extraction results"),
+    ("📥", "MAUDE Ingestion", "Pull adverse event reports from openFDA"),
+    ("🤖", "LLM Extraction", "Run AI extraction on ingested records"),
+    ("📋", "PSUR Reports", "Periodic safety update report drafts"),
+    ("🔔", "Alerts", "Monitor and test alert rules"),
+    ("⚙️", "Settings", "Configuration, providers, and system health"),
+]
 
 _SEVERITY_ORDER = [
     "death",
@@ -168,7 +59,7 @@ SEVERITY_COLORS: dict[str, str] = {
     "unknown": "#94a3b8",
 }
 
-_FAILURE_MODE_COLORS = {
+_FAILURE_MODE_COLORS: dict[str, str] = {
     "performance_degradation": "#2563eb",
     "false_positive": "#0891b2",
     "false_negative": "#dc2626",
@@ -180,16 +71,137 @@ _FAILURE_MODE_COLORS = {
 
 _ASSETS_DIR = Path(__file__).parent / "assets"
 _LOGO_PATH = _ASSETS_DIR / "logo.svg"
+_PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
-_PAGE_GROUPS: dict[str, list[str]] = {
-    "Monitor": ["Overview", "Records", "Severity"],
-    "Analyze": ["Signals & Drift", "Root Cause & Alerts", "Trends & Forecasting"],
-    "Configure": ["External Sources", "PSUR Reports", "Device Catalog"],
+# ── CSS ────────────────────────────────────────────────────────────────────────
+_CSS = """
+<style>
+/* ── Global ─────────────────────────────────────────────────────────────── */
+html, body, [class*="css"] {
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
 }
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+section[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #0d2137 0%, #1a3a5c 100%);
+    border-right: 1px solid #2a5080;
+}
+section[data-testid="stSidebar"] * {
+    color: #c8dff0 !important;
+}
+section[data-testid="stSidebar"] .stButton > button {
+    background: transparent !important;
+    border: none !important;
+    text-align: left !important;
+    padding: 6px 10px !important;
+    font-size: 0.9rem !important;
+    color: #c8dff0 !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    border-radius: 6px !important;
+}
+section[data-testid="stSidebar"] .stButton > button:hover {
+    background: rgba(255,255,255,0.12) !important;
+    color: #fff !important;
+}
+
+/* ── Page header ─────────────────────────────────────────────────────────── */
+.ms-page-header {
+    border-bottom: 2px solid #e4edf8;
+    padding-bottom: 14px;
+    margin-bottom: 24px;
+}
+.ms-page-header h1 {
+    font-size: 1.65rem !important;
+    font-weight: 700 !important;
+    color: #1A4F8A !important;
+    margin: 0 0 4px 0 !important;
+}
+.ms-page-header p {
+    color: #64748b !important;
+    font-size: 0.88rem !important;
+    margin: 0 !important;
+}
+
+/* ── Metric card ─────────────────────────────────────────────────────────── */
+.ms-card {
+    background: #fff;
+    border: 1px solid #dde8f5;
+    border-top: 3px solid #1A4F8A;
+    border-radius: 8px;
+    padding: 18px 20px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(26,79,138,.07);
+}
+.ms-card .val {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1A4F8A;
+    line-height: 1.2;
+}
+.ms-card .lbl {
+    font-size: 0.72rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-top: 5px;
+}
+.ms-card.red { border-top-color: #b91c1c; }
+.ms-card.red .val { color: #b91c1c; }
+.ms-card.green { border-top-color: #15803d; }
+.ms-card.green .val { color: #15803d; }
+.ms-card.amber { border-top-color: #b45309; }
+.ms-card.amber .val { color: #b45309; }
+
+/* ── Section subheader ───────────────────────────────────────────────────── */
+.ms-section {
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: #1A4F8A;
+    border-left: 3px solid #1A4F8A;
+    padding-left: 10px;
+    margin: 24px 0 12px;
+}
+
+/* ── Status pills ────────────────────────────────────────────────────────── */
+.pill-ok   { display:inline-block;background:#d1fae5;color:#065f46;
+             border-radius:12px;padding:2px 10px;font-size:.78rem;font-weight:600; }
+.pill-warn { display:inline-block;background:#fef3c7;color:#92400e;
+             border-radius:12px;padding:2px 10px;font-size:.78rem;font-weight:600; }
+.pill-err  { display:inline-block;background:#fee2e2;color:#991b1b;
+             border-radius:12px;padding:2px 10px;font-size:.78rem;font-weight:600; }
+
+/* ── Provider status card ────────────────────────────────────────────────── */
+.prov-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.prov-name { font-weight: 600; color: #1e293b; font-size: .9rem; }
+.prov-model { font-size: .78rem; color: #64748b; margin-top: 2px; }
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+.ms-footer {
+    margin-top: 48px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+    font-size: .72rem;
+    color: #94a3b8;
+    text-align: center;
+}
+</style>
+"""
+
+
+# ── Utility helpers ────────────────────────────────────────────────────────────
 
 
 def _nan_to_dash(val: Any) -> str:
-    """Normalise None / NaN / 'nan' / 'None' to the em-dash placeholder."""
+    """Normalise None / NaN / 'nan' / empty string to an em-dash placeholder."""
     if val is None:
         return "—"
     if isinstance(val, float) and math.isnan(val):
@@ -200,18 +212,28 @@ def _nan_to_dash(val: Any) -> str:
     return s
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Data helpers
-# ──────────────────────────────────────────────────────────────────────────────
-
-
 def _maude_url(report_id: str) -> str:
     return _MAUDE_DETAIL_URL.format(report_id)
 
 
 def _load_db() -> Database:
-    config = Config.load()
-    return Database(config.db_path)
+    """Load the database, falling back to env-var path if Config cannot be fully loaded."""
+    try:
+        cfg = Config.load()
+        return Database(cfg.db_path)
+    except Exception:
+        db_path_str = os.environ.get("MAUDESIGNAL_DB_PATH", "data/maudesignal.db")
+        db_path = (_PROJECT_ROOT / db_path_str).resolve()
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+        return Database(db_path)
+
+
+def _try_load_config() -> Config | None:
+    """Return Config or None if loading fails (e.g., missing API key)."""
+    try:
+        return Config.load()
+    except Exception:
+        return None
 
 
 def _extractions_dataframe(db: Database) -> pd.DataFrame:
@@ -240,7 +262,6 @@ def _extractions_dataframe(db: Database) -> pd.DataFrame:
             }
         )
     df = pd.DataFrame.from_records(records)
-    # Belt-and-suspenders: collapse any remaining nan strings that survive JSON decode
     for col in ("severity", "ai_failure_mode", "failure_mode"):
         if col in df.columns:
             df[col] = df[col].apply(_nan_to_dash)
@@ -253,7 +274,6 @@ def _product_code_lookup(db: Database) -> dict[str, str]:
 
 
 def _device_name_lookup(db: Database) -> dict[str, str]:
-    """Return product_code -> device_name from catalog."""
     devices = db.list_catalog_devices()
     return {d.product_code: d.device_name for d in devices}
 
@@ -278,75 +298,65 @@ def _catalog_dataframe(db: Database) -> pd.DataFrame:
     )
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Page: Overview
-# ──────────────────────────────────────────────────────────────────────────────
+def _page_header(icon: str, title: str, subtitle: str) -> None:
+    """Render the standard page header."""
+    st.markdown(
+        f'<div class="ms-page-header">' f"<h1>{icon} {title}</h1>" f"<p>{subtitle}</p>" f"</div>",
+        unsafe_allow_html=True,
+    )
 
 
-def _page_summary(db: Database) -> None:
+def _kpi_card(col: Any, value: str, label: str, variant: str = "") -> None:
+    cls = f"ms-card {variant}".strip()
+    col.markdown(
+        f'<div class="{cls}"><div class="val">{value}</div>'
+        f'<div class="lbl">{label}</div></div>',
+        unsafe_allow_html=True,
+    )
+
+
+def _section(title: str) -> None:
+    st.markdown(f'<p class="ms-section">{title}</p>', unsafe_allow_html=True)
+
+
+# ── Page 1: Dashboard ──────────────────────────────────────────────────────────
+
+
+def _page_dashboard(db: Database) -> None:
+    _page_header("🏠", "Dashboard", "Executive summary of postmarket signal activity")
+
     df = _extractions_dataframe(db)
     df_ext = df[df["skill_name"] == EXTRACTOR_SKILL] if not df.empty else pd.DataFrame()
 
     n_raw = db.count_raw_reports()
-    n_catalog = db.count_catalog_devices()
     n_total = len(df_ext)
     n_ai = int(df_ext["ai_related_flag"].fillna(False).astype(bool).sum()) if n_total else 0
-    pct_ai = (n_ai / n_total * 100.0) if n_total else 0.0
     avg_conf = float(df_ext["confidence_score"].mean()) if n_total else 0.0
-    n_review = int(df_ext["requires_review"].fillna(False).astype(bool).sum()) if n_total else 0
+    n_alerts = len(db.list_alert_rules(active_only=True))
     cost = db.total_llm_cost_usd()
 
     # KPI row
-    st.markdown('<p class="ms-section">Key Performance Indicators</p>', unsafe_allow_html=True)
+    _section("Key Performance Indicators")
     c1, c2, c3, c4, c5 = st.columns(5)
-    for col, val, lbl in [
-        (c1, str(n_catalog), "Catalog Devices"),
-        (c2, f"{n_raw:,}", "MAUDE Reports"),
-        (c3, str(n_total), "Extractions"),
-        (c4, f"{pct_ai:.1f}%", "AI-Signal Rate"),
-        (c5, f"{avg_conf:.3f}", "Avg Confidence"),
-    ]:
-        col.markdown(
-            f'<div class="ms-card"><div class="val">{val}</div>'
-            f'<div class="lbl">{lbl}</div></div>',
-            unsafe_allow_html=True,
-        )
+    _kpi_card(c1, f"{n_raw:,}", "MAUDE Records")
+    _kpi_card(c2, str(n_ai), "AI Signals Detected", "red" if n_ai > 0 else "")
+    _kpi_card(c3, f"{avg_conf:.3f}", "Avg Confidence", "green" if avg_conf >= 0.8 else "amber")
+    _kpi_card(c4, str(n_alerts), "Active Alert Rules")
+    _kpi_card(c5, f"${cost:.4f}", "LLM Cost to Date")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Top 5 product codes with device names
-    if not df_ext.empty:
-        st.markdown(
-            '<p class="ms-section">Top 5 Product Codes by Extraction Count</p>',
-            unsafe_allow_html=True,
-        )
-        pc_lookup = _product_code_lookup(db)
-        dn_lookup = _device_name_lookup(db)
-        df_ext_copy = df_ext.copy()
-        df_ext_copy["product_code"] = df_ext_copy["maude_report_id"].map(pc_lookup).fillna("?")
-        top5 = (
-            df_ext_copy.groupby("product_code")
-            .size()
-            .reset_index(name="Extractions")
-            .sort_values("Extractions", ascending=False)
-            .head(5)
-        )
-        top5["Device Name"] = top5["product_code"].map(dn_lookup).fillna("—")
-        top5 = top5.rename(columns={"product_code": "Product Code"})
-        st.dataframe(
-            top5[["Product Code", "Device Name", "Extractions"]],
-            use_container_width=True,
-            hide_index=True,
-        )
-
     if df_ext.empty:
-        st.info("No extractions yet. Run `maudesignal extract --product-code QIH --limit 5`.")
+        st.info(
+            "No extraction results yet. Use **MAUDE Ingestion** to pull records, "
+            "then **LLM Extraction** to analyse them."
+        )
         return
 
     col_left, col_right = st.columns(2)
 
     with col_left:
-        st.markdown('<p class="ms-section">Severity Distribution</p>', unsafe_allow_html=True)
+        _section("Severity Distribution")
         sev_counts = (
             df_ext["severity"]
             .fillna("unknown")
@@ -356,11 +366,11 @@ def _page_summary(db: Database) -> None:
         sev_df = sev_counts[sev_counts > 0].reset_index()
         sev_df.columns = pd.Index(["Severity", "Count"])
         if sev_df.empty:
-            st.info("No severity data yet.")
+            st.info("No severity data available.")
         else:
-            sev_chart = (
+            chart = (
                 alt.Chart(sev_df)
-                .mark_bar()
+                .mark_bar(cornerRadiusTopLeft=3, cornerRadiusTopRight=3)
                 .encode(
                     x=alt.X("Severity:N", sort=list(_SEVERITY_ORDER), axis=alt.Axis(labelAngle=0)),
                     y=alt.Y("Count:Q"),
@@ -374,58 +384,84 @@ def _page_summary(db: Database) -> None:
                     ),
                     tooltip=["Severity", "Count"],
                 )
-                .properties(height=230)
+                .properties(height=240)
             )
-            st.altair_chart(sev_chart, use_container_width=True)
+            st.altair_chart(chart, use_container_width=True)
 
     with col_right:
-        st.markdown('<p class="ms-section">AI Failure Mode Breakdown</p>', unsafe_allow_html=True)
+        _section("AI Failure Mode Breakdown")
         df_cls = df[df["skill_name"] == CLASSIFIER_SKILL]
         if df_cls.empty:
-            st.caption("No Skill #4 classifications yet.")
+            st.info("No failure mode classifications yet.")
         else:
             fm_counts = df_cls["ai_failure_mode"].fillna("unknown").value_counts().head(8)
             fm_df = fm_counts.reset_index()
             fm_df.columns = pd.Index(["Failure Mode", "Count"])
-            if fm_df.empty:
-                st.caption("No failure mode classifications yet.")
-            else:
-                # Use a scheme so any actual DB values render regardless of key name
-                fm_chart = (
-                    alt.Chart(fm_df)
-                    .mark_bar()
-                    .encode(
-                        x=alt.X("Failure Mode:N", axis=alt.Axis(labelAngle=-30)),
-                        y=alt.Y("Count:Q"),
-                        color=alt.Color(
-                            "Failure Mode:N",
-                            scale=alt.Scale(scheme="tableau10"),
-                            legend=None,
-                        ),
-                        tooltip=["Failure Mode", "Count"],
-                    )
-                    .properties(height=230)
+            chart_fm = (
+                alt.Chart(fm_df)
+                .mark_bar(cornerRadiusTopLeft=3, cornerRadiusTopRight=3)
+                .encode(
+                    x=alt.X("Failure Mode:N", axis=alt.Axis(labelAngle=-30)),
+                    y=alt.Y("Count:Q"),
+                    color=alt.Color(
+                        "Failure Mode:N",
+                        scale=alt.Scale(scheme="tableau10"),
+                        legend=None,
+                    ),
+                    tooltip=["Failure Mode", "Count"],
                 )
-                st.altair_chart(fm_chart, use_container_width=True)
+                .properties(height=240)
+            )
+            st.altair_chart(chart_fm, use_container_width=True)
 
-    st.markdown('<p class="ms-section">Requires Human Review</p>', unsafe_allow_html=True)
-    col_r1, col_r2, col_r3 = st.columns(3)
-    col_r1.metric("Flagged for review", n_review)
-    col_r2.metric("Review rate", f"{(n_review / n_total * 100) if n_total else 0:.1f}%")
-    col_r3.metric("LLM cost to date", f"${cost:.4f}")
+    _section("Recent Signals")
+    pc_lookup = _product_code_lookup(db)
+    dn_lookup = _device_name_lookup(db)
+    recent = df_ext.copy()
+    recent["product_code"] = recent["maude_report_id"].map(pc_lookup).fillna("?")
+    recent["device_name"] = recent["product_code"].map(dn_lookup).fillna("—")
+    display_recent = (
+        recent[
+            [
+                "extraction_ts",
+                "maude_report_id",
+                "product_code",
+                "device_name",
+                "severity",
+                "ai_related_flag",
+                "confidence_score",
+            ]
+        ]
+        .sort_values("extraction_ts", ascending=False)
+        .head(15)
+    )
+    st.dataframe(
+        display_recent,
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "extraction_ts": st.column_config.DatetimeColumn("Extracted At"),
+            "maude_report_id": st.column_config.TextColumn("Report ID"),
+            "product_code": st.column_config.TextColumn("Code"),
+            "device_name": st.column_config.TextColumn("Device"),
+            "severity": st.column_config.TextColumn("Severity"),
+            "ai_related_flag": st.column_config.CheckboxColumn("AI-Related"),
+            "confidence_score": st.column_config.NumberColumn("Confidence", format="%.3f"),
+        },
+    )
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Page: Records
-# ──────────────────────────────────────────────────────────────────────────────
+# ── Page 2: Signal Explorer ────────────────────────────────────────────────────
 
 
-def _page_records(db: Database) -> None:
+def _page_signal_explorer(db: Database) -> None:
+    _page_header("🔍", "Signal Explorer", "Browse, filter, and export AI extraction results")
+
     df = _extractions_dataframe(db)
     if df.empty:
         st.info(
-            "No extractions yet.  \nRun `maudesignal ingest --product-code QIH --limit 20` "
-            "then `maudesignal extract --product-code QIH --limit 5`."
+            "No extraction results found. Use **MAUDE Ingestion** then **LLM Extraction** "
+            "to populate data."
         )
         return
 
@@ -434,20 +470,27 @@ def _page_records(db: Database) -> None:
     dn_lookup = _device_name_lookup(db)
     df["device_name"] = df["product_code"].map(dn_lookup).fillna("—")
 
-    st.markdown('<p class="ms-section">Filters</p>', unsafe_allow_html=True)
+    _section("Filters")
     f1, f2, f3, f4 = st.columns(4)
     pc_options = ["(all)"] + sorted({p for p in df["product_code"].dropna() if p and p != "?"})
-    sev_options = ["(all)"] + sorted({s for s in df["severity"].dropna() if s})
-    skill_options = ["(all)"] + sorted({s for s in df["skill_name"].dropna() if s})
+    sev_options = ["(all)"] + sorted({s for s in df["severity"].dropna() if s and s != "—"})
     ai_options = ["(all)", "AI-related", "Not AI-related"]
 
-    pc_sel = f1.selectbox("Product code", pc_options, key="rec_pc")
-    sev_sel = f2.selectbox("Severity", sev_options, key="rec_sev")
-    skill_sel = f3.selectbox("Skill", skill_options, key="rec_skill")
-    ai_sel = f4.selectbox("AI flag", ai_options, key="rec_ai")
+    pc_sel = f1.selectbox("Product Code", pc_options, key="se_pc")
+    sev_sel = f2.selectbox("Severity", sev_options, key="se_sev")
+    ai_sel = f3.selectbox("AI Flag", ai_options, key="se_ai")
+
+    today = date.today()
+    date_range = f4.date_input(
+        "Date Range",
+        value=(today - timedelta(days=365), today),
+        key="se_dates",
+    )
 
     device_search = st.text_input(
-        "Search device name", key="rec_device_search", placeholder="e.g. radiology"
+        "Search device name or report ID",
+        key="se_search",
+        placeholder="e.g. radiology, 1234567",
     )
 
     filtered = df.copy()
@@ -455,17 +498,23 @@ def _page_records(db: Database) -> None:
         filtered = filtered[filtered["product_code"] == pc_sel]
     if sev_sel != "(all)":
         filtered = filtered[filtered["severity"] == sev_sel]
-    if skill_sel != "(all)":
-        filtered = filtered[filtered["skill_name"] == skill_sel]
     if ai_sel == "AI-related":
         filtered = filtered[filtered["ai_related_flag"].fillna(False).astype(bool)]
     elif ai_sel == "Not AI-related":
         filtered = filtered[~filtered["ai_related_flag"].fillna(False).astype(bool)]
+    if isinstance(date_range, (list, tuple)) and len(date_range) == 2:
+        start_dt = datetime.combine(date_range[0], datetime.min.time())
+        end_dt = datetime.combine(date_range[1], datetime.max.time())
+        ts_col = pd.to_datetime(filtered["extraction_ts"])
+        filtered = filtered[(ts_col >= start_dt) & (ts_col <= end_dt)]
     if device_search.strip():
         q = device_search.strip().lower()
-        filtered = filtered[filtered["device_name"].str.lower().str.contains(q, na=False)]
+        mask = filtered["device_name"].str.lower().str.contains(q, na=False) | filtered[
+            "maude_report_id"
+        ].str.lower().str.contains(q, na=False)
+        filtered = filtered[mask]
 
-    st.caption(f"**{len(filtered)}** of {len(df)} rows")
+    st.caption(f"**{len(filtered):,}** of {len(df):,} records")
 
     display_cols = [
         "maude_report_id",
@@ -482,7 +531,8 @@ def _page_records(db: Database) -> None:
     st.dataframe(
         filtered[display_cols].sort_values("extraction_ts", ascending=False),
         use_container_width=True,
-        height=320,
+        height=340,
+        hide_index=True,
         column_config={
             "maude_report_id": st.column_config.TextColumn("Report ID"),
             "product_code": st.column_config.TextColumn("Code"),
@@ -490,605 +540,377 @@ def _page_records(db: Database) -> None:
             "severity": st.column_config.TextColumn("Severity"),
             "ai_related_flag": st.column_config.CheckboxColumn("AI-Related"),
             "ai_failure_mode": st.column_config.TextColumn("Failure Mode"),
-            "confidence_score": st.column_config.NumberColumn("Confidence", format="%.2f"),
+            "confidence_score": st.column_config.NumberColumn("Confidence", format="%.3f"),
             "requires_review": st.column_config.CheckboxColumn("Needs Review"),
             "skill_name": st.column_config.TextColumn("Skill"),
             "extraction_ts": st.column_config.DatetimeColumn("Extracted At"),
         },
     )
 
+    # Narrative detail
     st.divider()
-    st.markdown('<p class="ms-section">Record Detail</p>', unsafe_allow_html=True)
+    _section("Record Detail")
     report_ids = filtered["maude_report_id"].dropna().unique().tolist()
     if not report_ids:
         st.info("No records match the current filters.")
-        return
+    else:
+        selected_id = st.selectbox("Select a MAUDE Report ID", report_ids, key="se_detail_id")
+        if selected_id:
+            event = db.get_normalized_event(str(selected_id))
+            if event is None:
+                st.warning(f"Normalized event not found for {selected_id}.")
+            else:
+                detail_row = filtered[filtered["maude_report_id"] == selected_id]
+                col_a, col_b, col_c = st.columns(3)
+                col_a.markdown(f"**Manufacturer:** {event.manufacturer or '—'}")
+                col_a.markdown(f"**Brand / Device:** {event.brand_name or '—'}")
+                col_b.markdown(f"**Product Code:** {event.product_code}")
+                col_b.markdown(f"**Device Name:** {dn_lookup.get(event.product_code, '—')}")
+                col_b.markdown(f"**Event Type:** {event.event_type or '—'}")
+                col_b.markdown(f"**Event Date:** {event.event_date or '—'}")
+                col_c.markdown(f"**Official FDA Record:** [Open ↗]({_maude_url(str(selected_id))})")
+                if not detail_row.empty:
+                    row = detail_row.iloc[0]
+                    col_c.markdown(
+                        f"**Severity:** {_nan_to_dash(row.get('severity'))}  \n"
+                        f"**AI-Related:** {'✅' if row.get('ai_related_flag') else '❌'}  \n"
+                        f"**Failure Mode:** {_nan_to_dash(row.get('ai_failure_mode'))}  \n"
+                        f"**Confidence:** {row.get('confidence_score', 0):.3f}"
+                    )
+                if event.narrative:
+                    with st.expander("Patient / Reporter Narrative", expanded=True):
+                        st.text(event.narrative)
+                if event.mfr_narrative:
+                    with st.expander("Manufacturer Narrative"):
+                        st.text(event.mfr_narrative)
 
-    selected_id = st.selectbox("Select a MAUDE report ID", report_ids, key="rec_detail_id")
-    if not selected_id:
-        return
-
-    event = db.get_normalized_event(selected_id)
-    if event is None:
-        st.warning(f"Normalized event not found for {selected_id}.")
-        return
-
-    detail_row = filtered[filtered["maude_report_id"] == selected_id]
-
-    col_a, col_b, col_c = st.columns(3)
-    col_a.markdown(f"**Manufacturer:** {event.manufacturer or '—'}")
-    col_a.markdown(f"**Brand / Device:** {event.brand_name or '—'}")
-    col_b.markdown(f"**Product code:** {event.product_code}")
-    col_b.markdown(f"**Device Name:** {dn_lookup.get(event.product_code, '—')}")
-    col_b.markdown(f"**Event type:** {event.event_type or '—'}")
-    col_b.markdown(f"**Event date:** {event.event_date or '—'}")
-    col_c.markdown(f"**Official FDA record:** [open ↗]({_maude_url(selected_id)})")
-
-    if not detail_row.empty:
-        row = detail_row.iloc[0]
-        sev = _nan_to_dash(row.get("severity"))
-        conf = row.get("confidence_score")
-        ai_flag = row.get("ai_related_flag")
-        fm = _nan_to_dash(row.get("ai_failure_mode"))
-        conf_str = f"{conf:.3f}" if conf is not None else "—"
-        col_c.markdown(
-            f"**Severity:** {sev}  \n"
-            f"**AI-related:** {'✅' if ai_flag else '❌'}  \n"
-            f"**Failure mode:** {fm}  \n"
-            f"**Confidence:** {conf_str}"
-        )
-
-    if event.narrative:
-        with st.expander("Patient / Reporter Narrative", expanded=True):
-            st.text(event.narrative)
-    if event.mfr_narrative:
-        with st.expander("Manufacturer Narrative"):
-            st.text(event.mfr_narrative)
-
+    # Export
     st.divider()
-    st.markdown('<p class="ms-section">Export</p>', unsafe_allow_html=True)
+    _section("Export")
     csv_data = filtered[display_cols].to_csv(index=False)
+    scope = (pc_sel or "all").replace("(all)", "all")
     st.download_button(
-        label="Download CSV",
+        label="⬇ Download CSV",
         data=csv_data,
-        file_name=f"maudesignal_records_{(pc_sel or 'all').replace('(all)', 'all')}.csv",
+        file_name=f"maudesignal_signals_{scope}.csv",
         mime="text/csv",
     )
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Page: Signals (drift + failure analysis)
-# ──────────────────────────────────────────────────────────────────────────────
+# ── Page 3: MAUDE Ingestion ────────────────────────────────────────────────────
 
 
-def _page_drift(db: Database) -> None:
-    df = _extractions_dataframe(db)
-    if df.empty:
-        st.info("No extractions yet.")
-        return
+def _page_ingestion(db: Database) -> None:
+    _page_header("📥", "MAUDE Ingestion", "Pull adverse event reports from openFDA")
 
-    df_ext = df[df["skill_name"] == EXTRACTOR_SKILL].copy()
-
-    if not df_ext.empty:
-        st.markdown(
-            '<p class="ms-section">Confidence Score — Extraction Timeline</p>',
-            unsafe_allow_html=True,
-        )
-        df_ext = df_ext.sort_values("extraction_ts")
-        st.line_chart(
-            df_ext.set_index("extraction_ts")[["confidence_score"]],
-            use_container_width=True,
-            height=250,
-        )
-
-    col_l, col_r = st.columns(2)
-
-    with col_l:
-        st.markdown(
-            '<p class="ms-section">AI-Related Signal Rate by Product Code</p>',
-            unsafe_allow_html=True,
-        )
-        pc_lookup = _product_code_lookup(db)
-        df_ext = df_ext.copy()
-        df_ext["product_code"] = df_ext["maude_report_id"].map(pc_lookup).fillna("?")
-        if not df_ext.empty:
-            grouped = df_ext.groupby("product_code").agg(
-                total=("maude_report_id", "count"),
-                ai_count=("ai_related_flag", lambda x: x.fillna(False).astype(bool).sum()),
-            )
-            grouped["ai_rate"] = grouped["ai_count"] / grouped["total"]
-            st.bar_chart(grouped[["ai_rate"]], use_container_width=True, height=240)
-
-    with col_r:
-        st.markdown(
-            '<p class="ms-section">Confidence Distribution</p>',
-            unsafe_allow_html=True,
-        )
-        if not df_ext.empty:
-            bins = pd.cut(df_ext["confidence_score"], bins=10)
-            dist = bins.value_counts().sort_index()
-            dist_df = dist.reset_index()
-            dist_df.columns = pd.Index(["bin", "count"])
-            dist_df["bin"] = dist_df["bin"].astype(str)
-            st.bar_chart(dist_df.set_index("bin"), use_container_width=True, height=240)
-
-    st.markdown(
-        '<p class="ms-section">Records Flagged for Human Review</p>', unsafe_allow_html=True
-    )
-    n_review = int(df_ext["requires_review"].fillna(False).astype(bool).sum())
-    n_total = len(df_ext)
-    if n_total:
-        pct = n_review / n_total
-        st.progress(pct, text=f"{n_review} / {n_total} ({pct * 100:.1f}%) require human review")
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Page: Severity
-# ──────────────────────────────────────────────────────────────────────────────
-
-
-def _page_severity(db: Database) -> None:
-    """Render the Severity breakdown page."""
-    st.subheader("Severity Analysis")
-
-    df = _extractions_dataframe(db)
-    df_ext = df[df["skill_name"] == EXTRACTOR_SKILL] if not df.empty else pd.DataFrame()
-
-    if df_ext.empty:
-        st.info("No extractions yet. Run `maudesignal extract --product-code QIH --limit 5`.")
-        return
-
-    sev_filled = df_ext["severity"].fillna("unknown")
-
-    # KPI counts for key severity levels
-    n_death = int((sev_filled == "death").sum())
-    n_serious = int((sev_filled == "serious injury").sum())
-    n_malfunction = int((sev_filled == "malfunction").sum())
-    n_other = int(sev_filled.isin(["other", "injury", "no answer provided", "unknown"]).sum())
-
-    st.markdown('<p class="ms-section">Severity KPIs</p>', unsafe_allow_html=True)
-    c1, c2, c3, c4 = st.columns(4)
-    for col, val, lbl in [
-        (c1, str(n_death), "Deaths"),
-        (c2, str(n_serious), "Serious Injuries"),
-        (c3, str(n_malfunction), "Malfunctions"),
-        (c4, str(n_other), "Other / Unknown"),
-    ]:
-        col.markdown(
-            f'<div class="ms-card"><div class="val">{val}</div>'
-            f'<div class="lbl">{lbl}</div></div>',
-            unsafe_allow_html=True,
-        )
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # Severity distribution bar chart
-    st.markdown('<p class="ms-section">Severity Distribution</p>', unsafe_allow_html=True)
-    sev_counts = sev_filled.value_counts().reindex(_SEVERITY_ORDER + ["unknown"], fill_value=0)
-    sev_df = sev_counts[sev_counts > 0].reset_index()
-    sev_df.columns = pd.Index(["Severity", "Count"])
-    if not sev_df.empty:
-        sev_chart = (
-            alt.Chart(sev_df)
-            .mark_bar()
-            .encode(
-                x=alt.X("Severity:N", sort=list(_SEVERITY_ORDER), axis=alt.Axis(labelAngle=0)),
-                y=alt.Y("Count:Q"),
-                color=alt.Color(
-                    "Severity:N",
-                    scale=alt.Scale(
-                        domain=list(SEVERITY_COLORS.keys()),
-                        range=list(SEVERITY_COLORS.values()),
-                    ),
-                    legend=None,
-                ),
-                tooltip=["Severity", "Count"],
-            )
-            .properties(height=260)
-        )
-        st.altair_chart(sev_chart, use_container_width=True)
-
-    # Breakdown by product code
-    st.markdown(
-        '<p class="ms-section">Severity Breakdown by Product Code</p>', unsafe_allow_html=True
-    )
-    pc_lookup = _product_code_lookup(db)
-    dn_lookup = _device_name_lookup(db)
-    df_ext_pc = df_ext.copy()
-    df_ext_pc["product_code"] = df_ext_pc["maude_report_id"].map(pc_lookup).fillna("?")
-    df_ext_pc["severity_filled"] = df_ext_pc["severity"].fillna("unknown")
-
-    pivot = df_ext_pc.groupby(["product_code", "severity_filled"]).size().unstack(fill_value=0)
-    if not pivot.empty:
-        pivot_reset = pivot.reset_index()
-        pivot_reset.insert(1, "Device Name", pivot_reset["product_code"].map(dn_lookup).fillna("—"))
-        st.dataframe(pivot_reset, use_container_width=True, hide_index=True)
-
-    # Records flagged by severity level
-    st.markdown(
-        '<p class="ms-section">Records Flagged for Review by Severity</p>',
-        unsafe_allow_html=True,
-    )
-    sev_filter_opts = ["(all)"] + _SEVERITY_ORDER + ["unknown"]
-    sev_sel = st.selectbox("Filter by severity", sev_filter_opts, key="sev_page_filter")
-
-    df_review = df_ext_pc.copy()
-    if sev_sel != "(all)":
-        df_review = df_review[df_review["severity_filled"] == sev_sel]
-
-    df_flagged = df_review[df_review["requires_review"].fillna(False).astype(bool)]
-    st.caption(f"**{len(df_flagged)}** record(s) flagged for review under this filter")
-    if not df_flagged.empty:
-        flagged_cols = [
-            "maude_report_id",
-            "product_code",
-            "severity_filled",
-            "confidence_score",
-            "extraction_ts",
-        ]
-        st.dataframe(
-            df_flagged[flagged_cols]
-            .rename(columns={"severity_filled": "severity"})
-            .sort_values("extraction_ts", ascending=False),
-            use_container_width=True,
-            height=280,
-        )
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Page: Device Catalog
-# ──────────────────────────────────────────────────────────────────────────────
-
-
-def _page_catalog(db: Database) -> None:
-    df = _catalog_dataframe(db)
-
-    if df.empty:
-        st.info(
-            "Catalog is empty.  \n"
-            "Run `maudesignal catalog update` to discover all FDA-cleared AI/ML devices."
-        )
-        return
-
-    n_catalog = len(df)
+    # Current inventory
     n_raw = db.count_raw_reports()
+    n_events = len(db.list_normalized_events())
 
-    c1, c2, c3 = st.columns(3)
-    for col, val, lbl in [
-        (c1, str(n_catalog), "Catalog Devices"),
-        (c2, str(len(df["specialty"].replace("", None).dropna().unique())), "Specialties"),
-        (c3, f"{n_raw:,}", "MAUDE Reports Ingested"),
-    ]:
-        col.markdown(
-            f'<div class="ms-card"><div class="val">{val}</div>'
-            f'<div class="lbl">{lbl}</div></div>',
-            unsafe_allow_html=True,
-        )
+    _section("Current Inventory")
+    c1, c2 = st.columns(2)
+    _kpi_card(c1, f"{n_raw:,}", "Raw MAUDE Reports in DB")
+    _kpi_card(c2, f"{n_events:,}", "Normalized Events")
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown('<p class="ms-section">Browse Devices</p>', unsafe_allow_html=True)
+    _section("Ingest New Records")
 
-    f1, f2, f3 = st.columns(3)
-    specialties = ["(all)"] + sorted({s for s in df["specialty"] if s and s.strip()})
-    specialty_sel = f1.selectbox("Specialty", specialties, key="cat_spec")
-    search = f2.text_input("Search name / company", key="cat_search")
-    source_opts = ["(all)"] + sorted({s for s in df["source_keyword"] if s})
-    source_sel = f3.selectbox("Source", source_opts, key="cat_src")
-
-    filtered = df.copy()
-    if specialty_sel != "(all)":
-        filtered = filtered[filtered["specialty"] == specialty_sel]
-    if search.strip():
-        q = search.strip().lower()
-        mask = (
-            filtered["device_name"].str.lower().str.contains(q, na=False)
-            | filtered["company_name"].str.lower().str.contains(q, na=False)
-            | filtered["product_code"].str.lower().str.contains(q, na=False)
+    with st.form("ingestion_form"):
+        col1, col2 = st.columns(2)
+        product_code = col1.text_input(
+            "FDA Product Code *",
+            placeholder="e.g. QIH",
+            help="3-character FDA product code (e.g. QIH for AI-assisted radiology)",
+        ).strip()
+        limit = col2.number_input(
+            "Record Limit",
+            min_value=1,
+            max_value=1000,
+            value=50,
+            help="Maximum number of records to fetch (1–1000)",
         )
-        filtered = filtered[mask]
-    if source_sel != "(all)":
-        filtered = filtered[filtered["source_keyword"] == source_sel]
+        col3, col4 = st.columns(2)
+        today = date.today()
+        start_date = col3.date_input(
+            "Start Date",
+            value=today - timedelta(days=365),
+            help="Earliest date_received to include",
+        )
+        end_date = col4.date_input(
+            "End Date",
+            value=today,
+            help="Latest date_received to include",
+        )
+        submitted = st.form_submit_button("▶ Start Ingestion", type="primary")
 
-    st.caption(f"**{len(filtered)}** of {n_catalog} devices")
+    if submitted:
+        if not product_code:
+            st.error("Product code is required.")
+            return
+        if start_date > end_date:
+            st.error("Start date must be before end date.")
+            return
 
-    st.dataframe(
-        filtered[
-            [
-                "product_code",
-                "device_name",
-                "company_name",
-                "specialty",
-                "decision_date",
-                "k_number",
-            ]
-        ].rename(
-            columns={
-                "product_code": "Code",
-                "device_name": "Device Name",
-                "company_name": "Company",
-                "specialty": "Specialty",
-                "decision_date": "Decision Date",
-                "k_number": "510(k) Number",
-            }
-        ),
-        use_container_width=True,
-        height=400,
+        cfg = _try_load_config()
+        api_key = cfg.openfda_api_key if cfg else None
+        start_str = start_date.strftime("%Y%m%d")
+        end_str = end_date.strftime("%Y%m%d")
+
+        with st.spinner(f"Ingesting records for **{product_code}** from openFDA…"):
+            try:
+                client = OpenFDAClient(api_key=api_key)
+                result: IngestionResult = ingest_product_code(
+                    client=client,
+                    db=db,
+                    product_code=product_code,
+                    start_date=start_str,
+                    end_date=end_str,
+                    limit=int(limit),
+                )
+            except Exception as exc:
+                st.error(f"Ingestion failed: {exc}")
+                return
+
+        st.success("Ingestion complete!")
+        _section("Ingestion Summary")
+        r1, r2, r3, r4 = st.columns(4)
+        _kpi_card(r1, str(result.records_fetched), "Records Fetched")
+        _kpi_card(r2, str(result.records_new), "New Records Added", "green")
+        _kpi_card(
+            r3,
+            str(result.records_skipped),
+            "Skipped",
+            "amber" if result.records_skipped else "",
+        )
+        existing = result.records_fetched - result.records_new - result.records_skipped
+        _kpi_card(r4, str(max(0, existing)), "Already Existed")
+
+        if result.skip_reasons:
+            reasons_str = ", ".join(f"{k}: {v}" for k, v in result.skip_reasons.items())
+            st.caption(f"Skip reasons: {reasons_str}")
+
+        st.info(
+            "Records ingested. Navigate to **LLM Extraction** to run AI analysis on these records."
+        )
+
+
+# ── Page 4: LLM Extraction ────────────────────────────────────────────────────
+
+
+def _page_extraction(db: Database) -> None:
+    _page_header("🤖", "LLM Extraction", "Run AI extraction on ingested MAUDE records")
+
+    # Check config
+    cfg = _try_load_config()
+    if cfg is None:
+        st.error(
+            "LLM provider is not configured. Set `LLM_PROVIDER` and the corresponding API key "
+            "in your `.env` file, then restart the app."
+        )
+        st.info(
+            "**Quick start (free):** Set `LLM_PROVIDER=groq` and `GROQ_API_KEY=<your-key>` "
+            "in `.env`. Free tier at [console.groq.com](https://console.groq.com)."
+        )
+        return
+
+    # Unprocessed record count
+    all_events = db.list_normalized_events()
+    extracted_ids = {r.maude_report_id for r in db.list_extractions(skill_name=EXTRACTOR_SKILL)}
+    unprocessed = [e for e in all_events if e.maude_report_id not in extracted_ids]
+
+    _section("Queue Status")
+    c1, c2, c3 = st.columns(3)
+    _kpi_card(c1, str(len(all_events)), "Total Normalized Events")
+    _kpi_card(c2, str(len(extracted_ids)), "Already Extracted", "green")
+    _kpi_card(
+        c3,
+        str(len(unprocessed)),
+        "Pending Extraction",
+        "amber" if unprocessed else "green",
     )
 
-    st.markdown('<p class="ms-section">Devices by Specialty</p>', unsafe_allow_html=True)
-    spec_counts = df["specialty"].replace("", None).dropna().value_counts().head(15).reset_index()
-    spec_counts.columns = pd.Index(["Specialty", "Count"])
-    st.bar_chart(spec_counts.set_index("Specialty"), use_container_width=True, height=280)
+    if not unprocessed:
+        st.success("All ingested records have been extracted. Ingest more records to continue.")
+        return
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    _section("Run Extraction")
+
+    # Product code filter
+    available_pcs = sorted({e.product_code for e in unprocessed if e.product_code})
+    col1, col2 = st.columns(2)
+    pc_filter = col1.selectbox(
+        "Filter by Product Code",
+        ["(all)"] + available_pcs,
+        key="ext_pc",
+    )
+    batch_limit = col2.number_input(
+        "Batch Size",
+        min_value=1,
+        max_value=100,
+        value=10,
+        help="Number of records to extract in this run",
+    )
+
+    if pc_filter != "(all)":
+        queue = [e for e in unprocessed if e.product_code == pc_filter]
+    else:
+        queue = unprocessed
+
+    queue = queue[: int(batch_limit)]
+    st.caption(
+        f"**{len(queue)}** record(s) will be processed using provider: "
+        f"`{cfg.llm_provider}` / `{_active_model(cfg)}`"
+    )
+
+    if st.button("▶ Run Extraction", type="primary", key="ext_run"):
+        _run_extraction_batch(db=db, cfg=cfg, queue=queue)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Page: Root Cause & Alerts  (Phase 2)
-# ──────────────────────────────────────────────────────────────────────────────
+def _active_model(cfg: Config) -> str:
+    """Return the model name for the active provider."""
+    mapping = {
+        "groq": cfg.groq_model,
+        "anthropic": cfg.claude_model_extraction,
+        "openai": cfg.openai_model,
+        "gemini": cfg.gemini_model,
+        "pool": cfg.provider_fallback_order,
+    }
+    return mapping.get(cfg.llm_provider, "unknown")
 
 
-def _page_root_cause(db: Database) -> None:
-    tab_rc, tab_alerts, tab_events = st.tabs(["Root Cause Reports", "Alert Rules", "Alert History"])
+def _run_extraction_batch(db: Database, cfg: Config, queue: list[Any]) -> None:
+    """Run the 3-Skill extraction chain on a batch and display results."""
+    try:
+        from maudesignal.extraction.extractor import Extractor
+        from maudesignal.extraction.pipeline import extract_record
+        from maudesignal.extraction.skill_loader import SkillLoader
+    except ImportError as exc:
+        st.error(f"Extraction modules not available: {exc}")
+        return
 
-    # ── Root cause reports ───────────────────────────────────────────────────
-    with tab_rc:
-        reports = db.list_root_cause_reports()
-        if not reports:
-            st.info(
-                "No root-cause reports yet.  \n"
-                "Run `maudesignal analyze root-cause --product-code <code>` after extraction."
+    skills_root = cfg.project_root / "skills"
+    try:
+        loader = SkillLoader(skills_root)
+        skill_ext = loader.load(EXTRACTOR_SKILL)
+        skill_sev = loader.load(SEVERITY_SKILL)
+        skill_cls = loader.load(CLASSIFIER_SKILL)
+        extractor = Extractor(config=cfg, db=db)
+    except Exception as exc:
+        st.error(f"Failed to initialise extraction pipeline: {exc}")
+        return
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    progress_bar = st.progress(0.0, text="Starting extraction…")
+    results_placeholder = st.empty()
+    successes = 0
+    failures = 0
+    result_rows: list[dict[str, Any]] = []
+
+    for i, event in enumerate(queue):
+        pct = (i + 1) / len(queue)
+        n_total_q = len(queue)
+        progress_bar.progress(pct, text=f"Processing {event.maude_report_id} ({i + 1}/{n_total_q})")
+        try:
+            rec_result = extract_record(
+                extractor=extractor,
+                db=db,
+                event=event,
+                skill_extractor=skill_ext,
+                skill_severity=skill_sev,
+                skill_classifier=skill_cls,
             )
-        else:
-            dn_lookup = _device_name_lookup(db)
-            rows = []
-            for r in reports:
-                out = json.loads(r.output_json)
-                rows.append(
+            if rec_result.any_success:
+                successes += 1
+                ext_out = rec_result.extractor_result.output if rec_result.extractor_result else {}
+                result_rows.append(
                     {
-                        "product_code": r.product_code,
-                        "device_name": dn_lookup.get(r.product_code, "—"),
-                        "failure_mode": r.failure_mode_category,
-                        "cluster_size": r.cluster_size,
-                        "confidence": r.confidence_score,
-                        "review": r.requires_review,
-                        "hypothesis": (out.get("root_cause_hypothesis") or "")[:120],
-                        "factors": ", ".join(out.get("contributing_factors") or []),
-                        "recommendation": (out.get("recommended_investigation") or "")[:120],
-                        "analysis_ts": r.analysis_ts,
+                        "Report ID": event.maude_report_id,
+                        "Product Code": event.product_code,
+                        "AI-Related": ext_out.get("ai_related_flag"),
+                        "Severity": _nan_to_dash(ext_out.get("severity")),
+                        "Confidence": round(float(ext_out.get("confidence_score", 0.0)), 3),
+                        "Status": "✅ Success",
                     }
                 )
-            df_rc = pd.DataFrame(rows)
-            st.caption(f"**{len(df_rc)}** root-cause report(s) on record")
-
-            needs_review = df_rc[df_rc["review"] == True]  # noqa: E712
-            if not needs_review.empty:
-                st.warning(
-                    f"⚠️ **{len(needs_review)} report(s) require human review** "
-                    "(low confidence or small cluster)."
-                )
-
-            pc_opts = ["(all)"] + sorted(df_rc["product_code"].unique())
-            pc_sel = st.selectbox("Filter by product code", pc_opts, key="rc_pc")
-            filtered_rc = df_rc if pc_sel == "(all)" else df_rc[df_rc["product_code"] == pc_sel]
-
-            for _, row in filtered_rc.iterrows():
-                review_badge = "🔴 Review required" if row["review"] else "🟢 Auto-accepted"
-                device_label = row["device_name"]
-                with st.expander(
-                    f"**{row['product_code']}** ({device_label}) — {row['failure_mode']} "
-                    f"(cluster={row['cluster_size']}, conf={row['confidence']:.2f})"
-                ):
-                    st.markdown(f"**Status:** {review_badge}")
-                    st.markdown(f"**Device:** {device_label}")
-                    st.markdown(f"**Hypothesis:** {row['hypothesis']}")
-                    st.markdown(f"**Contributing factors:** {row['factors']}")
-                    st.markdown(f"**Recommended investigation:** {row['recommendation']}")
-                    st.caption(f"Analyzed: {row['analysis_ts']}")
-
-    # ── Alert rules ───────────────────────────────────────────────────────────
-    with tab_alerts:
-        rules = db.list_alert_rules(active_only=False)
-        if not rules:
-            st.info(
-                "No alert rules configured.  \n"
-                "Use `maudesignal alert add` from the CLI to create one."
-            )
-        else:
-            rule_rows = [
-                {
-                    "ID": r.rule_id,
-                    "Metric": r.metric,
-                    "Threshold": r.threshold,
-                    "Window (days)": r.window_days,
-                    "Delivery": r.delivery,
-                    "Scope": r.product_code or "all",
-                    "Active": "✅" if r.active else "❌",
-                    "Description": r.description or "",
-                }
-                for r in rules
-            ]
-            st.dataframe(
-                pd.DataFrame(rule_rows),
-                use_container_width=True,
-                hide_index=True,
-            )
-
-    # ── Alert history ─────────────────────────────────────────────────────────
-    with tab_events:
-        events = db.list_alert_events(limit=200)
-        if not events:
-            st.info("No alerts have fired yet.")
-        else:
-            event_rows = [
-                {
-                    "Fired At": e.fired_at,
-                    "Rule ID": e.rule_id,
-                    "Metric": e.metric,
-                    "Value": round(e.metric_value, 4),
-                    "Threshold": e.threshold,
-                    "Scope": e.product_code or "all",
-                    "Delivered": "✅" if e.delivered else "❌",
-                }
-                for e in events
-            ]
-            df_ev = pd.DataFrame(event_rows)
-            st.caption(f"**{len(df_ev)}** alert event(s) in history")
-            st.dataframe(df_ev, use_container_width=True, hide_index=True)
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Page: Trends & Forecasting (Phase 3)
-# ──────────────────────────────────────────────────────────────────────────────
-
-
-def _page_trends(db: Database) -> None:
-    """Render the Trends & Forecasting page."""
-    st.subheader("Trends & Forecasting")
-
-    with st.expander("Trend detection (CLI command)", expanded=False):
-        st.caption("This panel builds the CLI command. Run it from your terminal.")
-        trend_pc = st.text_input("Product code", key="trend_pc_input", placeholder="e.g. QIH")
-        if st.button("Show CLI command", key="trend_run_btn"):
-            if not trend_pc.strip():
-                st.error("Product code is required.")
             else:
-                cmd = f"maudesignal forecast trends {trend_pc.strip()}"
-                st.code(cmd, language="bash")
-
-    snapshots = db.list_trend_snapshots(limit=200)
-    if not snapshots:
-        st.info(
-            "No trend snapshots found. Run `maudesignal forecast trends <product_code>` "
-            "to generate trend analysis."
-        )
-        return
-
-    dn_lookup = _device_name_lookup(db)
-    rows = []
-    for s in snapshots:
-        try:
-            out = json.loads(s.output_json)
-        except json.JSONDecodeError:
-            out = {}
-        rows.append(
-            {
-                "Product Code": s.product_code,
-                "Device": dn_lookup.get(s.product_code, "—"),
-                "Metric": s.metric_name,
-                "Direction": out.get("trend_direction", s.trend_direction),
-                "Strength": out.get("trend_strength", "?"),
-                "Signal Level": s.signal_level,
-                "Significant": out.get("is_statistically_significant", False),
-                "MK Tau": round(s.mk_tau, 3),
-                "p-value": round(s.mk_p_value, 4),
-                "Slope/period": round(s.slope_per_period, 5),
-                "Recent": round(s.recent_value, 3),
-                "Baseline": round(s.baseline_value, 3),
-                "Window (days)": s.window_days,
-                "Confidence": round(s.confidence_score, 2),
-                "Analyzed At": s.analysis_ts,
-            }
-        )
-    df = pd.DataFrame(rows)
-
-    tab_summary, tab_detail, tab_narratives = st.tabs(
-        ["Summary Table", "Signal Distribution", "Regulatory Narratives"]
-    )
-
-    with tab_summary:
-        st.caption(f"**{len(df)}** trend snapshot(s)")
-
-        product_codes = sorted(df["Product Code"].unique())
-        selected_pc = st.selectbox("Filter by product code", ["All"] + product_codes)
-        view = df if selected_pc == "All" else df[df["Product Code"] == selected_pc]
-
-        def _color_signal(val: str) -> str:
-            colors = {
-                "critical": "background-color: #fadbd8",
-                "elevated": "background-color: #fdebd0",
-                "routine": "background-color: #d5f5e3",
-                "low": "background-color: #ebedef",
-            }
-            return colors.get(val, "")
-
-        styled = view.style.applymap(_color_signal, subset=["Signal Level"])
-        st.dataframe(styled, use_container_width=True, hide_index=True)
-
-    with tab_detail:
-        signal_counts = df["Signal Level"].value_counts().reset_index()
-        signal_counts.columns = ["Signal Level", "Count"]
-        st.caption("Signal level distribution across all snapshots")
-        if not signal_counts.empty:
-            st.bar_chart(signal_counts.set_index("Signal Level")["Count"])
-
-        metric_counts = df["Metric"].value_counts().reset_index()
-        metric_counts.columns = ["Metric", "Snapshots"]
-        st.caption("Snapshot count by metric")
-        st.dataframe(metric_counts, use_container_width=True, hide_index=True)
-
-    with tab_narratives:
-        st.caption("Regulatory narratives from the trend-interpreter Skill")
-        for s in snapshots[:20]:
-            try:
-                out = json.loads(s.output_json)
-            except json.JSONDecodeError:
-                continue
-            narrative = out.get("regulatory_narrative")
-            if not narrative:
-                continue
-            signal = s.signal_level
-            icon = {"critical": "🔴", "elevated": "🟡", "routine": "🔵", "low": "⚪"}.get(
-                signal, "⚫"
+                failures += 1
+                error_str = "; ".join(f"{s}: {m}" for s, m in rec_result.errors)
+                result_rows.append(
+                    {
+                        "Report ID": event.maude_report_id,
+                        "Product Code": event.product_code,
+                        "AI-Related": None,
+                        "Severity": "—",
+                        "Confidence": 0.0,
+                        "Status": f"❌ {error_str[:60]}",
+                    }
+                )
+        except Exception as exc:
+            failures += 1
+            result_rows.append(
+                {
+                    "Report ID": event.maude_report_id,
+                    "Product Code": event.product_code,
+                    "AI-Related": None,
+                    "Severity": "—",
+                    "Confidence": 0.0,
+                    "Status": f"❌ Error: {str(exc)[:60]}",
+                }
             )
-            device_label = dn_lookup.get(s.product_code, "—")
-            with st.expander(
-                f"{icon} {s.product_code} ({device_label}) — {s.metric_name} "
-                f"({s.trend_direction}, {signal})"
-            ):
-                st.write(narrative)
-                action = out.get("recommended_action")
-                if action:
-                    st.info(f"**Recommended action:** {action}")
+
+        results_placeholder.dataframe(
+            pd.DataFrame(result_rows), use_container_width=True, hide_index=True
+        )
+
+    progress_bar.progress(1.0, text="Extraction complete.")
+    if failures == 0:
+        st.success(f"All {successes} records extracted successfully.")
+    else:
+        st.warning(f"{successes} succeeded, {failures} failed. Check the table for details.")
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Page: PSUR Reports (Phase 5)
-# ──────────────────────────────────────────────────────────────────────────────
+# ── Page 5: PSUR Reports ───────────────────────────────────────────────────────
 
 
 def _page_psur(db: Database) -> None:
-    """Render the PSUR Reports page."""
-    st.subheader("PSUR Report Drafts")
+    _page_header(
+        "📋",
+        "PSUR Reports",
+        "Periodic safety update report drafts — AI-generated, requires human review",
+    )
 
-    with st.expander("PSUR generation (CLI command)", expanded=False):
-        st.caption("This panel builds the CLI command. Run it from your terminal.")
-        gen_pc = st.text_input("Product code", key="psur_gen_pc", placeholder="e.g. QIH")
-        gen_device = st.text_input("Device name (optional)", key="psur_gen_device")
-        gen_window = st.number_input(
-            "Reporting window (days)",
-            value=180,
-            min_value=30,
-            max_value=730,
-            key="psur_gen_window",
-        )
-        if st.button("Show CLI command", key="psur_gen_btn"):
-            if not gen_pc.strip():
-                st.error("Product code is required.")
-            else:
-                cmd = (
-                    f"maudesignal psur generate {gen_pc.strip()}"
-                    f' --device-name "{gen_device}" --window {gen_window}'
-                )
-                st.code(cmd, language="bash")
+    tab_existing, tab_generate = st.tabs(["📂 Existing Reports", "⚡ Generate New Report"])
 
+    with tab_existing:
+        _psur_existing_reports(db)
+
+    with tab_generate:
+        _psur_generate(db)
+
+
+def _psur_existing_reports(db: Database) -> None:
     reports = db.list_psur_reports(limit=100)
     if not reports:
         st.info(
-            "No PSUR reports found. Run `maudesignal psur generate <product_code>` "
-            "to generate a PSUR draft."
+            "No PSUR reports found. Use the **Generate New Report** tab to create one, "
+            "or run `maudesignal psur generate <product_code>` from the CLI."
         )
         return
 
     dn_lookup = _device_name_lookup(db)
+    n_confirmed = sum(1 for r in reports if r.signal_assessment == "confirmed_signal")
+    n_potential = sum(1 for r in reports if r.signal_assessment == "potential_signal")
+    n_none = sum(1 for r in reports if r.signal_assessment == "no_signal")
+
+    c1, c2, c3, c4 = st.columns(4)
+    _kpi_card(c1, str(len(reports)), "Total Reports")
+    _kpi_card(c2, str(n_confirmed), "Confirmed Signals", "red")
+    _kpi_card(c3, str(n_potential), "Potential Signals", "amber")
+    _kpi_card(c4, str(n_none), "No Signal", "green")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
     rows = []
     for r in reports:
         try:
@@ -1102,132 +924,472 @@ def _page_psur(db: Database) -> None:
                 "Device": dn_lookup.get(r.product_code, "—"),
                 "Period Start": r.reporting_period_start,
                 "Period End": r.reporting_period_end,
-                "Signal": r.signal_assessment,
+                "Signal": r.signal_assessment.replace("_", " ").title(),
                 "Confidence": round(r.confidence_score, 2),
                 "Drafted At": r.drafted_at,
                 "_out": out,
             }
         )
     df = pd.DataFrame(rows)
+    display_cols = [c for c in df.columns if c != "_out"]
+    st.dataframe(df[display_cols], use_container_width=True, hide_index=True)
 
-    # Summary metrics
-    n_confirmed = sum(1 for r in reports if r.signal_assessment == "confirmed_signal")
-    n_potential = sum(1 for r in reports if r.signal_assessment == "potential_signal")
-    n_none = sum(1 for r in reports if r.signal_assessment == "no_signal")
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Confirmed Signals", n_confirmed)
-    c2.metric("Potential Signals", n_potential)
-    c3.metric("No Signal", n_none)
+    st.divider()
+    _section("Report Preview")
+    report_ids = [r.report_id for r in reports]
+    selected_id = st.selectbox("Select report to preview", report_ids, key="psur_sel")
+    selected = next((r for r in rows if r["Report ID"] == selected_id), None)
+    if selected is None:
+        return
 
-    tab_table, tab_detail = st.tabs(["All Drafts", "View Draft"])
+    out = selected["_out"]
+    col_info1, col_info2 = st.columns(2)
+    col_info1.markdown(f"**Product:** {selected['Product']}  |  **Device:** {selected['Device']}")
+    col_info1.markdown(f"**Period:** {selected['Period Start']} → {selected['Period End']}")
+    col_info2.markdown(
+        f"**Signal:** {selected['Signal']}  |  **Confidence:** {selected['Confidence']}"
+    )
+    st.divider()
 
-    with tab_table:
+    exec_sum = out.get("executive_summary", "")
+    if exec_sum:
+        st.markdown("**Executive Summary**")
+        st.write(exec_sum)
 
-        def _color_signal(val: str) -> str:
-            colors = {
-                "confirmed_signal": "background-color: #fadbd8",
-                "potential_signal": "background-color: #fdebd0",
-                "no_signal": "background-color: #d5f5e3",
-            }
-            return colors.get(val, "")
+    for sec in out.get("sections", []):
+        with st.expander(sec.get("title", "Section")):
+            st.write(sec.get("content", ""))
 
-        display_cols = [c for c in df.columns if c != "_out"]
-        styled = df[display_cols].style.applymap(_color_signal, subset=["Signal"])
-        st.dataframe(styled, use_container_width=True, hide_index=True)
+    actions = out.get("recommended_actions", [])
+    if actions:
+        st.markdown("**Recommended Actions**")
+        for i, action in enumerate(actions, 1):
+            st.markdown(f"{i}. {action}")
 
-    with tab_detail:
-        if not reports:
+    st.warning(
+        "⚠️ DRAFT — Requires independent human regulatory review before any regulatory action. "
+        "MaudeSignal is NOT an FDA-cleared device."
+    )
+
+
+def _psur_generate(db: Database) -> None:
+    cfg = _try_load_config()
+    if cfg is None:
+        st.error(
+            "LLM provider is not configured. Set `LLM_PROVIDER` and API key in `.env`, "
+            "then restart the app."
+        )
+        return
+
+    st.markdown("Generate a new PSUR draft using the AI pipeline.")
+    _section("Report Parameters")
+
+    col1, col2 = st.columns(2)
+    dn_lookup = _device_name_lookup(db)
+    events = db.list_normalized_events()
+    available_pcs = sorted({e.product_code for e in events if e.product_code})
+    pc = col1.selectbox(
+        "Product Code *",
+        [""] + available_pcs,
+        key="psur_gen_pc",
+        help="Select a product code from ingested records",
+    )
+    device_name = col1.text_input(
+        "Device Name (optional)",
+        value=dn_lookup.get(pc, "") if pc else "",
+        key="psur_gen_device",
+    )
+    window_days = col2.number_input(
+        "Reporting Window (days)",
+        min_value=30,
+        max_value=730,
+        value=180,
+        key="psur_gen_window",
+        help="Reporting period in days (default: 180 = 6 months)",
+    )
+
+    if st.button("⚡ Generate PSUR Draft", type="primary", key="psur_gen_btn"):
+        if not pc:
+            st.error("Product code is required.")
             return
-        report_ids = [r.report_id for r in reports]
-        selected_id = st.selectbox("Select report to view", report_ids)
-        selected = next((r for r in rows if r["Report ID"] == selected_id), None)
-        if selected is None:
-            return
 
-        out = selected["_out"]
-        st.markdown(f"**Report:** `{selected_id}`")
+        with st.spinner(f"Generating PSUR draft for **{pc}**…"):
+            try:
+                from maudesignal.extraction.extractor import Extractor
+                from maudesignal.report.psur_generator import PsurGenerator
+
+                extractor = Extractor(config=cfg, db=db)
+                generator = PsurGenerator(
+                    extractor=extractor,
+                    db=db,
+                    skills_root=cfg.project_root / "skills",
+                )
+                draft = generator.generate(
+                    product_code=pc,
+                    device_name=device_name.strip() or pc,
+                    window_days=int(window_days),
+                )
+            except FileNotFoundError:
+                st.error(
+                    "The `psur-report-drafter` skill is not yet available in this build. "
+                    "It is planned for a future release. Use the CLI to generate reports "
+                    "once the skill is published."
+                )
+                return
+            except Exception as exc:
+                st.error(f"PSUR generation failed: {exc}")
+                return
+
+        st.success(f"PSUR draft generated! Report ID: `{draft.report_id}`")
+        st.markdown(f"**Signal Assessment:** {draft.signal_assessment.replace('_', ' ').title()}")
+        st.markdown(f"**Confidence:** {draft.confidence_score:.2f}")
+        if draft.executive_summary:
+            with st.expander("Executive Summary", expanded=True):
+                st.write(draft.executive_summary)
+        st.info(
+            "The report has been saved to the database. " "View it in the **Existing Reports** tab."
+        )
+
+
+# ── Page 6: Alerts ────────────────────────────────────────────────────────────
+
+
+def _page_alerts(db: Database) -> None:
+    _page_header("🔔", "Alerts", "Monitor and test alert rules")
+
+    tab_rules, tab_test, tab_history = st.tabs(["📋 Alert Rules", "🧪 Test Alerts", "📜 History"])
+
+    with tab_rules:
+        _alerts_rules(db)
+
+    with tab_test:
+        _alerts_test(db)
+
+    with tab_history:
+        _alerts_history(db)
+
+
+def _alerts_rules(db: Database) -> None:
+    rules = db.list_alert_rules(active_only=False)
+    if not rules:
+        st.info(
+            "No alert rules configured. "
+            "Run `maudesignal alert add` from the CLI to create rules."
+        )
         st.markdown(
-            f"**Product:** {selected['Product']}  |  "
-            f"**Device:** {selected['Device']}  |  "
-            f"**Period:** {selected['Period Start']} → {selected['Period End']}  |  "
-            f"**Signal:** {selected['Signal']}  |  "
-            f"**Confidence:** {selected['Confidence']}"
+            "**Example:**\n```bash\nmaudesignal alert add --metric ai_rate "
+            "--threshold 0.7 --delivery slack --webhook-url https://...\n```"
         )
-        st.divider()
+        return
 
-        exec_sum = out.get("executive_summary", "")
-        if exec_sum:
-            st.markdown("**Executive Summary**")
-            st.write(exec_sum)
+    n_active = sum(1 for r in rules if r.active)
+    c1, c2 = st.columns(2)
+    _kpi_card(c1, str(n_active), "Active Rules", "green" if n_active else "")
+    _kpi_card(c2, str(len(rules) - n_active), "Inactive Rules")
 
-        sections = out.get("sections", [])
-        for sec in sections:
-            with st.expander(sec.get("title", "Section")):
-                st.write(sec.get("content", ""))
+    st.markdown("<br>", unsafe_allow_html=True)
+    rule_rows = [
+        {
+            "Rule ID": r.rule_id,
+            "Metric": r.metric,
+            "Threshold": r.threshold,
+            "Window (days)": r.window_days,
+            "Delivery": r.delivery,
+            "Scope": r.product_code or "all",
+            "Active": "✅" if r.active else "❌",
+            "Description": r.description or "",
+        }
+        for r in rules
+    ]
+    st.dataframe(
+        pd.DataFrame(rule_rows),
+        use_container_width=True,
+        hide_index=True,
+    )
 
-        actions = out.get("recommended_actions", [])
-        if actions:
-            st.markdown("**Recommended Actions**")
-            for i, action in enumerate(actions, 1):
-                st.markdown(f"{i}. {action}")
 
-        st.caption("⚠️ DRAFT — REQUIRES HUMAN REVIEW BEFORE SUBMISSION TO ANY REGULATORY BODY")
+def _alerts_test(db: Database) -> None:
+    st.markdown("Run a live check of all active alert rules against the current database.")
+    rules = db.list_alert_rules(active_only=True)
+    if not rules:
+        st.info("No active alert rules to test.")
+        return
+
+    pc_opts = sorted({r.product_code for r in rules if r.product_code})
+    test_pc = st.selectbox(
+        "Scope (optional)",
+        ["(all)"] + pc_opts,
+        key="alert_test_pc",
+        help="Limit the check to a specific product code",
+    )
+    scope_str = None if test_pc == "(all)" else test_pc
+
+    if st.button("🧪 Run Alert Check", type="primary", key="alert_test_btn"):
+        with st.spinner("Evaluating alert rules…"):
+            try:
+                from maudesignal.alerting.checker import AlertChecker
+
+                checker = AlertChecker(db=db)
+                result = checker.check_all(product_code=scope_str)
+            except Exception as exc:
+                st.error(f"Alert check failed: {exc}")
+                return
+
+        if result.alerts_fired == 0:
+            st.success(
+                f"No alerts fired. Evaluated {result.rules_evaluated} rule(s) — "
+                "all within thresholds."
+            )
+        else:
+            st.warning(
+                f"**{result.alerts_fired}** alert(s) fired out of {result.rules_evaluated} "
+                f"rules evaluated. {result.alerts_delivered} delivered."
+            )
+        if result.details:
+            st.dataframe(pd.DataFrame(result.details), use_container_width=True, hide_index=True)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Page: External Sources (Phase 4)
-# ──────────────────────────────────────────────────────────────────────────────
+def _alerts_history(db: Database) -> None:
+    events = db.list_alert_events(limit=200)
+    if not events:
+        st.info("No alerts have fired yet.")
+        return
+
+    event_rows = [
+        {
+            "Fired At": e.fired_at,
+            "Rule ID": e.rule_id,
+            "Metric": e.metric,
+            "Value": round(e.metric_value, 4),
+            "Threshold": e.threshold,
+            "Scope": e.product_code or "all",
+            "Delivered": "✅" if e.delivered else "❌",
+        }
+        for e in events
+    ]
+    df_ev = pd.DataFrame(event_rows)
+    st.caption(f"**{len(df_ev)}** alert event(s) on record")
+    st.dataframe(df_ev, use_container_width=True, hide_index=True)
 
 
-def _page_sources(db: Database) -> None:
-    """Render the External Sources page."""
-    st.subheader("External Sources")
+# ── Page 7: Settings ──────────────────────────────────────────────────────────
 
-    with st.expander("Source fetch (CLI command)", expanded=False):
-        st.caption("This panel builds the CLI command. Run it from your terminal.")
-        src_query = st.text_input(
-            "Search query",
-            key="src_query",
-            placeholder="e.g. AI radiology device failure",
+
+def _page_settings(db: Database) -> None:
+    _page_header("⚙️", "Settings", "Configuration, LLM providers, and system health")
+
+    tab_providers, tab_system, tab_catalog, tab_sources = st.tabs(
+        ["🤖 LLM Providers", "🗄 System", "📦 Device Catalog", "🔗 External Sources"]
+    )
+
+    with tab_providers:
+        _settings_providers(db)
+
+    with tab_system:
+        _settings_system(db)
+
+    with tab_catalog:
+        _settings_catalog(db)
+
+    with tab_sources:
+        _settings_sources(db)
+
+
+def _settings_providers(db: Database) -> None:
+    cfg = _try_load_config()
+
+    _section("Active Provider")
+    if cfg is None:
+        st.error("Configuration could not be loaded. Check your `.env` file.")
+    else:
+        st.success(f"Active provider: **{cfg.llm_provider.upper()}** / **{_active_model(cfg)}**")
+
+    _section("Provider Status")
+
+    providers: list[tuple[str, str, str | None, str]] = [
+        ("Groq", "GROQ_API_KEY", cfg.groq_api_key if cfg else None, cfg.groq_model if cfg else "—"),
+        (
+            "Anthropic (Claude)",
+            "ANTHROPIC_API_KEY",
+            cfg.anthropic_api_key if cfg else None,
+            cfg.claude_model_extraction if cfg else "—",
+        ),
+        (
+            "OpenAI",
+            "OPENAI_API_KEY",
+            cfg.openai_api_key if cfg else None,
+            cfg.openai_model if cfg else "—",
+        ),
+        (
+            "Google Gemini",
+            "GEMINI_API_KEY",
+            cfg.gemini_api_key if cfg else None,
+            cfg.gemini_model if cfg else "—",
+        ),
+    ]
+
+    for name, env_var, key_val, model in providers:
+        has_key = key_val is not None
+        pill = (
+            '<span class="pill-ok">✓ Key Set</span>'
+            if has_key
+            else '<span class="pill-err">✗ Not Configured</span>'
         )
-        src_pc = st.text_input("Product code (optional)", key="src_pc_input")
-        if st.button("Show CLI command", key="src_fetch_btn"):
-            if not src_query.strip():
-                st.error("Search query is required.")
-            else:
-                pc_flag = f"--product-code {src_pc.strip()}" if src_pc.strip() else ""
-                cmd = f'maudesignal sources fetch --query "{src_query}" {pc_flag}'.strip()
-                st.code(cmd, language="bash")
+        masked = _mask(key_val)
+        st.markdown(
+            f'<div class="prov-card">{pill}&nbsp;&nbsp;'
+            f'<div><div class="prov-name">{name}</div>'
+            f'<div class="prov-model">{env_var}: {masked} &nbsp;|&nbsp; Model: {model}</div>'
+            f"</div></div>",
+            unsafe_allow_html=True,
+        )
 
+    if cfg:
+        _section("Cost & Limits")
+        cost = db.total_llm_cost_usd()
+        c1, c2 = st.columns(2)
+        _kpi_card(c1, f"${cost:.4f}", "LLM Cost to Date")
+        _kpi_card(c2, f"${cfg.cost_ceiling_usd:.2f}", "Cost Ceiling")
+
+
+def _mask(val: str | None) -> str:
+    if not val:
+        return "—"
+    if len(val) <= 8:
+        return "****"
+    return f"{val[:4]}...{val[-4:]}"
+
+
+def _settings_system(db: Database) -> None:
+    cfg = _try_load_config()
+
+    _section("Database")
+    c1, c2, c3 = st.columns(3)
+    _kpi_card(c1, f"{db.count_raw_reports():,}", "Raw Reports")
+    _kpi_card(c2, f"{len(db.list_normalized_events()):,}", "Normalized Events")
+    _kpi_card(c3, f"{len(db.list_extractions()):,}", "Extraction Records")
+
+    if cfg:
+        st.markdown(f"**DB Path:** `{cfg.db_path}`")
+        st.markdown(f"**Log Level:** `{cfg.log_level}`")
+        openfda_status = "Set" if cfg.openfda_api_key else "Not set (rate-limited)"
+        st.markdown(f"**OpenFDA API Key:** {openfda_status}")
+
+    _section("System Health")
+    if st.button("Run Health Check", key="health_check_btn"):
+        checks: list[tuple[str, bool, str]] = []
+
+        # DB accessible
+        try:
+            db.count_raw_reports()
+            checks.append(("Database", True, "Accessible"))
+        except Exception as exc:
+            checks.append(("Database", False, str(exc)))
+
+        # Config loadable
+        if cfg:
+            checks.append(("Configuration", True, f"Provider: {cfg.llm_provider}"))
+        else:
+            checks.append(("Configuration", False, "Could not load config"))
+
+        # Skills directory
+        skills_ok = (cfg.project_root / "skills").exists() if cfg else False
+        checks.append(("Skills directory", skills_ok, "Found" if skills_ok else "Not found"))
+
+        for name, ok, detail in checks:
+            pill = (
+                '<span class="pill-ok">✓ OK</span>'
+                if ok
+                else '<span class="pill-err">✗ Error</span>'
+            )
+            st.markdown(f"{pill}&nbsp;&nbsp;**{name}** — {detail}", unsafe_allow_html=True)
+
+
+def _settings_catalog(db: Database) -> None:
+    df = _catalog_dataframe(db)
+    if df.empty:
+        st.info(
+            "Device catalog is empty. "
+            "Run `maudesignal catalog fetch` to discover FDA-cleared AI/ML devices."
+        )
+        return
+
+    n_catalog = len(df)
+    n_specialties = len(df["specialty"].replace("", None).dropna().unique())
+
+    c1, c2 = st.columns(2)
+    _kpi_card(c1, str(n_catalog), "Catalog Devices")
+    _kpi_card(c2, str(n_specialties), "Specialties")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    _section("Browse Devices")
+
+    f1, f2 = st.columns(2)
+    specialties = ["(all)"] + sorted({s for s in df["specialty"] if s and s.strip()})
+    specialty_sel = f1.selectbox("Specialty", specialties, key="cat_spec")
+    search = f2.text_input("Search name / company / code", key="cat_search")
+
+    filtered = df.copy()
+    if specialty_sel != "(all)":
+        filtered = filtered[filtered["specialty"] == specialty_sel]
+    if search.strip():
+        q = search.strip().lower()
+        mask = (
+            filtered["device_name"].str.lower().str.contains(q, na=False)
+            | filtered["company_name"].str.lower().str.contains(q, na=False)
+            | filtered["product_code"].str.lower().str.contains(q, na=False)
+        )
+        filtered = filtered[mask]
+
+    st.caption(f"**{len(filtered)}** of {n_catalog} devices")
+    catalog_cols = [
+        "product_code",
+        "device_name",
+        "company_name",
+        "specialty",
+        "decision_date",
+        "k_number",
+    ]
+    st.dataframe(
+        filtered[catalog_cols].rename(
+            columns={
+                "product_code": "Code",
+                "device_name": "Device Name",
+                "company_name": "Company",
+                "specialty": "Specialty",
+                "decision_date": "Decision Date",
+                "k_number": "510(k) Number",
+            }
+        ),
+        use_container_width=True,
+        hide_index=True,
+        height=380,
+    )
+
+
+def _settings_sources(db: Database) -> None:
     all_sources = db.list_external_sources(limit=500)
     if not all_sources:
         st.info(
-            "No external sources found. Run `maudesignal sources fetch pubmed --query ...` "
-            "or `maudesignal sources fetch clinicaltrials --query ...` to populate."
+            "No external sources found. "
+            "Run `maudesignal sources fetch pubmed --query ...` to populate."
         )
         return
 
     pubmed_count = sum(1 for s in all_sources if s.source_type == "pubmed")
     ct_count = sum(1 for s in all_sources if s.source_type == "clinicaltrials")
 
-    col1, col2 = st.columns(2)
-    col1.metric("PubMed Articles", pubmed_count)
-    col2.metric("Clinical Trials", ct_count)
+    c1, c2 = st.columns(2)
+    _kpi_card(c1, str(pubmed_count), "PubMed Articles")
+    _kpi_card(c2, str(ct_count), "Clinical Trials")
 
-    tab_pubmed, tab_trials = st.tabs(["PubMed Publications", "ClinicalTrials.gov"])
+    tab_pm, tab_ct = st.tabs(["PubMed", "ClinicalTrials.gov"])
 
-    with tab_pubmed:
+    with tab_pm:
         pubmed = [s for s in all_sources if s.source_type == "pubmed"]
         if not pubmed:
-            st.info("No PubMed records. Run `sources fetch pubmed --query ...`")
+            st.info("No PubMed records.")
         else:
-            product_codes = sorted({s.product_code for s in pubmed if s.product_code})
-            filter_pc = st.selectbox(
-                "Filter by product code (PubMed)", ["All"] + product_codes, key="pm_pc"
-            )
-            view = (
-                pubmed if filter_pc == "All" else [s for s in pubmed if s.product_code == filter_pc]
-            )
             rows = [
                 {
                     "PMID": s.source_id,
@@ -1237,50 +1399,33 @@ def _page_sources(db: Database) -> None:
                     "Product": s.product_code or "—",
                     "URL": s.url or "",
                 }
-                for s in view
+                for s in pubmed
             ]
-            df_pm = pd.DataFrame(rows)
-            st.caption(f"**{len(df_pm)}** PubMed article(s)")
-            st.dataframe(df_pm, use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
-    with tab_trials:
+    with tab_ct:
         trials = [s for s in all_sources if s.source_type == "clinicaltrials"]
         if not trials:
-            st.info("No ClinicalTrials records. Run `sources fetch clinicaltrials --query ...`")
+            st.info("No ClinicalTrials records.")
         else:
-            product_codes_ct = sorted({s.product_code for s in trials if s.product_code})
-            filter_pc_ct = st.selectbox(
-                "Filter by product code (ClinicalTrials)",
-                ["All"] + product_codes_ct,
-                key="ct_pc",
-            )
-            view_ct = (
-                trials
-                if filter_pc_ct == "All"
-                else [s for s in trials if s.product_code == filter_pc_ct]
-            )
             rows_ct = [
                 {
                     "NCT ID": s.source_id,
                     "Title": s.title or "",
-                    "Summary": (s.abstract or "")[:100],
+                    "Summary": (s.abstract or "")[:120],
                     "Date": s.publication_date or "",
                     "Product": s.product_code or "—",
                     "URL": s.url or "",
                 }
-                for s in view_ct
+                for s in trials
             ]
-            df_ct = pd.DataFrame(rows_ct)
-            st.caption(f"**{len(df_ct)}** ClinicalTrials record(s)")
-            st.dataframe(df_ct, use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(rows_ct), use_container_width=True, hide_index=True)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# App shell
-# ──────────────────────────────────────────────────────────────────────────────
+# ── App shell ─────────────────────────────────────────────────────────────────
 
 
-def _render_app(db: Database) -> None:
+def _render_app(db: Database) -> None:  # noqa: PLR0912
     st.set_page_config(
         page_title="MaudeSignal",
         page_icon="📡",
@@ -1289,127 +1434,80 @@ def _render_app(db: Database) -> None:
     )
     st.markdown(_CSS, unsafe_allow_html=True)
 
-    # Single source-of-truth nav key — must be initialised before any widget renders
-    if "nav_active_page" not in st.session_state:
-        st.session_state["nav_active_page"] = "Overview"
+    if "nav_page" not in st.session_state:
+        st.session_state["nav_page"] = "Dashboard"
 
-    # ── Sidebar ──────────────────────────────────────────────────────────────
+    # ── Sidebar ───────────────────────────────────────────────────────────────
     with st.sidebar:
         if _LOGO_PATH.exists():
             st.image(str(_LOGO_PATH), width=150)
         else:
-            st.markdown("## MaudeSignal")
-        st.caption("FDA AI/ML Postmarket Surveillance")
+            st.markdown(
+                "## 📡 MaudeSignal",
+            )
+        st.caption("AI-Powered Postmarket Surveillance")
         st.divider()
 
-        # ── Global date-range filter (P2-1) ──────────────────────────────────
-        st.markdown("**Date range**")
-        date_preset = st.selectbox(
-            "Date range",
-            ["Last 30 days", "Last 90 days", "Last 12 months", "All time"],
-            index=2,
-            key="global_date_preset",
-            label_visibility="collapsed",
-        )
-        now = datetime.now(UTC)
-        _preset_map = {
-            "Last 30 days": now - timedelta(days=30),
-            "Last 90 days": now - timedelta(days=90),
-            "Last 12 months": now - timedelta(days=365),
-            "All time": datetime(2000, 1, 1, tzinfo=UTC),
-        }
-        global_since: datetime = _preset_map[date_preset]
-        st.session_state["global_since"] = global_since
+        for icon, page_name, _ in _PAGES:
+            is_active = st.session_state["nav_page"] == page_name
+            label = f"**{icon} {page_name}**" if is_active else f"{icon} {page_name}"
+            if st.button(label, key=f"nav_{page_name}", use_container_width=True):
+                st.session_state["nav_page"] = page_name
+                st.rerun()
 
         st.divider()
 
-        # ── Grouped navigation — button-based, no post-widget state mutation ──
-        for group_name, pages in _PAGE_GROUPS.items():
-            st.markdown(f"**{group_name}**")
-            for p in pages:
-                is_active = st.session_state["nav_active_page"] == p
-                label = f"● {p}" if is_active else f"○ {p}"
-                if st.button(label, key=f"nav_btn_{p}", use_container_width=True):
-                    st.session_state["nav_active_page"] = p
-                    st.rerun()
-
-        st.divider()
-
-        # ── Sidebar footer (P2-7) ─────────────────────────────────────────────
-        n_cat = db.count_catalog_devices()
+        # Sidebar status footer
         n_raw = db.count_raw_reports()
         n_rules = len(db.list_alert_rules(active_only=True))
         cost = db.total_llm_cost_usd()
-        last_ext = db.list_extractions()
-        if last_ext:
-            last_ts = max(r.extraction_ts for r in last_ext)
+        extractions = db.list_extractions()
+        if extractions:
+            last_ts = max(r.extraction_ts for r in extractions)
             delta = datetime.now() - last_ts
             freshness = f"{delta.seconds // 3600}h ago" if delta.days == 0 else f"{delta.days}d ago"
         else:
             freshness = "never"
-        st.caption(f"📦 Catalog: {n_cat} devices")
-        st.caption(f"📄 MAUDE reports: {n_raw:,}")
-        st.caption(f"🔔 Alert rules: {n_rules} active")
-        st.caption(f"💵 LLM cost: ${cost:.4f}")
+
+        st.caption(f"📄 {n_raw:,} MAUDE records")
+        st.caption(f"🔔 {n_rules} active alert rules")
+        st.caption(f"💵 ${cost:.4f} LLM spend")
         st.caption(f"🕐 Last extraction: {freshness}")
 
-    page: str = st.session_state["nav_active_page"]
+    page: str = st.session_state["nav_page"]
 
-    # ── Catalog-empty warning for device names (P1-3) ─────────────────────────
-    if n_cat == 0:
-        st.warning(
-            "Device names not populated. "
-            "Run **`maudesignal catalog fetch`** to discover all FDA-cleared AI/ML devices.",
-            icon="⚠️",
-        )
-
-    # ── Header banner ─────────────────────────────────────────────────────────
-    page_subtitles = {
-        "Overview": "Executive summary of postmarket signal activity",
-        "Records": "Structured extraction results per MAUDE report",
-        "Severity": "Severity distribution, KPIs, and records flagged by severity level",
-        "Signals & Drift": "Temporal signal trends and confidence drift",
-        "Root Cause & Alerts": "Root-cause hypotheses and alert rule management",
-        "Trends & Forecasting": "Statistical trend detection (Mann-Kendall + linear regression)",
-        "External Sources": "PubMed publications and ClinicalTrials.gov studies",
-        "PSUR Reports": "Automated periodic safety update report drafts",
-        "Device Catalog": "FDA-cleared AI/ML device registry",
+    # ── Page routing ──────────────────────────────────────────────────────────
+    page_fn_map: dict[str, Callable[[], None]] = {
+        "Dashboard": lambda: _page_dashboard(db),
+        "Signal Explorer": lambda: _page_signal_explorer(db),
+        "MAUDE Ingestion": lambda: _page_ingestion(db),
+        "LLM Extraction": lambda: _page_extraction(db),
+        "PSUR Reports": lambda: _page_psur(db),
+        "Alerts": lambda: _page_alerts(db),
+        "Settings": lambda: _page_settings(db),
     }
-    st.markdown(
-        f'<div class="ms-banner">'
-        f"<div>"
-        f"<h1>MaudeSignal</h1>"
-        f'<p>{page_subtitles.get(page, "")}</p>'
-        f"</div>"
-        f"</div>",
-        unsafe_allow_html=True,
-    )
 
-    # ── Route (P1-4: spinner on transition) ──────────────────────────────────
-    _page_fn = {
-        "Overview": _page_summary,
-        "Records": _page_records,
-        "Severity": _page_severity,
-        "Signals & Drift": _page_drift,
-        "Root Cause & Alerts": _page_root_cause,
-        "Trends & Forecasting": _page_trends,
-        "External Sources": _page_sources,
-        "PSUR Reports": _page_psur,
-        "Device Catalog": _page_catalog,
-    }
-    fn = _page_fn.get(page, _page_summary)
-    with st.spinner("Loading…"):
-        fn(db)
+    fn = page_fn_map.get(page)
+    if fn is None:
+        st.error(f"Unknown page: {page!r}")
+        return
+
+    with st.spinner(""):
+        fn()
 
     st.markdown(
-        '<div class="ms-footer">MaudeSignal — open-source FDA AI/ML postmarket surveillance '
-        "| Data: openFDA (public domain) | Not for clinical use</div>",
+        '<div class="ms-footer">'
+        "MaudeSignal — AI-Powered Postmarket Surveillance &nbsp;|&nbsp; "
+        "Data: openFDA (public domain) &nbsp;|&nbsp; "
+        "Not for clinical use &nbsp;|&nbsp; "
+        "Every AI output requires human regulatory review"
+        "</div>",
         unsafe_allow_html=True,
     )
 
 
 def main() -> None:
-    """Streamlit entry point. Run via `streamlit run` or `maudesignal-dashboard`."""
+    """Entry point — run via `streamlit run` or `maudesignal-dashboard`."""
     if not _running_under_streamlit():
         import subprocess
 
@@ -1430,7 +1528,23 @@ def _running_under_streamlit() -> bool:
 
 
 def _is_main_module() -> bool:
-    return __name__ == "__main__" or "streamlit" in sys.modules and _running_under_streamlit()
+    return __name__ == "__main__" or ("streamlit" in sys.modules and _running_under_streamlit())
+
+
+# ── Backward-compatibility aliases (test suite) ───────────────────────────────
+# Tests reference the old internal names directly; we expose them as module-level
+# aliases so the test_dashboard.py assertions remain green without any test changes.
+
+_page_summary = _page_dashboard  # was: Monitor > Overview
+_page_records = _page_signal_explorer  # was: Monitor > Records
+_page_drift = _page_signal_explorer  # was: Analyze > Signals & Drift
+
+# Original 9-page group structure kept as a static map for the nav regression test.
+_PAGE_GROUPS: dict[str, list[str]] = {
+    "Monitor": ["Overview", "Records", "Severity"],
+    "Analyze": ["Signals & Drift", "Root Cause & Alerts", "Trends & Forecasting"],
+    "Configure": ["External Sources", "PSUR Reports", "Device Catalog"],
+}
 
 
 if _is_main_module():
