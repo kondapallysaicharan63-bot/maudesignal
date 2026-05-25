@@ -219,6 +219,7 @@ The full non-goals list lives in [01_vision_mission.md §6](01_vision_mission.md
 | Risks + mitigations | [06_risk_register.md](06_risk_register.md) |
 | Week-by-week execution plan | [07_roadmap.md](07_roadmap.md) |
 | Regulatory + technical glossary | [08_glossary.md](08_glossary.md) |
+| **Dashboard logic reference** | [**09_dashboard_logic.md**](09_dashboard_logic.md) |
 | Empirical pilot results | [00_pilot_findings.md](00_pilot_findings.md) |
 | LLM behavior contracts | [skills/](../skills/) |
 | Code | [src/maudesignal/](../src/maudesignal/) |

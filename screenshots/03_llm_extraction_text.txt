@@ -1,0 +1,54 @@
+keyboard_double_arrow_left
+
+AI-Powered Postmarket Surveillance
+
+🏠 Dashboard
+
+🔍 Signal Explorer
+
+📥 MAUDE Ingestion
+
+🤖 LLM Extraction
+
+📋 PSUR Reports
+
+🔔 Alerts
+
+⚙️ Settings
+
+📄 290 MAUDE records
+
+🔔 3 active alert rules
+
+💵 $0.0000 LLM spend
+
+🕐 Last extraction: -1d ago
+
+🤖 LLM Extraction
+
+Run AI extraction on ingested MAUDE records
+
+Queue Status
+
+290
+TOTAL NORMALIZED EVENTS
+54
+ALREADY EXTRACTED
+236
+PENDING EXTRACTION
+
+
+
+Run Extraction
+
+Filter by Product Code
+
+(all)
+
+Batch Size
+
+10 record(s) will be processed using provider: pool / gemini,gemini2,gemini3
+
+▶ Run Extraction
+
+MaudeSignal — AI-Powered Postmarket Surveillance  |  Data: openFDA (public domain)  |  Not for clinical use  |  Every AI output requires human regulatory review

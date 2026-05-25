@@ -1,16 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "PsurReportDrafterOutput",
-  "description": "Structured PSUR section draft for an FDA AI/ML medical device.",
+  "description": "Structured PSUR section draft for an FDA AI/ML medical device. Only contains fields the LLM is responsible for generating; metadata (product_code, period dates, skill_name, model_used) is injected by the generator.",
   "type": "object",
   "required": [
-    "product_code",
-    "reporting_period_start",
-    "reporting_period_end",
-    "drafted_at",
-    "skill_name",
-    "skill_version",
-    "model_used",
     "executive_summary",
     "signal_assessment",
     "sections",
@@ -18,13 +11,6 @@
     "confidence_score"
   ],
   "properties": {
-    "product_code": { "type": "string", "minLength": 1 },
-    "reporting_period_start": { "type": "string", "format": "date" },
-    "reporting_period_end": { "type": "string", "format": "date" },
-    "drafted_at": { "type": "string", "format": "date-time" },
-    "skill_name": { "type": "string", "const": "psur-report-drafter" },
-    "skill_version": { "type": "string" },
-    "model_used": { "type": "string" },
     "executive_summary": {
       "type": "string",
       "minLength": 80,

@@ -1,0 +1,74 @@
+AI-Powered Postmarket Surveillance
+
+🏠 Dashboard
+
+🔍 Signal Explorer
+
+📥 MAUDE Ingestion
+
+🤖 LLM Extraction
+
+📋 PSUR Reports
+
+🔔 Alerts
+
+⚙️ Settings
+
+📄 290 MAUDE records
+
+🔔 3 active alert rules
+
+💵 $0.0000 LLM spend
+
+🕐 Last extraction: -1d ago
+
+🏠 Dashboard
+
+Executive summary of postmarket signal activity
+
+Key Performance Indicators
+
+290
+MAUDE RECORDS
+14
+AI SIGNALS DETECTED
+0.884
+AVG CONFIDENCE
+3
+ACTIVE ALERT RULES
+$0.00
+LLM COST TO DATE
+
+
+
+Severity Distribution
+
+malfunction
+other
+Severity
+0
+10
+20
+30
+40
+50
+60
+Count
+
+AI Failure Mode Breakdown
+
+data_pipeline_error
+false_negative_cl…
+not_ai_related
+software_bug
+Failure Mode
+0
+1
+2
+3
+4
+Count
+
+Recent Signals
+
+MaudeSignal — AI-Powered Postmarket Surveillance  |  Data: openFDA (public domain)  |  Not for clinical use  |  Every AI output requires human regulatory review

@@ -22,6 +22,7 @@ from tenacity import (
 from maudesignal.common.exceptions import (
     OpenFDAAPIError,
     OpenFDARateLimitError,
+    OpenFDAUnavailableError,
 )
 from maudesignal.common.logging import get_logger
 
@@ -117,7 +118,7 @@ class OpenFDAClient:
     @retry(
         stop=stop_after_attempt(MAX_RETRIES),
         wait=wait_exponential(multiplier=1, min=1, max=10),
-        retry=retry_if_exception_type(OpenFDARateLimitError),
+        retry=retry_if_exception_type((OpenFDARateLimitError, OpenFDAUnavailableError)),
         reraise=True,
     )
     def _fetch_page(
@@ -126,7 +127,7 @@ class OpenFDAClient:
         skip: int,
         limit: int,
     ) -> list[dict[str, Any]]:
-        """Fetch a single page from openFDA. Retries on rate limit."""
+        """Fetch a single page from openFDA. Retries on rate limit or 5xx."""
         params: dict[str, str | int] = {
             "search": query,
             "limit": limit,
@@ -156,6 +157,10 @@ class OpenFDAClient:
         if response.status_code == 429:
             logger.warning("openfda_rate_limit", skip=skip)
             raise OpenFDARateLimitError("openFDA returned 429")
+
+        if response.status_code in (500, 503):
+            logger.warning("openfda_server_error", status=response.status_code, skip=skip)
+            raise OpenFDAUnavailableError(f"openFDA server error {response.status_code}")
 
         if response.status_code >= 500:
             raise OpenFDAAPIError(f"openFDA server error {response.status_code}")

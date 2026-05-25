@@ -1,0 +1,1643 @@
+
+  You can now view your Streamlit app in your browser.
+
+  Local URL: http://localhost:8501
+  Network URL: http://192.168.86.53:8501
+  External URL: http://67.180.157.147:8501
+
+2026-05-24 13:19:20 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 13:19:22 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 15:30:50 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 15:30:58 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 15:30:58 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 15:31:02 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 15:31:02 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 15:31:05 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 15:31:06 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 15:31:09 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 15:31:09 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 15:31:13 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 15:31:13 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 15:31:16 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 15:31:16 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 16:57:48 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 16:57:53 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 16:57:54 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 16:59:41 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:00:42 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:00:50 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:00:50 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:01:46 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:02:01 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:02:01 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:02:07 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:02:07 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:02:13 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:02:13 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:02:18 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:02:19 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:02:24 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:02:24 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:02:30 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:02:30 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:03:34 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:03:43 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:03:43 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:05:08 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:05:17 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:05:17 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:07:48 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:07:56 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:07:56 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:08:07 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:08:07 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:08:13 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:08:13 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:09:28 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:09:28 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:09:59 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:09:59 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:10:27 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:10:27 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:10:36 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:10:56 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:10:58 [info     ] ingestion_start                end_date=20260524 limit=50 product_code=QIH start_date=20250524
+2026-05-24 17:10:58 [debug    ] openfda_fetch                  endpoint=https://api.fda.gov/device/event.json has_api_key=True limit=50 skip=0
+2026-05-24 17:11:22 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:11:23 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:11:26 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:11:26 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:25:34 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:25:34 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:26:26 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:26:26 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:27:36 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:27:36 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:27:40 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:27:40 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:28:05 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:28:07 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:28:07 [info     ] skill_loaded                   bad_examples=5 good_examples=5 skill=maude-narrative-extractor version=1.0.0
+2026-05-24 17:28:07 [info     ] skill_loaded                   bad_examples=5 good_examples=5 skill=severity-triage version=1.0.0
+2026-05-24 17:28:07 [info     ] skill_loaded                   bad_examples=5 good_examples=5 skill=ai-failure-mode-classifier version=1.0.0
+2026-05-24 17:28:14 [info     ] extraction_request_start       input_preview='{"maude_report_id": "1001226", "event_description": "CUSTOMER CALLED IN TO REPORT THAT THE N-395 WOULD NOT TURN ON. THE N-395 WAS RETURNED TO COVIDIEN AND DURING THE COVIDIEN FACTORY SERVICE EVALUATIO...' model=gemini-2.5-flash provider=gemini skill=maude-narrative-extractor skill_version=1.0.0
+2026-05-24 17:28:14 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:28:14 [info     ] skill_loaded                   bad_examples=5 good_examples=5 skill=maude-narrative-extractor version=1.0.0
+2026-05-24 17:28:14 [info     ] skill_loaded                   bad_examples=5 good_examples=5 skill=severity-triage version=1.0.0
+2026-05-24 17:28:14 [info     ] skill_loaded                   bad_examples=5 good_examples=5 skill=ai-failure-mode-classifier version=1.0.0
+2026-05-24 17:28:17 [info     ] extraction_request_start       input_preview='{"maude_report_id": "1001226", "event_description": "CUSTOMER CALLED IN TO REPORT THAT THE N-395 WOULD NOT TURN ON. THE N-395 WAS RETURNED TO COVIDIEN AND DURING THE COVIDIEN FACTORY SERVICE EVALUATIO...' model=gemini-2.5-flash provider=gemini skill=maude-narrative-extractor skill_version=1.0.0
+2026-05-24 17:28:17 [error    ] extraction_schema_violation    error="'CUSTOMER CALLED IN TO REPORT THAT THE N-395 WOULD NOT TURN ON. THE N-395 WAS RETURNED TO COVIDIEN AND DURING THE COVIDIEN FACTORY SERVICE EVALUATION ON 02/06/2008 IT WAS DETERMINED THAT THE SPEAKER WAS MISSING FROM THE N-395 UNIT; THEREFORE, THERE WAS NO AUDIO. THE BIOMEDICAL ENGINEER OF THE FACILITY WAS CONTACTED AND REPORTS THAT HE HAD DAMAGED AND DISCARDED THE SPEAKER WHEN HE DISASSEMBLED THE UNIT. NO PT WAS INVOLVED.\\n\\n---\\nMANUFACTURER NARRATIVE:\\nCOVIDIEN HAS CONCLUDED THAT THE MISSING SPEAKER OCCURRED DURING SERVICE MAINTENANCE BY THE BIOMEDICAL ENGINEER OF THE HOSPITAL. COVIDIEN HAS RESTORED THE AUDIO TO THE N-395 BY REPLACING THE SPEAKER.' is too long" output_preview='{\n  "maude_report_id": "1001226",\n  "extraction_ts": "2026-04-23T14:22:18Z",\n  "skill_name": "maude-narrative-extractor",\n  "skill_version": "1.0.0",\n  "model_used": "claude-sonnet-4-6",\n  "failure_mode": "Missing speaker causing no audio output",\n  "severity": "malfunction",\n  "patient_outcome": "No patient involved",\n  "device_problem": "Speaker removed during facility service maintenance",\n  "ai_related_flag": false,\n  "ai_related_rationale": "Narrative clearly describes a physical component ...' provider=gemini skill=maude-narrative-extractor
+2026-05-24 17:28:17 [warning  ] skill_failed                   error="Skill maude-narrative-extractor v1.0.0 output failed schema validation via gemini: 'CUSTOMER CALLED IN TO REPORT THAT THE N-395 WOULD NOT TURN ON. THE N-395 WAS RETURNED TO COVIDIEN AND DURING THE COVIDIEN FACTORY SERVICE EVALUATION ON 02/06/2008 IT WAS DETERMINED THAT THE SPEAKER WAS MISSING FROM THE N-395 UNIT; THEREFORE, THERE WAS NO AUDIO. THE BIOMEDICAL ENGINEER OF THE FACILITY WAS CONTACTED AND REPORTS THAT HE HAD DAMAGED AND DISCARDED THE SPEAKER WHEN HE DISASSEMBLED THE UNIT. NO PT WAS INVOLVED.\\n\\n---\\nMANUFACTURER NARRATIVE:\\nCOVIDIEN HAS CONCLUDED THAT THE MISSING SPEAKER OCCURRED DURING SERVICE MAINTENANCE BY THE BIOMEDICAL ENGINEER OF THE HOSPITAL. COVIDIEN HAS RESTORED THE AUDIO TO THE N-395 BY REPLACING THE SPEAKER.' is too long" maude_report_id=1001226 skill=maude-narrative-extractor
+2026-05-24 17:28:20 [error    ] extraction_schema_violation    error="'CUSTOMER CALLED IN TO REPORT THAT THE N-395 WOULD NOT TURN ON. THE N-395 WAS RETURNED TO COVIDIEN AND DURING THE COVIDIEN FACTORY SERVICE EVALUATION ON 02/06/2008 IT WAS DETERMINED THAT THE SPEAKER WAS MISSING FROM THE N-395 UNIT; THEREFORE, THERE WAS NO AUDIO. THE BIOMEDICAL ENGINEER OF THE FACILITY WAS CONTACTED AND REPORTS THAT HE HAD DAMAGED AND DISCARDED THE SPEAKER WHEN HE DISASSEMBLED THE UNIT. NO PT WAS INVOLVED.\\n\\n---\\nMANUFACTURER NARRATIVE:\\nCOVIDIEN HAS CONCLUDED THAT THE MISSING SPEAKER OCCURRED DURING SERVICE MAINTENANCE BY THE BIOMEDICAL ENGINEER OF THE HOSPITAL. COVIDIEN HAS RESTORED THE AUDIO TO THE N-395 BY REPLACING THE SPEAKER.' is too long" output_preview='{\n  "maude_report_id": "1001226",\n  "extraction_ts": "2026-04-23T14:22:18Z",\n  "skill_name": "maude-narrative-extractor",\n  "skill_version": "1.0.0",\n  "model_used": "claude-sonnet-4-6",\n  "failure_mode": "Missing speaker causing no audio output",\n  "severity": "malfunction",\n  "patient_outcome": "No patient involved",\n  "device_problem": "Speaker removed during facility service maintenance",\n  "ai_related_flag": false,\n  "ai_related_rationale": "Narrative clearly describes a physical component ...' provider=gemini skill=maude-narrative-extractor
+2026-05-24 17:28:20 [warning  ] skill_failed                   error="Skill maude-narrative-extractor v1.0.0 output failed schema validation via gemini: 'CUSTOMER CALLED IN TO REPORT THAT THE N-395 WOULD NOT TURN ON. THE N-395 WAS RETURNED TO COVIDIEN AND DURING THE COVIDIEN FACTORY SERVICE EVALUATION ON 02/06/2008 IT WAS DETERMINED THAT THE SPEAKER WAS MISSING FROM THE N-395 UNIT; THEREFORE, THERE WAS NO AUDIO. THE BIOMEDICAL ENGINEER OF THE FACILITY WAS CONTACTED AND REPORTS THAT HE HAD DAMAGED AND DISCARDED THE SPEAKER WHEN HE DISASSEMBLED THE UNIT. NO PT WAS INVOLVED.\\n\\n---\\nMANUFACTURER NARRATIVE:\\nCOVIDIEN HAS CONCLUDED THAT THE MISSING SPEAKER OCCURRED DURING SERVICE MAINTENANCE BY THE BIOMEDICAL ENGINEER OF THE HOSPITAL. COVIDIEN HAS RESTORED THE AUDIO TO THE N-395 BY REPLACING THE SPEAKER.' is too long" maude_report_id=1001226 skill=maude-narrative-extractor
+2026-05-24 17:28:20 [info     ] extraction_request_start       input_preview='{"maude_report_id": "1001227", "event_description": "IN 2008, THE PURCHASING AGENT FOR A HOSPITAL REPORTED TO COVIDIEN THEY HAD AN N295 PULSE OXIMETER WITHOUT ANY AUDIO TONE. THERE WAS NO REPORT OF PT...' model=gemini-2.5-flash provider=gemini skill=maude-narrative-extractor skill_version=1.0.0
+2026-05-24 17:28:23 [error    ] extraction_schema_violation    error='"IN 2008, THE PURCHASING AGENT FOR A HOSPITAL REPORTED TO COVIDIEN THEY HAD AN N295 PULSE OXIMETER WITHOUT ANY AUDIO TONE. THERE WAS NO REPORT OF PT INVOLVED.\\n\\n---\\nMANUFACTURER NARRATIVE:\\nTHE HOSPITAL\'S PURCHASING AGENT HAD NO OTHER INFO REGARDING THE N295 AND STATED SHE WOULD ASK THE BIOMED DEPARTMENT IF THEY HAD ANY FURTHER DETAILS REGARDING THE N295. COVIDIEN REQUESTED THE CUSTOMER RETURN THE N295 FOR FAILURE INVESTIGATION. THE CUSTOMER STATED THEY WOULD NOT BE RETURNING THE N295 AND WOULD CONTACT US IF THEY DECIDED TO ORDER REPLACEMENT PARTS TO SERVICE THE UNIT THEMSELVES OR RETURN THE DEVICE TO US. THIS INVESTIGATION IS IN PROGRESS AND A FOLLOW UP REPORT WILL BE FILED IF THE N295 IS RETURNED FOR FAILURE INVESTIGATION, AND/OR ANY NEW SIGNIFICANT INFO IS ATTAINED." is too long' output_preview='{\n  "maude_report_id": "1001227",\n  "extraction_ts": "2026-04-23T14:22:18Z",\n  "skill_name": "maude-narrative-extractor",\n  "skill_version": "1.0.0",\n  "model_used": "claude-sonnet-4-6",\n  "failure_mode": "Absence of audio tone on pulse oximeter",\n  "severity": "malfunction",\n  "patient_outcome": "No patient reported",\n  "device_problem": "Pulse oximeter failed to produce audio tone",\n  "ai_related_flag": false,\n  "ai_related_rationale": "Narrative describes a hardware/audible alarm issue, no me...' provider=gemini skill=maude-narrative-extractor
+2026-05-24 17:28:23 [warning  ] skill_failed                   error='Skill maude-narrative-extractor v1.0.0 output failed schema validation via gemini: "IN 2008, THE PURCHASING AGENT FOR A HOSPITAL REPORTED TO COVIDIEN THEY HAD AN N295 PULSE OXIMETER WITHOUT ANY AUDIO TONE. THERE WAS NO REPORT OF PT INVOLVED.\\n\\n---\\nMANUFACTURER NARRATIVE:\\nTHE HOSPITAL\'S PURCHASING AGENT HAD NO OTHER INFO REGARDING THE N295 AND STATED SHE WOULD ASK THE BIOMED DEPARTMENT IF THEY HAD ANY FURTHER DETAILS REGARDING THE N295. COVIDIEN REQUESTED THE CUSTOMER RETURN THE N295 FOR FAILURE INVESTIGATION. THE CUSTOMER STATED THEY WOULD NOT BE RETURNING THE N295 AND WOULD CONTACT US IF THEY DECIDED TO ORDER REPLACEMENT PARTS TO SERVICE THE UNIT THEMSELVES OR RETURN THE DEVICE TO US. THIS INVESTIGATION IS IN PROGRESS AND A FOLLOW UP REPORT WILL BE FILED IF THE N295 IS RETURNED FOR FAILURE INVESTIGATION, AND/OR ANY NEW SIGNIFICANT INFO IS ATTAINED." is too long' maude_report_id=1001227 skill=maude-narrative-extractor
+2026-05-24 17:28:23 [info     ] extraction_request_start       input_preview='{"maude_report_id": "10013452", "event_description": "WHILE TAKING OFF PULSE OXIMETER FROM LEFT MIDDLE TOE, WE NOTICED A PRESSURE INJURY FROM THE DEVICE. PATIENT WAS FOUND TO HAVE STAGE ONE PRESSURE I...' model=gemini-2.5-flash provider=gemini skill=maude-narrative-extractor skill_version=1.0.0
+2026-05-24 17:28:26 [error    ] extraction_schema_violation    error='"WHILE TAKING OFF PULSE OXIMETER FROM LEFT MIDDLE TOE, WE NOTICED A PRESSURE INJURY FROM THE DEVICE. PATIENT WAS FOUND TO HAVE STAGE ONE PRESSURE INJURY UNDERNEATH PULSE OXIMETRY SENSOR ON LEFT MIDDLE TOE. PATIENT TRANSFERRED TO ICC FROM TRAUMA STEPDOWN - JUST OVER 24 HOURS PREVIOUSLY, THEREFORE INJURY OCCURRED WHILE THE PATIENT WAS ON THAT UNIT. PULSE OXIMETRY SENSOR USED WAS COVIDIEN NELLCOR NEONATAL-ADULT SPO2 SENSOR. BROWN FABRIC SENSOR. WHILE REVIEWING DOCUMENTATION IN SUNRISE THERE WERE MULTIPLE SHIFTS WHERE RESPIRATORY THERAPY DID NOT DOCUMENT AN ASSESSMENT OF THE SKIN UNDERNEATH PATIENT\'S RESPIRATORY DEVICES." is too long' output_preview='{\n  "maude_report_id": "10013452",\n  "extraction_ts": "2026-04-23T14:22:18Z",\n  "skill_name": "maude-narrative-extractor",\n  "skill_version": "1.0.0",\n  "model_used": "claude-sonnet-4-6",\n  "failure_mode": "Pressure injury from pulse oximeter sensor",\n  "severity": "serious_injury",\n  "patient_outcome": "Stage one pressure injury on left middle toe; patient transferred to ICC",\n  "device_problem": "Pulse oximetry sensor caused pressure injury",\n  "ai_related_flag": false,\n  "ai_related_rationale...' provider=gemini skill=maude-narrative-extractor
+2026-05-24 17:28:26 [warning  ] skill_failed                   error='Skill maude-narrative-extractor v1.0.0 output failed schema validation via gemini: "WHILE TAKING OFF PULSE OXIMETER FROM LEFT MIDDLE TOE, WE NOTICED A PRESSURE INJURY FROM THE DEVICE. PATIENT WAS FOUND TO HAVE STAGE ONE PRESSURE INJURY UNDERNEATH PULSE OXIMETRY SENSOR ON LEFT MIDDLE TOE. PATIENT TRANSFERRED TO ICC FROM TRAUMA STEPDOWN - JUST OVER 24 HOURS PREVIOUSLY, THEREFORE INJURY OCCURRED WHILE THE PATIENT WAS ON THAT UNIT. PULSE OXIMETRY SENSOR USED WAS COVIDIEN NELLCOR NEONATAL-ADULT SPO2 SENSOR. BROWN FABRIC SENSOR. WHILE REVIEWING DOCUMENTATION IN SUNRISE THERE WERE MULTIPLE SHIFTS WHERE RESPIRATORY THERAPY DID NOT DOCUMENT AN ASSESSMENT OF THE SKIN UNDERNEATH PATIENT\'S RESPIRATORY DEVICES." is too long' maude_report_id=10013452 skill=maude-narrative-extractor
+2026-05-24 17:28:26 [info     ] extraction_request_start       input_preview='{"maude_report_id": "10017909", "event_description": "THE CUSTOMER REPORTED A SPARK CAME OUT OF THE BACK OF THE RDS-3 DEVICE AND IT STOPPED WORKING. NO PATIENT IMPACT OR CONSEQUENCES WERE REPORTED.", ...' model=gemini-2.5-flash provider=gemini skill=maude-narrative-extractor skill_version=1.0.0
+2026-05-24 17:28:29 [error    ] extraction_schema_violation    error="'THE CUSTOMER REPORTED A SPARK CAME OUT OF THE BACK OF THE RDS-3 DEVICE AND IT STOPPED WORKING. NO PATIENT IMPACT OR CONSEQUENCES WERE REPORTED.\\n\\n---\\nMANUFACTURER NARRATIVE:\\nADDITIONAL MANUFACTURING NARRATIVE: OTHER, OTHER TEXT: THE RETURNED DEVICE WAS EVALUATED. VISUAL INSPECTION UPON RECEIVING REVEALED NO EXTERNAL DAMAGE OR DEFECTS. THE DEVICE WAS ABLE TO POWER ON USING AC POWER. A GOOD KNOWN RADICAL-7 WAS ABLE TO BE CHARGED WHILE IN THE DOCKING STATION AND WAS ABLE TO ESTABLISH COMMUNICATION WITH THE DOCKING STATION; HOWEVER, THE AC INLET MODULE WAS DAMAGED. THE DOCKING STATION FAILED BOTH PRODUCTION AND VERIFY HIPOT TESTS DUE TO THE DAMAGED AC INLET MODULE. AFTER TEMPORARILY REPLACING THE AC INLET WITH ONE FROM A KNOWN GOOD RDS, THE CUSTOMER¿S DOCKING STATION WAS ABLE TO PASS HIPOT TESTING. A SERVICE HISTORY RECORD REVIEW REVEALS THAT THIS UNIT WAS IN THE FIELD FOR OVER TWO (2) YEARS WITH NO PREVIOUS REPORTED ISSUES PRIOR TO THIS REPORTED EVENT.' is too long" output_preview='{\n  "maude_report_id": "10017909",\n  "extraction_ts": "2026-04-23T14:22:18Z",\n  "skill_name": "maude-narrative-extractor",\n  "skill_version": "1.0.0",\n  "model_used": "claude-sonnet-4-6",\n  "failure_mode": "Spark from device and device stopped working",\n  "severity": "malfunction",\n  "patient_outcome": "No patient impact or consequences reported",\n  "device_problem": "Damaged AC inlet module in docking station",\n  "ai_related_flag": false,\n  "ai_related_rationale": "Narrative describes a hardwar...' provider=gemini skill=maude-narrative-extractor
+2026-05-24 17:28:29 [warning  ] skill_failed                   error="Skill maude-narrative-extractor v1.0.0 output failed schema validation via gemini: 'THE CUSTOMER REPORTED A SPARK CAME OUT OF THE BACK OF THE RDS-3 DEVICE AND IT STOPPED WORKING. NO PATIENT IMPACT OR CONSEQUENCES WERE REPORTED.\\n\\n---\\nMANUFACTURER NARRATIVE:\\nADDITIONAL MANUFACTURING NARRATIVE: OTHER, OTHER TEXT: THE RETURNED DEVICE WAS EVALUATED. VISUAL INSPECTION UPON RECEIVING REVEALED NO EXTERNAL DAMAGE OR DEFECTS. THE DEVICE WAS ABLE TO POWER ON USING AC POWER. A GOOD KNOWN RADICAL-7 WAS ABLE TO BE CHARGED WHILE IN THE DOCKING STATION AND WAS ABLE TO ESTABLISH COMMUNICATION WITH THE DOCKING STATION; HOWEVER, THE AC INLET MODULE WAS DAMAGED. THE DOCKING STATION FAILED BOTH PRODUCTION AND VERIFY HIPOT TESTS DUE TO THE DAMAGED AC INLET MODULE. AFTER TEMPORARILY REPLACING THE AC INLET WITH ONE FROM A KNOWN GOOD RDS, THE CUSTOMER¿S DOCKING STATION WAS ABLE TO PASS HIPOT TESTING. A SERVICE HISTORY RECORD REVIEW REVEALS THAT THIS UNIT WAS IN THE FIELD FOR OVER TWO (2) YEARS WITH NO PREVIOUS REPORTED ISSUES PRIOR TO THIS REPORTED EVENT.' is too long" maude_report_id=10017909 skill=maude-narrative-extractor
+2026-05-24 17:28:29 [info     ] extraction_request_start       input_preview='{"maude_report_id": "10017920", "event_description": "THE CUSTOMER REPORTED THAT THE DEVICE HAD MISSING LED SEGMENTS. NO CONSEQUENCES OR IMPACT TO PATIENT WERE REPORTED.", "mfr_narrative": "ADDITIONAL...' model=gemini-2.5-flash provider=gemini skill=maude-narrative-extractor skill_version=1.0.0
+2026-05-24 17:28:32 [error    ] extraction_schema_violation    error="'THE CUSTOMER REPORTED THAT THE DEVICE HAD MISSING LED SEGMENTS. NO CONSEQUENCES OR IMPACT TO PATIENT WERE REPORTED.\\n\\n---\\nMANUFACTURER NARRATIVE:\\nADDITIONAL MANUFACURING NARRATIVE: OTHER, OTHER TEXT: THE RETURNED DEVICE WAS EVALUATED. UPON POWER ON, NOT ALL THE LED DIGITS LIT UP. DURING OPERATIONAL AND FUNCTIONAL TESTING, THE DEVICE WAS ABLE TO OBTAIN READINGS. INTERNAL INSPECTION WAS PERFORMED AND CONTAMINATION DAMAGES WERE OBSERVED ON THE SYSTEM CIRCUIT BOARD WHICH PREVENTED SOME OF THE LED DIGITS FROM LIGHTING UP. A SERVICE HISTORY RECORD REVIEW REVEALS THAT THIS UNIT WAS IN THE FIELD FOR OVER EIGHT (8) MONTHS WITH NO PREVIOUS REPORTED ISSUES RELATED TO THIS REPORTED EVENT., CORRECTED DATA: B3: DATE OF EVENT FROM (B)(6) 1901 TO (B)(6) 2020.' is too long" output_preview='{\n  "maude_report_id": "10017920",\n  "extraction_ts": "2026-04-23T14:22:18Z",\n  "skill_name": "maude-narrative-extractor",\n  "skill_version": "1.0.0",\n  "model_used": "claude-sonnet-4-6",\n  "failure_mode": "Missing LED segments on display",\n  "severity": "malfunction",\n  "patient_outcome": "No consequences or impact to patient reported",\n  "device_problem": "Contamination damages on system circuit board preventing LED digits from lighting up",\n  "ai_related_flag": false,\n  "ai_related_rationale"...' provider=gemini skill=maude-narrative-extractor
+2026-05-24 17:28:32 [warning  ] skill_failed                   error="Skill maude-narrative-extractor v1.0.0 output failed schema validation via gemini: 'THE CUSTOMER REPORTED THAT THE DEVICE HAD MISSING LED SEGMENTS. NO CONSEQUENCES OR IMPACT TO PATIENT WERE REPORTED.\\n\\n---\\nMANUFACTURER NARRATIVE:\\nADDITIONAL MANUFACURING NARRATIVE: OTHER, OTHER TEXT: THE RETURNED DEVICE WAS EVALUATED. UPON POWER ON, NOT ALL THE LED DIGITS LIT UP. DURING OPERATIONAL AND FUNCTIONAL TESTING, THE DEVICE WAS ABLE TO OBTAIN READINGS. INTERNAL INSPECTION WAS PERFORMED AND CONTAMINATION DAMAGES WERE OBSERVED ON THE SYSTEM CIRCUIT BOARD WHICH PREVENTED SOME OF THE LED DIGITS FROM LIGHTING UP. A SERVICE HISTORY RECORD REVIEW REVEALS THAT THIS UNIT WAS IN THE FIELD FOR OVER EIGHT (8) MONTHS WITH NO PREVIOUS REPORTED ISSUES RELATED TO THIS REPORTED EVENT., CORRECTED DATA: B3: DATE OF EVENT FROM (B)(6) 1901 TO (B)(6) 2020.' is too long" maude_report_id=10017920 skill=maude-narrative-extractor
+2026-05-24 17:28:32 [info     ] extraction_request_start       input_preview='{"maude_report_id": "10018011", "event_description": "THE CUSTOMER REPORTED THE DEVICE ALERTED THE SYSTEM WITH A MESSAGE OF \\"NO COMM\\" MULTIPLE TIMES AND \\"SENSOR OFF\\" MESSAGE.  THE CUSTOMER ALSO RE...' model=gemini-2.5-flash provider=gemini skill=maude-narrative-extractor skill_version=1.0.0
+2026-05-24 17:28:32 [warning  ] skill_failed                   error="Gemini API call failed: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 5, model: gemini-2.5-flash\\nPlease retry in 27.070818809s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerMinutePerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-2.5-flash'}, 'quotaValue': '5'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '27s'}]}}" maude_report_id=10018011 skill=maude-narrative-extractor
+2026-05-24 17:28:32 [info     ] extraction_request_start       input_preview='{"maude_report_id": "1002040", "event_description": "MALE WITH CONFIRMED SUICIDE ATTEMPT VIA CARBON MONOXIDE. PATIENT INITIALLY UNRESPONSIVE WITH A WEAK PULSE. PATIENT WAS EXTRICATED AND OXYGEN WAS AD...' model=gemini-2.5-flash provider=gemini skill=maude-narrative-extractor skill_version=1.0.0
+2026-05-24 17:28:32 [warning  ] skill_failed                   error="Gemini API call failed: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 5, model: gemini-2.5-flash\\nPlease retry in 26.832397102s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerMinutePerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-2.5-flash'}, 'quotaValue': '5'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '26s'}]}}" maude_report_id=1002040 skill=maude-narrative-extractor
+2026-05-24 17:28:32 [info     ] extraction_request_start       input_preview='{"maude_report_id": "1002149", "event_description": "NELLCOR PURITAN BENNETT RECEIVED A REPORT FROM A BIOMEDICAL ENGINEER THAT THE UNIT DID NOT PROVIDE AN AUDIO TONE.", "mfr_narrative": "THE CALLER HA...' model=gemini-2.5-flash provider=gemini skill=maude-narrative-extractor skill_version=1.0.0
+2026-05-24 17:28:33 [warning  ] skill_failed                   error="Gemini API call failed: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 5, model: gemini-2.5-flash\\nPlease retry in 26.575113804s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerMinutePerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-2.5-flash'}, 'quotaValue': '5'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '26s'}]}}" maude_report_id=1002149 skill=maude-narrative-extractor
+2026-05-24 17:28:33 [info     ] extraction_request_start       input_preview='{"maude_report_id": "1002150", "event_description": "NELLCOR PURITAN BENNETT RECEIVED A REPORT FROM A BIOMEDICAL ENGINEER THAT THE UNIT DID NOT PROVIDE AN AUDIO TONE.", "mfr_narrative": "THE CALLER HA...' model=gemini-2.5-flash provider=gemini skill=maude-narrative-extractor skill_version=1.0.0
+2026-05-24 17:28:33 [warning  ] skill_failed                   error="Gemini API call failed: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 5, model: gemini-2.5-flash\\nPlease retry in 26.362047369s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerMinutePerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-2.5-flash'}, 'quotaValue': '5'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '26s'}]}}" maude_report_id=1002150 skill=maude-narrative-extractor
+2026-05-24 17:28:33 [info     ] extraction_request_start       input_preview='{"maude_report_id": "10025054", "event_description": "THE CUSTOMER REPORTED THAT THE DEVICE DID NOT OBTAIN SPO2 READINGS. NO CONSEQUENCES OR IMPACT TO PATIENT WERE REPORTED.", "mfr_narrative": "THE PR...' model=gemini-2.5-flash provider=gemini skill=maude-narrative-extractor skill_version=1.0.0
+2026-05-24 17:28:33 [warning  ] skill_failed                   error="Gemini API call failed: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 5, model: gemini-2.5-flash\\nPlease retry in 26.136997577s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerMinutePerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-2.5-flash'}, 'quotaValue': '5'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '26s'}]}}" maude_report_id=10025054 skill=maude-narrative-extractor
+2026-05-24 17:28:39 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:28:39 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:29:01 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:29:01 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:29:23 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:29:23 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:29:38 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:29:38 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:41:37 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:41:48 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:41:59 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:42:10 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:42:21 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:42:33 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:42:44 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:42:55 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:43:06 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:43:17 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:43:28 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:43:40 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:43:50 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:44:02 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:44:09 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:44:15 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:44:21 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:44:26 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:44:32 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:44:38 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:44:44 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:44:52 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:44:58 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:45:04 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:45:10 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:45:15 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:45:21 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:45:27 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:45:32 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:45:38 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:45:44 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:45:51 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:46:02 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:46:02 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:46:16 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:46:21 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:46:21 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:46:28 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:46:28 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:46:43 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:46:43 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:46:45 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:46:51 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:46:56 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:47:01 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:47:01 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:47:08 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:47:12 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:47:18 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:47:18 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:47:24 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:47:29 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:47:36 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:47:40 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 17:47:40 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:18:20 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:18:21 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         '<div class="ms-footer">'                                             |
+|   1826         "MaudeSignal — AI-Powered Postmarket Surveillance &nbsp;|&nbsp; "     |
+|   1827         "Data: openFDA (public domain) &nbsp;|&nbsp; "                        |
+| > 1828         "Not for clinical use &nbsp;|&nbsp; "                                 |
+|   1829         "Every AI output requires human regulatory review"                    |
+|   1830         "</div>",                                                             |
+|   1831         unsafe_allow_html=True,                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1814 in <lambda> |
+|                                                                                      |
+|   1811         "PSUR Reports": lambda: _page_psur(db),                               |
+|   1812         "Alerts": lambda: _page_alerts(db),                                   |
+|   1813         "Settings": lambda: _page_settings(db),                               |
+| > 1814     }                                                                         |
+|   1815                                                                               |
+|   1816     fn = page_fn_map.get(page)                                                |
+|   1817     if fn is None:                                                            |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:802 in           |
+| _page_signal_explorer                                                                |
+|                                                                                      |
+|    799     _section("Filters")                                                       |
+|    800     f1, f2, f3, f4 = st.columns(4)                                            |
+|    801     pc_options = ["(all)"] + sorted({p for p in df["product_code"].dropna() i |
+| >  802     sev_options = ["(all)"] + sorted({s for s in df["severity"].dropna() if s |
+|    803     ai_options = ["(all)", "AI-related", "Not AI-related"]                    |
+|    804                                                                               |
+|    805     pc_sel = f1.selectbox("Product Code", pc_options, key="se_pc")            |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:602 in           |
+| _device_name_lookup                                                                  |
+|                                                                                      |
+|    599                                                                               |
+|    600                                                                               |
+|    601 def _catalog_dataframe(db: Database) -> pd.DataFrame:                         |
+| >  602     devices = db.list_catalog_devices()                                       |
+|    603     if not devices:                                                           |
+|    604         return pd.DataFrame()                                                 |
+|    605     return pd.DataFrame(                                                      |
++--------------------------------------------------------------------------------------+
+AttributeError: 'Database' object has no attribute 'brand_name_lookup'
+2026-05-24 22:39:44 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:39:51 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:39:51 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1814 in <lambda> |
+|                                                                                      |
+|   1811     2026-05-24 22:39:57 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:39:57 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:39:58 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:39:58 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               2026-05-24 22:40:00 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+|
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+2026-05-24 22:40:00 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1814 in <lambda> |
+|                                                                                      |
+|   1811     2026-05-24 22:40:48 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:40:48 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1814 in <lambda> |
+|                                                                                      |
+|   1811     2026-05-24 22:41:03 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:41:03 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:41:06 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:41:06 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:41:40 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:41:40 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1817 in <lambda> |
+|                                                                                      |
+|   1814         "Signal Explorer": lambda: _page_signal_explorer(db),                 |
+|   1815         "MAUDE Ingestion": lambda: _page_ingestion(db),                       |
+|   1816         "LLM Extraction": lambda: _page_extraction(db),                       |
+| > 1817         "PSUR Reports": lambda: _page_psur(db),                               |
+|   1818         "Alerts": lambda: _page_alerts(db),                                   |
+|   1819         "Settings": lambda: _page_settings(db),                               |
+|   1820     }                                                                         |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1218 in          |
+| _page_psur                                                                           |
+|                                                                                      |
+|   1215     tab_existing, tab_generate = st.tabs(["2026-05-24 22:41:54 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:41:54 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:41:56 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:41:56 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:42:48 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:42:58 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:43:06 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:43:16 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:43:17 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1814 in <lambda> |
+|                                                                                      |
+|   1811     2026-05-24 22:43:19 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:43:25 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:43:26 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:43:31 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:43:31 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:43:32 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:43:38 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:43:39 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1817 in <lambda> |
+|                                                                                      |
+|   1814         "Signal Explorer": lambda: _page_signal_explorer(db),                 |
+|   1815         "MAUDE Ingestion": lambda: _page_ingestion(db),                       |
+|   1816         "LLM Extraction": lambda: _page_extraction(db),                       |
+| > 1817         "PSUR Reports": lambda: _page_psur(db),                               |
+|   1818         "Alerts": lambda: _page_alerts(db),                                   |
+|   1819         "Settings": lambda: _page_settings(db),                               |
+|   1820     }                                                                         |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1218 in          |
+| _page_psur                                                                           |
+|                                                                                      |
+|   1215     tab_existing, tab_generate = st.tabs(["2026-05-24 22:43:44 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:43:45 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:43:45 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:43:51 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:43:52 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:43:58 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:44:11 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:44:23 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:44:36 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:44:48 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:45:01 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:45:13 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:45:25 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:45:38 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:45:50 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:46:02 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:46:14 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:46:29 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:46:41 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:46:54 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:47:06 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:47:18 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:47:30 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:47:43 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:47:54 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:47:54 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1814 in <lambda> |
+|                                                                                      |
+|   1811     2026-05-24 22:48:00 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:48:12 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:48:12 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1814 in <lambda> |
+|                                                                                      |
+|   1811     2026-05-24 22:48:18 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1884 in <module> |
+|                                                                                      |
+|   1881                                                                               |
+|   1882 if _is_main_module():                                                         |
+|   1883     _db: Any = _load_db()                                                     |
+| > 1884     _render_app(_db)                                                          |
+|   1885                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1828 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1825         return                                                                |
+|   1826                                                                               |
+|   1827     with st.spinner(""):                                                      |
+| > 1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|   1831         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1813 in <lambda> |
+|                                                                                      |
+|   1810                                                                               |
+|   1811     2026-05-24 22:48:30 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:48:30 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1897 in <module> |
+|                                                                                      |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1841 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1838     )                                                                         |
+|   1839                                                                               |
+|   1840                                                                               |
+| > 1841 def main() -> None:                                                           |
+|   1842     """Entry point — run via `streamlit run` or `maudesignal-dashboard`."""   |
+|   1843     if not _running_under_streamlit():                                        |
+|   1844         import subprocess                                                     |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1827 in <lambda> |
+|                                                                                      |
+|   1824         st.error(f"Unknown page: {page!r}")                                   |
+|   1825         return                                                                |
+|   1826                                                                               |
+| > 1827     with st.spinner(""):                                                      |
+|   1828         fn()                                                                  |
+|   1829                                                                               |
+|   1830     st.markdown(                                                              |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:815 in           |
+| _page_signal_explorer                                                                |
+|                                                                                      |
+|    812     sev_sel = f2.selectbox("Severity", sev_options, key="se_sev")             |
+|    813     ai_sel = f3.selectbox("AI Flag", ai_options, key="se_ai")                 |
+|    814                                                                               |
+| >  815     today = date.today()                                                      |
+|    816     date_range = f4.date_input(                                               |
+|    817         "Date Range",                                                         |
+|    818         value=(today - timedelta(days=365), today),                           |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:615 in           |
+| _device_name_lookup                                                                  |
+|                                                                                      |
+|    612         [                                                                     |
+|    613             {                                                                 |
+|    614                 "product_code": d.product_code,                               |
+| >  615                 "device_name": d.device_name,                                 |
+|    616                 "company_name": d.company_name or "",                         |
+|    617                 "specialty": d.specialty or "",                               |
+|    618                 "decision_date": d.decision_date or "",                       |
++--------------------------------------------------------------------------------------+
+AttributeError: 'Database' object has no attribute 'brand_name_lookup'
+2026-05-24 22:48:37 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1897 in <module> |
+|                                                                                      |
+|   1894                                                                               |
+|   1895 if _is_main_module():                                                         |
+|   1896     _db: Any = _load_db()                                                     |
+| > 1897     _render_app(_db)                                                          |
+|   1898                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1841 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1838         return                                                                |
+|   1839                                                                               |
+|   1840     with st.spinner(""):                                                      |
+| > 1841         fn()                                                                  |
+|   1842                                                                               |
+|   1843     st.markdown(                                                              |
+|   1844         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1826 in <lambda> |
+|                                                                                      |
+|   1823                                                                               |
+|   1824     2026-05-24 22:48:48 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:48:49 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1901 in <module> |
+|                                                                                      |
+|   1898                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1845 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1842                                                                               |
+|   1843     st.markdown(                                                              |
+|   1844         '<div class="ms-footer">'                                             |
+| > 1845         "MaudeSignal — AI-Powered Postmarket Surveillance &nbsp;|&nbsp; "     |
+|   1846         "Data: openFDA (public domain) &nbsp;|&nbsp; "                        |
+|   1847         "Not for clinical use &nbsp;|&nbsp; "                                 |
+|   1848         "Every AI output requires human regulatory review"                    |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1831 in <lambda> |
+|                                                                                      |
+|   1828         "MAUDE Ingestion": lambda: _page_ingestion(db),                       |
+|   1829         "LLM Extraction": lambda: _page_extraction(db),                       |
+|   1830         "PSUR Reports": lambda: _page_psur(db),                               |
+| > 1831         "Alerts": lambda: _page_alerts(db),                                   |
+|   1832         "Settings": lambda: _page_settings(db),                               |
+|   1833     }                                                                         |
+|   1834                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:819 in           |
+| _page_signal_explorer                                                                |
+|                                                                                      |
+|    816     df["device_name"] = df["product_code"].map(dn_lookup).fillna("—")         |
+|    817                                                                               |
+|    818     _section("Filters")                                                       |
+| >  819     f1, f2, f3, f4 = st.columns(4)                                            |
+|    820     pc_options = ["(all)"] + sorted({p for p in df["product_code"].dropna() i |
+|    821     sev_options = ["(all)"] + sorted({s for s in df["severity"].dropna() if s |
+|    822     ai_options = ["(all)", "AI-related", "Not AI-related"]                    |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:619 in           |
+| _device_name_lookup                                                                  |
+|                                                                                      |
+|    616     catalog = {d.product_code: d.device_name for d in db.list_catalog_devices |
+|    617     return {**brand_fallback, **catalog}  # catalog wins on conflict          |
+|    618                                                                               |
+| >  619                                                                               |
+|    620 def _catalog_dataframe(db: Database) -> pd.DataFrame:                         |
+|    621     devices = db.list_catalog_devices()                                       |
+|    622     if not devices:                                                           |
++--------------------------------------------------------------------------------------+
+AttributeError: 'Database' object has no attribute 'brand_name_lookup'
+2026-05-24 22:48:55 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1901 in <module> |
+|                                                                                      |
+|   1898                                                                               |
+|   1899 if _is_main_module():                                                         |
+|   1900     _db: Any = _load_db()                                                     |
+| > 1901     _render_app(_db)                                                          |
+|   1902                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1845 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1842         return                                                                |
+|   1843                                                                               |
+|   1844     with st.spinner(""):                                                      |
+| > 1845         fn()                                                                  |
+|   1846                                                                               |
+|   1847     st.markdown(                                                              |
+|   1848         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1830 in <lambda> |
+|                                                                                      |
+|   1827                                                                               |
+|   1828     2026-05-24 22:49:03 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
+2026-05-24 22:49:03 [info     ] database_initialized           db_path=C:\Users\konda\projects\safesignal\data\safesignal.db
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\konda\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python312\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1905 in <module> |
+|                                                                                      |
+|   1902                                                                               |
+|   1903 if _is_main_module():                                                         |
+|   1904     _db: Any = _load_db()                                                     |
+| > 1905     _render_app(_db)                                                          |
+|   1906                                                                               |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1849 in          |
+| _render_app                                                                          |
+|                                                                                      |
+|   1846         return                                                                |
+|   1847                                                                               |
+|   1848     with st.spinner(""):                                                      |
+| > 1849         fn()                                                                  |
+|   1850                                                                               |
+|   1851     st.markdown(                                                              |
+|   1852         '<div class="ms-footer">'                                             |
+|                                                                                      |
+| C:\Users\konda\projects\safesignal\src\maudesignal\dashboard\app.py:1835 in <lambda> |
+|                                                                                      |
+|   1832     

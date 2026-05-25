@@ -1,0 +1,90 @@
+keyboard_double_arrow_left
+
+AI-Powered Postmarket Surveillance
+
+🏠 Dashboard
+
+🔍 Signal Explorer
+
+📥 MAUDE Ingestion
+
+🤖 LLM Extraction
+
+📋 PSUR Reports
+
+🔔 Alerts
+
+⚙️ Settings
+
+📄 290 MAUDE records
+
+🔔 3 active alert rules
+
+💵 $0.0000 LLM spend
+
+🕐 Last extraction: -1d ago
+
+🔍 Signal Explorer
+
+Browse, filter, and export AI extraction results
+
+Filters
+
+Product Code
+
+(all)
+
+Severity
+
+(all)
+
+AI Flag
+
+(all)
+
+Date Range
+
+Press the down arrow key to interact with the calendar and select a date. Press the escape button to close the calendar.
+
+Selected date range is from 2025/05/24 to 2026/05/24.
+
+Search device name or report ID
+
+98 of 136 records
+
+Record Detail
+
+Select a MAUDE Report ID
+
+19864749
+
+Manufacturer: BRAINLAB AG
+
+Brand / Device: BRAINLAB ELEMENTS 6.0;ELEMENTS IMAGE FUSION;ELEMENTS IMAGE FUSION ANGIO;ELEME
+
+Product Code: QIH
+
+Device Name: BRAINLAB ELEMENTS 6.0;ELEMENTS IMAGE FUSION;ELEMENTS IMAGE FUSION ANGIO;ELEME
+
+Event Type: i
+
+Event Date: 20240729
+
+Official FDA Record: Open ↗
+
+Severity: serious_injury
+AI-Related: ✅
+Failure Mode: —
+Confidence: 0.900
+
+keyboard_arrow_down
+
+Patient / Reporter Narrative
+
+MALPOSITION OF THE LEAD RESULTING IN LEAD EDEMA WAS REPORTED. THE CAUSE IS BELIEVED TO BE DUE TO INCORRECT PLANNING OF THE SOFTWARE (BRAINLAB) OR THE FRAME SYSTEM (RM). THIS REPORT REFLECTS INFORMATION RECEIVED BY FDA IN THE FORM OF A NOTIFICATION PER 803.22 (B)(2).
+
+Export
+
+⬇ Download CSV
+
+MaudeSignal — AI-Powered Postmarket Surveillance  |  Data: openFDA (public domain)  |  Not for clinical use  |  Every AI output requires human regulatory review

@@ -75,6 +75,7 @@ dev = [
     "pytest>=8.0.0",
     "pytest-cov>=4.1.0",
     "pytest-mock>=3.12.0",
+    "pytest-playwright>=0.4.0",
     "mypy>=1.9.0",
     "ruff>=0.3.0",
     "black>=24.3.0",
@@ -127,6 +128,18 @@ ignore_missing_imports = true
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+exclude = [
+    "check_explorer.py",
+    "check_labels.py",
+    "check_text.py",
+    "dom_inspect.py",
+    "dom_inspect2.py",
+    "pixel_check.py",
+    "shot_alerts.py",
+    "take_screenshots.py",
+    "verify_db.py",
+    "verify_ui.py",
+]
 
 [tool.ruff.lint]
 select = [
@@ -152,7 +165,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["D", "S101"]  # No docstrings required in tests; assert is fine
+"tests/**" = ["D", "S101", "SIM"]  # No docstrings required in tests; assert is fine; nested-with is common
 "scripts/**" = ["T20"]  # CLI utility scripts may use print()
 
 [tool.ruff.lint.pydocstyle]
@@ -185,6 +198,7 @@ markers = [
     "integration: integration tests (may require API keys)",
     "slow: slow tests (>5 seconds)",
     "gold_set: tests that run against the hand-labeled gold standard",
+    "e2e: end-to-end browser tests requiring the Streamlit server at localhost:8501",
 ]
 
 # ==========================================

@@ -280,13 +280,28 @@ def extract(
         f"{skill_classifier.name} v{skill_classifier.version}"
     )
 
-    events = db.list_normalized_events(product_code=product_code, limit=limit)
+    events = db.list_normalized_events(product_code=product_code)
     if not events:
         console.print(
             f"[yellow]No ingested events found for {product_code}. "
             f"Run `maudesignal ingest --product-code {product_code}` first.[/yellow]"
         )
         raise typer.Exit(code=1)
+
+    # Skip records already successfully extracted to avoid duplicate rows and wasted API calls.
+    already_done = {
+        r.maude_report_id
+        for r in db.list_extractions(skill_name="maude-narrative-extractor")
+    }
+    events = [e for e in events if e.maude_report_id not in already_done]
+    if limit:
+        events = events[:limit]
+
+    if not events:
+        console.print(
+            f"[green]All ingested records for {product_code} already extracted.[/green]"
+        )
+        raise typer.Exit(code=0)
 
     extractor = Extractor(config=config, db=db)
     console.print(f"Extracting {len(events)} record(s) through 3-Skill chain...")

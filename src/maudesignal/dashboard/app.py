@@ -73,125 +73,466 @@ _ASSETS_DIR = Path(__file__).parent / "assets"
 _LOGO_PATH = _ASSETS_DIR / "logo.svg"
 _PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
-# ── CSS ────────────────────────────────────────────────────────────────────────
+# ── CSS (Meta design-system–aligned) ──────────────────────────────────────────
 _CSS = """
 <style>
-/* ── Global ─────────────────────────────────────────────────────────────── */
-html, body, [class*="css"] {
-    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  direction: ltr;
 }
+/* ── Design tokens ───────────────────────────────────────────────────────── */
+:root {
+  /* Brand & accent */
+  --ms-primary:        #0866FF;              /* cobalt – action CTAs          */
+  --ms-primary-deep:   #0143B5;              /* pressed / dark-surface        */
+  --ms-primary-soft:   rgba(8,102,255,0.12); /* info callout tint             */
+  --ms-ink-button:     #0A1317;              /* black pill – marketing CTAs   */
+  --ms-on-ink-button:  #FFFFFF;
+  --ms-on-primary:     #FFFFFF;
+
+  /* Surface */
+  --ms-canvas:         #FFFFFF;
+  --ms-surface-soft:   #F0F2F5;
+  --ms-hairline:       #CCD0D5;
+  --ms-hairline-soft:  #E4E6EB;
+
+  /* Text */
+  --ms-ink-deep:       #0A1317;
+  --ms-ink:            #1C1E21;
+  --ms-charcoal:       #3C3C3C;
+  --ms-slate:          #606770;
+  --ms-steel:          #767676;
+  --ms-stone:          #9EA3A9;
+
+  /* Semantic */
+  --ms-success:        #2E7D32;
+  --ms-attention:      #E65C00;
+  --ms-warning:        #E6AC00;
+  --ms-critical:       #E02020;
+  --ms-critical-strong:#C62828;
+
+  /* Border radius */
+  --r-sm:     4px;
+  --r-md:     6px;
+  --r-lg:     8px;
+  --r-xl:     16px;
+  --r-xxl:    24px;
+  --r-xxxl:   32px;
+  --r-feature:40px;
+  --r-full:   100px;
+
+  /* Spacing */
+  --sp-xs:  8px;  --sp-sm: 10px; --sp-md: 12px;  --sp-base: 16px;
+  --sp-lg: 20px;  --sp-xl: 24px; --sp-xxl: 32px; --sp-xxxl: 40px;
+  --sp-section-sm: 48px; --sp-section: 64px; --sp-section-lg: 80px;
+
+  /* Elevation */
+  --shadow-pill:  rgba(0,0,0,0.20) 1px 1px 0px 0px;
+  --shadow-panel: rgba(20,22,26,0.30) 0px 1px 4px 0px;
+}
+
+/* ── Global typography ───────────────────────────────────────────────────── */
+html, body, [class*="css"] {
+  font-family: 'Montserrat', Helvetica, Arial, 'Noto Sans', sans-serif !important;
+  color: var(--ms-ink) !important;
+  background-color: var(--ms-canvas) !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Streamlit chrome resets ─────────────────────────────────────────────── */
+[data-testid="stAppViewContainer"] > .main {
+  background-color: var(--ms-canvas);
+}
+[data-testid="stHeader"] { background: transparent !important; }
+[data-testid="stDecoration"] { display: none !important; }
+footer { display: none !important; }
 
 /* ── Sidebar ─────────────────────────────────────────────────────────────── */
 section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0d2137 0%, #1a3a5c 100%);
-    border-right: 1px solid #2a5080;
+  background: linear-gradient(180deg, #0d2137 0%, #1a3a5c 100%) !important;
+  border-right: 1px solid #2a5080 !important;
 }
 section[data-testid="stSidebar"] * {
-    color: #c8dff0 !important;
-}
-section[data-testid="stSidebar"] .stButton > button {
-    background: transparent !important;
-    border: none !important;
-    text-align: left !important;
-    padding: 6px 10px !important;
-    font-size: 0.9rem !important;
-    color: #c8dff0 !important;
-    box-shadow: none !important;
-    width: 100% !important;
-    border-radius: 6px !important;
-}
-section[data-testid="stSidebar"] .stButton > button:hover {
-    background: rgba(255,255,255,0.12) !important;
-    color: #fff !important;
+  font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
+  color: #c8dff0 !important;
 }
 
-/* ── Page header ─────────────────────────────────────────────────────────── */
+/* Sidebar nav buttons — pill-shaped (Meta {rounded.full}) */
+section[data-testid="stSidebar"] .stButton > button {
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  text-align: left !important;
+  padding: 8px 16px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.14px !important;
+  color: #c8dff0 !important;
+  box-shadow: none !important;
+  width: 100% !important;
+  border-radius: var(--r-full) !important;  /* pill */
+  transition: background 0.15s ease-out !important;
+}
+section[data-testid="stSidebar"] .stButton > button:hover,
+section[data-testid="stSidebar"] .stButton > button:focus {
+  background: rgba(255,255,255,0.12) !important;
+  border-color: rgba(255,255,255,0.18) !important;
+  color: #fff !important;
+}
+
+/* ── Main content buttons — cobalt pill (uniform across all button types) ─── */
+.stButton > button,
+.stFormSubmitButton > button,
+[data-testid="stBaseButton-primary"],
+[data-testid="stBaseButton-secondary"],
+[data-testid="stFormSubmitButton"] > button {
+  border-radius: 100px !important;
+  font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.14px !important;
+  padding: 12px 28px !important;
+  line-height: 1.43 !important;
+  background: #0866FF !important;   /* cobalt — explicit hex, avoids CSS-var resolution edge cases */
+  color: #FFFFFF !important;
+  border: none !important;
+  box-shadow: none !important;
+  transition: background 0.15s ease-out !important;
+  min-height: 44px !important;
+}
+.stButton > button:hover,
+.stFormSubmitButton > button:hover,
+[data-testid="stBaseButton-primary"]:hover {
+  background: #0143B5 !important;   /* cobalt-deep on hover */
+  color: #FFFFFF !important;
+}
+.stButton > button:active,
+.stFormSubmitButton > button:active {
+  background: #0143B5 !important;
+  color: #FFFFFF !important;
+}
+
+/* ── Page header — Meta {typography.display-lg} hierarchy ───────────────── */
 .ms-page-header {
-    border-bottom: 2px solid #e4edf8;
-    padding-bottom: 14px;
-    margin-bottom: 24px;
+  padding-bottom: var(--sp-xl);
+  margin-bottom: var(--sp-xxl);
+  border-bottom: 1px solid var(--ms-hairline-soft);
 }
 .ms-page-header h1 {
-    font-size: 1.65rem !important;
-    font-weight: 700 !important;
-    color: #1A4F8A !important;
-    margin: 0 0 4px 0 !important;
+  font-size: 36px !important;
+  font-weight: 500 !important;
+  line-height: 1.28 !important;
+  letter-spacing: 0 !important;
+  color: var(--ms-ink-deep) !important;
+  margin: 0 0 6px 0 !important;
+  font-variant-ligatures: common-ligatures !important;
 }
-.ms-page-header p {
-    color: #64748b !important;
-    font-size: 0.88rem !important;
-    margin: 0 !important;
+/* Subtitle: slate on every descendant — st.html() used so no Streamlit blue spans */
+.ms-page-header p,
+.ms-page-subtitle,
+.ms-page-header p *,
+.ms-page-header p a,
+.ms-page-header p a:hover,
+.ms-page-header p code,
+.ms-page-header p em,
+.ms-page-header p strong,
+.ms-page-header p span {
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  line-height: 1.44 !important;
+  color: var(--ms-slate) !important;
+  margin: 0 !important;
+  text-decoration: none !important;
+  background: none !important;
 }
 
-/* ── Metric card ─────────────────────────────────────────────────────────── */
+/* ── KPI card — Meta card-product-feature ({rounded.xxxl}) ──────────────── */
 .ms-card {
-    background: #fff;
-    border: 1px solid #dde8f5;
-    border-top: 3px solid #1A4F8A;
-    border-radius: 8px;
-    padding: 18px 20px;
-    text-align: center;
-    box-shadow: 0 2px 8px rgba(26,79,138,.07);
+  background: var(--ms-canvas);
+  border: 1px solid var(--ms-hairline-soft);   /* hairline, no top accent     */
+  border-top: 3px solid var(--ms-primary);     /* cobalt accent top rail      */
+  border-radius: var(--r-xxxl);                /* 32px — photographic cards   */
+  padding: var(--sp-xxl) var(--sp-xxl);        /* 32px internal padding       */
+  text-align: center;
+  box-shadow: none;                            /* flat — Meta's zero-elevation */
 }
 .ms-card .val {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1A4F8A;
-    line-height: 1.2;
+  font-size: clamp(20px, 2.8vw, 32px);        /* scales down for long values  */
+  font-weight: 700;
+  line-height: 1.17;
+  color: var(--ms-primary);
+  letter-spacing: 0;
+  white-space: nowrap;                         /* prevents value wrap          */
+  overflow: visible;
 }
 .ms-card .lbl {
-    font-size: 0.72rem;
-    color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-    margin-top: 5px;
+  font-size: 11px !important;                 /* {typography.caption-bold}    */
+  font-weight: 700 !important;
+  color: var(--ms-steel) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  margin-top: 6px !important;
+  font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
 }
-.ms-card.red { border-top-color: #b91c1c; }
-.ms-card.red .val { color: #b91c1c; }
-.ms-card.green { border-top-color: #15803d; }
-.ms-card.green .val { color: #15803d; }
-.ms-card.amber { border-top-color: #b45309; }
-.ms-card.amber .val { color: #b45309; }
 
-/* ── Section subheader ───────────────────────────────────────────────────── */
+/* Card semantic variants */
+.ms-card.red   { border-top-color: var(--ms-critical);   }
+.ms-card.red   .val { color: var(--ms-critical);   }
+.ms-card.green { border-top-color: var(--ms-success);    }
+.ms-card.green .val { color: var(--ms-success);    }
+.ms-card.amber { border-top-color: var(--ms-attention);  }
+.ms-card.amber .val { color: var(--ms-attention);  }
+
+/* ── Section heading — Meta {typography.heading-sm} ─────────────────────── */
 .ms-section {
-    font-size: 0.98rem;
-    font-weight: 600;
-    color: #1A4F8A;
-    border-left: 3px solid #1A4F8A;
-    padding-left: 10px;
-    margin: 24px 0 12px;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  line-height: 1.44 !important;
+  color: var(--ms-ink-deep) !important;
+  font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
+  margin: var(--sp-xxl) 0 var(--sp-md) !important;
+  padding: 0 !important;
+  border-left: none !important;
+  border-bottom: 1px solid var(--ms-hairline-soft) !important;
+  padding-bottom: var(--sp-xs) !important;
 }
 
-/* ── Status pills ────────────────────────────────────────────────────────── */
-.pill-ok   { display:inline-block;background:#d1fae5;color:#065f46;
-             border-radius:12px;padding:2px 10px;font-size:.78rem;font-weight:600; }
-.pill-warn { display:inline-block;background:#fef3c7;color:#92400e;
-             border-radius:12px;padding:2px 10px;font-size:.78rem;font-weight:600; }
-.pill-err  { display:inline-block;background:#fee2e2;color:#991b1b;
-             border-radius:12px;padding:2px 10px;font-size:.78rem;font-weight:600; }
+/* ── Status pills — Meta badge-* pattern ({rounded.full}) ───────────────── */
+.pill-ok {
+  display: inline-block;
+  background: #E6F4EA;
+  color: var(--ms-success);
+  border-radius: var(--r-full);
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.33;
+  letter-spacing: 0;
+}
+.pill-warn {
+  display: inline-block;
+  background: #FFF3CD;
+  color: #7A4F00;
+  border-radius: var(--r-full);
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.33;
+}
+.pill-err {
+  display: inline-block;
+  background: #FDEDED;
+  color: var(--ms-critical-strong);
+  border-radius: var(--r-full);
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.33;
+}
 
-/* ── Provider status card ────────────────────────────────────────────────── */
+/* ── Provider card — Meta card-icon-feature ({rounded.xl}) ──────────────── */
 .prov-card {
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
+  background: var(--ms-canvas);
+  border: 1px solid var(--ms-hairline-soft);
+  border-radius: var(--r-xl);              /* 16px — icon-feature tile style  */
+  padding: var(--sp-lg) var(--sp-xl);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  margin-bottom: var(--sp-xs);
+  box-shadow: none;
 }
-.prov-name { font-weight: 600; color: #1e293b; font-size: .9rem; }
-.prov-model { font-size: .78rem; color: #64748b; margin-top: 2px; }
+.prov-name {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.50;
+  letter-spacing: -0.16px;
+  color: var(--ms-ink-deep);
+}
+.prov-model {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.43;
+  letter-spacing: -0.14px;
+  color: var(--ms-slate);
+  margin-top: 2px;
+}
 
-/* ── Footer ──────────────────────────────────────────────────────────────── */
+/* ── Streamlit native elements: typography harmonisation ─────────────────── */
+h1, h2, h3, h4 {
+  font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
+  font-weight: 500 !important;
+  color: var(--ms-ink-deep) !important;
+}
+p, li, label, span {
+  font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
+}
+
+/* ── Markdown body text ──────────────────────────────────────────────────── */
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] li,
+[data-testid="stText"] p {
+  font-size: 16px !important;
+  line-height: 1.50 !important;
+  letter-spacing: -0.16px !important;
+  color: var(--ms-ink) !important;
+  font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
+}
+[data-testid="stMarkdownContainer"] strong {
+  color: var(--ms-ink-deep) !important;
+}
+[data-testid="stMarkdownContainer"] a {
+  color: var(--ms-primary) !important;
+  text-decoration: underline !important;
+}
+
+/* ── Form / widget labels — ink-deep, never Streamlit-blue ──────────────── */
+/* data-testid="stWidgetLabel" is how Streamlit marks ALL widget labels in 1.x */
+[data-testid="stWidgetLabel"],
+[data-testid="stWidgetLabel"] p,
+[data-testid="stWidgetLabel"] span,
+/* Broad selector: covers all labels regardless of widget testid version */
+section[data-testid="stMain"] label,
+[data-testid="stMainBlockContainer"] label,
+[data-testid="stVerticalBlock"] label,
+[data-testid="stHorizontalBlock"] label,
+[data-testid="stColumn"] label,
+[data-testid="stForm"] label,
+/* Belt-and-suspenders: specific widget testid overrides */
+[data-testid="stTextInput"] label,
+[data-testid="stNumberInput"] label,
+[data-testid="stDateInput"] label,
+[data-testid="stSelectbox"] label,
+[data-testid="stTextArea"] label,
+[data-testid="stCheckbox"] label,
+[data-testid="stRadio"] label,
+[data-testid="stSlider"] label,
+.stTextInput label, .stNumberInput label,
+.stSelectbox label, .stDateInput label {
+  color: #0A1317 !important;   /* explicit hex — avoids CSS-var resolution edge cases */
+  font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.14px !important;
+}
+
+/* ── Caption / small text ────────────────────────────────────────────────── */
+[data-testid="stCaptionContainer"],
+[data-testid="stCaptionContainer"] p,
+[data-testid="stCaptionContainer"] span {
+  color: var(--ms-slate) !important;
+  font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
+  font-size: 12px !important;
+}
+[data-testid="stCaptionContainer"] code,
+[data-testid="stCaptionContainer"] strong {
+  color: var(--ms-ink-deep) !important;
+  background: var(--ms-surface-soft) !important;
+  border-radius: var(--r-sm) !important;
+  padding: 1px 5px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
+}
+
+/* ── Sidebar text — explicit override after global p/span rule ───────────── */
+section[data-testid="stSidebar"] p,
+section[data-testid="stSidebar"] span,
+section[data-testid="stSidebar"] label,
+section[data-testid="stSidebar"] li {
+  color: #c8dff0 !important;
+  font-size: inherit !important;
+}
+
+/* Tab labels — Meta {typography.body-sm-bold} */
+[data-testid="stTabs"] button[role="tab"] {
+  font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.14px !important;
+  color: var(--ms-slate) !important;
+  border-radius: var(--r-full) !important;
+  padding: 8px 16px !important;
+}
+[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
+  color: var(--ms-ink-deep) !important;
+  background: var(--ms-surface-soft) !important;
+}
+
+/* Info / warning / error boxes — hairline border flat style */
+[data-testid="stAlert"] {
+  border-radius: var(--r-xl) !important;
+  border: 1px solid var(--ms-hairline-soft) !important;
+  box-shadow: none !important;
+  font-size: 14px !important;
+}
+
+/* Form inputs — Meta text-input style */
+input[type="text"], input[type="number"], textarea, select {
+  font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
+  font-size: 16px !important;
+  border-radius: var(--r-lg) !important;  /* 8px */
+  border: 1px solid var(--ms-hairline) !important;
+  height: 44px !important;
+}
+input:focus, textarea:focus, select:focus {
+  border: 2px solid #1877F2 !important;  /* fb-blue focus ring */
+  outline: none !important;
+}
+
+/* Selectbox / combobox pill */
+[data-testid="stSelectbox"] > div > div {
+  border-radius: var(--r-lg) !important;
+  border-color: var(--ms-hairline) !important;
+}
+
+/* Dataframe */
+[data-testid="stDataFrame"] {
+  border-radius: var(--r-xl) !important;
+  overflow: hidden;
+  border: 1px solid var(--ms-hairline-soft) !important;
+}
+
+/* ── Footer — Meta footer-region style ──────────────────────────────────── */
 .ms-footer {
-    margin-top: 48px;
-    padding-top: 12px;
-    border-top: 1px solid #e2e8f0;
-    font-size: .72rem;
-    color: #94a3b8;
-    text-align: center;
+  margin-top: var(--sp-section);
+  padding-top: var(--sp-md);
+  border-top: 1px solid var(--ms-hairline-soft);
+  font-size: 12px;                          /* {typography.caption} */
+  font-weight: 400;
+  line-height: 1.33;
+  color: var(--ms-stone);
+  text-align: center;
+  letter-spacing: 0;
+}
+
+/* ── Promo / info banner — dark ink-deep strip ───────────────────────────── */
+.ms-banner-info {
+  background: var(--ms-primary-soft);
+  border-radius: var(--r-xl);
+  padding: var(--sp-md) var(--sp-xl);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ms-primary-deep);
+  margin-bottom: var(--sp-xl);
+}
+.ms-banner-warn {
+  background: #FFF3CD;
+  border-radius: var(--r-xl);
+  padding: var(--sp-md) var(--sp-xl);
+  font-size: 14px;
+  font-weight: 700;
+  color: #7A4F00;
+  margin-bottom: var(--sp-xl);
 }
 </style>
 """
@@ -274,8 +615,14 @@ def _product_code_lookup(db: Database) -> dict[str, str]:
 
 
 def _device_name_lookup(db: Database) -> dict[str, str]:
-    devices = db.list_catalog_devices()
-    return {d.product_code: d.device_name for d in devices}
+    """Return product_code → display name.
+
+    Prefers device_catalog.device_name; falls back to normalized_events.brand_name
+    so product codes never enriched still show a human-readable label.
+    """
+    brand_fallback = db.brand_name_lookup()
+    catalog = {d.product_code: d.device_name for d in db.list_catalog_devices()}
+    return {**brand_fallback, **catalog}  # catalog wins on conflict
 
 
 def _catalog_dataframe(db: Database) -> pd.DataFrame:
@@ -300,19 +647,25 @@ def _catalog_dataframe(db: Database) -> pd.DataFrame:
 
 def _page_header(icon: str, title: str, subtitle: str) -> None:
     """Render the standard page header."""
-    st.markdown(
-        f'<div class="ms-page-header">' f"<h1>{icon} {title}</h1>" f"<p>{subtitle}</p>" f"</div>",
-        unsafe_allow_html=True,
+    st.html(
+        f'<div class="ms-page-header">'
+        f'<h1 style="font-size:36px;font-weight:500;color:#0A1317;margin:0 0 6px 0;'
+        f'font-family:Montserrat,Helvetica,Arial,sans-serif;letter-spacing:0;">'
+        f"{icon} {title}</h1>"
+        f'<p style="font-size:16px;font-weight:400;line-height:1.44;color:#606770;'
+        f'margin:0;font-family:Montserrat,Helvetica,Arial,sans-serif;">'
+        f"{subtitle}</p>"
+        f"</div>"
     )
 
 
 def _kpi_card(col: Any, value: str, label: str, variant: str = "") -> None:
     cls = f"ms-card {variant}".strip()
-    col.markdown(
-        f'<div class="{cls}"><div class="val">{value}</div>'
-        f'<div class="lbl">{label}</div></div>',
-        unsafe_allow_html=True,
-    )
+    with col:
+        st.html(
+            f'<div class="{cls}"><div class="val">{value}</div>'
+            f'<div class="lbl">{label}</div></div>'
+        )
 
 
 def _section(title: str) -> None:
@@ -342,7 +695,7 @@ def _page_dashboard(db: Database) -> None:
     _kpi_card(c2, str(n_ai), "AI Signals Detected", "red" if n_ai > 0 else "")
     _kpi_card(c3, f"{avg_conf:.3f}", "Avg Confidence", "green" if avg_conf >= 0.8 else "amber")
     _kpi_card(c4, str(n_alerts), "Active Alert Rules")
-    _kpi_card(c5, f"${cost:.4f}", "LLM Cost to Date")
+    _kpi_card(c5, f"${cost:.2f}", "LLM Cost to Date")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -1248,7 +1601,7 @@ def _settings_providers(db: Database) -> None:
         _section("Cost & Limits")
         cost = db.total_llm_cost_usd()
         c1, c2 = st.columns(2)
-        _kpi_card(c1, f"${cost:.4f}", "LLM Cost to Date")
+        _kpi_card(c1, f"${cost:.2f}", "LLM Cost to Date")
         _kpi_card(c2, f"${cfg.cost_ceiling_usd:.2f}", "Cost Ceiling")
 
 
@@ -1432,7 +1785,7 @@ def _render_app(db: Database) -> None:  # noqa: PLR0912
         layout="wide",
         initial_sidebar_state="expanded",
     )
-    st.markdown(_CSS, unsafe_allow_html=True)
+    st.html(_CSS)
 
     if "nav_page" not in st.session_state:
         st.session_state["nav_page"] = "Dashboard"

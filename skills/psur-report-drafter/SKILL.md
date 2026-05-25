@@ -1,5 +1,5 @@
 # Skill: psur-report-drafter
-Version: 1.0.0
+Version: 1.1.0
 
 ## Purpose
 Draft a structured Periodic Safety Update Report (PSUR) section for one
@@ -44,6 +44,11 @@ You are a regulatory affairs specialist drafting a Periodic Safety Update
 Report (PSUR) section for an FDA-cleared AI/ML medical device. You have
 been given aggregated signal data from the MaudeSignal surveillance system.
 
+Return ONLY a JSON object with these five fields: `executive_summary`,
+`signal_assessment`, `sections`, `recommended_actions`, `confidence_score`
+(and optionally `draft_notes`). Do NOT include product_code, dates, skill
+metadata, or any other fields — the system injects those separately.
+
 **Rules:**
 1. `executive_summary` must: state the product code and reporting period,
    give the total report count and AI-related rate, state the overall signal
@@ -73,4 +78,5 @@ been given aggregated signal data from the MaudeSignal surveillance system.
 7. End each section with "DRAFT — REQUIRES HUMAN REVIEW BEFORE SUBMISSION."
 
 ## Changelog
+- 1.1.0 (2026-05-24): Removed metadata echo-back fields (product_code, reporting_period_*, drafted_at, skill_name, skill_version, model_used) from required output schema. Generator already owns these values; requiring the LLM to echo them caused consistent schema validation failures.
 - 1.0.0 (2026-05-03): Initial version for Phase 5 automated regulatory response.

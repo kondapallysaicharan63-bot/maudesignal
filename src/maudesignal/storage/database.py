@@ -346,6 +346,19 @@ class Database:
         with self._session() as session:
             return len(session.execute(select(DeviceCatalogRecord)).scalars().all())
 
+    def brand_name_lookup(self) -> dict[str, str]:
+        """Return product_code → brand_name from normalized_events (first non-null per code).
+
+        Used as a fallback when a product code has no device_catalog entry.
+        """
+        with self._session() as session:
+            events = session.execute(select(NormalizedEventRecord)).scalars().all()
+            result: dict[str, str] = {}
+            for ev in events:
+                if ev.product_code and ev.brand_name and ev.product_code not in result:
+                    result[ev.product_code] = ev.brand_name
+            return result
+
     # ------------------------------------------------------------------
     # Root cause reports  (Phase 2)
     # ------------------------------------------------------------------

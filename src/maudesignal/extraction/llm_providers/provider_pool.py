@@ -47,8 +47,11 @@ _TOKEN_TO_ENV: dict[str, tuple[str, str]] = {
 }
 
 
-BACKOFF_SECONDS: int = 60
-"""Seconds a rate-limited slot stays in backoff before it is retried."""
+BACKOFF_SECONDS: int = 40
+"""Seconds a rate-limited slot stays in backoff before it is retried.
+Gemini free-tier 429s carry a "retry in ~35s" header, so 40s gives a small
+buffer while cutting idle wait to below the old 60s default.
+"""
 
 _RATE_LIMIT_MARKERS = (
     "429",

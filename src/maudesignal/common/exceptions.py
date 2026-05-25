@@ -24,6 +24,10 @@ class OpenFDARateLimitError(OpenFDAAPIError):
     """Raised when openFDA returns 429 after all retries exhausted."""
 
 
+class OpenFDAUnavailableError(OpenFDAAPIError):
+    """Raised when openFDA returns 5xx; eligible for retry with backoff."""
+
+
 # --- Extraction layer ---
 
 
