@@ -118,6 +118,16 @@ what is acceptable code.
 
 Full list: [docs/01_vision_mission.md §6](docs/01_vision_mission.md).
 
+> **Hackathon extension (Oct 2026).** For the Meta Global AI Developer
+> Hackathon (Oct 26 – Nov 4, 2026) a scoped conversational surface was added:
+> the `safety-copilot` (Muse Spark via the Meta Model API, `src/maudesignal/copilot/`).
+> It is not a general chatbot. It is a B2B regulatory triage aid that answers
+> only through 6 deterministic tools over stored records, emits structured
+> claims, and shows nothing that the claim-level gate (`src/maudesignal/gate/`)
+> has not verified. It never gives medical advice; its actions are drafts that
+> a named human approves; nothing is filed with FDA. Every other boundary
+> above still holds. File-by-file list: [HACKATHON.md](HACKATHON.md).
+
 ---
 
 ## 4. Tech Stack
@@ -181,8 +191,11 @@ maudesignal/
 │   ├── classification/         # F3 (planned)
 │   ├── drift/                  # F4 (planned)
 │   ├── verification/           # F5 — citation verifier
-│   ├── dashboard/              # F6 (planned, Streamlit)
-│   └── reports/                # F7 (planned, PSUR)
+│   ├── dashboard/              # F6 Streamlit (+ copilot_pages.py, hackathon)
+│   ├── reports/                # F7 (planned, PSUR)
+│   ├── copilot/                # Hackathon: Muse Spark agent, tools, CAPA actions
+│   ├── gate/                   # Hackathon: claim-level citation gate
+│   └── monitor/                # Hackathon: overnight deterioration digest
 ├── tests/                      # pytest, gold sets, fixtures
 ├── pyproject.toml              # Project + tool config
 ├── README.md                   # Public-facing
@@ -261,6 +274,7 @@ MaudeSignal does not handle PHI under any circumstances.
 | `drift-analysis-interpreter` | ✅ v1.0.0 (skeleton) | Translates KS/PSI stats into regulator language; not wired into pipeline yet |
 | `fda-guidance-retriever` | 📋 planned | Grounded retrieval over FDA guidance corpus |
 | `psur-report-drafter` | 📋 planned | Final composer; consumes everything |
+| `safety-copilot` | ✅ v1.0.0 (hackathon, Oct 2026) | Copilot contract: tool use + structured claims checked by `gate/`; advisory only |
 
 If you need to add a new Skill, follow the structure of the existing
 five Skills and update the table above.
@@ -322,7 +336,8 @@ See `maudesignal/config.py` for the authoritative list.
 - ❌ Do not add PHI handling, multi-tenant, auth, or SaaS scaffolding.
 - ❌ Do not add a new regulator (EU MDR, Health Canada, etc.) without
   going through scope review in the Charter.
-- ❌ Do not add features beyond F1–F7. The 8-week scope is fixed.
+- ❌ Do not add features beyond F1–F7. The 8-week scope is fixed. (The
+  hackathon extension in §3 is the one documented exception.)
 - ❌ Do not return `confidence_score = 1.0` from any Skill. Cap at 0.95.
 - ❌ Do not use LLM training-data knowledge as a citation verification
   source.

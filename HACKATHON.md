@@ -36,6 +36,9 @@ Everything under `src/maudesignal/copilot/`, `src/maudesignal/gate/` and
 | `digests/2026-08-24.*`, `digests/2026-08-31.*` | Two digests generated from the seeded data |
 | `.github/workflows/monitor.yml` | Daily cron + manual dispatch running the monitor; commits the digest back (`chore(monitor):`) |
 | `tests/unit/test_monitor.py` | Tests for detector, digest, fetch and CLI |
+| `streamlit_app.py`, `requirements.txt` | Streamlit Community Cloud entry point and dependency file for the keyless public demo (installs this repo; dependencies stay in `pyproject.toml`) |
+| `tests/unit/test_dashboard_default_db.py` | Tests that the dashboard falls back to the demo DB only when nothing else is configured |
+| `docs/architecture.mmd`, `docs/architecture.svg` | Architecture diagram (Mermaid source + rendered SVG) of the hackathon flow |
 
 Small changes to pre-existing modules made during the event (to support the
 monitor, or bugs it exposed): `Database.list_event_facts` / `max_date_received`
@@ -45,7 +48,16 @@ with `+` encoded as `%2B` (HTTP 500); fix — live openFDA `event_type` is a
 string, so ingestion had been storing single letters (`"m"`, `"i"`); fix —
 structlog captured `sys.stderr` once, so logging crashed after the stream was
 closed (the 4 failing CI tests); `Database.date_received_lookup`; dashboard
-package import made lazy so submodules don't re-run the app.
+package import made lazy so submodules don't re-run the app;
+`dashboard/app.py` `_load_db` now opens `data/demo/maudesignal_demo.db` when
+`MAUDESIGNAL_DB_PATH` is unset and `data/maudesignal.db` does not exist
+(stored-first public deploy); `.streamlit/config.toml` gained `headless = true`;
+`README.md` rewritten for the hackathon (pre-existing pipeline section kept,
+trimmed, with stale CLI commands and test counts corrected); `CLAUDE.md` gained a
+"Hackathon extension (Oct 2026)" note and the `safety-copilot` Skill row;
+pre-hackathon root-level debug scripts and logs removed (public-repo hygiene),
+with their ruff excludes in `pyproject.toml` replaced by per-file ignores for the
+remaining smoke-test and screenshot scripts.
 
 Plus this manifest, the demo video, and the submission write-up.
 
@@ -72,10 +84,7 @@ The copilot reads from that pipeline. It does not claim it.
   `muse-spark-1.3` (latest, docs-recommended), base URL
   `https://api.meta.ai/v1`, streaming via `stream=True`.
 
-## Planning docs (in this repo)
+## Planning docs
 
-Full workflow, delivery plan, dev workflow, checklist, and skills
-worksheet live under `docs/hackathon/` (mirrored from the workspace
-planning docs). They describe the plan; this manifest describes what
-was actually built. Workspace copies are canonical — repo copies are
-re-pushed after planning changes.
+The day-by-day planning docs are kept outside the public repo. This manifest
+describes what was actually built.

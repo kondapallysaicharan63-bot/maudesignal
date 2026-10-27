@@ -76,6 +76,8 @@ _FAILURE_MODE_COLORS: dict[str, str] = {
 _ASSETS_DIR = Path(__file__).parent / "assets"
 _LOGO_PATH = _ASSETS_DIR / "logo.svg"
 _PROJECT_ROOT = Path(__file__).resolve().parents[3]
+_DEFAULT_DB_RELPATH = Path("data") / "maudesignal.db"
+_DEMO_DB_PATH = _PROJECT_ROOT / "data" / "demo" / "maudesignal_demo.db"
 
 # ── CSS (Meta design-system–aligned) ──────────────────────────────────────────
 _CSS = """
@@ -562,7 +564,18 @@ def _maude_url(report_id: str) -> str:
 
 
 def _load_db() -> Database:
-    """Load the database, falling back to env-var path if Config cannot be fully loaded."""
+    """Load the database, falling back to env-var path if Config cannot be fully loaded.
+
+    Stored-first deploy (added during the Meta hackathon): when
+    ``MAUDESIGNAL_DB_PATH`` is unset and there is no local ``data/maudesignal.db``,
+    open the committed keyless demo database instead of creating an empty one.
+    """
+    if (
+        not os.environ.get("MAUDESIGNAL_DB_PATH")
+        and not (_PROJECT_ROOT / _DEFAULT_DB_RELPATH).exists()
+        and _DEMO_DB_PATH.exists()
+    ):
+        return Database(_DEMO_DB_PATH)
     try:
         cfg = Config.load()
         return Database(cfg.db_path)

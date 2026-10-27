@@ -128,18 +128,6 @@ ignore_missing_imports = true
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-exclude = [
-    "check_explorer.py",
-    "check_labels.py",
-    "check_text.py",
-    "dom_inspect.py",
-    "dom_inspect2.py",
-    "pixel_check.py",
-    "shot_alerts.py",
-    "take_screenshots.py",
-    "verify_db.py",
-    "verify_ui.py",
-]
 
 [tool.ruff.lint]
 select = [
@@ -167,6 +155,8 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["D", "S101", "SIM"]  # No docstrings required in tests; assert is fine; nested-with is common
 "scripts/**" = ["T20"]  # CLI utility scripts may use print()
+"screenshots/**" = ["D", "T20", "SIM"]  # one-off screenshot helper
+"test_meta_connection.py" = ["D", "T20"]  # smoke-test script run in CI; prints by design
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"  # NFR-17 requires Google-style
