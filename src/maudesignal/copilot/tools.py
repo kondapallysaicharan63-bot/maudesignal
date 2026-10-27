@@ -1,0 +1,325 @@
+"""Tools the copilot model can call.
+
+HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
+
+Every tool is deterministic, reads only stored data, and returns plain JSON
+with the exact numbers and report ids it used, so the citation gate can
+re-verify anything the model repeats. The only tool that writes is
+``draft_capa``, and it can only create a *draft* — approval is a human action
+outside the model's reach (see ``copilot.actions``).
+"""
+
+from __future__ import annotations
+
+import json
+from collections import Counter
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import date, timedelta
+from typing import Any
+
+from maudesignal.copilot.actions import draft_capa
+from maudesignal.gate.cfr import CFR_SECTIONS
+from maudesignal.gate.evidence import EvidenceStore
+from maudesignal.monitor.deterioration import detect_from_database, parse_yyyymmdd
+from maudesignal.monitor.digest import build_digest, digest_to_dict
+from maudesignal.storage.database import Database
+
+MAX_IDS = 10
+EXCERPT_CHARS = 600
+
+ToolFn = Callable[..., dict[str, Any]]
+
+
+def _ymd(d: date) -> str:
+    return d.strftime("%Y%m%d")
+
+
+@dataclass
+class ToolContext:
+    """Everything a tool may read or write."""
+
+    db: Database
+    store: EvidenceStore
+    actor: str = "copilot:muse-spark"
+    created_capas: list[str] = field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
+# Tool implementations
+# ---------------------------------------------------------------------------
+
+
+def overnight_signals(ctx: ToolContext, as_of: str | None = None) -> dict[str, Any]:
+    """Deterioration digest: which product codes are new / spiking / escalating."""
+    as_of_date = parse_yyyymmdd(as_of) if as_of else None
+    digest = build_digest(detect_from_database(ctx.db, as_of_date))
+    d = digest_to_dict(digest)
+    w = digest.result.window
+    out: dict[str, Any] = {
+        "as_of": _ymd(w.as_of),
+        "headline": d["headline"],
+        "current_window": {"date_from": _ymd(w.current_start), "date_to": _ymd(w.current_end)},
+        "baseline_window": {
+            "date_from": _ymd(w.baseline_start),
+            "date_to": _ymd(w.baseline_end),
+        },
+        "rules": d["rules"],
+        "signals": [],
+    }
+    for s in d["signals"]:
+        out["signals"].append(
+            {
+                k: (v[:MAX_IDS] if isinstance(v, list) else v)
+                for k, v in s.items()
+                if k not in ("baseline_report_ids", "baseline_severe_report_ids")
+            }
+        )
+    return out
+
+
+def product_summary(
+    ctx: ToolContext,
+    product_code: str,
+    date_from: str | None = None,
+    date_to: str | None = None,
+) -> dict[str, Any]:
+    """Counts and event-type shares for one product code, plus its 510(k) device."""
+    rows = ctx.store.select(product_code=product_code, date_from=date_from, date_to=date_to)
+    by_type = Counter((r.event_type or "Unknown") for r in rows)
+    total = len(rows)
+    devices = [
+        {"k_number": d.k_number, "device_name": d.device_name, "company": d.company_name}
+        for d in ctx.store.devices
+        if d.product_code == product_code
+    ]
+    dates = sorted(r.date_received for r in rows if r.date_received)
+    return {
+        "product_code": product_code,
+        "date_from": date_from,
+        "date_to": date_to,
+        "report_count": total,
+        "event_type_counts": dict(by_type),
+        "event_type_share_pct": {
+            k: round(100.0 * v / total, 1) for k, v in by_type.items() if total
+        },
+        "earliest_date_received": dates[0] if dates else None,
+        "latest_date_received": dates[-1] if dates else None,
+        "devices_510k": devices,
+        "example_report_ids": [r.report_id for r in rows[:MAX_IDS]],
+    }
+
+
+def search_reports(
+    ctx: ToolContext,
+    product_code: str | None = None,
+    keyword: str | None = None,
+    event_type: str | None = None,
+    limit: int = 5,
+) -> dict[str, Any]:
+    """Find reports; returns narrative excerpts that can be quoted verbatim."""
+    rows = ctx.store.select(product_code=product_code, event_type=event_type)
+    if keyword:
+        kw = keyword.lower()
+        rows = [r for r in rows if kw in r.text.lower()]
+    rows = sorted(rows, key=lambda r: r.date_received or "", reverse=True)
+    limit = max(1, min(int(limit), 10))
+    return {
+        "matched": len(rows),
+        "reports": [
+            {
+                "report_id": r.report_id,
+                "product_code": r.product_code,
+                "event_type": r.event_type,
+                "date_received": r.date_received,
+                "brand_name": r.brand_name,
+                "narrative_excerpt": r.text[:EXCERPT_CHARS],
+            }
+            for r in rows[:limit]
+        ],
+    }
+
+
+def get_report(ctx: ToolContext, report_id: str) -> dict[str, Any]:
+    """Full stored narrative for one MAUDE report."""
+    r = ctx.store.record(report_id)
+    if r is None:
+        return {"error": f"report {report_id} not found"}
+    return {
+        "report_id": r.report_id,
+        "product_code": r.product_code,
+        "event_type": r.event_type,
+        "date_received": r.date_received,
+        "manufacturer": r.manufacturer,
+        "brand_name": r.brand_name,
+        "narrative": r.text[:3000],
+    }
+
+
+def deadline_check(
+    ctx: ToolContext, awareness_date: str, five_day_trigger: bool = False
+) -> dict[str, Any]:
+    """Advisory MDR clock from the date the manufacturer became aware.
+
+    30 calendar days under 21 CFR 803.50; 5 work days under 21 CFR 803.53 when
+    remedial action is needed to prevent an unreasonable risk of substantial
+    harm, or when FDA requests it. This does not decide reportability.
+    """
+    _ = ctx
+    start = parse_yyyymmdd(awareness_date)
+    if five_day_trigger:
+        d, added = start, 0
+        while added < 5:
+            d += timedelta(days=1)
+            if d.weekday() < 5:
+                added += 1
+        due, section, basis = d, "803.53", "5 work days"
+    else:
+        due, section, basis = start + timedelta(days=30), "803.50", "30 calendar days"
+    return {
+        "awareness_date": _ymd(start),
+        "due_date": _ymd(due),
+        "basis": basis,
+        "regulation_section": section,
+        "regulation_title": CFR_SECTIONS[section],
+        "advisory": "Reportability is a human regulatory decision; this is a clock only.",
+    }
+
+
+def draft_capa_tool(
+    ctx: ToolContext,
+    product_code: str,
+    title: str,
+    problem_statement: str,
+    report_ids: list[str],
+) -> dict[str, Any]:
+    """Create a CAPA *draft* (status=draft). A named human must approve it."""
+    unknown = [rid for rid in report_ids if ctx.store.record(rid) is None]
+    if unknown or not report_ids:
+        return {"error": "every report_id must exist in the store", "unknown": unknown}
+    row = draft_capa(
+        ctx.db,
+        product_code=product_code,
+        title=title,
+        problem_statement=problem_statement,
+        report_ids=report_ids,
+        actor=ctx.actor,
+    )
+    ctx.created_capas.append(row.capa_id)
+    return {
+        "capa_id": row.capa_id,
+        "status": row.status,
+        "next_step": "Awaiting approval by a named QA/RA reviewer. Nothing has been filed.",
+    }
+
+
+TOOLS: dict[str, ToolFn] = {
+    "overnight_signals": overnight_signals,
+    "product_summary": product_summary,
+    "search_reports": search_reports,
+    "get_report": get_report,
+    "deadline_check": deadline_check,
+    "draft_capa": draft_capa_tool,
+}
+
+_STR = {"type": "string"}
+_YMD = {"type": "string", "description": "YYYYMMDD"}
+
+TOOL_SCHEMAS: list[dict[str, Any]] = [
+    {
+        "type": "function",
+        "function": {
+            "name": "overnight_signals",
+            "description": "Deterioration digest: new / spiking / severity-escalating product "
+            "codes in the last 7 days vs a 4-week baseline, with exact counts and report ids.",
+            "parameters": {"type": "object", "properties": {"as_of": _YMD}},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "product_summary",
+            "description": "Report counts and event-type shares for one product code "
+            "(optionally within a date_received window), plus its 510(k) devices.",
+            "parameters": {
+                "type": "object",
+                "properties": {"product_code": _STR, "date_from": _YMD, "date_to": _YMD},
+                "required": ["product_code"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "search_reports",
+            "description": "Search stored MAUDE reports; returns narrative excerpts you may "
+            "quote verbatim with their report_id.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "product_code": _STR,
+                    "keyword": _STR,
+                    "event_type": {"type": "string", "enum": ["Malfunction", "Injury", "Death"]},
+                    "limit": {"type": "integer", "minimum": 1, "maximum": 10},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_report",
+            "description": "Full stored narrative for one MAUDE report id.",
+            "parameters": {
+                "type": "object",
+                "properties": {"report_id": _STR},
+                "required": ["report_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "deadline_check",
+            "description": "Advisory MDR due date from the awareness date (30 calendar days, "
+            "or 5 work days when five_day_trigger is true). Does not decide reportability.",
+            "parameters": {
+                "type": "object",
+                "properties": {"awareness_date": _YMD, "five_day_trigger": {"type": "boolean"}},
+                "required": ["awareness_date"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "draft_capa",
+            "description": "Create a CAPA DRAFT for human approval. Use only when the user "
+            "asks for a CAPA or corrective action. Cite the supporting report ids.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "product_code": _STR,
+                    "title": _STR,
+                    "problem_statement": _STR,
+                    "report_ids": {"type": "array", "items": _STR, "minItems": 1},
+                },
+                "required": ["product_code", "title", "problem_statement", "report_ids"],
+            },
+        },
+    },
+]
+
+
+def call_tool(ctx: ToolContext, name: str, arguments_json: str) -> dict[str, Any]:
+    """Dispatch a model tool call. Errors are returned to the model, never raised."""
+    fn = TOOLS.get(name)
+    if fn is None:
+        return {"error": f"unknown tool {name}"}
+    try:
+        args = json.loads(arguments_json or "{}")
+        if not isinstance(args, dict):
+            return {"error": "arguments must be a JSON object"}
+        return fn(ctx, **args)
+    except (TypeError, ValueError, KeyError) as exc:
+        return {"error": f"{type(exc).__name__}: {exc}"}

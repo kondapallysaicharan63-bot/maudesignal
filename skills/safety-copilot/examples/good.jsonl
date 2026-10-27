@@ -1,0 +1,1 @@
+{"input": "How is LLZ trending this week?", "expected_output": {"sentences": [{"text": "LLZ received 33 reports in the week ending 2026-08-31.", "claims": [{"kind": "count", "product_code": "LLZ", "value": 33, "date_from": "20260825", "date_to": "20260831"}]}, {"text": "A QA/RA reviewer should confirm whether this spike reflects one failure mode.", "claims": []}]}}

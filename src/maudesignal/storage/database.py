@@ -9,6 +9,7 @@ writes through this class — no module executes raw SQL elsewhere.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from datetime import UTC, datetime
 from pathlib import Path
@@ -20,9 +21,11 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from maudesignal.common.logging import get_logger
 from maudesignal.storage.models import (
+    ActionAuditRecord,
     AlertEventRecord,
     AlertRuleRecord,
     Base,
+    CapaDraftRecord,
     DeviceCatalogRecord,
     ExternalSourceRecord,
     ExtractionRecord,
@@ -929,3 +932,152 @@ class Database:
                 stmt = stmt.where(PsurReportRecord.product_code == product_code)
             stmt = stmt.limit(limit)
             return list(session.execute(stmt).scalars().all())
+
+    # ------------------------------------------------------------------
+    # HACKATHON-BUILT: copilot actions (CAPA drafts) + hash-chained audit
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _audit_hash(
+        prev_hash: str, ts: datetime, actor: str, action: str, entity_id: str, payload_json: str
+    ) -> str:
+        body = json.dumps(
+            {
+                "ts": ts.isoformat(),
+                "actor": actor,
+                "action": action,
+                "entity_id": entity_id,
+                "payload": payload_json,
+            },
+            sort_keys=True,
+        )
+        return hashlib.sha256((prev_hash + body).encode("utf-8")).hexdigest()
+
+    def _append_audit(
+        self, session: Session, *, actor: str, action: str, entity_id: str, payload: dict[str, Any]
+    ) -> ActionAuditRecord:
+        last = session.execute(
+            select(ActionAuditRecord).order_by(ActionAuditRecord.seq.desc()).limit(1)
+        ).scalar_one_or_none()
+        prev_hash = last.entry_hash if last else "GENESIS"
+        ts = datetime.now(UTC).replace(tzinfo=None)
+        payload_json = json.dumps(payload, sort_keys=True)
+        row = ActionAuditRecord(
+            ts=ts,
+            actor=actor,
+            action=action,
+            entity_id=entity_id,
+            payload_json=payload_json,
+            prev_hash=prev_hash,
+            entry_hash=self._audit_hash(prev_hash, ts, actor, action, entity_id, payload_json),
+        )
+        session.add(row)
+        session.flush()
+        return row
+
+    def append_audit(
+        self, *, actor: str, action: str, entity_id: str, payload: dict[str, Any]
+    ) -> ActionAuditRecord:
+        """Append one entry to the hash-chained action audit trail."""
+        with self._session() as session:
+            row = self._append_audit(
+                session, actor=actor, action=action, entity_id=entity_id, payload=payload
+            )
+            session.commit()
+            return row
+
+    def list_audit(self, *, entity_id: str | None = None) -> list[ActionAuditRecord]:
+        """Return audit entries in chain order."""
+        with self._session() as session:
+            stmt = select(ActionAuditRecord).order_by(ActionAuditRecord.seq)
+            if entity_id:
+                stmt = stmt.where(ActionAuditRecord.entity_id == entity_id)
+            return list(session.execute(stmt).scalars().all())
+
+    def verify_audit_chain(self) -> tuple[bool, int | None]:
+        """Recompute every hash. Returns (ok, first_bad_seq)."""
+        prev = "GENESIS"
+        for row in self.list_audit():
+            expected = self._audit_hash(
+                prev, row.ts, row.actor, row.action, row.entity_id, row.payload_json
+            )
+            if row.prev_hash != prev or row.entry_hash != expected:
+                return False, row.seq
+            prev = row.entry_hash
+        return True, None
+
+    def create_capa_draft(
+        self,
+        *,
+        capa_id: str,
+        product_code: str,
+        title: str,
+        problem_statement: str,
+        report_ids: list[str],
+        created_by: str,
+    ) -> CapaDraftRecord:
+        """Audit-first: write the audit entry, then the draft, in one transaction."""
+        with self._session() as session:
+            self._append_audit(
+                session,
+                actor=created_by,
+                action="capa.draft",
+                entity_id=capa_id,
+                payload={
+                    "product_code": product_code,
+                    "title": title,
+                    "problem_statement": problem_statement,
+                    "report_ids": report_ids,
+                },
+            )
+            row = CapaDraftRecord(
+                capa_id=capa_id,
+                product_code=product_code,
+                title=title,
+                problem_statement=problem_statement,
+                report_ids_json=json.dumps(report_ids),
+                status="draft",
+                created_at=datetime.now(UTC).replace(tzinfo=None),
+                created_by=created_by,
+                decided_by=None,
+                decided_at=None,
+                decision_note=None,
+            )
+            session.add(row)
+            session.commit()
+            return row
+
+    def get_capa_draft(self, capa_id: str) -> CapaDraftRecord | None:
+        """Return one CAPA draft by id."""
+        with self._session() as session:
+            return session.get(CapaDraftRecord, capa_id)
+
+    def list_capa_drafts(self, *, status: str | None = None) -> list[CapaDraftRecord]:
+        """Return CAPA drafts, newest first."""
+        with self._session() as session:
+            stmt = select(CapaDraftRecord).order_by(CapaDraftRecord.created_at.desc())
+            if status:
+                stmt = stmt.where(CapaDraftRecord.status == status)
+            return list(session.execute(stmt).scalars().all())
+
+    def decide_capa_draft(
+        self, *, capa_id: str, new_status: str, decided_by: str, note: str | None
+    ) -> CapaDraftRecord:
+        """Audit-first status change. Caller enforces which transitions are legal."""
+        with self._session() as session:
+            row = session.get(CapaDraftRecord, capa_id)
+            if row is None:
+                raise KeyError(capa_id)
+            self._append_audit(
+                session,
+                actor=decided_by,
+                action=f"capa.{new_status}",
+                entity_id=capa_id,
+                payload={"from": row.status, "to": new_status, "note": note},
+            )
+            row.status = new_status
+            row.decided_by = decided_by
+            row.decided_at = datetime.now(UTC).replace(tzinfo=None)
+            row.decision_note = note
+            session.commit()
+            return row

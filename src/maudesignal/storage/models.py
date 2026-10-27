@@ -272,3 +272,49 @@ class PsurReportRecord(Base):
     model_used: Mapped[str] = mapped_column(String)
     output_json: Mapped[str] = mapped_column(Text)
     confidence_score: Mapped[float] = mapped_column(Float)
+
+
+# ---------------------------------------------------------------------------
+# HACKATHON-BUILT (Oct 26 – Nov 4, 2026): copilot actions + tamper-evident audit
+# ---------------------------------------------------------------------------
+
+
+class CapaDraftRecord(Base):
+    """A CAPA draft proposed by the copilot. Only a named human can approve it.
+
+    Status is forward-only: ``draft`` -> ``approved`` | ``rejected``.
+    """
+
+    __tablename__ = "capa_drafts"
+
+    capa_id: Mapped[str] = mapped_column(String, primary_key=True)
+    product_code: Mapped[str] = mapped_column(String, index=True)
+    title: Mapped[str] = mapped_column(String)
+    problem_statement: Mapped[str] = mapped_column(Text)
+    report_ids_json: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+    created_by: Mapped[str] = mapped_column(String)
+    decided_by: Mapped[str | None] = mapped_column(String)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime)
+    decision_note: Mapped[str | None] = mapped_column(Text)
+
+
+class ActionAuditRecord(Base):
+    """Append-only, hash-chained audit trail for every copilot action.
+
+    ``entry_hash = sha256(prev_hash + canonical_json(entry))``. Editing or
+    deleting any row breaks every later hash, which ``verify_audit_chain``
+    detects.
+    """
+
+    __tablename__ = "action_audit"
+
+    seq: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    ts: Mapped[datetime] = mapped_column(DateTime)
+    actor: Mapped[str] = mapped_column(String)
+    action: Mapped[str] = mapped_column(String, index=True)
+    entity_id: Mapped[str] = mapped_column(String, index=True)
+    payload_json: Mapped[str] = mapped_column(Text)
+    prev_hash: Mapped[str] = mapped_column(String)
+    entry_hash: Mapped[str] = mapped_column(String)

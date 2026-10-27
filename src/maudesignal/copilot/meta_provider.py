@@ -19,6 +19,7 @@ which is unacceptable for medical-device data.
 from __future__ import annotations
 
 from collections.abc import Iterator
+from typing import Any
 
 from maudesignal.common.exceptions import MaudeSignalError
 from maudesignal.extraction.llm_providers.base import (
@@ -26,6 +27,9 @@ from maudesignal.extraction.llm_providers.base import (
     LLMProvider,
     LLMResponse,
 )
+
+SPARK_USD_PER_M_INPUT = 1.25
+SPARK_USD_PER_M_OUTPUT = 4.25
 
 
 class MetaProviderError(MaudeSignalError):
@@ -66,6 +70,11 @@ class MetaProvider(LLMProvider):
     def provider_name(self) -> str:
         """Short provider name used in logs and audit trail."""
         return "meta"
+
+    @property
+    def client(self) -> Any:
+        """Underlying OpenAI-compatible client (used for tool-calling by the agent)."""
+        return self._client
 
     @property
     def model(self) -> str:
@@ -151,9 +160,12 @@ class MetaProvider(LLMProvider):
     def estimate_cost_usd(self, input_tokens: int, output_tokens: int) -> float:
         """Return a conservative USD cost estimate for a completed call.
 
-        NOTE (hackathon): Meta Model API pricing is covered by the $150
-        participant credit during the event, so this returns 0.0 until
-        production pricing is pinned from the Meta pricing page.
+        Uses Muse Spark 1.3 Standard-tier list prices as read from the Meta
+        Model API pricing page on 2026-10-27: $1.25 per 1M input tokens and
+        $4.25 per 1M output tokens. Hackathon calls draw on the $150 credit.
         """
-        _ = (input_tokens, output_tokens)
-        return 0.0
+        return round(
+            input_tokens * SPARK_USD_PER_M_INPUT / 1e6
+            + output_tokens * SPARK_USD_PER_M_OUTPUT / 1e6,
+            6,
+        )
