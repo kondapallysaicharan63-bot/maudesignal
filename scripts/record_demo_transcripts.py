@@ -7,6 +7,11 @@ Actions secret; it is never written anywhere). Works on a COPY of the demo DB
 so CAPA drafts created during recording never touch the committed seed.
 
     python scripts/record_demo_transcripts.py --out demo/transcripts
+
+Voice: ``--voice-file demo/voice/question.wav --voice-label 00-voice-overnight``
+transcribes the WAV with Meta Voice Transcribe, asks the transcript text, and
+saves the transcript with a ``voice`` block (what was heard). With
+``--voice-file`` the typed demo questions are skipped unless ``--only`` names some.
 """
 
 from __future__ import annotations
@@ -25,6 +30,11 @@ from maudesignal.copilot.agent import CopilotAgent  # noqa: E402
 from maudesignal.copilot.meta_provider import MetaProvider  # noqa: E402
 from maudesignal.copilot.tools import ToolContext  # noqa: E402
 from maudesignal.copilot.transcript import save_transcript  # noqa: E402
+from maudesignal.copilot.voice import (  # noqa: E402
+    DEFAULT_VOICE_MODEL,
+    MetaTranscriber,
+    ask_by_voice,
+)
 from maudesignal.gate.loader import store_from_database  # noqa: E402
 from maudesignal.storage.database import Database  # noqa: E402
 
@@ -51,6 +61,11 @@ def main() -> int:
     ap.add_argument("--out", type=Path, default=ROOT / "demo/transcripts")
     ap.add_argument("--model", default=os.environ.get("META_MODEL_API_MODEL", "muse-spark-1.3"))
     ap.add_argument("--only", nargs="*", help="labels to run (default: all)")
+    ap.add_argument("--voice-file", type=Path, help="WAV (mono 16-bit, 16/24 kHz) to ask by voice")
+    ap.add_argument("--voice-label", default="00-voice", help="label for the voice transcript")
+    ap.add_argument(
+        "--voice-model", default=os.environ.get("META_VOICE_MODEL", DEFAULT_VOICE_MODEL)
+    )
     args = ap.parse_args()
 
     key = os.environ.get("META_MODEL_API_KEY", "")
@@ -70,6 +85,8 @@ def main() -> int:
         for label, question in DEMO_QUESTIONS:
             if args.only and label not in args.only:
                 continue
+            if args.voice_file and not args.only:
+                break
             result = agent.ask(question)
             path = save_transcript(result, args.out, label=label)
             total += result.cost_usd
@@ -79,6 +96,17 @@ def main() -> int:
                 f"gate first={fp.passed}/{fp.passed + fp.blocked} "
                 f"final={fin.passed}/{fin.passed + fin.blocked} repaired={result.repaired} "
                 f"cost=${result.cost_usd:.4f} -> {path.name}"
+            )
+        if args.voice_file:
+            with MetaTranscriber(key, base_url=base_url, model=args.voice_model) as tr:
+                ans = ask_by_voice(tr, agent, args.voice_file)
+            voice = ans.transcript.to_voice_block()
+            path = save_transcript(ans.result, args.out, label=args.voice_label, voice=voice)
+            total += ans.cost_usd
+            print(
+                f"{args.voice_label}: heard={ans.transcript.text!r} "
+                f"({ans.transcript.duration_s} s, ${ans.transcript.cost_usd:.6f}) "
+                f"cost=${ans.cost_usd:.4f} -> {path.name}"
             )
         ok, bad = db.verify_audit_chain()
         print(f"audit chain ok={ok} first_bad={bad}; total cost=${total:.4f}")
