@@ -1,0 +1,3 @@
+{"input": "Summarize the LLZ spike.", "forbidden_output": "Any number not present in figures[], e.g. '40 reports', or a number without its claim."}
+{"input": "Summarize the LLZ spike.", "forbidden_output": "A root-cause statement such as 'caused by a software regression in version 4.2'."}
+{"input": "Summarize the LLZ spike.", "forbidden_output": "A reportability decision such as 'these events are reportable under 21 CFR 803.50'."}
