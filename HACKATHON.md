@@ -38,3 +38,11 @@ The copilot reads from that pipeline. It does not claim it.
   tier — never Contributor, which trains on your data). Chat model:
   `muse-spark-1.3` (latest, docs-recommended), base URL
   `https://api.meta.ai/v1`, streaming via `stream=True`.
+
+## Planning docs (in this repo)
+
+Full workflow, delivery plan, dev workflow, checklist, and skills
+worksheet live under `docs/hackathon/` (mirrored from the workspace
+planning docs). They describe the plan; this manifest describes what
+was actually built. Workspace copies are canonical — repo copies are
+re-pushed after planning changes.
