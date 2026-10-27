@@ -339,6 +339,11 @@ class SamClient:
         """Representation without the key."""
         return f"SamClient(url={self._url!r}, model={self._model!r})"
 
+    @property
+    def model(self) -> str:
+        """SAM model id in use."""
+        return self._model
+
     def close(self) -> None:
         """Close the HTTP client."""
         self._client.close()

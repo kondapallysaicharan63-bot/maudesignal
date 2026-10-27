@@ -1862,6 +1862,8 @@ def _render_app(db: Database) -> None:  # noqa: PLR0912
         st.caption(f"🔔 {n_rules} active alert rules")
         st.caption(f"💵 ${cost:.4f} LLM spend")
         st.caption(f"🕐 Last extraction: {freshness}")
+        # Filled after the page runs, so it reflects calls made on this rerun.
+        quota_slot = st.empty()
 
     page: str = st.session_state["nav_page"]
 
@@ -1892,6 +1894,11 @@ def _render_app(db: Database) -> None:  # noqa: PLR0912
 
     with st.spinner(""):
         fn()
+
+    from maudesignal.dashboard.spend_ui import sidebar_quota
+
+    with quota_slot.container():
+        sidebar_quota(db)
 
     st.markdown(
         '<div class="ms-footer">'

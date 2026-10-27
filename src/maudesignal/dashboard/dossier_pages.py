@@ -24,7 +24,9 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 
+from maudesignal.copilot.spend import SpendLimitError
 from maudesignal.dashboard.copilot_pages import FRAMING_BANNER
+from maudesignal.dashboard.spend_ui import guarded_client
 from maudesignal.dossier.builder import DossierError, top_worsening_signal
 from maudesignal.dossier.render import pdf_page_png
 from maudesignal.dossier.review import (
@@ -38,19 +40,12 @@ from maudesignal.dossier.review import (
 from maudesignal.dossier.service import DossierOutput, produce, recorded_dir
 from maudesignal.storage.database import Database
 
-_BASE_URL_DEFAULT = "https://api.meta.ai/v1"
 
-
-def _client() -> Any | None:
-    """OpenAI-compatible Meta client when a key is present (never displayed or logged)."""
-    key = os.environ.get("META_MODEL_API_KEY", "")
-    if not key:
+def _client(db: Database) -> Any | None:
+    """Spend-capped Meta client when a key is present (the key is never displayed or logged)."""
+    if not os.environ.get("META_MODEL_API_KEY"):
         return None
-    from openai import OpenAI
-
-    return OpenAI(
-        api_key=key, base_url=os.environ.get("META_MODEL_API_BASE_URL", _BASE_URL_DEFAULT)
-    )
+    return guarded_client(db)
 
 
 def _subject_options(db: Database) -> list[tuple[str, str | None, str | None]]:
@@ -133,23 +128,30 @@ def page_dossier(db: Database) -> None:
             value=datetime.now(UTC).date(),
             key="dossier_aw",
         )
-    client = _client()
+    client = _client(db)
     live_narr = False
     if client is not None:
         live_narr = st.checkbox(
             "Draft the narrative live with Muse Spark (≈ $0.01)", key="dossier_live_narr"
         )
 
-    try:
+    def build(live: Any | None) -> DossierOutput:
         with st.spinner("Building dossier…"):
-            out: DossierOutput = produce(
+            return produce(
                 db,
                 capa_id=capa_id,
                 product_code=product_code,
                 awareness_date=aw,
                 awareness_basis="entered on the dossier page",
-                live_client=client if live_narr else None,
+                live_client=live,
             )
+
+    try:
+        try:
+            out = build(client if live_narr else None)
+        except SpendLimitError as exc:
+            st.warning(f"{exc} No Meta call was made; the narrative is left out.")
+            out = build(None)
     except (DossierError, RuntimeError) as exc:
         st.error(f"Could not build the dossier: {exc}")
         return
@@ -204,6 +206,8 @@ def page_dossier(db: Database) -> None:
                     )
                 record_review(db, r)
                 st.session_state["dossier_review"] = r
+            except SpendLimitError as exc:
+                st.warning(f"{exc} No Meta call was made; the recorded review (if any) is shown.")
             except (ReviewError, RuntimeError) as exc:
                 st.error(str(exc))
         live = st.session_state.get("dossier_review")

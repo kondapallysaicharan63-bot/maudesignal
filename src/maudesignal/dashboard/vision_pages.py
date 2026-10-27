@@ -19,7 +19,10 @@ from typing import Any
 
 import streamlit as st
 
+from maudesignal.copilot.spend import SpendLimitError
 from maudesignal.dashboard.copilot_pages import FRAMING_BANNER
+from maudesignal.dashboard.spend_ui import guard as spend_guard
+from maudesignal.dashboard.spend_ui import guarded_client
 from maudesignal.monitor.deterioration import ProductCodeSignal, detect_from_database
 from maudesignal.storage.database import Database
 from maudesignal.vision import DEMO_K_NUMBERS
@@ -183,23 +186,18 @@ def _read_live(db: Database, k: str) -> None:  # pragma: no cover - needs a live
     from maudesignal.vision.verify import store_summary
 
     try:
+        spend_guard(db).check("vision")
         with st.spinner("Fetching the PDF, reading it twice with Muse Spark, checking…"):
             with OpenFda510k(os.environ.get("OPENFDA_API_KEY")) as ofda:
-                s = read_and_verify_510k(k, client=_openai_client(), openfda=ofda)
+                s = read_and_verify_510k(k, client=guarded_client(db), openfda=ofda)
             store_summary(db, s)
+    except SpendLimitError as exc:
+        st.warning(f"{exc} No Meta call was made; the recorded reading (if any) is shown.")
+        return
     except (FdaPdfError, VisionModelError, OpenFdaError) as exc:
         st.error(f"Not read: {exc}")
         return
     st.session_state.setdefault("vision_live_summaries", {})[k] = s
-
-
-def _openai_client() -> Any:  # pragma: no cover - needs a live key
-    from openai import OpenAI
-
-    return OpenAI(
-        api_key=os.environ["META_MODEL_API_KEY"],
-        base_url=os.environ.get("META_MODEL_API_BASE_URL", "https://api.meta.ai/v1"),
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -324,7 +322,7 @@ def _label_live(db: Database) -> None:  # pragma: no cover - needs a live key
     from maudesignal.vision.images import ImageInputError
     from maudesignal.vision.label import read_device_label
     from maudesignal.vision.openfda510k import OpenFda510k
-    from maudesignal.vision.sam import SamClient
+    from maudesignal.vision.sam import SAM_USD_PER_IMAGE, SamClient
     from maudesignal.vision.spark import VisionModelError
 
     shot = st.camera_input("Photograph a device label or box")
@@ -338,19 +336,30 @@ def _label_live(db: Database) -> None:  # pragma: no cover - needs a live key
         catalog = {d.k_number for d in db.list_catalog_devices() if d.k_number}
         key = os.environ["META_MODEL_API_KEY"]
         base = os.environ.get("META_MODEL_API_BASE_URL", "https://api.meta.ai/v1")
+        g = spend_guard(db)
         try:
+            g.check("sam")
             with (
                 st.spinner("SAM 3.1 is finding the label, Muse Spark is reading it…"),
                 SamClient(key, base_url=base) as sam,
                 OpenFda510k(os.environ.get("OPENFDA_API_KEY")) as ofda,
             ):
-                res = read_device_label(
-                    data,
-                    client=_openai_client(),
-                    sam=sam,
-                    openfda=ofda,
-                    catalog_k_numbers=catalog,
-                )
+                try:
+                    res = read_device_label(
+                        data,
+                        client=guarded_client(db),
+                        sam=sam,
+                        openfda=ofda,
+                        catalog_k_numbers=catalog,
+                    )
+                except SpendLimitError:
+                    # SAM already ran; count it before reporting the refusal.
+                    g.record(kind="sam", model=sam.model, cost_usd=SAM_USD_PER_IMAGE)
+                    raise
+            g.record(kind="sam", model=sam.model, cost_usd=res.sam_cost_usd)
+        except SpendLimitError as exc:
+            st.warning(f"{exc} No further Meta call was made; recorded label runs are below.")
+            return
         except (ImageInputError, VisionModelError) as exc:
             st.error(f"Not read: {exc}")
             return

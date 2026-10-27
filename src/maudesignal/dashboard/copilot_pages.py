@@ -23,7 +23,10 @@ import streamlit as st
 
 from maudesignal.copilot.actions import ActionError, decide_capa
 from maudesignal.copilot.audit_export import load_exports
+from maudesignal.copilot.spend import SpendLimitError
 from maudesignal.copilot.transcript import load_transcripts
+from maudesignal.dashboard.spend_ui import cap_notice, guarded_client, recorded_fallback
+from maudesignal.dashboard.spend_ui import guard as spend_guard
 from maudesignal.gate import (
     CountClaim,
     DeviceClaim,
@@ -168,6 +171,11 @@ def _voice_html(voice: dict[str, Any]) -> str:
 
 
 def _render_transcript(t: dict[str, Any]) -> None:
+    if t.get("fallback_for"):
+        st.caption(
+            f"You asked: “{t['fallback_for']}”. Live quota reached, so this is the closest "
+            f"recorded Muse Spark answer (recorded {t.get('recorded_at_utc', '')}), not a new call."
+        )
     if isinstance(t.get("voice"), dict):
         st.html(_voice_html(t["voice"]))
     st.markdown(f"**Q:** {t['question']}")
@@ -272,31 +280,41 @@ def page_copilot(db: Database) -> None:
 
 def _live_copilot(db: Database) -> None:  # pragma: no cover - needs a live key
     from maudesignal.copilot.agent import CopilotAgent
-    from maudesignal.copilot.meta_provider import MetaProvider
     from maudesignal.copilot.tools import ToolContext
     from maudesignal.copilot.transcript import result_to_dict
 
     if "copilot_agent" not in st.session_state:
-        provider = MetaProvider(
-            api_key=os.environ["META_MODEL_API_KEY"],
-            model=os.environ.get("META_MODEL_API_MODEL", "muse-spark-1.3"),
-            base_url=os.environ.get("META_MODEL_API_BASE_URL", "https://api.meta.ai/v1"),
-        )
         ctx = ToolContext(db=db, store=store_from_database(db))
-        st.session_state["copilot_agent"] = CopilotAgent(provider.client, ctx, model=provider.model)
+        model = os.environ.get("META_MODEL_API_MODEL", "muse-spark-1.3")
+        # Every chat call the agent makes passes the per-session and daily caps.
+        st.session_state["copilot_agent"] = CopilotAgent(guarded_client(db), ctx, model=model)
         st.session_state["copilot_log"] = []
-    _voice_question(st.session_state["copilot_agent"])
+    _voice_question(db, st.session_state["copilot_agent"])
     q = st.chat_input("Ask about stored signals…")
     if q:
-        with st.spinner("Muse Spark is working…"):
-            res = st.session_state["copilot_agent"].ask(q)
-        st.session_state["copilot_log"].append(result_to_dict(res))
+        try:
+            spend_guard(db).check("copilot")
+            with st.spinner("Muse Spark is working…"):
+                res = st.session_state["copilot_agent"].ask(q)
+            st.session_state["copilot_log"].append(result_to_dict(res))
+        except SpendLimitError as exc:
+            _fallback(q, str(exc))
     for t in reversed(st.session_state["copilot_log"]):
         with st.container(border=True):
             _render_transcript(t)
 
 
-def _voice_question(agent: Any) -> None:  # pragma: no cover - needs a live key
+def _fallback(question: str, message: str) -> None:
+    """Cap reached: show the closest recorded answer; no Meta call is made."""
+    cap_notice(message)
+    t = recorded_fallback(question, load_transcripts(TRANSCRIPT_DIR))
+    if t is None:
+        st.info("No recorded answers are available yet.")
+        return
+    st.session_state["copilot_log"].append(t)
+
+
+def _voice_question(db: Database, agent: Any) -> None:  # pragma: no cover - needs a live key
     """Record a spoken question → Meta Voice Transcribe → the same gated copilot."""
     import hashlib
 
@@ -304,6 +322,7 @@ def _voice_question(agent: Any) -> None:  # pragma: no cover - needs a live key
     from maudesignal.copilot.voice import (
         DEFAULT_VOICE_MODEL,
         MetaTranscriber,
+        Transcript,
         VoiceTranscribeError,
         ask_by_voice,
     )
@@ -320,18 +339,32 @@ def _voice_question(agent: Any) -> None:  # pragma: no cover - needs a live key
     if st.session_state.get("copilot_voice_done") == digest:
         return  # Streamlit reruns keep the widget value; ask each recording once.
     st.session_state["copilot_voice_done"] = digest
+    g = spend_guard(db)
+    model = os.environ.get("META_VOICE_MODEL", DEFAULT_VOICE_MODEL)
+    heard: list[Transcript] = []
+
+    def count_voice(t: Transcript) -> None:
+        heard.append(t)
+        g.record(kind="voice", model=model, cost_usd=t.cost_usd)
+
     try:
+        g.check("voice")
         with (
             MetaTranscriber(
                 os.environ["META_MODEL_API_KEY"],
                 base_url=os.environ.get("META_MODEL_API_BASE_URL", "https://api.meta.ai/v1"),
-                model=os.environ.get("META_VOICE_MODEL", DEFAULT_VOICE_MODEL),
+                model=model,
             ) as transcriber,
             st.spinner("Transcribing, then Muse Spark is working…"),
         ):
-            ans = ask_by_voice(transcriber, agent, data, filename="question.wav")
+            ans = ask_by_voice(
+                transcriber, agent, data, filename="question.wav", on_transcribed=count_voice
+            )
     except VoiceTranscribeError as exc:
         st.error(f"Voice question not asked: {exc}")
+        return
+    except SpendLimitError as exc:
+        _fallback(heard[0].text if heard else "voice question", str(exc))
         return
     st.session_state["copilot_log"].append(
         result_to_dict(ans.result, voice=ans.transcript.to_voice_block())

@@ -24,6 +24,7 @@ import io
 import json
 import math
 import wave
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -370,6 +371,7 @@ def ask_by_voice(
     audio: Path | str | bytes,
     *,
     filename: str = "question.wav",
+    on_transcribed: Callable[[Transcript], None] | None = None,
 ) -> VoiceAnswer:
     """Transcribe a spoken question, then ask the copilot the transcript text.
 
@@ -378,6 +380,9 @@ def ask_by_voice(
         agent: The copilot (text only — audio never reaches the chat model).
         audio: Path to a WAV file, or the WAV bytes (e.g. from ``st.audio_input``).
         filename: Name used for validation/upload when ``audio`` is bytes.
+        on_transcribed: Called with the transcript right after transcription and
+            before the copilot is asked (the dashboard counts the call against
+            its spend caps here, so it is counted even if the answer is refused).
 
     Returns:
         The transcript (shown to the analyst) and the gated copilot result.
@@ -398,6 +403,8 @@ def ask_by_voice(
         path = Path(audio)
         data, filename = path.read_bytes(), path.name
     transcript = transcriber.transcribe_bytes(data, filename=filename)
+    if on_transcribed is not None:
+        on_transcribed(transcript)
     audio_sha256 = hashlib.sha256(data).hexdigest()
     db = agent.context.db
     entry = {
