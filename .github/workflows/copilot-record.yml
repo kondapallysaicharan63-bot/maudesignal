@@ -1,7 +1,7 @@
 # HACKATHON-BUILT — record real Muse Spark copilot transcripts for the
 # stored-first public demo. Spends Meta Model API credit, so it only runs when
 # demo/RECORD_REQUEST changes (or by manual dispatch once on the default branch).
-name: Record copilot transcripts
+name: Record live Meta runs (copilot, voice, vision, dossier)
 
 on:
   workflow_dispatch:
@@ -25,12 +25,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install poppler (PDF rasterizing for the 510(k) reader + dossier preview)
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
       - run: pip install -e .
       - name: Record transcripts (key from secrets, never echoed)
         env:
           META_MODEL_API_KEY: ${{ secrets.META_MODEL_API_KEY }}
           META_MODEL_API_BASE_URL: https://api.meta.ai/v1
           META_MODEL_API_MODEL: muse-spark-1.3
+        continue-on-error: true
         run: python scripts/record_demo_transcripts.py --out demo/transcripts
       - name: Record the spoken question (Meta Voice Transcribe → copilot)
         if: hashFiles('demo/voice/question.wav') != ''
@@ -41,14 +44,31 @@ jobs:
         run: >-
           python scripts/record_demo_transcripts.py --out demo/transcripts
           --voice-file demo/voice/question.wav --voice-label 00-voice-overnight
+        continue-on-error: true
+      - name: Record vision runs (510(k) summary reader + label camera; Muse Spark + SAM 3.1)
+        continue-on-error: true
+        env:
+          META_MODEL_API_KEY: ${{ secrets.META_MODEL_API_KEY }}
+          META_MODEL_API_BASE_URL: https://api.meta.ai/v1
+        run: python scripts/record_vision_runs.py
+      - name: Build demo dossier (Muse Spark narrative + Muse Wonder review)
+        continue-on-error: true
+        env:
+          META_MODEL_API_KEY: ${{ secrets.META_MODEL_API_KEY }}
+          META_MODEL_API_BASE_URL: https://api.meta.ai/v1
+        run: python scripts/build_demo_dossier.py
       - uses: actions/upload-artifact@v4
         with:
-          name: copilot-transcripts
-          path: demo/transcripts/
+          name: live-meta-runs
+          path: |
+            demo/transcripts/
+            demo/vision/
+            demo/dossier/
       - name: Commit transcripts
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add demo/transcripts
-          git diff --cached --quiet || git commit -m "chore(demo): record Muse Spark copilot transcripts"
+          git add demo/transcripts demo/vision demo/dossier
+          git add -f demo/dossier/*.pdf || true
+          git diff --cached --quiet || git commit -m "chore(demo): record live Meta runs (copilot, voice, vision, dossier)"
           git push

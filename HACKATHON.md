@@ -64,6 +64,28 @@ pre-hackathon root-level debug scripts and logs removed (public-repo hygiene),
 with their ruff excludes in `pyproject.toml` replaced by per-file ignores for the
 remaining smoke-test and screenshot scripts.
 
+### Added Oct 27 (PRD v2: scattered sources, vision, audit-ready dossier)
+
+| File | What it is |
+|---|---|
+| `copilot/agent.py` (F2) | Final answer uses Meta's strict `json_schema` `response_format` (no tools on that call); `structured_output` and `reasoning_effort` options |
+| `skills/safety-copilot` 1.1.0 | Strict-mode schema with 9 claim kinds as `anyOf` branches |
+| `copilot/tools.py` | 3 new tools — `recalls`, `device_510k`, `literature` (9 total), reading stored data only |
+| `sources/openfda_sources.py`, `scripts/seed_sources.py` | openFDA device recall + 510(k) fetchers into `external_sources`; demo DB now holds 566 recalls (every recall for the demo codes), 266 510(k) records, 20 PubMed abstracts |
+| `gate/` (recall, recall-count, literature claims) | Recall numbers / counts and PMIDs verified against stored data; quotes from abstracts and recall reasons; K-number check falls back to stored 510(k) records; untagged recall numbers and PMIDs blocked. Adversarial set now 89 cases, 0 false pass / 0 false block |
+| `vision/` (`fda_pdf.py`, `reader.py`, `spark.py`, `verify.py`, `openfda510k.py`, `pipeline.py`, `images.py`) + `skills/fda-document-reader/` | Muse Spark reads 510(k) summary page images (two independent reads); accuracy check gives each field VERIFIED / CONFLICT / UNVERIFIABLE from read agreement, openFDA and the PDF text layer — conflicts flagged "low clarity — human check", never silently resolved |
+| `vision/sam.py`, `vision/label.py` + `skills/device-label-reader/` | SAM 3.1 locates a device label in a photo → Muse Spark reads the crop → K-number / GTIN check → that device's signals; lot/serial session-only |
+| `dossier/` (`builder.py`, `figures.py`, `chart.py`, `mdr.py`, `model.py`, `render.py`, `service.py`, `templates/`) | Signal Evaluation & CAPA dossier PDF built like a controlled quality record (document control, approval block modeled on 21 CFR 11.50, ISO 13485 §8.5.2 CAPA record, Form 3500A-mapped MDR worksheet marked not for submission, audit appendix). Every printed number carries a claim the gate re-verifies |
+| `dossier/narrative.py` + `skills/dossier-narrative/` | Muse Spark narrative behind the gate; withheld sentences shown with reasons |
+| `dossier/review.py` + `skills/dossier-reviewer/` | Muse Wonder 1.0 independent reviewer (PDF input); findings only, stored in the audit trail |
+| `dossier/illustration.py` + `skills/dossier-cover-illustration/` | Optional Muse Image cover, off by default, captioned "not evidence" |
+| `dashboard/dossier_pages.py`, `dashboard/vision_pages.py` | Dossier and Vision pages (stored-first replay without a key) |
+| `scripts/build_demo_dossier.py`, `scripts/record_vision_runs.py`, `demo/dossier/*.pdf`, `docs/dossier_sources.md`, `docs/hackathon/VISION_API_NOTES.md`, `packages.txt` | Demo builds, regulatory sources, Meta API notes, poppler for Streamlit Cloud |
+| `tests/unit/test_scattered_sources.py`, `test_vision.py`, `test_dossier.py` | Tests for all of the above (scripted clients / mock transports, no network) |
+
+Small pre-existing changes: `Database.delete_external_sources`, `Database.list_raw_reports`;
+`sources/pubmed.py` fetches real abstracts and retries once on 429; dashboard wiring in `app.py`.
+
 Plus this manifest, the demo video, and the submission write-up.
 
 ## What is PRE-EXISTING (the base — NOT presented as hackathon work)

@@ -40,8 +40,9 @@
    On the demo data: *"0 new, 1 worsening — LLZ: volume spike (33 this week vs
    a weekly mean of 8.75)"* ([digests/2026-08-31.md](digests/2026-08-31.md)).
 2. **Ask the copilot.** *"What got worse for LLZ this week, and what do the
-   reports say?"* Muse Spark 1.3 calls 6 tools over the stored records and
-   answers as sentences, each tagged with the claims it makes.
+   reports say?"* Muse Spark 1.3 calls 9 tools over stored MAUDE reports, FDA
+   recalls, 510(k) records and PubMed abstracts, and answers in a strict JSON
+   schema: sentences, each tagged with the claims it makes.
 3. **The gate checks every claim.** A made-up quote is withheld with the
    reason (*"quote not found verbatim in 25675105"*). A true quote passes and
    links to the MAUDE report it came from. If anything is blocked, the model
@@ -51,16 +52,33 @@
    is a human decision.
 5. **CAPA draft.** The copilot can only create a *draft*. A named human
    approves or rejects it on the Actions page; the model cannot.
-6. **Audit trail.** Every answer and decision is appended to a SHA-256
+6. **Audit-ready dossier.** One click builds a Signal Evaluation & CAPA Record
+   PDF laid out like a controlled quality record: document control, signal
+   evaluation, evidence table, CAPA record mapped to ISO 13485:2016 §8.5.2
+   (required by QMSR), an MDR worksheet mapped to FDA Form 3500A (stamped *not
+   for submission*), an approval block modeled on 21 CFR 11.50 and the audit
+   trail. Every printed number is re-verified by the gate. **Muse Wonder 1.0**
+   reviews the whole PDF before a human signs and lists anything unsupported.
+7. **Vision.** Muse Spark reads FDA 510(k) summary PDFs (many are scanned)
+   twice, independently; a field is *verified* only if both reads agree and
+   openFDA / the PDF text layer agree, otherwise it is flagged for a human.
+   A photo of a device label → **SAM 3.1** finds the label → Muse Spark reads
+   it → the K-number is checked against FDA → that device's signals open.
+8. **Audit trail.** Every answer and decision is appended to a SHA-256
    hash-chained log; the dashboard verifies the chain and detects tampering.
 
 ## How Meta AI is used
 
 | Step | Meta model / API | Why |
 |---|---|---|
-| Answering a question | **Muse Spark 1.3** (`muse-spark-1.3`) via the **Meta Model API** (OpenAI-compatible, `https://api.meta.ai/v1`) | Tool calling over 6 deterministic tools; structured output (sentences + typed claims, [`skills/safety-copilot`](skills/safety-copilot/SKILL.md)); a **repair turn** after a gate block, fed the gate's reasons and recomputed values |
+| Answering a question | **Muse Spark 1.3** (`muse-spark-1.3`) via the **Meta Model API** (OpenAI-compatible, `https://api.meta.ai/v1`) | Tool calling over 9 deterministic tools; **strict `json_schema` structured output** (sentences + typed claims, [`skills/safety-copilot`](skills/safety-copilot/SKILL.md)); a **repair turn** after a gate block, fed the gate's reasons and recomputed values |
+| Reading scanned FDA documents | **Muse Spark 1.3 image understanding** ([`skills/fda-document-reader`](skills/fda-document-reader/SKILL.md)) | 510(k) summary pages → structured fields with per-field legibility; two independent reads + openFDA + text layer decide VERIFIED / CONFLICT / UNVERIFIABLE |
+| Device-label camera | **SAM 3.1** (`sam-3.1`) + **Muse Spark 1.3 vision** | SAM locates the label in the photo, Spark reads the crop, the K-number / GTIN is checked against FDA |
+| Dossier narrative | **Muse Spark 1.3** ([`skills/dossier-narrative`](skills/dossier-narrative/SKILL.md)) | One-page summary drafted as claims and passed through the gate |
+| Independent reviewer | **Muse Wonder 1.0** (`muse-wonder-1.0`, PDF input, 1M context) | Reads the full dossier PDF + cited reports and lists unsupported or contradicted statements before a human approves; never edits the record |
+| Cover illustration (optional, off by default) | **Muse Image 1.0** | Non-evidentiary cover art, captioned "AI-generated illustration — not evidence"; never inside evidence sections |
 | Spoken questions | **Meta Voice Transcribe** (`muse-voice-transcribe-1.0`) | Ask by voice; only the transcript text reaches Muse Spark, and it goes through the same copilot and gate |
-| Recording the public demo | Muse Spark 1.3 in GitHub Actions ([`copilot-record.yml`](.github/workflows/copilot-record.yml)), key from repository secrets | The public, keyless app replays real runs instead of mocked ones |
+| Recording the public demo | All of the above in GitHub Actions ([`copilot-record.yml`](.github/workflows/copilot-record.yml)), key from repository secrets | The public, keyless app replays real runs instead of mocked ones |
 
 **Standard tier only.** Never the Contributor tier, which trains on your data.
 The key is read from `META_MODEL_API_KEY`, never committed or logged.
@@ -81,7 +99,7 @@ flowchart LR
 
     subgraph copilot["Copilot (Meta Model API)"]
         Q["Analyst question"] --> SPARK["Muse Spark 1.3<br/>tool calling"]
-        SPARK <--> TOOLS["6 deterministic tools<br/>signals, summary, search,<br/>report, MDR clock, CAPA draft"]
+        SPARK <--> TOOLS["9 deterministic tools<br/>signals, summary, search, report,<br/>recalls, 510(k), literature,<br/>MDR clock, CAPA draft"]
         TOOLS --> DB
         SPARK --> ANS["Structured answer<br/>sentences + claims"]
         ANS --> GATE{"Claim-level gate<br/>recompute numbers ·<br/>verbatim quotes · ids · CFR"}
@@ -108,19 +126,22 @@ model calls. For every sentence the copilot wants to show:
   **shares** must be within 0.5 percentage points;
 - **quotes** must appear verbatim in the narrative of the report they are
   attributed to (a real quote pinned to the wrong report is blocked);
-- **510(k) numbers** must exist in the catalog and match the stated product
-  code / device name; **MAUDE report ids** must exist;
+- **510(k) numbers** must exist in the catalog or stored openFDA 510(k)
+  records and match the stated product code / device name; **MAUDE report
+  ids**, **FDA recall numbers** and **PubMed PMIDs** must exist in stored data
+  (and match the stated product code / year); recall counts are recomputed;
 - **21 CFR sections** must be on a curated allowlist; QS-reg sections
   superseded by QMSR on 2026-02-02 are blocked with the reason;
 - a sentence that mentions a number, K-number, report id or CFR section
   **without** a matching structured claim is blocked as ungrounded.
 
-**Adversarial test set:** [54 cases](tests/fixtures/gate/adversarial.jsonl)
-(33 must block, 21 must pass): fabricated and drifted quotes, real quotes on
+**Adversarial test set:** [89 cases](tests/fixtures/gate/adversarial.jsonl)
+(55 must block, 34 must pass): fabricated and drifted quotes, real quotes on
 the wrong report, stale / inflated counts, wrong shares, fake and mismatched
-K-numbers, hallucinated and superseded CFR sections, untagged mentions.
+K-numbers, hallucinated and superseded CFR sections, fake recall numbers and
+PMIDs, real ones on the wrong product or year, untagged mentions.
 Result: **0 false passes, 0 false blocks**
-([`tests/unit/test_gate.py`](tests/unit/test_gate.py), 63 tests).
+([`tests/unit/test_gate.py`](tests/unit/test_gate.py), 106 tests).
 
 Real verdicts on the demo database (137 MAUDE reports):
 
@@ -171,7 +192,7 @@ openFDA pipeline below predates the event. The file-by-file list is in
 
 ## Tests
 
-**324 unit tests pass, 64.7% line + branch coverage**
+**488 unit tests pass, 76% line + branch coverage**
 (`pytest tests/unit`; CI also runs ruff, black and `mypy --strict` on Python
 3.11 and 3.12).
 

@@ -122,7 +122,7 @@ Full list: [docs/01_vision_mission.md §6](docs/01_vision_mission.md).
 > Hackathon (Oct 26 – Nov 4, 2026) a scoped conversational surface was added:
 > the `safety-copilot` (Muse Spark via the Meta Model API, `src/maudesignal/copilot/`).
 > It is not a general chatbot. It is a B2B regulatory triage aid that answers
-> only through 6 deterministic tools over stored records, emits structured
+> only through 9 deterministic tools over stored records, emits structured
 > claims, and shows nothing that the claim-level gate (`src/maudesignal/gate/`)
 > has not verified. It never gives medical advice; its actions are drafts that
 > a named human approves; nothing is filed with FDA. Every other boundary
@@ -195,7 +195,9 @@ maudesignal/
 │   ├── reports/                # F7 (planned, PSUR)
 │   ├── copilot/                # Hackathon: Muse Spark agent, tools, CAPA actions
 │   ├── gate/                   # Hackathon: claim-level citation gate
-│   └── monitor/                # Hackathon: overnight deterioration digest
+│   ├── monitor/                # Hackathon: overnight deterioration digest
+│   ├── dossier/                # Hackathon: Signal Evaluation & CAPA dossier PDF + Wonder review
+│   └── vision/                 # Hackathon: 510(k) summary reader, label camera (SAM + Spark)
 ├── tests/                      # pytest, gold sets, fixtures
 ├── pyproject.toml              # Project + tool config
 ├── README.md                   # Public-facing
@@ -274,8 +276,11 @@ MaudeSignal does not handle PHI under any circumstances.
 | `drift-analysis-interpreter` | ✅ v1.0.0 (skeleton) | Translates KS/PSI stats into regulator language; not wired into pipeline yet |
 | `fda-guidance-retriever` | 📋 planned | Grounded retrieval over FDA guidance corpus |
 | `psur-report-drafter` | 📋 planned | Final composer; consumes everything |
-| `safety-copilot` | ✅ v1.0.0 (hackathon, Oct 2026) | Copilot contract: tool use + structured claims checked by `gate/`; advisory only |
+| `safety-copilot` | ✅ v1.1.0 (hackathon, Oct 2026) | Copilot contract: tool use + structured claims checked by `gate/`; advisory only |
 | `fda-document-reader` | ✅ v1.0.0 (hackathon, Oct 2026) | Muse Spark reads 510(k) summary page images; checked by `vision/verify.py` (two reads + openFDA + text layer) |
+| `dossier-narrative` | ✅ v1.0.0 (hackathon, Oct 2026) | Muse Spark one-page dossier summary as gated claims |
+| `dossier-reviewer` | ✅ v1.0.0 (hackathon, Oct 2026) | Muse Wonder independent review of the dossier PDF; findings only |
+| `dossier-cover-illustration` | ✅ v1.0.0 (hackathon, Oct 2026) | Optional Muse Image cover; non-evidentiary, off by default |
 | `device-label-reader` | ✅ v1.0.0 (hackathon, Oct 2026) | Muse Spark reads a SAM-cropped device label; K-number / GTIN checked by `vision/label.py` |
 
 If you need to add a new Skill, follow the structure of the existing
