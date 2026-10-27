@@ -7,8 +7,12 @@ Loop, for one user question:
 1. Muse Spark (Meta Model API) picks tools — overnight signals, product
    summaries, report search, MDR deadline clock, CAPA draft — and reads their
    JSON results.
-2. It answers as structured sentences, each tagged with the claims it makes
-   (``skills/safety-copilot``).
+2. When it stops calling tools, the final answer is requested with Meta's
+   strict ``json_schema`` ``response_format`` (schema from
+   ``skills/safety-copilot/schemas/output.schema.json``) and no tools, so it is
+   always structured sentences, each tagged with the claims it makes. Tool
+   rounds never carry ``response_format``: Meta's docs do not say the two may
+   be combined in one request. The tolerant ``parse_answer`` stays as fallback.
 3. The deterministic gate (``maudesignal.gate``) recomputes every number and
    matches every quote / id / CFR section against stored evidence.
 4. If anything is blocked, the model gets ONE repair turn with the gate's
@@ -36,6 +40,11 @@ from maudesignal.extraction.skill_loader import LoadedSkill, SkillLoader
 from maudesignal.gate import Claim, ClaimParseError, GateReport, claim_from_dict, verify_answer
 
 SKILL_NAME = "safety-copilot"
+RESPONSE_FORMAT_NAME = "safety_copilot_answer"
+# Accepted by Muse Spark per https://dev.meta.ai/docs/reasoning (checked 2026-10-27);
+# "none" returns HTTP 400 for Muse Spark, so it is not offered.
+REASONING_EFFORTS = ("minimal", "low", "medium", "high", "xhigh", "max")
+_SCHEMA_META_KEYS = ("$schema", "$id", "title", "description")
 _FENCE = re.compile(r"^```(?:json)?\s*|\s*```$", re.MULTILINE)
 
 
@@ -116,6 +125,19 @@ def parse_answer(content: str) -> list[tuple[str, list[Claim]]]:
     return out
 
 
+def response_format_from_schema(schema: dict[str, Any]) -> dict[str, Any]:
+    """Wrap a Skill output schema as a strict ``json_schema`` response_format.
+
+    Root-level annotation keys (``$schema``, ``title``, ...) are dropped: the
+    strict subset requires a plain object root and the docs do not list them.
+    """
+    body = {k: v for k, v in schema.items() if k not in _SCHEMA_META_KEYS}
+    return {
+        "type": "json_schema",
+        "json_schema": {"name": RESPONSE_FORMAT_NAME, "schema": body, "strict": True},
+    }
+
+
 def _repair_message(report: GateReport) -> str:
     lines = ["GATE BLOCKED — these sentences were withheld:"]
     for i, s in enumerate(report.sentences):
@@ -144,6 +166,8 @@ class CopilotAgent:
         max_tool_rounds: int = 6,
         max_repairs: int = 1,
         max_tokens: int = 1500,
+        structured_output: bool = True,
+        reasoning_effort: str | None = None,
     ) -> None:
         """Create an agent.
 
@@ -154,10 +178,17 @@ class CopilotAgent:
             skill: Loaded ``safety-copilot`` skill (loaded from ``skills/`` if omitted).
             max_tool_rounds: Cap on model turns that call tools.
             max_repairs: Repair turns after a gate block.
-            max_tokens: Output cap per model call.
+            max_tokens: Output cap per model call (reasoning tokens count toward it).
+            structured_output: Request the final answer with the strict
+                ``json_schema`` response_format (no tools on that call).
+            reasoning_effort: Optional Chat Completions ``reasoning_effort``
+                (``minimal`` ... ``max``); None omits the parameter so the model
+                reasons at its own default level.
         """
         if "contributor" in model.lower():
             raise ValueError("Contributor-tier models train on your data; use Standard tier.")
+        if reasoning_effort is not None and reasoning_effort not in REASONING_EFFORTS:
+            raise ValueError(f"reasoning_effort must be one of {REASONING_EFFORTS}")
         self._client = client
         self._ctx = ctx
         self._model = model
@@ -165,6 +196,9 @@ class CopilotAgent:
         self._max_tool_rounds = max_tool_rounds
         self._max_repairs = max_repairs
         self._max_tokens = max_tokens
+        self._structured = structured_output
+        self._reasoning_effort = reasoning_effort
+        self._response_format = response_format_from_schema(self._skill.output_schema)
         self._history: list[dict[str, Any]] = []
 
     @property
@@ -172,17 +206,33 @@ class CopilotAgent:
         """Version of the behavior contract in use."""
         return self._skill.version
 
+    @property
+    def response_format(self) -> dict[str, Any]:
+        """The strict json_schema response_format sent on final-answer calls."""
+        return self._response_format
+
     def _create(self, messages: list[dict[str, Any]], *, tools: bool) -> Any:
+        """One chat-completions call: a tool round (``tools``) or a final-answer call."""
         kwargs: dict[str, Any] = {
             "model": self._model,
             "messages": messages,
             "max_tokens": self._max_tokens,
             "temperature": 0.0,
         }
+        if self._reasoning_effort is not None:
+            kwargs["reasoning_effort"] = self._reasoning_effort
         if tools:
             kwargs["tools"] = TOOL_SCHEMAS
-            kwargs["tool_choice"] = "auto"
+            kwargs["tool_choice"] = "auto"  # the only value Meta's API accepts
+        elif self._structured:
+            kwargs["response_format"] = self._response_format
         return self._client.chat.completions.create(**kwargs)
+
+    def _final_answer(self, messages: list[dict[str, Any]], result: CopilotResult) -> str:
+        """Final-answer call: no tools, schema-constrained when structured output is on."""
+        resp = self._create(messages, tools=False)
+        self._count(resp, result)
+        return str(resp.choices[0].message.content or "")
 
     def ask(self, question: str) -> CopilotResult:
         """Answer one question (multi-turn: earlier Q/A pairs are kept as context)."""
@@ -235,6 +285,10 @@ class CopilotAgent:
             msg = resp.choices[0].message
             tool_calls = getattr(msg, "tool_calls", None) or []
             if not tool_calls:
+                if self._structured:
+                    # The model is done with tools; ask again for the answer
+                    # under the strict schema (its free-form draft is dropped).
+                    return self._final_answer(messages, result)
                 return str(msg.content or "")
             messages.append(
                 {
@@ -264,9 +318,7 @@ class CopilotAgent:
                 messages.append({"role": "tool", "tool_call_id": tc.id, "content": payload})
         # Tool budget exhausted: ask for the answer without tools.
         messages.append({"role": "user", "content": "Answer now with the JSON object only."})
-        resp = self._create(messages, tools=False)
-        self._count(resp, result)
-        return str(resp.choices[0].message.content or "")
+        return self._final_answer(messages, result)
 
     def _parse_or_retry(
         self, content: str, messages: list[dict[str, Any]], result: CopilotResult
@@ -284,9 +336,7 @@ class CopilotAgent:
                     'Return only {"sentences": [{"text": ..., "claims": [...]}]}.',
                 }
             )
-            resp = self._create(messages, tools=False)
-            self._count(resp, result)
-            retry = str(resp.choices[0].message.content or "")
+            retry = self._final_answer(messages, result)
             try:
                 parsed = parse_answer(retry)
                 messages.append({"role": "assistant", "content": retry})
@@ -313,6 +363,8 @@ class CopilotAgent:
                 "question": result.question[:500],
                 "model": result.model,
                 "skill_version": self.skill_version,
+                "structured_output": self._structured,
+                "reasoning_effort": self._reasoning_effort,
                 "tools": [t.name for t in result.tool_calls],
                 "gate_first_pass": {
                     "passed": result.first_pass_report.passed,

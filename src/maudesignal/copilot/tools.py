@@ -4,7 +4,10 @@ HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
 Every tool is deterministic, reads only stored data, and returns plain JSON
 with the exact numbers and report ids it used, so the citation gate can
-re-verify anything the model repeats. The only tool that writes is
+re-verify anything the model repeats. Besides MAUDE, three tools reach the
+sources a QA/RA analyst otherwise opens in separate tabs — FDA recalls, 510(k)
+clearance records and PubMed abstracts — from copies stored by
+``scripts/seed_sources.py``, so the gate can verify those claims too. The only tool that writes is
 ``draft_capa``, and it can only create a *draft* — approval is a human action
 outside the model's reach (see ``copilot.actions``).
 """
@@ -27,6 +30,7 @@ from maudesignal.storage.database import Database
 
 MAX_IDS = 10
 EXCERPT_CHARS = 600
+ABSTRACT_CHARS = 900
 
 ToolFn = Callable[..., dict[str, Any]]
 
@@ -213,6 +217,96 @@ def draft_capa_tool(
     }
 
 
+def recalls(
+    ctx: ToolContext,
+    product_code: str,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    limit: int = 10,
+) -> dict[str, Any]:
+    """Stored openFDA device recalls for one product code, newest first."""
+    rows = ctx.store.select_recalls(product_code=product_code, date_from=date_from, date_to=date_to)
+    rows = sorted(rows, key=lambda r: (r.date_initiated or "", r.recall_number), reverse=True)
+    limit = max(1, min(int(limit), 20))
+    return {
+        "product_code": product_code,
+        "date_from": date_from,
+        "date_to": date_to,
+        "stored_recall_count": len(rows),
+        "source": "openFDA device/recall.json (stored copy)",
+        "recalls": [
+            {
+                "recall_number": r.recall_number,
+                "event_number": r.event_number,
+                "recalling_firm": r.recalling_firm,
+                "recall_status": r.recall_status,
+                "date_initiated": r.date_initiated,
+                "k_numbers": list(r.k_numbers),
+                "product_description": r.product_description[:300],
+                "reason_for_recall": r.reason_for_recall[:EXCERPT_CHARS],
+            }
+            for r in rows[:limit]
+        ],
+    }
+
+
+def device_510k(ctx: ToolContext, k_number: str) -> dict[str, Any]:
+    """510(k) record for one K-number (catalog first, then stored openFDA 510(k) data)."""
+    k = k_number.strip().upper()
+    dev = ctx.store.device(k)
+    source = "510(k) AI/ML catalog"
+    full = ctx.store.clearance(k)
+    if dev is None:
+        dev, source = full, "openFDA device/510k.json (stored copy)"
+    if dev is None:
+        return {"error": f"{k} not in the 510(k) catalog or stored 510(k) records"}
+    detail = full or dev
+    return {
+        "k_number": dev.k_number,
+        "source": source,
+        "applicant": detail.company_name,
+        "device_name": dev.device_name,
+        "product_code": dev.product_code,
+        "decision_date": detail.decision_date,
+        "decision_code": detail.decision_code,
+        "statement_or_summary": detail.statement_or_summary,
+        "recalls_citing_this_k_number": [
+            r.recall_number for r in ctx.store.recalls if k in r.k_numbers
+        ][:MAX_IDS],
+    }
+
+
+def literature(
+    ctx: ToolContext,
+    product_code: str | None = None,
+    query: str | None = None,
+    limit: int = 5,
+) -> dict[str, Any]:
+    """Stored PubMed articles (by the product code they were fetched for and/or keywords)."""
+    rows = list(ctx.store.literature)
+    if product_code:
+        rows = [a for a in rows if (a.product_code or "").upper() == product_code.upper()]
+    if query:
+        words = [w for w in query.lower().split() if w]
+        rows = [a for a in rows if all(w in a.text.lower() for w in words)]
+    rows = sorted(rows, key=lambda a: (a.year or 0, a.pmid), reverse=True)
+    limit = max(1, min(int(limit), 10))
+    return {
+        "matched": len(rows),
+        "source": "PubMed via NCBI E-utilities (stored copy)",
+        "articles": [
+            {
+                "pmid": a.pmid,
+                "title": a.title,
+                "year": a.year,
+                "journal": a.journal,
+                "abstract_excerpt": a.abstract[:ABSTRACT_CHARS],
+            }
+            for a in rows[:limit]
+        ],
+    }
+
+
 TOOLS: dict[str, ToolFn] = {
     "overnight_signals": overnight_signals,
     "product_summary": product_summary,
@@ -220,6 +314,9 @@ TOOLS: dict[str, ToolFn] = {
     "get_report": get_report,
     "deadline_check": deadline_check,
     "draft_capa": draft_capa_tool,
+    "recalls": recalls,
+    "device_510k": device_510k,
+    "literature": literature,
 }
 
 _STR = {"type": "string"}
@@ -305,6 +402,56 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
                     "report_ids": {"type": "array", "items": _STR, "minItems": 1},
                 },
                 "required": ["product_code", "title", "problem_statement", "report_ids"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "recalls",
+            "description": "FDA device recalls (openFDA recall database) for one product code, "
+            "newest first: recall numbers, firm, status, date initiated, cited 510(k)s and the "
+            "reason for recall (quotable with the recall_number as source_id). "
+            "stored_recall_count is the exact count for the filters.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "product_code": _STR,
+                    "date_from": {"type": "string", "description": "YYYYMMDD (date initiated)"},
+                    "date_to": {"type": "string", "description": "YYYYMMDD (date initiated)"},
+                    "limit": {"type": "integer", "minimum": 1, "maximum": 20},
+                },
+                "required": ["product_code"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "device_510k",
+            "description": "510(k) clearance record for one K-number: applicant, device name, "
+            "product code, decision date/code, summary-or-statement, and recalls citing it.",
+            "parameters": {
+                "type": "object",
+                "properties": {"k_number": _STR},
+                "required": ["k_number"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "literature",
+            "description": "Published literature (PubMed) stored for a product code and/or "
+            "matching keywords: PMID, title, year, journal and an abstract excerpt you may "
+            "quote verbatim with the PMID as source_id.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "product_code": _STR,
+                    "query": _STR,
+                    "limit": {"type": "integer", "minimum": 1, "maximum": 10},
+                },
             },
         },
     },

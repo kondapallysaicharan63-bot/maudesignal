@@ -116,5 +116,141 @@
     "Data are public, de-identified FDA MAUDE reports; no PHI.",
     "Counts reflect openFDA at fetch time; openFDA re-publishes weekly, so a re-run may differ slightly.",
     "MAUDE product codes are reporter-assigned; a few LLZ reports may concern non-AI devices."
-  ]
+  ],
+  "external_sources": {
+    "generated_by": "scripts/seed_sources.py",
+    "fetched_at_utc": "2026-10-27T17:40:54+00:00",
+    "openfda_meta_last_updated": "2026-10-24",
+    "api_key_used": false,
+    "table": "external_sources (source_type fda_recall / fda_510k / pubmed)",
+    "counts": {
+      "fda_recall": 566,
+      "fda_510k": 266,
+      "pubmed": 20
+    },
+    "k510_cited_by_recalls_or_catalog": {
+      "requested": 227,
+      "stored": 227,
+      "search": "k_number:(K...+K...) in chunks of 50"
+    },
+    "per_product_code": {
+      "LLZ": {
+        "recalls": {
+          "endpoint": "https://api.fda.gov/device/recall.json",
+          "search": "product_code:LLZ",
+          "matching_total_at_fetch": 561,
+          "stored": 561,
+          "complete": true
+        },
+        "k510_recent": {
+          "endpoint": "https://api.fda.gov/device/510k.json",
+          "search": "product_code:LLZ",
+          "sort": "decision_date:desc",
+          "matching_total_at_fetch": 2293,
+          "stored": 10
+        },
+        "pubmed": {
+          "query": "(\"MAUDE\"[tiab] OR \"adverse event reports\"[tiab]) AND (\"artificial intelligence\"[tiab] OR \"machine learning\"[tiab]) AND hasabstract",
+          "sort": "relevance",
+          "max_results": 5,
+          "pmids": [
+            "30303528",
+            "35579817",
+            "32623971",
+            "31395567",
+            "38269880"
+          ]
+        }
+      },
+      "QIH": {
+        "recalls": {
+          "endpoint": "https://api.fda.gov/device/recall.json",
+          "search": "product_code:QIH",
+          "matching_total_at_fetch": 2,
+          "stored": 2,
+          "complete": true
+        },
+        "k510_recent": {
+          "endpoint": "https://api.fda.gov/device/510k.json",
+          "search": "product_code:QIH",
+          "sort": "decision_date:desc",
+          "matching_total_at_fetch": 337,
+          "stored": 10
+        },
+        "pubmed": {
+          "query": "\"artificial intelligence\"[tiab] AND triage[tiab] AND (\"large vessel occlusion\"[tiab] OR \"intracranial hemorrhage\"[tiab]) AND hasabstract",
+          "sort": "relevance",
+          "max_results": 5,
+          "pmids": [
+            "31594798",
+            "40197098",
+            "34785617",
+            "33243898",
+            "33849032"
+          ]
+        }
+      },
+      "MYN": {
+        "recalls": {
+          "endpoint": "https://api.fda.gov/device/recall.json",
+          "search": "product_code:MYN",
+          "matching_total_at_fetch": 3,
+          "stored": 3,
+          "complete": true
+        },
+        "k510_recent": {
+          "endpoint": "https://api.fda.gov/device/510k.json",
+          "search": "product_code:MYN",
+          "sort": "decision_date:desc",
+          "matching_total_at_fetch": 40,
+          "stored": 10
+        },
+        "pubmed": {
+          "query": "\"computer-aided detection\"[tiab] AND \"false positive\"[tiab] AND hasabstract",
+          "sort": "relevance",
+          "max_results": 5,
+          "pmids": [
+            "37541274",
+            "36350524",
+            "35943350",
+            "34207226",
+            "32531273"
+          ]
+        }
+      },
+      "POK": {
+        "recalls": {
+          "endpoint": "https://api.fda.gov/device/recall.json",
+          "search": "product_code:POK",
+          "matching_total_at_fetch": 0,
+          "stored": 0,
+          "complete": true
+        },
+        "k510_recent": {
+          "endpoint": "https://api.fda.gov/device/510k.json",
+          "search": "product_code:POK",
+          "sort": "decision_date:desc",
+          "matching_total_at_fetch": 23,
+          "stored": 10
+        },
+        "pubmed": {
+          "query": "\"computer-aided diagnosis\"[tiab] AND cancer[tiab] AND lesions[tiab] AND hasabstract",
+          "sort": "relevance",
+          "max_results": 5,
+          "pmids": [
+            "40608200",
+            "35304117",
+            "36270318",
+            "37038298",
+            "40054749"
+          ]
+        }
+      }
+    },
+    "notes": [
+      "Recall rows are product-level (one product_res_number each); one recall event (res_event_number) can cover several rows.",
+      "PubMed articles are linked to a product code only through the query they were fetched with; they are context, not evidence about a specific MAUDE report.",
+      "Stored raw payloads are trimmed (openfda harmonization blocks dropped) to keep the demo DB small."
+    ]
+  }
 }

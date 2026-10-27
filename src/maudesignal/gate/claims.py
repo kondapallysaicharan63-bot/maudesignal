@@ -13,16 +13,36 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Literal
 
-ClaimKind = Literal["quote", "count", "share", "device", "record", "regulation"]
+ClaimKind = Literal[
+    "quote",
+    "count",
+    "share",
+    "device",
+    "record",
+    "regulation",
+    "recall",
+    "recall_count",
+    "literature",
+]
 
 
 @dataclass(frozen=True)
 class QuoteClaim:
-    """A verbatim quote attributed to a specific MAUDE report."""
+    """A verbatim quote attributed to one stored source.
+
+    Exactly one attribution is used: ``source_id`` (a stored PubMed PMID or FDA
+    recall number) when given, otherwise ``report_id`` (a MAUDE report id).
+    """
 
     quote: str
-    report_id: str
+    report_id: str | None = None
+    source_id: str | None = None
     kind: ClaimKind = "quote"
+
+    @property
+    def attributed_to(self) -> str:
+        """The id this quote is pinned to."""
+        return self.source_id or self.report_id or ""
 
 
 @dataclass(frozen=True)
@@ -76,7 +96,66 @@ class RegulationClaim:
     kind: ClaimKind = "regulation"
 
 
-Claim = QuoteClaim | CountClaim | ShareClaim | DeviceClaim | RecordClaim | RegulationClaim
+@dataclass(frozen=True)
+class RecallClaim:
+    """An FDA recall asserted to exist (optionally for a product code).
+
+    ``recall_number`` is the product-level recall number (e.g. ``Z-0186-2027``)
+    or the recall event number (``res_event_number``) from openFDA.
+    """
+
+    recall_number: str
+    product_code: str | None = None
+    kind: ClaimKind = "recall"
+
+
+@dataclass(frozen=True)
+class RecallCountClaim:
+    """'N recalls' for a product code, optionally by event_date_initiated window."""
+
+    product_code: str
+    value: int
+    date_from: str | None = None
+    date_to: str | None = None
+    kind: ClaimKind = "recall_count"
+
+
+@dataclass(frozen=True)
+class LiteratureClaim:
+    """A PubMed article (PMID) asserted to exist in stored sources (optionally its year)."""
+
+    pmid: str
+    year: int | None = None
+    kind: ClaimKind = "literature"
+
+
+Claim = (
+    QuoteClaim
+    | CountClaim
+    | ShareClaim
+    | DeviceClaim
+    | RecordClaim
+    | RegulationClaim
+    | RecallClaim
+    | RecallCountClaim
+    | LiteratureClaim
+)
+
+
+def _opt_str(v: Any) -> str | None:
+    """None / empty stays None; anything else becomes a stripped string."""
+    if v is None:
+        return None
+    s = str(v).strip()
+    return s or None
+
+
+def normalize_pmid(pmid: str) -> str:
+    """'PMID: 123' / 'pmid123' -> '123'."""
+    p = pmid.strip()
+    if p.lower().startswith("pmid"):
+        p = p[4:].lstrip(" :")
+    return p
 
 
 class ClaimParseError(ValueError):
@@ -92,7 +171,10 @@ def claim_from_dict(d: dict[str, Any]) -> Claim:
     kind = d.get("kind")
     try:
         if kind == "quote":
-            return QuoteClaim(quote=str(d["quote"]), report_id=str(d["report_id"]))
+            report_id, source_id = _opt_str(d.get("report_id")), _opt_str(d.get("source_id"))
+            if not report_id and not source_id:
+                raise KeyError("report_id or source_id")
+            return QuoteClaim(quote=str(d["quote"]), report_id=report_id, source_id=source_id)
         if kind == "count":
             return CountClaim(
                 product_code=str(d["product_code"]),
@@ -119,6 +201,24 @@ def claim_from_dict(d: dict[str, Any]) -> Claim:
             return RecordClaim(report_id=str(d["report_id"]), product_code=d.get("product_code"))
         if kind == "regulation":
             return RegulationClaim(section=str(d["section"]).replace("21 CFR", "").strip())
+        if kind == "recall":
+            return RecallClaim(
+                recall_number=str(d["recall_number"]).strip(),
+                product_code=_opt_str(d.get("product_code")),
+            )
+        if kind == "recall_count":
+            return RecallCountClaim(
+                product_code=str(d["product_code"]),
+                value=int(d["value"]),
+                date_from=_opt_str(d.get("date_from")),
+                date_to=_opt_str(d.get("date_to")),
+            )
+        if kind == "literature":
+            year = d.get("year")
+            return LiteratureClaim(
+                pmid=normalize_pmid(str(d["pmid"])),
+                year=None if year is None else int(year),
+            )
     except (KeyError, TypeError, ValueError) as exc:
         raise ClaimParseError(f"malformed {kind!r} claim: {exc}") from exc
     raise ClaimParseError(f"unknown claim kind: {kind!r}")

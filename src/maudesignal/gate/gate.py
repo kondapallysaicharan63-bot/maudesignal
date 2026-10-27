@@ -8,15 +8,20 @@ What it guarantees, for every sentence the copilot shows a user:
 
 * every **number** is recomputed from stored records and must match exactly
   (counts) or within 0.5 percentage points (shares);
-* every **quote** must appear verbatim in the narrative of the report it is
-  attributed to (a real quote pinned to the wrong report is blocked);
-* every **510(k) number** must exist in the catalog and belong to the stated
-  product code / device;
+* every **quote** must appear verbatim in the narrative of the report — or the
+  stored PubMed abstract / FDA recall text — it is attributed to (a real quote
+  pinned to the wrong source is blocked);
+* every **510(k) number** must exist in the catalog (or, failing that, in the
+  stored openFDA 510(k) records) and belong to the stated product code / device;
+* every **recall number** must exist in the stored openFDA recalls (and match
+  the stated product code); every **recall count** is recomputed;
+* every **PMID** must exist in the stored PubMed records (and match a stated year);
 * every **MAUDE report id** must exist (and match the stated product code);
 * every **21 CFR section** must be in the curated allowlist (superseded QS-reg
   sections are blocked with the reason);
-* a sentence that mentions a K-number, CFR section, percentage or report count
-  *without* a matching structured claim is blocked as ungrounded.
+* a sentence that mentions a K-number, CFR section, percentage, report or recall
+  count, recall number or PMID *without* a matching structured claim is blocked
+  as ungrounded.
 
 The gate is deterministic and makes no model calls.
 """
@@ -32,10 +37,14 @@ from maudesignal.gate.claims import (
     Claim,
     CountClaim,
     DeviceClaim,
+    LiteratureClaim,
     QuoteClaim,
+    RecallClaim,
+    RecallCountClaim,
     RecordClaim,
     RegulationClaim,
     ShareClaim,
+    normalize_pmid,
 )
 from maudesignal.gate.evidence import EvidenceStore, normalize_text
 
@@ -50,6 +59,9 @@ _COUNT_RE = re.compile(
     r"(?:reports?|events?|deaths?|injur(?:y|ies)|malfunctions?|MDRs?|records?)\b",
     re.IGNORECASE,
 )
+_RECALL_COUNT_RE = re.compile(r"\b(\d[\d,]*)\s+(?:[\w-]+\s+){0,2}?recalls?\b", re.IGNORECASE)
+_RECALL_NO_RE = re.compile(r"\b[A-Z]-\d{4}-\d{4}\b")
+_PMID_RE = re.compile(r"\bPMID\s*:?\s*(\d{1,9})\b", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -137,6 +149,12 @@ def verify_claim(claim: Claim, store: EvidenceStore) -> ClaimVerdict:
         return _verify_device(claim, store)
     if isinstance(claim, RecordClaim):
         return _verify_record(claim, store)
+    if isinstance(claim, RecallClaim):
+        return _verify_recall(claim, store)
+    if isinstance(claim, RecallCountClaim):
+        return _verify_recall_count(claim, store)
+    if isinstance(claim, LiteratureClaim):
+        return _verify_literature(claim, store)
     return _verify_regulation(claim)
 
 
@@ -144,12 +162,16 @@ def _verify_quote(c: QuoteClaim, store: EvidenceStore) -> ClaimVerdict:
     q = normalize_text(c.quote)
     if len(q) < 8:
         return ClaimVerdict(c, "block", "quote too short to verify")
+    if c.source_id:
+        return _verify_source_quote(c, q, store)
+    if not c.report_id:
+        return ClaimVerdict(c, "block", "quote is not attributed to any source")
     rec = store.record(c.report_id)
     if rec is None:
         return ClaimVerdict(c, "block", f"report {c.report_id} not in evidence store")
     if q in rec.normalized_text:
         return ClaimVerdict(c, "pass", "verbatim match", (rec.report_id,))
-    elsewhere = store.find_quote(c.quote)
+    elsewhere = store.find_quote(c.quote) or store.find_quote_in_sources(c.quote)
     if elsewhere:
         return ClaimVerdict(
             c,
@@ -158,6 +180,26 @@ def _verify_quote(c: QuoteClaim, store: EvidenceStore) -> ClaimVerdict:
             tuple(elsewhere[:3]),
         )
     return ClaimVerdict(c, "block", f"quote not found verbatim in {c.report_id}")
+
+
+def _verify_source_quote(c: QuoteClaim, q: str, store: EvidenceStore) -> ClaimVerdict:
+    sid = c.source_id or ""
+    found = store.source_text(sid)
+    if found is None:
+        return ClaimVerdict(c, "block", f"source {sid} not in stored literature or recalls")
+    text, label = found
+    if q in text:
+        return ClaimVerdict(c, "pass", f"verbatim match in {label}", (label,))
+    elsewhere = [x for x in store.find_quote_in_sources(c.quote) if x != label]
+    elsewhere += store.find_quote(c.quote)
+    if elsewhere:
+        return ClaimVerdict(
+            c,
+            "block",
+            f"quote is real but belongs to {', '.join(elsewhere[:3])}, not {label}",
+            tuple(elsewhere[:3]),
+        )
+    return ClaimVerdict(c, "block", f"quote not found verbatim in {label}")
 
 
 def _verify_count(c: CountClaim, store: EvidenceStore) -> ClaimVerdict:
@@ -198,8 +240,14 @@ def _verify_share(c: ShareClaim, store: EvidenceStore) -> ClaimVerdict:
 
 def _verify_device(c: DeviceClaim, store: EvidenceStore) -> ClaimVerdict:
     dev = store.device(c.k_number)
+    source = "catalog"
     if dev is None:
-        return ClaimVerdict(c, "block", f"{c.k_number} not in the 510(k) catalog")
+        dev = store.clearance(c.k_number)
+        source = "openFDA 510(k)"
+    if dev is None:
+        return ClaimVerdict(
+            c, "block", f"{c.k_number} not in the 510(k) catalog or stored 510(k) records"
+        )
     if c.product_code and c.product_code.upper() != dev.product_code.upper():
         return ClaimVerdict(
             c,
@@ -214,7 +262,7 @@ def _verify_device(c: DeviceClaim, store: EvidenceStore) -> ClaimVerdict:
             f"{c.k_number} is '{dev.device_name}', not '{c.device_name}'",
             (dev.k_number,),
         )
-    return ClaimVerdict(c, "pass", f"catalog: {dev.device_name}", (dev.k_number,))
+    return ClaimVerdict(c, "pass", f"{source}: {dev.device_name}", (dev.k_number,))
 
 
 def _verify_record(c: RecordClaim, store: EvidenceStore) -> ClaimVerdict:
@@ -229,6 +277,49 @@ def _verify_record(c: RecordClaim, store: EvidenceStore) -> ClaimVerdict:
             (rec.report_id,),
         )
     return ClaimVerdict(c, "pass", "record exists", (rec.report_id,))
+
+
+def _verify_recall(c: RecallClaim, store: EvidenceStore) -> ClaimVerdict:
+    matches = store.recalls_by_number(c.recall_number)
+    if not matches:
+        return ClaimVerdict(c, "block", f"recall {c.recall_number} not in stored FDA recalls")
+    ids = tuple(r.recall_number for r in matches[:10])
+    if c.product_code:
+        codes = sorted({r.product_code for r in matches})
+        if c.product_code.upper() not in {pc.upper() for pc in codes}:
+            return ClaimVerdict(
+                c,
+                "block",
+                f"recall {c.recall_number} is product code {', '.join(codes)}, "
+                f"not {c.product_code}",
+                ids,
+            )
+    r0 = matches[0]
+    return ClaimVerdict(
+        c, "pass", f"FDA recall: {r0.recalling_firm or '?'} ({r0.recall_status or '?'})", ids
+    )
+
+
+def _verify_recall_count(c: RecallCountClaim, store: EvidenceStore) -> ClaimVerdict:
+    rows = store.select_recalls(
+        product_code=c.product_code, date_from=c.date_from, date_to=c.date_to
+    )
+    n = len(rows)
+    ids = tuple(r.recall_number for r in rows[:20])
+    if n == c.value:
+        return ClaimVerdict(c, "pass", f"recomputed {n} stored recalls", ids, float(n))
+    return ClaimVerdict(c, "block", f"claimed {c.value}, stored recalls show {n}", ids, float(n))
+
+
+def _verify_literature(c: LiteratureClaim, store: EvidenceStore) -> ClaimVerdict:
+    art = store.article(c.pmid)
+    if art is None:
+        return ClaimVerdict(c, "block", f"PMID {c.pmid} not in stored literature")
+    if c.year is not None and art.year != c.year:
+        return ClaimVerdict(
+            c, "block", f"PMID {c.pmid} was published {art.year}, not {c.year}", (art.pmid,)
+        )
+    return ClaimVerdict(c, "pass", f"PubMed: {art.title[:80]}", (f"PMID {art.pmid}",))
 
 
 def _verify_regulation(c: RegulationClaim) -> ClaimVerdict:
@@ -253,9 +344,39 @@ def _looks_like_date(token: str) -> bool:
     return 1990 <= y <= 2100 and 1 <= m <= 12 and 1 <= d <= 31
 
 
+def _strip_quoted_spans(text: str, claims: list[Claim]) -> str:
+    """Remove each quote claim's text from the sentence where it appears in quotation marks.
+
+    Only spans inside quotation marks are removed, so a number cannot be
+    smuggled past the count/share checks by tagging an unquoted phrase as a quote.
+    """
+    for c in claims:
+        if isinstance(c, QuoteClaim) and len(normalize_text(c.quote)) >= 8:
+            body = r"\s+".join(re.escape(w) for w in c.quote.split())
+            pattern = r"[\"“‘']\s*" + body + r"[\s.,;:!?]*[\"”’']"
+            text = re.sub(pattern, " ", text, flags=re.IGNORECASE)
+    return text
+
+
 def _ungrounded_mentions(text: str, claims: list[Claim]) -> list[str]:
-    """Find checkable-looking mentions in the sentence that no claim covers."""
+    """Find checkable-looking mentions in the sentence that no claim covers.
+
+    Spans covered by a quote claim are skipped: a number inside a verbatim
+    quote (e.g. an abstract's "F1-score=85%") is checked by that quote claim —
+    if the quote does not verify, the claim blocks the sentence anyway.
+    """
     out: list[str] = []
+    text = _strip_quoted_spans(text, claims)
+    source_ids = {
+        c.source_id.strip().upper() for c in claims if isinstance(c, QuoteClaim) and c.source_id
+    }
+    pmid_claimed = {c.pmid for c in claims if isinstance(c, LiteratureClaim)}
+    pmid_claimed |= {normalize_pmid(s) for s in source_ids}
+    for m in _PMID_RE.finditer(text):
+        if m.group(1) not in pmid_claimed:
+            out.append(f"PMID {m.group(1)} has no literature claim")
+    # Checked above; drop "PMID n" so "PMID 123 reports ..." is not read as a report count.
+    text = _PMID_RE.sub(" ", text)
     k_claimed = {c.k_number.upper() for c in claims if isinstance(c, DeviceClaim)}
     for m in _K_RE.finditer(text):
         if m.group(0).upper() not in k_claimed:
@@ -274,7 +395,18 @@ def _ungrounded_mentions(text: str, claims: list[Claim]) -> list[str]:
         v = int(m.group(1).replace(",", ""))
         if v not in count_claimed:
             out.append(f"'{m.group(0)}' has no count claim")
-    record_claimed = {c.report_id for c in claims if isinstance(c, (RecordClaim, QuoteClaim))}
+    recall_count_claimed = {c.value for c in claims if isinstance(c, RecallCountClaim)}
+    for m in _RECALL_COUNT_RE.finditer(text):
+        v = int(m.group(1).replace(",", ""))
+        if v not in recall_count_claimed:
+            out.append(f"'{m.group(0)}' has no recall_count claim")
+    recall_claimed = {c.recall_number.strip().upper() for c in claims if isinstance(c, RecallClaim)}
+    for m in _RECALL_NO_RE.finditer(text):
+        if m.group(0).upper() not in recall_claimed | source_ids:
+            out.append(f"recall {m.group(0)} has no recall claim")
+    record_claimed = {c.report_id for c in claims if isinstance(c, RecordClaim)}
+    record_claimed |= {c.report_id for c in claims if isinstance(c, QuoteClaim) and c.report_id}
+    record_claimed |= pmid_claimed  # a claimed PMID is not an untagged MAUDE report id
     for token in re.findall(r"\b\d{7}-\d{4}-\d{5}\b|\bMW\d{7}\b|\b\d{7,9}\b", text):
         if _looks_like_date(token):
             continue

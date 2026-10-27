@@ -1,27 +1,133 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "safety-copilot answer",
+  "description": "Strict-mode compatible (Meta Model API structured output): plain object root, additionalProperties false and every property required on every object, no oneOf/allOf; optional values are nullable.",
   "type": "object",
-  "required": ["sentences"],
   "additionalProperties": false,
+  "required": ["sentences"],
   "properties": {
     "sentences": {
       "type": "array",
-      "maxItems": 12,
       "items": {
         "type": "object",
-        "required": ["text", "claims"],
+        "description": "One sentence of the answer and every checkable claim it makes.",
         "additionalProperties": false,
+        "required": ["text", "claims"],
         "properties": {
-          "text": {"type": "string", "minLength": 1},
+          "text": {"type": "string"},
           "claims": {
             "type": "array",
             "items": {
-              "type": "object",
-              "required": ["kind"],
-              "properties": {
-                "kind": {"enum": ["quote", "count", "share", "device", "record", "regulation"]}
-              }
+              "anyOf": [
+                {
+                  "type": "object",
+                  "description": "Verbatim quote. Use report_id for a MAUDE narrative, or source_id (PMID or FDA recall number) for a PubMed abstract / recall reason; set the other to null.",
+                  "additionalProperties": false,
+                  "required": ["kind", "quote", "report_id", "source_id"],
+                  "properties": {
+                    "kind": {"type": "string", "enum": ["quote"]},
+                    "quote": {"type": "string"},
+                    "report_id": {"type": ["string", "null"]},
+                    "source_id": {"type": ["string", "null"]}
+                  }
+                },
+                {
+                  "type": "object",
+                  "description": "Number of stored MAUDE reports for a product code (dates YYYYMMDD, date_received).",
+                  "additionalProperties": false,
+                  "required": ["kind", "product_code", "value", "event_type", "date_from", "date_to"],
+                  "properties": {
+                    "kind": {"type": "string", "enum": ["count"]},
+                    "product_code": {"type": "string"},
+                    "value": {"type": "integer"},
+                    "event_type": {"type": ["string", "null"]},
+                    "date_from": {"type": ["string", "null"]},
+                    "date_to": {"type": ["string", "null"]}
+                  }
+                },
+                {
+                  "type": "object",
+                  "description": "Percent (0-100) of a product code's MAUDE reports that have event_type.",
+                  "additionalProperties": false,
+                  "required": ["kind", "product_code", "event_type", "value_pct", "date_from", "date_to"],
+                  "properties": {
+                    "kind": {"type": "string", "enum": ["share"]},
+                    "product_code": {"type": "string"},
+                    "event_type": {"type": "string"},
+                    "value_pct": {"type": "number"},
+                    "date_from": {"type": ["string", "null"]},
+                    "date_to": {"type": ["string", "null"]}
+                  }
+                },
+                {
+                  "type": "object",
+                  "description": "A 510(k) number and the product code / device name it belongs to.",
+                  "additionalProperties": false,
+                  "required": ["kind", "k_number", "product_code", "device_name"],
+                  "properties": {
+                    "kind": {"type": "string", "enum": ["device"]},
+                    "k_number": {"type": "string"},
+                    "product_code": {"type": ["string", "null"]},
+                    "device_name": {"type": ["string", "null"]}
+                  }
+                },
+                {
+                  "type": "object",
+                  "description": "A MAUDE report id that exists.",
+                  "additionalProperties": false,
+                  "required": ["kind", "report_id", "product_code"],
+                  "properties": {
+                    "kind": {"type": "string", "enum": ["record"]},
+                    "report_id": {"type": "string"},
+                    "product_code": {"type": ["string", "null"]}
+                  }
+                },
+                {
+                  "type": "object",
+                  "description": "A 21 CFR section, e.g. 803.50.",
+                  "additionalProperties": false,
+                  "required": ["kind", "section"],
+                  "properties": {
+                    "kind": {"type": "string", "enum": ["regulation"]},
+                    "section": {"type": "string"}
+                  }
+                },
+                {
+                  "type": "object",
+                  "description": "An FDA recall number (e.g. Z-0186-2027) or recall event number.",
+                  "additionalProperties": false,
+                  "required": ["kind", "recall_number", "product_code"],
+                  "properties": {
+                    "kind": {"type": "string", "enum": ["recall"]},
+                    "recall_number": {"type": "string"},
+                    "product_code": {"type": ["string", "null"]}
+                  }
+                },
+                {
+                  "type": "object",
+                  "description": "Number of stored FDA recalls for a product code (dates YYYYMMDD, date initiated).",
+                  "additionalProperties": false,
+                  "required": ["kind", "product_code", "value", "date_from", "date_to"],
+                  "properties": {
+                    "kind": {"type": "string", "enum": ["recall_count"]},
+                    "product_code": {"type": "string"},
+                    "value": {"type": "integer"},
+                    "date_from": {"type": ["string", "null"]},
+                    "date_to": {"type": ["string", "null"]}
+                  }
+                },
+                {
+                  "type": "object",
+                  "description": "A PubMed article by PMID (year optional).",
+                  "additionalProperties": false,
+                  "required": ["kind", "pmid", "year"],
+                  "properties": {
+                    "kind": {"type": "string", "enum": ["literature"]},
+                    "pmid": {"type": "string"},
+                    "year": {"type": ["integer", "null"]}
+                  }
+                }
+              ]
             }
           }
         }

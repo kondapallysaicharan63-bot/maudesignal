@@ -14,6 +14,7 @@ from __future__ import annotations
 import html
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any
 
@@ -33,6 +34,7 @@ from maudesignal.gate import (
 from maudesignal.gate.loader import store_from_database
 from maudesignal.monitor.deterioration import detect_from_database
 from maudesignal.monitor.digest import build_digest, render_markdown
+from maudesignal.sources.openfda_sources import k510_url
 from maudesignal.storage.database import Database
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -79,8 +81,18 @@ def _evidence_links(s: dict[str, Any]) -> str:
     ids: list[str] = []
     for c in s.get("claims", []):
         ids += [i for i in c.get("evidence_ids", []) if i and not i.startswith("21 CFR")]
-    links = [f"[{i}]({MAUDE_URL.format(i.split('-')[0])})" for i in dict.fromkeys(ids)][:5]
-    return ", ".join(links)
+    return ", ".join(_evidence_link(i) for i in list(dict.fromkeys(ids))[:5])
+
+
+def _evidence_link(eid: str) -> str:
+    """Markdown link for one evidence id: MAUDE report, PubMed, 510(k), or plain text."""
+    if eid.startswith("PMID "):
+        return f"[{eid}](https://pubmed.ncbi.nlm.nih.gov/{eid[5:]}/)"
+    if re.fullmatch(r"K\d{6}", eid):
+        return f"[{eid}]({k510_url(eid)})"
+    if re.fullmatch(r"\d{7}-\d{4}-\d{5}|\d{6,10}", eid):
+        return f"[{eid}]({MAUDE_URL.format(eid.split('-')[0])})"
+    return eid  # recall numbers and other ids: shown, not linked
 
 
 # ---------------------------------------------------------------------------

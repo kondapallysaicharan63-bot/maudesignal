@@ -878,6 +878,27 @@ class Database:
         """Return count of external source records."""
         return len(self.list_external_sources(source_type=source_type, limit=100_000))
 
+    def delete_external_sources(self, *, source_type: str) -> int:
+        """Delete every external source row of one type; return how many were removed.
+
+        HACKATHON-BUILT (Oct 2026): lets ``scripts/seed_sources.py`` rebuild the
+        recall / 510(k) / PubMed rows of the demo DB without stale leftovers.
+        """
+        with self._session() as session:
+            rows = list(
+                session.execute(
+                    select(ExternalSourceRecord).where(
+                        ExternalSourceRecord.source_type == source_type
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            for row in rows:
+                session.delete(row)
+            session.commit()
+            return len(rows)
+
     # ------------------------------------------------------------------
     # PSUR reports  (Phase 5)
     # ------------------------------------------------------------------

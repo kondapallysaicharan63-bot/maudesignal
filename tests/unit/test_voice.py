@@ -277,7 +277,8 @@ def test_ask_by_voice_end_to_end(tmp_path: Path) -> None:
             ]
         }
     )
-    client = FakeClient([_msg(tool_calls=[call]), _msg(answer)])
+    # tool round, tool-free draft, then the schema-constrained final-answer call
+    client = FakeClient([_msg(tool_calls=[call]), _msg(answer), _msg(answer)])
     agent = CopilotAgent(client, ctx)
     wav = tmp_path / "question.wav"
     wav.write_bytes(_wav(3.2))

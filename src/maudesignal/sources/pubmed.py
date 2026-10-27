@@ -11,7 +11,8 @@ from __future__ import annotations
 
 import hashlib
 import time
-from dataclasses import dataclass
+import xml.etree.ElementTree as ET  # noqa: N817 - stdlib idiom; parses NCBI's own XML
+from dataclasses import dataclass, replace
 from typing import Any
 
 import httpx
@@ -26,6 +27,7 @@ _EFETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 _ESUMMARY_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
 _DEFAULT_MAX_RESULTS = 20
 _REQUEST_DELAY_S = 0.34  # ~3 req/s limit for unauthenticated
+_RETRY_AFTER_429_S = 2.0
 
 
 @dataclass(frozen=True)
@@ -56,6 +58,7 @@ class PubMedFetcher:
         query: str,
         product_code: str | None = None,
         max_results: int = _DEFAULT_MAX_RESULTS,
+        with_abstracts: bool = False,
     ) -> list[PubMedArticle]:
         """Search PubMed and store results; return fetched articles.
 
@@ -63,18 +66,32 @@ class PubMedFetcher:
             query: PubMed search query (e.g. "AI radiology adverse event").
             product_code: Optional product code to tag stored records.
             max_results: Maximum number of articles to fetch.
+            with_abstracts: Also fetch the real abstract text (one batched
+                EFetch call) instead of storing only "Source: <journal>".
+                Articles without an abstract are then skipped. Added during the
+                Meta Global AI Developer Hackathon (Oct 2026) so the copilot can
+                quote abstracts and the gate can verify the quotes.
         """
         pmids = self._esearch(query=query, max_results=max_results)
         if not pmids:
             logger.info("pubmed_no_results", query=query)
             return []
 
+        abstracts: dict[str, str] = {}
+        if with_abstracts:
+            time.sleep(_REQUEST_DELAY_S)
+            abstracts = self.fetch_abstracts(pmids)
+
         articles: list[PubMedArticle] = []
         for pmid in pmids:
+            if with_abstracts and not abstracts.get(pmid):
+                continue
             time.sleep(_REQUEST_DELAY_S)
             article = self._efetch_summary(pmid)
             if article is None:
                 continue
+            if with_abstracts:
+                article = replace(article, abstract=abstracts[pmid])
             record_id = _record_id("pubmed", pmid)
             self._db.upsert_external_source(
                 record_id=record_id,
@@ -101,6 +118,26 @@ class PubMedFetcher:
     def close(self) -> None:
         """Close the underlying HTTP client."""
         self._client.close()
+
+    def fetch_abstracts(self, pmids: list[str]) -> dict[str, str]:
+        """Return ``{pmid: abstract text}`` via one EFetch XML call (empty on error)."""
+        if not pmids:
+            return {}
+        params: dict[str, str] = {
+            "db": "pubmed",
+            "id": ",".join(pmids),
+            "retmode": "xml",
+            "rettype": "abstract",
+        }
+        if self._api_key:
+            params["api_key"] = self._api_key
+        try:
+            resp = self._client.get(_EFETCH_URL, params=params)
+            resp.raise_for_status()
+            return parse_abstracts_xml(resp.text)
+        except Exception as exc:
+            logger.error("pubmed_efetch_abstracts_failed", error=str(exc))
+            return {}
 
     # ------------------------------------------------------------------
     # Private helpers
@@ -138,6 +175,9 @@ class PubMedFetcher:
             params["api_key"] = self._api_key
         try:
             resp = self._client.get(_ESUMMARY_URL, params=params)
+            if resp.status_code == 429:  # keyless NCBI rate limit: back off once
+                time.sleep(_RETRY_AFTER_429_S)
+                resp = self._client.get(_ESUMMARY_URL, params=params)
             resp.raise_for_status()
             data = resp.json()
             result = data.get("result", {})
@@ -167,6 +207,30 @@ class PubMedFetcher:
         except Exception as exc:
             logger.error("pubmed_efetch_failed", pmid=pmid, error=str(exc))
             return None
+
+
+def parse_abstracts_xml(xml_text: str) -> dict[str, str]:
+    """Parse PubMed EFetch XML into ``{pmid: abstract}``.
+
+    Structured abstracts keep their section labels (``"METHODS: ..."``).
+    """
+    out: dict[str, str] = {}
+    root = ET.fromstring(xml_text)
+    for art in root.iter("PubmedArticle"):
+        pmid_el = art.find("MedlineCitation/PMID")
+        pmid = (pmid_el.text or "").strip() if pmid_el is not None else ""
+        if not pmid:
+            continue
+        parts: list[str] = []
+        for el in art.findall("MedlineCitation/Article/Abstract/AbstractText"):
+            text = " ".join("".join(el.itertext()).split())
+            if not text:
+                continue
+            label = el.get("Label")
+            parts.append(f"{label}: {text}" if label else text)
+        if parts:
+            out[pmid] = " ".join(parts)
+    return out
 
 
 def _record_id(source_type: str, source_id: str) -> str:

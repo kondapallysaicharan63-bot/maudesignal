@@ -5,13 +5,22 @@ from maudesignal.gate.claims import (
     ClaimParseError,
     CountClaim,
     DeviceClaim,
+    LiteratureClaim,
     QuoteClaim,
+    RecallClaim,
+    RecallCountClaim,
     RecordClaim,
     RegulationClaim,
     ShareClaim,
     claim_from_dict,
 )
-from maudesignal.gate.evidence import DeviceRef, EvidenceRecord, EvidenceStore
+from maudesignal.gate.evidence import (
+    DeviceRef,
+    EvidenceRecord,
+    EvidenceStore,
+    LiteratureRef,
+    RecallRef,
+)
 from maudesignal.gate.gate import (
     ClaimVerdict,
     GateReport,
@@ -32,7 +41,12 @@ __all__ = [
     "EvidenceRecord",
     "EvidenceStore",
     "GateReport",
+    "LiteratureClaim",
+    "LiteratureRef",
     "QuoteClaim",
+    "RecallClaim",
+    "RecallCountClaim",
+    "RecallRef",
     "RecordClaim",
     "RegulationClaim",
     "SentenceVerdict",
