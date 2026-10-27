@@ -72,10 +72,7 @@ class SafetyCopilot:
         """
         user_content = question
         if context:
-            user_content = (
-                f"Signal records for grounding:\n{context}\n\n"
-                f"Question: {question}"
-            )
+            user_content = f"Signal records for grounding:\n{context}\n\n" f"Question: {question}"
         yield from self._provider.complete_stream(
             system_prompt=_COPILOT_SYSTEM_PROMPT,
             messages=[LLMMessage(role="user", content=user_content)],

@@ -81,16 +81,16 @@ class MetaProvider(LLMProvider):
         temperature: float = 0.0,
     ) -> LLMResponse:
         """Send messages and return a normalized response."""
+        chat_messages: list[dict[str, str]] = [
+            {"role": "system", "content": system_prompt},
+        ]
+        for msg in messages:
+            chat_messages.append({"role": msg.role, "content": msg.content})
+
         try:
             response = self._client.chat.completions.create(
                 model=self._model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    *[
-                        {"role": m.role, "content": m.content}
-                        for m in messages
-                    ],
-                ],
+                messages=chat_messages,  # type: ignore[arg-type]
                 max_tokens=max_tokens,
                 temperature=temperature,
             )
@@ -120,26 +120,30 @@ class MetaProvider(LLMProvider):
         Used by the copilot UI so answers appear token-by-token instead of
         after the full response completes.
         """
+        chat_messages: list[dict[str, str]] = [
+            {"role": "system", "content": system_prompt},
+        ]
+        for msg in messages:
+            chat_messages.append({"role": msg.role, "content": msg.content})
+
         try:
             stream = self._client.chat.completions.create(
                 model=self._model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    *[
-                        {"role": m.role, "content": m.content}
-                        for m in messages
-                    ],
-                ],
+                messages=chat_messages,  # type: ignore[arg-type]
                 max_tokens=max_tokens,
                 temperature=temperature,
                 stream=True,
             )
         except Exception as exc:
-            raise MetaProviderError(
-                f"Meta Model API stream failed: {exc}"
-            ) from exc
+            raise MetaProviderError(f"Meta Model API stream failed: {exc}") from exc
+
+        # Local import: openai is an optional dependency (see __init__).
+        # The guard also narrows the SDK's streaming union type for mypy.
+        from openai.types.chat import ChatCompletionChunk
 
         for chunk in stream:
+            if not isinstance(chunk, ChatCompletionChunk):
+                continue
             delta = chunk.choices[0].delta.content if chunk.choices else None
             if delta:
                 yield delta
