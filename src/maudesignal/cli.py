@@ -1275,7 +1275,7 @@ def monitor(
     """
     from maudesignal.config import openfda_api_key_from_env
     from maudesignal.monitor.deterioration import detect_from_database, parse_yyyymmdd
-    from maudesignal.monitor.digest import build_digest, render_json, render_markdown
+    from maudesignal.monitor.digest import digest_from_database, render_json, render_markdown
     from maudesignal.monitor.fetch import incremental_fetch
 
     configure_logging("WARNING")
@@ -1314,7 +1314,7 @@ def monitor(
         console.print(f"[red]No dated events in {db_path}:[/red] {exc}")
         raise typer.Exit(code=1) from exc
 
-    digest = build_digest(result, fetch_summary=fetch_summary, notes=notes)
+    digest = digest_from_database(db, result, fetch_summary=fetch_summary, notes=notes)
     out_dir.mkdir(parents=True, exist_ok=True)
     stem = result.window.as_of.isoformat()
     md_path = out_dir / f"{stem}.md"

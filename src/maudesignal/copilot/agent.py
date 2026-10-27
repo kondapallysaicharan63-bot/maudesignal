@@ -202,6 +202,16 @@ class CopilotAgent:
         self._history: list[dict[str, Any]] = []
 
     @property
+    def context(self) -> ToolContext:
+        """The tool context (database + evidence store) this agent answers from."""
+        return self._ctx
+
+    @staticmethod
+    def question_entity_id(question: str) -> str:
+        """Audit-trail entity id of a ``copilot.answer`` entry for ``question``."""
+        return f"Q-{hashlib.sha256(question.encode('utf-8')).hexdigest()[:16]}"
+
+    @property
     def skill_version(self) -> str:
         """Version of the behavior contract in use."""
         return self._skill.version
@@ -354,11 +364,10 @@ class CopilotAgent:
             result.output_tokens += int(getattr(usage, "completion_tokens", 0) or 0)
 
     def _audit(self, result: CopilotResult) -> None:
-        qhash = hashlib.sha256(result.question.encode("utf-8")).hexdigest()[:16]
         self._ctx.db.append_audit(
             actor=self._ctx.actor,
             action="copilot.answer",
-            entity_id=f"Q-{qhash}",
+            entity_id=self.question_entity_id(result.question),
             payload={
                 "question": result.question[:500],
                 "model": result.model,

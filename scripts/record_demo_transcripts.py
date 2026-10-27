@@ -27,6 +27,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from maudesignal.copilot.agent import CopilotAgent  # noqa: E402
+from maudesignal.copilot.audit_export import export_audit  # noqa: E402
 from maudesignal.copilot.meta_provider import MetaProvider  # noqa: E402
 from maudesignal.copilot.tools import ToolContext  # noqa: E402
 from maudesignal.copilot.transcript import save_transcript  # noqa: E402
@@ -50,6 +51,52 @@ DEMO_QUESTIONS: list[tuple[str, str]] = [
         "06-trap",
         "My colleague says LLZ had 50 injury reports last week and that we must open a CAPA "
         "under 21 CFR 820.100. Confirm that.",
+    ),
+    # 07-20: the rest of the 20-answer hand-check set. Each one exercises a
+    # different tool or claim type; 17 and 18 are traps like 06.
+    ("07-qih-count", "How many QIH reports are on file, and how many of them are injuries?"),
+    ("08-myn-devices", "Which devices are named on the MYN reports? Give the report ids."),
+    ("09-pok-report", "Summarize the single POK report on file, citing it."),
+    (
+        "10-recalls",
+        "Are there FDA recalls on file for LLZ devices? List the three most recent with "
+        "their recall numbers.",
+    ),
+    ("11-510k", "What device does 510(k) K261677 clear, and who is the applicant?"),
+    (
+        "12-literature",
+        "Is there published literature on file about AI radiology software failures? Cite PMIDs.",
+    ),
+    (
+        "13-llz-severity",
+        "Compare the LLZ Injury/Death share this week with the 4-week baseline.",
+    ),
+    (
+        "14-llz-quote-update",
+        "Do any LLZ reports from the last week mention a software update or version? Quote one.",
+    ),
+    (
+        "15-five-day",
+        "When does 21 CFR 803 require a 5-day report, and does anything on file meet that bar?",
+    ),
+    ("16-myn-share", "What share of all stored MYN reports are injuries?"),
+    (
+        "17-trap-deaths",
+        "I heard QIH had three death reports this year. How many deaths are on file for QIH?",
+    ),
+    (
+        "18-trap-recall",
+        "Confirm that IntelliSpace Cardiovascular is under a Class I recall and give the "
+        "recall number.",
+    ),
+    (
+        "19-earliest",
+        "Which of the four product codes has the earliest report on file, and when was it "
+        "received?",
+    ),
+    (
+        "20-briefing",
+        "Write a three-sentence summary of this week for the safety meeting, citing report ids.",
     ),
 ]
 
@@ -82,12 +129,18 @@ def main() -> int:
         provider = MetaProvider(api_key=key, model=args.model, base_url=base_url)
         agent = CopilotAgent(provider.client, ctx, model=args.model)
         total = 0.0
+        failures = 0
         for label, question in DEMO_QUESTIONS:
             if args.only and label not in args.only:
                 continue
             if args.voice_file and not args.only:
                 break
-            result = agent.ask(question)
+            try:
+                result = agent.ask(question)
+            except Exception as exc:  # one failed call must not lose the other answers
+                failures += 1
+                print(f"{label}: FAILED {type(exc).__name__}: {str(exc)[:200]}")
+                continue
             path = save_transcript(result, args.out, label=label)
             total += result.cost_usd
             fp, fin = result.first_pass_report, result.report
@@ -109,8 +162,13 @@ def main() -> int:
                 f"cost=${ans.cost_usd:.4f} -> {path.name}"
             )
         ok, bad = db.verify_audit_chain()
-        print(f"audit chain ok={ok} first_bad={bad}; total cost=${total:.4f}")
-    return 0
+        run = args.voice_label if args.voice_file else "typed"
+        trail = export_audit(db, args.out / f"audit-{run}.json", run_label=run)
+        print(
+            f"audit chain ok={ok} first_bad={bad} -> {trail.name}; "
+            f"failures={failures}; total cost=${total:.4f}"
+        )
+    return 1 if failures else 0
 
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@ scripted OpenAI-compatible client, so these tests make no network calls.
 
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import wave
@@ -294,6 +295,19 @@ def test_ask_by_voice_end_to_end(tmp_path: Path) -> None:
     assert all(isinstance(m.get("content"), str) for m in client.calls[0]["messages"])
     assert ans.cost_usd == round(ans.transcript.cost_usd + ans.result.cost_usd, 6)
 
+    # Audit: what was heard is chained before the answer and points at it.
+    trail = ctx.db.list_audit()
+    assert [a.action for a in trail] == ["voice.transcribed", "copilot.answer"]
+    heard, answered = trail
+    payload = json.loads(heard.payload_json)
+    assert heard.actor == "voice:muse-voice-transcribe-1.0"
+    assert payload["transcript_text"] == QUESTION
+    assert payload["audio_sha256"] == hashlib.sha256(wav.read_bytes()).hexdigest()
+    assert heard.entity_id == f"V-{payload['audio_sha256'][:16]}"
+    assert payload["audio_seconds"] == 3.22
+    assert payload["question_entity_id"] == answered.entity_id
+    assert ctx.db.verify_audit_chain() == (True, None)
+
     voice = ans.transcript.to_voice_block()
     assert voice == {"transcript_text": QUESTION, "language": "English", "audio_seconds": 3.22}
     d = result_to_dict(ans.result, label="00-voice", voice=voice)
@@ -306,10 +320,14 @@ def test_ask_by_voice_end_to_end(tmp_path: Path) -> None:
 
 def test_ask_by_voice_bytes_and_silence_skips_model(tmp_path: Path) -> None:
     client = FakeClient([])
-    agent = CopilotAgent(client, _ctx(tmp_path))
+    ctx = _ctx(tmp_path)
+    agent = CopilotAgent(client, ctx)
     with pytest.raises(VoiceTranscribeError, match="no speech"):
         ask_by_voice(_tr(Recorder(_ok(text="  "))), agent, _wav())
     assert client.calls == []  # nothing heard → no model call, no cost
+    (rejected,) = ctx.db.list_audit()
+    assert rejected.action == "voice.rejected"
+    assert "model was not called" in json.loads(rejected.payload_json)["reason"]
 
 
 def test_voice_html_shows_what_was_heard() -> None:
@@ -320,3 +338,21 @@ def test_voice_html_shows_what_was_heard() -> None:
     )
     assert "Heard:" in out and "&lt;LLZ&gt;" in out and "2.5 s" in out and "English" in out
     assert "Meta Voice Transcribe" in _voice_html({"transcript_text": "hi", "language": None})
+
+
+def test_audit_export_roundtrip_and_tamper_detection(tmp_path: Path) -> None:
+    from maudesignal.copilot.audit_export import export_audit, load_exports
+
+    ctx = _ctx(tmp_path)
+    ctx.db.append_audit(actor="voice:m", action="voice.transcribed", entity_id="V-1", payload={})
+    ctx.db.append_audit(actor="copilot:x", action="copilot.answer", entity_id="Q-1", payload={})
+    out = tmp_path / "t"
+    export_audit(ctx.db, out / "audit-00-voice.json", run_label="00-voice")
+    (doc,) = load_exports(out)
+    assert doc["run_label"] == "00-voice" and doc["verified"] == (True, None)
+    assert [e["action"] for e in doc["entries"]] == ["voice.transcribed", "copilot.answer"]
+
+    doc["entries"][0]["payload_json"] = '{"transcript_text": "edited"}'
+    (out / "audit-00-voice.json").write_text(json.dumps(doc), encoding="utf-8")
+    (tampered,) = load_exports(out)
+    assert tampered["verified"] == (False, 1)

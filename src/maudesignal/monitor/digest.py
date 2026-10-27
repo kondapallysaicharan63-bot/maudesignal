@@ -10,6 +10,9 @@ template filled with numbers taken verbatim from the detector.
 Headline format: ``"<N> new, <M> worsening"`` where *new* counts
 ``new_signal`` product codes and *worsening* counts ``spike`` plus
 ``severity_escalation`` product codes.
+
+Flagged product codes are ranked by a fixed key (see :data:`RANKING_ORDER`)
+and every rank carries a sentence saying why, built from the same numbers.
 """
 
 from __future__ import annotations
@@ -18,8 +21,10 @@ import json
 from dataclasses import dataclass, field
 from typing import Any
 
+from maudesignal.catalog.names import brand_counts, classification_names, report_brands
 from maudesignal.monitor.deterioration import (
     BASELINE_WEEKS,
+    CLASSIFICATION_PRECEDENCE,
     CURRENT_WINDOW_DAYS,
     SEVERITY_ESCALATION_PP,
     SPIKE_MIN_REPORTS,
@@ -27,13 +32,24 @@ from maudesignal.monitor.deterioration import (
     DetectionResult,
     ProductCodeSignal,
 )
+from maudesignal.storage.database import Database
 
 DIGEST_FOOTER = (
     "Advisory only — B2B regulatory triage aid, not medical advice. "
     "Every item requires human review; nothing is reported to FDA automatically."
 )
-DIGEST_SCHEMA_VERSION = "1.0"
+DIGEST_SCHEMA_VERSION = "1.1"
 MAX_EXAMPLE_IDS = 3
+
+#: How flagged product codes are ordered, most urgent first. Each step only
+#: breaks ties left by the steps before it.
+RANKING_ORDER: tuple[str, ...] = (
+    "rule precedence: new signal, then severity escalation, then volume spike",
+    "more Injury/Death reports this window",
+    "higher ratio of this window's count to the baseline weekly mean",
+    "more reports this window",
+    "product code, alphabetically",
+)
 
 _TITLES: dict[str, str] = {
     "new_signal": "new signal",
@@ -58,6 +74,12 @@ class Digest:
         fetch_summary: Optional ``product_code -> records newly stored`` from
             this run's ingestion step (empty when nothing was fetched).
         notes: Optional extra lines (e.g. a fetch warning), rendered verbatim.
+        ranked: Flagged (non-stable) signals, most urgent first.
+        rank_reasons: ``product_code -> sentence`` saying why it holds its rank.
+        device_types: ``product_code -> FDA classification device name`` (only
+            codes with a stored name).
+        window_brands: ``product_code -> [(brand, reports)]`` for the brand
+            names written on this window's reports, most frequent first.
     """
 
     result: DetectionResult
@@ -68,6 +90,125 @@ class Digest:
     source: str
     fetch_summary: dict[str, int] = field(default_factory=dict)
     notes: tuple[str, ...] = ()
+    ranked: tuple[ProductCodeSignal, ...] = ()
+    rank_reasons: dict[str, str] = field(default_factory=dict)
+    device_types: dict[str, str] = field(default_factory=dict)
+    window_brands: dict[str, list[tuple[str, int]]] = field(default_factory=dict)
+
+
+# ----------------------------------------------------------------------
+# Ranking
+# ----------------------------------------------------------------------
+
+
+def _rank_key(signal: ProductCodeSignal) -> tuple[int, int, float, int, str]:
+    ratio = -1.0 if signal.spike_ratio is None else signal.spike_ratio
+    return (
+        CLASSIFICATION_PRECEDENCE.index(signal.classification),
+        -signal.current_severe_count,
+        -ratio,
+        -signal.current_count,
+        signal.product_code,
+    )
+
+
+def rank_signals(signals: tuple[ProductCodeSignal, ...]) -> tuple[ProductCodeSignal, ...]:
+    """Order flagged signals most urgent first (stable codes are left out).
+
+    Args:
+        signals: Every product-code signal from a detection run.
+
+    Returns:
+        The non-stable signals sorted by :data:`RANKING_ORDER`.
+    """
+    return tuple(sorted((s for s in signals if not s.is_stable), key=_rank_key))
+
+
+def _ratio_text(signal: ProductCodeSignal) -> str:
+    return "n/a" if signal.spike_ratio is None else f"{signal.spike_ratio:.2f}x"
+
+
+def rule_evidence(signal: ProductCodeSignal) -> str:
+    """One clause stating the rule that fired and the numbers that crossed it.
+
+    Args:
+        signal: A non-stable signal.
+
+    Returns:
+        e.g. ``"volume spike: 33 reports this window vs a baseline weekly mean
+        of 8.75 (3.77x; the rule needs >= 2x and >= 3 reports)"``.
+    """
+    if signal.classification == "new_signal":
+        if signal.prior_report_count == 0:
+            return f"new signal: first {signal.current_count} report(s) ever stored for this code"
+        return (
+            f"new signal: event type(s) never seen before for this code "
+            f"({', '.join(signal.new_event_types)}) despite {signal.prior_report_count} "
+            f"earlier reports"
+        )
+    if signal.classification == "severity_escalation":
+        delta = signal.severe_share_delta_pp or 0.0
+        return (
+            f"severity escalation: Injury/Death share {_pct(signal.current_severe_share)} "
+            f"({signal.current_severe_count}/{signal.current_count}) vs baseline "
+            f"{_pct(signal.baseline_severe_share)} "
+            f"({signal.baseline_severe_count}/{signal.baseline_count}), {delta:+.1f} pp; "
+            f"the rule needs >= +{SEVERITY_ESCALATION_PP} pp"
+        )
+    return (
+        f"volume spike: {signal.current_count} reports this window vs a baseline weekly mean "
+        f"of {signal.baseline_weekly_mean:.2f} ({_ratio_text(signal)}; the rule needs "
+        f">= {SPIKE_MULTIPLIER}x and >= {SPIKE_MIN_REPORTS} reports)"
+    )
+
+
+def _deciding_step(a: ProductCodeSignal, b: ProductCodeSignal) -> str:
+    """Why ``a`` ranks above ``b``: the first ranking step where they differ."""
+    ka, kb = _rank_key(a), _rank_key(b)
+    if ka[0] != kb[0]:
+        return f"{_TITLES[a.classification]} outranks {_TITLES[b.classification]}"
+    if ka[1] != kb[1]:
+        return (
+            f"more Injury/Death reports this window "
+            f"({a.current_severe_count} vs {b.current_severe_count})"
+        )
+    if ka[2] != kb[2]:
+        return f"higher ratio to baseline ({_ratio_text(a)} vs {_ratio_text(b)})"
+    if ka[3] != kb[3]:
+        return f"more reports this window ({a.current_count} vs {b.current_count})"
+    return (
+        f"tie on every measure; ordered by product code ({a.product_code} before {b.product_code})"
+    )
+
+
+def rank_reasons(ranked: tuple[ProductCodeSignal, ...], stable_count: int) -> dict[str, str]:
+    """Explain each flagged product code's rank in one sentence.
+
+    Args:
+        ranked: Output of :func:`rank_signals`.
+        stable_count: Product codes that crossed no threshold.
+
+    Returns:
+        ``product_code -> reason``.
+    """
+    n = len(ranked)
+    reasons: dict[str, str] = {}
+    for i, s in enumerate(ranked):
+        parts = [f"Ranked {i + 1} of {n} flagged: {rule_evidence(s)}."]
+        if n == 1:
+            parts.append(
+                f"It is the only product code that crossed a rule threshold; "
+                f"{stable_count} other code(s) stayed below every threshold."
+            )
+        else:
+            if i + 1 < n:
+                below = ranked[i + 1]
+                parts.append(f"Above {below.product_code}: {_deciding_step(s, below)}.")
+            if i > 0:
+                above = ranked[i - 1]
+                parts.append(f"Below {above.product_code}: {_deciding_step(above, s)}.")
+        reasons[s.product_code] = " ".join(parts)
+    return reasons
 
 
 def example_report_ids(signal: ProductCodeSignal, limit: int = MAX_EXAMPLE_IDS) -> list[str]:
@@ -98,6 +239,8 @@ def build_digest(
     source: str = "openFDA device adverse-event reports stored in the local MaudeSignal database",
     fetch_summary: dict[str, int] | None = None,
     notes: tuple[str, ...] = (),
+    device_types: dict[str, str] | None = None,
+    report_brands: dict[str, str] | None = None,
 ) -> Digest:
     """Summarize a detection result into a :class:`Digest`.
 
@@ -106,6 +249,8 @@ def build_digest(
         source: Data-source description shown under the headline.
         fetch_summary: Optional per-product-code count of newly stored records.
         notes: Optional extra lines to include verbatim.
+        device_types: Optional ``product_code -> FDA device type`` names.
+        report_brands: Optional ``report_id -> brand name`` from the stored reports.
 
     Returns:
         The digest.
@@ -115,6 +260,10 @@ def build_digest(
         1 for s in result.signals if s.classification in ("spike", "severity_escalation")
     )
     stable = sum(1 for s in result.signals if s.is_stable)
+    ranked = rank_signals(result.signals)
+    brands = report_brands or {}
+    window_brands = {s.product_code: brand_counts(s.current_report_ids, brands) for s in ranked}
+    window_brands = {pc: pairs for pc, pairs in window_brands.items() if pairs}
     return Digest(
         result=result,
         headline=f"{new_count} new, {worsening} worsening",
@@ -124,6 +273,41 @@ def build_digest(
         source=source,
         fetch_summary=dict(sorted((fetch_summary or {}).items())),
         notes=notes,
+        ranked=ranked,
+        rank_reasons=rank_reasons(ranked, stable),
+        device_types={
+            pc: name
+            for pc, name in sorted((device_types or {}).items())
+            if any(s.product_code == pc for s in result.signals)
+        },
+        window_brands=window_brands,
+    )
+
+
+def digest_from_database(
+    db: Database,
+    result: DetectionResult,
+    *,
+    fetch_summary: dict[str, int] | None = None,
+    notes: tuple[str, ...] = (),
+) -> Digest:
+    """Build a digest with device names taken from the same database.
+
+    Args:
+        db: Database the detection ran over.
+        result: The detection result.
+        fetch_summary: Optional per-product-code count of newly stored records.
+        notes: Optional extra lines to include verbatim.
+
+    Returns:
+        The digest, with FDA device types and report brand names filled in.
+    """
+    return build_digest(
+        result,
+        fetch_summary=fetch_summary,
+        notes=notes,
+        device_types=classification_names(db),
+        report_brands=report_brands(db),
     )
 
 
@@ -136,9 +320,31 @@ def _pct(value: float | None) -> str:
     return "n/a" if value is None else f"{value * 100:.1f}%"
 
 
-def _signal_section(signal: ProductCodeSignal) -> list[str]:
+def _device_line(
+    device_type: str | None, brands: list[tuple[str, int]], current_count: int
+) -> str | None:
+    parts = []
+    if device_type:
+        parts.append(f"FDA device type {device_type}")
+    if brands:
+        named = ", ".join(f"{b} ({n} of {current_count} reports)" for b, n in brands)
+        parts.append(f"named on this window's reports: {named}")
+    return f"- Device: {'; '.join(parts)}" if parts else None
+
+
+def _signal_section(
+    signal: ProductCodeSignal,
+    reason: str | None = None,
+    device_type: str | None = None,
+    brands: list[tuple[str, int]] | None = None,
+) -> list[str]:
     title = _TITLES[signal.classification]
     lines = [f"## {signal.product_code} — {title}", ""]
+    device = _device_line(device_type, brands or [], signal.current_count)
+    if device:
+        lines.append(device)
+    if reason:
+        lines.append(f"- Why this rank: {reason}")
     if len(signal.triggers) > 1:
         fired = ", ".join(_TITLES[t] for t in signal.triggers)
         lines.append(f"- Rules fired: {fired}")
@@ -200,6 +406,7 @@ def render_markdown(digest: Digest) -> str:
         f"- Rules: new signal = first reports / never-seen event type; "
         f"spike = >= {SPIKE_MULTIPLIER}x baseline weekly mean and >= {SPIKE_MIN_REPORTS} reports; "
         f"severity escalation = Injury/Death share up >= {SEVERITY_ESCALATION_PP} pp",
+        f"- Ranking (most urgent first): {'; then '.join(RANKING_ORDER)}",
     ]
     if digest.fetch_summary:
         fetched = ", ".join(f"{pc} {n}" for pc, n in digest.fetch_summary.items())
@@ -207,10 +414,18 @@ def render_markdown(digest: Digest) -> str:
     lines.extend(f"- Note: {note}" for note in digest.notes)
     lines.append("")
 
-    flagged = digest.result.non_stable()
+    flagged = digest.ranked or rank_signals(digest.result.signals)
     if flagged:
         for signal in flagged:
-            lines.extend(_signal_section(signal))
+            pc = signal.product_code
+            lines.extend(
+                _signal_section(
+                    signal,
+                    digest.rank_reasons.get(pc),
+                    digest.device_types.get(pc),
+                    digest.window_brands.get(pc),
+                )
+            )
     else:
         lines.extend(["No product code crossed a rule threshold.", ""])
 
@@ -289,6 +504,7 @@ def digest_to_dict(digest: Digest) -> dict[str, Any]:
             "spike_min_reports": SPIKE_MIN_REPORTS,
             "severity_escalation_pp": SEVERITY_ESCALATION_PP,
             "severe_event_types": ["death", "injury"],
+            "ranking_order": list(RANKING_ORDER),
         },
         "source": digest.source,
         "events_considered": digest.result.events_considered,
@@ -297,6 +513,20 @@ def digest_to_dict(digest: Digest) -> dict[str, Any]:
         "fetch_summary": digest.fetch_summary,
         "notes": list(digest.notes),
         "signals": [_signal_to_dict(s) for s in digest.result.signals],
+        "device_types": digest.device_types,
+        "window_brands": {
+            pc: [{"brand": b, "reports": n} for b, n in pairs]
+            for pc, pairs in digest.window_brands.items()
+        },
+        "ranking": [
+            {
+                "rank": i + 1,
+                "product_code": s.product_code,
+                "classification": s.classification,
+                "reason": digest.rank_reasons.get(s.product_code, ""),
+            }
+            for i, s in enumerate(digest.ranked)
+        ],
         "footer": DIGEST_FOOTER,
     }
 

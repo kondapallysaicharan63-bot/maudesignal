@@ -108,7 +108,7 @@ def download_510k_pdf(
 
     Args:
         k_number: 510(k) number.
-        cache_dir: Cache folder (``data/demo/510k`` by default; PDFs are gitignored).
+        cache_dir: Cache folder (``data/demo/510k`` by default; the demo PDFs are committed there).
         transport: Injected HTTP transport (tests).
         timeout_s: Request timeout.
 

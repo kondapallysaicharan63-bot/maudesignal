@@ -982,6 +982,13 @@ class Database:
     # ------------------------------------------------------------------
 
     @staticmethod
+    def audit_entry_hash(
+        prev_hash: str, ts: datetime, actor: str, action: str, entity_id: str, payload_json: str
+    ) -> str:
+        """Hash of one audit entry chained to ``prev_hash`` (for re-verifying exports)."""
+        return Database._audit_hash(prev_hash, ts, actor, action, entity_id, payload_json)
+
+    @staticmethod
     def _audit_hash(
         prev_hash: str, ts: datetime, actor: str, action: str, entity_id: str, payload_json: str
     ) -> str:

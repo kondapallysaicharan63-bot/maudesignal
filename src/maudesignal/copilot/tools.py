@@ -25,7 +25,7 @@ from maudesignal.copilot.actions import draft_capa
 from maudesignal.gate.cfr import CFR_SECTIONS
 from maudesignal.gate.evidence import EvidenceStore
 from maudesignal.monitor.deterioration import detect_from_database, parse_yyyymmdd
-from maudesignal.monitor.digest import build_digest, digest_to_dict
+from maudesignal.monitor.digest import digest_from_database, digest_to_dict
 from maudesignal.storage.database import Database
 
 MAX_IDS = 10
@@ -57,7 +57,7 @@ class ToolContext:
 def overnight_signals(ctx: ToolContext, as_of: str | None = None) -> dict[str, Any]:
     """Deterioration digest: which product codes are new / spiking / escalating."""
     as_of_date = parse_yyyymmdd(as_of) if as_of else None
-    digest = build_digest(detect_from_database(ctx.db, as_of_date))
+    digest = digest_from_database(ctx.db, detect_from_database(ctx.db, as_of_date))
     d = digest_to_dict(digest)
     w = digest.result.window
     out: dict[str, Any] = {
@@ -69,9 +69,16 @@ def overnight_signals(ctx: ToolContext, as_of: str | None = None) -> dict[str, A
             "date_to": _ymd(w.baseline_end),
         },
         "rules": d["rules"],
+        # Flagged codes most urgent first, each with the sentence explaining its rank.
+        "ranking": d["ranking"],
+        "device_types": d["device_types"],
+        "window_brands": d["window_brands"],
         "signals": [],
     }
-    for s in d["signals"]:
+    order = {r["product_code"]: r["rank"] for r in d["ranking"]}
+    for s in sorted(
+        d["signals"], key=lambda x: (order.get(x["product_code"], 1_000), x["product_code"])
+    ):
         out["signals"].append(
             {
                 k: (v[:MAX_IDS] if isinstance(v, list) else v)

@@ -22,6 +22,7 @@ import pandas as pd
 import streamlit as st
 
 from maudesignal.copilot.actions import ActionError, decide_capa
+from maudesignal.copilot.audit_export import load_exports
 from maudesignal.copilot.transcript import load_transcripts
 from maudesignal.gate import (
     CountClaim,
@@ -33,7 +34,7 @@ from maudesignal.gate import (
 )
 from maudesignal.gate.loader import store_from_database
 from maudesignal.monitor.deterioration import detect_from_database
-from maudesignal.monitor.digest import build_digest, render_markdown
+from maudesignal.monitor.digest import RANKING_ORDER, digest_from_database, render_markdown
 from maudesignal.sources.openfda_sources import k510_url
 from maudesignal.storage.database import Database
 
@@ -104,7 +105,7 @@ def page_overnight(db: Database) -> None:
     """Overnight deterioration digest (deterministic, no model)."""
     st.html(FRAMING_BANNER)
     result = detect_from_database(db)
-    digest = build_digest(result)
+    digest = digest_from_database(db, result)
     c1, c2, c3 = st.columns(3)
     c1.metric("New signals", digest.new_count)
     c2.metric("Worsening", digest.worsening_count)
@@ -115,6 +116,27 @@ def page_overnight(db: Database) -> None:
         f"This week: {w.current_start} → {w.current_end}; baseline: "
         f"{w.baseline_start} → {w.baseline_end}."
     )
+    if digest.ranked:
+        top = digest.ranked[0]
+        device = digest.device_types.get(top.product_code)
+        brands = digest.window_brands.get(top.product_code, [])
+        with st.container(border=True):
+            st.markdown(
+                f"**Top signal: {top.product_code}**"
+                + (f" · {html.escape(device)}" if device else "")
+            )
+            st.markdown(f"**Why it is ranked first.** {digest.rank_reasons[top.product_code]}")
+            if brands:
+                st.caption(
+                    "Devices named on this week's reports: "
+                    + ", ".join(f"{b} ({n} of {top.current_count} reports)" for b, n in brands)
+                    + "."
+                )
+            st.caption(
+                "Ranking order: "
+                + "; then ".join(RANKING_ORDER)
+                + ". Deterministic — no model involved."
+            )
     st.markdown(render_markdown(digest))
     digests = sorted((PROJECT_ROOT / "digests").glob("*.md"))
     if digests:
@@ -356,6 +378,9 @@ def page_actions(db: Database) -> None:
 
     st.subheader("Audit trail")
     rows = db.list_audit()
+    if not rows:
+        _recorded_audit_trails()
+        return
     ok, bad = db.verify_audit_chain()
     if ok:
         st.success(f"Hash chain intact across {len(rows)} entries.")
@@ -379,3 +404,60 @@ def page_actions(db: Database) -> None:
             hide_index=True,
             use_container_width=True,
         )
+
+
+def _recorded_audit_trails() -> None:
+    """Show the audit trails saved by the live recording runs (stored-first demo)."""
+    exports = load_exports(TRANSCRIPT_DIR)
+    if not exports:
+        st.caption("No audit entries yet. Ask the copilot something to start the trail.")
+        return
+    st.caption(
+        "This public demo database has no live actions, so these are the trails written "
+        "during the recorded Meta runs (voice transcription, copilot answers, CAPA drafts). "
+        "Every hash is recomputed here from the stored fields."
+    )
+    for doc in exports:
+        entries = doc.get("entries", [])
+        ok, bad = doc["verified"]
+        label = f"Recorded run `{doc.get('run_label', doc['file'])}` · {len(entries)} entries"
+        if ok:
+            st.success(f"{label} · hash chain intact.")
+        else:
+            st.error(f"{label} · hash chain broken at entry {bad}.")
+        if entries:
+            st.dataframe(
+                pd.DataFrame(
+                    [
+                        {
+                            "seq": e["seq"],
+                            "time (UTC)": e["ts"],
+                            "actor": e["actor"],
+                            "action": e["action"],
+                            "entity": e["entity_id"],
+                            "detail": _audit_detail(e),
+                            "hash": e["entry_hash"][:12],
+                        }
+                        for e in entries
+                    ]
+                ),
+                hide_index=True,
+                use_container_width=True,
+            )
+
+
+def _audit_detail(entry: dict[str, Any]) -> str:
+    """One readable line per entry: what was heard, asked or drafted."""
+    try:
+        payload = json.loads(entry.get("payload_json") or "{}")
+    except ValueError:
+        return ""
+    if entry.get("action", "").startswith("voice."):
+        return f"heard: {payload.get('transcript_text', '')!r} ({payload.get('audio_seconds')} s)"
+    if entry.get("action") == "copilot.answer":
+        g = payload.get("gate_final", {})
+        return (
+            f"asked: {payload.get('question', '')[:80]!r} · gate "
+            f"{g.get('passed', 0)}/{g.get('passed', 0) + g.get('blocked', 0)} passed"
+        )
+    return str(payload.get("title") or "")

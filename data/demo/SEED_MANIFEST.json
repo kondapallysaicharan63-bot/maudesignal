@@ -103,14 +103,16 @@
   "catalog": {
     "populated": true,
     "source": "openFDA 510(k) keyword search via maudesignal.catalog.fetcher",
-    "devices_found": 19,
+    "devices_found": 5,
     "keywords_searched": 12,
     "errors": [],
     "seeded_codes_in_catalog": [
       "LLZ",
       "MYN",
+      "POK",
       "QIH"
-    ]
+    ],
+    "correction_2026_10_27": "Removed 15 fallback rows whose device names were placeholders, not FDA names; LLZ, MYN and POK now carry their openFDA classification device_name (the same names as the queries above). QIH and JAK rows came from the live 510(k) search and are unchanged."
   },
   "notes": [
     "Data are public, de-identified FDA MAUDE reports; no PHI.",

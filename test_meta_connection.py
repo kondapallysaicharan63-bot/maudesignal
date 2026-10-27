@@ -42,6 +42,16 @@ def main() -> int:
 
     ids = sorted(m.id for m in OpenAI(api_key=api_key, base_url=base_url).models.list())
     print(f"models.list OK: {len(ids)} models; {model} available: {model in ids}")
+    print(f"models.list ids: {', '.join(ids)}")
+    # Every model id the hackathon features call; a missing one 404s at run time.
+    for needed in (
+        "muse-spark-1.3",
+        "muse-wonder-1.0",
+        "muse-image-1.0",
+        "muse-voice-transcribe-1.0",
+        "sam-3.1",
+    ):
+        print(f"  {needed}: {'listed' if needed in ids else 'NOT LISTED'}")
 
     provider = MetaProvider(api_key=api_key, model=model, base_url=base_url)
     copilot = SafetyCopilot(provider)

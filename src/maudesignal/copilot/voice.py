@@ -19,6 +19,7 @@ header, and never logged, stored or included in an exception message.
 
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import math
@@ -385,11 +386,43 @@ def ask_by_voice(
         AudioValidationError: Clip rejected locally.
         VoiceTranscribeError: Transcription failed or nothing intelligible was heard
             (the model is not called in either case).
+
+    Each transcribed clip appends a ``voice.transcribed`` entry (model, audio
+    SHA-256, duration, the exact text heard, and the entity id of the
+    ``copilot.answer`` entry that follows) to the hash-chained audit trail; a
+    clip with no recognised speech appends ``voice.rejected``.
     """
     if isinstance(audio, bytes):
-        transcript = transcriber.transcribe_bytes(audio, filename=filename)
+        data = audio
     else:
-        transcript = transcriber.transcribe_file(audio)
+        path = Path(audio)
+        data, filename = path.read_bytes(), path.name
+    transcript = transcriber.transcribe_bytes(data, filename=filename)
+    audio_sha256 = hashlib.sha256(data).hexdigest()
+    db = agent.context.db
+    entry = {
+        "model": transcriber.model,
+        "audio_sha256": audio_sha256,
+        "audio_seconds": transcript.duration_s,
+        "language": transcript.language,
+        "transcript_text": transcript.text[:500],
+        "estimated_cost_usd": transcript.cost_usd,
+    }
     if not transcript.text:
+        # Recorded too, so a dropped question is visible in the trail.
+        db.append_audit(
+            actor=f"voice:{transcriber.model}",
+            action="voice.rejected",
+            entity_id=f"V-{audio_sha256[:16]}",
+            payload={**entry, "reason": "no speech recognised; the model was not called"},
+        )
         raise VoiceTranscribeError("no speech was recognised in the recording")
+    # What was heard goes into the chain before the answer, linked by entity id,
+    # so a reviewer can tie each spoken question to the copilot.answer it produced.
+    db.append_audit(
+        actor=f"voice:{transcriber.model}",
+        action="voice.transcribed",
+        entity_id=f"V-{audio_sha256[:16]}",
+        payload={**entry, "question_entity_id": agent.question_entity_id(transcript.text)},
+    )
     return VoiceAnswer(transcript=transcript, result=agent.ask(transcript.text))

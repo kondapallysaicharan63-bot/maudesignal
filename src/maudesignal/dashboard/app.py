@@ -15,6 +15,7 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
+from maudesignal.catalog.names import classification_names, report_brands
 from maudesignal.config import Config
 from maudesignal.ingestion.openfda_client import OpenFDAClient
 from maudesignal.ingestion.pipeline import IngestionResult, ingest_product_code
@@ -636,12 +637,13 @@ def _product_code_lookup(db: Database) -> dict[str, str]:
 def _device_name_lookup(db: Database) -> dict[str, str]:
     """Return product_code → display name.
 
-    Prefers device_catalog.device_name; falls back to normalized_events.brand_name
-    so product codes never enriched still show a human-readable label.
+    Prefers the FDA classification name; then device_catalog.device_name; then
+    normalized_events.brand_name so product codes never enriched still show a
+    human-readable label.
     """
     brand_fallback = db.brand_name_lookup()
     catalog = {d.product_code: d.device_name for d in db.list_catalog_devices()}
-    return {**brand_fallback, **catalog}  # catalog wins on conflict
+    return {**brand_fallback, **catalog, **classification_names(db)}
 
 
 def _catalog_dataframe(db: Database) -> pd.DataFrame:
@@ -791,7 +793,13 @@ def _page_dashboard(db: Database) -> None:
     dn_lookup = _device_name_lookup(db)
     recent = df_ext.copy()
     recent["product_code"] = recent["maude_report_id"].map(pc_lookup).fillna("?")
-    recent["device_name"] = recent["product_code"].map(dn_lookup).fillna("—")
+    # The device named on each report; the product code's FDA name only when blank.
+    recent["device_name"] = (
+        recent["maude_report_id"]
+        .map(report_brands(db))
+        .fillna(recent["product_code"].map(dn_lookup))
+        .fillna("—")
+    )
     display_recent = (
         recent[
             [
@@ -840,7 +848,12 @@ def _page_signal_explorer(db: Database) -> None:
     pc_lookup = _product_code_lookup(db)
     df["product_code"] = df["maude_report_id"].map(pc_lookup).fillna("?")
     dn_lookup = _device_name_lookup(db)
-    df["device_name"] = df["product_code"].map(dn_lookup).fillna("—")
+    df["device_name"] = (
+        df["maude_report_id"]
+        .map(report_brands(db))
+        .fillna(df["product_code"].map(dn_lookup))
+        .fillna("—")
+    )
 
     _section("Filters")
     f1, f2, f3, f4 = st.columns(4)
@@ -937,7 +950,7 @@ def _page_signal_explorer(db: Database) -> None:
                 col_a.markdown(f"**Manufacturer:** {event.manufacturer or '—'}")
                 col_a.markdown(f"**Brand / Device:** {event.brand_name or '—'}")
                 col_b.markdown(f"**Product Code:** {event.product_code}")
-                col_b.markdown(f"**Device Name:** {dn_lookup.get(event.product_code, '—')}")
+                col_b.markdown(f"**FDA device type:** {dn_lookup.get(event.product_code, '—')}")
                 col_b.markdown(f"**Event Type:** {event.event_type or '—'}")
                 col_b.markdown(f"**Event Date:** {event.event_date or '—'}")
                 col_c.markdown(f"**Official FDA Record:** [Open ↗]({_maude_url(str(selected_id))})")
