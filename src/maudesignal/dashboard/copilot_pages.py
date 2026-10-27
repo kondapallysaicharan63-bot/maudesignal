@@ -6,7 +6,7 @@ Stored-first: the public deployment has no API key. The Copilot page replays
 transcripts recorded from real Muse Spark runs (``demo/transcripts``) and runs
 the citation gate live — the gate is deterministic and needs no model. If
 ``META_MODEL_API_KEY`` is present (local use), the page also offers live
-questions.
+questions, typed or spoken (spoken → Meta Voice Transcribe → text → copilot).
 """
 
 from __future__ import annotations
@@ -117,7 +117,25 @@ def page_overnight(db: Database) -> None:
 # ---------------------------------------------------------------------------
 
 
+def _voice_html(voice: dict[str, Any]) -> str:
+    """Render the "Heard: …" line so the analyst sees exactly what the ASR produced."""
+    facts = []
+    if voice.get("audio_seconds") is not None:
+        facts.append(f"{float(voice['audio_seconds']):.1f} s")
+    if voice.get("language"):
+        facts.append(str(voice["language"]))
+    facts.append("Meta Voice Transcribe")
+    return (
+        '<div style="font-size:14px;color:#1c2b33;margin:0 0 4px 0">'
+        f"🎙 <b>Heard:</b> “{html.escape(str(voice.get('transcript_text', '')))}”"
+        f' <span style="color:#65676b;font-size:12px">({html.escape(" · ".join(facts))})</span>'
+        "</div>"
+    )
+
+
 def _render_transcript(t: dict[str, Any]) -> None:
+    if isinstance(t.get("voice"), dict):
+        st.html(_voice_html(t["voice"]))
     st.markdown(f"**Q:** {t['question']}")
     for s in t["final"]["sentences"]:
         st.html(_sentence_html(s))
@@ -233,6 +251,7 @@ def _live_copilot(db: Database) -> None:  # pragma: no cover - needs a live key
         ctx = ToolContext(db=db, store=store_from_database(db))
         st.session_state["copilot_agent"] = CopilotAgent(provider.client, ctx, model=provider.model)
         st.session_state["copilot_log"] = []
+    _voice_question(st.session_state["copilot_agent"])
     q = st.chat_input("Ask about stored signals…")
     if q:
         with st.spinner("Muse Spark is working…"):
@@ -241,6 +260,48 @@ def _live_copilot(db: Database) -> None:  # pragma: no cover - needs a live key
     for t in reversed(st.session_state["copilot_log"]):
         with st.container(border=True):
             _render_transcript(t)
+
+
+def _voice_question(agent: Any) -> None:  # pragma: no cover - needs a live key
+    """Record a spoken question → Meta Voice Transcribe → the same gated copilot."""
+    import hashlib
+
+    from maudesignal.copilot.transcript import result_to_dict
+    from maudesignal.copilot.voice import (
+        DEFAULT_VOICE_MODEL,
+        MetaTranscriber,
+        VoiceTranscribeError,
+        ask_by_voice,
+    )
+
+    clip = st.audio_input(
+        "🎙 Or ask by voice (transcribed by Meta Voice Transcribe, then answered as text)",
+        sample_rate=16000,
+        key="copilot_voice",
+    )
+    if clip is None:
+        return
+    data = clip.getvalue()
+    digest = hashlib.sha256(data).hexdigest()
+    if st.session_state.get("copilot_voice_done") == digest:
+        return  # Streamlit reruns keep the widget value; ask each recording once.
+    st.session_state["copilot_voice_done"] = digest
+    try:
+        with (
+            MetaTranscriber(
+                os.environ["META_MODEL_API_KEY"],
+                base_url=os.environ.get("META_MODEL_API_BASE_URL", "https://api.meta.ai/v1"),
+                model=os.environ.get("META_VOICE_MODEL", DEFAULT_VOICE_MODEL),
+            ) as transcriber,
+            st.spinner("Transcribing, then Muse Spark is working…"),
+        ):
+            ans = ask_by_voice(transcriber, agent, data, filename="question.wav")
+    except VoiceTranscribeError as exc:
+        st.error(f"Voice question not asked: {exc}")
+        return
+    st.session_state["copilot_log"].append(
+        result_to_dict(ans.result, voice=ans.transcript.to_voice_block())
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -47,9 +47,19 @@ def _report_to_dict(report: GateReport) -> dict[str, Any]:
     }
 
 
-def result_to_dict(result: CopilotResult, *, label: str = "") -> dict[str, Any]:
-    """Serialize a copilot result."""
-    return {
+def result_to_dict(
+    result: CopilotResult, *, label: str = "", voice: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Serialize a copilot result.
+
+    Args:
+        result: The copilot result.
+        label: Demo story label (sort key).
+        voice: Optional ``Transcript.to_voice_block()`` when the question was spoken
+            (``transcript_text``, ``language``, ``audio_seconds``). Omitted when None, so
+            text-only transcripts are unchanged.
+    """
+    out: dict[str, Any] = {
         "schema_version": TRANSCRIPT_SCHEMA_VERSION,
         "label": label,
         "recorded_at_utc": datetime.now(UTC).isoformat(timespec="seconds"),
@@ -72,15 +82,26 @@ def result_to_dict(result: CopilotResult, *, label: str = "") -> dict[str, Any]:
             "cost_usd": result.cost_usd,
         },
     }
+    if voice is not None:
+        out["voice"] = dict(voice)
+    return out
 
 
-def save_transcript(result: CopilotResult, out_dir: Path, *, label: str = "") -> Path:
-    """Write one transcript as JSON; returns the path."""
+def save_transcript(
+    result: CopilotResult,
+    out_dir: Path,
+    *,
+    label: str = "",
+    voice: dict[str, Any] | None = None,
+) -> Path:
+    """Write one transcript as JSON; returns the path (``voice`` as in ``result_to_dict``)."""
     out_dir.mkdir(parents=True, exist_ok=True)
     slug = re.sub(r"[^a-z0-9]+", "-", (label or result.question).lower()).strip("-")[:48]
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     path = out_dir / f"{stamp}-{slug}.json"
-    path.write_text(json.dumps(result_to_dict(result, label=label), indent=2), encoding="utf-8")
+    path.write_text(
+        json.dumps(result_to_dict(result, label=label, voice=voice), indent=2), encoding="utf-8"
+    )
     return path
 
 
