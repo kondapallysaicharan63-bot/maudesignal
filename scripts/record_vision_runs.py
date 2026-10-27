@@ -6,9 +6,12 @@ Needs META_MODEL_API_KEY (in CI from a GitHub Actions secret; never written
 anywhere). Two parts:
 
 1. 510(k) summary reader — for each K-number (default: ``DEMO_K_NUMBERS``) the
-   summary PDF is downloaded into ``data/demo/510k/`` (gitignored), its first
-   pages are read twice by Muse Spark and checked against openFDA and the text
-   layer; the result is written to ``demo/vision/510k-<K>.json``.
+   summary PDF is taken from ``data/demo/510k/`` or downloaded (plain HTTP,
+   then headless Chromium via Playwright when FDA's bot protection refuses);
+   its first pages are read twice by Muse Spark and checked against openFDA
+   and the text layer; the result is written to ``demo/vision/510k-<K>.json``.
+   A K-number whose PDF cannot be obtained is SKIPPED (not failed): no model
+   call is made and any earlier recorded reading for it is left as it was.
 2. Label camera — every ``demo/vision/labels/*.jpg|jpeg|png|webp`` photo goes
    through SAM 3.1 → Muse Spark → openFDA; the result is written to
    ``demo/vision/label-<stem>.json`` WITHOUT lot / serial numbers.
@@ -16,8 +19,8 @@ anywhere). Two parts:
     python scripts/record_vision_runs.py
     python scripts/record_vision_runs.py --k K210666 --skip-labels
 
-Exit code 0 when everything requested was recorded, 1 when some items failed,
-2 when the key is missing.
+Exit code 0 when everything requested was recorded or skipped, 1 when some
+items failed, 2 when the key is missing.
 """
 
 from __future__ import annotations
@@ -33,7 +36,11 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from maudesignal.common.exceptions import MaudeSignalError  # noqa: E402
 from maudesignal.vision import DEMO_K_NUMBERS  # noqa: E402
-from maudesignal.vision.fda_pdf import DEFAULT_CACHE_DIR, DEFAULT_MAX_PAGES  # noqa: E402
+from maudesignal.vision.fda_pdf import (  # noqa: E402
+    DEFAULT_CACHE_DIR,
+    DEFAULT_MAX_PAGES,
+    PdfUnavailableError,
+)
 from maudesignal.vision.label import read_device_label  # noqa: E402
 from maudesignal.vision.openfda510k import OpenFda510k  # noqa: E402
 from maudesignal.vision.pipeline import (  # noqa: E402
@@ -56,6 +63,11 @@ def main() -> int:
     ap.add_argument("--labels", type=Path, default=DEMO_VISION_DIR / "labels")
     ap.add_argument("--skip-labels", action="store_true")
     ap.add_argument("--skip-510k", action="store_true")
+    ap.add_argument(
+        "--no-browser",
+        action="store_true",
+        help="do not fall back to headless Chromium when the plain PDF download is refused",
+    )
     ap.add_argument("--model", default=os.environ.get("META_MODEL_API_MODEL", "muse-spark-1.3"))
     ap.add_argument("--sam-model", default=os.environ.get("META_SAM_MODEL", DEFAULT_SAM_MODEL))
     args = ap.parse_args()
@@ -70,6 +82,7 @@ def main() -> int:
 
     client = OpenAI(api_key=key, base_url=base_url)
     failures = 0
+    skipped: list[str] = []
     total_cost = 0.0
     with OpenFda510k(os.environ.get("OPENFDA_API_KEY")) as ofda:
         if not args.skip_510k:
@@ -82,7 +95,17 @@ def main() -> int:
                         cache_dir=args.cache,
                         max_pages=args.max_pages,
                         model=args.model,
+                        browser_fallback=not args.no_browser,
                     )
+                except PdfUnavailableError as exc:
+                    skipped.append(k)
+                    kept = (
+                        " (earlier recorded reading kept)"
+                        if (args.out / f"510k-{k.upper()}.json").is_file()
+                        else ""
+                    )
+                    print(f"[510k] {k}: SKIPPED — PDF unavailable{kept}: {exc}")
+                    continue
                 except MaudeSignalError as exc:
                     failures += 1
                     print(f"[510k] {k}: FAILED — {exc}")
@@ -121,7 +144,10 @@ def main() -> int:
                         f"({res.k_status}) product_code={res.product_code} "
                         f"basis={res.match_basis} cost=${res.cost_usd:.4f}"
                     )
-    print(f"total estimated cost ${total_cost:.4f}; failures: {failures}")
+    print(
+        f"total estimated cost ${total_cost:.4f}; failures: {failures}; "
+        f"skipped (PDF unavailable): {len(skipped)}{' ' + ', '.join(skipped) if skipped else ''}"
+    )
     return 1 if failures else 0
 
 

@@ -45,6 +45,9 @@ jobs:
           python scripts/record_demo_transcripts.py --out demo/transcripts
           --voice-file demo/voice/question.wav --voice-label 00-voice-overnight
         continue-on-error: true
+      - name: Install headless Chromium (510(k) PDF fetch fallback; failure only means skips)
+        continue-on-error: true
+        run: pip install playwright && python -m playwright install --with-deps chromium
       - name: Record vision runs (510(k) summary reader + label camera; Muse Spark + SAM 3.1)
         continue-on-error: true
         env:
@@ -75,6 +78,8 @@ jobs:
           mkdir -p demo/transcripts demo/vision demo/dossier
           git add -A demo/transcripts demo/vision demo/dossier
           git add docs/hackathon/HAND_CHECK.md 2>/dev/null || true
+          # Public FDA PDFs the browser fallback fetched: cached so no later run needs FDA again.
+          git add data/demo/510k/*.pdf 2>/dev/null || true
           git add -f demo/dossier/*.pdf 2>/dev/null || true
           git diff --cached --quiet || git commit -m "chore(demo): record live Meta runs (copilot, voice, vision, dossier)"
           git pull --rebase origin "${GITHUB_REF_NAME}"

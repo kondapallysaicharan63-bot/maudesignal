@@ -23,6 +23,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -48,6 +49,10 @@ class FdaPdfError(MaudeSignalError):
 
 class RasterizerUnavailableError(FdaPdfError):
     """poppler-utils (``pdftoppm``) is not installed."""
+
+
+class PdfUnavailableError(FdaPdfError):
+    """The PDF could not be obtained (blocked, missing or not a PDF); nothing was read."""
 
 
 def normalize_k_number(value: str) -> str:
@@ -113,37 +118,104 @@ def download_510k_pdf(
         timeout_s: Request timeout.
 
     Raises:
-        FdaPdfError: HTTP error, a non-PDF answer (e.g. FDA's bot-protection
+        PdfUnavailableError: HTTP error, a non-PDF answer (e.g. FDA's bot-protection
             "apology" page), or an oversized file.
     """
     k = normalize_k_number(k_number)
     path = cache_dir / f"{k}.pdf"
-    if path.is_file() and path.read_bytes()[:5] == b"%PDF-":
+    if is_cached_pdf(path):
         return path
     url = pdf_url(k)
     try:
         with httpx.Client(follow_redirects=True, timeout=timeout_s, transport=transport) as client:
             resp = client.get(url)
     except httpx.HTTPError as exc:
-        raise FdaPdfError(f"download of {k} failed ({type(exc).__name__})") from exc
+        raise PdfUnavailableError(f"download of {k} failed ({type(exc).__name__})") from exc
     final = str(resp.url)
     if "apology" in final:
-        raise FdaPdfError(
+        raise PdfUnavailableError(
             f"FDA served its access-denied page instead of {k}.pdf (automated-traffic "
             f"protection). Download {url} in a browser and save it as {path}."
         )
     if resp.status_code != 200:
-        raise FdaPdfError(f"{url} returned HTTP {resp.status_code}")
-    data = resp.content
+        raise PdfUnavailableError(f"{url} returned HTTP {resp.status_code}")
+    return store_pdf(resp.content, path, url)
+
+
+def is_cached_pdf(path: Path) -> bool:
+    """True when ``path`` already holds a PDF (checked by its magic bytes)."""
+    return path.is_file() and path.read_bytes()[:5] == b"%PDF-"
+
+
+def store_pdf(data: bytes, path: Path, url: str) -> Path:
+    """Check that ``data`` is a PDF within the size limit and write it atomically.
+
+    Args:
+        data: Downloaded bytes.
+        path: Cache file to write.
+        url: Where the bytes came from (for error messages).
+
+    Raises:
+        PdfUnavailableError: Not a PDF, or larger than ``MAX_PDF_BYTES``.
+    """
     if data[:5] != b"%PDF-":
-        raise FdaPdfError(f"{url} did not return a PDF")
+        raise PdfUnavailableError(f"{url} did not return a PDF")
     if len(data) > MAX_PDF_BYTES:
-        raise FdaPdfError(f"{k}.pdf is {len(data) / 1e6:.1f} MB (limit {MAX_PDF_BYTES / 1e6} MB)")
-    cache_dir.mkdir(parents=True, exist_ok=True)
+        raise PdfUnavailableError(
+            f"{path.name} is {len(data) / 1e6:.1f} MB (limit {MAX_PDF_BYTES / 1e6} MB)"
+        )
+    path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".part")
     tmp.write_bytes(data)
     tmp.replace(path)
     return path
+
+
+BrowserFetch = Callable[[str, Path], Path]
+
+
+def fetch_510k_pdf(
+    k_number: str,
+    cache_dir: Path = DEFAULT_CACHE_DIR,
+    *,
+    transport: httpx.BaseTransport | None = None,
+    browser_fallback: bool = False,
+    browser_fetch: BrowserFetch | None = None,
+) -> Path:
+    """Cache, then a plain HTTP download, then (optionally) a headless browser.
+
+    FDA's bot protection answers plain HTTP clients on CI runners with an
+    "apology" page; a real browser that first opens the 510(k) database page
+    usually gets the PDF. The browser path needs Playwright + Chromium and is
+    off by default (the recorder turns it on).
+
+    Args:
+        k_number: 510(k) number.
+        cache_dir: Cache folder.
+        transport: Injected HTTP transport (tests).
+        browser_fallback: Try a headless browser when the plain download fails.
+        browser_fetch: Injected browser fetcher (tests); defaults to
+            :func:`maudesignal.vision.browser_fetch.browser_download_510k_pdf`.
+
+    Raises:
+        PdfUnavailableError: Every route failed; the message names each reason.
+    """
+    try:
+        return download_510k_pdf(k_number, cache_dir, transport=transport)
+    except PdfUnavailableError as http_exc:
+        if not browser_fallback:
+            raise
+        if browser_fetch is None:
+            from maudesignal.vision.browser_fetch import browser_download_510k_pdf
+
+            browser_fetch = browser_download_510k_pdf
+        try:
+            return browser_fetch(normalize_k_number(k_number), cache_dir)
+        except FdaPdfError as browser_exc:
+            raise PdfUnavailableError(
+                f"{normalize_k_number(k_number)}: plain download failed ({http_exc}); "
+                f"browser fetch failed ({browser_exc})"
+            ) from browser_exc
 
 
 def _tool(name: str) -> str:
@@ -258,10 +330,11 @@ def load_summary(
     max_pages: int = DEFAULT_MAX_PAGES,
     dpi: int = DEFAULT_DPI,
     transport: httpx.BaseTransport | None = None,
+    browser_fallback: bool = False,
 ) -> SummaryDocument:
     """Download (or reuse the cache), rasterize and extract the text layer."""
     k = normalize_k_number(k_number)
-    pdf = download_510k_pdf(k, cache_dir, transport=transport)
+    pdf = fetch_510k_pdf(k, cache_dir, transport=transport, browser_fallback=browser_fallback)
     return SummaryDocument(
         k_number=k,
         pdf_path=pdf,
