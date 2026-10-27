@@ -245,6 +245,14 @@ def _verify_regulation(c: RegulationClaim) -> ClaimVerdict:
 # ---------------------------------------------------------------------------
 
 
+def _looks_like_date(token: str) -> bool:
+    """True for YYYYMMDD tokens (dates are not report ids)."""
+    if len(token) != 8 or not token.isdigit():
+        return False
+    y, m, d = int(token[:4]), int(token[4:6]), int(token[6:])
+    return 1990 <= y <= 2100 and 1 <= m <= 12 and 1 <= d <= 31
+
+
 def _ungrounded_mentions(text: str, claims: list[Claim]) -> list[str]:
     """Find checkable-looking mentions in the sentence that no claim covers."""
     out: list[str] = []
@@ -267,7 +275,9 @@ def _ungrounded_mentions(text: str, claims: list[Claim]) -> list[str]:
         if v not in count_claimed:
             out.append(f"'{m.group(0)}' has no count claim")
     record_claimed = {c.report_id for c in claims if isinstance(c, (RecordClaim, QuoteClaim))}
-    for token in re.findall(r"\b\d{7}-\d{4}-\d{5}\b|\bMW\d{7}\b", text):
+    for token in re.findall(r"\b\d{7}-\d{4}-\d{5}\b|\bMW\d{7}\b|\b\d{7,9}\b", text):
+        if _looks_like_date(token):
+            continue
         if token not in record_claimed:
             out.append(f"report {token} has no record claim")
     return out

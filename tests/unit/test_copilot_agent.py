@@ -257,3 +257,32 @@ def test_meta_provider_cost_estimate() -> None:
     p = MetaProvider(api_key="test-not-a-key", model="muse-spark-1.3", base_url="http://x")
     assert p.estimate_cost_usd(1_000_000, 1_000_000) == pytest.approx(5.5)
     assert p.client is not None
+
+
+def test_transcript_roundtrip(tmp_path: Path) -> None:
+    from maudesignal.copilot.transcript import load_transcripts, save_transcript
+
+    ctx = _ctx(tmp_path)
+    bad = _answer(("QIH has 9 reports.", [{"kind": "count", "product_code": "QIH", "value": 9}]))
+    good = _answer(("QIH has 3 reports.", [{"kind": "count", "product_code": "QIH", "value": 3}]))
+    res = CopilotAgent(FakeClient([_msg(bad), _msg(good)]), ctx).ask("count?")
+    out = tmp_path / "tx"
+    save_transcript(res, out, label="02-b")
+    save_transcript(res, out, label="01-a")
+    (out / "junk.json").write_text("not json")
+    loaded = load_transcripts(out)
+    assert [t["label"] for t in loaded] == ["01-a", "02-b"]
+    t = loaded[0]
+    assert t["first_pass"]["blocked"] == 1 and t["final"]["passed"] == 1 and t["repaired"]
+    assert t["final"]["sentences"][0]["claims"][0]["evidence_ids"]
+    assert load_transcripts(tmp_path / "missing") == []
+
+
+def test_sentence_html_marks_withheld() -> None:
+    from maudesignal.dashboard.copilot_pages import _evidence_links, _sentence_html
+
+    blocked = _sentence_html({"text": "x <b>", "status": "block", "reasons": ["count: no"]})
+    assert "WITHHELD" in blocked and "&lt;b&gt;" in blocked and "count: no" in blocked
+    assert "VERIFIED" in _sentence_html({"text": "ok", "status": "pass"})
+    s = {"claims": [{"evidence_ids": ["50426770", "21 CFR 803.50"]}]}
+    assert "50426770" in _evidence_links(s) and "CFR" not in _evidence_links(s)

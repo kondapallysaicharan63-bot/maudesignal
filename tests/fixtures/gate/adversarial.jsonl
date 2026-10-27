@@ -50,3 +50,5 @@
 {"id": "u07", "category": "tag_mismatch_count", "sentence": "QIH has 7 reports.", "claims": [{"kind": "count", "product_code": "QIH", "value": 4}], "expect": "block"}
 {"id": "m01", "category": "one_bad_claim_blocks_sentence", "sentence": "QIH has 4 reports; open CAPA under 21 CFR 820.100.", "claims": [{"kind": "count", "product_code": "QIH", "value": 4}, {"kind": "regulation", "section": "820.100"}], "expect": "block"}
 {"id": "m02", "category": "all_good_multi", "sentence": "K990001 (QIH) has 4 reports.", "claims": [{"kind": "count", "product_code": "QIH", "value": 4}, {"kind": "device", "k_number": "K990001", "product_code": "QIH"}], "expect": "pass"}
+{"id": "u08", "category": "untagged_mdr_key", "sentence": "See MDR 50426770 for details.", "claims": [], "expect": "block"}
+{"id": "u09", "category": "date_is_not_an_id", "sentence": "Window ends 20260831.", "claims": [], "expect": "pass"}

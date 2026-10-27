@@ -6,13 +6,26 @@
 
 ## What was built DURING the hackathon (new work — this is the submission)
 
-Everything under `src/maudesignal/copilot/` was created during the event:
+Everything under `src/maudesignal/copilot/`, `src/maudesignal/gate/` and
+`src/maudesignal/monitor/` was created during the event:
 
 | File | What it is |
 |---|---|
 | `copilot/meta_provider.py` | Meta Model API provider (OpenAI-compatible client, streaming) implementing the existing `LLMProvider` interface |
 | `copilot/copilot.py` | Conversational safety copilot: plain-English questions → streamed, grounded answers |
 | `copilot/__init__.py` | Package exports |
+| `copilot/agent.py` | Muse Spark tool-use loop → structured answer (sentences + claims) → claim-level gate → one repair turn with the gate's recomputed values → unrepaired sentences withheld; every answer written to the audit trail |
+| `copilot/tools.py` | 6 deterministic tools the model calls: overnight signals, product summary, report search, report fetch, MDR deadline clock (21 CFR 803.50 / 803.53, advisory), CAPA draft |
+| `copilot/actions.py` | CAPA drafts: audit-first, forward-only (`draft → approved / rejected`), only a named human can decide |
+| `copilot/transcript.py` | Records real Muse Spark runs so the keyless public demo replays them honestly |
+| `skills/safety-copilot/` | Versioned behavior contract (prompt, output schema, examples) for the copilot |
+| `gate/` (`gate.py`, `claims.py`, `evidence.py`, `cfr.py`, `loader.py`) | **Claim-level citation gate.** Recomputes counts/shares from stored records, verbatim-matches quotes to the cited report (a real quote pinned to the wrong report is blocked), checks 510(k) numbers against the catalog, allowlists 21 CFR sections (blocks QS-reg sections superseded by QMSR on 2026-02-02), and blocks numbers / ids / CFR cites that carry no structured claim. Deterministic, no model calls. The `regulatory-citation-verifier` Skill spec pre-existed with zero call sites; this is its enforcement. |
+| `tests/fixtures/gate/adversarial.jsonl` + `tests/unit/test_gate.py` | 54 adversarial cases (fabricated / drifted quotes, wrong-record quotes, stale and inflated numbers, fake and mismatched K-numbers, hallucinated and superseded CFR, untagged mentions): 0 false pass, 0 false block |
+| `dashboard/copilot_pages.py` | New dashboard pages: **Overnight** digest, **Copilot** (recorded runs + live "try to fool the gate" playground + live mode when a key is present), **Actions & Audit** (approve/reject CAPA drafts, hash-chain verification) |
+| `storage`: `CapaDraftRecord`, `ActionAuditRecord` + DB methods | CAPA draft table and append-only, SHA-256 hash-chained audit trail with tamper detection |
+| `scripts/record_demo_transcripts.py`, `.github/workflows/copilot-record.yml`, `demo/` | Records the demo questions through the real Muse Spark copilot in GitHub Actions (key from repository secrets, never in code) |
+| `.github/workflows/meta-smoke.yml`, `test_meta_connection.py` | Meta Model API smoke test (`models.list` + streaming) run with repository secrets |
+| `tests/unit/test_copilot_agent.py` | Agent loop, repair turn, withheld sentences, CAPA approval rules, audit tamper detection, tools, transcripts (scripted fake client — no credits) |
 | `monitor/deterioration.py` | Deterministic per-product-code detector: last 7 days vs trailing 4-week baseline → `new_signal` / `spike` / `severity_escalation` / `stable`, returning every count, share and report id used |
 | `monitor/digest.py` | Overnight digest ("N new, M worsening") rendered to Markdown + JSON with a fixed advisory footer; no LLM |
 | `monitor/fetch.py` | Capped, whole-day incremental openFDA fetch (reuses the existing ingestion pipeline) |
@@ -29,7 +42,10 @@ monitor, or bugs it exposed): `Database.list_event_facts` / `max_date_received`
 / `list_product_codes`; `OpenFDAClient.count_by_date_received`;
 `config.openfda_api_key_from_env`; fix — openFDA date-range queries were sent
 with `+` encoded as `%2B` (HTTP 500); fix — live openFDA `event_type` is a
-string, so ingestion had been storing single letters (`"m"`, `"i"`).
+string, so ingestion had been storing single letters (`"m"`, `"i"`); fix —
+structlog captured `sys.stderr` once, so logging crashed after the stream was
+closed (the 4 failing CI tests); `Database.date_received_lookup`; dashboard
+package import made lazy so submodules don't re-run the app.
 
 Plus this manifest, the demo video, and the submission write-up.
 

@@ -31,6 +31,10 @@ _MAUDE_DETAIL_URL = (
 
 # ── Page registry: (icon, name, subtitle) ─────────────────────────────────────
 _PAGES: list[tuple[str, str, str]] = [
+    # HACKATHON-BUILT pages (Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026)
+    ("🌙", "Overnight", "What changed since yesterday — deterministic digest"),
+    ("🛡️", "Copilot", "Muse Spark copilot with a claim-level citation gate"),
+    ("✅", "Actions & Audit", "Human-approved CAPA drafts and tamper-evident audit trail"),
     ("🏠", "Dashboard", "Executive summary of postmarket signal activity"),
     ("🔍", "Signal Explorer", "Browse, filter, and export AI extraction results"),
     ("📥", "MAUDE Ingestion", "Pull adverse event reports from openFDA"),
@@ -1788,7 +1792,7 @@ def _render_app(db: Database) -> None:  # noqa: PLR0912
     st.html(_CSS)
 
     if "nav_page" not in st.session_state:
-        st.session_state["nav_page"] = "Dashboard"
+        st.session_state["nav_page"] = "Overnight"
 
     # ── Sidebar ───────────────────────────────────────────────────────────────
     with st.sidebar:
@@ -1801,6 +1805,7 @@ def _render_app(db: Database) -> None:  # noqa: PLR0912
         st.caption("AI-Powered Postmarket Surveillance")
         st.divider()
 
+        st.caption("NEW — built during the Meta hackathon: Overnight, Copilot, Actions & Audit")
         for icon, page_name, _ in _PAGES:
             is_active = st.session_state["nav_page"] == page_name
             label = f"**{icon} {page_name}**" if is_active else f"{icon} {page_name}"
@@ -1830,7 +1835,12 @@ def _render_app(db: Database) -> None:  # noqa: PLR0912
     page: str = st.session_state["nav_page"]
 
     # ── Page routing ──────────────────────────────────────────────────────────
+    from maudesignal.dashboard.copilot_pages import page_actions, page_copilot, page_overnight
+
     page_fn_map: dict[str, Callable[[], None]] = {
+        "Overnight": lambda: page_overnight(db),
+        "Copilot": lambda: page_copilot(db),
+        "Actions & Audit": lambda: page_actions(db),
         "Dashboard": lambda: _page_dashboard(db),
         "Signal Explorer": lambda: _page_signal_explorer(db),
         "MAUDE Ingestion": lambda: _page_ingestion(db),
