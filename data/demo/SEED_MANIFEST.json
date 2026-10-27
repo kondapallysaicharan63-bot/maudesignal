@@ -1,0 +1,120 @@
+{
+  "schema_version": "1.0",
+  "generated_by": "scripts/seed_demo_data.py",
+  "fetched_at_utc": "2026-10-27T07:37:44+00:00",
+  "openfda_meta_last_updated": "2026-10-13",
+  "api_key_used": false,
+  "max_total_records": 160,
+  "database": "data/demo/maudesignal_demo.db",
+  "product_codes": [
+    "LLZ",
+    "QIH",
+    "MYN",
+    "POK"
+  ],
+  "record_counts": {
+    "LLZ": 121,
+    "QIH": 10,
+    "MYN": 5,
+    "POK": 1
+  },
+  "total_records": 137,
+  "max_date_received": "20260831",
+  "queries": [
+    {
+      "product_code": "LLZ",
+      "device_name": "System, Image Processing, Radiological",
+      "rationale": "complete Jul-Aug 2026 window so weekly counts are exact",
+      "endpoint": "https://api.fda.gov/device/event.json",
+      "search": "device.device_report_product_code:LLZ+AND+date_received:[20260701+TO+20260831]",
+      "example_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code:LLZ+AND+date_received:[20260701+TO+20260831]&limit=121",
+      "date_received_start": "20260701",
+      "date_received_end": "20260831",
+      "matching_total_at_fetch": 121,
+      "records_fetched": 121,
+      "records_stored": 121,
+      "complete": true,
+      "date_received_min_max": [
+        "20260701",
+        "20260831"
+      ],
+      "skip_reasons": {
+        "missing_narrative": 48
+      }
+    },
+    {
+      "product_code": "QIH",
+      "device_name": "Automated Radiological Image Processing Software",
+      "rationale": "all reports",
+      "endpoint": "https://api.fda.gov/device/event.json",
+      "search": "device.device_report_product_code:QIH",
+      "example_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code:QIH&limit=10",
+      "date_received_start": null,
+      "date_received_end": null,
+      "matching_total_at_fetch": 10,
+      "records_fetched": 10,
+      "records_stored": 10,
+      "complete": true,
+      "date_received_min_max": [
+        "20240729",
+        "20260702"
+      ],
+      "skip_reasons": {}
+    },
+    {
+      "product_code": "MYN",
+      "device_name": "Analyzer, Medical Image",
+      "rationale": "all reports",
+      "endpoint": "https://api.fda.gov/device/event.json",
+      "search": "device.device_report_product_code:MYN",
+      "example_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code:MYN&limit=5",
+      "date_received_start": null,
+      "date_received_end": null,
+      "matching_total_at_fetch": 5,
+      "records_fetched": 5,
+      "records_stored": 5,
+      "complete": true,
+      "date_received_min_max": [
+        "20060518",
+        "20250313"
+      ],
+      "skip_reasons": {}
+    },
+    {
+      "product_code": "POK",
+      "device_name": "Computer-Assisted Diagnostic Software For Lesions Suspicious For Cancer",
+      "rationale": "all reports",
+      "endpoint": "https://api.fda.gov/device/event.json",
+      "search": "device.device_report_product_code:POK",
+      "example_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code:POK&limit=1",
+      "date_received_start": null,
+      "date_received_end": null,
+      "matching_total_at_fetch": 1,
+      "records_fetched": 1,
+      "records_stored": 1,
+      "complete": true,
+      "date_received_min_max": [
+        "20210115",
+        "20210115"
+      ],
+      "skip_reasons": {}
+    }
+  ],
+  "catalog": {
+    "populated": true,
+    "source": "openFDA 510(k) keyword search via maudesignal.catalog.fetcher",
+    "devices_found": 19,
+    "keywords_searched": 12,
+    "errors": [],
+    "seeded_codes_in_catalog": [
+      "LLZ",
+      "MYN",
+      "QIH"
+    ]
+  },
+  "notes": [
+    "Data are public, de-identified FDA MAUDE reports; no PHI.",
+    "Counts reflect openFDA at fetch time; openFDA re-publishes weekly, so a re-run may differ slightly.",
+    "MAUDE product codes are reporter-assigned; a few LLZ reports may concern non-AI devices."
+  ]
+}

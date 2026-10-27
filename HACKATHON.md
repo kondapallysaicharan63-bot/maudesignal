@@ -13,6 +13,23 @@ Everything under `src/maudesignal/copilot/` was created during the event:
 | `copilot/meta_provider.py` | Meta Model API provider (OpenAI-compatible client, streaming) implementing the existing `LLMProvider` interface |
 | `copilot/copilot.py` | Conversational safety copilot: plain-English questions → streamed, grounded answers |
 | `copilot/__init__.py` | Package exports |
+| `monitor/deterioration.py` | Deterministic per-product-code detector: last 7 days vs trailing 4-week baseline → `new_signal` / `spike` / `severity_escalation` / `stable`, returning every count, share and report id used |
+| `monitor/digest.py` | Overnight digest ("N new, M worsening") rendered to Markdown + JSON with a fixed advisory footer; no LLM |
+| `monitor/fetch.py` | Capped, whole-day incremental openFDA fetch (reuses the existing ingestion pipeline) |
+| `monitor/__init__.py` | Package exports |
+| `cli.py` → `maudesignal monitor` | New CLI command: optional capped fetch → detect → `digests/YYYY-MM-DD.{md,json}` |
+| `scripts/seed_demo_data.py` | Keyless seeding of the demo DB from live openFDA via the existing ingestion + catalog code |
+| `data/demo/maudesignal_demo.db`, `data/demo/SEED_MANIFEST.json` | 137 real MAUDE reports (LLZ Jul–Aug 2026 complete window; all QIH, MYN, POK reports) + manifest of the exact queries |
+| `digests/2026-08-24.*`, `digests/2026-08-31.*` | Two digests generated from the seeded data |
+| `.github/workflows/monitor.yml` | Daily cron + manual dispatch running the monitor; commits the digest back (`chore(monitor):`) |
+| `tests/unit/test_monitor.py` | Tests for detector, digest, fetch and CLI |
+
+Small changes to pre-existing modules made during the event (to support the
+monitor, or bugs it exposed): `Database.list_event_facts` / `max_date_received`
+/ `list_product_codes`; `OpenFDAClient.count_by_date_received`;
+`config.openfda_api_key_from_env`; fix — openFDA date-range queries were sent
+with `+` encoded as `%2B` (HTTP 500); fix — live openFDA `event_type` is a
+string, so ingestion had been storing single letters (`"m"`, `"i"`).
 
 Plus this manifest, the demo video, and the submission write-up.
 
