@@ -1,0 +1,1 @@
+{"input": "box photo with no 510(k) number printed", "forbidden_output": {"fields.k_number.value": "K191171"}, "why": "K-number inferred from product knowledge; must be not_present"}

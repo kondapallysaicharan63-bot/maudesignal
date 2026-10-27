@@ -1,0 +1,313 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FdaDocumentReaderOutput",
+  "description": "Output schema for skills/fda-document-reader v1.0.0 (strict-mode subset)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "fields"
+  ],
+  "properties": {
+    "fields": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "k_number",
+        "applicant",
+        "device_name",
+        "product_code",
+        "regulation_number",
+        "decision_date",
+        "predicate_devices",
+        "indications_for_use",
+        "intended_use",
+        "technology_summary"
+      ],
+      "properties": {
+        "k_number": {
+          "type": "object",
+          "description": "510(k) number, K + 6 digits",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "page",
+            "legibility"
+          ],
+          "properties": {
+            "value": {
+              "type": "string"
+            },
+            "page": {
+              "type": "integer",
+              "description": "Source page (1-based); 0 if not present"
+            },
+            "legibility": {
+              "type": "string",
+              "enum": [
+                "clear",
+                "partly_legible",
+                "illegible",
+                "not_present"
+              ]
+            }
+          }
+        },
+        "applicant": {
+          "type": "object",
+          "description": "Submitter / applicant company",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "page",
+            "legibility"
+          ],
+          "properties": {
+            "value": {
+              "type": "string"
+            },
+            "page": {
+              "type": "integer",
+              "description": "Source page (1-based); 0 if not present"
+            },
+            "legibility": {
+              "type": "string",
+              "enum": [
+                "clear",
+                "partly_legible",
+                "illegible",
+                "not_present"
+              ]
+            }
+          }
+        },
+        "device_name": {
+          "type": "object",
+          "description": "Trade / proprietary name",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "page",
+            "legibility"
+          ],
+          "properties": {
+            "value": {
+              "type": "string"
+            },
+            "page": {
+              "type": "integer",
+              "description": "Source page (1-based); 0 if not present"
+            },
+            "legibility": {
+              "type": "string",
+              "enum": [
+                "clear",
+                "partly_legible",
+                "illegible",
+                "not_present"
+              ]
+            }
+          }
+        },
+        "product_code": {
+          "type": "object",
+          "description": "Three-letter FDA product code",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "page",
+            "legibility"
+          ],
+          "properties": {
+            "value": {
+              "type": "string"
+            },
+            "page": {
+              "type": "integer",
+              "description": "Source page (1-based); 0 if not present"
+            },
+            "legibility": {
+              "type": "string",
+              "enum": [
+                "clear",
+                "partly_legible",
+                "illegible",
+                "not_present"
+              ]
+            }
+          }
+        },
+        "regulation_number": {
+          "type": "object",
+          "description": "21 CFR regulation number, digits only, e.g. 892.2050",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "page",
+            "legibility"
+          ],
+          "properties": {
+            "value": {
+              "type": "string"
+            },
+            "page": {
+              "type": "integer",
+              "description": "Source page (1-based); 0 if not present"
+            },
+            "legibility": {
+              "type": "string",
+              "enum": [
+                "clear",
+                "partly_legible",
+                "illegible",
+                "not_present"
+              ]
+            }
+          }
+        },
+        "decision_date": {
+          "type": "object",
+          "description": "FDA decision date YYYY-MM-DD if printed",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "page",
+            "legibility"
+          ],
+          "properties": {
+            "value": {
+              "type": "string"
+            },
+            "page": {
+              "type": "integer",
+              "description": "Source page (1-based); 0 if not present"
+            },
+            "legibility": {
+              "type": "string",
+              "enum": [
+                "clear",
+                "partly_legible",
+                "illegible",
+                "not_present"
+              ]
+            }
+          }
+        },
+        "predicate_devices": {
+          "type": "object",
+          "description": "Predicate K-numbers or names",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "page",
+            "legibility"
+          ],
+          "properties": {
+            "value": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "page": {
+              "type": "integer",
+              "description": "Source page (1-based); 0 if not present"
+            },
+            "legibility": {
+              "type": "string",
+              "enum": [
+                "clear",
+                "partly_legible",
+                "illegible",
+                "not_present"
+              ]
+            }
+          }
+        },
+        "indications_for_use": {
+          "type": "object",
+          "description": "Verbatim indications for use",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "page",
+            "legibility"
+          ],
+          "properties": {
+            "value": {
+              "type": "string"
+            },
+            "page": {
+              "type": "integer",
+              "description": "Source page (1-based); 0 if not present"
+            },
+            "legibility": {
+              "type": "string",
+              "enum": [
+                "clear",
+                "partly_legible",
+                "illegible",
+                "not_present"
+              ]
+            }
+          }
+        },
+        "intended_use": {
+          "type": "object",
+          "description": "Verbatim intended use",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "page",
+            "legibility"
+          ],
+          "properties": {
+            "value": {
+              "type": "string"
+            },
+            "page": {
+              "type": "integer",
+              "description": "Source page (1-based); 0 if not present"
+            },
+            "legibility": {
+              "type": "string",
+              "enum": [
+                "clear",
+                "partly_legible",
+                "illegible",
+                "not_present"
+              ]
+            }
+          }
+        },
+        "technology_summary": {
+          "type": "object",
+          "description": "At most 3 sentences, words from the pages only",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "page",
+            "legibility"
+          ],
+          "properties": {
+            "value": {
+              "type": "string"
+            },
+            "page": {
+              "type": "integer",
+              "description": "Source page (1-based); 0 if not present"
+            },
+            "legibility": {
+              "type": "string",
+              "enum": [
+                "clear",
+                "partly_legible",
+                "illegible",
+                "not_present"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}
