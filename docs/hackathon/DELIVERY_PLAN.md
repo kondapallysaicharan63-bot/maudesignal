@@ -88,6 +88,57 @@ are the gate (Day 3) and the video (Day 7). Everything else has a fallback.
 | Partner grants (Baseten/Modal/Fireworks) | Day 8 Spark Open ONLY | PENDING, never load-bearing |
 | Baseten form confirmation | — | UNCONFIRMED (Modal + Fireworks confirmed) |
 
+## Verification standard: prerequisites complete, everything e2e-tested, agentic
+
+A plan counts as VERIFIED only when every prerequisite is listed with a
+status AND every path that will be demoed has been tested end-to-end by
+an agent — not by assertion. No exceptions.
+
+### Prerequisites (complete list)
+
+| # | Prerequisite | Status |
+|---|---|---|
+| 1 | Python 3.12 venv, repo imports, 321 tests collect | DONE Day 1 |
+| 2 | GitHub branch + auth (`gh` device login + `setup-git`) | DONE Oct 26 |
+| 3 | openFDA key, new, verified live (120,000/day) | DONE Oct 26 |
+| 4 | Meta API key + $150 credit in account | PENDING from Charan (secure handoff) |
+| 5 | Meta pricing + rate limits read (budget input) | PENDING, Day 2 |
+| 6 | Streamlit Cloud account (GitHub-connected) | NEEDED Day 2 |
+| 7 | MHRA official feed access (public, no key expected) | VERIFY Day 6 morning |
+| 8 | Voice-transcribe billing/pricing confirmation | NEEDED Day 4 |
+| 9 | Partner grants | PENDING, never load-bearing |
+| 10 | Submission portal access (Cerebral Valley, approved Oct 25) | DONE |
+| 11 | X account access for Day 10 demo post | NEEDED Day 10 (Charan posts) |
+| 12 | Baseten $100 form confirmation | UNCONFIRMED |
+
+### E2E layers (QA agent owns all seven; nothing demoed untested)
+
+1. Unit/integration — pytest: 321 existing + new gate/tool/monitor
+   tests. Run after EVERY code change, not just daily.
+2. Gate adversarial set — 30–50 cases (Day 3). Copilot builds the gate,
+   QA breaks it. Builder and breaker stay separate, deliberately.
+3. Copilot loop e2e — scripted scenario: question → tool → gate →
+   action → audit row exists (Day 4).
+4. Monitor e2e — cron trigger → ingest → deterioration → digest →
+   Overnight page shows it (Day 6).
+5. Dashboard e2e — Playwright: every button clicked, every page loads.
+   This is Charan's bar: everything works, everything tested (Days 6–8).
+6. Deployed app e2e — public link, stored-first, NO live key, no live
+   calls from the deployed app (Day 8).
+7. Submission e2e — full dry run Day 9 (repo link, video link, live
+   link, form draft) + Day 10 confirmation inside the portal, not just
+   "sent."
+
+### Agentic execution
+
+- QA agent runs layers 1–7; evening automated verification posts
+  results to the build chat (tests + demo path + claims cited).
+- A failure loops the SAME day with the owning agent; it is never
+  carried silently to the next day.
+- The demo video's primary take is the stored-first path — a path that
+  has already passed layers 1–6. The live fresh-check take is second,
+  never the only take.
+
 ## Fallbacks (decided in advance, not improvised under pressure)
 
 - Meta underperforms on subset → Groq stays default, with evidence;
