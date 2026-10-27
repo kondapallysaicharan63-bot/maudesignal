@@ -95,6 +95,9 @@ Small pre-existing changes: `Database.delete_external_sources`, `Database.list_r
 | `scripts/hand_check.py`, `docs/hackathon/HAND_CHECK.md` | 20-answer hand-check worksheet: gate pass rates computed from the recorded transcripts, every cited id looked up in stored records, a hand-verdict column per sentence |
 | `vision/browser_fetch.py` | Headless-Chromium fallback for 510(k) PDFs that FDA refuses to plain HTTP clients; the recorder skips (not fails) a K-number whose PDF cannot be obtained |
 | `scripts/record_demo_transcripts.py`, `.github/workflows/copilot-record.yml` | 20 typed demo questions; one failed question no longer stops a run; commit step hardened |
+| `copilot/spend.py`, `dashboard/spend_ui.py` | Live-call caps per browser session ($1 and 20 Meta calls, whichever first) and per day ($10), configurable by env vars; a cap hit makes no call and shows the recorded answer; usage in the audit trail; quota in the sidebar |
+| `tests/e2e/test_08_hackathon_pages.py` | Playwright tests for the five new pages, expected values computed from the demo DB |
+| `docs/hackathon/BUDGET.md`, `docs/hackathon/PRD.md` | $150 budget (prices from code, measured ledger) and feature status with evidence |
 
 Small pre-existing changes: `catalog/fetcher.py` no longer writes made-up names for
 fallback product codes (names come from the openFDA classification endpoint, or the

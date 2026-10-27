@@ -1,0 +1,87 @@
+# Meta API budget: the $150 credit
+
+The $150 Meta Model API credit pays for every live call in this project. This
+page covers what each call costs, the guards in code, what has been spent, and
+how the rest is split.
+
+**Rule:** every number on this page is either a price copied from the code
+(which cites Meta's pricing pages), arithmetic on those prices, or a cost
+printed by a real run. Amounts marked **PROPOSED** are spending decisions for
+Charan to confirm. They are not measurements.
+
+## 1. Prices used in code (Standard tier only; Contributor tier is refused)
+
+| Model | Price | Where in code | Source |
+|---|---|---|---|
+| `muse-spark-1.3` (copilot, 510(k) reader, label reader, dossier narrative) | $1.25 per 1M input tokens, $4.25 per 1M output tokens | `copilot/meta_provider.py` `SPARK_USD_PER_M_INPUT/OUTPUT` | Meta pricing page, read 2026-10-27 |
+| `muse-wonder-1.0` (dossier reviewer) | $4.00 / $20.00 per 1M input / output tokens | `dossier/review.py` `WONDER_USD_PER_M_*` | same page |
+| `muse-voice-transcribe-1.0` | $0.18 per audio hour, whole seconds rounded down; failed requests and 429s not billed | `copilot/voice.py` `VOICE_USD_PER_AUDIO_HOUR` | https://dev.meta.ai/docs/speech-to-text (see `VOICE_API_NOTES.md`) |
+| `sam-3.1` (label camera) | $2.50 per 1,000 images | `vision/sam.py` `SAM_USD_PER_IMAGE` | https://dev.meta.ai/docs/pricing-rate-limits |
+| `muse-image-1.0` (optional cover, off by default) | $0.01 per image | `dossier/illustration.py` `USD_PER_IMAGE` | same page |
+
+All of these are estimates from list prices. The Meta console balance is the
+ground truth. Charan reads it, because it cannot be seen from the build
+environment.
+
+## 2. Output-cost ceiling per call (arithmetic on code limits, not measured)
+
+Output tokens are capped by `max_tokens` in code, so the output side of each call has a hard ceiling:
+
+| Call | `max_tokens` (code) | Output-cost ceiling |
+|---|---|---|
+| Copilot turn (`copilot/agent.py`) | 1,500 | 1,500 × $4.25 / 1M = $0.0064 |
+| 510(k) / label read (`vision/spark.py`) | 4,096 | $0.0174 |
+| Dossier narrative (`dossier/narrative.py`) | 1,200 | $0.0051 |
+| Dossier reviewer, Wonder (`dossier/review.py`) | 4,000 | 4,000 × $20 / 1M = $0.0800 |
+
+Input tokens have no ceiling in code (tool results and page images vary), so
+the real per-answer cost comes from the recorded runs (section 4).
+
+## 3. Guards in code
+
+- **Recording runs**: the Record workflow runs only when `demo/RECORD_REQUEST`
+  changes on a push. Every answer prints its cost, every transcript stores its
+  token usage, and `scripts/hand_check.py` totals the recorded cost.
+- **Public app** (`copilot/spend.py`, `dashboard/spend_ui.py`): every live call
+  goes through a per-session guard. There are no accounts; a browser session is one user.
+
+  | Cap | Default | Env var to tune it |
+  |---|---|---|
+  | Spend per browser session | $1.00 | `MAUDESIGNAL_CAP_SESSION_USD` |
+  | Meta calls per browser session | 20 | `MAUDESIGNAL_CAP_SESSION_CALLS` |
+  | Spend per UTC day, all sessions | $10.00 | `MAUDESIGNAL_CAP_DAILY_USD` |
+
+  The guard checks before each call. A cap hit makes no Meta call and shows the
+  recorded demo answer instead. Every call writes a `meta.usage` audit entry,
+  and the first refusal writes `meta.cap_hit`. The sidebar shows what remains.
+  The call that is running when a cap is crossed can overshoot by its own cost
+  (bounded as in section 2).
+- **Deployed app without a key**: it makes no live calls at all and costs $0.
+  That is the default public setup.
+
+## 4. Spend ledger (measured)
+
+| Date (UTC) | Run | What ran | Estimated cost | Evidence |
+|---|---|---|---|---|
+| 2026-10-27 | Meta smoke test, run 40560284301 (3 attempts) | `models.list` + one streamed answer | not logged (the smoke test prints no token usage) | Actions log |
+| 2026-10-27 | Record live Meta runs, run 40560284763 | copilot and dossier calls returned 404 (old key); 510(k) reader stopped before any model call (FDA refused the PDFs) | vision step printed `total estimated cost $0.0000`; copilot step printed none (the run stopped at the 404) | Actions log |
+| — | next Record run (after the push) | 20 typed questions + 1 voice question, 510(k) reader, dossier narrative + reviewer | **pending**: fill in from the run's printed costs and `HAND_CHECK.md` | — |
+
+## 5. Allocation of the $150 (PROPOSED: Charan to confirm)
+
+| Bucket | Proposed cap | How it is held |
+|---|---|---|
+| Recording runs (demo transcripts, vision, dossier) until the Nov 1 video | to be set after the first measured run: (measured cost per run) × planned re-runs | push-gated workflow |
+| Public live demo, if a key is ever added to the deployed app | at most `MAUDESIGNAL_CAP_DAILY_USD` per day (default $10) × days live | spend guard |
+| Development and tuning calls | from the same measured per-answer cost | manual |
+| Reserve for video day (Nov 1) and submission (Nov 4) | keep a reserve, size set after the first measured run | not spent without Charan's yes |
+
+Worst case for the public app at the default caps: $10 per day. Lower
+`MAUDESIGNAL_CAP_DAILY_USD` before adding a key to the deployed app if the
+measured per-answer cost suggests less is enough.
+
+## 6. When to stop and check
+
+- After each Record run, add a row to section 4 and compare it with the console balance.
+- If the console balance and the logged estimates disagree by more than the
+  smallest recorded run cost, stop live runs until the difference is explained.
