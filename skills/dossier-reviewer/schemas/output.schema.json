@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "dossier-reviewer findings",
+  "type": "object",
+  "required": ["findings"],
+  "additionalProperties": false,
+  "properties": {
+    "findings": {
+      "type": "array",
+      "maxItems": 15,
+      "items": {
+        "type": "object",
+        "required": ["section", "statement", "issue_type", "evidence_ids", "severity"],
+        "additionalProperties": false,
+        "properties": {
+          "section": {"type": "string", "minLength": 1},
+          "statement": {"type": "string", "maxLength": 300},
+          "issue_type": {
+            "enum": ["unsupported", "contradicted", "missing_required_element", "unclear"]
+          },
+          "evidence_ids": {"type": "array", "items": {"type": "string"}},
+          "severity": {"enum": ["high", "medium", "low"]},
+          "explanation": {"type": "string", "maxLength": 300}
+        }
+      }
+    }
+  }
+}

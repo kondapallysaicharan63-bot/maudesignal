@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "dossier-narrative output",
+  "type": "object",
+  "required": ["sentences"],
+  "additionalProperties": false,
+  "properties": {
+    "sentences": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "required": ["text", "claims"],
+        "additionalProperties": false,
+        "properties": {
+          "text": {"type": "string", "minLength": 1},
+          "claims": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["kind"],
+              "properties": {
+                "kind": {"enum": ["quote", "count", "share", "device", "record", "regulation"]}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

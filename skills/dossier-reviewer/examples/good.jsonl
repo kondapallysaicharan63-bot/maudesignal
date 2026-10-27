@@ -1,0 +1,2 @@
+{"input": "Dossier §6 says 'Reports described intermittent loss of power' but no cited narrative mentions power.", "expected_output": {"findings": [{"section": "6", "statement": "Reports described intermittent loss of power", "issue_type": "unsupported", "evidence_ids": [], "severity": "high", "explanation": "None of the cited MAUDE narratives mention power loss."}]}}
+{"input": "A sound dossier where open CAPA fields are marked 'To be completed by CAPA owner'.", "expected_output": {"findings": []}}

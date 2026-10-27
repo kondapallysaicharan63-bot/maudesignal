@@ -224,6 +224,29 @@ class Database:
                 stmt = stmt.where(RawReportRecord.product_code == product_code)
             return [(rid, pc, dr, et) for rid, pc, dr, et in session.execute(stmt).all()]
 
+    def list_raw_reports(self, report_ids: list[str]) -> list[RawReportRecord]:
+        """Return the raw openFDA rows for the given report ids, ordered by report id.
+
+        HACKATHON-BUILT (dossier): used to read device fields (brand, model,
+        510(k) number) for the Signal Evaluation & CAPA dossier. Unknown ids
+        are skipped.
+
+        Args:
+            report_ids: MAUDE report ids (``mdr_report_key``).
+
+        Returns:
+            Matching raw report rows.
+        """
+        if not report_ids:
+            return []
+        with self._session() as session:
+            stmt = (
+                select(RawReportRecord)
+                .where(RawReportRecord.maude_report_id.in_(report_ids))
+                .order_by(RawReportRecord.maude_report_id)
+            )
+            return list(session.execute(stmt).scalars().all())
+
     def max_date_received(self, product_code: str | None = None) -> str | None:
         """Return the latest ``date_received`` (YYYYMMDD) stored, or None if empty."""
         with self._session() as session:

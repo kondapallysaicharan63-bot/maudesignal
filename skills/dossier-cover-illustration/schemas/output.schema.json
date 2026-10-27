@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "muse-image-1.0 images/generations response (fields used)",
+  "type": "object",
+  "required": ["data"],
+  "properties": {
+    "data": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["b64_json"],
+        "properties": {"b64_json": {"type": "string", "minLength": 1}}
+      }
+    },
+    "output_format": {"type": "string"}
+  }
+}
