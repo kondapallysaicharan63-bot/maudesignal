@@ -86,6 +86,22 @@ remaining smoke-test and screenshot scripts.
 Small pre-existing changes: `Database.delete_external_sources`, `Database.list_raw_reports`;
 `sources/pubmed.py` fetches real abstracts and retries once on 429; dashboard wiring in `app.py`.
 
+### Added Oct 27, later (polish before the live recording)
+
+| File | What it is |
+|---|---|
+| `monitor/digest.py` (schema 1.1), `catalog/names.py` | Flagged codes ranked by a fixed, documented key; each rank carries a "why" sentence built from the detector's numbers; digest names the FDA device type and the brands on this window's reports. Overnight page shows "Why it is ranked first"; the `overnight_signals` tool returns the ranking |
+| `copilot/voice.py`, `copilot/audit_export.py` | Each spoken question appends a hash-chained `voice.transcribed` entry (model, audio SHA-256, duration, text heard) linked to its `copilot.answer`; silence appends `voice.rejected`. Recording runs export their trail; the Actions page re-verifies and shows it |
+| `scripts/hand_check.py`, `docs/hackathon/HAND_CHECK.md` | 20-answer hand-check worksheet: gate pass rates computed from the recorded transcripts, every cited id looked up in stored records, a hand-verdict column per sentence |
+| `vision/browser_fetch.py` | Headless-Chromium fallback for 510(k) PDFs that FDA refuses to plain HTTP clients; the recorder skips (not fails) a K-number whose PDF cannot be obtained |
+| `scripts/record_demo_transcripts.py`, `.github/workflows/copilot-record.yml` | 20 typed demo questions; one failed question no longer stops a run; commit step hardened |
+
+Small pre-existing changes: `catalog/fetcher.py` no longer writes made-up names for
+fallback product codes (names come from the openFDA classification endpoint, or the
+code is skipped); demo DB catalog corrected (LLZ/MYN/POK carry FDA classification
+names, 15 placeholder rows removed; recorded in `SEED_MANIFEST.json`); dashboard
+tables in `app.py` show the brand written on each report.
+
 Plus this manifest, the demo video, and the submission write-up.
 
 ## What is PRE-EXISTING (the base — NOT presented as hackathon work)
