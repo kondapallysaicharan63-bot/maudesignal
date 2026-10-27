@@ -59,7 +59,7 @@
 | Step | Meta model / API | Why |
 |---|---|---|
 | Answering a question | **Muse Spark 1.3** (`muse-spark-1.3`) via the **Meta Model API** (OpenAI-compatible, `https://api.meta.ai/v1`) | Tool calling over 6 deterministic tools; structured output (sentences + typed claims, [`skills/safety-copilot`](skills/safety-copilot/SKILL.md)); a **repair turn** after a gate block, fed the gate's reasons and recomputed values |
-| Spoken questions | **Meta Voice Transcribe** (*in progress*) | Ask by voice; the transcript goes through the same copilot and gate |
+| Spoken questions | **Meta Voice Transcribe** (`muse-voice-transcribe-1.0`) | Ask by voice; only the transcript text reaches Muse Spark, and it goes through the same copilot and gate |
 | Recording the public demo | Muse Spark 1.3 in GitHub Actions ([`copilot-record.yml`](.github/workflows/copilot-record.yml)), key from repository secrets | The public, keyless app replays real runs instead of mocked ones |
 
 **Standard tier only.** Never the Contributor tier, which trains on your data.

@@ -26,6 +26,11 @@ Everything under `src/maudesignal/copilot/`, `src/maudesignal/gate/` and
 | `scripts/record_demo_transcripts.py`, `.github/workflows/copilot-record.yml`, `demo/` | Records the demo questions through the real Muse Spark copilot in GitHub Actions (key from repository secrets, never in code) |
 | `.github/workflows/meta-smoke.yml`, `test_meta_connection.py` | Meta Model API smoke test (`models.list` + streaming) run with repository secrets |
 | `tests/unit/test_copilot_agent.py` | Agent loop, repair turn, withheld sentences, CAPA approval rules, audit tamper detection, tools, transcripts (scripted fake client — no credits) |
+| `copilot/voice.py` | Second Meta AI surface: spoken question → **Muse Voice Transcribe** (`POST /v1/asr/transcribe`, `muse-voice-transcribe-1.0`) → transcript text → the same copilot + claim-level gate. Audio never goes to the chat model. Local WAV validation before upload, $0.18/audio-hour cost estimate, key never logged |
+| `dashboard/copilot_pages.py` (voice) | "Ask live" mic input when a key is present; recorded runs show "🎙 Heard: …" so the analyst sees what was transcribed |
+| `scripts/record_demo_transcripts.py --voice-file`, `demo/voice/question.wav` | Records the spoken demo question through Voice Transcribe + Muse Spark in CI (key from secrets). The WAV is a synthetic placeholder voice |
+| `tests/unit/test_voice.py` | 29 tests: request format, errors, validation, voice → gated answer end to end (mock transport, no network) |
+| `docs/hackathon/VOICE_API_NOTES.md` | What Meta's Voice Transcribe docs say vs what is unverified |
 | `monitor/deterioration.py` | Deterministic per-product-code detector: last 7 days vs trailing 4-week baseline → `new_signal` / `spike` / `severity_escalation` / `stable`, returning every count, share and report id used |
 | `monitor/digest.py` | Overnight digest ("N new, M worsening") rendered to Markdown + JSON with a fixed advisory footer; no LLM |
 | `monitor/fetch.py` | Capped, whole-day incremental openFDA fetch (reuses the existing ingestion pipeline) |
@@ -79,7 +84,8 @@ The copilot reads from that pipeline. It does not claim it.
   such requests.
 - No factual claim in a copilot answer is generated without grounding in a
   pipeline record or a verified primary source (citation hard-gate).
-- Meta models used: Muse Spark series via the Meta Model API (Standard
+- Meta models used: `muse-voice-transcribe-1.0` (Voice Transcribe, `POST https://api.meta.ai/v1/asr/transcribe`) for spoken questions, and the
+  Muse Spark series via the Meta Model API (Standard
   tier — never Contributor, which trains on your data). Chat model:
   `muse-spark-1.3` (latest, docs-recommended), base URL
   `https://api.meta.ai/v1`, streaming via `stream=True`.
