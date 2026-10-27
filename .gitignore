@@ -34,9 +34,8 @@ llm_audit_log.jsonl
 reports/
 *.pdf
 !docs/**/*.pdf
-# Public FDA 510(k) summary PDFs for the vision demo. FDA blocks CI runners from
-# downloading them, so they are saved from a browser and committed here.
-!data/demo/510k/*.pdf
+# Public FDA 510(k) summary PDFs for the vision demo live in docs/510k/ (covered by
+# the docs/**/*.pdf exception above); FDA blocks CI runners from downloading them.
 
 # --- Python ---
 __pycache__/

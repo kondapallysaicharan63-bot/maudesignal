@@ -32,7 +32,7 @@ import httpx
 from maudesignal.common.exceptions import MaudeSignalError
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_CACHE_DIR = PROJECT_ROOT / "data" / "demo" / "510k"
+DEFAULT_CACHE_DIR = PROJECT_ROOT / "docs" / "510k"  # public FDA PDFs, committed
 FDA_PDF_URL = "https://www.accessdata.fda.gov/cdrh_docs/{folder}/{k}.pdf"
 MAX_PDF_BYTES = 40_000_000
 DEFAULT_MAX_PAGES = 8
@@ -113,7 +113,7 @@ def download_510k_pdf(
 
     Args:
         k_number: 510(k) number.
-        cache_dir: Cache folder (``data/demo/510k`` by default; the demo PDFs are committed there).
+        cache_dir: Cache folder (``docs/510k`` by default; the demo PDFs are committed there).
         transport: Injected HTTP transport (tests).
         timeout_s: Request timeout.
 

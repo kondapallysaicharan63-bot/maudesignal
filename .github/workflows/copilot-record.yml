@@ -79,7 +79,7 @@ jobs:
           git add -A demo/transcripts demo/vision demo/dossier
           git add docs/hackathon/HAND_CHECK.md 2>/dev/null || true
           # Public FDA PDFs the browser fallback fetched: cached so no later run needs FDA again.
-          git add data/demo/510k/*.pdf 2>/dev/null || true
+          git add docs/510k/*.pdf 2>/dev/null || true
           git add -f demo/dossier/*.pdf 2>/dev/null || true
           git diff --cached --quiet || git commit -m "chore(demo): record live Meta runs (copilot, voice, vision, dossier)"
           git pull --rebase origin "${GITHUB_REF_NAME}"

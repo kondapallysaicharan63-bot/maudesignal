@@ -6,7 +6,7 @@ Needs META_MODEL_API_KEY (in CI from a GitHub Actions secret; never written
 anywhere). Two parts:
 
 1. 510(k) summary reader — for each K-number (default: ``DEMO_K_NUMBERS``) the
-   summary PDF is taken from ``data/demo/510k/`` or downloaded (plain HTTP,
+   summary PDF is taken from ``docs/510k/`` or downloaded (plain HTTP,
    then headless Chromium via Playwright when FDA's bot protection refuses);
    its first pages are read twice by Muse Spark and checked against openFDA
    and the text layer; the result is written to ``demo/vision/510k-<K>.json``.
