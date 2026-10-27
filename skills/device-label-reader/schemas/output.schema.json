@@ -1,0 +1,222 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DeviceLabelReaderOutput",
+  "description": "Output schema for skills/device-label-reader v1.0.0 (strict-mode subset)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "fields",
+    "overall_legibility"
+  ],
+  "properties": {
+    "fields": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "device_name",
+        "manufacturer",
+        "model_number",
+        "k_number",
+        "udi",
+        "gtin",
+        "lot",
+        "serial"
+      ],
+      "properties": {
+        "device_name": {
+          "type": "object",
+          "description": "Device / product name as printed",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "legibility"
+          ],
+          "properties": {
+            "value": {
+              "type": "string"
+            },
+            "legibility": {
+              "type": "string",
+              "enum": [
+                "clear",
+                "partly_legible",
+                "illegible",
+                "not_present"
+              ]
+            }
+          }
+        },
+        "manufacturer": {
+          "type": "object",
+          "description": "Manufacturer or distributor as printed",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "legibility"
+          ],
+          "properties": {
+            "value": {
+              "type": "string"
+            },
+            "legibility": {
+              "type": "string",
+              "enum": [
+                "clear",
+                "partly_legible",
+                "illegible",
+                "not_present"
+              ]
+            }
+          }
+        },
+        "model_number": {
+          "type": "object",
+          "description": "Model, catalog or REF number",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "legibility"
+          ],
+          "properties": {
+            "value": {
+              "type": "string"
+            },
+            "legibility": {
+              "type": "string",
+              "enum": [
+                "clear",
+                "partly_legible",
+                "illegible",
+                "not_present"
+              ]
+            }
+          }
+        },
+        "k_number": {
+          "type": "object",
+          "description": "510(k) number if printed, K + 6 digits",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "legibility"
+          ],
+          "properties": {
+            "value": {
+              "type": "string"
+            },
+            "legibility": {
+              "type": "string",
+              "enum": [
+                "clear",
+                "partly_legible",
+                "illegible",
+                "not_present"
+              ]
+            }
+          }
+        },
+        "udi": {
+          "type": "object",
+          "description": "Full UDI human-readable string if printed, e.g. (01)...(17)...",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "legibility"
+          ],
+          "properties": {
+            "value": {
+              "type": "string"
+            },
+            "legibility": {
+              "type": "string",
+              "enum": [
+                "clear",
+                "partly_legible",
+                "illegible",
+                "not_present"
+              ]
+            }
+          }
+        },
+        "gtin": {
+          "type": "object",
+          "description": "GTIN / device identifier digits if printed",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "legibility"
+          ],
+          "properties": {
+            "value": {
+              "type": "string"
+            },
+            "legibility": {
+              "type": "string",
+              "enum": [
+                "clear",
+                "partly_legible",
+                "illegible",
+                "not_present"
+              ]
+            }
+          }
+        },
+        "lot": {
+          "type": "object",
+          "description": "LOT number (session only, never stored)",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "legibility"
+          ],
+          "properties": {
+            "value": {
+              "type": "string"
+            },
+            "legibility": {
+              "type": "string",
+              "enum": [
+                "clear",
+                "partly_legible",
+                "illegible",
+                "not_present"
+              ]
+            }
+          }
+        },
+        "serial": {
+          "type": "object",
+          "description": "SN / serial number (session only, never stored)",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "legibility"
+          ],
+          "properties": {
+            "value": {
+              "type": "string"
+            },
+            "legibility": {
+              "type": "string",
+              "enum": [
+                "clear",
+                "partly_legible",
+                "illegible",
+                "not_present"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "overall_legibility": {
+      "type": "string",
+      "enum": [
+        "clear",
+        "partly_legible",
+        "illegible",
+        "not_present"
+      ]
+    }
+  }
+}

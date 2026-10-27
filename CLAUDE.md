@@ -275,6 +275,8 @@ MaudeSignal does not handle PHI under any circumstances.
 | `fda-guidance-retriever` | 📋 planned | Grounded retrieval over FDA guidance corpus |
 | `psur-report-drafter` | 📋 planned | Final composer; consumes everything |
 | `safety-copilot` | ✅ v1.0.0 (hackathon, Oct 2026) | Copilot contract: tool use + structured claims checked by `gate/`; advisory only |
+| `fda-document-reader` | ✅ v1.0.0 (hackathon, Oct 2026) | Muse Spark reads 510(k) summary page images; checked by `vision/verify.py` (two reads + openFDA + text layer) |
+| `device-label-reader` | ✅ v1.0.0 (hackathon, Oct 2026) | Muse Spark reads a SAM-cropped device label; K-number / GTIN checked by `vision/label.py` |
 
 If you need to add a new Skill, follow the structure of the existing
 five Skills and update the table above.
