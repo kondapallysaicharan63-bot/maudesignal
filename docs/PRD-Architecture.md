@@ -47,7 +47,6 @@
 ```
 maudesignal/
 ├── CLAUDE.md                   ← AI assistant instructions (non-negotiable)
-├── CHAT-HISTORY-SUMMARY.md     ← Project context for AI agents
 ├── DISCLAIMER.md               ← Legal disclaimer
 ├── README.md                   ← Public landing page
 ├── docker-compose.yml
