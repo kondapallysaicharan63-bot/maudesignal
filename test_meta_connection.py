@@ -38,6 +38,11 @@ def main() -> int:
         print("Copy .env.example to .env and fill in your values (do not commit .env).")
         return 2
 
+    from openai import OpenAI
+
+    ids = sorted(m.id for m in OpenAI(api_key=api_key, base_url=base_url).models.list())
+    print(f"models.list OK: {len(ids)} models; {model} available: {model in ids}")
+
     provider = MetaProvider(api_key=api_key, model=model, base_url=base_url)
     copilot = SafetyCopilot(provider)
     print(f"Model: {provider.model} | Provider: {provider.provider_name}")
