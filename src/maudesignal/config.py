@@ -175,6 +175,19 @@ class Config:
         }
 
 
+def openfda_api_key_from_env() -> str | None:
+    """Return the optional ``OPENFDA_API_KEY`` without requiring any LLM key.
+
+    HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
+    Used by keyless, LLM-free paths (demo seeding, ``maudesignal monitor``)
+    that must run even when no LLM provider is configured.
+
+    Returns:
+        The stripped key, or None when unset/blank.
+    """
+    return os.environ.get("OPENFDA_API_KEY", "").strip() or None
+
+
 def _mask_secret(value: str | None) -> str:
     """Return a masked representation safe for logging (NFR-08)."""
     if not value:

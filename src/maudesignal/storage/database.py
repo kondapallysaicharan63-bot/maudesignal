@@ -14,7 +14,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, func, select
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -183,6 +183,58 @@ class Database:
                 select(RawReportRecord.maude_report_id, RawReportRecord.date_received)
             ).all()
             return {rid: d for rid, d in rows if d}
+
+    # HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
+    # Read helpers for the deterioration monitor (maudesignal.monitor).
+
+    def list_event_facts(
+        self, product_code: str | None = None
+    ) -> list[tuple[str, str, str | None, str | None]]:
+        """Return the minimal per-report facts the deterioration monitor needs.
+
+        Joins ``raw_reports`` (authoritative ``date_received``) with
+        ``normalized_events`` (``event_type``). Narratives are not read.
+
+        Args:
+            product_code: Optional product-code filter.
+
+        Returns:
+            Tuples of ``(maude_report_id, product_code, date_received, event_type)``
+            ordered by report id. ``date_received`` is openFDA's YYYYMMDD string;
+            ``event_type`` is lower-cased (e.g. ``"malfunction"``) or None.
+        """
+        with self._session() as session:
+            stmt = (
+                select(
+                    RawReportRecord.maude_report_id,
+                    RawReportRecord.product_code,
+                    RawReportRecord.date_received,
+                    NormalizedEventRecord.event_type,
+                )
+                .outerjoin(
+                    NormalizedEventRecord,
+                    NormalizedEventRecord.maude_report_id == RawReportRecord.maude_report_id,
+                )
+                .order_by(RawReportRecord.maude_report_id)
+            )
+            if product_code:
+                stmt = stmt.where(RawReportRecord.product_code == product_code)
+            return [(rid, pc, dr, et) for rid, pc, dr, et in session.execute(stmt).all()]
+
+    def max_date_received(self, product_code: str | None = None) -> str | None:
+        """Return the latest ``date_received`` (YYYYMMDD) stored, or None if empty."""
+        with self._session() as session:
+            stmt = select(func.max(RawReportRecord.date_received))
+            if product_code:
+                stmt = stmt.where(RawReportRecord.product_code == product_code)
+            value = session.execute(stmt).scalar()
+            return str(value) if value else None
+
+    def list_product_codes(self) -> list[str]:
+        """Return the distinct product codes present in ``raw_reports``, sorted."""
+        with self._session() as session:
+            stmt = select(RawReportRecord.product_code).distinct()
+            return sorted(str(pc) for pc in session.execute(stmt).scalars().all())
 
     # ------------------------------------------------------------------
     # Extractions

@@ -113,6 +113,53 @@ class OpenFDAClient:
                 return
             skip += page_size
 
+    # HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
+    @retry(
+        stop=stop_after_attempt(MAX_RETRIES),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_exception_type((OpenFDARateLimitError, OpenFDAUnavailableError)),
+        reraise=True,
+    )
+    def count_by_date_received(
+        self,
+        product_code: str,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> list[tuple[str, int]]:
+        """Return per-day report counts (openFDA ``count=date_received``).
+
+        One request, no records downloaded. Lets callers fetch whole days
+        only, so a capped incremental fetch never leaves a partial day behind.
+
+        Args:
+            product_code: FDA 3-character product code.
+            start_date: Earliest ``date_received`` (YYYYMMDD). Optional.
+            end_date: Latest ``date_received`` (YYYYMMDD). Optional.
+
+        Returns:
+            ``(YYYYMMDD, count)`` pairs sorted by date; empty when none match.
+        """
+        params: dict[str, str | int] = {
+            "search": search_param(_build_query(product_code, start_date, end_date)),
+            "count": "date_received",
+        }
+        if self._api_key:
+            params["api_key"] = self._api_key
+        try:
+            response = self._client.get(OPENFDA_EVENT_ENDPOINT, params=params)
+        except httpx.HTTPError as exc:
+            raise OpenFDAAPIError(f"HTTP error contacting openFDA: {exc}") from exc
+        if response.status_code == 404:
+            return []
+        if response.status_code == 429:
+            raise OpenFDARateLimitError("openFDA returned 429")
+        if response.status_code in (500, 503):
+            raise OpenFDAUnavailableError(f"openFDA server error {response.status_code}")
+        if response.status_code != 200:
+            raise OpenFDAAPIError(f"Unexpected openFDA status {response.status_code}")
+        rows = response.json().get("results", [])
+        return sorted((str(r["time"]), int(r["count"])) for r in rows)
+
     # ------------------------------------------------------------------
 
     @retry(
@@ -129,7 +176,7 @@ class OpenFDAClient:
     ) -> list[dict[str, Any]]:
         """Fetch a single page from openFDA. Retries on rate limit or 5xx."""
         params: dict[str, str | int] = {
-            "search": query,
+            "search": search_param(query),
             "limit": limit,
             "skip": skip,
         }
@@ -173,6 +220,24 @@ class OpenFDAClient:
         payload = response.json()
         results: list[dict[str, Any]] = payload.get("results", [])
         return results
+
+
+def search_param(query: str) -> str:
+    """Convert an openFDA query written with URL ``+`` separators to a param value.
+
+    openFDA documents queries as they appear in a URL, where ``+`` means a
+    space. httpx percent-encodes a literal ``+`` as ``%2B``, which openFDA
+    rejects with HTTP 500 for ``+AND+`` / ``[a+TO+b]`` queries, so the
+    separators are sent as spaces (httpx then encodes them as ``+``).
+    Fix added during the Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
+
+    Args:
+        query: Query in openFDA URL syntax, e.g. from :func:`_build_query`.
+
+    Returns:
+        The same query with ``+`` replaced by spaces.
+    """
+    return query.replace("+", " ")
 
 
 def _build_query(
