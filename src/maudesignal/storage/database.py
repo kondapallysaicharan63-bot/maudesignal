@@ -176,6 +176,14 @@ class Database:
                 stmt = stmt.limit(limit)
             return list(session.execute(stmt).scalars().all())
 
+    def date_received_lookup(self) -> dict[str, str]:
+        """Return maude_report_id -> date_received (YYYYMMDD) for every raw report."""
+        with self._session() as session:
+            rows = session.execute(
+                select(RawReportRecord.maude_report_id, RawReportRecord.date_received)
+            ).all()
+            return {rid: d for rid, d in rows if d}
+
     # ------------------------------------------------------------------
     # Extractions
     # ------------------------------------------------------------------

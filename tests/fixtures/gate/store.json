@@ -1,0 +1,97 @@
+{
+ "_note": "SYNTHETIC evidence store for gate tests. Report ids and K-numbers are fictional.",
+ "records": [
+  {
+   "report_id": "9000001-2026-00001",
+   "product_code": "QIH",
+   "event_type": "Injury",
+   "date_received": "20260911",
+   "text": "The AI triage software failed to flag a large vessel occlusion on CT angiography; radiologist identified it 40 minutes later.",
+   "brand_name": "Synthetic QIH App",
+   "manufacturer": "Example Medical QIH"
+  },
+  {
+   "report_id": "9000002-2026-00002",
+   "product_code": "QIH",
+   "event_type": "Malfunction",
+   "date_received": "20260912",
+   "text": "Algorithm notification was delayed after a server update; no patient harm reported.",
+   "brand_name": "Synthetic QIH App",
+   "manufacturer": "Example Medical QIH"
+  },
+  {
+   "report_id": "9000003-2026-00003",
+   "product_code": "QIH",
+   "event_type": "Malfunction",
+   "date_received": "20260913",
+   "text": "Software flagged an intracranial hemorrhage that was not present on review (false positive).",
+   "brand_name": "Synthetic QIH App",
+   "manufacturer": "Example Medical QIH"
+  },
+  {
+   "report_id": "9000004-2026-00004",
+   "product_code": "QIH",
+   "event_type": "Malfunction",
+   "date_received": "20260914",
+   "text": "User reported the application crashed when loading a study with more than 500 slices.",
+   "brand_name": "Synthetic QIH App",
+   "manufacturer": "Example Medical QIH"
+  },
+  {
+   "report_id": "9000005-2026-00005",
+   "product_code": "LLZ",
+   "event_type": "Malfunction",
+   "date_received": "20260915",
+   "text": "Image overlay misregistered by several millimeters after the scanner firmware upgrade.",
+   "brand_name": "Synthetic LLZ App",
+   "manufacturer": "Example Medical LLZ"
+  },
+  {
+   "report_id": "9000006-2026-00006",
+   "product_code": "LLZ",
+   "event_type": "Malfunction",
+   "date_received": "20260916",
+   "text": "Segmentation contour omitted part of the lesion; clinician corrected manually.",
+   "brand_name": "Synthetic LLZ App",
+   "manufacturer": "Example Medical LLZ"
+  },
+  {
+   "report_id": "9000007-2026-00007",
+   "product_code": "MYN",
+   "event_type": "Malfunction",
+   "date_received": "20260917",
+   "text": "Mammography CAD mark was placed on the wrong breast in the report view.",
+   "brand_name": "Synthetic MYN App",
+   "manufacturer": "Example Medical MYN"
+  },
+  {
+   "report_id": "9000008-2026-00008",
+   "product_code": "MYN",
+   "event_type": "Injury",
+   "date_received": "20260918",
+   "text": "No CAD marks displayed for a case later confirmed as malignant.",
+   "brand_name": "Synthetic MYN App",
+   "manufacturer": "Example Medical MYN"
+  }
+ ],
+ "devices": [
+  {
+   "k_number": "K990001",
+   "product_code": "QIH",
+   "device_name": "Synthetic Stroke Triage",
+   "company_name": "Example Medical QIH"
+  },
+  {
+   "k_number": "K990002",
+   "product_code": "LLZ",
+   "device_name": "Synthetic Image Registration",
+   "company_name": "Example Medical LLZ"
+  },
+  {
+   "k_number": "K990003",
+   "product_code": "MYN",
+   "device_name": "Synthetic Mammo CAD",
+   "company_name": "Example Medical MYN"
+  }
+ ]
+}
