@@ -1,0 +1,497 @@
+{
+  "kind": "510k_summary_reading",
+  "k_number": "K031779",
+  "created_at": "2026-10-28T05:48:22+00:00",
+  "pdf_url": "https://www.accessdata.fda.gov/cdrh_docs/pdf3/K031779.pdf",
+  "page_count": 5,
+  "pages_read": 5,
+  "has_text_layer": true,
+  "agreement_pct": 100.0,
+  "counts": {
+    "VERIFIED": 10,
+    "CONFLICT": 0,
+    "UNVERIFIABLE": 0
+  },
+  "cost_usd": 0.058336,
+  "openfda": {
+    "k_number": "K031779",
+    "applicant": "Confirma, Inc.",
+    "device_name": "CADSTREAM",
+    "product_code": "LLZ",
+    "decision_date": "2003-08-06",
+    "regulation_number": "892.2050",
+    "statement_or_summary": "Summary"
+  },
+  "fields": [
+    {
+      "name": "k_number",
+      "status": "VERIFIED",
+      "value": "K031779",
+      "read_a": {
+        "value": "K031779",
+        "page": 1,
+        "legibility": "clear"
+      },
+      "read_b": {
+        "value": "K031779",
+        "page": 1,
+        "legibility": "clear"
+      },
+      "reads_agree": true,
+      "similarity": 1.0,
+      "checks": [
+        {
+          "source": "two_reads",
+          "outcome": "pass",
+          "detail": "similarity 1.00"
+        },
+        {
+          "source": "openfda",
+          "outcome": "pass",
+          "detail": "openFDA: 'K031779'"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "name": "applicant",
+      "status": "VERIFIED",
+      "value": "Confirma, Inc.",
+      "read_a": {
+        "value": "Confirma, Inc.",
+        "page": 1,
+        "legibility": "clear"
+      },
+      "read_b": {
+        "value": "Confirma, Inc.",
+        "page": 1,
+        "legibility": "clear"
+      },
+      "reads_agree": true,
+      "similarity": 1.0,
+      "checks": [
+        {
+          "source": "two_reads",
+          "outcome": "pass",
+          "detail": "similarity 1.00"
+        },
+        {
+          "source": "openfda",
+          "outcome": "pass",
+          "detail": "openFDA: 'Confirma, Inc.'"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "name": "device_name",
+      "status": "VERIFIED",
+      "value": "CADstream Version 2.0",
+      "read_a": {
+        "value": "CADstream Version 2.0",
+        "page": 1,
+        "legibility": "clear"
+      },
+      "read_b": {
+        "value": "CADstream Version 2.0",
+        "page": 1,
+        "legibility": "clear"
+      },
+      "reads_agree": true,
+      "similarity": 1.0,
+      "checks": [
+        {
+          "source": "two_reads",
+          "outcome": "pass",
+          "detail": "similarity 1.00"
+        },
+        {
+          "source": "openfda",
+          "outcome": "pass",
+          "detail": "openFDA: 'CADSTREAM'"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "name": "product_code",
+      "status": "VERIFIED",
+      "value": "LLZ",
+      "read_a": {
+        "value": "LLZ",
+        "page": 3,
+        "legibility": "clear"
+      },
+      "read_b": {
+        "value": "LLZ",
+        "page": 3,
+        "legibility": "clear"
+      },
+      "reads_agree": true,
+      "similarity": 1.0,
+      "checks": [
+        {
+          "source": "two_reads",
+          "outcome": "pass",
+          "detail": "similarity 1.00"
+        },
+        {
+          "source": "openfda",
+          "outcome": "pass",
+          "detail": "openFDA: 'LLZ'"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "name": "regulation_number",
+      "status": "VERIFIED",
+      "value": "892.2050",
+      "read_a": {
+        "value": "892.2050",
+        "page": 3,
+        "legibility": "clear"
+      },
+      "read_b": {
+        "value": "892.2050",
+        "page": 3,
+        "legibility": "clear"
+      },
+      "reads_agree": true,
+      "similarity": 1.0,
+      "checks": [
+        {
+          "source": "two_reads",
+          "outcome": "pass",
+          "detail": "similarity 1.00"
+        },
+        {
+          "source": "openfda",
+          "outcome": "pass",
+          "detail": "openFDA: '892.2050'"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "name": "decision_date",
+      "status": "VERIFIED",
+      "value": "2003-08-06",
+      "read_a": {
+        "value": "2003-08-06",
+        "page": 3,
+        "legibility": "clear"
+      },
+      "read_b": {
+        "value": "2003-08-06",
+        "page": 3,
+        "legibility": "clear"
+      },
+      "reads_agree": true,
+      "similarity": 1.0,
+      "checks": [
+        {
+          "source": "two_reads",
+          "outcome": "pass",
+          "detail": "similarity 1.00"
+        },
+        {
+          "source": "openfda",
+          "outcome": "pass",
+          "detail": "openFDA: '2003-08-06'"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "name": "predicate_devices",
+      "status": "VERIFIED",
+      "value": [
+        "K002519",
+        "K992654",
+        "K961023",
+        "K020546",
+        "K984221"
+      ],
+      "read_a": {
+        "value": [
+          "K002519",
+          "K992654",
+          "K961023",
+          "K020546",
+          "K984221"
+        ],
+        "page": 1,
+        "legibility": "clear"
+      },
+      "read_b": {
+        "value": [
+          "K002519",
+          "K992654",
+          "K961023",
+          "K020546",
+          "K984221"
+        ],
+        "page": 1,
+        "legibility": "clear"
+      },
+      "reads_agree": true,
+      "similarity": 1.0,
+      "checks": [
+        {
+          "source": "two_reads",
+          "outcome": "pass",
+          "detail": "similarity 1.00"
+        },
+        {
+          "source": "openfda_predicates",
+          "outcome": "pass",
+          "detail": "5 predicate K-number(s) exist in openFDA"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "name": "indications_for_use",
+      "status": "VERIFIED",
+      "value": "CADstream is a Computer Aided Detection (CAD) system intended for use in analyzing magnetic resonance imaging (MRI) studies. CADstream automatically registers serial patient image acquisitions to minimize the impact of patient motion, segments and labels tissue types based on enhancement characteristics (parametric image maps), and performs other user-defined post-processing functions (image subtractions, multiplanar reformats, maximum intensity projections). When interpreted by a skilled physician, this device provides information that may be useful in screening and diagnosis. CADstream can also be used to provide accurate and reproducible measurements of the longest diameters and volume of segmented tissues. Patient management decisions should not be made based solely on the results of CADstream analysis.",
+      "read_a": {
+        "value": "CADstream is a Computer Aided Detection (CAD) system intended for use in analyzing magnetic resonance imaging (MRI) studies. CADstream automatically registers serial patient image acquisitions to minimize the impact of patient motion, segments and labels tissue types based on enhancement characteristics (parametric image maps), and performs other user-defined post-processing functions (image subtractions, multiplanar reformats, maximum intensity projections). When interpreted by a skilled physician, this device provides information that may be useful in screening and diagnosis. CADstream can also be used to provide accurate and reproducible measurements of the longest diameters and volume of segmented tissues. Patient management decisions should not be made based solely on the results of CADstream analysis.",
+        "page": 5,
+        "legibility": "clear"
+      },
+      "read_b": {
+        "value": "CADstream is a Computer Aided Detection (CAD) system intended for use in analyzing magnetic resonance imaging (MRI) studies. CADstream automatically registers serial patient image acquisitions to minimize the impact of patient motion, segments and labels tissue types based on enhancement characteristics (parametric image maps), and performs other user-defined post-processing functions (image subtractions, multiplanar reformats, maximum intensity projections). When interpreted by a skilled physician, this device provides information that may be useful in screening and diagnosis. CADstream can also be used to provide accurate and reproducible measurements of the longest diameters and volume of segmented tissues. Patient management decisions should not be made based solely on the results of CADstream analysis.",
+        "page": 5,
+        "legibility": "clear"
+      },
+      "reads_agree": true,
+      "similarity": 1.0,
+      "checks": [
+        {
+          "source": "two_reads",
+          "outcome": "pass",
+          "detail": "similarity 1.00"
+        },
+        {
+          "source": "text_layer",
+          "outcome": "pass",
+          "detail": "100% found in text layer"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "name": "intended_use",
+      "status": "VERIFIED",
+      "value": "CADstream is a Computer Aided Detection (CAD) system intended for use in analyzing magnetic resonance imaging (MRI) studies. CADstream automatically registers serial patient image acquisitions to minimize the impact of patient motion, segments and labels tissue types based on enhancement characteristics (parametric image maps), and performs other user-defined post-processing functions (image subtractions, multiplanar reformats, maximum intensity projections). When interpreted by a skilled physician, this device provides information that may be useful in screening and diagnosis. CADstream can also be used to provide accurate and reproducible measurements of the longest diameters and volume of segmented tissues. Patient management decisions should not be made based solely on the results of CADstream analysis.",
+      "read_a": {
+        "value": "CADstream is a Computer Aided Detection (CAD) system intended for use in analyzing magnetic resonance imaging (MRI) studies. CADstream automatically registers serial patient image acquisitions to minimize the impact of patient motion, segments and labels tissue types based on enhancement characteristics (parametric image maps), and performs other user-defined post-processing functions (image subtractions, multiplanar reformats, maximum intensity projections). When interpreted by a skilled physician, this device provides information that may be useful in screening and diagnosis. CADstream can also be used to provide accurate and reproducible measurements of the longest diameters and volume of segmented tissues. Patient management decisions should not be made based solely on the results of CADstream analysis.",
+        "page": 2,
+        "legibility": "clear"
+      },
+      "read_b": {
+        "value": "CADstream is a Computer Aided Detection (CAD) system intended for use in analyzing magnetic resonance imaging (MRI) studies. CADstream automatically registers serial patient image acquisitions to minimize the impact of patient motion, segments and labels tissue types based on enhancement characteristics (parametric image maps), and performs other user-defined post-processing functions (image subtractions, multiplanar reformats, maximum intensity projections). When interpreted by a skilled physician, this device provides information that may be useful in screening and diagnosis. CADstream can also be used to provide accurate and reproducible measurements of the longest diameters and volume of segmented tissues. Patient management decisions should not be made based solely on the results of CADstream analysis.",
+        "page": 2,
+        "legibility": "clear"
+      },
+      "reads_agree": true,
+      "similarity": 1.0,
+      "checks": [
+        {
+          "source": "two_reads",
+          "outcome": "pass",
+          "detail": "similarity 1.00"
+        },
+        {
+          "source": "text_layer",
+          "outcome": "pass",
+          "detail": "100% found in text layer"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "name": "technology_summary",
+      "status": "VERIFIED",
+      "value": "The CADstream software simultaneously analyzes the pixel signal intensities from multiple MR sequences and applies multivariate pattern recognition methods to perform tissue segmentation and classification. The CADstream system consists of proprietary software developed by Confirma installed on an off-the-shelf personal computer and a monitor configured as an CADstream display station.",
+      "read_a": {
+        "value": "The CADstream software simultaneously analyzes the pixel signal intensities from multiple MR sequences and applies multivariate pattern recognition methods to perform tissue segmentation and classification. The CADstream system consists of proprietary software developed by Confirma installed on an off-the-shelf personal computer and a monitor configured as an CADstream display station.",
+        "page": 2,
+        "legibility": "clear"
+      },
+      "read_b": {
+        "value": "The CADstream device relies on the assumption that pixels having similar MR signal intensities represent similar tissues. The CADstream software simultaneously analyzes the pixel signal intensities from multiple MR sequences and applies multivariate pattern recognition methods to perform tissue segmentation and classification. The CADstream system consists of proprietary software developed by Confirma installed on an off-the-shelf personal computer and a monitor configured as an CADstream display station.",
+        "page": 2,
+        "legibility": "clear"
+      },
+      "reads_agree": true,
+      "similarity": 0.827,
+      "checks": [
+        {
+          "source": "two_reads",
+          "outcome": "pass",
+          "detail": "similarity 0.83"
+        }
+      ],
+      "note": "two independent reads agree (no other source covers it)"
+    }
+  ],
+  "reads": [
+    {
+      "label": "A",
+      "fields": {
+        "k_number": {
+          "value": "K031779",
+          "page": 1,
+          "legibility": "clear"
+        },
+        "applicant": {
+          "value": "Confirma, Inc.",
+          "page": 1,
+          "legibility": "clear"
+        },
+        "device_name": {
+          "value": "CADstream Version 2.0",
+          "page": 1,
+          "legibility": "clear"
+        },
+        "product_code": {
+          "value": "LLZ",
+          "page": 3,
+          "legibility": "clear"
+        },
+        "regulation_number": {
+          "value": "892.2050",
+          "page": 3,
+          "legibility": "clear"
+        },
+        "decision_date": {
+          "value": "2003-08-06",
+          "page": 3,
+          "legibility": "clear"
+        },
+        "predicate_devices": {
+          "value": [
+            "K002519",
+            "K992654",
+            "K961023",
+            "K020546",
+            "K984221"
+          ],
+          "page": 1,
+          "legibility": "clear"
+        },
+        "indications_for_use": {
+          "value": "CADstream is a Computer Aided Detection (CAD) system intended for use in analyzing magnetic resonance imaging (MRI) studies. CADstream automatically registers serial patient image acquisitions to minimize the impact of patient motion, segments and labels tissue types based on enhancement characteristics (parametric image maps), and performs other user-defined post-processing functions (image subtractions, multiplanar reformats, maximum intensity projections). When interpreted by a skilled physician, this device provides information that may be useful in screening and diagnosis. CADstream can also be used to provide accurate and reproducible measurements of the longest diameters and volume of segmented tissues. Patient management decisions should not be made based solely on the results of CADstream analysis.",
+          "page": 5,
+          "legibility": "clear"
+        },
+        "intended_use": {
+          "value": "CADstream is a Computer Aided Detection (CAD) system intended for use in analyzing magnetic resonance imaging (MRI) studies. CADstream automatically registers serial patient image acquisitions to minimize the impact of patient motion, segments and labels tissue types based on enhancement characteristics (parametric image maps), and performs other user-defined post-processing functions (image subtractions, multiplanar reformats, maximum intensity projections). When interpreted by a skilled physician, this device provides information that may be useful in screening and diagnosis. CADstream can also be used to provide accurate and reproducible measurements of the longest diameters and volume of segmented tissues. Patient management decisions should not be made based solely on the results of CADstream analysis.",
+          "page": 2,
+          "legibility": "clear"
+        },
+        "technology_summary": {
+          "value": "The CADstream software simultaneously analyzes the pixel signal intensities from multiple MR sequences and applies multivariate pattern recognition methods to perform tissue segmentation and classification. The CADstream system consists of proprietary software developed by Confirma installed on an off-the-shelf personal computer and a monitor configured as an CADstream display station.",
+          "page": 2,
+          "legibility": "clear"
+        }
+      },
+      "page_order": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "max_side": 1600,
+      "model": "muse-spark-1.3",
+      "skill_version": "1.0.0",
+      "input_tokens": 14840,
+      "output_tokens": 3533,
+      "cost_usd": 0.033565
+    },
+    {
+      "label": "B",
+      "fields": {
+        "k_number": {
+          "value": "K031779",
+          "page": 1,
+          "legibility": "clear"
+        },
+        "applicant": {
+          "value": "Confirma, Inc.",
+          "page": 1,
+          "legibility": "clear"
+        },
+        "device_name": {
+          "value": "CADstream Version 2.0",
+          "page": 1,
+          "legibility": "clear"
+        },
+        "product_code": {
+          "value": "LLZ",
+          "page": 3,
+          "legibility": "clear"
+        },
+        "regulation_number": {
+          "value": "892.2050",
+          "page": 3,
+          "legibility": "clear"
+        },
+        "decision_date": {
+          "value": "2003-08-06",
+          "page": 3,
+          "legibility": "clear"
+        },
+        "predicate_devices": {
+          "value": [
+            "K002519",
+            "K992654",
+            "K961023",
+            "K020546",
+            "K984221"
+          ],
+          "page": 1,
+          "legibility": "clear"
+        },
+        "indications_for_use": {
+          "value": "CADstream is a Computer Aided Detection (CAD) system intended for use in analyzing magnetic resonance imaging (MRI) studies. CADstream automatically registers serial patient image acquisitions to minimize the impact of patient motion, segments and labels tissue types based on enhancement characteristics (parametric image maps), and performs other user-defined post-processing functions (image subtractions, multiplanar reformats, maximum intensity projections). When interpreted by a skilled physician, this device provides information that may be useful in screening and diagnosis. CADstream can also be used to provide accurate and reproducible measurements of the longest diameters and volume of segmented tissues. Patient management decisions should not be made based solely on the results of CADstream analysis.",
+          "page": 5,
+          "legibility": "clear"
+        },
+        "intended_use": {
+          "value": "CADstream is a Computer Aided Detection (CAD) system intended for use in analyzing magnetic resonance imaging (MRI) studies. CADstream automatically registers serial patient image acquisitions to minimize the impact of patient motion, segments and labels tissue types based on enhancement characteristics (parametric image maps), and performs other user-defined post-processing functions (image subtractions, multiplanar reformats, maximum intensity projections). When interpreted by a skilled physician, this device provides information that may be useful in screening and diagnosis. CADstream can also be used to provide accurate and reproducible measurements of the longest diameters and volume of segmented tissues. Patient management decisions should not be made based solely on the results of CADstream analysis.",
+          "page": 2,
+          "legibility": "clear"
+        },
+        "technology_summary": {
+          "value": "The CADstream device relies on the assumption that pixels having similar MR signal intensities represent similar tissues. The CADstream software simultaneously analyzes the pixel signal intensities from multiple MR sequences and applies multivariate pattern recognition methods to perform tissue segmentation and classification. The CADstream system consists of proprietary software developed by Confirma installed on an off-the-shelf personal computer and a monitor configured as an CADstream display station.",
+          "page": 2,
+          "legibility": "clear"
+        }
+      },
+      "page_order": [
+        5,
+        4,
+        3,
+        2,
+        1
+      ],
+      "max_side": 1100,
+      "model": "muse-spark-1.3",
+      "skill_version": "1.0.0",
+      "input_tokens": 8080,
+      "output_tokens": 3452,
+      "cost_usd": 0.024771
+    }
+  ],
+  "thumbnails": [
+    "data:image/jpeg;base64,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",
+    "data:image/jpeg;base64,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",
+    "data:image/jpeg;base64,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",
+    "data:image/jpeg;base64,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",
+    "data:image/jpeg;base64,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"
+  ]
+}

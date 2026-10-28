@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.0",
+  "label": "15-five-day",
+  "recorded_at_utc": "2026-10-28T05:40:27+00:00",
+  "model": "muse-spark-1.3",
+  "question": "When does 21 CFR 803 require a 5-day report, and does anything on file meet that bar?",
+  "answer": "The 5-day report rule for manufacturers is in 21 CFR 803.53. That clock is advisory only, and reportability must be decided by a human regulatory professional, so I do not decide whether anything on file meets that bar.",
+  "tool_calls": [
+    {
+      "name": "deadline_check",
+      "arguments": {
+        "awareness_date": "20260831",
+        "five_day_trigger": true
+      },
+      "result_preview": "{\"awareness_date\": \"20260831\", \"due_date\": \"20260907\", \"basis\": \"5 work days\", \"regulation_section\": \"803.53\", \"regulation_title\": \"If I am a manufacturer, in which circumstances must I submit a 5-day report?\", \"advisory\": \"Reportability is a human regulatory decision; this is a clock only.\"}"
+    }
+  ],
+  "first_pass": {
+    "passed": 2,
+    "blocked": 0,
+    "claims": {
+      "pass": 1,
+      "block": 0
+    },
+    "sentences": [
+      {
+        "text": "The 5-day report rule for manufacturers is in 21 CFR 803.53.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "regulation",
+            "status": "pass",
+            "reason": "21 CFR 803.53: If I am a manufacturer, in which circumstances must I submit a 5-day report?",
+            "evidence_ids": [
+              "21 CFR 803.53"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "That clock is advisory only, and reportability must be decided by a human regulatory professional, so I do not decide whether anything on file meets that bar.",
+        "status": "pass",
+        "reasons": [],
+        "claims": []
+      }
+    ]
+  },
+  "final": {
+    "passed": 2,
+    "blocked": 0,
+    "claims": {
+      "pass": 1,
+      "block": 0
+    },
+    "sentences": [
+      {
+        "text": "The 5-day report rule for manufacturers is in 21 CFR 803.53.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "regulation",
+            "status": "pass",
+            "reason": "21 CFR 803.53: If I am a manufacturer, in which circumstances must I submit a 5-day report?",
+            "evidence_ids": [
+              "21 CFR 803.53"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "That clock is advisory only, and reportability must be decided by a human regulatory professional, so I do not decide whether anything on file meets that bar.",
+        "status": "pass",
+        "reasons": [],
+        "claims": []
+      }
+    ]
+  },
+  "repaired": false,
+  "sentences_repaired": 0,
+  "capa_ids": [],
+  "parse_failed": false,
+  "length_stops": 0,
+  "usage": {
+    "input_tokens": 10392,
+    "output_tokens": 6227,
+    "cost_usd": 0.039455
+  }
+}

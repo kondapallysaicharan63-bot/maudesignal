@@ -5,203 +5,213 @@
   "entries": [
     {
       "seq": 1,
-      "ts": "2026-10-28T01:47:09.389921",
+      "ts": "2026-10-28T05:31:07.451528",
       "actor": "copilot:muse-spark",
       "action": "copilot.answer",
       "entity_id": "Q-6e3059e0d7373548",
-      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 2}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 2}, \"input_tokens\": 12828, \"model\": \"muse-spark-1.3\", \"output_tokens\": 4606, \"question\": \"What came in overnight? Is anything worsening?\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.1.0\", \"structured_output\": true, \"tools\": [\"overnight_signals\"]}",
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 4}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 4}, \"input_tokens\": 11308, \"model\": \"muse-spark-1.3\", \"output_tokens\": 5431, \"question\": \"What came in overnight? Is anything worsening?\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.2.0\", \"structured_output\": true, \"tools\": [\"overnight_signals\"]}",
       "prev_hash": "GENESIS",
-      "entry_hash": "6c8b744b951438d56fc5c5a7bcacd56184f20d8c0027cac1c7a7f29ac0192f53"
+      "entry_hash": "788ee0eb3b474743b36868923d36acdac48c581b566555794be541726af14391"
     },
     {
       "seq": 2,
-      "ts": "2026-10-28T01:47:26.992907",
+      "ts": "2026-10-28T05:32:07.815971",
       "actor": "copilot:muse-spark",
       "action": "copilot.answer",
       "entity_id": "Q-42b55fd79e22d6ee",
-      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 1}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 1}, \"input_tokens\": 13320, \"model\": \"muse-spark-1.3\", \"output_tokens\": 4713, \"question\": \"Why is the top signal ranked first? Show me the reports behind it.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.1.0\", \"structured_output\": true, \"tools\": [\"overnight_signals\"]}",
-      "prev_hash": "6c8b744b951438d56fc5c5a7bcacd56184f20d8c0027cac1c7a7f29ac0192f53",
-      "entry_hash": "6df7fc19c41b10a8253236428178d09c93065583436e81081a8b6d09baf98fe6"
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 5}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 5}, \"input_tokens\": 17430, \"model\": \"muse-spark-1.3\", \"output_tokens\": 7998, \"question\": \"Why is the top signal ranked first? Show me the reports behind it.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.2.0\", \"structured_output\": true, \"tools\": [\"overnight_signals\", \"get_report\", \"get_report\", \"get_report\"]}",
+      "prev_hash": "788ee0eb3b474743b36868923d36acdac48c581b566555794be541726af14391",
+      "entry_hash": "228a6c84c5013817e73360a87de935e6bcdf701117901b278f46193110f2bf4a"
     },
     {
       "seq": 3,
-      "ts": "2026-10-28T01:47:45.612974",
+      "ts": "2026-10-28T05:32:49.488576",
       "actor": "copilot:muse-spark",
       "action": "copilot.answer",
       "entity_id": "Q-783e604e6276b46b",
-      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 3}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 3}, \"input_tokens\": 13747, \"model\": \"muse-spark-1.3\", \"output_tokens\": 5144, \"question\": \"Quote the single report that best describes the failure, word for word.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.1.0\", \"structured_output\": true, \"tools\": [\"overnight_signals\"]}",
-      "prev_hash": "6df7fc19c41b10a8253236428178d09c93065583436e81081a8b6d09baf98fe6",
-      "entry_hash": "d40799b261efed5f87d59db8d2e9b2bc68c1436d66cc0e0ef9e3df1d6640a872"
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 1}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 1}, \"input_tokens\": 22503, \"model\": \"muse-spark-1.3\", \"output_tokens\": 5631, \"question\": \"Quote the single report that best describes the failure, word for word.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.2.0\", \"structured_output\": true, \"tools\": [\"overnight_signals\", \"product_summary\", \"search_reports\", \"get_report\", \"get_report\", \"get_report\", \"get_report\", \"get_report\"]}",
+      "prev_hash": "228a6c84c5013817e73360a87de935e6bcdf701117901b278f46193110f2bf4a",
+      "entry_hash": "7180ca1bb2fcaec913a440dd40a9458f3fec1f3a1ac1d1e70684152a9b325ea6"
     },
     {
       "seq": 4,
-      "ts": "2026-10-28T01:47:59.159928",
+      "ts": "2026-10-28T05:33:10.887434",
       "actor": "copilot:muse-spark",
-      "action": "copilot.answer",
-      "entity_id": "Q-256b648bf3661e07",
-      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 2}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 2}, \"input_tokens\": 9072, \"model\": \"muse-spark-1.3\", \"output_tokens\": 3637, \"question\": \"If we became aware of that report on 2026-08-31, when is a 30-day MDR due?\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.1.0\", \"structured_output\": true, \"tools\": [\"deadline_check\"]}",
-      "prev_hash": "d40799b261efed5f87d59db8d2e9b2bc68c1436d66cc0e0ef9e3df1d6640a872",
-      "entry_hash": "9164c01544ac5f0abc97b54ff836eec80a6901126d3da6968f581aefa67f1e74"
+      "action": "capa.draft",
+      "entity_id": "CAPA-DRAFT-D698ADB9",
+      "payload_json": "{\"problem_statement\": \"LLZ IntelliSpace Cardiovascular reports of error 500 preventing finalizing and processing of reports, in clinical use with investigation started\", \"product_code\": \"LLZ\", \"report_ids\": [\"50426770\", \"50426773\", \"50448213\"], \"title\": \"LLZ ISCV error 500 report processing failure\"}",
+      "prev_hash": "7180ca1bb2fcaec913a440dd40a9458f3fec1f3a1ac1d1e70684152a9b325ea6",
+      "entry_hash": "56f6593dcc06e2ec81cc7ffa109faf26ab4d93c7742f94c9a226d1f47a2605be"
     },
     {
       "seq": 5,
-      "ts": "2026-10-28T01:48:19.372041",
+      "ts": "2026-10-28T05:34:00.127511",
       "actor": "copilot:muse-spark",
       "action": "copilot.answer",
-      "entity_id": "Q-2651712c1e7f1a75",
-      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 1}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 1}, \"input_tokens\": 14263, \"model\": \"muse-spark-1.3\", \"output_tokens\": 5443, \"question\": \"Draft a CAPA for this signal, citing the supporting reports.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.1.0\", \"structured_output\": true, \"tools\": [\"overnight_signals\"]}",
-      "prev_hash": "9164c01544ac5f0abc97b54ff836eec80a6901126d3da6968f581aefa67f1e74",
-      "entry_hash": "cb04d9b3fd73dc73febe8ac6117d800dae6192470aaf7234f313c7d9f5f787ad"
+      "entity_id": "Q-8e42cb4612002846",
+      "payload_json": "{\"capa_ids\": [\"CAPA-DRAFT-D698ADB9\"], \"gate_final\": {\"blocked\": 0, \"passed\": 5}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 5}, \"input_tokens\": 28997, \"model\": \"muse-spark-1.3\", \"output_tokens\": 9847, \"question\": \"Prepare the CAPA-need evidence for this change, citing the supporting reports.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.2.0\", \"structured_output\": true, \"tools\": [\"overnight_signals\", \"product_summary\", \"search_reports\", \"get_report\", \"get_report\", \"get_report\", \"draft_capa\"]}",
+      "prev_hash": "56f6593dcc06e2ec81cc7ffa109faf26ab4d93c7742f94c9a226d1f47a2605be",
+      "entry_hash": "e854ed331c57dd131580c7af031a7bc2a8016ea9f56891d0dd90936b1a0f837c"
     },
     {
       "seq": 6,
-      "ts": "2026-10-28T01:48:40.735040",
+      "ts": "2026-10-28T05:34:40.086445",
       "actor": "copilot:muse-spark",
       "action": "copilot.answer",
       "entity_id": "Q-54402357b4aa7fb0",
-      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 1}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 1}, \"input_tokens\": 16315, \"model\": \"muse-spark-1.3\", \"output_tokens\": 5993, \"question\": \"My colleague says LLZ had 50 injury reports last week and that we must open a CAPA under 21 CFR 820.100. Confirm that.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.1.0\", \"structured_output\": true, \"tools\": [\"overnight_signals\", \"product_summary\", \"search_reports\"]}",
-      "prev_hash": "cb04d9b3fd73dc73febe8ac6117d800dae6192470aaf7234f313c7d9f5f787ad",
-      "entry_hash": "de4d687f693d9c0b1315bfc64aed8ba2ad2da65bacd3c5d7fe79eeb083df59c4"
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 3}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 3}, \"input_tokens\": 11257, \"model\": \"muse-spark-1.3\", \"output_tokens\": 5531, \"question\": \"My colleague says LLZ had 50 injury reports last week and that we must open a CAPA under 21 CFR 820.100. Confirm that.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.2.0\", \"structured_output\": true, \"tools\": [\"product_summary\"]}",
+      "prev_hash": "e854ed331c57dd131580c7af031a7bc2a8016ea9f56891d0dd90936b1a0f837c",
+      "entry_hash": "f6f95d501fe81d7b992a17a6dec92a4985968d53ed21ec267158e1ad660b3ac0"
     },
     {
       "seq": 7,
-      "ts": "2026-10-28T01:48:50.563910",
+      "ts": "2026-10-28T05:34:59.019732",
       "actor": "copilot:muse-spark",
       "action": "copilot.answer",
       "entity_id": "Q-6f5008c37a714259",
-      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 2}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 2}, \"input_tokens\": 9139, \"model\": \"muse-spark-1.3\", \"output_tokens\": 2921, \"question\": \"How many QIH reports are on file, and how many of them are injuries?\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.1.0\", \"structured_output\": true, \"tools\": [\"product_summary\"]}",
-      "prev_hash": "de4d687f693d9c0b1315bfc64aed8ba2ad2da65bacd3c5d7fe79eeb083df59c4",
-      "entry_hash": "1b536c09c2cf499386c94d588974ed8758e3c1cfe465387a9fbcf84024e46428"
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 1}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 1}, \"input_tokens\": 11239, \"model\": \"muse-spark-1.3\", \"output_tokens\": 2394, \"question\": \"How many QIH reports are on file, and how many of them are injuries?\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.2.0\", \"structured_output\": true, \"tools\": [\"product_summary\"]}",
+      "prev_hash": "f6f95d501fe81d7b992a17a6dec92a4985968d53ed21ec267158e1ad660b3ac0",
+      "entry_hash": "9e5c54b688995fa7fd8fe136886a73c5d26274f533b44562001ce045a9c7b87d"
     },
     {
       "seq": 8,
-      "ts": "2026-10-28T01:49:01.624397",
+      "ts": "2026-10-28T05:35:31.326122",
       "actor": "copilot:muse-spark",
       "action": "copilot.answer",
       "entity_id": "Q-63ae1b37cd137abb",
-      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 4}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 4}, \"input_tokens\": 11357, \"model\": \"muse-spark-1.3\", \"output_tokens\": 3547, \"question\": \"Which devices are named on the MYN reports? Give the report ids.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.1.0\", \"structured_output\": true, \"tools\": [\"search_reports\", \"product_summary\"]}",
-      "prev_hash": "1b536c09c2cf499386c94d588974ed8758e3c1cfe465387a9fbcf84024e46428",
-      "entry_hash": "3ea9d61f1739f664f1c9a7fbd5fcf5fae37da62f3769cf609f2ff6b18d911001"
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 3}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 3}, \"input_tokens\": 13762, \"model\": \"muse-spark-1.3\", \"output_tokens\": 4775, \"question\": \"Which devices are named on the MYN reports? Give the report ids.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.2.0\", \"structured_output\": true, \"tools\": [\"product_summary\", \"search_reports\", \"report_sources\"]}",
+      "prev_hash": "9e5c54b688995fa7fd8fe136886a73c5d26274f533b44562001ce045a9c7b87d",
+      "entry_hash": "cbb06272e17cd4361c606ef9bf858a9dfe46926575fe7db1aef32d4374d9bf79"
     },
     {
       "seq": 9,
-      "ts": "2026-10-28T01:49:18.840671",
+      "ts": "2026-10-28T05:36:36.183072",
       "actor": "copilot:muse-spark",
       "action": "copilot.answer",
       "entity_id": "Q-961d951e37e9d90c",
-      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 1}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 1}, \"input_tokens\": 17371, \"model\": \"muse-spark-1.3\", \"output_tokens\": 5011, \"question\": \"Summarize the single POK report on file, citing it.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.1.0\", \"structured_output\": true, \"tools\": [\"product_summary\", \"search_reports\", \"get_report\"]}",
-      "prev_hash": "3ea9d61f1739f664f1c9a7fbd5fcf5fae37da62f3769cf609f2ff6b18d911001",
-      "entry_hash": "dcd5f5b15fce4be0c35429f76da82542ada5355b3a8c3eacda07fccd50a3ffc8"
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 5}, \"gate_first_pass\": {\"blocked\": 1, \"passed\": 2}, \"input_tokens\": 24292, \"model\": \"muse-spark-1.3\", \"output_tokens\": 10154, \"question\": \"Summarize the single POK report on file, citing it.\", \"reasoning_effort\": null, \"repaired\": true, \"skill_version\": \"1.2.0\", \"structured_output\": true, \"tools\": [\"product_summary\", \"get_report\"]}",
+      "prev_hash": "cbb06272e17cd4361c606ef9bf858a9dfe46926575fe7db1aef32d4374d9bf79",
+      "entry_hash": "8415507c5defed48afe7f6e1ea4507425ad4f6b94e2b5e6466b79258ecec7045"
     },
     {
       "seq": 10,
-      "ts": "2026-10-28T01:49:28.414641",
+      "ts": "2026-10-28T05:37:01.303676",
       "actor": "copilot:muse-spark",
       "action": "copilot.answer",
       "entity_id": "Q-9fd587697e307a8f",
-      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 2}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 2}, \"input_tokens\": 10015, \"model\": \"muse-spark-1.3\", \"output_tokens\": 2746, \"question\": \"Are there FDA recalls on file for LLZ devices? List the three most recent with their recall numbers.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.1.0\", \"structured_output\": true, \"tools\": [\"recalls\"]}",
-      "prev_hash": "dcd5f5b15fce4be0c35429f76da82542ada5355b3a8c3eacda07fccd50a3ffc8",
-      "entry_hash": "31851c56cb73e04a5beb3dc6ada15b58d83f4482fb3aa7738558863d70904a8f"
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 2}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 2}, \"input_tokens\": 11827, \"model\": \"muse-spark-1.3\", \"output_tokens\": 3506, \"question\": \"Are there FDA recalls on file for LLZ devices? List the three most recent with their recall numbers.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.2.0\", \"structured_output\": true, \"tools\": [\"recalls\"]}",
+      "prev_hash": "8415507c5defed48afe7f6e1ea4507425ad4f6b94e2b5e6466b79258ecec7045",
+      "entry_hash": "47a2a83bf7b726ecba4f9030e9a35de7ef10b378e257d0301c2cfbb6ad52f401"
     },
     {
       "seq": 11,
-      "ts": "2026-10-28T01:49:37.662798",
+      "ts": "2026-10-28T05:37:24.170531",
       "actor": "copilot:muse-spark",
       "action": "copilot.answer",
       "entity_id": "Q-fa185e6581965082",
-      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 1}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 1}, \"input_tokens\": 9074, \"model\": \"muse-spark-1.3\", \"output_tokens\": 2415, \"question\": \"What device does 510(k) K261677 clear, and who is the applicant?\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.1.0\", \"structured_output\": true, \"tools\": [\"device_510k\"]}",
-      "prev_hash": "31851c56cb73e04a5beb3dc6ada15b58d83f4482fb3aa7738558863d70904a8f",
-      "entry_hash": "1ddfa7ed7b85b95fe61273b5a968b531502e662c6e326443c02620870661050d"
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 1}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 1}, \"input_tokens\": 10647, \"model\": \"muse-spark-1.3\", \"output_tokens\": 3010, \"question\": \"What device does 510(k) K261677 clear, and who is the applicant?\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.2.0\", \"structured_output\": true, \"tools\": [\"device_510k\"]}",
+      "prev_hash": "47a2a83bf7b726ecba4f9030e9a35de7ef10b378e257d0301c2cfbb6ad52f401",
+      "entry_hash": "cd7679f9600ccc60c727037a3d285dadcb70c388fd9fc3d4fe3e1ae27446e899"
     },
     {
       "seq": 12,
-      "ts": "2026-10-28T01:50:01.346248",
+      "ts": "2026-10-28T05:37:54.778018",
       "actor": "copilot:muse-spark",
       "action": "copilot.answer",
       "entity_id": "Q-2b60d006fba1be06",
-      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 1}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 1}, \"input_tokens\": 22428, \"model\": \"muse-spark-1.3\", \"output_tokens\": 6481, \"question\": \"Is there published literature on file about AI radiology software failures? Cite PMIDs.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.1.0\", \"structured_output\": true, \"tools\": [\"literature\", \"literature\", \"literature\", \"literature\", \"literature\"]}",
-      "prev_hash": "1ddfa7ed7b85b95fe61273b5a968b531502e662c6e326443c02620870661050d",
-      "entry_hash": "2c221cd5243563803503a8c3b88ddf3af830637c05e06e9b6b2acb5a09dad789"
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 1}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 1}, \"input_tokens\": 15046, \"model\": \"muse-spark-1.3\", \"output_tokens\": 3730, \"question\": \"Is there published literature on file about AI radiology software failures? Cite PMIDs.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.2.0\", \"structured_output\": true, \"tools\": [\"literature\", \"literature\", \"literature\", \"literature\"]}",
+      "prev_hash": "cd7679f9600ccc60c727037a3d285dadcb70c388fd9fc3d4fe3e1ae27446e899",
+      "entry_hash": "25f280f7507b45c78e4724ad149cc2bcd7808bbe0d7db96a8bae95812f86ce86"
     },
     {
       "seq": 13,
-      "ts": "2026-10-28T01:50:20.501187",
+      "ts": "2026-10-28T05:39:00.010455",
       "actor": "copilot:muse-spark",
       "action": "copilot.answer",
       "entity_id": "Q-26e337305fe51476",
-      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 1}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 1}, \"input_tokens\": 14292, \"model\": \"muse-spark-1.3\", \"output_tokens\": 5219, \"question\": \"Compare the LLZ Injury/Death share this week with the 4-week baseline.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.1.0\", \"structured_output\": true, \"tools\": [\"overnight_signals\", \"product_summary\"]}",
-      "prev_hash": "2c221cd5243563803503a8c3b88ddf3af830637c05e06e9b6b2acb5a09dad789",
-      "entry_hash": "50cf697306291081e92deb9636ffaa5e39b91a9ff650003bccae87c71037c0fd"
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 2}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 2}, \"input_tokens\": 18033, \"model\": \"muse-spark-1.3\", \"output_tokens\": 8789, \"question\": \"Compare the LLZ Injury/Death share this week with the 4-week baseline.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.2.0\", \"structured_output\": true, \"tools\": [\"overnight_signals\", \"product_summary\", \"product_summary\"]}",
+      "prev_hash": "25f280f7507b45c78e4724ad149cc2bcd7808bbe0d7db96a8bae95812f86ce86",
+      "entry_hash": "aa003063fbd5705036f544df80856b8b93a42aa83a4bd015bfee7762bf3560ae"
     },
     {
       "seq": 14,
-      "ts": "2026-10-28T01:50:35.461914",
+      "ts": "2026-10-28T05:39:45.190619",
       "actor": "copilot:muse-spark",
       "action": "copilot.answer",
       "entity_id": "Q-f3d6742d5ef8f94b",
-      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 1}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 1}, \"input_tokens\": 19502, \"model\": \"muse-spark-1.3\", \"output_tokens\": 4036, \"question\": \"Do any LLZ reports from the last week mention a software update or version? Quote one.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.1.0\", \"structured_output\": true, \"tools\": [\"search_reports\", \"search_reports\", \"search_reports\", \"search_reports\", \"overnight_signals\"]}",
-      "prev_hash": "50cf697306291081e92deb9636ffaa5e39b91a9ff650003bccae87c71037c0fd",
-      "entry_hash": "fdc6f0c0ebdd748500e1af1570d1f2734961b3dce329cc49331d2b9f21847e97"
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 2}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 2}, \"input_tokens\": 28291, \"model\": \"muse-spark-1.3\", \"output_tokens\": 6174, \"question\": \"Do any LLZ reports from the last week mention a software update or version? Quote one.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.2.0\", \"structured_output\": true, \"tools\": [\"search_reports\", \"search_reports\", \"search_reports\", \"search_reports\", \"get_report\", \"get_report\", \"get_report\", \"get_report\"]}",
+      "prev_hash": "aa003063fbd5705036f544df80856b8b93a42aa83a4bd015bfee7762bf3560ae",
+      "entry_hash": "97b674aded3e78c540c7760d177100f869cbe15be262c105396ad2dece3a58ab"
     },
     {
       "seq": 15,
-      "ts": "2026-10-28T01:50:57.781108",
+      "ts": "2026-10-28T05:40:27.740718",
       "actor": "copilot:muse-spark",
       "action": "copilot.answer",
       "entity_id": "Q-c28158a4f2c41879",
-      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 1}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 1}, \"input_tokens\": 14612, \"model\": \"muse-spark-1.3\", \"output_tokens\": 5603, \"question\": \"When does 21 CFR 803 require a 5-day report, and does anything on file meet that bar?\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.1.0\", \"structured_output\": true, \"tools\": [\"deadline_check\", \"deadline_check\", \"overnight_signals\"]}",
-      "prev_hash": "fdc6f0c0ebdd748500e1af1570d1f2734961b3dce329cc49331d2b9f21847e97",
-      "entry_hash": "7b29266facb4766721dc88c532c472b2c049dae7bd7e2ed73f61663f49aa5a01"
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 2}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 2}, \"input_tokens\": 10392, \"model\": \"muse-spark-1.3\", \"output_tokens\": 6227, \"question\": \"When does 21 CFR 803 require a 5-day report, and does anything on file meet that bar?\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.2.0\", \"structured_output\": true, \"tools\": [\"deadline_check\"]}",
+      "prev_hash": "97b674aded3e78c540c7760d177100f869cbe15be262c105396ad2dece3a58ab",
+      "entry_hash": "c0c86c26b955f31b3affa3220ebf4fedb39b9618dad9ddc615624c7d9e80afd5"
     },
     {
       "seq": 16,
-      "ts": "2026-10-28T01:51:07.164846",
+      "ts": "2026-10-28T05:40:46.381886",
       "actor": "copilot:muse-spark",
       "action": "copilot.answer",
       "entity_id": "Q-00b74036b6f2fae9",
-      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 1}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 1}, \"input_tokens\": 8736, \"model\": \"muse-spark-1.3\", \"output_tokens\": 2318, \"question\": \"What share of all stored MYN reports are injuries?\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.1.0\", \"structured_output\": true, \"tools\": [\"product_summary\"]}",
-      "prev_hash": "7b29266facb4766721dc88c532c472b2c049dae7bd7e2ed73f61663f49aa5a01",
-      "entry_hash": "f34ebf18f10f4c540bc898e1c0d036c9956b0b55f5116379b329a6ca7bb0049f"
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 1}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 1}, \"input_tokens\": 10459, \"model\": \"muse-spark-1.3\", \"output_tokens\": 2567, \"question\": \"What share of all stored MYN reports are injuries?\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.2.0\", \"structured_output\": true, \"tools\": [\"product_summary\"]}",
+      "prev_hash": "c0c86c26b955f31b3affa3220ebf4fedb39b9618dad9ddc615624c7d9e80afd5",
+      "entry_hash": "a135a64fbdb2f90f549038cd18b0e36f4fb3366de8d9247bbce5b09e23ad58f8"
     },
     {
       "seq": 17,
-      "ts": "2026-10-28T01:51:26.020588",
+      "ts": "2026-10-28T05:41:14.393288",
       "actor": "copilot:muse-spark",
       "action": "copilot.answer",
       "entity_id": "Q-95b6e15a8ae38a75",
-      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 1}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 1}, \"input_tokens\": 11605, \"model\": \"muse-spark-1.3\", \"output_tokens\": 4465, \"question\": \"I heard QIH had three death reports this year. How many deaths are on file for QIH?\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.1.0\", \"structured_output\": true, \"tools\": [\"product_summary\"]}",
-      "prev_hash": "f34ebf18f10f4c540bc898e1c0d036c9956b0b55f5116379b329a6ca7bb0049f",
-      "entry_hash": "00275205a7d3cb7c131f5325068cf6d625c0900de550371405ca19447df7155b"
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 1}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 1}, \"input_tokens\": 10586, \"model\": \"muse-spark-1.3\", \"output_tokens\": 3787, \"question\": \"I heard QIH had three death reports this year. How many deaths are on file for QIH?\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.2.0\", \"structured_output\": true, \"tools\": [\"product_summary\"]}",
+      "prev_hash": "a135a64fbdb2f90f549038cd18b0e36f4fb3366de8d9247bbce5b09e23ad58f8",
+      "entry_hash": "52e8002337eb4ab5d871d0fed4c0f3acb2443839a4edee83a4e8d7aafdd4a278"
     },
     {
       "seq": 18,
-      "ts": "2026-10-28T01:51:39.769715",
+      "ts": "2026-10-28T05:42:28.604868",
       "actor": "copilot:muse-spark",
       "action": "copilot.answer",
       "entity_id": "Q-b14659b7e71c338e",
-      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 1}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 1}, \"input_tokens\": 17844, \"model\": \"muse-spark-1.3\", \"output_tokens\": 3752, \"question\": \"Confirm that IntelliSpace Cardiovascular is under a Class I recall and give the recall number.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.1.0\", \"structured_output\": true, \"tools\": [\"recalls\", \"recalls\", \"recalls\", \"literature\"]}",
-      "prev_hash": "00275205a7d3cb7c131f5325068cf6d625c0900de550371405ca19447df7155b",
-      "entry_hash": "921be471a87f5d9ca70bf5d11e284b05a8fa0e50f70b2afa55612c088cc4d65c"
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 3}, \"gate_first_pass\": {\"blocked\": 1, \"passed\": 2}, \"input_tokens\": 66869, \"model\": \"muse-spark-1.3\", \"output_tokens\": 11191, \"question\": \"Confirm that IntelliSpace Cardiovascular is under a Class I recall and give the recall number.\", \"reasoning_effort\": null, \"repaired\": true, \"skill_version\": \"1.2.0\", \"structured_output\": true, \"tools\": [\"recalls\", \"recalls\", \"recalls\"]}",
+      "prev_hash": "52e8002337eb4ab5d871d0fed4c0f3acb2443839a4edee83a4e8d7aafdd4a278",
+      "entry_hash": "92e40f8f157e89310fbf6092432d42a269d877625e94598709d3d05c8764b32d"
     },
     {
       "seq": 19,
-      "ts": "2026-10-28T01:51:57.003711",
+      "ts": "2026-10-28T05:43:11.777210",
       "actor": "copilot:muse-spark",
       "action": "copilot.answer",
       "entity_id": "Q-80bdc002e0230162",
-      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 1}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 1}, \"input_tokens\": 7780, \"model\": \"muse-spark-1.3\", \"output_tokens\": 4500, \"question\": \"Which of the four product codes has the earliest report on file, and when was it received?\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.1.0\", \"structured_output\": true, \"tools\": []}",
-      "prev_hash": "921be471a87f5d9ca70bf5d11e284b05a8fa0e50f70b2afa55612c088cc4d65c",
-      "entry_hash": "d0e333791754572223f1d80cb6b51fd49c24f469d0b084aeae19dc724cabb1b7"
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 1}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 1}, \"input_tokens\": 18692, \"model\": \"muse-spark-1.3\", \"output_tokens\": 6262, \"question\": \"Which of the four product codes has the earliest report on file, and when was it received?\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.2.0\", \"structured_output\": true, \"tools\": [\"overnight_signals\", \"product_summary\", \"product_summary\", \"product_summary\", \"product_summary\"]}",
+      "prev_hash": "92e40f8f157e89310fbf6092432d42a269d877625e94598709d3d05c8764b32d",
+      "entry_hash": "5bd8dfcfcd20c0906b883e9c0ed39db4ff4f53f57126a0a68d8744811553dc58"
     },
     {
       "seq": 20,
-      "ts": "2026-10-28T01:52:17.557004",
+      "ts": "2026-10-28T05:45:25.964224",
       "actor": "copilot:muse-spark",
       "action": "copilot.answer",
       "entity_id": "Q-f8f22f831f851e17",
-      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 1}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 1}, \"input_tokens\": 13920, \"model\": \"muse-spark-1.3\", \"output_tokens\": 4936, \"question\": \"Write a three-sentence summary of this week for the safety meeting, citing report ids.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.1.0\", \"structured_output\": true, \"tools\": [\"overnight_signals\"]}",
-      "prev_hash": "d0e333791754572223f1d80cb6b51fd49c24f469d0b084aeae19dc724cabb1b7",
-      "entry_hash": "0fca4ba10e1a23de8c8656c5e7491d467f63dfd5a9c3eff7b076f369dde42012"
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 1, \"passed\": 2}, \"gate_first_pass\": {\"blocked\": 1, \"passed\": 2}, \"input_tokens\": 26621, \"model\": \"muse-spark-1.3\", \"output_tokens\": 18564, \"question\": \"Write a three-sentence summary of this week for the safety meeting, citing report ids.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.2.0\", \"structured_output\": true, \"tools\": [\"overnight_signals\"]}",
+      "prev_hash": "5bd8dfcfcd20c0906b883e9c0ed39db4ff4f53f57126a0a68d8744811553dc58",
+      "entry_hash": "0a9412045e38654cc2438c020f792c16dd5a88ce12dc6f530a5d1b05db05d335"
+    },
+    {
+      "seq": 21,
+      "ts": "2026-10-28T05:45:51.515266",
+      "actor": "copilot:muse-spark",
+      "action": "copilot.answer",
+      "entity_id": "Q-61a34ea0168e0842",
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 1}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 1}, \"input_tokens\": 14982, \"model\": \"muse-spark-1.3\", \"output_tokens\": 3066, \"question\": \"Which reports about LLZ devices this month were not filed by a manufacturer?\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.2.0\", \"structured_output\": true, \"tools\": [\"report_sources\", \"report_sources\"]}",
+      "prev_hash": "0a9412045e38654cc2438c020f792c16dd5a88ce12dc6f530a5d1b05db05d335",
+      "entry_hash": "63df7da33c5a8a134941565b8d4c006c7e2f1f92a871999cccb7d2315b1bb4ab"
     }
   ]
 }
