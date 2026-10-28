@@ -165,3 +165,21 @@ def test_exploratory_findings_are_fixed(tmp_path: Path) -> None:
         ),
     )
     assert "at least one" in empty["error"]
+
+
+def test_literature_ranks_by_matching_terms() -> None:
+    """2026-10-28 recordings: "AI radiology software failures" matched nothing because
+    every word had to appear; relevant abstracts were stored. Now ranked by terms."""
+    from maudesignal.gate.evidence import EvidenceStore, LiteratureRef
+
+    store = EvidenceStore(
+        literature=[
+            LiteratureRef("1", "Artificial intelligence in radiology", "Software failures seen."),
+            LiteratureRef("2", "Deep learning for stroke", "Radiology triage software."),
+            LiteratureRef("3", "Hip replacement outcomes", "Orthopaedic follow-up."),
+        ]
+    )
+    ctx = ToolContext(db=None, store=store)  # type: ignore[arg-type]
+    out = call_tool(ctx, "literature", json.dumps({"query": "AI radiology software failures"}))
+    assert [a["pmid"] for a in out["articles"]] == ["1", "2"]  # 4 of 4 terms, then 3 of 4
+    assert call_tool(ctx, "literature", json.dumps({"query": "the of"}))["matched"] == 3

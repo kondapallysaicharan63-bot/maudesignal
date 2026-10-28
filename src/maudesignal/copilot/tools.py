@@ -297,6 +297,23 @@ def device_510k(ctx: ToolContext, k_number: str) -> dict[str, Any]:
     }
 
 
+_STOP = frozenset(
+    "a an and any are as at be by for from in is it of on or the to with about".split()  # noqa: SIM905
+)
+_AI_RE = r"\bai\b|artificial intelligence|machine learning|deep learning|computer[- ]aided|\bcad\b"
+
+
+def _query_terms(query: str) -> list[re.Pattern[str]]:
+    """Case-insensitive patterns, one per query word: AI synonyms or a 5-letter stem."""
+    out: list[re.Pattern[str]] = []
+    for w in re.findall(r"[a-z0-9]+", query.lower()):
+        if w in _STOP:
+            continue
+        pattern = _AI_RE if w in ("ai", "ml") else r"\b" + re.escape(w[:5] if len(w) > 5 else w)
+        out.append(re.compile(pattern, re.IGNORECASE))
+    return out
+
+
 def literature(
     ctx: ToolContext,
     product_code: str | None = None,
@@ -307,13 +324,22 @@ def literature(
     rows = list(ctx.store.literature)
     if product_code:
         rows = [a for a in rows if (a.product_code or "").upper() == product_code.upper()]
-    if query:
-        words = [w for w in query.lower().split() if w]
-        rows = [a for a in rows if all(w in a.text.lower() for w in words)]
-    rows = sorted(rows, key=lambda a: (a.year or 0, a.pmid), reverse=True)
+    scores: dict[str, int] = {}
+    terms = _query_terms(query or "")
+    if terms:
+        # Rank by how many query terms an article contains. Requiring every word
+        # returned nothing for "AI radiology software failures" in the 2026-10-28
+        # recordings although relevant abstracts were stored.
+        need = max(1, (len(terms) + 1) // 2)
+        scores = {a.pmid: sum(1 for t in terms if t.search(a.text)) for a in rows}
+        rows = [a for a in rows if scores[a.pmid] >= need]
+    rows = sorted(rows, key=lambda a: (scores.get(a.pmid, 0), a.year or 0, a.pmid), reverse=True)
     limit = max(1, min(int(limit), 10))
     return {
         "matched": len(rows),
+        **(
+            {"query_terms": len(terms), "match_rule": "at least half of the terms"} if terms else {}
+        ),
         "source": "PubMed via NCBI E-utilities (stored copy)",
         "articles": [
             {
