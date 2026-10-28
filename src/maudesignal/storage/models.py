@@ -54,6 +54,10 @@ class NormalizedEventRecord(Base):
     mfr_narrative: Mapped[str | None] = mapped_column(Text)
     manufacturer: Mapped[str | None] = mapped_column(String)
     brand_name: Mapped[str | None] = mapped_column(String)
+    # openFDA ``report_source_code`` ("Manufacturer report", "User Facility report",
+    # "Voluntary report", "Distributor report"); "" when the raw record has none.
+    # Added during the Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
+    report_source: Mapped[str | None] = mapped_column(String, index=True, nullable=True)
 
 
 class ExtractionRecord(Base):

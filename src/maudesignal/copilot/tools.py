@@ -325,6 +325,41 @@ def literature(
     }
 
 
+def report_sources(
+    ctx: ToolContext,
+    product_code: str,
+    date_from: str | None = None,
+    date_to: str | None = None,
+) -> dict[str, Any]:
+    """Who filed the stored reports: counts by source, plus those not filed by a manufacturer."""
+    rows = ctx.store.select(product_code=product_code, date_from=date_from, date_to=date_to)
+    by_source = Counter(r.source or "unknown" for r in rows)
+    others = sorted(
+        (r for r in rows if r.source and r.source != "manufacturer"),
+        key=lambda r: (r.date_received or "", r.report_id),
+        reverse=True,
+    )
+    return {
+        "product_code": product_code,
+        "date_from": date_from,
+        "date_to": date_to,
+        "report_count": len(rows),
+        "source_counts": dict(sorted(by_source.items())),
+        "non_manufacturer_count": len(others),
+        "non_manufacturer_reports": [
+            {
+                "report_id": r.report_id,
+                "date_received": r.date_received,
+                "source": r.source,
+                "brand_name": r.brand_name,
+            }
+            for r in others[:MAX_IDS]
+        ],
+        "claim_hint": "state counts with source_count claims; source is one of manufacturer, "
+        "user facility, voluntary, distributor, non-manufacturer",
+    }
+
+
 TOOLS: dict[str, ToolFn] = {
     "overnight_signals": overnight_signals,
     "product_summary": product_summary,
@@ -335,6 +370,7 @@ TOOLS: dict[str, ToolFn] = {
     "recalls": recalls,
     "device_510k": device_510k,
     "literature": literature,
+    "report_sources": report_sources,
 }
 
 _STR = {"type": "string"}
@@ -480,6 +516,20 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
                     "query": _STR,
                     "limit": {"type": "integer", "minimum": 1, "maximum": 10},
                 },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "report_sources",
+            "description": "Who filed the stored reports for a product code: counts by "
+            "openFDA report source (manufacturer, user facility, voluntary, distributor) and the "
+            "reports not filed by a manufacturer (id, date, source, brand).",
+            "parameters": {
+                "type": "object",
+                "properties": {"product_code": _STR, "date_from": _YMD, "date_to": _YMD},
+                "required": ["product_code"],
             },
         },
     },

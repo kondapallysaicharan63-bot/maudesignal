@@ -32,6 +32,7 @@ from maudesignal.monitor.deterioration import (
     DetectionResult,
     ProductCodeSignal,
 )
+from maudesignal.monitor.sources import sourced_reports
 from maudesignal.storage.database import Database
 
 DIGEST_FOOTER = (
@@ -80,6 +81,8 @@ class Digest:
             codes with a stored name).
         window_brands: ``product_code -> [(brand, reports)]`` for the brand
             names written on this window's reports, most frequent first.
+        window_sources: ``product_code -> {source: reports}`` in this window
+            (openFDA report source; empty when the sources are not known).
     """
 
     result: DetectionResult
@@ -94,6 +97,7 @@ class Digest:
     rank_reasons: dict[str, str] = field(default_factory=dict)
     device_types: dict[str, str] = field(default_factory=dict)
     window_brands: dict[str, list[tuple[str, int]]] = field(default_factory=dict)
+    window_sources: dict[str, dict[str, int]] = field(default_factory=dict)
 
 
 # ----------------------------------------------------------------------
@@ -241,6 +245,7 @@ def build_digest(
     notes: tuple[str, ...] = (),
     device_types: dict[str, str] | None = None,
     report_brands: dict[str, str] | None = None,
+    report_sources: dict[str, str] | None = None,
 ) -> Digest:
     """Summarize a detection result into a :class:`Digest`.
 
@@ -251,6 +256,7 @@ def build_digest(
         notes: Optional extra lines to include verbatim.
         device_types: Optional ``product_code -> FDA device type`` names.
         report_brands: Optional ``report_id -> brand name`` from the stored reports.
+        report_sources: Optional ``report_id -> normalized report source``.
 
     Returns:
         The digest.
@@ -264,6 +270,15 @@ def build_digest(
     brands = report_brands or {}
     window_brands = {s.product_code: brand_counts(s.current_report_ids, brands) for s in ranked}
     window_brands = {pc: pairs for pc, pairs in window_brands.items() if pairs}
+    window_sources: dict[str, dict[str, int]] = {}
+    if report_sources:
+        for sig in result.signals:
+            counts: dict[str, int] = {}
+            for rid in sig.current_report_ids:
+                key = report_sources.get(rid) or "unknown"
+                counts[key] = counts.get(key, 0) + 1
+            if counts:
+                window_sources[sig.product_code] = dict(sorted(counts.items()))
     return Digest(
         result=result,
         headline=f"{new_count} new, {worsening} worsening",
@@ -281,6 +296,7 @@ def build_digest(
             if any(s.product_code == pc for s in result.signals)
         },
         window_brands=window_brands,
+        window_sources=window_sources,
     )
 
 
@@ -308,6 +324,7 @@ def digest_from_database(
         notes=notes,
         device_types=classification_names(db),
         report_brands=report_brands(db),
+        report_sources={r.report_id: r.source for r in sourced_reports(db)},
     )
 
 
@@ -337,12 +354,16 @@ def _signal_section(
     reason: str | None = None,
     device_type: str | None = None,
     brands: list[tuple[str, int]] | None = None,
+    sources: dict[str, int] | None = None,
 ) -> list[str]:
     title = _TITLES[signal.classification]
     lines = [f"## {signal.product_code} — {title}", ""]
     device = _device_line(device_type, brands or [], signal.current_count)
     if device:
         lines.append(device)
+    if sources:
+        filed = ", ".join(f"{src} {n}" for src, n in sources.items())
+        lines.append(f"- Filed by (openFDA report source), this window: {filed}")
     if reason:
         lines.append(f"- Why this rank: {reason}")
     if len(signal.triggers) > 1:
@@ -424,6 +445,7 @@ def render_markdown(digest: Digest) -> str:
                     digest.rank_reasons.get(pc),
                     digest.device_types.get(pc),
                     digest.window_brands.get(pc),
+                    digest.window_sources.get(pc),
                 )
             )
     else:
@@ -518,6 +540,7 @@ def digest_to_dict(digest: Digest) -> dict[str, Any]:
             pc: [{"brand": b, "reports": n} for b, n in pairs]
             for pc, pairs in digest.window_brands.items()
         },
+        "window_sources": digest.window_sources,
         "ranking": [
             {
                 "rank": i + 1,

@@ -44,9 +44,15 @@ from maudesignal.gate.claims import (
     RecordClaim,
     RegulationClaim,
     ShareClaim,
+    SourceCountClaim,
     normalize_pmid,
 )
-from maudesignal.gate.evidence import EvidenceStore, normalize_text
+from maudesignal.gate.evidence import (
+    NON_MANUFACTURER,
+    EvidenceStore,
+    normalize_source,
+    normalize_text,
+)
 
 Status = Literal["pass", "block"]
 
@@ -155,6 +161,8 @@ def verify_claim(claim: Claim, store: EvidenceStore) -> ClaimVerdict:
         return _verify_recall_count(claim, store)
     if isinstance(claim, LiteratureClaim):
         return _verify_literature(claim, store)
+    if isinstance(claim, SourceCountClaim):
+        return _verify_source_count(claim, store)
     return _verify_regulation(claim)
 
 
@@ -214,6 +222,24 @@ def _verify_count(c: CountClaim, store: EvidenceStore) -> ClaimVerdict:
     if n == c.value:
         return ClaimVerdict(c, "pass", f"recomputed {n}", ids, float(n))
     return ClaimVerdict(c, "block", f"claimed {c.value}, records show {n}", ids, float(n))
+
+
+def _verify_source_count(c: SourceCountClaim, store: EvidenceStore) -> ClaimVerdict:
+    want = normalize_source(c.source)
+    if not want:
+        return ClaimVerdict(c, "block", f"unknown report source {c.source!r}")
+    rows = store.select(product_code=c.product_code, date_from=c.date_from, date_to=c.date_to)
+    if want == NON_MANUFACTURER:
+        # Reports whose source is unknown are not counted as "not filed by a manufacturer".
+        hits = [r for r in rows if r.source and r.source != "manufacturer"]
+    else:
+        hits = [r for r in rows if r.source == want]
+    n = len(hits)
+    ids = tuple(r.report_id for r in hits[:20])
+    label = f"{want} reports" if want != NON_MANUFACTURER else "reports not filed by a manufacturer"
+    if n == c.value:
+        return ClaimVerdict(c, "pass", f"recomputed {n} {label}", ids, float(n))
+    return ClaimVerdict(c, "block", f"claimed {c.value}, records show {n} {label}", ids, float(n))
 
 
 def _verify_share(c: ShareClaim, store: EvidenceStore) -> ClaimVerdict:
@@ -390,7 +416,7 @@ def _ungrounded_mentions(text: str, claims: list[Claim]) -> list[str]:
         v = float(m.group(1))
         if not any(abs(v - p) < 1e-6 for p in pct_claimed):
             out.append(f"{m.group(0)} has no share claim")
-    count_claimed = {c.value for c in claims if isinstance(c, CountClaim)}
+    count_claimed = {c.value for c in claims if isinstance(c, CountClaim | SourceCountClaim)}
     for m in _COUNT_RE.finditer(text):
         v = int(m.group(1).replace(",", ""))
         if v not in count_claimed:

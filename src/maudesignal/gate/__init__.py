@@ -12,6 +12,7 @@ from maudesignal.gate.claims import (
     RecordClaim,
     RegulationClaim,
     ShareClaim,
+    SourceCountClaim,
     claim_from_dict,
 )
 from maudesignal.gate.evidence import (
@@ -20,6 +21,7 @@ from maudesignal.gate.evidence import (
     EvidenceStore,
     LiteratureRef,
     RecallRef,
+    normalize_source,
 )
 from maudesignal.gate.gate import (
     ClaimVerdict,
@@ -51,7 +53,9 @@ __all__ = [
     "RegulationClaim",
     "SentenceVerdict",
     "ShareClaim",
+    "SourceCountClaim",
     "claim_from_dict",
+    "normalize_source",
     "verify",
     "verify_answer",
     "verify_claim",

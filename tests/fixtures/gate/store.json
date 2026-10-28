@@ -1,177 +1,185 @@
 {
- "_note": "SYNTHETIC evidence store for gate tests. Report ids, K-numbers, recall numbers and PMIDs are fictional.",
- "records": [
-  {
-   "report_id": "9000001-2026-00001",
-   "product_code": "QIH",
-   "event_type": "Injury",
-   "date_received": "20260911",
-   "text": "The AI triage software failed to flag a large vessel occlusion on CT angiography; radiologist identified it 40 minutes later.",
-   "brand_name": "Synthetic QIH App",
-   "manufacturer": "Example Medical QIH"
-  },
-  {
-   "report_id": "9000002-2026-00002",
-   "product_code": "QIH",
-   "event_type": "Malfunction",
-   "date_received": "20260912",
-   "text": "Algorithm notification was delayed after a server update; no patient harm reported.",
-   "brand_name": "Synthetic QIH App",
-   "manufacturer": "Example Medical QIH"
-  },
-  {
-   "report_id": "9000003-2026-00003",
-   "product_code": "QIH",
-   "event_type": "Malfunction",
-   "date_received": "20260913",
-   "text": "Software flagged an intracranial hemorrhage that was not present on review (false positive).",
-   "brand_name": "Synthetic QIH App",
-   "manufacturer": "Example Medical QIH"
-  },
-  {
-   "report_id": "9000004-2026-00004",
-   "product_code": "QIH",
-   "event_type": "Malfunction",
-   "date_received": "20260914",
-   "text": "User reported the application crashed when loading a study with more than 500 slices.",
-   "brand_name": "Synthetic QIH App",
-   "manufacturer": "Example Medical QIH"
-  },
-  {
-   "report_id": "9000005-2026-00005",
-   "product_code": "LLZ",
-   "event_type": "Malfunction",
-   "date_received": "20260915",
-   "text": "Image overlay misregistered by several millimeters after the scanner firmware upgrade.",
-   "brand_name": "Synthetic LLZ App",
-   "manufacturer": "Example Medical LLZ"
-  },
-  {
-   "report_id": "9000006-2026-00006",
-   "product_code": "LLZ",
-   "event_type": "Malfunction",
-   "date_received": "20260916",
-   "text": "Segmentation contour omitted part of the lesion; clinician corrected manually.",
-   "brand_name": "Synthetic LLZ App",
-   "manufacturer": "Example Medical LLZ"
-  },
-  {
-   "report_id": "9000007-2026-00007",
-   "product_code": "MYN",
-   "event_type": "Malfunction",
-   "date_received": "20260917",
-   "text": "Mammography CAD mark was placed on the wrong breast in the report view.",
-   "brand_name": "Synthetic MYN App",
-   "manufacturer": "Example Medical MYN"
-  },
-  {
-   "report_id": "9000008-2026-00008",
-   "product_code": "MYN",
-   "event_type": "Injury",
-   "date_received": "20260918",
-   "text": "No CAD marks displayed for a case later confirmed as malignant.",
-   "brand_name": "Synthetic MYN App",
-   "manufacturer": "Example Medical MYN"
-  }
- ],
- "devices": [
-  {
-   "k_number": "K990001",
-   "product_code": "QIH",
-   "device_name": "Synthetic Stroke Triage",
-   "company_name": "Example Medical QIH"
-  },
-  {
-   "k_number": "K990002",
-   "product_code": "LLZ",
-   "device_name": "Synthetic Image Registration",
-   "company_name": "Example Medical LLZ"
-  },
-  {
-   "k_number": "K990003",
-   "product_code": "MYN",
-   "device_name": "Synthetic Mammo CAD",
-   "company_name": "Example Medical MYN"
-  }
- ],
- "recalls": [
-  {
-   "recall_number": "Z-9001-2026",
-   "product_code": "QIH",
-   "event_number": "99001",
-   "recalling_firm": "Example Medical QIH",
-   "product_description": "Synthetic Stroke Triage software v2.1",
-   "reason_for_recall": "Software may fail to send a notification when the worklist exceeds 200 studies; sensitivity fell to 81.5% in affected sites.",
-   "recall_status": "Open, Classified",
-   "date_initiated": "20260904",
-   "k_numbers": [
-    "K990001"
-   ]
-  },
-  {
-   "recall_number": "Z-9002-2026",
-   "product_code": "QIH",
-   "event_number": "99001",
-   "recalling_firm": "Example Medical QIH",
-   "product_description": "Synthetic Stroke Triage software v2.2",
-   "reason_for_recall": "Software may fail to send a notification when the worklist exceeds 200 studies.",
-   "recall_status": "Open, Classified",
-   "date_initiated": "20260904",
-   "k_numbers": [
-    "K990001"
-   ]
-  },
-  {
-   "recall_number": "Z-9003-2025",
-   "product_code": "LLZ",
-   "event_number": "98500",
-   "recalling_firm": "Example Medical LLZ",
-   "product_description": "Synthetic Image Registration workstation",
-   "reason_for_recall": "Measurements displayed in the 3D view may be larger than the actual anatomical dimension.",
-   "recall_status": "Terminated",
-   "date_initiated": "20250110",
-   "k_numbers": [
-    "K990002",
-    "K990777"
-   ]
-  }
- ],
- "clearances": [
-  {
-   "k_number": "K990777",
-   "product_code": "LLZ",
-   "device_name": "Synthetic PACS Viewer",
-   "company_name": "Example Imaging Inc.",
-   "decision_date": "2019-05-02",
-   "decision_code": "SESE",
-   "statement_or_summary": "Summary"
-  },
-  {
-   "k_number": "K990001",
-   "product_code": "QIH",
-   "device_name": "Synthetic Stroke Triage",
-   "company_name": "Example Medical QIH",
-   "decision_date": "2024-03-01",
-   "decision_code": "SESE",
-   "statement_or_summary": "Summary"
-  }
- ],
- "literature": [
-  {
-   "pmid": "90000001",
-   "title": "Synthetic study of AI triage notification failures.",
-   "abstract": "We reviewed adverse event reports for AI triage software. Missed notifications clustered after server updates (F1-score=85%).",
-   "year": 2024,
-   "journal": "Synthetic J",
-   "product_code": "QIH"
-  },
-  {
-   "pmid": "90000002",
-   "title": "Synthetic evaluation of CAD false positives in mammography.",
-   "abstract": "Computer-aided detection produced 0.4 false-positive marks per image in the synthetic cohort.",
-   "year": 2021,
-   "journal": "Synthetic Radiol",
-   "product_code": "MYN"
-  }
- ]
+  "_note": "SYNTHETIC evidence store for gate tests. Report ids, K-numbers, recall numbers and PMIDs are fictional.",
+  "records": [
+    {
+      "report_id": "9000001-2026-00001",
+      "product_code": "QIH",
+      "event_type": "Injury",
+      "date_received": "20260911",
+      "text": "The AI triage software failed to flag a large vessel occlusion on CT angiography; radiologist identified it 40 minutes later.",
+      "brand_name": "Synthetic QIH App",
+      "manufacturer": "Example Medical QIH",
+      "report_source": "Manufacturer report"
+    },
+    {
+      "report_id": "9000002-2026-00002",
+      "product_code": "QIH",
+      "event_type": "Malfunction",
+      "date_received": "20260912",
+      "text": "Algorithm notification was delayed after a server update; no patient harm reported.",
+      "brand_name": "Synthetic QIH App",
+      "manufacturer": "Example Medical QIH",
+      "report_source": "Manufacturer report"
+    },
+    {
+      "report_id": "9000003-2026-00003",
+      "product_code": "QIH",
+      "event_type": "Malfunction",
+      "date_received": "20260913",
+      "text": "Software flagged an intracranial hemorrhage that was not present on review (false positive).",
+      "brand_name": "Synthetic QIH App",
+      "manufacturer": "Example Medical QIH",
+      "report_source": "Manufacturer report"
+    },
+    {
+      "report_id": "9000004-2026-00004",
+      "product_code": "QIH",
+      "event_type": "Malfunction",
+      "date_received": "20260914",
+      "text": "User reported the application crashed when loading a study with more than 500 slices.",
+      "brand_name": "Synthetic QIH App",
+      "manufacturer": "Example Medical QIH",
+      "report_source": "User Facility report"
+    },
+    {
+      "report_id": "9000005-2026-00005",
+      "product_code": "LLZ",
+      "event_type": "Malfunction",
+      "date_received": "20260915",
+      "text": "Image overlay misregistered by several millimeters after the scanner firmware upgrade.",
+      "brand_name": "Synthetic LLZ App",
+      "manufacturer": "Example Medical LLZ",
+      "report_source": "Manufacturer report"
+    },
+    {
+      "report_id": "9000006-2026-00006",
+      "product_code": "LLZ",
+      "event_type": "Malfunction",
+      "date_received": "20260916",
+      "text": "Segmentation contour omitted part of the lesion; clinician corrected manually.",
+      "brand_name": "Synthetic LLZ App",
+      "manufacturer": "Example Medical LLZ",
+      "report_source": "Voluntary report"
+    },
+    {
+      "report_id": "9000007-2026-00007",
+      "product_code": "MYN",
+      "event_type": "Malfunction",
+      "date_received": "20260917",
+      "text": "Mammography CAD mark was placed on the wrong breast in the report view.",
+      "brand_name": "Synthetic MYN App",
+      "manufacturer": "Example Medical MYN",
+      "report_source": "Manufacturer report"
+    },
+    {
+      "report_id": "9000008-2026-00008",
+      "product_code": "MYN",
+      "event_type": "Injury",
+      "date_received": "20260918",
+      "text": "No CAD marks displayed for a case later confirmed as malignant.",
+      "brand_name": "Synthetic MYN App",
+      "manufacturer": "Example Medical MYN",
+      "report_source": "Distributor report"
+    }
+  ],
+  "devices": [
+    {
+      "k_number": "K990001",
+      "product_code": "QIH",
+      "device_name": "Synthetic Stroke Triage",
+      "company_name": "Example Medical QIH"
+    },
+    {
+      "k_number": "K990002",
+      "product_code": "LLZ",
+      "device_name": "Synthetic Image Registration",
+      "company_name": "Example Medical LLZ"
+    },
+    {
+      "k_number": "K990003",
+      "product_code": "MYN",
+      "device_name": "Synthetic Mammo CAD",
+      "company_name": "Example Medical MYN"
+    }
+  ],
+  "recalls": [
+    {
+      "recall_number": "Z-9001-2026",
+      "product_code": "QIH",
+      "event_number": "99001",
+      "recalling_firm": "Example Medical QIH",
+      "product_description": "Synthetic Stroke Triage software v2.1",
+      "reason_for_recall": "Software may fail to send a notification when the worklist exceeds 200 studies; sensitivity fell to 81.5% in affected sites.",
+      "recall_status": "Open, Classified",
+      "date_initiated": "20260904",
+      "k_numbers": [
+        "K990001"
+      ]
+    },
+    {
+      "recall_number": "Z-9002-2026",
+      "product_code": "QIH",
+      "event_number": "99001",
+      "recalling_firm": "Example Medical QIH",
+      "product_description": "Synthetic Stroke Triage software v2.2",
+      "reason_for_recall": "Software may fail to send a notification when the worklist exceeds 200 studies.",
+      "recall_status": "Open, Classified",
+      "date_initiated": "20260904",
+      "k_numbers": [
+        "K990001"
+      ]
+    },
+    {
+      "recall_number": "Z-9003-2025",
+      "product_code": "LLZ",
+      "event_number": "98500",
+      "recalling_firm": "Example Medical LLZ",
+      "product_description": "Synthetic Image Registration workstation",
+      "reason_for_recall": "Measurements displayed in the 3D view may be larger than the actual anatomical dimension.",
+      "recall_status": "Terminated",
+      "date_initiated": "20250110",
+      "k_numbers": [
+        "K990002",
+        "K990777"
+      ]
+    }
+  ],
+  "clearances": [
+    {
+      "k_number": "K990777",
+      "product_code": "LLZ",
+      "device_name": "Synthetic PACS Viewer",
+      "company_name": "Example Imaging Inc.",
+      "decision_date": "2019-05-02",
+      "decision_code": "SESE",
+      "statement_or_summary": "Summary"
+    },
+    {
+      "k_number": "K990001",
+      "product_code": "QIH",
+      "device_name": "Synthetic Stroke Triage",
+      "company_name": "Example Medical QIH",
+      "decision_date": "2024-03-01",
+      "decision_code": "SESE",
+      "statement_or_summary": "Summary"
+    }
+  ],
+  "literature": [
+    {
+      "pmid": "90000001",
+      "title": "Synthetic study of AI triage notification failures.",
+      "abstract": "We reviewed adverse event reports for AI triage software. Missed notifications clustered after server updates (F1-score=85%).",
+      "year": 2024,
+      "journal": "Synthetic J",
+      "product_code": "QIH"
+    },
+    {
+      "pmid": "90000002",
+      "title": "Synthetic evaluation of CAD false positives in mammography.",
+      "abstract": "Computer-aided detection produced 0.4 false-positive marks per image in the synthetic cohort.",
+      "year": 2021,
+      "journal": "Synthetic Radiol",
+      "product_code": "MYN"
+    }
+  ]
 }

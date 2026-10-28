@@ -192,6 +192,11 @@
     "QIH": "Automated Radiological Image Processing Software"
   },
   "window_brands": {},
+  "window_sources": {
+    "LLZ": {
+      "manufacturer": 6
+    }
+  },
   "ranking": [],
   "footer": "Advisory only — B2B regulatory triage aid, not medical advice. Every item requires human review; nothing is reported to FDA automatically."
 }

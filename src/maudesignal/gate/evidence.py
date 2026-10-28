@@ -39,6 +39,38 @@ def normalize_text(text: str) -> str:
     return _NON_WORD_EDGE.sub("", t)
 
 
+#: Canonical report sources (openFDA ``report_source_code`` without " report").
+REPORT_SOURCES = ("manufacturer", "user facility", "voluntary", "distributor")
+NON_MANUFACTURER = "non-manufacturer"
+_SOURCE_ALIASES = {
+    "user facility": "user facility",
+    "facility": "user facility",
+    # MAUDE "user facility" reports come from hospitals, nursing homes and other
+    # device user facilities, so "hospital reports" is checked as user-facility reports.
+    "hospital": "user facility",
+    "voluntary": "voluntary",
+    "distributor": "distributor",
+    "importer": "distributor",
+    "manufacturer": "manufacturer",
+    "non-manufacturer": NON_MANUFACTURER,
+    "not manufacturer": NON_MANUFACTURER,
+}
+
+
+def normalize_source(value: str | None) -> str:
+    """'User Facility report' -> 'user facility'; unknown or missing -> ''.
+
+    Args:
+        value: openFDA ``report_source_code`` or a claim's source.
+
+    Returns:
+        A value of :data:`REPORT_SOURCES`, ``"non-manufacturer"``, or ``""``.
+    """
+    v = " ".join((value or "").strip().lower().replace("_", " ").split())
+    v = v.removesuffix(" reports").removesuffix(" report").strip()
+    return _SOURCE_ALIASES.get(v, "")
+
+
 @dataclass(frozen=True)
 class EvidenceRecord:
     """One adverse-event record (a MAUDE report) usable as evidence."""
@@ -50,6 +82,12 @@ class EvidenceRecord:
     text: str = ""  # narrative + manufacturer narrative
     manufacturer: str | None = None
     brand_name: str | None = None
+    report_source: str | None = None  # openFDA report_source_code
+
+    @property
+    def source(self) -> str:
+        """Normalized report source (see :func:`normalize_source`)."""
+        return normalize_source(self.report_source)
 
     @property
     def normalized_text(self) -> str:

@@ -388,7 +388,7 @@ def test_output_schema_is_strict_mode_compatible() -> None:
     for key in ("anyOf", "oneOf", "allOf", "enum", "not"):
         assert key not in schema, f"root must be a plain object (found {key})"
     objects = _walk_objects(schema)
-    assert len(objects) >= 11  # root, sentence, 9 claim kinds
+    assert len(objects) >= 12  # root, sentence, 10 claim kinds
     for path, obj in objects:
         assert obj.get("additionalProperties") is False, path
         assert sorted(obj.get("required", [])) == sorted(obj["properties"]), path
@@ -407,6 +407,7 @@ def test_output_schema_is_strict_mode_compatible() -> None:
         "recall",
         "recall_count",
         "literature",
+        "source_count",
     }
 
 

@@ -38,6 +38,7 @@ from maudesignal.gate import (
 from maudesignal.gate.loader import store_from_database
 from maudesignal.monitor.deterioration import detect_from_database
 from maudesignal.monitor.digest import RANKING_ORDER, digest_from_database, render_markdown
+from maudesignal.monitor.sources import not_by_manufacturer, source_counts, sourced_reports
 from maudesignal.sources.openfda_sources import k510_url
 from maudesignal.storage.database import Database
 
@@ -141,12 +142,89 @@ def page_overnight(db: Database) -> None:
                 + ". Deterministic — no model involved."
             )
     st.markdown(render_markdown(digest))
+    _who_filed(db, digest)
     digests = sorted((PROJECT_ROOT / "digests").glob("*.md"))
     if digests:
         with st.expander(f"Archived digests ({len(digests)})"):
             for p in reversed(digests):
                 st.markdown(f"**{p.stem}**")
                 st.code(p.read_text(encoding="utf-8")[:4000], language="markdown")
+
+
+SOURCE_FILTERS = {
+    "Not filed by a manufacturer": None,
+    "Manufacturer": "manufacturer",
+    "User facility (e.g. hospital)": "user facility",
+    "Voluntary": "voluntary",
+    "Distributor": "distributor",
+}
+
+
+def _who_filed(db: Database, digest: Any) -> None:
+    """F12: report sources per device type, and a filterable list of the reports."""
+    reports = sourced_reports(db)
+    if not reports:
+        return
+    w = digest.result.window
+    week = source_counts(reports, date_from=_ymd(w.current_start), date_to=_ymd(w.current_end))
+    stored = source_counts(reports)
+    st.subheader("Who filed the reports")
+    st.caption(
+        "openFDA report source. A manufacturer already knows the complaints it files itself; "
+        "reports filed by a user facility (such as a hospital), a voluntary reporter or a "
+        "distributor are the ones it may not have seen. Counted from the stored records."
+    )
+    st.dataframe(
+        pd.DataFrame(
+            [
+                {
+                    "device type (product code)": pc,
+                    "FDA device type": digest.device_types.get(pc, ""),
+                    "this week": ", ".join(f"{k} {v}" for k, v in week.get(pc, {}).items()) or "0",
+                    "all stored": ", ".join(f"{k} {v}" for k, v in counts.items()),
+                }
+                for pc, counts in stored.items()
+            ]
+        ),
+        hide_index=True,
+        use_container_width=True,
+    )
+    c1, c2 = st.columns(2)
+    choice = c1.selectbox("Show reports filed by", list(SOURCE_FILTERS), key="src_filter")
+    codes = c2.multiselect("Device types", sorted(stored), default=sorted(stored), key="src_codes")
+    wanted = SOURCE_FILTERS[choice]
+    rows = (
+        not_by_manufacturer(reports)
+        if wanted is None
+        else [r for r in reports if r.source == wanted]
+    )
+    rows = [r for r in rows if r.product_code in codes]
+    st.markdown(f"**{choice}: {len(rows)} stored report(s)** (all stored dates, newest first)")
+    if rows:
+        st.dataframe(
+            pd.DataFrame(
+                [
+                    {
+                        "report": MAUDE_URL.format(r.report_id.split("-")[0]),
+                        "report id": r.report_id,
+                        "date received": r.date_received or "",
+                        "source": r.source,
+                        "device type": r.product_code,
+                        "device named": r.brand_name or "",
+                    }
+                    for r in rows
+                ]
+            ),
+            column_config={
+                "report": st.column_config.LinkColumn("FDA record", display_text="open")
+            },
+            hide_index=True,
+            use_container_width=True,
+        )
+
+
+def _ymd(d: Any) -> str:
+    return str(d.isoformat()).replace("-", "")
 
 
 # ---------------------------------------------------------------------------

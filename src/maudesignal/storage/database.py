@@ -63,7 +63,35 @@ class Database:
         )
         self._session_factory = sessionmaker(bind=self._engine, expire_on_commit=False)
         Base.metadata.create_all(self._engine)
+        self._ensure_report_source()
         logger.info("database_initialized", db_path=str(db_path))
+
+    def _ensure_report_source(self) -> None:
+        """Add ``normalized_events.report_source`` to older databases and backfill it.
+
+        The value comes from each stored raw openFDA record (``report_source_code``),
+        so no re-fetch is needed. Rows whose raw record has no source get ``""``
+        so they are not re-read on every start. (Hackathon addition, Oct 2026.)
+        """
+        with self._engine.begin() as conn:
+            cols = {row[1] for row in conn.exec_driver_sql("PRAGMA table_info(normalized_events)")}
+            if "report_source" not in cols:
+                conn.exec_driver_sql(
+                    "ALTER TABLE normalized_events ADD COLUMN report_source VARCHAR"
+                )
+            todo = conn.exec_driver_sql(
+                "SELECT n.maude_report_id, r.raw_json FROM normalized_events n "
+                "LEFT JOIN raw_reports r USING (maude_report_id) WHERE n.report_source IS NULL"
+            ).fetchall()
+            for rid, raw in todo:
+                try:
+                    source = str(json.loads(raw or "{}").get("report_source_code") or "")
+                except ValueError:
+                    source = ""
+                conn.exec_driver_sql(
+                    "UPDATE normalized_events SET report_source = ? WHERE maude_report_id = ?",
+                    (source, rid),
+                )
 
     @property
     def path(self) -> Path:
@@ -118,10 +146,12 @@ class Database:
         mfr_narrative: str | None,
         manufacturer: str | None,
         brand_name: str | None,
+        report_source: str | None = None,
     ) -> None:
         """Insert or replace a normalized event row.
 
         Normalized rows can be regenerated from raw, so replacement is fine.
+        ``report_source`` is kept when a later upsert does not supply one.
         """
         with self._session() as session:
             stmt = sqlite_insert(NormalizedEventRecord).values(
@@ -133,6 +163,7 @@ class Database:
                 mfr_narrative=mfr_narrative,
                 manufacturer=manufacturer,
                 brand_name=brand_name,
+                report_source=report_source,
             )
             stmt = stmt.on_conflict_do_update(
                 index_elements=["maude_report_id"],
@@ -144,6 +175,9 @@ class Database:
                     "mfr_narrative": stmt.excluded.mfr_narrative,
                     "manufacturer": stmt.excluded.manufacturer,
                     "brand_name": stmt.excluded.brand_name,
+                    "report_source": func.coalesce(
+                        stmt.excluded.report_source, NormalizedEventRecord.report_source
+                    ),
                 },
             )
             session.execute(stmt)

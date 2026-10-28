@@ -103,6 +103,7 @@ def ingest_product_code(
             mfr_narrative=normalized["mfr_narrative"],
             manufacturer=normalized["manufacturer"],
             brand_name=normalized["brand_name"],
+            report_source=normalized["report_source"],
         )
 
         if fetched % 25 == 0:
@@ -182,4 +183,5 @@ def _normalize(raw: dict[str, Any], product_code: str) -> dict[str, Any]:
         "mfr_narrative": mfr_narrative,
         "manufacturer": device_0.get("manufacturer_d_name"),
         "brand_name": device_0.get("brand_name"),
+        "report_source": raw.get("report_source_code") or "",
     }

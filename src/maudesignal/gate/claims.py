@@ -23,6 +23,7 @@ ClaimKind = Literal[
     "recall",
     "recall_count",
     "literature",
+    "source_count",
 ]
 
 
@@ -129,6 +130,22 @@ class LiteratureClaim:
     kind: ClaimKind = "literature"
 
 
+@dataclass(frozen=True)
+class SourceCountClaim:
+    """'N reports from <source>' for a product code, optionally within dates.
+
+    ``source`` is a report source ("manufacturer", "user facility", "voluntary",
+    "distributor") or "non-manufacturer" (every known source except manufacturer).
+    """
+
+    product_code: str
+    source: str
+    value: int
+    date_from: str | None = None
+    date_to: str | None = None
+    kind: ClaimKind = "source_count"
+
+
 Claim = (
     QuoteClaim
     | CountClaim
@@ -139,6 +156,7 @@ Claim = (
     | RecallClaim
     | RecallCountClaim
     | LiteratureClaim
+    | SourceCountClaim
 )
 
 
@@ -209,6 +227,14 @@ def claim_from_dict(d: dict[str, Any]) -> Claim:
         if kind == "recall_count":
             return RecallCountClaim(
                 product_code=str(d["product_code"]),
+                value=int(d["value"]),
+                date_from=_opt_str(d.get("date_from")),
+                date_to=_opt_str(d.get("date_to")),
+            )
+        if kind == "source_count":
+            return SourceCountClaim(
+                product_code=str(d["product_code"]),
+                source=str(d["source"]),
                 value=int(d["value"]),
                 date_from=_opt_str(d.get("date_from")),
                 date_to=_opt_str(d.get("date_to")),

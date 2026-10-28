@@ -226,6 +226,11 @@
       }
     ]
   },
+  "window_sources": {
+    "LLZ": {
+      "manufacturer": 33
+    }
+  },
   "ranking": [
     {
       "rank": 1,

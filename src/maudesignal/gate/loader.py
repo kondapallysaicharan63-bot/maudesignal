@@ -106,6 +106,7 @@ def store_from_database(db: Database, *, product_code: str | None = None) -> Evi
             text=" ".join(t for t in (ev.narrative, ev.mfr_narrative) if t),
             manufacturer=ev.manufacturer,
             brand_name=ev.brand_name,
+            report_source=ev.report_source,
         )
         for ev in db.list_normalized_events(product_code=product_code)
     ]
