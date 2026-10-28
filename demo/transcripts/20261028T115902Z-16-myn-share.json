@@ -1,10 +1,10 @@
 {
   "schema_version": "1.0",
   "label": "16-myn-share",
-  "recorded_at_utc": "2026-10-28T05:40:46+00:00",
+  "recorded_at_utc": "2026-10-28T11:59:02+00:00",
   "model": "muse-spark-1.3",
   "question": "What share of all stored MYN reports are injuries?",
-  "answer": "20.0% of all stored MYN reports are injuries.",
+  "answer": "20% of all stored MYN reports are injuries.",
   "tool_calls": [
     {
       "name": "product_summary",
@@ -23,7 +23,7 @@
     },
     "sentences": [
       {
-        "text": "20.0% of all stored MYN reports are injuries.",
+        "text": "20% of all stored MYN reports are injuries.",
         "status": "pass",
         "reasons": [],
         "claims": [
@@ -48,7 +48,7 @@
     },
     "sentences": [
       {
-        "text": "20.0% of all stored MYN reports are injuries.",
+        "text": "20% of all stored MYN reports are injuries.",
         "status": "pass",
         "reasons": [],
         "claims": [
@@ -70,8 +70,8 @@
   "parse_failed": false,
   "length_stops": 0,
   "usage": {
-    "input_tokens": 10459,
-    "output_tokens": 2567,
-    "cost_usd": 0.023983
+    "input_tokens": 12712,
+    "output_tokens": 1746,
+    "cost_usd": 0.023311
   }
 }

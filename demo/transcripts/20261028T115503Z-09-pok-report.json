@@ -1,10 +1,10 @@
 {
   "schema_version": "1.0",
   "label": "09-pok-report",
-  "recorded_at_utc": "2026-10-28T05:36:36+00:00",
+  "recorded_at_utc": "2026-10-28T11:55:03+00:00",
   "model": "muse-spark-1.3",
   "question": "Summarize the single POK report on file, citing it.",
-  "answer": "There is 1 stored POK report on file. There is 1 stored POK malfunction report on file. The stored report is report 11195257. Report 11195257 states \"QUANTX SOFTWARE MAY ENTER INTO AN ERROR STATE IN WHICH MEDICAL IMAGES DISPLAYED TO THE USER ARE FROZEN IN PLACE.\" Report 11195257 further notes \"THIS ERROR WAS OBSERVED BY QLARITY STAFF DURING A TRAINING SESSION AND DID NOT INVOLVE VIEWING LIVE PATIENT DATA.\"",
+  "answer": "POK has 1 stored report, report 11195257. Report 11195257 describes QUANTX freezing with \"QUANTX SOFTWARE MAY ENTER INTO AN ERROR STATE IN WHICH MEDICAL IMAGES DISPLAYED TO THE USER ARE FROZEN IN PLACE\" and notes \"THIS ERROR WAS OBSERVED BY QLARITY STAFF DURING A TRAINING SESSION AND DID NOT INVOLVE VIEWING LIVE PATIENT DATA.\"",
   "tool_calls": [
     {
       "name": "product_summary",
@@ -12,6 +12,14 @@
         "product_code": "POK"
       },
       "result_preview": "{\"product_code\": \"POK\", \"date_from\": null, \"date_to\": null, \"report_count\": 1, \"event_type_counts\": {\"malfunction\": 1}, \"event_type_share_pct\": {\"malfunction\": 100.0}, \"earliest_date_received\": \"20210115\", \"latest_date_received\": \"20210115\", \"devices_510k\": [], \"example_report_ids\": [\"11195257\"]}"
+    },
+    {
+      "name": "search_reports",
+      "arguments": {
+        "limit": 10,
+        "product_code": "POK"
+      },
+      "result_preview": "{\"matched\": 1, \"reports\": [{\"report_id\": \"11195257\", \"product_code\": \"POK\", \"event_type\": \"malfunction\", \"date_received\": \"20210115\", \"brand_name\": \"QUANTX\", \"narrative_excerpt\": \"QUANTX SOFTWARE MAY ENTER INTO AN ERROR STATE IN WHICH MEDICAL IMAGES DISPLAYED TO THE USER ARE FROZEN IN PLACE. QUANTX "
     },
     {
       "name": "get_report",
@@ -23,27 +31,17 @@
   ],
   "first_pass": {
     "passed": 2,
-    "blocked": 1,
+    "blocked": 0,
     "claims": {
-      "pass": 7,
+      "pass": 5,
       "block": 0
     },
     "sentences": [
       {
-        "text": "There is 1 stored POK report on file, report 11195257, recorded as malfunction.",
-        "status": "block",
-        "reasons": [
-          "ungrounded: '11195257, recorded as malfunction' has no count claim"
-        ],
+        "text": "POK has 1 stored report, report 11195257.",
+        "status": "pass",
+        "reasons": [],
         "claims": [
-          {
-            "kind": "count",
-            "status": "pass",
-            "reason": "recomputed 1",
-            "evidence_ids": [
-              "11195257"
-            ]
-          },
           {
             "kind": "count",
             "status": "pass",
@@ -63,7 +61,7 @@
         ]
       },
       {
-        "text": "Report 11195257 states \"QUANTX SOFTWARE MAY ENTER INTO AN ERROR STATE IN WHICH MEDICAL IMAGES DISPLAYED TO THE USER ARE FROZEN IN PLACE.\"",
+        "text": "Report 11195257 describes QUANTX freezing with \"QUANTX SOFTWARE MAY ENTER INTO AN ERROR STATE IN WHICH MEDICAL IMAGES DISPLAYED TO THE USER ARE FROZEN IN PLACE\" and notes \"THIS ERROR WAS OBSERVED BY QLARITY STAFF DURING A TRAINING SESSION AND DID NOT INVOLVE VIEWING LIVE PATIENT DATA.\"",
         "status": "pass",
         "reasons": [],
         "claims": [
@@ -79,21 +77,6 @@
             "kind": "quote",
             "status": "pass",
             "reason": "verbatim match",
-            "evidence_ids": [
-              "11195257"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Report 11195257 further notes \"THIS ERROR WAS OBSERVED BY QLARITY STAFF DURING A TRAINING SESSION AND DID NOT INVOLVE VIEWING LIVE PATIENT DATA.\"",
-        "status": "pass",
-        "reasons": [],
-        "claims": [
-          {
-            "kind": "record",
-            "status": "pass",
-            "reason": "record exists",
             "evidence_ids": [
               "11195257"
             ]
@@ -111,15 +94,15 @@
     ]
   },
   "final": {
-    "passed": 5,
+    "passed": 2,
     "blocked": 0,
     "claims": {
-      "pass": 7,
+      "pass": 5,
       "block": 0
     },
     "sentences": [
       {
-        "text": "There is 1 stored POK report on file.",
+        "text": "POK has 1 stored report, report 11195257.",
         "status": "pass",
         "reasons": [],
         "claims": [
@@ -130,29 +113,7 @@
             "evidence_ids": [
               "11195257"
             ]
-          }
-        ]
-      },
-      {
-        "text": "There is 1 stored POK malfunction report on file.",
-        "status": "pass",
-        "reasons": [],
-        "claims": [
-          {
-            "kind": "count",
-            "status": "pass",
-            "reason": "recomputed 1",
-            "evidence_ids": [
-              "11195257"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "The stored report is report 11195257.",
-        "status": "pass",
-        "reasons": [],
-        "claims": [
+          },
           {
             "kind": "record",
             "status": "pass",
@@ -164,7 +125,7 @@
         ]
       },
       {
-        "text": "Report 11195257 states \"QUANTX SOFTWARE MAY ENTER INTO AN ERROR STATE IN WHICH MEDICAL IMAGES DISPLAYED TO THE USER ARE FROZEN IN PLACE.\"",
+        "text": "Report 11195257 describes QUANTX freezing with \"QUANTX SOFTWARE MAY ENTER INTO AN ERROR STATE IN WHICH MEDICAL IMAGES DISPLAYED TO THE USER ARE FROZEN IN PLACE\" and notes \"THIS ERROR WAS OBSERVED BY QLARITY STAFF DURING A TRAINING SESSION AND DID NOT INVOLVE VIEWING LIVE PATIENT DATA.\"",
         "status": "pass",
         "reasons": [],
         "claims": [
@@ -180,21 +141,6 @@
             "kind": "quote",
             "status": "pass",
             "reason": "verbatim match",
-            "evidence_ids": [
-              "11195257"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Report 11195257 further notes \"THIS ERROR WAS OBSERVED BY QLARITY STAFF DURING A TRAINING SESSION AND DID NOT INVOLVE VIEWING LIVE PATIENT DATA.\"",
-        "status": "pass",
-        "reasons": [],
-        "claims": [
-          {
-            "kind": "record",
-            "status": "pass",
-            "reason": "record exists",
             "evidence_ids": [
               "11195257"
             ]
@@ -211,14 +157,14 @@
       }
     ]
   },
-  "repaired": true,
-  "sentences_repaired": 3,
+  "repaired": false,
+  "sentences_repaired": 0,
   "capa_ids": [],
   "parse_failed": false,
   "length_stops": 0,
   "usage": {
-    "input_tokens": 24292,
-    "output_tokens": 10154,
-    "cost_usd": 0.07352
+    "input_tokens": 19539,
+    "output_tokens": 4454,
+    "cost_usd": 0.043353
   }
 }

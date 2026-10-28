@@ -1,0 +1,485 @@
+{
+  "kind": "510k_summary_reading",
+  "k_number": "K043333",
+  "created_at": "2026-10-28T12:04:31+00:00",
+  "pdf_url": "https://www.accessdata.fda.gov/cdrh_docs/pdf4/K043333.pdf",
+  "page_count": 6,
+  "pages_read": 6,
+  "has_text_layer": true,
+  "agreement_pct": 80.0,
+  "counts": {
+    "VERIFIED": 8,
+    "CONFLICT": 2,
+    "UNVERIFIABLE": 0
+  },
+  "cost_usd": 0.104845,
+  "openfda": {
+    "k_number": "K043333",
+    "applicant": "Vital Images, Inc.",
+    "device_name": "VITREA2, VERSION 3.7 MEDICAL IMAGE PROCESSING SYSTEM",
+    "product_code": "LLZ",
+    "decision_date": "2004-12-15",
+    "regulation_number": "892.2050",
+    "statement_or_summary": "Summary"
+  },
+  "fields": [
+    {
+      "name": "k_number",
+      "status": "VERIFIED",
+      "value": "K043333",
+      "read_a": {
+        "value": "K043333",
+        "page": 4,
+        "legibility": "clear"
+      },
+      "read_b": {
+        "value": "K043333",
+        "page": 1,
+        "legibility": "clear"
+      },
+      "reads_agree": true,
+      "similarity": 1.0,
+      "checks": [
+        {
+          "source": "two_reads",
+          "outcome": "pass",
+          "detail": "similarity 1.00"
+        },
+        {
+          "source": "openfda",
+          "outcome": "pass",
+          "detail": "openFDA: 'K043333'"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "name": "applicant",
+      "status": "VERIFIED",
+      "value": "Vital Images, Inc.",
+      "read_a": {
+        "value": "Vital Images, Inc.",
+        "page": 1,
+        "legibility": "clear"
+      },
+      "read_b": {
+        "value": "Vital Images, Inc.",
+        "page": 1,
+        "legibility": "clear"
+      },
+      "reads_agree": true,
+      "similarity": 1.0,
+      "checks": [
+        {
+          "source": "two_reads",
+          "outcome": "pass",
+          "detail": "similarity 1.00"
+        },
+        {
+          "source": "openfda",
+          "outcome": "pass",
+          "detail": "openFDA: 'Vital Images, Inc.'"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "name": "device_name",
+      "status": "VERIFIED",
+      "value": "Vitrea2, Version 3.7 Medical Image Processing Software",
+      "read_a": {
+        "value": "Vitrea2, Version 3.7 Medical Image Processing Software",
+        "page": 1,
+        "legibility": "clear"
+      },
+      "read_b": {
+        "value": "Vitrea2, Version 3.7 Medical Image Processing Software",
+        "page": 1,
+        "legibility": "clear"
+      },
+      "reads_agree": true,
+      "similarity": 1.0,
+      "checks": [
+        {
+          "source": "two_reads",
+          "outcome": "pass",
+          "detail": "similarity 1.00"
+        },
+        {
+          "source": "openfda",
+          "outcome": "pass",
+          "detail": "openFDA: 'VITREA2, VERSION 3.7 MEDICAL IMAGE PROCESSING SYSTEM'"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "name": "product_code",
+      "status": "VERIFIED",
+      "value": "LLZ",
+      "read_a": {
+        "value": "LLZ",
+        "page": 4,
+        "legibility": "clear"
+      },
+      "read_b": {
+        "value": "LLZ",
+        "page": 4,
+        "legibility": "clear"
+      },
+      "reads_agree": true,
+      "similarity": 1.0,
+      "checks": [
+        {
+          "source": "two_reads",
+          "outcome": "pass",
+          "detail": "similarity 1.00"
+        },
+        {
+          "source": "openfda",
+          "outcome": "pass",
+          "detail": "openFDA: 'LLZ'"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "name": "regulation_number",
+      "status": "VERIFIED",
+      "value": "892.2050",
+      "read_a": {
+        "value": "892.2050",
+        "page": 4,
+        "legibility": "clear"
+      },
+      "read_b": {
+        "value": "892.2050",
+        "page": 4,
+        "legibility": "clear"
+      },
+      "reads_agree": true,
+      "similarity": 1.0,
+      "checks": [
+        {
+          "source": "two_reads",
+          "outcome": "pass",
+          "detail": "similarity 1.00"
+        },
+        {
+          "source": "openfda",
+          "outcome": "pass",
+          "detail": "openFDA: '892.2050'"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "name": "decision_date",
+      "status": "VERIFIED",
+      "value": "2004-12-15",
+      "read_a": {
+        "value": "2004-12-15",
+        "page": 4,
+        "legibility": "clear"
+      },
+      "read_b": {
+        "value": "2004-12-15",
+        "page": 4,
+        "legibility": "clear"
+      },
+      "reads_agree": true,
+      "similarity": 1.0,
+      "checks": [
+        {
+          "source": "two_reads",
+          "outcome": "pass",
+          "detail": "similarity 1.00"
+        },
+        {
+          "source": "openfda",
+          "outcome": "pass",
+          "detail": "openFDA: '2004-12-15'"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "name": "predicate_devices",
+      "status": "VERIFIED",
+      "value": [
+        "K040305",
+        "K032748",
+        "K023760",
+        "K023003"
+      ],
+      "read_a": {
+        "value": [
+          "K040305",
+          "K032748",
+          "K023760",
+          "K023003"
+        ],
+        "page": 1,
+        "legibility": "clear"
+      },
+      "read_b": {
+        "value": [
+          "K040305",
+          "K032748",
+          "K023760",
+          "K023003"
+        ],
+        "page": 1,
+        "legibility": "clear"
+      },
+      "reads_agree": true,
+      "similarity": 1.0,
+      "checks": [
+        {
+          "source": "two_reads",
+          "outcome": "pass",
+          "detail": "similarity 1.00"
+        },
+        {
+          "source": "openfda_predicates",
+          "outcome": "pass",
+          "detail": "4 predicate K-number(s) exist in openFDA"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "name": "indications_for_use",
+      "status": "CONFLICT",
+      "value": null,
+      "read_a": {
+        "value": "CT Colonography The separately-licensed CT Colonography option is intended for closely examining the lumen of the colon using features such as auto-segmentation, axial imaging, multi-planar reformatting, fly-through, simultaneous display of prone and supine images, and transparent wall view. CT Cardiac The separately-licensed CT Cardiac option contains two components: Coronary Artery Analysis and Cardiac Functional Analysis. The Vital Images' CT Cardiac option provides a variety of tools and views for working with clinical CT images of the coronary arteries, heart, and surrounding tissue. Coronary Artery Analysis The Coronary Artery Analysis component of the Vitrea CT Cardiac option is intended for determining the presence and extent of coronary obstructive disease by providing a non-invasive approach to survey a patient's coronary arteries. The vessel probe technology integrated into the CT Cardiac option allows physicians' to click on an artery to simultaneously view the following: the highlighted vessel in 3D, two curved vessel views orthogonal to each other, and cross-sectional views. Cardiac Functional Analysis The Cardiac Functional Analysis (CFA) component of the Vitrea CT Cardiac option is intended to be used with CT studies of the heart to assist cardiologists and radiologists in assessing function when producing a cardiac evaluation. The CFA component of the CT Cardiac option includes semi-automatic heart and left ventricle segmentation, including identification of long axis and mitral valve boundaries across multiple phases; calculation of global metrics, including end diastolic volume, end systolic volume, stroke volume, ejection fraction, cardiac output, cardiac index, stroke index, and myocardial mass; and calculation of regional metrics; including wall motion, percentage of wall thickening, regional ejection fraction, and polar plots. Lung Analysis The separately-licensed Lung Analysis option is intended for the review and analysis of thoracic CT images for the purposes of characterizing nodules in the lung in a single study, or over the time course of several thoracic studies. Characterizations include diameter, volume and volume over time. The system automatically performs the measurements, allowing lung nodules and measurements to be displayed.",
+        "page": 6,
+        "legibility": "clear"
+      },
+      "read_b": {
+        "value": "Vitrea 2 is a medical diagnostic system that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. In addition, the Vitrea2 Version 3.7 has the following additional indications: CT Colonography The separately-licensed CT Colonography option is intended for closely examining the lumen of the colon using features such as auto-segmentation, axial imaging, multi-planar reformatting, fly-through, simultaneous display of prone and supine images, and transparent wall view. CT Cardiac The separately-licensed CT Cardiac option contains two components: Coronary Artery Analysis and Cardiac Functional Analysis. The Vital Images' CT Cardiac option provides a variety of tools and views for working with clinical CT images of the coronary arteries, heart, and surrounding tissue. Coronary Artery Analysis The Coronary Artery Analysis component of the Vitrea CT Cardiac option is intended for determining the presence and extent of coronary obstructive disease by providing a non-invasive approach to survey a patient's coronary arteries. The vessel probe technology integrated into the CT Cardiac option allows physicians' to click on an artery to simultaneously view the following: the highlighted vessel in 3D, two curved vessel views orthogonal to each other, and cross-sectional views. Cardiac Functional Analysis The Cardiac Functional Analysis (CFA) component of the Vitrea CT Cardiac option is intended to be used with CT studies of the heart to assist cardiologists and radiologists in assessing function when producing a cardiac evaluation. The CFA component of the CT Cardiac option includes semi-automatic heart and left ventricle segmentation, including identification of long axis and mitral valve boundaries across multiple phases; calculation of global metrics, including end diastolic volume, end systolic volume, stroke volume, ejection fraction, cardiac output, cardiac index, stroke index, and myocardial mass; and calculation of regional metrics; including wall motion, percentage of wall thickening, regional ejection fraction, and polar plots. Lung Analysis The separately-licensed Lung Analysis option is intended for the review and analysis of thoracic CT images for the purposes of characterizing nodules in the lung in a single study, or over the time course of several thoracic studies. Characterizations include diameter, volume and volume over time. The system automatically performs the measurements, allowing lung nodules and measurements to be displayed.",
+        "page": 6,
+        "legibility": "clear"
+      },
+      "reads_agree": false,
+      "similarity": 0.943,
+      "checks": [
+        {
+          "source": "two_reads",
+          "outcome": "fail",
+          "detail": "similarity 0.94"
+        }
+      ],
+      "note": "reads disagree; low clarity \u2014 human check"
+    },
+    {
+      "name": "intended_use",
+      "status": "CONFLICT",
+      "value": null,
+      "read_a": {
+        "value": "Vitrea 2 is a medical diagnostic system that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. In addition, the Vitrea2 Version 3.7 has the following additional indications:",
+        "page": 2,
+        "legibility": "clear"
+      },
+      "read_b": {
+        "value": "Vitrea 2 is a medical diagnostic system that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. In addition, the Vitrea2 Version 3.7 has the following additional indications: CT Colonography The separately-licensed CT Colonography option is intended for closely examining the lumen of the colon using features such as auto-segmentation, axial imaging, multi-planar reformatting, fly-through, simultaneous display of prone and supine images, and transparent wall view. CT Cardiac The separately-licensed CT Cardiac option contains two components: Coronary Artery Analysis and Cardiac Functional Analysis. The Vital Images' CT Cardiac option provides a variety of tools and views for working with clinical CT images of the coronary arteries, heart, and surrounding tissue. Coronary Artery Analysis The Coronary Artery Analysis component of the Vitrea CT Cardiac option is intended for determining the presence and extent of coronary obstructive disease by providing a non-invasive approach to survey a patient's coronary arteries. The vessel probe technology integrated into the CT Cardiac option allows physicians' to click on an artery to simultaneously view the following: the highlighted vessel in 3D, two curved vessel views orthogonal to each other, and cross-sectional views. Cardiac Functional Analysis The Cardiac Functional Analysis (CFA) component of the Vitrea CT Cardiac option is intended to be used with CT studies of the heart to assist cardiologists and radiologists in assessing function when producing a cardiac evaluation. The CFA component of the CT Cardiac option includes semi-automatic heart and left ventricle segmentation, including identification of long axis and mitral valve boundaries across multiple phases; calculation of global metrics, including end diastolic volume, end systolic volume, stroke volume, ejection fraction, cardiac output, cardiac index, stroke index, and myocardial mass; and calculation of regional metrics; including wall motion, percentage of wall thickening, regional ejection fraction, and polar plots. Lung Analysis The separately-licensed Lung Analysis option is intended for the review and analysis of thoracic CT images for the purposes of characterizing nodules in the lung in a single study, or over the time course of several thoracic studies. Characterizations include diameter, volume and volume over time. The system automatically performs the measurements, allowing lung nodules and measurements to be displayed.",
+        "page": 2,
+        "legibility": "clear"
+      },
+      "reads_agree": false,
+      "similarity": 0.195,
+      "checks": [
+        {
+          "source": "two_reads",
+          "outcome": "fail",
+          "detail": "similarity 0.20"
+        }
+      ],
+      "note": "reads disagree; low clarity \u2014 human check"
+    },
+    {
+      "name": "technology_summary",
+      "status": "VERIFIED",
+      "value": "The Vitrea2 system is a medical diagnostic device that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. The Vitrea2 system provides multi-dimensional visualization of digital images to aid clinicians in their analysis of anatomy and pathology. Vitrea2, Version 3.7 is an upgrade to Vitrea2, Version 3.5 (cleared under K040305).",
+      "read_a": {
+        "value": "The Vitrea2 system is a medical diagnostic device that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. The Vitrea2 system provides multi-dimensional visualization of digital images to aid clinicians in their analysis of anatomy and pathology. Vitrea2, Version 3.7 is an upgrade to Vitrea2, Version 3.5 (cleared under K040305).",
+        "page": 1,
+        "legibility": "clear"
+      },
+      "read_b": {
+        "value": "The Vitrea2 system is a medical diagnostic device that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. The Vitrea2 system provides multi-dimensional visualization of digital images to aid clinicians in their analysis of anatomy and pathology.",
+        "page": 1,
+        "legibility": "clear"
+      },
+      "reads_agree": true,
+      "similarity": 0.8,
+      "checks": [
+        {
+          "source": "two_reads",
+          "outcome": "pass",
+          "detail": "similarity 0.80"
+        }
+      ],
+      "note": "two independent reads agree (no other source covers it)"
+    }
+  ],
+  "reads": [
+    {
+      "label": "A",
+      "fields": {
+        "k_number": {
+          "value": "K043333",
+          "page": 4,
+          "legibility": "clear"
+        },
+        "applicant": {
+          "value": "Vital Images, Inc.",
+          "page": 1,
+          "legibility": "clear"
+        },
+        "device_name": {
+          "value": "Vitrea2, Version 3.7 Medical Image Processing Software",
+          "page": 1,
+          "legibility": "clear"
+        },
+        "product_code": {
+          "value": "LLZ",
+          "page": 4,
+          "legibility": "clear"
+        },
+        "regulation_number": {
+          "value": "892.2050",
+          "page": 4,
+          "legibility": "clear"
+        },
+        "decision_date": {
+          "value": "2004-12-15",
+          "page": 4,
+          "legibility": "clear"
+        },
+        "predicate_devices": {
+          "value": [
+            "K040305",
+            "K032748",
+            "K023760",
+            "K023003"
+          ],
+          "page": 1,
+          "legibility": "clear"
+        },
+        "indications_for_use": {
+          "value": "CT Colonography The separately-licensed CT Colonography option is intended for closely examining the lumen of the colon using features such as auto-segmentation, axial imaging, multi-planar reformatting, fly-through, simultaneous display of prone and supine images, and transparent wall view. CT Cardiac The separately-licensed CT Cardiac option contains two components: Coronary Artery Analysis and Cardiac Functional Analysis. The Vital Images' CT Cardiac option provides a variety of tools and views for working with clinical CT images of the coronary arteries, heart, and surrounding tissue. Coronary Artery Analysis The Coronary Artery Analysis component of the Vitrea CT Cardiac option is intended for determining the presence and extent of coronary obstructive disease by providing a non-invasive approach to survey a patient's coronary arteries. The vessel probe technology integrated into the CT Cardiac option allows physicians' to click on an artery to simultaneously view the following: the highlighted vessel in 3D, two curved vessel views orthogonal to each other, and cross-sectional views. Cardiac Functional Analysis The Cardiac Functional Analysis (CFA) component of the Vitrea CT Cardiac option is intended to be used with CT studies of the heart to assist cardiologists and radiologists in assessing function when producing a cardiac evaluation. The CFA component of the CT Cardiac option includes semi-automatic heart and left ventricle segmentation, including identification of long axis and mitral valve boundaries across multiple phases; calculation of global metrics, including end diastolic volume, end systolic volume, stroke volume, ejection fraction, cardiac output, cardiac index, stroke index, and myocardial mass; and calculation of regional metrics; including wall motion, percentage of wall thickening, regional ejection fraction, and polar plots. Lung Analysis The separately-licensed Lung Analysis option is intended for the review and analysis of thoracic CT images for the purposes of characterizing nodules in the lung in a single study, or over the time course of several thoracic studies. Characterizations include diameter, volume and volume over time. The system automatically performs the measurements, allowing lung nodules and measurements to be displayed.",
+          "page": 6,
+          "legibility": "clear"
+        },
+        "intended_use": {
+          "value": "Vitrea 2 is a medical diagnostic system that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. In addition, the Vitrea2 Version 3.7 has the following additional indications:",
+          "page": 2,
+          "legibility": "clear"
+        },
+        "technology_summary": {
+          "value": "The Vitrea2 system is a medical diagnostic device that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. The Vitrea2 system provides multi-dimensional visualization of digital images to aid clinicians in their analysis of anatomy and pathology. Vitrea2, Version 3.7 is an upgrade to Vitrea2, Version 3.5 (cleared under K040305).",
+          "page": 1,
+          "legibility": "clear"
+        }
+      },
+      "page_order": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "max_side": 1600,
+      "model": "muse-spark-1.3",
+      "skill_version": "1.0.0",
+      "input_tokens": 16899,
+      "output_tokens": 5088,
+      "cost_usd": 0.042748
+    },
+    {
+      "label": "B",
+      "fields": {
+        "k_number": {
+          "value": "K043333",
+          "page": 1,
+          "legibility": "clear"
+        },
+        "applicant": {
+          "value": "Vital Images, Inc.",
+          "page": 1,
+          "legibility": "clear"
+        },
+        "device_name": {
+          "value": "Vitrea2, Version 3.7 Medical Image Processing Software",
+          "page": 1,
+          "legibility": "clear"
+        },
+        "product_code": {
+          "value": "LLZ",
+          "page": 4,
+          "legibility": "clear"
+        },
+        "regulation_number": {
+          "value": "892.2050",
+          "page": 4,
+          "legibility": "clear"
+        },
+        "decision_date": {
+          "value": "2004-12-15",
+          "page": 4,
+          "legibility": "clear"
+        },
+        "predicate_devices": {
+          "value": [
+            "K040305",
+            "K032748",
+            "K023760",
+            "K023003"
+          ],
+          "page": 1,
+          "legibility": "clear"
+        },
+        "indications_for_use": {
+          "value": "Vitrea 2 is a medical diagnostic system that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. In addition, the Vitrea2 Version 3.7 has the following additional indications: CT Colonography The separately-licensed CT Colonography option is intended for closely examining the lumen of the colon using features such as auto-segmentation, axial imaging, multi-planar reformatting, fly-through, simultaneous display of prone and supine images, and transparent wall view. CT Cardiac The separately-licensed CT Cardiac option contains two components: Coronary Artery Analysis and Cardiac Functional Analysis. The Vital Images' CT Cardiac option provides a variety of tools and views for working with clinical CT images of the coronary arteries, heart, and surrounding tissue. Coronary Artery Analysis The Coronary Artery Analysis component of the Vitrea CT Cardiac option is intended for determining the presence and extent of coronary obstructive disease by providing a non-invasive approach to survey a patient's coronary arteries. The vessel probe technology integrated into the CT Cardiac option allows physicians' to click on an artery to simultaneously view the following: the highlighted vessel in 3D, two curved vessel views orthogonal to each other, and cross-sectional views. Cardiac Functional Analysis The Cardiac Functional Analysis (CFA) component of the Vitrea CT Cardiac option is intended to be used with CT studies of the heart to assist cardiologists and radiologists in assessing function when producing a cardiac evaluation. The CFA component of the CT Cardiac option includes semi-automatic heart and left ventricle segmentation, including identification of long axis and mitral valve boundaries across multiple phases; calculation of global metrics, including end diastolic volume, end systolic volume, stroke volume, ejection fraction, cardiac output, cardiac index, stroke index, and myocardial mass; and calculation of regional metrics; including wall motion, percentage of wall thickening, regional ejection fraction, and polar plots. Lung Analysis The separately-licensed Lung Analysis option is intended for the review and analysis of thoracic CT images for the purposes of characterizing nodules in the lung in a single study, or over the time course of several thoracic studies. Characterizations include diameter, volume and volume over time. The system automatically performs the measurements, allowing lung nodules and measurements to be displayed.",
+          "page": 6,
+          "legibility": "clear"
+        },
+        "intended_use": {
+          "value": "Vitrea 2 is a medical diagnostic system that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. In addition, the Vitrea2 Version 3.7 has the following additional indications: CT Colonography The separately-licensed CT Colonography option is intended for closely examining the lumen of the colon using features such as auto-segmentation, axial imaging, multi-planar reformatting, fly-through, simultaneous display of prone and supine images, and transparent wall view. CT Cardiac The separately-licensed CT Cardiac option contains two components: Coronary Artery Analysis and Cardiac Functional Analysis. The Vital Images' CT Cardiac option provides a variety of tools and views for working with clinical CT images of the coronary arteries, heart, and surrounding tissue. Coronary Artery Analysis The Coronary Artery Analysis component of the Vitrea CT Cardiac option is intended for determining the presence and extent of coronary obstructive disease by providing a non-invasive approach to survey a patient's coronary arteries. The vessel probe technology integrated into the CT Cardiac option allows physicians' to click on an artery to simultaneously view the following: the highlighted vessel in 3D, two curved vessel views orthogonal to each other, and cross-sectional views. Cardiac Functional Analysis The Cardiac Functional Analysis (CFA) component of the Vitrea CT Cardiac option is intended to be used with CT studies of the heart to assist cardiologists and radiologists in assessing function when producing a cardiac evaluation. The CFA component of the CT Cardiac option includes semi-automatic heart and left ventricle segmentation, including identification of long axis and mitral valve boundaries across multiple phases; calculation of global metrics, including end diastolic volume, end systolic volume, stroke volume, ejection fraction, cardiac output, cardiac index, stroke index, and myocardial mass; and calculation of regional metrics; including wall motion, percentage of wall thickening, regional ejection fraction, and polar plots. Lung Analysis The separately-licensed Lung Analysis option is intended for the review and analysis of thoracic CT images for the purposes of characterizing nodules in the lung in a single study, or over the time course of several thoracic studies. Characterizations include diameter, volume and volume over time. The system automatically performs the measurements, allowing lung nodules and measurements to be displayed.",
+          "page": 2,
+          "legibility": "clear"
+        },
+        "technology_summary": {
+          "value": "The Vitrea2 system is a medical diagnostic device that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. The Vitrea2 system provides multi-dimensional visualization of digital images to aid clinicians in their analysis of anatomy and pathology.",
+          "page": 1,
+          "legibility": "clear"
+        }
+      },
+      "page_order": [
+        6,
+        5,
+        4,
+        3,
+        2,
+        1
+      ],
+      "max_side": 1100,
+      "model": "muse-spark-1.3",
+      "skill_version": "1.0.0",
+      "input_tokens": 9000,
+      "output_tokens": 11964,
+      "cost_usd": 0.062097
+    }
+  ],
+  "thumbnails": [
+    "data:image/jpeg;base64,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",
+    "data:image/jpeg;base64,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",
+    "data:image/jpeg;base64,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",
+    "data:image/jpeg;base64,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",
+    "data:image/jpeg;base64,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",
+    "data:image/jpeg;base64,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"
+  ]
+}

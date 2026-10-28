@@ -1,57 +1,14 @@
 {
   "doc_id": "SER-LLZ-20260831-001",
   "model": "muse-wonder-1.0",
-  "skill_version": "1.1.0",
+  "skill_version": "1.1.1",
   "mode": "pdf",
-  "created_at": "2026-10-28T05:54:18Z",
-  "raw_output": "{\"findings\": [{\"section\": \"6\", \"statement\": \"Shown: 1 · withheld: 0.\", \"issue_type\": \"missing_required_element\", \"evidence_ids\": [], \"severity\": \"high\", \"explanation\": \"Section 6 claims one verified sentence is shown, but no narrative sentence appears below the VERIFIED label; the summary body is blank, so the narrative cannot be checked against the cited evidence.\"}, {\"section\": \"5.3\", \"statement\": \"B3 Date of event — Per report — see Evidence table\", \"issue_type\": \"contradicted\", \"evidence_ids\": [\"50426770\", \"50503662\", \"50515470\"], \"severity\": \"medium\", \"explanation\": \"The Evidence table and evidence input give only Received/date_received dates and no date of event for the cited reports, so B3 is not sourced as stated.\"}, {\"section\": \"4.7\", \"statement\": \"This document, its revision history and the audit trail in Appendix A. Reporting to management review: pending.\", \"issue_type\": \"missing_required_element\", \"evidence_ids\": [], \"severity\": \"medium\", \"explanation\": \"No revision history appears in the record; document control shows only Rev. 0.2 and Contents lists no revision-history section, so the referenced record element is absent.\"}, {\"section\": \"1\", \"statement\": \"Device name(s) in reports: IntelliSpace Cardiovascular\", \"issue_type\": \"contradicted\", \"evidence_ids\": [\"50519908\"], \"severity\": \"low\", \"explanation\": \"Report 50519908 has brand_name 'IntelliSpace CardioVascular' (capital V), as shown in Section 3 row 29; Section 1 lists only the 'Cardiovascular' spelling.\"}]}",
-  "findings": [
-    {
-      "section": "6",
-      "statement": "Shown: 1 · withheld: 0.",
-      "issue_type": "missing_required_element",
-      "evidence_ids": [],
-      "severity": "high",
-      "explanation": "Section 6 claims one verified sentence is shown, but no narrative sentence appears below the VERIFIED label; the summary body is blank, so the narrative cannot be checked against the cited evidence.",
-      "evidence_check": "no ids"
-    },
-    {
-      "section": "5.3",
-      "statement": "B3 Date of event — Per report — see Evidence table",
-      "issue_type": "contradicted",
-      "evidence_ids": [
-        "50426770",
-        "50503662",
-        "50515470"
-      ],
-      "severity": "medium",
-      "explanation": "The Evidence table and evidence input give only Received/date_received dates and no date of event for the cited reports, so B3 is not sourced as stated.",
-      "evidence_check": "ids exist"
-    },
-    {
-      "section": "4.7",
-      "statement": "This document, its revision history and the audit trail in Appendix A. Reporting to management review: pending.",
-      "issue_type": "missing_required_element",
-      "evidence_ids": [],
-      "severity": "medium",
-      "explanation": "No revision history appears in the record; document control shows only Rev. 0.2 and Contents lists no revision-history section, so the referenced record element is absent.",
-      "evidence_check": "no ids"
-    },
-    {
-      "section": "1",
-      "statement": "Device name(s) in reports: IntelliSpace Cardiovascular",
-      "issue_type": "contradicted",
-      "evidence_ids": [
-        "50519908"
-      ],
-      "severity": "low",
-      "explanation": "Report 50519908 has brand_name 'IntelliSpace CardioVascular' (capital V), as shown in Section 3 row 29; Section 1 lists only the 'Cardiovascular' spelling.",
-      "evidence_check": "ids exist"
-    }
-  ],
+  "created_at": "2026-10-28T12:09:13Z",
+  "raw_output": "{\"findings\": []}",
+  "findings": [],
   "parse_error": "",
-  "input_tokens": 28261,
-  "output_tokens": 15588,
+  "input_tokens": 28303,
+  "output_tokens": 7589,
   "schema": "dossier-review/1",
-  "cost_usd": 0.424804
+  "cost_usd": 0.264992
 }

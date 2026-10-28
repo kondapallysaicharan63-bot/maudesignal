@@ -1,0 +1,126 @@
+{
+  "schema_version": "1.0",
+  "label": "15-five-day",
+  "recorded_at_utc": "2026-10-28T11:58:51+00:00",
+  "model": "muse-spark-1.3",
+  "question": "When does 21 CFR 803 require a 5-day report, and does anything on file meet that bar?",
+  "answer": "The 5-day report provision is in 21 CFR 803.53, while standard manufacturer reporting is in 21 CFR 803.50. Whether anything on file meets the 5-day bar is a human regulatory decision that I cannot make. A named human must review reportability and approve every record.",
+  "tool_calls": [
+    {
+      "name": "deadline_check",
+      "arguments": {
+        "awareness_date": "20260831",
+        "five_day_trigger": false
+      },
+      "result_preview": "{\"awareness_date\": \"20260831\", \"due_date\": \"20260930\", \"basis\": \"30 calendar days\", \"regulation_section\": \"803.50\", \"regulation_title\": \"If I am a manufacturer, what reporting requirements apply to me?\", \"advisory\": \"Reportability is a human regulatory decision; this is a clock only.\"}"
+    },
+    {
+      "name": "deadline_check",
+      "arguments": {
+        "awareness_date": "20260831",
+        "five_day_trigger": true
+      },
+      "result_preview": "{\"awareness_date\": \"20260831\", \"due_date\": \"20260907\", \"basis\": \"5 work days\", \"regulation_section\": \"803.53\", \"regulation_title\": \"If I am a manufacturer, in which circumstances must I submit a 5-day report?\", \"advisory\": \"Reportability is a human regulatory decision; this is a clock only.\"}"
+    }
+  ],
+  "first_pass": {
+    "passed": 3,
+    "blocked": 0,
+    "claims": {
+      "pass": 2,
+      "block": 0
+    },
+    "sentences": [
+      {
+        "text": "The 5-day report provision is in 21 CFR 803.53, while standard manufacturer reporting is in 21 CFR 803.50.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "regulation",
+            "status": "pass",
+            "reason": "21 CFR 803.53: If I am a manufacturer, in which circumstances must I submit a 5-day report?",
+            "evidence_ids": [
+              "21 CFR 803.53"
+            ]
+          },
+          {
+            "kind": "regulation",
+            "status": "pass",
+            "reason": "21 CFR 803.50: If I am a manufacturer, what reporting requirements apply to me?",
+            "evidence_ids": [
+              "21 CFR 803.50"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Whether anything on file meets the 5-day bar is a human regulatory decision that I cannot make.",
+        "status": "pass",
+        "reasons": [],
+        "claims": []
+      },
+      {
+        "text": "A named human must review reportability and approve every record.",
+        "status": "pass",
+        "reasons": [],
+        "claims": []
+      }
+    ]
+  },
+  "final": {
+    "passed": 3,
+    "blocked": 0,
+    "claims": {
+      "pass": 2,
+      "block": 0
+    },
+    "sentences": [
+      {
+        "text": "The 5-day report provision is in 21 CFR 803.53, while standard manufacturer reporting is in 21 CFR 803.50.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "regulation",
+            "status": "pass",
+            "reason": "21 CFR 803.53: If I am a manufacturer, in which circumstances must I submit a 5-day report?",
+            "evidence_ids": [
+              "21 CFR 803.53"
+            ]
+          },
+          {
+            "kind": "regulation",
+            "status": "pass",
+            "reason": "21 CFR 803.50: If I am a manufacturer, what reporting requirements apply to me?",
+            "evidence_ids": [
+              "21 CFR 803.50"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Whether anything on file meets the 5-day bar is a human regulatory decision that I cannot make.",
+        "status": "pass",
+        "reasons": [],
+        "claims": []
+      },
+      {
+        "text": "A named human must review reportability and approve every record.",
+        "status": "pass",
+        "reasons": [],
+        "claims": []
+      }
+    ]
+  },
+  "repaired": false,
+  "sentences_repaired": 0,
+  "capa_ids": [],
+  "parse_failed": false,
+  "length_stops": 0,
+  "usage": {
+    "input_tokens": 17558,
+    "output_tokens": 6883,
+    "cost_usd": 0.0512
+  }
+}

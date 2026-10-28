@@ -1,15 +1,25 @@
 {
   "schema_version": "1.0",
   "label": "19-earliest",
-  "recorded_at_utc": "2026-10-28T05:43:11+00:00",
+  "recorded_at_utc": "2026-10-28T12:00:34+00:00",
   "model": "muse-spark-1.3",
   "question": "Which of the four product codes has the earliest report on file, and when was it received?",
-  "answer": "Among LLZ with 121 stored reports, MYN with 5 stored reports, POK with 1 stored report, and QIH with 10 stored reports, MYN has the earliest report on file, received 2006-05-18.",
+  "answer": "Among LLZ (121 reports), MYN (5 reports), QIH (10 reports) and POK (1 report), MYN has the earliest stored report, received 2006-05-18.",
   "tool_calls": [
+    {
+      "name": "my_device_types",
+      "arguments": {},
+      "result_preview": "{\"device_types\": [], \"device_types_set_by\": null, \"notes\": [], \"note\": \"Chosen by a person; the copilot cannot change this list and never decides which devices are similar.\"}"
+    },
     {
       "name": "overnight_signals",
       "arguments": {},
-      "result_preview": "{\"as_of\": \"20260831\", \"headline\": \"0 new, 1 worsening\", \"current_window\": {\"date_from\": \"20260825\", \"date_to\": \"20260831\"}, \"baseline_window\": {\"date_from\": \"20260728\", \"date_to\": \"20260824\"}, \"rules\": {\"current_window_days\": 7, \"baseline_weeks\": 4, \"spike_multiplier\": 2, \"spike_min_reports\": 3, \"se"
+      "result_preview": "{\"as_of\": \"20260831\", \"headline\": \"New kind of problem: 0 \\u00b7 More serious than usual: 0 \\u00b7 Reports suddenly increased: 1\", \"current_window\": {\"date_from\": \"20260825\", \"date_to\": \"20260831\"}, \"baseline_window\": {\"date_from\": \"20260728\", \"date_to\": \"20260824\"}, \"rules\": {\"current_window_days\":"
+    },
+    {
+      "name": "compare_signals",
+      "arguments": {},
+      "result_preview": "{\"error\": \"no device types given and none remembered; ask the user which product codes to compare\"}"
     },
     {
       "name": "product_summary",
@@ -28,16 +38,16 @@
     {
       "name": "product_summary",
       "arguments": {
-        "product_code": "POK"
+        "product_code": "QIH"
       },
-      "result_preview": "{\"product_code\": \"POK\", \"date_from\": null, \"date_to\": null, \"report_count\": 1, \"event_type_counts\": {\"malfunction\": 1}, \"event_type_share_pct\": {\"malfunction\": 100.0}, \"earliest_date_received\": \"20210115\", \"latest_date_received\": \"20210115\", \"devices_510k\": [], \"example_report_ids\": [\"11195257\"]}"
+      "result_preview": "{\"product_code\": \"QIH\", \"date_from\": null, \"date_to\": null, \"report_count\": 10, \"event_type_counts\": {\"injury\": 1, \"malfunction\": 9}, \"event_type_share_pct\": {\"injury\": 10.0, \"malfunction\": 90.0}, \"earliest_date_received\": \"20240729\", \"latest_date_received\": \"20260702\", \"devices_510k\": [{\"k_number\":"
     },
     {
       "name": "product_summary",
       "arguments": {
-        "product_code": "QIH"
+        "product_code": "POK"
       },
-      "result_preview": "{\"product_code\": \"QIH\", \"date_from\": null, \"date_to\": null, \"report_count\": 10, \"event_type_counts\": {\"injury\": 1, \"malfunction\": 9}, \"event_type_share_pct\": {\"injury\": 10.0, \"malfunction\": 90.0}, \"earliest_date_received\": \"20240729\", \"latest_date_received\": \"20260702\", \"devices_510k\": [{\"k_number\":"
+      "result_preview": "{\"product_code\": \"POK\", \"date_from\": null, \"date_to\": null, \"report_count\": 1, \"event_type_counts\": {\"malfunction\": 1}, \"event_type_share_pct\": {\"malfunction\": 100.0}, \"earliest_date_received\": \"20210115\", \"latest_date_received\": \"20210115\", \"devices_510k\": [], \"example_report_ids\": [\"11195257\"]}"
     }
   ],
   "first_pass": {
@@ -49,7 +59,7 @@
     },
     "sentences": [
       {
-        "text": "Among LLZ with 121 stored reports, MYN with 5 stored reports, POK with 1 stored report, and QIH with 10 stored reports, MYN has the earliest report on file, received 2006-05-18.",
+        "text": "Among LLZ (121 reports), MYN (5 reports), QIH (10 reports) and POK (1 report), MYN has the earliest stored report, received 2006-05-18.",
         "status": "pass",
         "reasons": [],
         "claims": [
@@ -95,14 +105,6 @@
           {
             "kind": "count",
             "status": "pass",
-            "reason": "recomputed 1",
-            "evidence_ids": [
-              "11195257"
-            ]
-          },
-          {
-            "kind": "count",
-            "status": "pass",
             "reason": "recomputed 10",
             "evidence_ids": [
               "19864749",
@@ -115,6 +117,14 @@
               "24453186",
               "24827620",
               "25692853"
+            ]
+          },
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 1",
+            "evidence_ids": [
+              "11195257"
             ]
           }
         ]
@@ -130,7 +140,7 @@
     },
     "sentences": [
       {
-        "text": "Among LLZ with 121 stored reports, MYN with 5 stored reports, POK with 1 stored report, and QIH with 10 stored reports, MYN has the earliest report on file, received 2006-05-18.",
+        "text": "Among LLZ (121 reports), MYN (5 reports), QIH (10 reports) and POK (1 report), MYN has the earliest stored report, received 2006-05-18.",
         "status": "pass",
         "reasons": [],
         "claims": [
@@ -176,14 +186,6 @@
           {
             "kind": "count",
             "status": "pass",
-            "reason": "recomputed 1",
-            "evidence_ids": [
-              "11195257"
-            ]
-          },
-          {
-            "kind": "count",
-            "status": "pass",
             "reason": "recomputed 10",
             "evidence_ids": [
               "19864749",
@@ -197,6 +199,14 @@
               "24827620",
               "25692853"
             ]
+          },
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 1",
+            "evidence_ids": [
+              "11195257"
+            ]
           }
         ]
       }
@@ -208,8 +218,8 @@
   "parse_failed": false,
   "length_stops": 0,
   "usage": {
-    "input_tokens": 18692,
-    "output_tokens": 6262,
-    "cost_usd": 0.049978
+    "input_tokens": 27727,
+    "output_tokens": 7251,
+    "cost_usd": 0.065476
   }
 }

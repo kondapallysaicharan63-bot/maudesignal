@@ -1,7 +1,7 @@
 {
   "kind": "510k_summary_reading",
   "k_number": "K031779",
-  "created_at": "2026-10-28T05:48:22+00:00",
+  "created_at": "2026-10-28T12:03:13+00:00",
   "pdf_url": "https://www.accessdata.fda.gov/cdrh_docs/pdf3/K031779.pdf",
   "page_count": 5,
   "pages_read": 5,
@@ -12,7 +12,7 @@
     "CONFLICT": 0,
     "UNVERIFIABLE": 0
   },
-  "cost_usd": 0.058336,
+  "cost_usd": 0.060036,
   "openfda": {
     "k_number": "K031779",
     "applicant": "Confirma, Inc.",
@@ -314,9 +314,9 @@
     {
       "name": "technology_summary",
       "status": "VERIFIED",
-      "value": "The CADstream software simultaneously analyzes the pixel signal intensities from multiple MR sequences and applies multivariate pattern recognition methods to perform tissue segmentation and classification. The CADstream system consists of proprietary software developed by Confirma installed on an off-the-shelf personal computer and a monitor configured as an CADstream display station.",
+      "value": "The CADstream system consists of proprietary software developed by Confirma installed on an off-the-shelf personal computer and a monitor configured as an CADstream display station. The CADstream software simultaneously analyzes the pixel signal intensities from multiple MR sequences and applies multivariate pattern recognition methods to perform tissue segmentation and classification.",
       "read_a": {
-        "value": "The CADstream software simultaneously analyzes the pixel signal intensities from multiple MR sequences and applies multivariate pattern recognition methods to perform tissue segmentation and classification. The CADstream system consists of proprietary software developed by Confirma installed on an off-the-shelf personal computer and a monitor configured as an CADstream display station.",
+        "value": "The CADstream system consists of proprietary software developed by Confirma installed on an off-the-shelf personal computer and a monitor configured as an CADstream display station. The CADstream software simultaneously analyzes the pixel signal intensities from multiple MR sequences and applies multivariate pattern recognition methods to perform tissue segmentation and classification.",
         "page": 2,
         "legibility": "clear"
       },
@@ -393,7 +393,7 @@
           "legibility": "clear"
         },
         "technology_summary": {
-          "value": "The CADstream software simultaneously analyzes the pixel signal intensities from multiple MR sequences and applies multivariate pattern recognition methods to perform tissue segmentation and classification. The CADstream system consists of proprietary software developed by Confirma installed on an off-the-shelf personal computer and a monitor configured as an CADstream display station.",
+          "value": "The CADstream system consists of proprietary software developed by Confirma installed on an off-the-shelf personal computer and a monitor configured as an CADstream display station. The CADstream software simultaneously analyzes the pixel signal intensities from multiple MR sequences and applies multivariate pattern recognition methods to perform tissue segmentation and classification.",
           "page": 2,
           "legibility": "clear"
         }
@@ -409,8 +409,8 @@
       "model": "muse-spark-1.3",
       "skill_version": "1.0.0",
       "input_tokens": 14840,
-      "output_tokens": 3533,
-      "cost_usd": 0.033565
+      "output_tokens": 4619,
+      "cost_usd": 0.038181
     },
     {
       "label": "B",
@@ -483,8 +483,8 @@
       "model": "muse-spark-1.3",
       "skill_version": "1.0.0",
       "input_tokens": 8080,
-      "output_tokens": 3452,
-      "cost_usd": 0.024771
+      "output_tokens": 2766,
+      "cost_usd": 0.021855
     }
   ],
   "thumbnails": [
