@@ -66,3 +66,11 @@ def test_a_re_recorded_sentence_is_checked_again(tmp_path: Path) -> None:
 
 def test_empty_transcripts() -> None:
     assert "No recorded transcripts yet" in hand_check.build([], {}, {})
+
+
+def test_prefixed_ids_resolve_to_stored_records() -> None:
+    """2026-10-28 recording: the model cited "PMID 35943350" and "recall Z-2543-2025"."""
+    known = {"35943350": "PubMed", "Z-2543-2025": "recall"}
+    assert hand_check._describe(known, "PMID 35943350") == "PubMed"
+    assert hand_check._describe(known, "recall Z-2543-2025") == "recall"
+    assert hand_check._describe(known, "21 CFR 803.53") == "not a stored record"

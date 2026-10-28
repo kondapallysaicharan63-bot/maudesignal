@@ -11,7 +11,7 @@ in for live answers, so no hackathon credit is spent on them.
 
 | # | Type | Status | Evidence |
 |---|---|---|---|
-| 1 | Unit | PASS | `pytest tests/unit`: 695 tests pass, 77% line + branch coverage. Parsers and normalizers keep every adverse-event field (`test_ingestion_pipeline.py`, `test_report_sources.py`: report source stored and back-filled from the raw openFDA record) |
+| 1 | Unit | PASS | `pytest tests/unit`: 698 tests pass, 77% line + branch coverage. Parsers and normalizers keep every adverse-event field (`test_ingestion_pipeline.py`, `test_report_sources.py`: report source stored and back-filled from the raw openFDA record) |
 | 2 | Integration | PASS | `test_compliance_journey.py`: openFDA client (mock transport serving real stored MAUDE records) → ingestion → three Skills with their real schemas → SQLite → dashboard data → PSUR. Live services together in GitHub Actions: openFDA counts vs stored counts (`check_source_counts.py`, 0 mismatches), MHRA via GOV.UK (17 alerts stored), Meta (Record run) |
 | 3 | System | PASS (product pages) / FAIL (20 classic-page tests, environment) | Playwright against the running app. Product pages: `tests/e2e/test_08_hackathon_pages.py`, 40 tests, all pass (five pages, every theme, top bar, keyboard, screen sizes). Classic pages `test_01` … `test_07`: 110 tests, 90 pass. **20 fail**: they expect LLM extraction rows or provider keys (`.env`) that the keyless demo database and this container do not hold — the same 20 fail on the code from before this session (run against commit 65c545a). One real regression (the top bar's theme picker was the first text input a test typed into) and two stale assumptions (the landing page; the keyless PSUR form) were fixed |
 | 4 | Acceptance (UAT) | PENDING (external) | Internal acceptance criteria met: report-source counts equal openFDA's (`docs/hackathon/SOURCE_COUNTS.md`); every shown sentence matched to an FDA record by the gate; the PSUR and the evidence pack carry no decision on reportability or CAPA need. **External sign-off by practitioners (Harish / PSM QA) is awaited and not claimed.** |
@@ -38,8 +38,8 @@ in for live answers, so no hackathon credit is spent on them.
 | Check | Result |
 |---|---|
 | Claim-level gate, adversarial set | 109 cases (68 must be withheld, 41 must pass): 0 false passes, 0 false blocks (`tests/unit/test_gate.py`) |
-| Gate on real model output | third 2026-10-28 recording (run 40683010813), 24 answers: 52/53 sentences passed first time (98.1%); 1 reply never parsed and was withheld |
-| Hand-check of recorded answers | 21 of 24 answers fully correct (87.5%); typed only 20 of 22 (90.9%); 50 sentences correct, 2 incomplete, 1 wrong |
+| Gate on real model output | fourth 2026-10-28 recording (run 40692882168), 24 answers: 49/50 sentences passed first time (98.0%), 50/50 after one repair; 0 unparsed, 0 token-cap stops (third: 52/53, 1 unparsed) |
+| Hand-check of recorded answers | 24 of 24 answers fully correct; typed 22 of 22; 50 of 50 sentences correct (checked by Claude against the database; Charan's independent check PENDING). Third recording: 21 of 24 |
 | Report sources vs openFDA | stored counts equal openFDA `count=report_source_code.exact` for every stored code |
 | Audit trail | editing any stored entry breaks the chain at that entry; detected in the database and in exported trails |
 | Spend caps | $1 and 20 Meta calls per browser session, $10 per day; no call starts once a cap is reached |

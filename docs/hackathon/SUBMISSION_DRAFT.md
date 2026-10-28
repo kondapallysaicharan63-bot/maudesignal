@@ -37,19 +37,21 @@ recorded run or a test in this repository (sources in brackets).
 
 ## Results (real runs, 2026-10-28)
 
-- Gate on live answers: 52 of 53 sentences matched the FDA records on the first
-  try (98.1%) across 24 answers (run 40683010813) [`docs/hackathon/HAND_CHECK.md`].
-- Hand-check by a person of every answer: 21 of 24 fully correct (87.5%); typed
-  questions 20 of 22 (90.9%) [same].
+- Gate on live answers: 49 of 50 sentences matched the FDA records on the first
+  try (98.0%), 50 of 50 after one repair turn, across 24 answers (run
+  40692882168) [`docs/hackathon/HAND_CHECK.md`].
+- Every answer checked by hand against the database: 24 of 24 fully correct
+  (typed 22 of 22); the run before: 21 of 24 [same]. _(Checked by Claude; Charan
+  to re-check before quoting this as a person's check.)_
 - Adversarial gate set: 109 made-up or tricky sentences, 0 let through wrongly, 0
   blocked wrongly [`tests/unit/test_gate.py`].
-- 510(k) summaries: 5 of 5 read; two reads agree on 80–100% of fields, the rest are
-  flagged for a person [`demo/vision/`].
+- 510(k) summaries: 5 of 5 read; two reads agree on 80–100% of fields (100% on 4 of
+  5), the rest are flagged for a person [`demo/vision/`].
 - Report sources vs openFDA: 0 mismatches [`docs/hackathon/SOURCE_COUNTS.md`].
-- Tests: 695 unit tests, 77% coverage; Playwright on every page and theme; all 21
+- Tests: 698 unit tests, 77% coverage; Playwright on every page and theme; all 21
   test types reported, with the external ones marked PENDING
   [`docs/hackathon/TESTING.md`].
-- Spend so far: about $4.49 of the $150 credit (estimates) [`docs/hackathon/BUDGET.md`].
+- Spend so far: about $6.20 of the $150 credit (estimates) [`docs/hackathon/BUDGET.md`].
 
 ## Video script v3 (from Charan's v2, updated to the build) — 2:45 target, 3:00 cap
 
@@ -65,7 +67,7 @@ Charan's v2 wording is kept everywhere else.
 | 0:12–0:30 | Stat card: "LLZ (imaging software): 19,970 FDA reports — 99.3% filed by manufacturers about their own devices" | "Device makers already know their own complaints — they're the ones who report them to FDA. What they can't easily see is what's happening to other companies' devices of the same type, and the few reports about their device filed by hospitals or users. That's buried in tens of thousands of reports." |
 | 0:30–0:50 | **What changed** page: hero "Reports suddenly increased — LLZ, 3.77×: 33 reports this week · weekly mean 8.75 before"; then **Who filed the reports** with "Not filed by a manufacturer" for MYN / QIH (3 voluntary reports each) | "Monday morning. For the device types I chose, it compared this week with the last four. Reports suddenly increased for one type: 33 against a normal 9. And here are reports that weren't filed by the manufacturer." |
 | 0:50–1:15 | **Copilot**: voice question (Heard: …) → answer with Verified pills + FDA links | "I just ask. Meta's Voice Transcribe hears the question, Muse Spark looks through FDA reports, recalls, 510(k)s and papers — and every number and quote comes back tied to the exact FDA record." |
-| 1:15–1:50 | **Gate playground**: "LLZ had 50 injury reports" and "21 CFR 820.100" → Withheld with reasons | "If anything — the model or a colleague — states something the records don't support, it's withheld, with the reason: the records show 2 LLZ injury reports, and 820.100 was replaced this February. In our latest recording, 52 of 53 sentences matched the FDA records on the first try, and a person checked every answer." |
+| 1:15–1:50 | **Gate playground**: "LLZ had 50 injury reports" and "21 CFR 820.100" → Withheld with reasons | "If anything — the model or a colleague — states something the records don't support, it's withheld, with the reason: the records show 2 LLZ injury reports, and 820.100 was replaced this February. In our latest recording, 49 of 50 sentences matched the FDA records on the first try, and every answer was checked by hand against the records." |
 | 1:50–2:10 | **Vision**: 510(k) summary fields Verified / Conflict; label photo → SAM box → device found | "It also reads scanned FDA documents and device labels — Muse Spark reads, SAM finds the label — and anything unclear is flagged for a person, never guessed." |
 | 2:10–2:35 | **Dossier** PDF (Signal Evaluation & CAPA-need Evidence) → Wonder review → **Actions & Audit**: type name → Accept → "Hash chain intact" | "For the jump it prepares a CAPA-need evidence pack in a quality-record layout; Muse Wonder reviews it first. Whether a CAPA is needed is our decision, on our own form — I accept, and every step is logged." |
 | 2:35–2:55 | Architecture, 2 lines | "Built this week on four Meta models — Muse Spark, Muse Wonder, Voice Transcribe and SAM — on my open-source MaudeSignal pipeline. Live demo and code below." |

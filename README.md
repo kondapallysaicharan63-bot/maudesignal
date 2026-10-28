@@ -99,22 +99,23 @@ From [`demo/transcripts/`](demo/transcripts/), [`demo/vision/`](demo/vision/),
 
 | | |
 |---|---|
-| Recording run | GitHub Actions run 40683010813: 24 copilot answers (22 typed, 2 spoken) |
-| Gate, first pass | 52/53 sentences passed (98.1%); no repair turn was needed |
-| Replies that never parsed | 1 of 24 (withheld, nothing shown) |
-| Hand-check | **21 of 24 answers fully correct (87.5%)**; typed questions only: 20 of 22 (90.9%). Of 53 sentences: 50 correct, 2 incomplete, 1 wrong |
-| Cost per answer | $0.0458 (24 answers, $1.0988) |
-| 510(k) reading | **5 of 5 summaries read**: agreement between the two reads 100% (K031779, all 10 fields verified), 90% (K210666), 80% (K043333, K261677, K190442); every disagreement is flagged for a person, never guessed |
-| Evidence pack (PDF) | Muse Spark summary: 5 sentences shown, 0 withheld; Muse Wonder review: 0 findings |
+| Recording run | GitHub Actions run 40692882168 (fourth recording, 2026-10-28): 24 copilot answers (22 typed, 2 spoken) |
+| Gate, first pass | 49/50 sentences passed (98.0%); after the one repair turn: 50/50 |
+| Replies that never parsed | 0 of 24; 0 answers stopped by the token cap |
+| Hand-check | **24 of 24 answers fully correct (100%)**; typed questions only: 22 of 22. All 50 sentences checked against the demo database by Claude; an independent check by Charan is pending. Earlier recordings: 21/24, 19/21, 6/21 |
+| Cost per answer | $0.0432 (24 answers, $1.0372) |
+| 510(k) reading | **5 of 5 summaries read**: the two reads agree on 100% of fields for K031779, K190442, K210666 and K261677 and 80% for K043333; fields that disagree with each other or with openFDA (3 conflicts, 1 unverifiable across the five) are flagged for a person, never guessed |
+| Evidence pack (PDF) | Muse Spark summary: 5 sentences shown, 0 withheld, in plain words (no "spike"); Muse Wonder review: 0 findings |
 | Report sources vs openFDA | 0 mismatches |
 
-The wrong sentence (12-literature) again said no relevant papers were on file
-when there are: a negative answer carries no claim, so the gate cannot check it
-(see [docs/VALIDATION_EVIDENCE.md](docs/VALIDATION_EVIDENCE.md)). The two
-incomplete ones: an answer withheld because the reply never parsed, and a recall
-answer that missed three stored IntelliSpace Cardiovascular recalls. The two
-spoken clips were greetings, not product questions; Voice Transcribe heard both
-correctly and the copilot claimed no facts.
+The three answers that were wrong or incomplete in the third recording are
+fixed: the literature tool now ranks papers by matching terms (12-literature
+cites four stored PMIDs), the recalls tool filters by keyword (18-trap-recall
+names a stored IntelliSpace Cardiovascular recall and still refuses to confirm a
+class that is not stored), and the larger token cap let 13-llz-severity answer
+(0% Injury/Death this week vs 2.9% in the 4 weeks before). The two spoken clips
+were greetings, not product questions; Voice Transcribe heard both correctly and
+the copilot claimed no facts.
 
 ## Tomorrow
 
@@ -258,7 +259,7 @@ openFDA pipeline below predates the event. The file-by-file list is in
 
 ## Tests
 
-**695 unit tests pass, 77% line + branch coverage** (2026-10-28); all 21 test types
+**698 unit tests pass, 77% line + branch coverage** (2026-10-28); all 21 test types
 are reported in [docs/hackathon/TESTING.md](docs/hackathon/TESTING.md)
 (`pytest tests/unit`; CI also runs ruff, black and `mypy --strict` on Python
 3.11 and 3.12).
