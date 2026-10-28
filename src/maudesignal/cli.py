@@ -290,17 +290,14 @@ def extract(
 
     # Skip records already successfully extracted to avoid duplicate rows and wasted API calls.
     already_done = {
-        r.maude_report_id
-        for r in db.list_extractions(skill_name="maude-narrative-extractor")
+        r.maude_report_id for r in db.list_extractions(skill_name="maude-narrative-extractor")
     }
     events = [e for e in events if e.maude_report_id not in already_done]
     if limit:
         events = events[:limit]
 
     if not events:
-        console.print(
-            f"[green]All ingested records for {product_code} already extracted.[/green]"
-        )
+        console.print(f"[green]All ingested records for {product_code} already extracted.[/green]")
         raise typer.Exit(code=0)
 
     extractor = Extractor(config=config, db=db)
