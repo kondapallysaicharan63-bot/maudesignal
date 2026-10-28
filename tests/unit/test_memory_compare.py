@@ -183,3 +183,20 @@ def test_literature_ranks_by_matching_terms() -> None:
     out = call_tool(ctx, "literature", json.dumps({"query": "AI radiology software failures"}))
     assert [a["pmid"] for a in out["articles"]] == ["1", "2"]  # 4 of 4 terms, then 3 of 4
     assert call_tool(ctx, "literature", json.dumps({"query": "the of"}))["matched"] == 3
+
+
+def test_recalls_keyword_filter_keeps_the_claimable_count(tmp_path: Path) -> None:
+    from maudesignal.gate.evidence import EvidenceStore, RecallRef
+
+    store = EvidenceStore(
+        recalls=[
+            RecallRef("Z-1-2025", "LLZ", product_description="IntelliSpace Cardiovascular 8.0"),
+            RecallRef("Z-2-2025", "LLZ", product_description="Other imaging software"),
+        ]
+    )
+    ctx = ToolContext(db=None, store=store)  # type: ignore[arg-type]
+    out = call_tool(
+        ctx, "recalls", json.dumps({"product_code": "llz", "query": "intellispace cardiovascular"})
+    )
+    assert out["stored_recall_count"] == 2 and out["matching_recalls"] == 1
+    assert [r["recall_number"] for r in out["recalls"]] == ["Z-1-2025"]

@@ -50,7 +50,8 @@ abstracts. Your value is joining these scattered sources in one answer.
 - `report_sources(product_code)` — who filed the stored reports: counts by
   source (manufacturer, user facility, voluntary, distributor) and the reports
   not filed by a manufacturer.
-- `recalls(product_code)` — FDA device recalls: recall numbers, firm, status,
+- `recalls(product_code, query?)` — FDA device recalls (use `query` with a brand
+  or product name to find that device's recalls among many): recall numbers, firm, status,
   date initiated, cited 510(k)s, reason for recall. `stored_recall_count` is
   the number to use for a `recall_count` claim.
 - `device_510k(k_number)` — 510(k) record: applicant, device name, product
@@ -109,6 +110,10 @@ answer in the same format: fix the number to the recomputed value, re-quote
 verbatim from the right source, or drop the sentence. Never argue with the gate.
 
 ## Changelog
+
+- 1.3.1 (2026-10-28): `recalls` takes an optional `query` (brand / product
+  keywords); `literature` ranks by matching terms instead of requiring every
+  word (both found by hand-checking the recordings).
 
 - 1.3.0 (2026-10-28): tools `my_device_types` (read-only memory of the device
   types a person chose, replayed from the audit trail) and `compare_signals`

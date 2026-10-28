@@ -244,16 +244,41 @@ def recalls(
     date_from: str | None = None,
     date_to: str | None = None,
     limit: int = 10,
+    query: str | None = None,
 ) -> dict[str, Any]:
-    """Stored openFDA device recalls for one product code, newest first."""
+    """Stored openFDA device recalls for one product code, newest first (optional keywords)."""
     rows = ctx.store.select_recalls(product_code=product_code, date_from=date_from, date_to=date_to)
+    total = len(rows)
+    q = (query or "").strip().lower()
+    if q:
+        # e.g. a brand name: in the 2026-10-28 recording the copilot missed three stored
+        # IntelliSpace Cardiovascular recalls among 561 LLZ recalls (no way to search).
+        words = q.split()
+        rows = [
+            r
+            for r in rows
+            if all(
+                w in f"{r.product_description} {r.reason_for_recall} {r.recalling_firm}".lower()
+                for w in words
+            )
+        ]
     rows = sorted(rows, key=lambda r: (r.date_initiated or "", r.recall_number), reverse=True)
     limit = max(1, min(int(limit), 20))
     return {
         "product_code": product_code,
         "date_from": date_from,
         "date_to": date_to,
-        "stored_recall_count": len(rows),
+        "stored_recall_count": total,
+        **(
+            {
+                "query": query,
+                "matching_recalls": len(rows),
+                "note": "matching_recalls counts the keyword matches only; recall_count "
+                "claims use stored_recall_count (product code + dates)",
+            }
+            if q
+            else {}
+        ),
         "source": "openFDA device/recall.json (stored copy)",
         "recalls": [
             {
@@ -591,6 +616,11 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
                     "date_from": {"type": "string", "description": "YYYYMMDD (date initiated)"},
                     "date_to": {"type": "string", "description": "YYYYMMDD (date initiated)"},
                     "limit": {"type": "integer", "minimum": 1, "maximum": 20},
+                    "query": {
+                        "type": "string",
+                        "description": "optional keywords, e.g. a brand name, matched in the "
+                        "product description, reason and firm",
+                    },
                 },
                 "required": ["product_code"],
             },
