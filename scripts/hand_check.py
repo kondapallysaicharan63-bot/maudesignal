@@ -31,7 +31,9 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from maudesignal.copilot.transcript import load_transcripts  # noqa: E402
 
-VERDICT_RE = re.compile(r"^\| (?P<key>[0-9a-z-]+#\d+) \|.*\| (?P<verdict>[^|]+) \|$")
+VERDICT_RE = re.compile(
+    r"^\| (?P<key>[0-9a-z-]+#\d+) \| (?P<sentence>.*?) \| (?:pass|block).*\| (?P<verdict>[^|]+) \|$"
+)
 
 
 def _lookup(db: Path) -> dict[str, str]:
@@ -57,6 +59,11 @@ def _rate(passed: int, blocked: int) -> str:
     return f"{passed}/{total} ({100 * passed / total:.1f}%)" if total else "0/0 (n/a)"
 
 
+def _vkey(key: str, sentence_cell: str) -> str:
+    """Verdict key: label#n plus the sentence text (a re-recorded sentence is re-checked)."""
+    return f"{key}\x00{sentence_cell}"
+
+
 def _old_verdicts(path: Path) -> dict[str, str]:
     if not path.is_file():
         return {}
@@ -64,7 +71,7 @@ def _old_verdicts(path: Path) -> dict[str, str]:
     for line in path.read_text(encoding="utf-8").splitlines():
         m = VERDICT_RE.match(line)
         if m and m["verdict"].strip() != "pending":
-            found[m["key"]] = m["verdict"].strip()
+            found[_vkey(m["key"], m["sentence"])] = m["verdict"].strip()
     return found
 
 
@@ -154,7 +161,7 @@ def build(transcripts: list[dict[str, Any]], known: dict[str, str], old: dict[st
             ids = sorted({e for c in s.get("claims", []) for e in c.get("evidence_ids", [])})
             cited = "; ".join(f"{e} ({known.get(e, 'not a stored record')})" for e in ids)
             key = f"{t['label']}#{i}"
-            verdict = old.get(key, "pending")
+            verdict = old.get(_vkey(key, _cell(s["text"])), "pending")
             verdicts[verdict.split()[0]] = verdicts.get(verdict.split()[0], 0) + 1
             reasons = f" — {_cell('; '.join(s.get('reasons', [])))}" if s.get("reasons") else ""
             lines.append(
@@ -164,17 +171,21 @@ def build(transcripts: list[dict[str, Any]], known: dict[str, str], old: dict[st
         lines.append("")
     tally = ", ".join(f"{k} {v}" for k, v in sorted(verdicts.items()) if v)
     lines += ["## Hand verdict tally", "", f"Sentences: {tally}", ""]
+
+    def vk(t: dict[str, Any], i: int) -> str:
+        return _vkey(f"{t['label']}#{i}", _cell(t["final"]["sentences"][i - 1]["text"]))
+
     checked = [
         t
         for t in transcripts
-        if all(f"{t['label']}#{i}" in old for i in range(1, len(t["final"]["sentences"]) + 1))
+        if all(vk(t, i) in old for i in range(1, len(t["final"]["sentences"]) + 1))
     ]
     if checked:
         fully = sum(
             1
             for t in checked
             if all(
-                old[f"{t['label']}#{i}"].startswith("correct")
+                old[vk(t, i)].startswith("correct")
                 for i in range(1, len(t["final"]["sentences"]) + 1)
             )
         )

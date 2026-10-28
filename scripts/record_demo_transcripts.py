@@ -105,6 +105,8 @@ DEMO_QUESTIONS: list[tuple[str, str]] = [
         "21-not-by-manufacturer",
         "Which reports about LLZ devices this month were not filed by a manufacturer?",
     ),
+    ("22-compare", "Compare LLZ, QIH and MYN this week. Where did reports suddenly increase?"),
+    ("23-mhra", "Are there MHRA alerts on file about imaging software? Quote one."),
 ]
 
 

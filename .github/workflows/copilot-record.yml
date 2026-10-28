@@ -28,6 +28,8 @@ jobs:
       - name: Install poppler (PDF rasterizing for the 510(k) reader + dossier preview)
         run: sudo apt-get update && sudo apt-get install -y poppler-utils
       - run: pip install -e .
+      - name: Start a clean recording (the previous run's transcripts are restored if none are recorded)
+        run: git rm -q --cached demo/transcripts/*.json && mkdir -p /tmp/prev && mv demo/transcripts/*.json /tmp/prev/ || true
       - name: Record transcripts (key from secrets, never echoed)
         env:
           META_MODEL_API_KEY: ${{ secrets.META_MODEL_API_KEY }}
@@ -68,6 +70,13 @@ jobs:
         env:
           OPENFDA_API_KEY: ${{ secrets.OPENFDA_API_KEY }}
         run: python scripts/check_source_counts.py
+      - name: Restore the previous transcripts if nothing was recorded
+        run: |
+          if ! ls demo/transcripts/*.json >/dev/null 2>&1; then
+            mv /tmp/prev/*.json demo/transcripts/ 2>/dev/null || true
+            git add demo/transcripts/*.json 2>/dev/null || true
+            echo "No transcripts recorded; previous run restored."
+          fi
       - name: Hand-check worksheet (gate pass rates from the recorded transcripts)
         continue-on-error: true
         run: python scripts/hand_check.py

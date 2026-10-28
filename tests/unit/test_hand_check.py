@@ -52,5 +52,17 @@ def test_rates_lookup_and_verdicts_survive_regeneration(tmp_path: Path) -> None:
     assert "ok 1" in again and "pending 1" in again
 
 
+def test_a_re_recorded_sentence_is_checked_again(tmp_path: Path) -> None:
+    ts = [_t("01-a", (1, 0), (1, 0), False)]
+    out = tmp_path / "HAND_CHECK.md"
+    md = hand_check.build(ts, {}, {})
+    out.write_text(md.replace("| pending |", "| correct — ok |", 1), encoding="utf-8")
+    new = [_t("01-a", (1, 0), (1, 0), False)]
+    new[0]["final"]["sentences"][0]["text"] = "LLZ had 50 reports this week."
+    again = hand_check.build(new, {}, hand_check._old_verdicts(out))
+    assert "correct — ok" not in again and "pending 1" in again
+    assert "Answers hand-checked" not in again
+
+
 def test_empty_transcripts() -> None:
     assert "No recorded transcripts yet" in hand_check.build([], {}, {})
