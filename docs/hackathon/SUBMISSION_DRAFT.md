@@ -33,7 +33,7 @@ recorded run or a test in this repository (sources in brackets).
 | Muse Spark 1.3 | Copilot (13 deterministic tools, strict JSON answers checked sentence by sentence), 510(k) summary reader (two independent reads), evidence-pack summary | `demo/transcripts/`, `demo/vision/`, `demo/dossier/` |
 | Muse Wonder 1.0 | Independent review of the evidence-pack PDF before a person accepts it | `demo/dossier/*-review.json` |
 | Voice Transcribe | Spoken questions → the same gated copilot | `demo/transcripts/*00-voice-*.json` |
-| SAM 3.1 | Finds the label in a device photo before Muse Spark reads it | `vision/`; live photo run pending Charan's photos |
+| SAM 3.1 | Finds the label in a device photo before Muse Spark reads it | `demo/vision/label-*.json`: 7 photos read, thermometer → product code FLL |
 
 ## Results (real runs, 2026-10-28)
 
@@ -52,7 +52,7 @@ recorded run or a test in this repository (sources in brackets).
 - Tests: 701 unit tests, 77% coverage; Playwright on every page and theme; all 21
   test types reported, with the external ones marked PENDING
   [`docs/hackathon/TESTING.md`].
-- Spend so far: about $8.09 of the $150 credit (estimates) [`docs/hackathon/BUDGET.md`].
+- Spend so far: about $8.28 of the $150 credit (estimates) [`docs/hackathon/BUDGET.md`].
 
 ## Video script v3 (from Charan's v2, updated to the build) — 2:45 target, 3:00 cap
 
@@ -78,14 +78,14 @@ changed this week? Did reports suddenly increase for any device?"), recorded as
 `00-voice-c`, answered correctly; do not use `question.wav` ("What came in
 overnight? Is anything worsening?" — both words are on the drop list). The
 clips are ElevenLabs text-to-speech, so say "Voice Transcribe hears the
-question", not that a practitioner asked it. (2) the label photos for the Vision
-beat; (3) the deployed link. Check the "2 LLZ injury reports" line against the
+question", not that a practitioner asked it. (2) Vision beat: use `label-thermometer-1.jpg` (SAM box → HoMedics TIE-240 →
+FDA product code FLL); (3) the deployed link. Check the "2 LLZ injury reports" line against the
 gate playground on the day.
 
 ## Not done / still needed from Charan
 
 - Deployed Streamlit link; external beta and expert sign-off (Harish / PSM QA).
-- Label photos (separate push, metadata stripped, no serial/QR visible).
+- Check `label-welch-module.jpg`: a short number is visible just below the black box.
 - Making `hackathon-day2` the default branch (or an OK to merge) so the daily
   monitor cron can run.
 - The final submit click.

@@ -51,6 +51,7 @@ records and papers, each tied to the stored FDA record.
 | Hand-check of the recorded answers | 27 of 28 answers fully correct (typed 21 of 22, spoken 6 of 6); of 65 sentences 64 correct, 1 incomplete (wrongly withheld), 0 wrong; checked against the demo database by Claude; independent check by Charan pending. Fourth run: 24 of 24; third: 21 of 24; second: 19 of 21; first: 6 of 21 | `docs/hackathon/HAND_CHECK.md` |
 | Independent review of the evidence PDF | Muse Wonder 1.0: 0 findings on the third, fourth and fifth recordings' PDFs (the second recording's 4 findings were fixed in code first) | `demo/dossier/*-review.json` |
 | 510(k) reading | 5 of 5 summaries read; agreement between the two reads 100% / 90% / 90% / 90% / 80% (fifth recording; 100/100/100/100/80 in the fourth); every disagreement, and every field that conflicts with openFDA, left for a person | `demo/vision/510k-*.json` |
+| Label camera | 7 of 7 photos read (run 40789231086): CareSens N, both HoMedics thermometers and Welch Allyn 802 LTR read correctly; thermometers matched to product code FLL; NOMAD Pro 2 left for a person to pick (device name only partly legible); Spot Vital Signs (label rotated 90°) and the Welch module returned nothing rather than a guess. No lot or serial stored; checked against each photo by Claude | `demo/vision/label-*.json`, `demo/vision/labels/` |
 | Audit-chain tamper test | editing any stored entry breaks the chain at that entry; detected in the database and in exported trails | `tests/unit/test_copilot_agent.py::test_audit_chain_detects_tampering`, `tests/unit/test_voice.py::test_audit_export_roundtrip_and_tamper_detection` |
 | Spend caps on live calls | $1 and 20 Meta calls per browser session, $10 per day; no call starts once a cap is reached; checked in the running app with the call cap at 0 | `tests/unit/test_spend.py`, `src/maudesignal/copilot/spend.py` |
 | Browser tests | Playwright tests of the five new pages against the keyless demo app; expected values computed from the demo database | `tests/e2e/test_08_hackathon_pages.py` |
@@ -81,6 +82,10 @@ records and papers, each tied to the stored FDA record.
 - The gate can also withhold a true sentence (a false block): in the fifth
   recording it read the year in "August 31, 2026" as a count. Fixed and added
   to the adversarial set; others may remain.
+- Label camera: a rotated or small label can return nothing (Spot Vital Signs);
+  the model can mis-read a partly legible field (the Welch module's first read
+  named the wrong equipment category). A product code is inferred only from a
+  clearly read name, and a person confirms every match.
 - The hand-check sample is 28 answers to fixed demo questions, checked by
   Claude against the database. It is not an independent or statistical
   accuracy estimate.
