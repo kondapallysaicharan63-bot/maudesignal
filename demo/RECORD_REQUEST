@@ -3,4 +3,4 @@
 # the real Muse Spark copilot (spends Meta API credit, ~cents per run) and
 # commits the transcripts to demo/transcripts/.
 # (workflow_dispatch only works once the workflow is on the default branch.)
-request: 4
+request: 5
