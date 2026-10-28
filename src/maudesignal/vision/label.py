@@ -458,11 +458,17 @@ def _name_search(result: LabelResult, openfda: OpenFda510k | None) -> None:
         result.product_code = codes[0]
     elif cands:
         result.match_basis = "ambiguous"
+    if result.product_code and name.legibility != "clear":
+        # 2026-10-28 label run: a partly legible "Tube Assembly" matched another maker's
+        # X-ray tube. A code is inferred only from a clearly read name; else a person picks.
+        result.product_code = None
+        result.match_basis = "ambiguous"
     result.checks.append(
         Check(
             "openfda_name_search",
             "pass" if result.product_code else ("fail" if not cands else "n/a"),
             f"{len(cands)} candidate(s), product code(s): {', '.join(codes) or 'none'}"
-            + (" — analyst must pick" if result.match_basis == "ambiguous" else ""),
+            + (" — analyst must pick" if result.match_basis == "ambiguous" else "")
+            + (" (device name not clearly legible)" if name.legibility != "clear" else ""),
         )
     )

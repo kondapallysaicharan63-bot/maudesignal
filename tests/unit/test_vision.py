@@ -790,6 +790,24 @@ def test_label_flow_single_name_match_and_unknown_k() -> None:
     assert res.match_basis == "single_name_match" and res.product_code == "MYN"
 
 
+def test_label_flow_partly_legible_name_never_sets_a_product_code() -> None:
+    """2026-10-28 label run: "Tube Assembly", partly legible, matched another maker's tube."""
+    client = FakeClient(
+        [
+            label_payload(
+                device_name={"value": "Tube Assembly", "legibility": "partly_legible"},
+                k_number={"value": "", "legibility": "not_present"},
+            )
+        ]
+    )
+    rows = [ofda_row("K990005", product_code="ITY"), ofda_row("K990006", product_code="ITY")]
+    with OpenFda510k(transport=openfda_transport(rows)) as ofda:
+        res = label.read_device_label(LABEL_PNG.read_bytes(), client=client, sam=None, openfda=ofda)
+    assert res.product_code is None and res.match_basis == "ambiguous" and res.needs_human_pick
+    assert len(res.candidates) == 2
+    assert "not clearly legible" in res.checks[-1].detail
+
+
 def test_label_flow_sam_finds_nothing_or_fails_reads_full_photo() -> None:
     client = FakeClient([label_payload(gtin={"value": "", "legibility": "not_present"})] * 2)
     with sam.SamClient("k", transport=sam_transport({})) as s:

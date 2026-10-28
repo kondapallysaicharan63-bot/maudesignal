@@ -136,7 +136,8 @@ def main() -> int:
                         continue
                     data = res.to_dict(include_session_fields=False)
                     data["image_file"] = photo.name
-                    out = args.out / f"label-{photo.stem}.json"
+                    # label-thermometer-1.jpg -> label-thermometer-1.json (not label-label-…)
+                    out = args.out / f"label-{photo.stem.removeprefix('label-')}.json"
                     out.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
                     total_cost += res.cost_usd
                     print(
