@@ -310,6 +310,20 @@ See `maudesignal/config.py` for the authoritative list.
 
 ---
 
+## 8.5 Design System (all UI work)
+
+Every user-facing surface (the website, the Streamlit dashboard, PSUR
+report HTML) uses [design-system/](design-system/README.md): bento layout,
+editorial paper theme, Newsreader + Geist, three themes (Paper, Night,
+High contrast). Link `design-system/tokens.css` and
+`design-system/maudesignal.css`, use the `.ms-*` classes and `var(--token)`
+values, and copy markup from `design-system/components/*.html`. Do not
+introduce other palettes, fonts, background images or gradients. Change
+the look by editing `design-system/tokens.json` and regenerating
+`tokens.css`.
+
+---
+
 ## 9. What NOT to Do
 
 - ❌ Do not write inline prompt strings in Python. Use a Skill.
