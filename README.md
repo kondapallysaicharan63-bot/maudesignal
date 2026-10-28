@@ -87,7 +87,7 @@ guidance, 510(k) history and MAUDE). MaudeSignal differs in three ways:
 - **It withholds what it cannot match.** Every number is recomputed, every
   quote matched word for word, every report id, 510(k), recall, PMID and CFR
   section checked against stored FDA records — or the sentence is not shown.
-  Adversarial set: 109 cases, 0 false passes, 0 false blocks.
+  Adversarial set: 112 cases, 0 false passes, 0 false blocks.
 - **It reads scanned 510(k) documents with a two-read accuracy check.**
 - **It is open source and self-hostable** (MIT), on public FDA data only.
 
@@ -99,23 +99,23 @@ From [`demo/transcripts/`](demo/transcripts/), [`demo/vision/`](demo/vision/),
 
 | | |
 |---|---|
-| Recording run | GitHub Actions run 40692882168 (fourth recording, 2026-10-28): 24 copilot answers (22 typed, 2 spoken) |
-| Gate, first pass | 49/50 sentences passed (98.0%); after the one repair turn: 50/50 |
-| Replies that never parsed | 0 of 24; 0 answers stopped by the token cap |
-| Hand-check | **24 of 24 answers fully correct (100%)**; typed questions only: 22 of 22. All 50 sentences checked against the demo database by Claude; an independent check by Charan is pending. Earlier recordings: 21/24, 19/21, 6/21 |
-| Cost per answer | $0.0432 (24 answers, $1.0372) |
-| 510(k) reading | **5 of 5 summaries read**: the two reads agree on 100% of fields for K031779, K190442, K210666 and K261677 and 80% for K043333; fields that disagree with each other or with openFDA (3 conflicts, 1 unverifiable across the five) are flagged for a person, never guessed |
+| Recording run | GitHub Actions run 40764365995 (fifth recording, 2026-10-28): 28 copilot answers (22 typed, 6 spoken) |
+| Gate, first pass | 63/65 sentences passed (96.9%); after one repair turn: 64/65 (one true sentence wrongly withheld — a year read as a count; fixed in the gate since) |
+| Replies that never parsed | 0 of 28; 0 answers stopped by the token cap |
+| Hand-check | **27 of 28 answers fully correct (96.4%)**; typed 21 of 22, spoken 6 of 6. Of 65 sentences: 64 correct, 1 incomplete (the wrongly withheld one); none wrong. Checked against the demo database by Claude; an independent check by Charan is pending. Earlier recordings: 24/24, 21/24, 19/21, 6/21 |
+| Cost per answer | $0.0454 (28 answers, $1.2717) |
+| 510(k) reading | **5 of 5 summaries read**: the two reads agree on 100% of fields for K031779, 90% for K190442, K210666 and K261677, and 80% for K043333; the 6 conflicting fields are flagged for a person, never guessed |
 | Evidence pack (PDF) | Muse Spark summary: 5 sentences shown, 0 withheld, in plain words (no "spike"); Muse Wonder review: 0 findings |
 | Report sources vs openFDA | 0 mismatches |
 
-The three answers that were wrong or incomplete in the third recording are
-fixed: the literature tool now ranks papers by matching terms (12-literature
-cites four stored PMIDs), the recalls tool filters by keyword (18-trap-recall
-names a stored IntelliSpace Cardiovascular recall and still refuses to confirm a
-class that is not stored), and the larger token cap let 13-llz-severity answer
-(0% Injury/Death this week vs 2.9% in the 4 weeks before). The two spoken clips
-were greetings, not product questions; Voice Transcribe heard both correctly and
-the copilot claimed no facts.
+Spoken questions: Charan's four text-to-speech clips were transcribed word for
+word by Voice Transcribe and answered correctly (what changed, why ranked first,
+and the "50 injury reports" trap, which the copilot rejects: 33 reports, 0
+injuries). One clip asks "What came in overnight? Is anything worsening?" — the
+answer is correct, but the wording is not used in the video. The one incomplete
+answer (06-trap) lost a true sentence because the gate read "August 31, 2026,
+all malfunction" as a count of 2026; the gate now treats a year after a month
+as a date (adversarial cases dt03–dt05).
 
 ## Tomorrow
 
@@ -196,15 +196,15 @@ model calls. For every sentence the copilot wants to show:
 - a sentence that mentions a number, K-number, report id or CFR section
   **without** a matching structured claim is blocked as ungrounded.
 
-**Adversarial test set:** [109 cases](tests/fixtures/gate/adversarial.jsonl)
-(68 must block, 41 must pass): fabricated and drifted quotes, real quotes on
+**Adversarial test set:** [112 cases](tests/fixtures/gate/adversarial.jsonl)
+(70 must block, 42 must pass): fabricated and drifted quotes, real quotes on
 the wrong report, stale / inflated counts, wrong shares, fake and mismatched
 K-numbers, hallucinated and superseded CFR sections, fake recall numbers and
 PMIDs, real ones on the wrong product or year, wrong report-source counts,
 untagged mentions (including "N hospital reports"), dates that look like counts,
 and counts written in words or scientific notation ("thirty-three reports", "1e3 reports").
 Result: **0 false passes, 0 false blocks**
-([`tests/unit/test_gate.py`](tests/unit/test_gate.py), 126 tests).
+([`tests/unit/test_gate.py`](tests/unit/test_gate.py), 129 tests).
 
 Real verdicts on the demo database (137 MAUDE reports):
 
@@ -259,7 +259,7 @@ openFDA pipeline below predates the event. The file-by-file list is in
 
 ## Tests
 
-**698 unit tests pass, 77% line + branch coverage** (2026-10-28); all 21 test types
+**701 unit tests pass, 77% line + branch coverage** (2026-10-28); all 21 test types
 are reported in [docs/hackathon/TESTING.md](docs/hackathon/TESTING.md)
 (`pytest tests/unit`; CI also runs ruff, black and `mypy --strict` on Python
 3.11 and 3.12).

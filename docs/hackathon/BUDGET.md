@@ -92,7 +92,12 @@ the real per-answer cost comes from the recorded runs (section 4).
 | 2026-10-28 | same run | dossier narrative (Muse Spark) | 4,365 in / 8,266 out tokens → $0.0406 | `demo/dossier/*-narrative.json` |
 | 2026-10-28 | same run | dossier review (Muse Wonder) | $0.2465 (28,303 in / 6,662 out); 0 findings | `demo/dossier/*-review.json` |
 | | **run total logged** | | **$1.7151** | |
-| | **logged so far, all runs** | | **$6.2023** of $150 (estimates from token counts × list prices; check the console balance) | |
+| 2026-10-28 | Record live Meta runs, run 40764365995 | 22 typed + 6 voice questions (28 answers) | $1.2717 (sum of the transcripts' usage) | `HAND_CHECK.md` |
+| 2026-10-28 | same run | 510(k) reader: all 5 read | $0.3758 (sum of the five results' `cost_usd`) | `demo/vision/510k-*.json` |
+| 2026-10-28 | same run | dossier narrative (Muse Spark) | 4,366 in / 7,243 out tokens → $0.0362 | `demo/dossier/*-narrative.json` |
+| 2026-10-28 | same run | dossier review (Muse Wonder) | $0.2061 (28,303 in / 4,646 out); 0 findings | `demo/dossier/*-review.json` |
+| | **run total logged** | | **$1.8898** | |
+| | **logged so far, all runs** | | **$8.0921** of $150 (estimates from token counts × list prices; check the console balance) | |
 
 ## 5. Allocation of the $150 (PROPOSED: Charan to confirm)
 

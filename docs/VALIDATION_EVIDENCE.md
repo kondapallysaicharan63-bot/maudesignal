@@ -44,13 +44,13 @@ records and papers, each tied to the stored FDA record.
 
 | Check | Result | Source |
 |---|---|---|
-| Unit tests | 698 pass; 77% line + branch coverage (run 2026-10-28) | `pytest tests/unit --cov=src/maudesignal --cov-branch` |
+| Unit tests | 701 pass; 77% line + branch coverage (run 2026-10-28) | `pytest tests/unit --cov=src/maudesignal --cov-branch` |
 | CI | ruff, black, `mypy --strict`, tests on Python 3.11 and 3.12 | `.github/workflows/ci.yml` |
-| Adversarial gate set | 109 cases (68 must be withheld, 41 must pass): 0 false passes, 0 false blocks | `tests/fixtures/gate/adversarial.jsonl`, `tests/unit/test_gate.py` |
-| Gate on real model output | fourth 2026-10-28 recording (run 40692882168), 24 answers: 49/50 sentences passed first time (98.0%), 50/50 after one repair turn; 0 unparsed replies, 0 token-cap stops. Earlier runs that day: 52/53 (third, 1 unparsed), 45/48 (second), and the first exposed unparsed replies counted as passed (fixed) | `docs/hackathon/HAND_CHECK.md` |
-| Hand-check of the recorded answers | 24 of 24 answers fully correct (typed 22 of 22); all 50 sentences checked against the demo database by Claude; independent check by Charan pending. Third run: 21 of 24; second: 19 of 21; first: 6 of 21 | `docs/hackathon/HAND_CHECK.md` |
-| Independent review of the evidence PDF | Muse Wonder 1.0: 0 findings on the third and fourth recordings' PDFs (the second recording's 4 findings were fixed in code first) | `demo/dossier/*-review.json` |
-| 510(k) reading | 5 of 5 summaries read; agreement between the two reads 100% / 100% / 100% / 100% / 80% (fourth recording); every disagreement, and every field that conflicts with openFDA, left for a person | `demo/vision/510k-*.json` |
+| Adversarial gate set | 112 cases (70 must be withheld, 42 must pass): 0 false passes, 0 false blocks | `tests/fixtures/gate/adversarial.jsonl`, `tests/unit/test_gate.py` |
+| Gate on real model output | fifth 2026-10-28 recording (run 40764365995), 28 answers (6 spoken): 63/65 sentences passed first time (96.9%), 64/65 after repair; the one withheld sentence was true (a false block: a year read as a count, fixed with cases dt03–dt05); 0 unparsed, 0 token-cap stops. Earlier runs that day: 49/50 (fourth), 52/53 (third, 1 unparsed), 45/48 (second), and the first exposed unparsed replies counted as passed (fixed) | `docs/hackathon/HAND_CHECK.md` |
+| Hand-check of the recorded answers | 27 of 28 answers fully correct (typed 21 of 22, spoken 6 of 6); of 65 sentences 64 correct, 1 incomplete (wrongly withheld), 0 wrong; checked against the demo database by Claude; independent check by Charan pending. Fourth run: 24 of 24; third: 21 of 24; second: 19 of 21; first: 6 of 21 | `docs/hackathon/HAND_CHECK.md` |
+| Independent review of the evidence PDF | Muse Wonder 1.0: 0 findings on the third, fourth and fifth recordings' PDFs (the second recording's 4 findings were fixed in code first) | `demo/dossier/*-review.json` |
+| 510(k) reading | 5 of 5 summaries read; agreement between the two reads 100% / 90% / 90% / 90% / 80% (fifth recording; 100/100/100/100/80 in the fourth); every disagreement, and every field that conflicts with openFDA, left for a person | `demo/vision/510k-*.json` |
 | Audit-chain tamper test | editing any stored entry breaks the chain at that entry; detected in the database and in exported trails | `tests/unit/test_copilot_agent.py::test_audit_chain_detects_tampering`, `tests/unit/test_voice.py::test_audit_export_roundtrip_and_tamper_detection` |
 | Spend caps on live calls | $1 and 20 Meta calls per browser session, $10 per day; no call starts once a cap is reached; checked in the running app with the call cap at 0 | `tests/unit/test_spend.py`, `src/maudesignal/copilot/spend.py` |
 | Browser tests | Playwright tests of the five new pages against the keyless demo app; expected values computed from the demo database | `tests/e2e/test_08_hackathon_pages.py` |
@@ -78,7 +78,10 @@ records and papers, each tied to the stored FDA record.
 - Completeness: the gate checks what is said, not what is left out. In the
   third recording a recall answer missed three stored recalls for the device
   it was asked about (the fourth names one of them as an example).
-- The hand-check sample is 24 answers to fixed demo questions, checked by
+- The gate can also withhold a true sentence (a false block): in the fifth
+  recording it read the year in "August 31, 2026" as a count. Fixed and added
+  to the adversarial set; others may remain.
+- The hand-check sample is 28 answers to fixed demo questions, checked by
   Claude against the database. It is not an independent or statistical
   accuracy estimate.
 - The approval step records a typed name with a timestamp in a hash-chained

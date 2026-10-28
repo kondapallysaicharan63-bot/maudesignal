@@ -107,3 +107,6 @@
 {"id": "w06", "category": "complaints_untagged", "sentence": "The firm received 33 complaints.", "claims": [], "expect": "block"}
 {"id": "w07", "category": "word_recall_count_untagged", "sentence": "There were two recalls for LLZ.", "claims": [], "expect": "block"}
 {"id": "w08", "category": "one_report_is_not_a_tally", "sentence": "One report describes a crash on open.", "claims": [], "expect": "pass"}
+{"id": "dt03", "category": "year_after_month_is_a_date", "sentence": "LLZ had 2 reports from September 15 to September 16, 2026, all malfunction.", "claims": [{"kind": "count", "product_code": "LLZ", "value": 2, "event_type": null, "date_from": "20260915", "date_to": "20260916"}], "expect": "pass"}
+{"id": "dt04", "category": "bare_year_is_still_a_count", "sentence": "LLZ had 2026 reports received 20260915 to 20260916.", "claims": [{"kind": "count", "product_code": "LLZ", "value": 2, "event_type": null, "date_from": "20260915", "date_to": "20260916"}], "expect": "block"}
+{"id": "dt05", "category": "date_does_not_hide_count", "sentence": "By September 16, 2026 LLZ had 7 reports.", "claims": [{"kind": "count", "product_code": "LLZ", "value": 2, "event_type": null, "date_from": "20260915", "date_to": "20260916"}], "expect": "block"}

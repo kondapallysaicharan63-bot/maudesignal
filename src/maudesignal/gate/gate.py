@@ -424,6 +424,20 @@ def _looks_like_date(token: str) -> bool:
     return 1990 <= y <= 2100 and 1 <= m <= 12 and 1 <= d <= 31
 
 
+_MONTH_BEFORE_YEAR = re.compile(
+    r"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\.?"
+    r"(?:\s+\d{1,2}(?:st|nd|rd|th)?)?,?\s*$",
+    re.IGNORECASE,
+)
+
+
+def _is_year_after_month(text: str, start: int, token: str) -> bool:
+    """True for the year in "August 31, 2026" or "August 2026" (not a count)."""
+    if len(token) != 4 or not token.isdigit() or not 1990 <= int(token) <= 2100:
+        return False
+    return _MONTH_BEFORE_YEAR.search(text[:start]) is not None
+
+
 def _strip_quoted_spans(text: str, claims: list[Claim]) -> str:
     """Remove each quote claim's text from the sentence where it appears in quotation marks.
 
@@ -473,9 +487,9 @@ def _ungrounded_mentions(text: str, claims: list[Claim]) -> list[str]:
     count_claimed = {c.value for c in claims if isinstance(c, CountClaim | SourceCountClaim)}
     for m in _COUNT_RE.finditer(text):
         token = m.group(1).rstrip(",")
-        if _looks_like_date(token):
-            # "... to 20260831, including reports 504..." is a date, not "20260831 reports"
-            # (a false block in the 2026-10-28 recording).
+        if _looks_like_date(token) or _is_year_after_month(text, m.start(1), token):
+            # "... to 20260831, including reports 504..." and "August 31, 2026, all
+            # malfunction" are dates, not counts (false blocks in 2026-10-28 recordings).
             continue
         n = _number_value(token)
         if n is None or n not in count_claimed:
@@ -483,7 +497,7 @@ def _ungrounded_mentions(text: str, claims: list[Claim]) -> list[str]:
     recall_count_claimed = {c.value for c in claims if isinstance(c, RecallCountClaim)}
     for m in _RECALL_COUNT_RE.finditer(text):
         token = m.group(1).rstrip(",")
-        if _looks_like_date(token):
+        if _looks_like_date(token) or _is_year_after_month(text, m.start(1), token):
             continue
         n = _number_value(token)
         if n is None or n not in recall_count_claimed:
