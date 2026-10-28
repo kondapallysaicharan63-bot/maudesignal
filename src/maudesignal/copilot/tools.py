@@ -15,6 +15,7 @@ outside the model's reach (see ``copilot.actions``).
 from __future__ import annotations
 
 import json
+import re
 from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -215,9 +216,11 @@ def draft_capa_tool(
     problem_statement: str,
     report_ids: list[str],
 ) -> dict[str, Any]:
-    """Create a CAPA *draft* (status=draft). A named human must approve it."""
+    """Record a CAPA-need evidence pack (status=draft). A named human accepts or rejects it."""
+    if not report_ids:
+        return {"error": "cite at least one supporting report (report_ids is empty)"}
     unknown = [rid for rid in report_ids if ctx.store.record(rid) is None]
-    if unknown or not report_ids:
+    if unknown:
         return {"error": "every report_id must exist in the store", "unknown": unknown}
     row = draft_capa(
         ctx.db,
@@ -653,6 +656,19 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
 ]
 
 
+def _normalize_args(args: dict[str, Any]) -> dict[str, Any]:
+    """Product codes are upper-case FDA codes; a list of codes may arrive as one string."""
+    out = dict(args)
+    if isinstance(out.get("product_code"), str):
+        out["product_code"] = out["product_code"].strip().upper()
+    codes = out.get("product_codes")
+    if isinstance(codes, str):
+        codes = [c for c in re.split(r"[\s,;]+", codes) if c]
+    if isinstance(codes, list):
+        out["product_codes"] = [str(c).strip().upper() for c in codes if str(c).strip()]
+    return out
+
+
 def call_tool(ctx: ToolContext, name: str, arguments_json: str) -> dict[str, Any]:
     """Dispatch a model tool call. Errors are returned to the model, never raised."""
     fn = TOOLS.get(name)
@@ -662,6 +678,6 @@ def call_tool(ctx: ToolContext, name: str, arguments_json: str) -> dict[str, Any
         args = json.loads(arguments_json or "{}")
         if not isinstance(args, dict):
             return {"error": "arguments must be a JSON object"}
-        return fn(ctx, **args)
+        return fn(ctx, **_normalize_args(args))
     except (TypeError, ValueError, KeyError) as exc:
         return {"error": f"{type(exc).__name__}: {exc}"}

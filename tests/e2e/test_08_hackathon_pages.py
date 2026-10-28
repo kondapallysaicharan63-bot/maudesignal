@@ -408,3 +408,68 @@ class TestThemes:
         assert _css_var(ms_page, "paper") == theme_values("pink")["paper"].lower()
         assert _css_var(ms_page, "surface") == "#ffffff"  # white solid cards
         assert "theme=pink" in ms_page.url
+
+
+# ---------------------------------------------------------------------------
+# Accessibility basics and screen sizes
+# ---------------------------------------------------------------------------
+
+_UNNAMED_CONTROLS_JS = """
+() => [...document.querySelectorAll('button, [role=radio], input, select, textarea, a[href]')]
+  .filter(el => el.offsetParent !== null)
+  // Streamlit's date picker adds a hidden native helper (tabindex=-1, not keyboard
+  // reachable); it is listed as a known Streamlit gap in TESTING.md, not counted here.
+  .filter(el => el.getAttribute('tabindex') !== '-1')
+  .filter(el => !(el.getAttribute('aria-label') || el.textContent.trim() ||
+                  (el.labels && el.labels.length) || el.getAttribute('title')))
+  .map(el => el.outerHTML.slice(0, 120))
+"""
+
+
+class TestAccessibility:
+    @pytest.mark.parametrize(
+        "nav", ["What changed", "Copilot", "Actions & Audit", "Dossier", "Vision"]
+    )
+    def test_every_visible_control_has_a_name(self, ms_page: Page, nav: str) -> None:
+        _open(ms_page, nav)
+        unnamed = ms_page.evaluate(_UNNAMED_CONTROLS_JS)
+        assert unnamed == [], unnamed
+
+    def test_top_bar_is_reachable_by_keyboard(self, ms_page: Page) -> None:
+        ms_page.locator(".ms-wordmark").focus()
+        names = []
+        for _ in range(8):
+            ms_page.keyboard.press("Tab")
+            names.append(
+                ms_page.evaluate(
+                    "document.activeElement.getAttribute('role') + ':' + "
+                    "document.activeElement.textContent.trim()"
+                )
+            )
+        assert any(n.startswith("radio:") for n in names), names
+        # Arrow keys move between pages inside the radio group (react-aria).
+        ms_page.locator(".st-key-ms_topbar").get_by_role("radio", name="What changed").focus()
+        ms_page.keyboard.press("ArrowRight")
+        ms_page.keyboard.press("Enter")
+        ms_page.wait_for_timeout(3_000)
+        expect(_main(ms_page)).to_contain_text("Recorded Muse Spark runs")
+
+
+class TestScreenSizes:
+    @pytest.mark.parametrize(
+        ("width", "height"), [(390, 844), (768, 1024), (1366, 768), (1920, 1080)]
+    )
+    def test_no_sideways_scroll_and_content_renders(
+        self, browser: Any, width: int, height: int
+    ) -> None:
+        ctx = browser.new_context(viewport={"width": width, "height": height})
+        page = ctx.new_page()
+        page.goto(BASE_URL, wait_until="networkidle")
+        page.wait_for_selector("text=MAUDE records on file", timeout=30_000)
+        page.wait_for_timeout(2_000)
+        expect(_main(page)).to_contain_text(FRAMING)
+        overflow = page.evaluate(
+            "document.documentElement.scrollWidth - document.documentElement.clientWidth"
+        )
+        assert overflow <= 1, f"{width}px wide page scrolls sideways by {overflow}px"
+        ctx.close()

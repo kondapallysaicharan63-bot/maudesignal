@@ -146,3 +146,22 @@ def test_stream_shows_only_verified_sentences() -> None:
     text = "".join(stream_verified(t))
     assert "10 reports" in text and "500" not in text
     assert "nothing is shown" in "".join(stream_verified({"final": {"sentences": []}}))
+
+
+def test_exploratory_findings_are_fixed(tmp_path: Path) -> None:
+    """Found by exploratory testing on 2026-10-28: lower-case codes, a string of codes,
+    and an empty CAPA-need evidence pack."""
+    db = _db(tmp_path)
+    ctx = ToolContext(db=db, store=store_from_database(db))
+    lower = call_tool(ctx, "product_summary", json.dumps({"product_code": "llz "}))
+    assert lower["product_code"] == "LLZ" and lower["report_count"] == 10
+    one_string = call_tool(ctx, "compare_signals", json.dumps({"product_codes": "llz, myn"}))
+    assert [r["product_code"] for r in one_string["rows"]] == ["LLZ", "MYN"]
+    empty = call_tool(
+        ctx,
+        "draft_capa",
+        json.dumps(
+            {"product_code": "LLZ", "title": "t", "problem_statement": "p", "report_ids": []}
+        ),
+    )
+    assert "at least one" in empty["error"]

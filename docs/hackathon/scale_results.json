@@ -1,0 +1,50 @@
+[
+  {
+    "records": 1000,
+    "seed_s": 0.09,
+    "detect_s": 0.018,
+    "digest_s": 0.027,
+    "what_changed_page_s": 0.073,
+    "gate_store_load_s": 0.015,
+    "gate_6_sentences_s": 0.006,
+    "copilot_gate_path_s": 0.02,
+    "peak_rss_mb": 64.3,
+    "over_limit": false
+  },
+  {
+    "records": 10000,
+    "seed_s": 0.21,
+    "detect_s": 0.081,
+    "digest_s": 0.205,
+    "what_changed_page_s": 0.622,
+    "gate_store_load_s": 0.139,
+    "gate_6_sentences_s": 0.044,
+    "copilot_gate_path_s": 0.182,
+    "peak_rss_mb": 90.0,
+    "over_limit": false
+  },
+  {
+    "records": 50000,
+    "seed_s": 0.73,
+    "detect_s": 0.464,
+    "digest_s": 1.24,
+    "what_changed_page_s": 4.008,
+    "gate_store_load_s": 0.785,
+    "gate_6_sentences_s": 0.251,
+    "copilot_gate_path_s": 1.036,
+    "peak_rss_mb": 203.0,
+    "over_limit": false
+  },
+  {
+    "records": 100000,
+    "seed_s": 1.47,
+    "detect_s": 0.958,
+    "digest_s": 3.336,
+    "what_changed_page_s": 10.158,
+    "gate_store_load_s": 1.875,
+    "gate_6_sentences_s": 0.513,
+    "copilot_gate_path_s": 2.388,
+    "peak_rss_mb": 341.3,
+    "over_limit": true
+  }
+]

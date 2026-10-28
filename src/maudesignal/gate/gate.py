@@ -60,12 +60,48 @@ SHARE_TOLERANCE_PP = 0.5
 
 _K_RE = re.compile(r"\b[KkDd][Ee]?N?\d{6}\b")
 _PCT_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(?:%|percent\b)")
+_UNITS = [
+    "zero",
+    "one",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nine",
+    "ten",
+    "eleven",
+    "twelve",
+    "thirteen",
+    "fourteen",
+    "fifteen",
+    "sixteen",
+    "seventeen",
+    "eighteen",
+    "nineteen",
+]
+_TENS = ["twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
+_WORD_VALUES: dict[str, int] = {w: i for i, w in enumerate(_UNITS)}
+_WORD_VALUES.update({t: 20 + 10 * i for i, t in enumerate(_TENS)})
+_WORD_VALUES.update({"dozen": 12, "a dozen": 12, "hundred": 100, "thousand": 1000})
+# A count written as digits ("1,200"), in scientific notation ("1e3") or in words
+# ("thirty-three", "a dozen"). "one" is left out: "one report" names an item, not a tally.
+_NUMBER = (
+    r"\d[\d,]*(?:\.\d+)?(?:e\d+)?|a\s+dozen|dozen|hundred|thousand"
+    r"|(?:" + "|".join(_TENS) + r")(?:-(?:one|two|three|four|five|six|seven|eight|nine))?"
+    r"|" + "|".join(sorted((u for u in _UNITS if u != "one"), key=len, reverse=True))
+)
 _COUNT_RE = re.compile(
-    r"\b(\d[\d,]*)\s+(?:\w+\s+){0,2}?"
-    r"(?:reports?|events?|deaths?|injur(?:y|ies)|malfunctions?|MDRs?|records?)\b",
+    r"\b(" + _NUMBER + r")\s+(?:\w+\s+){0,2}?"
+    r"(?:reports?|events?|deaths?|injur(?:y|ies)|malfunctions?|MDRs?|records?|complaints?|"
+    r"cases?|filings?)\b",
     re.IGNORECASE,
 )
-_RECALL_COUNT_RE = re.compile(r"\b(\d[\d,]*)\s+(?:[\w-]+\s+){0,2}?recalls?\b", re.IGNORECASE)
+_RECALL_COUNT_RE = re.compile(
+    r"\b(" + _NUMBER + r")\s+(?:[\w-]+\s+){0,2}?recalls?\b", re.IGNORECASE
+)
 _RECALL_NO_RE = re.compile(r"\b[A-Z]-\d{4}-\d{4}\b")
 _PMID_RE = re.compile(r"\bPMID\s*:?\s*(\d{1,9})\b", re.IGNORECASE)
 
@@ -362,6 +398,24 @@ def _verify_regulation(c: RegulationClaim) -> ClaimVerdict:
 # ---------------------------------------------------------------------------
 
 
+def _number_value(token: str) -> int | None:
+    """Integer value of a count token: digits, ``1e3``, or number words."""
+    t = token.strip().rstrip(",").lower()
+    if t[:1].isdigit():
+        try:
+            return int(float(t.replace(",", "")))
+        except ValueError:
+            return None
+    t = re.sub(r"\s+", " ", t)
+    if t in _WORD_VALUES:
+        return _WORD_VALUES[t]
+    if "-" in t:
+        tens, _, unit = t.partition("-")
+        if tens in _TENS and unit in _UNITS[1:10]:
+            return _WORD_VALUES[tens] + _WORD_VALUES[unit]
+    return None
+
+
 def _looks_like_date(token: str) -> bool:
     """True for YYYYMMDD tokens (dates are not report ids)."""
     if len(token) != 8 or not token.isdigit():
@@ -423,16 +477,16 @@ def _ungrounded_mentions(text: str, claims: list[Claim]) -> list[str]:
             # "... to 20260831, including reports 504..." is a date, not "20260831 reports"
             # (a false block in the 2026-10-28 recording).
             continue
-        v = int(token.replace(",", ""))
-        if v not in count_claimed:
+        v = _number_value(token)
+        if v is None or v not in count_claimed:
             out.append(f"'{m.group(0)}' has no count claim")
     recall_count_claimed = {c.value for c in claims if isinstance(c, RecallCountClaim)}
     for m in _RECALL_COUNT_RE.finditer(text):
         token = m.group(1).rstrip(",")
         if _looks_like_date(token):
             continue
-        v = int(token.replace(",", ""))
-        if v not in recall_count_claimed:
+        v = _number_value(token)
+        if v is None or v not in recall_count_claimed:
             out.append(f"'{m.group(0)}' has no recall_count claim")
     recall_claimed = {c.recall_number.strip().upper() for c in claims if isinstance(c, RecallClaim)}
     for m in _RECALL_NO_RE.finditer(text):
