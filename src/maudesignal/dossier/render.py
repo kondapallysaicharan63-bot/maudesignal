@@ -41,10 +41,10 @@ _ENV = Environment(
 )
 
 STATUS_LABELS = {
-    "no-capa": "Draft — signal evaluation only (no CAPA draft)",
-    "draft": "Draft — awaiting QA/RA review",
-    "approved": "Approved for CAPA initiation (CAPA open)",
-    "rejected": "Rejected by reviewer",
+    "no-capa": "Draft — signal evaluation evidence only",
+    "draft": "Draft — CAPA-need evidence awaiting QA/RA review",
+    "approved": "Evidence accepted by reviewer (CAPA need decided on the company's form)",
+    "rejected": "Evidence rejected by reviewer",
 }
 
 

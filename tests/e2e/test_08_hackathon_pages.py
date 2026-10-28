@@ -140,7 +140,8 @@ class TestOvernight:
 
 def _select(page: Page, label: str, option: str) -> None:
     box = page.locator("[data-testid='stSelectbox']").filter(has_text=label).first
-    box.click()
+    box.scroll_into_view_if_needed()
+    box.get_by_role("button", name="Open").click()  # react-aria combobox opens from its button
     page.get_by_role("option", name=option, exact=True).first.click()
     page.wait_for_timeout(1_500)
 
@@ -220,7 +221,8 @@ class TestActionsAudit:
     def test_capa_header_counts_drafts_awaiting_review(self, ms_page: Page, db: Database) -> None:
         waiting = sum(1 for d in db.list_capa_drafts() if d.status == "draft")
         main = _open(ms_page, "Actions & Audit")
-        expect(main).to_contain_text(f"CAPA drafts ({waiting} awaiting review)")
+        expect(main).to_contain_text(f"CAPA-need evidence ({waiting} awaiting review)")
+        expect(main).to_contain_text("This document is evidence only.")
         expect(main.get_by_label("Your name (recorded as the approver)")).to_be_visible()
 
     def test_audit_trail_shows_db_chain_or_recorded_trails(
@@ -251,7 +253,7 @@ class TestActionsAudit:
 class TestDossier:
     def test_metrics_and_reverified_figures(self, ms_page: Page) -> None:
         main = _open(ms_page, "Dossier")
-        expect(main).to_contain_text("Signal Evaluation & CAPA dossier")
+        expect(main).to_contain_text("Signal Evaluation & CAPA-need Evidence")
         metric = main.locator("[data-testid='stMetric']").filter(has_text="Figures re-verified")
         value = metric.locator("[data-testid='stMetricValue']").inner_text()
         m = re.fullmatch(r"(\d+)/(\d+)", value.strip())
@@ -316,3 +318,19 @@ class TestVision:
         expect(panel).to_contain_text("Lot and serial numbers stay in this session")
         if not list((DEMO_VISION_DIR).glob("label-*.json")):
             expect(panel).to_contain_text("No recorded label runs yet")
+
+
+class TestWhoFiled:
+    def test_source_table_and_filter_match_the_records(self, ms_page: Page, db: Database) -> None:
+        from maudesignal.monitor.sources import not_by_manufacturer, sourced_reports
+
+        reports = sourced_reports(db)
+        others = not_by_manufacturer(reports)
+        manufacturer = [r for r in reports if r.source == "manufacturer"]
+        main = _open(ms_page, "Overnight")
+        expect(main).to_contain_text("Who filed the reports")
+        expect(main).to_contain_text(f"Not filed by a manufacturer: {len(others)} stored report(s)")
+        _select(ms_page, "Show reports filed by", "Manufacturer")
+        expect(_main(ms_page)).to_contain_text(
+            f"Manufacturer: {len(manufacturer)} stored report(s)"
+        )

@@ -13,7 +13,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>{{ d.doc_id }} — Signal Evaluation &amp; CAPA Record</title>
+<title>{{ d.doc_id }} — Signal Evaluation &amp; CAPA-need Evidence</title>
 <style>
 @page {
   size: Letter;
@@ -93,16 +93,18 @@ a { color: #1a5fb4; }
 
 {# ======================= 1. COVER / APPROVAL ======================= #}
 <section class="cover" id="sec-cover">
-  <h1>Signal Evaluation &amp; CAPA Record</h1>
+  <h1>Signal Evaluation &amp; CAPA-need Evidence</h1>
   <div class="sub">Product code <b>{{ d.device.product_code }}</b>{% if d.device.classification_name %} — {{ d.device.classification_name }}{% endif %}{% if d.capa %} · {{ d.capa.title }}{% endif %}</div>
 
   {% if d.status == "approved" %}
-  <div class="stamp ok">APPROVED FOR CAPA INITIATION by {{ d.capa.decided_by }} — open items in §4 remain with the CAPA owner</div>
+  <div class="stamp ok">EVIDENCE ACCEPTED by {{ d.capa.decided_by }} — the CAPA-need decision is made on the company's own form; open items in §4 remain with the CAPA owner</div>
   {% elif d.status == "rejected" %}
-  <div class="stamp">REJECTED BY REVIEWER — this record documents the rejection</div>
+  <div class="stamp">EVIDENCE REJECTED BY REVIEWER — this record documents the rejection</div>
   {% else %}
   <div class="stamp">{{ DRAFT_STAMP }} — prepared by software; not approved</div>
   {% endif %}
+
+  <div class="note"><b>Whether a CAPA is required is decided by the company&#39;s own CAPA-need form. This document is evidence only.</b> MaudeSignal never decides whether a CAPA is needed, whether an event is reportable, or which devices are similar.</div>
 
   <h3>Document control</h3>
   <table class="dc">
@@ -203,22 +205,23 @@ a { color: #1a5fb4; }
 
 {# ======================= 4. CAPA RECORD ======================= #}
 <section class="newpage" id="sec-capa">
-  <h2>4. CAPA record (ISO 13485:2016 §8.5.2 / §8.5.3, incorporated by 21 CFR Part 820 — QMSR)</h2>
+  <h2>4. CAPA-need evidence and blank CAPA sections for the CAPA owner (ISO 13485:2016 §8.5.2 / §8.5.3, incorporated by 21 CFR Part 820 — QMSR)</h2>
+  <p class="small"><b>Whether a CAPA is required is decided by the company&#39;s own CAPA-need form. This document is evidence only.</b> The sections below are left blank for the CAPA owner if their form decides a CAPA is needed.</p>
   {% if d.capa %}
   <table class="kv">
-    <tr><th>CAPA ID</th><td>{{ d.capa.capa_id }}</td><th>Status</th><td>{{ d.capa.status|upper }}</td></tr>
+    <tr><th>Evidence record ID</th><td>{{ d.capa.capa_id }}</td><th>Status</th><td>{{ d.capa.status|upper }}</td></tr>
     <tr><th>Title</th><td colspan="3">{{ d.capa.title }}</td></tr>
     <tr><th>Opened (UTC)</th><td>{{ d.capa.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td><th>Opened by</th><td class="mono">{{ d.capa.created_by }}</td></tr>
     <tr><th>Source</th><td colspan="3">Postmarket surveillance signal {{ d.doc_id }} (§2) · complaint/MDR data (§3) · MDR worksheet (§5)</td></tr>
   </table>
   {% else %}
-  <div class="note">No CAPA draft exists for this signal yet. The headings below are the blank CAPA template; create a draft on the Copilot or Actions page to populate it.</div>
+  <div class="note">No CAPA-need evidence record exists for this signal yet. The headings below are the blank CAPA template; ask the copilot to prepare the CAPA-need evidence to populate §4.1.</div>
   {% endif %}
   <p class="small">Under the QMSR (effective 2026-02-02) CAPA requirements are those of ISO 13485:2016 §8.5.2 and §8.5.3; the former 21 CFR 820.100 is superseded and is not cited.</p>
 
   <h3>4.1 (a) Review of nonconformities, including complaints</h3>
   {% if d.capa %}
-  <p><b>Problem statement as drafted</b> <span class="small">({{ d.capa.created_by }}, recorded verbatim from the CAPA draft)</span>:</p>
+  <p><b>Problem statement as prepared</b> <span class="small">({{ d.capa.created_by }}, recorded verbatim from the CAPA-need evidence record)</span>:</p>
   <div class="note">{{ d.capa.problem_statement }}</div>
   {% if d.capa.problem_statement_flags %}<div class="gap"><b>Gate:</b> the drafted text contains figures or identifiers without a structured claim — treat as unverified: {{ d.capa.problem_statement_flags|join("; ") }}</div>{% endif %}
   {% endif %}

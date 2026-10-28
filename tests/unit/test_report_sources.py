@@ -121,6 +121,11 @@ def test_tool_and_gate_claim(tmp_path: Path) -> None:
     assert out["source_counts"] == {"manufacturer": 4, "user facility": 1}
     assert out["non_manufacturer_count"] == 1
     assert out["non_manufacturer_reports"][0]["report_id"] == "r3"
+    assert out["latest_date_received"] == "20260829" and "note" not in out
+    later = call_tool(
+        ctx, "report_sources", json.dumps({"product_code": "LLZ", "date_from": "20261001"})
+    )
+    assert later["report_count"] == 0 and "dated after 20260829" in later["note"]
     ok, bad = verify(
         [
             SourceCountClaim("LLZ", "non-manufacturer", 1),

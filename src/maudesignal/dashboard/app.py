@@ -35,7 +35,11 @@ _PAGES: list[tuple[str, str, str]] = [
     # HACKATHON-BUILT pages (Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026)
     ("🌙", "Overnight", "What changed since yesterday — deterministic digest"),
     ("🛡️", "Copilot", "Muse Spark copilot with a claim-level citation gate"),
-    ("✅", "Actions & Audit", "Human-approved CAPA drafts and tamper-evident audit trail"),
+    (
+        "✅",
+        "Actions & Audit",
+        "CAPA-need evidence a named person accepts, and the tamper-evident audit trail",
+    ),
     ("📄", "Dossier", "Audit-ready Signal Evaluation & CAPA record (PDF) + Muse Wonder review"),
     ("📷", "Vision", "510(k) summary reader and device-label camera (Muse Spark + SAM)"),
     ("🏠", "Dashboard", "Executive summary of postmarket signal activity"),

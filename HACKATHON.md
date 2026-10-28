@@ -15,14 +15,14 @@ Everything under `src/maudesignal/copilot/`, `src/maudesignal/gate/` and
 | `copilot/copilot.py` | Conversational safety copilot: plain-English questions → streamed, grounded answers |
 | `copilot/__init__.py` | Package exports |
 | `copilot/agent.py` | Muse Spark tool-use loop → structured answer (sentences + claims) → claim-level gate → one repair turn with the gate's recomputed values → unrepaired sentences withheld; every answer written to the audit trail |
-| `copilot/tools.py` | 6 deterministic tools the model calls: overnight signals, product summary, report search, report fetch, MDR deadline clock (21 CFR 803.50 / 803.53, advisory), CAPA draft |
-| `copilot/actions.py` | CAPA drafts: audit-first, forward-only (`draft → approved / rejected`), only a named human can decide |
+| `copilot/tools.py` | 6 deterministic tools the model calls: overnight signals, product summary, report search, report fetch, MDR deadline clock (21 CFR 803.50 / 803.53, advisory), CAPA-need evidence |
+| `copilot/actions.py` | CAPA-need evidence records: audit-first, forward-only (`draft → approved / rejected`), only a named human can decide. Whether a CAPA is required is decided by the company's own CAPA-need form |
 | `copilot/transcript.py` | Records real Muse Spark runs so the keyless public demo replays them honestly |
 | `skills/safety-copilot/` | Versioned behavior contract (prompt, output schema, examples) for the copilot |
 | `gate/` (`gate.py`, `claims.py`, `evidence.py`, `cfr.py`, `loader.py`) | **Claim-level citation gate.** Recomputes counts/shares from stored records, verbatim-matches quotes to the cited report (a real quote pinned to the wrong report is blocked), checks 510(k) numbers against the catalog, allowlists 21 CFR sections (blocks QS-reg sections superseded by QMSR on 2026-02-02), and blocks numbers / ids / CFR cites that carry no structured claim. Deterministic, no model calls. The `regulatory-citation-verifier` Skill spec pre-existed with zero call sites; this is its enforcement. |
 | `tests/fixtures/gate/adversarial.jsonl` + `tests/unit/test_gate.py` | 54 adversarial cases (fabricated / drifted quotes, wrong-record quotes, stale and inflated numbers, fake and mismatched K-numbers, hallucinated and superseded CFR, untagged mentions): 0 false pass, 0 false block |
-| `dashboard/copilot_pages.py` | New dashboard pages: **Overnight** digest, **Copilot** (recorded runs + live "try to fool the gate" playground + live mode when a key is present), **Actions & Audit** (approve/reject CAPA drafts, hash-chain verification) |
-| `storage`: `CapaDraftRecord`, `ActionAuditRecord` + DB methods | CAPA draft table and append-only, SHA-256 hash-chained audit trail with tamper detection |
+| `dashboard/copilot_pages.py` | New dashboard pages: **Overnight** digest, **Copilot** (recorded runs + live "try to fool the gate" playground + live mode when a key is present), **Actions & Audit** (accept/reject CAPA-need evidence, hash-chain verification) |
+| `storage`: `CapaDraftRecord`, `ActionAuditRecord` + DB methods | CAPA-need evidence table and append-only, SHA-256 hash-chained audit trail with tamper detection |
 | `scripts/record_demo_transcripts.py`, `.github/workflows/copilot-record.yml`, `demo/` | Records the demo questions through the real Muse Spark copilot in GitHub Actions (key from repository secrets, never in code) |
 | `.github/workflows/meta-smoke.yml`, `test_meta_connection.py` | Meta Model API smoke test (`models.list` + streaming) run with repository secrets |
 | `tests/unit/test_copilot_agent.py` | Agent loop, repair turn, withheld sentences, CAPA approval rules, audit tamper detection, tools, transcripts (scripted fake client — no credits) |
@@ -75,7 +75,7 @@ remaining smoke-test and screenshot scripts.
 | `gate/` (recall, recall-count, literature claims) | Recall numbers / counts and PMIDs verified against stored data; quotes from abstracts and recall reasons; K-number check falls back to stored 510(k) records; untagged recall numbers and PMIDs blocked. Adversarial set now 89 cases, 0 false pass / 0 false block |
 | `vision/` (`fda_pdf.py`, `reader.py`, `spark.py`, `verify.py`, `openfda510k.py`, `pipeline.py`, `images.py`) + `skills/fda-document-reader/` | Muse Spark reads 510(k) summary page images (two independent reads); accuracy check gives each field VERIFIED / CONFLICT / UNVERIFIABLE from read agreement, openFDA and the PDF text layer — conflicts flagged "low clarity — human check", never silently resolved |
 | `vision/sam.py`, `vision/label.py` + `skills/device-label-reader/` | SAM 3.1 locates a device label in a photo → Muse Spark reads the crop → K-number / GTIN check → that device's signals; lot/serial session-only |
-| `dossier/` (`builder.py`, `figures.py`, `chart.py`, `mdr.py`, `model.py`, `render.py`, `service.py`, `templates/`) | Signal Evaluation & CAPA dossier PDF built like a controlled quality record (document control, approval block modeled on 21 CFR 11.50, ISO 13485 §8.5.2 CAPA record, Form 3500A-mapped MDR worksheet marked not for submission, audit appendix). Every printed number carries a claim the gate re-verifies |
+| `dossier/` (`builder.py`, `figures.py`, `chart.py`, `mdr.py`, `model.py`, `render.py`, `service.py`, `templates/`) | Signal Evaluation & CAPA-need Evidence PDF built like a controlled quality record (document control, approval block modeled on 21 CFR 11.50, ISO 13485 §8.5.2 CAPA record, Form 3500A-mapped MDR worksheet marked not for submission, audit appendix). Every printed number carries a claim the gate re-verifies |
 | `dossier/narrative.py` + `skills/dossier-narrative/` | Muse Spark narrative behind the gate; withheld sentences shown with reasons |
 | `dossier/review.py` + `skills/dossier-reviewer/` | Muse Wonder 1.0 independent reviewer (PDF input); findings only, stored in the audit trail |
 | `dossier/illustration.py` + `skills/dossier-cover-illustration/` | Optional Muse Image cover, off by default, captioned "not evidence" |
@@ -104,6 +104,18 @@ fallback product codes (names come from the openFDA classification endpoint, or 
 code is skipped); demo DB catalog corrected (LLZ/MYN/POK carry FDA classification
 names, 15 placeholder rows removed; recorded in `SEED_MANIFEST.json`); dashboard
 tables in `app.py` show the brand written on each report.
+
+### Added Oct 28 (PRD v2.1)
+
+| File | What it is |
+|---|---|
+| `monitor/sources.py`, `gate` `source_count` claim, `copilot/tools.py` `report_sources` | F12 report-source filter: openFDA `report_source_code` stored on every event (backfilled from stored raw records), counts per device type, the reports not filed by a manufacturer, a gated claim kind and 10 adversarial cases |
+| `scripts/check_source_counts.py`, `docs/hackathon/SOURCE_COUNTS.md` | Stored source counts compared with openFDA's own counts each recording run |
+| `docs/VALIDATION_EVIDENCE.md` | Intended use, deterministic vs model-generated, test evidence, known limits, what a manufacturer would still do |
+| `skills/safety-copilot` 1.2.0, `dossier-narrative` 1.1.0, `dossier-reviewer` 1.1.0 | "CAPA-need evidence" wording; the copilot never decides CAPA need, reportability or device similarity |
+
+Small pre-existing changes: `NormalizedEventRecord.report_source` column (with a
+one-time `ALTER TABLE` + backfill in `Database`), `ingestion/pipeline.py` stores it.
 
 Plus this manifest, the demo video, and the submission write-up.
 

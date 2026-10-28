@@ -333,6 +333,8 @@ def report_sources(
 ) -> dict[str, Any]:
     """Who filed the stored reports: counts by source, plus those not filed by a manufacturer."""
     rows = ctx.store.select(product_code=product_code, date_from=date_from, date_to=date_to)
+    stored = [r.date_received for r in ctx.store.select(product_code=product_code)]
+    latest = max((d for d in stored if d), default=None)
     by_source = Counter(r.source or "unknown" for r in rows)
     others = sorted(
         (r for r in rows if r.source and r.source != "manufacturer"),
@@ -344,6 +346,12 @@ def report_sources(
         "date_from": date_from,
         "date_to": date_to,
         "report_count": len(rows),
+        "latest_date_received": latest,
+        **(
+            {"note": f"no stored {product_code} report is dated after {latest}"}
+            if latest and date_from and date_from > latest
+            else {}
+        ),
         "source_counts": dict(sorted(by_source.items())),
         "non_manufacturer_count": len(others),
         "non_manufacturer_reports": [
@@ -455,8 +463,10 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
         "type": "function",
         "function": {
             "name": "draft_capa",
-            "description": "Create a CAPA DRAFT for human approval. Use only when the user "
-            "asks for a CAPA or corrective action. Cite the supporting report ids.",
+            "description": "Record CAPA-need evidence for a named person to review: the "
+            "supporting report ids and a factual problem statement. It does not decide that a "
+            "CAPA is needed (the company's own CAPA-need form decides). Use only when the user "
+            "asks for CAPA-need evidence or a corrective action.",
             "parameters": {
                 "type": "object",
                 "properties": {

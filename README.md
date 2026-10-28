@@ -4,78 +4,125 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**A Muse Spark safety copilot for medical-device QA/RA teams that cannot state a number, quote, device id or CFR section it can't prove from public FDA records.**
+**Every morning, MaudeSignal shows what got worse for the device types you choose — your competitors' devices and reports about your device you didn't file — and answers with only FDA-verified facts. People make every decision.**
 
-> **What this is:** a B2B regulatory triage aid for quality / regulatory-affairs
-> analysts at AI/ML medical-device makers, working on public openFDA MAUDE
-> adverse-event data.
+> **What this is:** a B2B tool for postmarket-surveillance (PMS) and
+> regulatory-affairs teams at medical-device makers, working on public openFDA
+> MAUDE adverse-event data.
 > **What it is not:** medical advice, clinical decision support, or an
-> FDA-cleared device.
-> **Human in the loop:** every action is a draft that a named human approves.
-> Nothing is filed with FDA automatically.
+> FDA-cleared device. It never decides whether an event is reportable, which
+> devices are similar, or whether a CAPA is needed.
+> **People decide:** whether a CAPA is required is decided by the company's own
+> CAPA-need form; MaudeSignal prepares evidence only, and a named person accepts
+> it. Nothing is filed with FDA automatically.
+
+Validation facts (what is deterministic, what a model writes, what is tested,
+what a manufacturer would still do): [docs/VALIDATION_EVIDENCE.md](docs/VALIDATION_EVIDENCE.md).
 
 ---
 
 ## The problem
 
-- A device maker that learns of a death or serious injury its device may have
-  caused or contributed to must file a medical device report **no later than
-  30 calendar days** after becoming aware
-  ([21 CFR 803.50(a)](https://www.ecfr.gov/current/title-21/chapter-I/subchapter-H/part-803/subpart-E/section-803.50)).
-- Those deadlines are often missed. A cross-sectional study in *The BMJ*
-  (Oct 2026) of the FDA's adverse-event database found that **55% of 6,308
-  summary reports** (bulk reports that bundle many events; together 159,503
-  events, July 2019 – June 2025) **exceeded the 30-day deadline**
-  ([doi:10.1136/bmj-2026-100812](https://doi.org/10.1136/bmj-2026-100812);
-  [BMJ press release](https://bmjgroup.com/?p=18426)).
-- Analysts triage MAUDE by hand: read narratives, count reports, check the
-  clock. A general-purpose chatbot speeds that up but can make up numbers,
-  quotes and regulation citations, which is not acceptable in a regulated
-  workflow.
+- Device makers already know their own complaints: they file them. What is
+  hard to see is what happens to **other companies' devices of the same type**
+  and the reports about **their own device filed by someone else** — a user
+  facility such as a hospital, a voluntary reporter, a distributor. Those sit
+  among tens of thousands of public MAUDE reports. openFDA's counts by report
+  source for the demo device types are in
+  [docs/hackathon/SOURCE_COUNTS.md](docs/hackathon/SOURCE_COUNTS.md).
+- Reading MAUDE by hand is slow; a general-purpose chatbot is faster but can
+  make up numbers, quotes and regulation citations, which a regulated
+  workflow cannot accept.
 
-## What it does in 60 seconds (Monday morning)
+## What it does (Monday morning)
 
-1. **Overnight digest.** A deterministic monitor (no LLM) compares the last 7
-   days of openFDA reports with a trailing 4-week baseline per product code.
-   On the demo data: *"0 new, 1 worsening — LLZ: volume spike (33 this week vs
-   a weekly mean of 8.75)"* ([digests/2026-08-31.md](digests/2026-08-31.md)).
-2. **Ask the copilot.** *"What got worse for LLZ this week, and what do the
-   reports say?"* Muse Spark 1.3 calls 9 tools over stored MAUDE reports, FDA
-   recalls, 510(k) records and PubMed abstracts, and answers in a strict JSON
-   schema: sentences, each tagged with the claims it makes.
-3. **The gate checks every claim.** A made-up quote is withheld with the
-   reason (*"quote not found verbatim in 25675105"*). A true quote passes and
-   links to the MAUDE report it came from. If anything is blocked, the model
-   gets one repair turn with the gate's recomputed values.
-4. **MDR deadline clock.** From the awareness date: 30 calendar days
-   (21 CFR 803.50) or 5 work days (21 CFR 803.53). Advisory: whether to report
-   is a human decision.
-5. **CAPA draft.** The copilot can only create a *draft*. A named human
-   approves or rejects it on the Actions page; the model cannot.
-6. **Audit-ready dossier.** One click builds a Signal Evaluation & CAPA Record
-   PDF laid out like a controlled quality record: document control, signal
-   evaluation, evidence table, CAPA record mapped to ISO 13485:2016 §8.5.2
-   (required by QMSR), an MDR worksheet mapped to FDA Form 3500A (stamped *not
-   for submission*), an approval block modeled on 21 CFR 11.50 and the audit
-   trail. Every printed number is re-verified by the gate. **Muse Wonder 1.0**
-   reviews the whole PDF before a human signs and lists anything unsupported.
+1. **Overnight digest.** A deterministic monitor (no model) compares the last
+   7 days of openFDA reports with the 4 weeks before, for the device types
+   (FDA product codes) you choose. On the demo data: *"0 new, 1 worsening —
+   LLZ: reports suddenly increased, 33 this week vs a weekly mean of 8.75
+   (3.77x)"* ([digests/2026-08-31.md](digests/2026-08-31.md)), with the reason
+   it is ranked first.
+2. **Who filed the reports.** Counts per device type by openFDA report source
+   (manufacturer, user facility, voluntary, distributor) and a filterable list
+   of the reports **not filed by a manufacturer**. On the demo data all 33 LLZ
+   reports this week, and all 121 stored, were filed by manufacturers; the
+   non-manufacturer reports on file are 3 MYN, 3 QIH and 1 POK (all voluntary).
+3. **Ask the copilot,** typed or by voice. Muse Spark calls 10 tools over
+   stored MAUDE reports, FDA recalls, 510(k) records and PubMed abstracts and
+   answers in a strict JSON schema: sentences, each tagged with the claims it
+   makes.
+4. **The gate checks every claim.** A made-up quote or count is withheld with
+   the reason (*"claimed 500, records show 121"*); a reply that does not parse
+   is withheld too. The model gets one repair turn with the gate's values.
+5. **CAPA-need evidence.** The copilot can prepare the evidence (the
+   supporting reports and a problem statement); a named person accepts or
+   rejects it on the Actions page. The model cannot.
+6. **Evidence pack (PDF).** *Signal Evaluation & CAPA-need Evidence*, laid out
+   like a controlled quality record: document control, signal evaluation,
+   evidence table, the ISO 13485:2016 §8.5.2 sections left blank for the CAPA
+   owner, an MDR worksheet mapped to FDA Form 3500A (stamped *not for
+   submission*) and the audit trail. Every printed number is re-verified by the
+   gate. **Muse Wonder 1.0** reviews the whole PDF before a person accepts it.
 7. **Vision.** Muse Spark reads FDA 510(k) summary PDFs (many are scanned)
    twice, independently; a field is *verified* only if both reads agree and
-   openFDA / the PDF text layer agree, otherwise it is flagged for a human.
+   openFDA / the PDF text layer agree, otherwise it is flagged for a person.
    A photo of a device label → **SAM 3.1** finds the label → Muse Spark reads
-   it → the K-number is checked against FDA → that device's signals open.
-8. **Audit trail.** Every answer and decision is appended to a SHA-256
-   hash-chained log; the dashboard verifies the chain and detects tampering.
+   it → the K-number is checked against FDA.
+8. **Audit trail.** Every answer, spoken question, live-call cost and decision
+   is appended to a SHA-256 hash-chained log; the dashboard re-verifies it.
+
+## How it's different
+
+Other tools summarize MAUDE with AI and add a review step — for example
+[DeviceWatch](https://devicewatch.app/data) (AI summaries of MAUDE records;
+public pricing from $499/month),
+[Basil Systems](https://www.businesswire.com/news/home/20251006297490/en/Basil-Systems-Launches-Safety-Signaling-Solution-to-Proactively-Detect-and-Prevent-Medical-Device-Risks)
+(AI safety signaling across regulatory and adverse-event records) and
+[Complizen](https://www.complizen.ai/platform) (AI answers drawing on FDA
+guidance, 510(k) history and MAUDE). MaudeSignal differs in three ways:
+
+- **It withholds what it cannot match.** Every number is recomputed, every
+  quote matched word for word, every report id, 510(k), recall, PMID and CFR
+  section checked against stored FDA records — or the sentence is not shown.
+  Adversarial set: 99 cases, 0 false passes, 0 false blocks.
+- **It reads scanned 510(k) documents with a two-read accuracy check.**
+- **It is open source and self-hostable** (MIT), on public FDA data only.
+
+## Real-run numbers (2026-10-28 recording)
+
+From [`demo/transcripts/`](demo/transcripts/), [`demo/vision/`](demo/vision/),
+[`demo/dossier/`](demo/dossier/) and the hand-check
+[`docs/hackathon/HAND_CHECK.md`](docs/hackathon/HAND_CHECK.md):
+
+| | |
+|---|---|
+| Recording runs | 1 (GitHub Actions run 40616911177): 21 copilot answers (20 typed, 1 spoken) |
+| Gate, first pass | 30/30 shown sentences passed — but 11 of the 21 replies never parsed and were wrongly counted as passed by that build; fixed since |
+| Hand-check | 6 of 21 answers fully correct (28.6%); no shown sentence stated a false fact |
+| Cost per answer | $0.0353 (21 answers, $0.7416) |
+| 510(k) reading | 1 of 5 summaries read (K261677): 80% agreement between the two reads, 8 fields verified, 2 conflicts flagged for a person |
+
+The fixes found by this run (token caps, unparsed replies, the week window)
+are in; the next recording replaces these numbers.
+
+## Tomorrow
+
+- **Buyer:** PMS / RA teams at small and mid-size device makers.
+- **Open source, self-hosted:** free.
+- **Hosted plan:** priced in the range practitioners we spoke to quoted,
+  about $200–300/month, against existing tools from $499/month.
+- **Pilot metric:** time to prepare the similar-device / signal-evidence
+  section of a PMS report, with and without MaudeSignal.
 
 ## How Meta AI is used
 
 | Step | Meta model / API | Why |
 |---|---|---|
-| Answering a question | **Muse Spark 1.3** (`muse-spark-1.3`) via the **Meta Model API** (OpenAI-compatible, `https://api.meta.ai/v1`) | Tool calling over 9 deterministic tools; **strict `json_schema` structured output** (sentences + typed claims, [`skills/safety-copilot`](skills/safety-copilot/SKILL.md)); a **repair turn** after a gate block, fed the gate's reasons and recomputed values |
+| Answering a question | **Muse Spark 1.3** (`muse-spark-1.3`) via the **Meta Model API** (OpenAI-compatible, `https://api.meta.ai/v1`) | Tool calling over 10 deterministic tools; **strict `json_schema` structured output** (sentences + typed claims, [`skills/safety-copilot`](skills/safety-copilot/SKILL.md)); a **repair turn** after a gate block, fed the gate's reasons and recomputed values |
 | Reading scanned FDA documents | **Muse Spark 1.3 image understanding** ([`skills/fda-document-reader`](skills/fda-document-reader/SKILL.md)) | 510(k) summary pages → structured fields with per-field legibility; two independent reads + openFDA + text layer decide VERIFIED / CONFLICT / UNVERIFIABLE |
 | Device-label camera | **SAM 3.1** (`sam-3.1`) + **Muse Spark 1.3 vision** | SAM locates the label in the photo, Spark reads the crop, the K-number / GTIN is checked against FDA |
 | Dossier narrative | **Muse Spark 1.3** ([`skills/dossier-narrative`](skills/dossier-narrative/SKILL.md)) | One-page summary drafted as claims and passed through the gate |
-| Independent reviewer | **Muse Wonder 1.0** (`muse-wonder-1.0`, PDF input, 1M context) | Reads the full dossier PDF + cited reports and lists unsupported or contradicted statements before a human approves; never edits the record |
+| Independent reviewer | **Muse Wonder 1.0** (`muse-wonder-1.0`, PDF input, 1M context) | Reads the full dossier PDF + cited reports and lists unsupported or contradicted statements before a person accepts the evidence; never edits the record |
 | Cover illustration (optional, off by default) | **Muse Image 1.0** | Non-evidentiary cover art, captioned "AI-generated illustration — not evidence"; never inside evidence sections |
 | Spoken questions | **Meta Voice Transcribe** (`muse-voice-transcribe-1.0`) | Ask by voice; only the transcript text reaches Muse Spark, and it goes through the same copilot and gate |
 | Recording the public demo | All of the above in GitHub Actions ([`copilot-record.yml`](.github/workflows/copilot-record.yml)), key from repository secrets | The public, keyless app replays real runs instead of mocked ones |
@@ -99,7 +146,7 @@ flowchart LR
 
     subgraph copilot["Copilot (Meta Model API)"]
         Q["Analyst question"] --> SPARK["Muse Spark 1.3<br/>tool calling"]
-        SPARK <--> TOOLS["9 deterministic tools<br/>signals, summary, search, report,<br/>recalls, 510(k), literature,<br/>MDR clock, CAPA draft"]
+        SPARK <--> TOOLS["10 deterministic tools<br/>signals, summary, search, report,<br/>report sources, recalls, 510(k),<br/>literature, MDR clock,<br/>CAPA-need evidence"]
         TOOLS --> DB
         SPARK --> ANS["Structured answer<br/>sentences + claims"]
         ANS --> GATE{"Claim-level gate<br/>recompute numbers ·<br/>verbatim quotes · ids · CFR"}
@@ -109,7 +156,7 @@ flowchart LR
     end
 
     DIG --> UI
-    UI --> ACT["Human approves / rejects<br/>CAPA draft"]
+    UI --> ACT["A named person accepts / rejects<br/>CAPA-need evidence"]
     ACT --> AUDIT[("Hash-chained<br/>audit trail")]
     GATE --> AUDIT
 ```
@@ -132,16 +179,19 @@ model calls. For every sentence the copilot wants to show:
   (and match the stated product code / year); recall counts are recomputed;
 - **21 CFR sections** must be on a curated allowlist; QS-reg sections
   superseded by QMSR on 2026-02-02 are blocked with the reason;
+- **report-source counts** (who filed the reports) are recomputed from the
+  stored openFDA `report_source_code`;
 - a sentence that mentions a number, K-number, report id or CFR section
   **without** a matching structured claim is blocked as ungrounded.
 
-**Adversarial test set:** [89 cases](tests/fixtures/gate/adversarial.jsonl)
-(55 must block, 34 must pass): fabricated and drifted quotes, real quotes on
+**Adversarial test set:** [99 cases](tests/fixtures/gate/adversarial.jsonl)
+(61 must block, 38 must pass): fabricated and drifted quotes, real quotes on
 the wrong report, stale / inflated counts, wrong shares, fake and mismatched
 K-numbers, hallucinated and superseded CFR sections, fake recall numbers and
-PMIDs, real ones on the wrong product or year, untagged mentions.
+PMIDs, real ones on the wrong product or year, wrong report-source counts,
+untagged mentions (including "N hospital reports").
 Result: **0 false passes, 0 false blocks**
-([`tests/unit/test_gate.py`](tests/unit/test_gate.py), 106 tests).
+([`tests/unit/test_gate.py`](tests/unit/test_gate.py), 116 tests).
 
 Real verdicts on the demo database (137 MAUDE reports):
 
@@ -185,14 +235,16 @@ dependencies from `requirements.txt`, no secrets required.
 ## Built during the hackathon vs pre-existing
 
 Built during the Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026):
-the copilot, the citation gate, the overnight monitor, the three new
-dashboard pages, the CAPA/audit tables and the keyless demo deploy. The
+the copilot, the citation gate, the overnight monitor and report-source
+filter, the five new dashboard pages (Overnight, Copilot, Actions & Audit,
+Dossier, Vision), voice questions, the evidence-pack PDF, the CAPA-need
+evidence and audit tables, the live-call spend caps and the keyless demo deploy. The
 openFDA pipeline below predates the event. The file-by-file list is in
 [HACKATHON.md](HACKATHON.md).
 
 ## Tests
 
-**488 unit tests pass, 76% line + branch coverage**
+**537 unit tests pass, 76% line + branch coverage** (2026-10-28)
 (`pytest tests/unit`; CI also runs ruff, black and `mypy --strict` on Python
 3.11 and 3.12).
 

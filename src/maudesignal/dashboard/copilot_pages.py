@@ -151,6 +151,11 @@ def page_overnight(db: Database) -> None:
                 st.code(p.read_text(encoding="utf-8")[:4000], language="markdown")
 
 
+CAPA_NEED_NOTE = (
+    "Whether a CAPA is required is decided by the company's own CAPA-need form. "
+    "This document is evidence only."
+)
+
 SOURCE_FILTERS = {
     "Not filed by a manufacturer": None,
     "Manufacturer": "manufacturer",
@@ -458,9 +463,12 @@ def page_actions(db: Database) -> None:
     """CAPA drafts awaiting a named human decision, plus the tamper-evident audit trail."""
     st.html(FRAMING_BANNER)
     drafts = db.list_capa_drafts()
-    st.subheader(f"CAPA drafts ({sum(1 for d in drafts if d.status == 'draft')} awaiting review)")
+    st.subheader(
+        f"CAPA-need evidence ({sum(1 for d in drafts if d.status == 'draft')} awaiting review)"
+    )
+    st.caption(CAPA_NEED_NOTE)
     if not drafts:
-        st.caption("No drafts yet. Ask the copilot to draft a CAPA for a signal.")
+        st.caption("None yet. Ask the copilot to prepare the CAPA-need evidence for a signal.")
     reviewer = st.text_input("Your name (recorded as the approver)", key="capa_reviewer")
     for d in drafts:
         with st.container(border=True):
@@ -471,7 +479,7 @@ def page_actions(db: Database) -> None:
                 "Supporting reports: "
                 + ", ".join(f"[{i}]({MAUDE_URL.format(i.split('-')[0])})" for i in ids)
             )
-            st.caption(f"Drafted by {d.created_by} at {d.created_at:%Y-%m-%d %H:%M} UTC")
+            st.caption(f"Prepared by {d.created_by} at {d.created_at:%Y-%m-%d %H:%M} UTC")
             if d.status == "draft":
                 c1, c2, _ = st.columns([1, 1, 4])
                 for col, decision, label in (
@@ -525,7 +533,7 @@ def _recorded_audit_trails() -> None:
         return
     st.caption(
         "This public demo database has no live actions, so these are the trails written "
-        "during the recorded Meta runs (voice transcription, copilot answers, CAPA drafts). "
+        "during the recorded Meta runs (voice transcription, copilot answers, CAPA-need evidence). "
         "Every hash is recomputed here from the stored fields."
     )
     for doc in exports:

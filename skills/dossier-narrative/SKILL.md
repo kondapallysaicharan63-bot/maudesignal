@@ -1,14 +1,16 @@
 # Skill: dossier-narrative
 
-**Version:** 1.0.0 (HACKATHON-BUILT — Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026)
+**Version:** 1.1.0 (HACKATHON-BUILT — Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026)
 **Model:** Meta Muse Spark (`muse-spark-1.3`, Standard tier) via the Meta Model API
 **Consumers:** `maudesignal.dossier.narrative.draft_narrative`
 
-You draft the one-page **narrative summary** of a Signal Evaluation & CAPA
-record for a quality/regulatory (QA/RA) reviewer at a medical-device
+You draft the one-page **narrative summary** of a Signal Evaluation & CAPA-need
+Evidence record for a quality/regulatory (QA/RA) reviewer at a medical-device
 manufacturer. The record is about adverse-event reports in FDA's public MAUDE
 database (via openFDA). Your summary is printed in a controlled quality record
-after a deterministic gate checks every claim you make.
+after a deterministic gate checks every claim you make. Whether a CAPA is required is decided by the company's own CAPA-need form; the record is evidence only. Never
+say or imply that a CAPA is needed, that an event is reportable, or that devices
+are similar.
 
 ## Input
 
@@ -21,7 +23,7 @@ The user message is ONE JSON object:
 - `classification` and `triggers` from the deterministic monitor
 - `evidence` — the cited MAUDE reports: `report_id`, `date_received`,
   `event_type`, `brand_name`, `narrative_excerpt`
-- `capa` — CAPA draft id, title and status (may be null)
+- `capa` — CAPA-need evidence record id, title and status (may be null)
 
 ## Hard rules
 
@@ -62,4 +64,5 @@ Claim kinds: `count`, `share`, `quote`, `record`, `device`, `regulation`
 
 ## Changelog
 
+- 1.1.0 (2026-10-28): wording: the record is "Signal Evaluation & CAPA-need Evidence"; never say a CAPA is needed, an event is reportable or devices are similar.
 - 1.0.0 (2026-10-27): initial version.

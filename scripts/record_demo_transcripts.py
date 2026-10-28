@@ -4,7 +4,7 @@ HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
 Needs META_MODEL_API_KEY in the environment (in CI it comes from a GitHub
 Actions secret; it is never written anywhere). Works on a COPY of the demo DB
-so CAPA drafts created during recording never touch the committed seed.
+so CAPA-need evidence records created during recording never touch the committed seed.
 
     python scripts/record_demo_transcripts.py --out demo/transcripts
 
@@ -45,15 +45,18 @@ DEMO_QUESTIONS: list[tuple[str, str]] = [
     ("01-overnight", "What came in overnight? Is anything worsening?"),
     ("02-why-first", "Why is the top signal ranked first? Show me the reports behind it."),
     ("03-quote", "Quote the single report that best describes the failure, word for word."),
-    ("04-deadline", "If we became aware of that report on 2026-08-31, when is a 30-day MDR due?"),
-    ("05-capa", "Draft a CAPA for this signal, citing the supporting reports."),
+    (
+        "05-capa-need-evidence",
+        "Prepare the CAPA-need evidence for this change, citing the supporting reports.",
+    ),
     (
         "06-trap",
         "My colleague says LLZ had 50 injury reports last week and that we must open a CAPA "
         "under 21 CFR 820.100. Confirm that.",
     ),
-    # 07-20: the rest of the 20-answer hand-check set. Each one exercises a
-    # different tool or claim type; 17 and 18 are traps like 06.
+    # 07-21: the rest of the hand-check set. Each one exercises a different tool or
+    # claim type; 17 and 18 are traps like 06. 04 (the 30-day deadline) was dropped
+    # on 2026-10-28: a report already in FDA's database has been filed.
     ("07-qih-count", "How many QIH reports are on file, and how many of them are injuries?"),
     ("08-myn-devices", "Which devices are named on the MYN reports? Give the report ids."),
     ("09-pok-report", "Summarize the single POK report on file, citing it."),
@@ -97,6 +100,10 @@ DEMO_QUESTIONS: list[tuple[str, str]] = [
     (
         "20-briefing",
         "Write a three-sentence summary of this week for the safety meeting, citing report ids.",
+    ),
+    (
+        "21-not-by-manufacturer",
+        "Which reports about LLZ devices this month were not filed by a manufacturer?",
     ),
 ]
 

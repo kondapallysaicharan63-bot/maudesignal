@@ -25,7 +25,7 @@ import pandas as pd
 import streamlit as st
 
 from maudesignal.copilot.spend import SpendLimitError
-from maudesignal.dashboard.copilot_pages import FRAMING_BANNER
+from maudesignal.dashboard.copilot_pages import CAPA_NEED_NOTE, FRAMING_BANNER
 from maudesignal.dashboard.spend_ui import guarded_client
 from maudesignal.dossier.builder import DossierError, top_worsening_signal
 from maudesignal.dossier.render import pdf_page_png
@@ -106,7 +106,8 @@ def _show_review(r: ReviewResult, *, source: str) -> None:
 def page_dossier(db: Database) -> None:
     """Signal Evaluation & CAPA dossier page."""
     st.html(FRAMING_BANNER)
-    st.subheader("Signal Evaluation & CAPA dossier")
+    st.subheader("Signal Evaluation & CAPA-need Evidence")
+    st.caption(CAPA_NEED_NOTE)
     st.caption(
         "A controlled-record style PDF: document control, approval block (modeled on 21 CFR "
         "11.50), signal numbers re-verified by the gate, evidence table, CAPA record mapped to "
@@ -114,7 +115,7 @@ def page_dossier(db: Database) -> None:
     )
     opts = _subject_options(db)
     if not opts:
-        st.info("No CAPA drafts and no worsening signal in this database.")
+        st.info("No CAPA-need evidence records and no worsening signal in this database.")
         return
     labels = [o[0] for o in opts]
     choice = st.selectbox("Document", labels, key="dossier_subject")
@@ -221,7 +222,7 @@ def page_dossier(db: Database) -> None:
                 "the reviewer live; findings are stored in the audit trail."
             )
     st.caption(
-        "Approve or reject the CAPA draft on the Actions & Audit page, then return here: the "
-        "regenerated PDF carries the reviewer's printed name, UTC time and meaning. The MDR "
+        "Accept or reject the CAPA-need evidence on the Actions & Audit page, then return here: "
+        "the regenerated PDF carries the reviewer's printed name, UTC time and meaning. The MDR "
         "worksheet keeps its NOT FOR SUBMISSION stamp."
     )
