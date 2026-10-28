@@ -134,6 +134,12 @@ Plus this manifest, the demo video, and the submission write-up.
 | `copilot/agent.py` | `ask(on_event=…)` progress events for streaming |
 | `demo/voice/question-a.wav`, `question-b.wav` | Charan's two ElevenLabs text-to-speech samples (not a real practitioner) |
 | `tests/unit/test_theme.py`, `test_memory_compare.py`, `test_mhra.py` | Contrast for every theme, memory/compare/tools/streaming, MHRA parsing/storage/gate |
+| `tests/unit/test_compliance_journey.py` | Offline end-to-end: openFDA (mock transport, real records) → ingestion → three Skills (real schemas) → SQLite → dashboard → PSUR Markdown + PDF |
+| `scripts/scale_test.py`, `scripts/load_test.py` | Seeded scalability/stress (breaking point ~100k records) and concurrent-session load (no Meta calls) |
+| `docs/hackathon/TESTING.md` | All 21 test types with PASS / FAIL / PENDING and evidence |
+| `scripts/prepare_label_photo.py`, `.github/workflows/vision-labels.yml`, `demo/vision/labels/README.md` | Label photos: metadata stripped before commit; separate SAM + Spark run when photos are pushed |
+| `gate/gate.py` (number words) | Counts written in words or scientific notation are detected (found by exploratory testing) |
+| `docs/hackathon/SUBMISSION_DRAFT.md` | Submission draft and video script v3 — not submitted |
 
 ## What is PRE-EXISTING (the base — NOT presented as hackathon work)
 
