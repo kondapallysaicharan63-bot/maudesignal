@@ -450,7 +450,11 @@ def page_copilot(db: Database) -> None:
         ["Recorded Muse Spark runs", "Try to fool the gate", "Ask live"]
     )
     with tab_replay:
-        transcripts = load_transcripts(TRANSCRIPT_DIR)
+        # Typed questions first (the demo's story order); spoken clips after them.
+        transcripts = sorted(
+            load_transcripts(TRANSCRIPT_DIR),
+            key=lambda t: (str(t.get("label", "")).startswith("00-voice"), str(t.get("label", ""))),
+        )
         if not transcripts:
             st.info(
                 "No recorded runs yet. They are produced by "
