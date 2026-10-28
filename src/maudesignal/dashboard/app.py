@@ -202,7 +202,7 @@ section[data-testid="stSidebar"] .stButton > button:focus {
   letter-spacing: -0.14px !important;
   padding: 12px 28px !important;
   line-height: 1.43 !important;
-  background: #0866FF !important;   /* cobalt — explicit hex, avoids CSS-var resolution edge cases */
+  background: #0866FF !important;   /* cobalt; explicit hex avoids CSS-var edge cases */
   color: #FFFFFF !important;
   border: none !important;
   box-shadow: none !important;
