@@ -138,3 +138,9 @@ section[data-testid="stSidebar"] .stButton > button [data-testid="stMarkdownCont
 .ms-hero .ms-kicker, .ms-hero .ms-kicker * { color: var(--accent-on-inverse) !important; }
 .ms-hero .ms-hero__deck, .ms-hero small { color: var(--on-inverse-2) !important; }
 .ms-hero .ms-hero__title, .ms-hero .ms-hero__fig { color: var(--on-inverse) !important; }
+/* Multiselect: Streamlit paints the box with its config colours; use the theme's. */
+.stMultiSelect div { background-color: var(--surface) !important; }
+.stMultiSelect span[data-baseweb="tag"], .stMultiSelect div > span:has(> span) {
+  background-color: var(--accent) !important; color: var(--on-accent) !important; }
+.stMultiSelect span[data-baseweb="tag"] *, .stMultiSelect div > span:has(> span) * {
+  color: var(--on-accent) !important; background-color: transparent !important; }

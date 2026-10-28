@@ -108,6 +108,18 @@ def _static_css() -> str:
     return "\n".join(imports + [ln for ln in lines if not ln.startswith("@import")])
 
 
+# Streamlit draws st.dataframe on a canvas from its own server-wide theme (light), and
+# that theme cannot change per browser session. In dark themes the grid is inverted
+# instead (hue-rotated so colours keep their meaning), which keeps text readable.
+_DARK_GRID = '[data-testid="stDataFrame"] canvas {filter: invert(0.92) hue-rotate(180deg);}'
+
+
+def _dark_grid(tid: str | None) -> str:
+    if tid is None:
+        return f"@media (prefers-color-scheme: dark){{{_DARK_GRID}}}"
+    return _DARK_GRID if tid in ("dark", "black") else ""
+
+
 def theme_css(name: str) -> str:
     """The ``<style>`` block for one theme: tokens, components and the Streamlit bridge."""
     label = normalize_theme(name)
@@ -121,7 +133,7 @@ def theme_css(name: str) -> str:
     else:
         scheme = "dark" if tid in ("dark", "black") else "light"
         colours = f":root{{{_block(tid)}color-scheme:{scheme};}}"
-    css = _static_css()
+    css = _static_css() + _dark_grid(tid)
     cut = css.rfind("@import")
     cut = css.index("\n", cut) + 1 if cut >= 0 else 0
     return f"<style>{css[:cut]}{colours}{css[cut:]}</style>"

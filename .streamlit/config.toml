@@ -8,8 +8,8 @@ toolbarMode = "minimal"
 gatherUsageStats = false
 
 [theme]
-primaryColor = "#0866FF"
-backgroundColor = "#ffffff"
-secondaryBackgroundColor = "#F0F2F5"
-textColor = "#0A1317"
+primaryColor = "#1d3fbf"
+backgroundColor = "#f6f3ec"
+secondaryBackgroundColor = "#efeae0"
+textColor = "#16130f"
 font = "sans serif"

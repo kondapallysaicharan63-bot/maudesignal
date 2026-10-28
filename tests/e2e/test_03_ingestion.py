@@ -57,7 +57,9 @@ class TestIngestionForm:
         ), "Expected a Run/Ingest action button"
 
     def test_product_code_input_accepts_text(self, ingestion: Page) -> None:
-        inputs = ingestion.locator("input[type='text']")
+        # Scoped to the page body: the top bar's theme picker is also a text input.
+        main = ingestion.locator("[data-testid='stMainBlockContainer']")
+        inputs = main.locator("input[type='text']:not([role='combobox'])")
         if inputs.count() == 0:
             pytest.skip("No text input found — form may use a different widget")
         inputs.first.fill("QIH")
