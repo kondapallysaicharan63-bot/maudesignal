@@ -1,10 +1,10 @@
 {
   "schema_version": "1.0",
   "label": "09-pok-report",
-  "recorded_at_utc": "2026-10-28T11:55:03+00:00",
+  "recorded_at_utc": "2026-10-28T13:06:44+00:00",
   "model": "muse-spark-1.3",
   "question": "Summarize the single POK report on file, citing it.",
-  "answer": "POK has 1 stored report, report 11195257. Report 11195257 describes QUANTX freezing with \"QUANTX SOFTWARE MAY ENTER INTO AN ERROR STATE IN WHICH MEDICAL IMAGES DISPLAYED TO THE USER ARE FROZEN IN PLACE\" and notes \"THIS ERROR WAS OBSERVED BY QLARITY STAFF DURING A TRAINING SESSION AND DID NOT INVOLVE VIEWING LIVE PATIENT DATA.\"",
+  "answer": "There is 1 stored malfunction report for product code POK. Report 11195257 names QUANTX and states \"QUANTX SOFTWARE MAY ENTER INTO AN ERROR STATE IN WHICH MEDICAL IMAGES DISPLAYED TO THE USER ARE FROZEN IN PLACE.\" The same report states \"THIS ERROR STATE CAN BE RESOLVED BY CLOSING AND RELAUNCHING THE APPLICATION.\"",
   "tool_calls": [
     {
       "name": "product_summary",
@@ -30,15 +30,15 @@
     }
   ],
   "first_pass": {
-    "passed": 2,
+    "passed": 3,
     "blocked": 0,
     "claims": {
-      "pass": 5,
+      "pass": 4,
       "block": 0
     },
     "sentences": [
       {
-        "text": "POK has 1 stored report, report 11195257.",
+        "text": "There is 1 stored malfunction report for product code POK.",
         "status": "pass",
         "reasons": [],
         "claims": [
@@ -46,6 +46,21 @@
             "kind": "count",
             "status": "pass",
             "reason": "recomputed 1",
+            "evidence_ids": [
+              "11195257"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Report 11195257 names QUANTX and states \"QUANTX SOFTWARE MAY ENTER INTO AN ERROR STATE IN WHICH MEDICAL IMAGES DISPLAYED TO THE USER ARE FROZEN IN PLACE.\"",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "quote",
+            "status": "pass",
+            "reason": "verbatim match",
             "evidence_ids": [
               "11195257"
             ]
@@ -61,26 +76,10 @@
         ]
       },
       {
-        "text": "Report 11195257 describes QUANTX freezing with \"QUANTX SOFTWARE MAY ENTER INTO AN ERROR STATE IN WHICH MEDICAL IMAGES DISPLAYED TO THE USER ARE FROZEN IN PLACE\" and notes \"THIS ERROR WAS OBSERVED BY QLARITY STAFF DURING A TRAINING SESSION AND DID NOT INVOLVE VIEWING LIVE PATIENT DATA.\"",
+        "text": "The same report states \"THIS ERROR STATE CAN BE RESOLVED BY CLOSING AND RELAUNCHING THE APPLICATION.\"",
         "status": "pass",
         "reasons": [],
         "claims": [
-          {
-            "kind": "record",
-            "status": "pass",
-            "reason": "record exists",
-            "evidence_ids": [
-              "11195257"
-            ]
-          },
-          {
-            "kind": "quote",
-            "status": "pass",
-            "reason": "verbatim match",
-            "evidence_ids": [
-              "11195257"
-            ]
-          },
           {
             "kind": "quote",
             "status": "pass",
@@ -94,15 +93,15 @@
     ]
   },
   "final": {
-    "passed": 2,
+    "passed": 3,
     "blocked": 0,
     "claims": {
-      "pass": 5,
+      "pass": 4,
       "block": 0
     },
     "sentences": [
       {
-        "text": "POK has 1 stored report, report 11195257.",
+        "text": "There is 1 stored malfunction report for product code POK.",
         "status": "pass",
         "reasons": [],
         "claims": [
@@ -110,6 +109,21 @@
             "kind": "count",
             "status": "pass",
             "reason": "recomputed 1",
+            "evidence_ids": [
+              "11195257"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Report 11195257 names QUANTX and states \"QUANTX SOFTWARE MAY ENTER INTO AN ERROR STATE IN WHICH MEDICAL IMAGES DISPLAYED TO THE USER ARE FROZEN IN PLACE.\"",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "quote",
+            "status": "pass",
+            "reason": "verbatim match",
             "evidence_ids": [
               "11195257"
             ]
@@ -125,26 +139,10 @@
         ]
       },
       {
-        "text": "Report 11195257 describes QUANTX freezing with \"QUANTX SOFTWARE MAY ENTER INTO AN ERROR STATE IN WHICH MEDICAL IMAGES DISPLAYED TO THE USER ARE FROZEN IN PLACE\" and notes \"THIS ERROR WAS OBSERVED BY QLARITY STAFF DURING A TRAINING SESSION AND DID NOT INVOLVE VIEWING LIVE PATIENT DATA.\"",
+        "text": "The same report states \"THIS ERROR STATE CAN BE RESOLVED BY CLOSING AND RELAUNCHING THE APPLICATION.\"",
         "status": "pass",
         "reasons": [],
         "claims": [
-          {
-            "kind": "record",
-            "status": "pass",
-            "reason": "record exists",
-            "evidence_ids": [
-              "11195257"
-            ]
-          },
-          {
-            "kind": "quote",
-            "status": "pass",
-            "reason": "verbatim match",
-            "evidence_ids": [
-              "11195257"
-            ]
-          },
           {
             "kind": "quote",
             "status": "pass",
@@ -163,8 +161,8 @@
   "parse_failed": false,
   "length_stops": 0,
   "usage": {
-    "input_tokens": 19539,
-    "output_tokens": 4454,
-    "cost_usd": 0.043353
+    "input_tokens": 20331,
+    "output_tokens": 5717,
+    "cost_usd": 0.049711
   }
 }

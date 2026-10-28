@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "label": "00-voice-a",
+  "recorded_at_utc": "2026-10-28T13:11:17+00:00",
+  "model": "muse-spark-1.3",
+  "question": "good evening my name is is Alistair and it is a pleasure to be at your service. Whether you need a story told, a lesson explained, or a message delivered with a touch of elegance, I shall do so with clarity and care.",
+  "answer": "Hello Alistair, I am MaudeSignal Copilot for quality and regulatory professionals. Tell me which device types you watch and I will join the stored MAUDE, recall, 510(k) and literature records for you.",
+  "tool_calls": [],
+  "first_pass": {
+    "passed": 2,
+    "blocked": 0,
+    "claims": {
+      "pass": 0,
+      "block": 0
+    },
+    "sentences": [
+      {
+        "text": "Hello Alistair, I am MaudeSignal Copilot for quality and regulatory professionals.",
+        "status": "pass",
+        "reasons": [],
+        "claims": []
+      },
+      {
+        "text": "Tell me which device types you watch and I will join the stored MAUDE, recall, 510(k) and literature records for you.",
+        "status": "pass",
+        "reasons": [],
+        "claims": []
+      }
+    ]
+  },
+  "final": {
+    "passed": 2,
+    "blocked": 0,
+    "claims": {
+      "pass": 0,
+      "block": 0
+    },
+    "sentences": [
+      {
+        "text": "Hello Alistair, I am MaudeSignal Copilot for quality and regulatory professionals.",
+        "status": "pass",
+        "reasons": [],
+        "claims": []
+      },
+      {
+        "text": "Tell me which device types you watch and I will join the stored MAUDE, recall, 510(k) and literature records for you.",
+        "status": "pass",
+        "reasons": [],
+        "claims": []
+      }
+    ]
+  },
+  "repaired": false,
+  "sentences_repaired": 0,
+  "capa_ids": [],
+  "parse_failed": false,
+  "length_stops": 0,
+  "usage": {
+    "input_tokens": 7554,
+    "output_tokens": 1824,
+    "cost_usd": 0.017195
+  },
+  "voice": {
+    "transcript_text": "good evening my name is is Alistair and it is a pleasure to be at your service. Whether you need a story told, a lesson explained, or a message delivered with a touch of elegance, I shall do so with clarity and care.",
+    "language": "English",
+    "audio_seconds": 14.16
+  }
+}

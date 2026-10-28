@@ -1,27 +1,31 @@
 {
   "schema_version": "1.0",
-  "label": "01-what-changed",
-  "recorded_at_utc": "2026-10-28T11:51:41+00:00",
+  "label": "13-llz-severity",
+  "recorded_at_utc": "2026-10-28T13:07:47+00:00",
   "model": "muse-spark-1.3",
-  "question": "What changed this week? Did reports suddenly increase for any device?",
-  "answer": "Yes, LLZ shows reports suddenly increased this week with 33 reports. MYN had 0 reports this week, POK had 0 reports this week, and QIH had 0 reports this week with no change flagged. A named human must review this before any regulatory decision.",
+  "question": "Compare the LLZ Injury/Death share this week with the 4-week baseline.",
+  "answer": "For product code LLZ this week reports suddenly increased with 33 reports from 20260825 to 20260831. The Injury/Death share was 0.0% this week compared with 2.9% in the 4-week baseline.",
   "tool_calls": [
     {
-      "name": "overnight_signals",
-      "arguments": {},
-      "result_preview": "{\"as_of\": \"20260831\", \"headline\": \"New kind of problem: 0 \\u00b7 More serious than usual: 0 \\u00b7 Reports suddenly increased: 1\", \"current_window\": {\"date_from\": \"20260825\", \"date_to\": \"20260831\"}, \"baseline_window\": {\"date_from\": \"20260728\", \"date_to\": \"20260824\"}, \"rules\": {\"current_window_days\":"
+      "name": "compare_signals",
+      "arguments": {
+        "product_codes": [
+          "LLZ"
+        ]
+      },
+      "result_preview": "{\"as_of\": \"20260831\", \"window\": {\"date_from\": \"20260825\", \"date_to\": \"20260831\"}, \"rows\": [{\"product_code\": \"LLZ\", \"change\": \"reports suddenly increased\", \"this_week\": 33, \"baseline_weekly_mean\": 8.75, \"ratio_to_baseline\": 3.77, \"injury_death_this_week\": 0, \"injury_death_share_pct\": 0.0, \"injury_dea"
     }
   ],
   "first_pass": {
-    "passed": 3,
+    "passed": 2,
     "blocked": 0,
     "claims": {
-      "pass": 4,
+      "pass": 3,
       "block": 0
     },
     "sentences": [
       {
-        "text": "Yes, LLZ shows reports suddenly increased this week with 33 reports.",
+        "text": "For product code LLZ this week reports suddenly increased with 33 reports from 20260825 to 20260831.",
         "status": "pass",
         "reasons": [],
         "claims": [
@@ -55,48 +59,38 @@
         ]
       },
       {
-        "text": "MYN had 0 reports this week, POK had 0 reports this week, and QIH had 0 reports this week with no change flagged.",
+        "text": "The Injury/Death share was 0.0% this week compared with 2.9% in the 4-week baseline.",
         "status": "pass",
         "reasons": [],
         "claims": [
           {
-            "kind": "count",
+            "kind": "share",
             "status": "pass",
-            "reason": "recomputed 0",
+            "reason": "recomputed 0.0% (0/33)",
             "evidence_ids": []
           },
           {
-            "kind": "count",
+            "kind": "share",
             "status": "pass",
-            "reason": "recomputed 0",
-            "evidence_ids": []
-          },
-          {
-            "kind": "count",
-            "status": "pass",
-            "reason": "recomputed 0",
-            "evidence_ids": []
+            "reason": "recomputed 2.9% (1/35)",
+            "evidence_ids": [
+              "50083162"
+            ]
           }
         ]
-      },
-      {
-        "text": "A named human must review this before any regulatory decision.",
-        "status": "pass",
-        "reasons": [],
-        "claims": []
       }
     ]
   },
   "final": {
-    "passed": 3,
+    "passed": 2,
     "blocked": 0,
     "claims": {
-      "pass": 4,
+      "pass": 3,
       "block": 0
     },
     "sentences": [
       {
-        "text": "Yes, LLZ shows reports suddenly increased this week with 33 reports.",
+        "text": "For product code LLZ this week reports suddenly increased with 33 reports from 20260825 to 20260831.",
         "status": "pass",
         "reasons": [],
         "claims": [
@@ -130,35 +124,25 @@
         ]
       },
       {
-        "text": "MYN had 0 reports this week, POK had 0 reports this week, and QIH had 0 reports this week with no change flagged.",
+        "text": "The Injury/Death share was 0.0% this week compared with 2.9% in the 4-week baseline.",
         "status": "pass",
         "reasons": [],
         "claims": [
           {
-            "kind": "count",
+            "kind": "share",
             "status": "pass",
-            "reason": "recomputed 0",
+            "reason": "recomputed 0.0% (0/33)",
             "evidence_ids": []
           },
           {
-            "kind": "count",
+            "kind": "share",
             "status": "pass",
-            "reason": "recomputed 0",
-            "evidence_ids": []
-          },
-          {
-            "kind": "count",
-            "status": "pass",
-            "reason": "recomputed 0",
-            "evidence_ids": []
+            "reason": "recomputed 2.9% (1/35)",
+            "evidence_ids": [
+              "50083162"
+            ]
           }
         ]
-      },
-      {
-        "text": "A named human must review this before any regulatory decision.",
-        "status": "pass",
-        "reasons": [],
-        "claims": []
       }
     ]
   },
@@ -168,8 +152,8 @@
   "parse_failed": false,
   "length_stops": 0,
   "usage": {
-    "input_tokens": 13734,
-    "output_tokens": 3961,
-    "cost_usd": 0.034002
+    "input_tokens": 13412,
+    "output_tokens": 8000,
+    "cost_usd": 0.050765
   }
 }
