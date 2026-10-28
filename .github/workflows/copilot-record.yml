@@ -43,7 +43,7 @@ jobs:
           META_MODEL_API_MODEL: muse-spark-1.3
         run: >-
           python scripts/record_demo_transcripts.py --out demo/transcripts
-          --voice-file demo/voice/question.wav --voice-label 00-voice-overnight
+          --voice-file demo/voice/question.wav --voice-label 00-voice-what-changed
         continue-on-error: true
       - name: Install headless Chromium (510(k) PDF fetch fallback; failure only means skips)
         continue-on-error: true

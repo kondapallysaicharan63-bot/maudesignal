@@ -31,6 +31,7 @@ from maudesignal.monitor.deterioration import (
     SPIKE_MIN_REPORTS,
     SPIKE_MULTIPLIER,
 )
+from maudesignal.monitor.digest import CHANGE_LABELS
 
 TEMPLATE_DIR = Path(__file__).resolve().parent / "templates"
 _ENV = Environment(
@@ -39,6 +40,7 @@ _ENV = Environment(
     trim_blocks=True,
     lstrip_blocks=True,
 )
+_ENV.globals["change_labels"] = CHANGE_LABELS
 
 STATUS_LABELS = {
     "no-capa": "Draft — signal evaluation evidence only",

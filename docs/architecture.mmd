@@ -4,8 +4,8 @@ flowchart LR
         ING --> DB[("SQLite<br/>reports + 510(k) catalog")]
     end
 
-    subgraph overnight["Overnight (no LLM)"]
-        DB --> MON["monitor/<br/>new · spike · escalation"]
+    subgraph changes["What changed (no LLM)"]
+        DB --> MON["monitor/<br/>reports suddenly increased ·<br/>more serious than usual ·<br/>new kind of problem"]
         MON --> DIG["Digest<br/>digests/YYYY-MM-DD.md"]
     end
 

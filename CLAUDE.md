@@ -195,7 +195,7 @@ maudesignal/
 │   ├── reports/                # F7 (planned, PSUR)
 │   ├── copilot/                # Hackathon: Muse Spark agent, tools, CAPA actions
 │   ├── gate/                   # Hackathon: claim-level citation gate
-│   ├── monitor/                # Hackathon: overnight deterioration digest
+│   ├── monitor/                # Hackathon: daily what-changed digest
 │   ├── dossier/                # Hackathon: Signal Evaluation & CAPA dossier PDF + Wonder review
 │   └── vision/                 # Hackathon: 510(k) summary reader, label camera (SAM + Spark)
 ├── tests/                      # pytest, gold sets, fixtures

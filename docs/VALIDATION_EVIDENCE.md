@@ -28,7 +28,7 @@ records and papers, each tied to the stored FDA record.
 
 | Part | Deterministic (no model) | Model-generated |
 |---|---|---|
-| Overnight monitor: new / spike / severity rules, ranking and its reason | yes (`src/maudesignal/monitor/`) | — |
+| What-changed monitor: reports suddenly increased / more serious than usual / new kind of problem rules, ranking and its reason | yes (`src/maudesignal/monitor/`) | — |
 | Report-source counts and the "not filed by a manufacturer" list | yes (`src/maudesignal/monitor/sources.py`, stored openFDA `report_source_code`) | — |
 | Citation gate: recomputes every count and share, matches every quote word for word, checks every report id, 510(k), recall, PMID and CFR section | yes (`src/maudesignal/gate/`) | — |
 | Copilot answer text | — | Muse Spark 1.3; shown only sentence by sentence after the gate passes it |

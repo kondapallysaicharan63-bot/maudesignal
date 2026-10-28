@@ -275,8 +275,15 @@ def _mixed_result() -> Any:
 
 def test_digest_headline_and_counts() -> None:
     digest = build_digest(_mixed_result())
-    assert digest.headline == "1 new, 1 worsening"
-    assert (digest.new_count, digest.worsening_count, digest.stable_count) == (1, 1, 1)
+    assert digest.headline == (
+        "New kind of problem: 1 · More serious than usual: 0 · Reports suddenly increased: 1"
+    )
+    assert (
+        digest.new_count,
+        digest.serious_count,
+        digest.increased_count,
+        digest.stable_count,
+    ) == (1, 0, 1, 1)
 
 
 def test_render_markdown_sections_and_footer() -> None:
@@ -284,14 +291,14 @@ def test_render_markdown_sections_and_footer() -> None:
         _mixed_result(), fetch_summary={"AAA": 2}, notes=("QIH: openFDA fetch failed",)
     )
     md = render_markdown(digest)
-    assert md.startswith("# MaudeSignal overnight digest — data as of 2026-08-31")
-    assert "**1 new, 1 worsening**" in md
-    assert "## AAA — volume spike" in md
+    assert md.startswith("# MaudeSignal — what changed, data as of 2026-08-31")
+    assert f"**{digest.headline}**" in md
+    assert "## AAA — reports suddenly increased" in md
     assert "Reports this window: 5 (baseline: 6 over 4 weeks, weekly mean 1.50; ratio 3.33x)" in md
     assert "Example report ids: c00, c01, c02" in md  # capped at 3
-    assert "## NEW — new signal" in md
+    assert "## NEW — new kind of problem" in md
     assert "First reports ever stored for this product code." in md
-    assert "## Stable" in md and "STB (1 this window)" in md
+    assert "## No change" in md and "STB (1 this window)" in md
     assert "Newly stored this run: AAA 2" in md
     assert "Note: QIH: openFDA fetch failed" in md
     assert md.rstrip().endswith(DIGEST_FOOTER)
@@ -305,12 +312,14 @@ def test_render_markdown_sections_and_footer() -> None:
 def test_render_markdown_no_signals_and_new_event_type_line() -> None:
     stable = detect_deterioration(_many("b", "20260801", 8) + _many("c", "20260826", 1), AS_OF)
     md = render_markdown(build_digest(stable))
-    assert "0 new, 0 worsening" in md
+    assert (
+        "New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 0" in md
+    )
     assert "No product code crossed a rule threshold." in md
 
     facts = _many("b", "20260801", 4) + [_f("c1", "20260826", "death"), _f("c2", "20260827")]
     md = render_markdown(build_digest(detect_deterioration(facts, AS_OF)))
-    assert "Rules fired: new signal, severity escalation" in md
+    assert "Rules fired: new kind of problem, more serious than usual" in md
     assert "never seen before for this code: death (4 earlier reports on file)" in md
 
 
@@ -318,11 +327,13 @@ def test_render_json_contains_every_number() -> None:
     digest = build_digest(_mixed_result())
     data = json.loads(render_json(digest))
     assert data == digest_to_dict(digest)
-    assert data["headline"] == "1 new, 1 worsening"
+    assert data["headline"] == digest.headline
+    assert data["counts"]["reports_suddenly_increased"] == 1
     assert data["window"]["baseline_start"] == "2026-07-28"
     assert data["footer"] == DIGEST_FOOTER
     aaa = next(s for s in data["signals"] if s["product_code"] == "AAA")
     assert aaa["classification"] == "spike"
+    assert aaa["label"] == "reports suddenly increased"
     assert aaa["current_count"] == len(aaa["current_report_ids"]) == 5
     assert aaa["baseline_count"] == len(aaa["baseline_report_ids"]) == 6
     assert aaa["baseline_weekly_mean"] == 1.5
@@ -489,9 +500,9 @@ def test_cli_monitor_no_fetch_writes_digests(tmp_path: Path) -> None:
         app, ["monitor", "--db", str(db_path), "--no-fetch", "--out-dir", str(out)]
     )
     assert result.exit_code == 0, result.output
-    assert "0 new, 1 worsening" in result.output
+    assert "LLZ: reports suddenly increased" in " ".join(result.output.split())
     md = (out / "2026-08-30.md").read_text(encoding="utf-8")
-    assert "## LLZ — volume spike" in md
+    assert "## LLZ — reports suddenly increased" in md
     assert md.rstrip().endswith(DIGEST_FOOTER)
     data = json.loads((out / "2026-08-30.json").read_text(encoding="utf-8"))
     assert data["as_of"] == "2026-08-30"

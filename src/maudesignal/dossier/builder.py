@@ -104,7 +104,7 @@ def _distinct(values: list[str]) -> tuple[str, ...]:
     return tuple(c.most_common(1)[0][0] for c in ranked)
 
 
-def top_worsening_signal(db: Database, as_of: date | None = None) -> ProductCodeSignal | None:
+def top_flagged_signal(db: Database, as_of: date | None = None) -> ProductCodeSignal | None:
     """The highest-priority non-stable signal (precedence, then current count)."""
     result = detect_from_database(db, as_of)
     ranked = sorted(
@@ -311,7 +311,7 @@ def build_dossier(
     Args:
         db: Open MaudeSignal database.
         capa_id: CAPA draft to document. Its product code selects the signal.
-        product_code: Signal to document when no CAPA is given (default: top worsening).
+        product_code: Signal to document when no CAPA is given (default: the top flagged change).
         as_of: Detection as-of date (default: latest stored ``date_received``).
         awareness_date: Manufacturer awareness date for the MDR clock (human input).
         awareness_basis: How the awareness date was obtained (printed on the worksheet).
@@ -333,9 +333,9 @@ def build_dossier(
         raise DossierError(str(exc)) from exc
     pc = capa_row.product_code if capa_row else product_code
     if pc is None:
-        top = top_worsening_signal(db, as_of)
+        top = top_flagged_signal(db, as_of)
         if top is None:
-            raise DossierError("no worsening signal and no CAPA draft to document")
+            raise DossierError("no flagged change and no CAPA-need evidence to document")
         pc = top.product_code
     sig = next((s for s in detection.signals if s.product_code == pc), None)
     if sig is None:

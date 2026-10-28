@@ -162,18 +162,18 @@ a { color: #1a5fb4; }
 <section class="newpage" id="sec-signal">
   <h2>2. Signal evaluation</h2>
   <h3>2.1 Method</h3>
-  <p>Deterministic detector <span class="mono">maudesignal.monitor.deterioration</span> over stored openFDA MAUDE reports, anchored on FDA <i>date_received</i>. Current window: the 7 days ending on the as-of date ({{ d.signal.current_start.isoformat() }} to {{ d.signal.current_end.isoformat() }}). Baseline: the 4 weeks before it ({{ d.signal.baseline_start.isoformat() }} to {{ d.signal.baseline_end.isoformat() }}). Rules (several may fire; precedence new_signal &gt; severity_escalation &gt; spike):</p>
+  <p>Deterministic detector <span class="mono">maudesignal.monitor.deterioration</span> over stored openFDA MAUDE reports, anchored on FDA <i>date_received</i>. Current window: the 7 days ending on the as-of date ({{ d.signal.current_start.isoformat() }} to {{ d.signal.current_end.isoformat() }}). Baseline: the 4 weeks before it ({{ d.signal.baseline_start.isoformat() }} to {{ d.signal.baseline_end.isoformat() }}). Rules (several may fire; precedence: new kind of problem, then more serious than usual, then reports suddenly increased):</p>
   <table class="kv small">
-    <tr><th>spike</th><td>current-window count ≥ {{ rules.spike_multiplier }}× the baseline weekly mean <b>and</b> ≥ {{ rules.spike_min }} reports</td></tr>
-    <tr><th>severity_escalation</th><td>Injury + Death share of the current window exceeds the baseline share by ≥ {{ rules.severity_pp }} percentage points (baseline non-empty)</td></tr>
-    <tr><th>new_signal</th><td>first-ever reports for the product code, or an event type never seen before the current window</td></tr>
+    <tr><th>Reports suddenly increased</th><td>current-window count ≥ {{ rules.spike_multiplier }}× the baseline weekly mean <b>and</b> ≥ {{ rules.spike_min }} reports</td></tr>
+    <tr><th>More serious than usual</th><td>Injury + Death share of the current window exceeds the baseline share by ≥ {{ rules.severity_pp }} percentage points (baseline non-empty)</td></tr>
+    <tr><th>New kind of problem</th><td>first-ever reports for the product code, or an event type never seen before the current window</td></tr>
   </table>
-  <h3>2.2 Result: <span style="color:#b3261e">{{ d.signal.classification|upper }}</span>{% if d.signal.triggers %} <span class="small">(rules fired: {{ d.signal.triggers|join(", ") }})</span>{% endif %}</h3>
+  <h3>2.2 Result: <span style="color:#b3261e">{{ change_labels[d.signal.classification]|upper }}</span>{% if d.signal.triggers %} <span class="small">(rules fired: {% for t in d.signal.triggers %}{{ change_labels[t] }}{% if not loop.last %}, {% endif %}{% endfor %})</span>{% endif %}</h3>
   <table>
     <thead><tr><th>Metric</th><th>Current window</th><th>Baseline (4 weeks)</th></tr></thead>
     <tr><td>Reports received</td><td>{{ fig(d.signal.current_count) }}</td><td>{{ fig(d.signal.baseline_count) }}</td></tr>
     <tr><td>Weekly mean (baseline ÷ 4)</td><td>—</td><td>{{ fig(d.signal.baseline_weekly_mean) }}</td></tr>
-    <tr><td>Spike threshold (2 × weekly mean)</td><td>{{ fig(d.signal.spike_threshold) }}</td><td>—</td></tr>
+    <tr><td>Sudden-increase threshold (2 × weekly mean)</td><td>{{ fig(d.signal.spike_threshold) }}</td><td>—</td></tr>
     <tr><td>Ratio current ÷ weekly mean</td><td>{% if d.signal.spike_ratio %}{{ fig(d.signal.spike_ratio) }}{% else %}undefined (empty baseline){% endif %}</td><td>—</td></tr>
     <tr><td>Injury + Death reports</td><td>{{ fig(d.signal.current_severe) }}</td><td>{{ fig(d.signal.baseline_severe) }}</td></tr>
     <tr><td>Injury + Death share</td><td>{% if d.signal.current_severe_share %}{{ fig(d.signal.current_severe_share) }}{% else %}undefined{% endif %}</td><td>{% if d.signal.baseline_severe_share %}{{ fig(d.signal.baseline_severe_share) }}{% else %}undefined{% endif %}</td></tr>
@@ -184,7 +184,7 @@ a { color: #1a5fb4; }
   <h3>2.3 Weekly report counts</h3>
   <div class="chart">{{ d.signal.chart_svg|safe }}</div>
   <div class="caption">Figure 1 — Reports per week by FDA date_received (B1–B4 = baseline weeks). Deterministic chart drawn from the stored records; not an AI-generated image.</div>
-  <div class="note">A spike is a statistical signal for human evaluation. It does not establish a device nonconformity, a root cause, or MDR reportability.</div>
+  <div class="note">A sudden increase in reports is a statistical signal for human evaluation. It does not establish a device nonconformity, a root cause, or MDR reportability.</div>
 </section>
 
 {# ======================= 3. EVIDENCE ======================= #}
@@ -225,12 +225,12 @@ a { color: #1a5fb4; }
   <div class="note">{{ d.capa.problem_statement }}</div>
   {% if d.capa.problem_statement_flags %}<div class="gap"><b>Gate:</b> the drafted text contains figures or identifiers without a structured claim — treat as unverified: {{ d.capa.problem_statement_flags|join("; ") }}</div>{% endif %}
   {% endif %}
-  <p>Complaint/MDR input reviewed: {{ fig(d.evidence_count) }} MAUDE reports (§3); signal classification <b>{{ d.signal.classification }}</b> (§2).</p>
+  <p>Complaint/MDR input reviewed: {{ fig(d.evidence_count) }} MAUDE reports (§3); signal result <b>{{ change_labels[d.signal.classification] }}</b> (§2).</p>
   <h3>4.2 (b) Determination of the cause(s) of nonconformity</h3>
   <p class="small">MaudeSignal does not determine root cause.</p>
   {{ tbc(4) }}
   <h3>4.3 (c) Evaluation of the need for action to ensure nonconformities do not recur</h3>
-  <p class="small">Input: deterministic rule fired — {{ d.signal.triggers|join(", ") or "none" }}. Need-for-action decision and risk assessment rationale:</p>
+  <p class="small">Input: deterministic rule fired — {% for t in d.signal.triggers %}{{ change_labels[t] }}{% if not loop.last %}, {% endif %}{% else %}none{% endfor %}. Need-for-action decision and risk assessment rationale:</p>
   {{ tbc(3) }}
   <h3>4.4 (d) Planning, documenting and implementing action, including updating documentation</h3>
   {{ tbc(3) }}

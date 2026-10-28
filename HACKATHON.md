@@ -15,13 +15,13 @@ Everything under `src/maudesignal/copilot/`, `src/maudesignal/gate/` and
 | `copilot/copilot.py` | Conversational safety copilot: plain-English questions → streamed, grounded answers |
 | `copilot/__init__.py` | Package exports |
 | `copilot/agent.py` | Muse Spark tool-use loop → structured answer (sentences + claims) → claim-level gate → one repair turn with the gate's recomputed values → unrepaired sentences withheld; every answer written to the audit trail |
-| `copilot/tools.py` | 6 deterministic tools the model calls: overnight signals, product summary, report search, report fetch, MDR deadline clock (21 CFR 803.50 / 803.53, advisory), CAPA-need evidence |
+| `copilot/tools.py` | 6 deterministic tools the model calls: what changed this week, product summary, report search, report fetch, MDR deadline clock (21 CFR 803.50 / 803.53, advisory), CAPA-need evidence |
 | `copilot/actions.py` | CAPA-need evidence records: audit-first, forward-only (`draft → approved / rejected`), only a named human can decide. Whether a CAPA is required is decided by the company's own CAPA-need form |
 | `copilot/transcript.py` | Records real Muse Spark runs so the keyless public demo replays them honestly |
 | `skills/safety-copilot/` | Versioned behavior contract (prompt, output schema, examples) for the copilot |
 | `gate/` (`gate.py`, `claims.py`, `evidence.py`, `cfr.py`, `loader.py`) | **Claim-level citation gate.** Recomputes counts/shares from stored records, verbatim-matches quotes to the cited report (a real quote pinned to the wrong report is blocked), checks 510(k) numbers against the catalog, allowlists 21 CFR sections (blocks QS-reg sections superseded by QMSR on 2026-02-02), and blocks numbers / ids / CFR cites that carry no structured claim. Deterministic, no model calls. The `regulatory-citation-verifier` Skill spec pre-existed with zero call sites; this is its enforcement. |
 | `tests/fixtures/gate/adversarial.jsonl` + `tests/unit/test_gate.py` | 54 adversarial cases (fabricated / drifted quotes, wrong-record quotes, stale and inflated numbers, fake and mismatched K-numbers, hallucinated and superseded CFR, untagged mentions): 0 false pass, 0 false block |
-| `dashboard/copilot_pages.py` | New dashboard pages: **Overnight** digest, **Copilot** (recorded runs + live "try to fool the gate" playground + live mode when a key is present), **Actions & Audit** (accept/reject CAPA-need evidence, hash-chain verification) |
+| `dashboard/copilot_pages.py` | New dashboard pages: **What changed** digest, **Copilot** (recorded runs + live "try to fool the gate" playground + live mode when a key is present), **Actions & Audit** (accept/reject CAPA-need evidence, hash-chain verification) |
 | `storage`: `CapaDraftRecord`, `ActionAuditRecord` + DB methods | CAPA-need evidence table and append-only, SHA-256 hash-chained audit trail with tamper detection |
 | `scripts/record_demo_transcripts.py`, `.github/workflows/copilot-record.yml`, `demo/` | Records the demo questions through the real Muse Spark copilot in GitHub Actions (key from repository secrets, never in code) |
 | `.github/workflows/meta-smoke.yml`, `test_meta_connection.py` | Meta Model API smoke test (`models.list` + streaming) run with repository secrets |
@@ -32,7 +32,7 @@ Everything under `src/maudesignal/copilot/`, `src/maudesignal/gate/` and
 | `tests/unit/test_voice.py` | 29 tests: request format, errors, validation, voice → gated answer end to end (mock transport, no network) |
 | `docs/hackathon/VOICE_API_NOTES.md` | What Meta's Voice Transcribe docs say vs what is unverified |
 | `monitor/deterioration.py` | Deterministic per-product-code detector: last 7 days vs trailing 4-week baseline → `new_signal` / `spike` / `severity_escalation` / `stable`, returning every count, share and report id used |
-| `monitor/digest.py` | Overnight digest ("N new, M worsening") rendered to Markdown + JSON with a fixed advisory footer; no LLM |
+| `monitor/digest.py` | What-changed digest ("New kind of problem: N · More serious than usual: M · Reports suddenly increased: K") rendered to Markdown + JSON with a fixed advisory footer; no LLM |
 | `monitor/fetch.py` | Capped, whole-day incremental openFDA fetch (reuses the existing ingestion pipeline) |
 | `monitor/__init__.py` | Package exports |
 | `cli.py` → `maudesignal monitor` | New CLI command: optional capped fetch → detect → `digests/YYYY-MM-DD.{md,json}` |
@@ -90,7 +90,7 @@ Small pre-existing changes: `Database.delete_external_sources`, `Database.list_r
 
 | File | What it is |
 |---|---|
-| `monitor/digest.py` (schema 1.1), `catalog/names.py` | Flagged codes ranked by a fixed, documented key; each rank carries a "why" sentence built from the detector's numbers; digest names the FDA device type and the brands on this window's reports. Overnight page shows "Why it is ranked first"; the `overnight_signals` tool returns the ranking |
+| `monitor/digest.py` (schema 1.1), `catalog/names.py` | Flagged codes ranked by a fixed, documented key; each rank carries a "why" sentence built from the detector's numbers; digest names the FDA device type and the brands on this window's reports. What changed page shows "Why it is ranked first"; the `overnight_signals` tool returns the ranking |
 | `copilot/voice.py`, `copilot/audit_export.py` | Each spoken question appends a hash-chained `voice.transcribed` entry (model, audio SHA-256, duration, text heard) linked to its `copilot.answer`; silence appends `voice.rejected`. Recording runs export their trail; the Actions page re-verifies and shows it |
 | `scripts/hand_check.py`, `docs/hackathon/HAND_CHECK.md` | 20-answer hand-check worksheet: gate pass rates computed from the recorded transcripts, every cited id looked up in stored records, a hand-verdict column per sentence |
 | `vision/browser_fetch.py` | Headless-Chromium fallback for 510(k) PDFs that FDA refuses to plain HTTP clients; the recorder skips (not fails) a K-number whose PDF cannot be obtained |

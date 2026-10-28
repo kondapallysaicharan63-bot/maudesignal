@@ -1,10 +1,11 @@
 {
-  "schema_version": "1.1",
+  "schema_version": "1.2",
   "as_of": "2026-08-31",
-  "headline": "0 new, 1 worsening",
+  "headline": "New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1",
   "counts": {
     "new": 0,
-    "worsening": 1,
+    "more_serious_than_usual": 0,
+    "reports_suddenly_increased": 1,
     "stable": 3
   },
   "window": {
@@ -25,7 +26,7 @@
       "injury"
     ],
     "ranking_order": [
-      "rule precedence: new signal, then severity escalation, then volume spike",
+      "rule precedence: new kind of problem, then more serious than usual, then reports suddenly increased",
       "more Injury/Death reports this window",
       "higher ratio of this window's count to the baseline weekly mean",
       "more reports this window",
@@ -42,6 +43,7 @@
     {
       "product_code": "LLZ",
       "classification": "spike",
+      "label": "reports suddenly increased",
       "triggers": [
         "spike"
       ],
@@ -145,6 +147,7 @@
     {
       "product_code": "MYN",
       "classification": "stable",
+      "label": "no change",
       "triggers": [],
       "current_count": 0,
       "current_report_ids": [],
@@ -168,6 +171,7 @@
     {
       "product_code": "POK",
       "classification": "stable",
+      "label": "no change",
       "triggers": [],
       "current_count": 0,
       "current_report_ids": [],
@@ -191,6 +195,7 @@
     {
       "product_code": "QIH",
       "classification": "stable",
+      "label": "no change",
       "triggers": [],
       "current_count": 0,
       "current_report_ids": [],
@@ -215,8 +220,7 @@
   "device_types": {
     "LLZ": "System, Image Processing, Radiological",
     "MYN": "Analyzer, Medical Image",
-    "POK": "Computer-Assisted Diagnostic Software For Lesions Suspicious For Cancer",
-    "QIH": "Automated Radiological Image Processing Software"
+    "POK": "Computer-Assisted Diagnostic Software For Lesions Suspicious For Cancer"
   },
   "window_brands": {
     "LLZ": [
@@ -236,7 +240,8 @@
       "rank": 1,
       "product_code": "LLZ",
       "classification": "spike",
-      "reason": "Ranked 1 of 1 flagged: volume spike: 33 reports this window vs a baseline weekly mean of 8.75 (3.77x; the rule needs >= 2x and >= 3 reports). It is the only product code that crossed a rule threshold; 3 other code(s) stayed below every threshold."
+      "label": "reports suddenly increased",
+      "reason": "Ranked 1 of 1 flagged: reports suddenly increased: 33 reports this window vs a baseline weekly mean of 8.75 (3.77x; the rule needs >= 2x and >= 3 reports). It is the only product code that crossed a rule threshold; 3 other code(s) stayed below every threshold."
     }
   ],
   "footer": "Advisory only — B2B regulatory triage aid, not medical advice. Every item requires human review; nothing is reported to FDA automatically."

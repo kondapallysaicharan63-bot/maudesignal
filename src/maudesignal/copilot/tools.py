@@ -55,7 +55,7 @@ class ToolContext:
 
 
 def overnight_signals(ctx: ToolContext, as_of: str | None = None) -> dict[str, Any]:
-    """Deterioration digest: which product codes are new / spiking / escalating."""
+    """What changed this week: new kind of problem, more serious, or more reports."""
     latest = detect_from_database(ctx.db).window.as_of
     as_of_date = parse_yyyymmdd(as_of) if as_of else None
     note = None
@@ -389,8 +389,10 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
         "type": "function",
         "function": {
             "name": "overnight_signals",
-            "description": "Deterioration digest: new / spiking / severity-escalating product "
-            "codes in the 7 days ending on the latest stored report date vs a 4-week baseline, "
+            "description": "What changed: product codes where reports suddenly increased, "
+            "reports are more serious than usual, or there is a new kind of problem (each "
+            "signal's `label` gives these plain words), in the 7 days ending on the latest "
+            "stored report date vs a 4-week baseline, "
             "with exact counts, report ids and the ranking with its reasons. Omit as_of: "
             "openFDA lags real time, so the default is the latest stored date, not today.",
             "parameters": {

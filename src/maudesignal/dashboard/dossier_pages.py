@@ -27,7 +27,7 @@ import streamlit as st
 from maudesignal.copilot.spend import SpendLimitError
 from maudesignal.dashboard.copilot_pages import CAPA_NEED_NOTE, FRAMING_BANNER
 from maudesignal.dashboard.spend_ui import guarded_client
-from maudesignal.dossier.builder import DossierError, top_worsening_signal
+from maudesignal.dossier.builder import DossierError, top_flagged_signal
 from maudesignal.dossier.render import pdf_page_png
 from maudesignal.dossier.review import (
     WONDER_MODEL,
@@ -38,6 +38,7 @@ from maudesignal.dossier.review import (
     review_dossier,
 )
 from maudesignal.dossier.service import DossierOutput, produce, recorded_dir
+from maudesignal.monitor.digest import CHANGE_LABELS
 from maudesignal.storage.database import Database
 
 
@@ -55,13 +56,14 @@ def _subject_options(db: Database) -> list[tuple[str, str | None, str | None]]:
         for c in db.list_capa_drafts()
     ]
     try:
-        top = top_worsening_signal(db)
+        top = top_flagged_signal(db)
     except ValueError:
         top = None
     if top is not None:
         opts.append(
             (
-                f"Top worsening signal · {top.product_code} · {top.classification} (no CAPA)",
+                f"Top flagged change · {top.product_code} · "
+                f"{CHANGE_LABELS[top.classification]} (no CAPA)",
                 None,
                 top.product_code,
             )
@@ -115,7 +117,7 @@ def page_dossier(db: Database) -> None:
     )
     opts = _subject_options(db)
     if not opts:
-        st.info("No CAPA-need evidence records and no worsening signal in this database.")
+        st.info("No CAPA-need evidence records and no flagged change in this database.")
         return
     labels = [o[0] for o in opts]
     choice = st.selectbox("Document", labels, key="dossier_subject")

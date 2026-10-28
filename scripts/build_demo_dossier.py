@@ -28,11 +28,12 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from maudesignal.copilot.actions import decide_capa, draft_capa  # noqa: E402
-from maudesignal.dossier.builder import top_worsening_signal  # noqa: E402
+from maudesignal.dossier.builder import top_flagged_signal  # noqa: E402
 from maudesignal.dossier.illustration import IllustrationError, generate_illustration  # noqa: E402
 from maudesignal.dossier.model import Illustration  # noqa: E402
 from maudesignal.dossier.review import WONDER_MODEL, review_dossier, save_review  # noqa: E402
 from maudesignal.dossier.service import produce  # noqa: E402
+from maudesignal.monitor.digest import CHANGE_LABELS  # noqa: E402
 from maudesignal.storage.database import Database  # noqa: E402
 
 DEMO_ACTOR = "copilot:muse-spark"
@@ -60,18 +61,22 @@ def main() -> int:
         db_copy = Path(tmp) / "demo.db"
         shutil.copy(args.db, db_copy)
         db = Database(db_copy)
-        sig = top_worsening_signal(db)
+        sig = top_flagged_signal(db)
         if sig is None:
-            print("no worsening signal in the demo DB")
+            print("no flagged change in the demo DB")
             return 1
         week_end = datetime.strptime(str(db.max_date_received()), "%Y%m%d").date()
         capa = draft_capa(
             db,
             product_code=sig.product_code,
-            title=f"{sig.product_code} report {sig.classification}: evaluate for corrective action",
+            title=(
+                f"{sig.product_code}: {CHANGE_LABELS[sig.classification]} — "
+                "evaluate for corrective action"
+            ),
             problem_statement=(
-                f"The overnight monitor classified product code {sig.product_code} as "
-                f"'{sig.classification}' for the week ending {week_end.isoformat()}. "
+                f"The daily monitor flagged product code {sig.product_code} as "
+                f"'{CHANGE_LABELS[sig.classification]}' for the week ending "
+                f"{week_end.isoformat()}. "
                 "The cited MAUDE reports from that week are attached for complaint review."
             ),
             report_ids=list(sig.current_report_ids),

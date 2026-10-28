@@ -1262,7 +1262,7 @@ def monitor(
         DEFAULT_DIGEST_DIR, "--out-dir", help="Directory for YYYY-MM-DD.md / .json digests."
     ),
 ) -> None:
-    """Overnight deterioration monitor: optional capped fetch, detect, write digest.
+    """Daily "what changed" monitor: optional capped fetch, detect, write digest.
 
     Deterministic — no LLM call. Needs no API key (OPENFDA_API_KEY is used if set).
     The digest file is named after the as-of date, not the wall-clock date,
@@ -1275,7 +1275,12 @@ def monitor(
     """
     from maudesignal.config import openfda_api_key_from_env
     from maudesignal.monitor.deterioration import detect_from_database, parse_yyyymmdd
-    from maudesignal.monitor.digest import digest_from_database, render_json, render_markdown
+    from maudesignal.monitor.digest import (
+        CHANGE_LABELS,
+        digest_from_database,
+        render_json,
+        render_markdown,
+    )
     from maudesignal.monitor.fetch import incremental_fetch
 
     configure_logging("WARNING")
@@ -1325,7 +1330,7 @@ def monitor(
     console.print(f"[bold]{digest.headline}[/bold] (as of {stem})")
     for signal in result.non_stable():
         console.print(
-            f"  {signal.product_code}: {signal.classification} "
+            f"  {signal.product_code}: {CHANGE_LABELS[signal.classification]} "
             f"(this week {signal.current_count}, baseline mean "
             f"{signal.baseline_weekly_mean:.2f})"
         )

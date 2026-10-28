@@ -1,10 +1,10 @@
 # HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
-# Overnight deterioration monitor: capped keyless openFDA fetch -> deterministic
+# Daily "what changed" monitor: capped keyless openFDA fetch -> deterministic
 # 7-day vs 4-week detector -> Markdown/JSON digest. No LLM calls in this workflow.
 # OPENFDA_API_KEY is optional (keyless openFDA allows 1,000 requests/day; one run
 # makes ~2 requests per product code plus one per fetched page).
 # Note: GitHub only fires `schedule` from the repository's default branch.
-name: Overnight monitor
+name: Daily monitor (what changed)
 
 on:
   schedule:
@@ -20,7 +20,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: overnight-monitor
+  group: daily-monitor
   cancel-in-progress: false
 
 jobs:
@@ -70,5 +70,5 @@ jobs:
             echo "No digest changes to commit."
             exit 0
           fi
-          git commit -m "chore(monitor): overnight digest $(date -u +%Y-%m-%d)"
+          git commit -m "chore(monitor): what-changed digest $(date -u +%Y-%m-%d)"
           git push

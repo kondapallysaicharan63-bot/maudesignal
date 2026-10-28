@@ -1,4 +1,4 @@
-"""E2E tests for the five hackathon pages: Overnight, Copilot, Actions & Audit, Dossier, Vision.
+"""E2E tests for the five hackathon pages: What changed, Copilot, Actions & Audit, Dossier, Vision.
 
 HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
@@ -74,29 +74,30 @@ class TestHackathonNav:
     def test_sidebar_labels_the_new_pages(self, ms_page: Page) -> None:
         sidebar = ms_page.locator(SIDEBAR_SELECTOR)
         expect(sidebar).to_contain_text("NEW — built during the Meta hackathon")
-        for name in ("Overnight", "Copilot", "Actions & Audit", "Dossier", "Vision"):
+        for name in ("What changed", "Copilot", "Actions & Audit", "Dossier", "Vision"):
             expect(sidebar.get_by_role("button", name=name, exact=False).first).to_be_visible()
 
     @pytest.mark.parametrize(
-        "nav", ["Overnight", "Copilot", "Actions & Audit", "Dossier", "Vision"]
+        "nav", ["What changed", "Copilot", "Actions & Audit", "Dossier", "Vision"]
     )
     def test_page_loads_with_framing_and_no_exception(self, ms_page: Page, nav: str) -> None:
         _open(ms_page, nav)
 
 
 # ---------------------------------------------------------------------------
-# Overnight
+# What changed
 # ---------------------------------------------------------------------------
 
 
-class TestOvernight:
+class TestWhatChanged:
     def test_counts_match_the_detector(self, ms_page: Page, db: Database) -> None:
         digest = digest_from_database(db, detect_from_database(db))
-        main = _open(ms_page, "Overnight")
+        main = _open(ms_page, "What changed")
         for label, value in (
-            ("New signals", digest.new_count),
-            ("Worsening", digest.worsening_count),
-            ("Stable", digest.stable_count),
+            ("Reports suddenly increased", digest.increased_count),
+            ("More serious than usual", digest.serious_count),
+            ("New kind of problem", digest.new_count),
+            ("No change", digest.stable_count),
         ):
             metric = main.locator("[data-testid='stMetric']").filter(has_text=label).first
             expect(metric.locator("[data-testid='stMetricValue']")).to_have_text(str(value))
@@ -105,7 +106,7 @@ class TestOvernight:
 
     def test_top_signal_and_why_it_is_ranked_first(self, ms_page: Page, db: Database) -> None:
         digest = digest_from_database(db, detect_from_database(db))
-        main = _open(ms_page, "Overnight")
+        main = _open(ms_page, "What changed")
         if not digest.ranked:
             expect(main).to_contain_text("No product code crossed a rule threshold.")
             return
@@ -125,9 +126,9 @@ class TestOvernight:
 
     def test_digest_body_rendered(self, ms_page: Page, db: Database) -> None:
         digest = digest_from_database(db, detect_from_database(db))
-        main = _open(ms_page, "Overnight")
+        main = _open(ms_page, "What changed")
         expect(main).to_contain_text(
-            f"MaudeSignal overnight digest — data as of {digest.result.window.as_of.isoformat()}"
+            f"MaudeSignal — what changed, data as of {digest.result.window.as_of.isoformat()}"
         )
         expect(main).to_contain_text(digest.headline)
         expect(main).to_contain_text("nothing is reported to FDA automatically")
@@ -327,7 +328,7 @@ class TestWhoFiled:
         reports = sourced_reports(db)
         others = not_by_manufacturer(reports)
         manufacturer = [r for r in reports if r.source == "manufacturer"]
-        main = _open(ms_page, "Overnight")
+        main = _open(ms_page, "What changed")
         expect(main).to_contain_text("Who filed the reports")
         expect(main).to_contain_text(f"Not filed by a manufacturer: {len(others)} stored report(s)")
         _select(ms_page, "Show reports filed by", "Manufacturer")

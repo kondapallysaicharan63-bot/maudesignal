@@ -79,18 +79,17 @@ mis-hearing before trusting the answer. A clip with no speech raises
 
 ## Demo audio
 
-`demo/voice/question.wav` ("What came in overnight? Is anything worsening?",
-3.2 s, mono 16 kHz 16-bit) was synthesized offline with ffmpeg's `flite`
-filter:
+The committed `demo/voice/question.wav` (3.2 s, mono 16 kHz 16-bit) is a
+robotic placeholder synthesized offline with ffmpeg's `flite` filter, and it
+still asks the old-wording question. The question for the video (wording
+review, 2026-10-28) is:
 
-    ffmpeg -f lavfi -i "flite=text='What came in overnight? Is anything worsening?':voice=slt" \
-        -ac 1 -ar 16000 -c:a pcm_s16le -map_metadata -1 demo/voice/question.wav
+> What changed this week? Did reports suddenly increase for any device?
 
-It's robotic. For the video, Charan should record the question in his own
-voice and replace the file, keeping the format:
+Charan records it in their own voice and replaces the file, keeping the format:
 `ffmpeg -i mine.m4a -ac 1 -ar 16000 -c:a pcm_s16le -map_metadata -1 demo/voice/question.wav`.
 
 Record (needs the key; CI does this from the repository secret):
 
     python scripts/record_demo_transcripts.py --voice-file demo/voice/question.wav \
-        --voice-label 00-voice-overnight
+        --voice-label 00-voice-what-changed

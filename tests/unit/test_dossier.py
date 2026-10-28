@@ -18,7 +18,7 @@ import pytest
 from maudesignal.copilot.actions import decide_capa, draft_capa
 from maudesignal.copilot.tools import deadline_check
 from maudesignal.dossier import build_dossier, render_html, verify_html
-from maudesignal.dossier.builder import DossierError, top_worsening_signal
+from maudesignal.dossier.builder import DossierError, top_flagged_signal
 from maudesignal.dossier.figures import (
     check_figure,
     const_figure,
@@ -326,7 +326,7 @@ def test_rejected_record(tmp_path: Path) -> None:
 
 def test_signal_only_dossier_and_errors(tmp_path: Path) -> None:
     db = _db(tmp_path)
-    top = top_worsening_signal(db)
+    top = top_flagged_signal(db)
     assert top is not None and top.product_code == PC
     d = build_dossier(db).data
     assert d.status == "no-capa" and d.revision == "0.1" and d.capa is None
@@ -701,7 +701,7 @@ def test_dossier_page_renders_keyless(tmp_path: Path, monkeypatch: pytest.Monkey
     at = AppTest.from_function(_page_script, default_timeout=60).run()
     assert not at.exception
     labels = at.selectbox[0].options
-    assert any(capa_id in o for o in labels) and any("Top worsening signal" in o for o in labels)
+    assert any(capa_id in o for o in labels) and any("Top flagged change" in o for o in labels)
     assert any(m.value == out.doc_id for m in at.metric)
     assert len(at.dataframe) == 1  # recorded reviewer findings
     assert any("Recorded run" in c.value for c in at.caption)

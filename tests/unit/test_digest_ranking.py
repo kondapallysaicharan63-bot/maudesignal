@@ -1,4 +1,4 @@
-"""Ranking, why-ranked sentences and device names in the overnight digest."""
+"""Ranking, why-ranked sentences and device names in the "what changed" digest."""
 
 from __future__ import annotations
 
@@ -42,9 +42,17 @@ def test_new_signal_outranks_spike_and_reason_names_the_step() -> None:
     facts = _spike("AAA", 4, 6) + [_f("n1", "20260830", "NEW")]
     digest = build_digest(detect_deterioration(facts, AS_OF))
     assert [s.product_code for s in digest.ranked] == ["NEW", "AAA"]
-    assert digest.rank_reasons["NEW"].startswith("Ranked 1 of 2 flagged: new signal: first 1")
-    assert "Above AAA: new signal outranks volume spike." in digest.rank_reasons["NEW"]
-    assert "Below NEW: new signal outranks volume spike." in digest.rank_reasons["AAA"]
+    assert digest.rank_reasons["NEW"].startswith(
+        "Ranked 1 of 2 flagged: new kind of problem: first 1"
+    )
+    assert (
+        "Above AAA: new kind of problem outranks reports suddenly increased."
+        in digest.rank_reasons["NEW"]
+    )
+    assert (
+        "Below NEW: new kind of problem outranks reports suddenly increased."
+        in digest.rank_reasons["AAA"]
+    )
 
 
 def test_ties_broken_by_ratio_then_count_then_code() -> None:
@@ -77,9 +85,9 @@ def test_single_flag_reason_and_markdown_json() -> None:
     digest = build_digest(detect_deterioration(facts, AS_OF))
     reason = digest.rank_reasons["AAA"]
     assert reason == (
-        "Ranked 1 of 1 flagged: volume spike: 6 reports this window vs a baseline weekly "
-        "mean of 1.00 (6.00x; the rule needs >= 2x and >= 3 reports). It is the only "
-        "product code that crossed a rule threshold; 1 other code(s) stayed below every "
+        "Ranked 1 of 1 flagged: reports suddenly increased: 6 reports this window vs a "
+        "baseline weekly mean of 1.00 (6.00x; the rule needs >= 2x and >= 3 reports). It is "
+        "the only product code that crossed a rule threshold; 1 other code(s) stayed below every "
         "threshold."
     )
     md = render_markdown(digest)
@@ -87,7 +95,13 @@ def test_single_flag_reason_and_markdown_json() -> None:
     assert "- Ranking (most urgent first): " + "; then ".join(RANKING_ORDER) in md
     data = digest_to_dict(digest)
     assert data["ranking"] == [
-        {"rank": 1, "product_code": "AAA", "classification": "spike", "reason": reason}
+        {
+            "rank": 1,
+            "product_code": "AAA",
+            "classification": "spike",
+            "label": "reports suddenly increased",
+            "reason": reason,
+        }
     ]
     assert data["rules"]["ranking_order"] == list(RANKING_ORDER)
 

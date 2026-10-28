@@ -33,8 +33,12 @@ _MAUDE_DETAIL_URL = (
 # ── Page registry: (icon, name, subtitle) ─────────────────────────────────────
 _PAGES: list[tuple[str, str, str]] = [
     # HACKATHON-BUILT pages (Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026)
-    ("🌙", "Overnight", "What changed since yesterday — deterministic digest"),
-    ("🛡️", "Copilot", "Muse Spark copilot with a claim-level citation gate"),
+    (
+        "📈",
+        "What changed",
+        "Reports suddenly increased, more serious than usual, or a new kind of problem — no model",
+    ),
+    ("🛡️", "Copilot", "Muse Spark copilot that only shows facts it can match to the FDA record"),
     (
         "✅",
         "Actions & Audit",
@@ -1824,7 +1828,7 @@ def _render_app(db: Database) -> None:  # noqa: PLR0912
     st.html(_CSS)
 
     if "nav_page" not in st.session_state:
-        st.session_state["nav_page"] = "Overnight"
+        st.session_state["nav_page"] = "What changed"
 
     # ── Sidebar ───────────────────────────────────────────────────────────────
     with st.sidebar:
@@ -1838,7 +1842,7 @@ def _render_app(db: Database) -> None:  # noqa: PLR0912
         st.divider()
 
         st.caption(
-            "NEW — built during the Meta hackathon: Overnight, Copilot, Actions & Audit, "
+            "NEW — built during the Meta hackathon: What changed, Copilot, Actions & Audit, "
             "Dossier, Vision"
         )
         for icon, page_name, _ in _PAGES:
@@ -1872,12 +1876,12 @@ def _render_app(db: Database) -> None:  # noqa: PLR0912
     page: str = st.session_state["nav_page"]
 
     # ── Page routing ──────────────────────────────────────────────────────────
-    from maudesignal.dashboard.copilot_pages import page_actions, page_copilot, page_overnight
+    from maudesignal.dashboard.copilot_pages import page_actions, page_changes, page_copilot
     from maudesignal.dashboard.dossier_pages import page_dossier
     from maudesignal.dashboard.vision_pages import page_vision
 
     page_fn_map: dict[str, Callable[[], None]] = {
-        "Overnight": lambda: page_overnight(db),
+        "What changed": lambda: page_changes(db),
         "Copilot": lambda: page_copilot(db),
         "Actions & Audit": lambda: page_actions(db),
         "Dossier": lambda: page_dossier(db),

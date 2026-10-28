@@ -4,7 +4,7 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Every morning, MaudeSignal shows what got worse for the device types you choose — your competitors' devices and reports about your device you didn't file — and answers with only FDA-verified facts. People make every decision.**
+**Every morning, MaudeSignal shows where reports suddenly increased, where they are more serious than usual and where there is a new kind of problem, for the device types you choose — your competitors' devices and reports about your device you didn't file. It only shows facts it can match to the FDA record. People make every decision.**
 
 > **What this is:** a B2B tool for postmarket-surveillance (PMS) and
 > regulatory-affairs teams at medical-device makers, working on public openFDA
@@ -36,12 +36,14 @@ what a manufacturer would still do): [docs/VALIDATION_EVIDENCE.md](docs/VALIDATI
 
 ## What it does (Monday morning)
 
-1. **Overnight digest.** A deterministic monitor (no model) compares the last
-   7 days of openFDA reports with the 4 weeks before, for the device types
-   (FDA product codes) you choose. On the demo data: *"0 new, 1 worsening —
-   LLZ: reports suddenly increased, 33 this week vs a weekly mean of 8.75
-   (3.77x)"* ([digests/2026-08-31.md](digests/2026-08-31.md)), with the reason
-   it is ranked first.
+1. **What changed this week.** A deterministic monitor (no model) compares
+   the last 7 days of openFDA reports with the 4 weeks before, for the device
+   types (FDA product codes) you choose, and flags three things: **reports
+   suddenly increased**, **more serious than usual**, or a **new kind of
+   problem**. On the demo data: *"LLZ: reports suddenly increased — 33 this
+   week vs a weekly mean of 8.75 (3.77x)"*
+   ([digests/2026-08-31.md](digests/2026-08-31.md)), with the reason it is
+   ranked first.
 2. **Who filed the reports.** Counts per device type by openFDA report source
    (manufacturer, user facility, voluntary, distributor) and a filterable list
    of the reports **not filed by a manufacturer**. On the demo data all 33 LLZ
@@ -145,8 +147,8 @@ flowchart LR
         ING --> DB[("SQLite<br/>reports + 510(k) catalog")]
     end
 
-    subgraph overnight["Overnight (no LLM)"]
-        DB --> MON["monitor/<br/>new · spike · escalation"]
+    subgraph changes["What changed (no LLM)"]
+        DB --> MON["monitor/<br/>reports suddenly increased ·<br/>more serious than usual ·<br/>new kind of problem"]
         MON --> DIG["Digest<br/>digests/YYYY-MM-DD.md"]
     end
 
@@ -218,10 +220,10 @@ cd maudesignal
 python3.12 -m venv .venv && source .venv/bin/activate
 pip install -e .
 
-# Overnight digest from the committed demo database (no network, no LLM)
+# What-changed digest from the committed demo database (no network, no LLM)
 maudesignal monitor --no-fetch
 
-# Dashboard on the demo database: Overnight, Copilot, Actions & Audit pages
+# Dashboard on the demo database: What changed, Copilot, Actions & Audit pages
 streamlit run streamlit_app.py
 ```
 
@@ -241,8 +243,8 @@ dependencies from `requirements.txt`, no secrets required.
 ## Built during the hackathon vs pre-existing
 
 Built during the Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026):
-the copilot, the citation gate, the overnight monitor and report-source
-filter, the five new dashboard pages (Overnight, Copilot, Actions & Audit,
+the copilot, the citation gate, the daily what-changed monitor and report-source
+filter, the five new dashboard pages (What changed, Copilot, Actions & Audit,
 Dossier, Vision), voice questions, the evidence-pack PDF, the CAPA-need
 evidence and audit tables, the live-call spend caps and the keyless demo deploy. The
 openFDA pipeline below predates the event. The file-by-file list is in

@@ -1,6 +1,6 @@
 """HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
-Capped, gap-free incremental fetch for the overnight monitor.
+Capped, gap-free incremental fetch for the daily monitor.
 
 For each product code already in the database, the monitor asks openFDA
 for per-day counts *after* the latest stored ``date_received`` (one cheap

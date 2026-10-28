@@ -4,8 +4,8 @@ HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
 Loop, for one user question:
 
-1. Muse Spark (Meta Model API) picks tools — overnight signals, product
-   summaries, report search, MDR deadline clock, CAPA draft — and reads their
+1. Muse Spark (Meta Model API) picks tools — what changed, product
+   summaries, report search, MDR deadline clock, CAPA-need evidence — and reads their
    JSON results.
 2. When it stops calling tools, the final answer is requested with Meta's
    strict ``json_schema`` ``response_format`` (schema from

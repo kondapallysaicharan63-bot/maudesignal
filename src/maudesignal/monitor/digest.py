@@ -1,15 +1,15 @@
 """HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
-Deterministic overnight digest built from a :class:`DetectionResult`.
+Deterministic "what changed" digest built from a :class:`DetectionResult`.
 
 The digest is rendered twice — Markdown for humans and JSON for machines
 (and for the downstream citation gate, which re-verifies every number
 against the stored records). No LLM is involved: every sentence is a fixed
 template filled with numbers taken verbatim from the detector.
 
-Headline format: ``"<N> new, <M> worsening"`` where *new* counts
-``new_signal`` product codes and *worsening* counts ``spike`` plus
-``severity_escalation`` product codes.
+Headline format: ``"New kind of problem: N · More serious than usual: M ·
+Reports suddenly increased: K"`` (``new_signal``, ``severity_escalation`` and
+``spike`` product codes, by their primary classification).
 
 Flagged product codes are ranked by a fixed key (see :data:`RANKING_ORDER`)
 and every rank carries a sentence saying why, built from the same numbers.
@@ -39,37 +39,42 @@ DIGEST_FOOTER = (
     "Advisory only — B2B regulatory triage aid, not medical advice. "
     "Every item requires human review; nothing is reported to FDA automatically."
 )
-DIGEST_SCHEMA_VERSION = "1.1"
+DIGEST_SCHEMA_VERSION = "1.2"
 MAX_EXAMPLE_IDS = 3
 
 #: How flagged product codes are ordered, most urgent first. Each step only
 #: breaks ties left by the steps before it.
 RANKING_ORDER: tuple[str, ...] = (
-    "rule precedence: new signal, then severity escalation, then volume spike",
+    "rule precedence: new kind of problem, then more serious than usual, "
+    "then reports suddenly increased",
     "more Injury/Death reports this window",
     "higher ratio of this window's count to the baseline weekly mean",
     "more reports this window",
     "product code, alphabetically",
 )
 
-_TITLES: dict[str, str] = {
-    "new_signal": "new signal",
-    "severity_escalation": "severity escalation",
-    "spike": "volume spike",
-    "stable": "stable",
+#: Plain words shown to people for each detector classification.
+CHANGE_LABELS: dict[str, str] = {
+    "new_signal": "new kind of problem",
+    "severity_escalation": "more serious than usual",
+    "spike": "reports suddenly increased",
+    "stable": "no change",
 }
 
 
 @dataclass(frozen=True)
 class Digest:
-    """A rendered-ready overnight digest.
+    """A rendered-ready "what changed" digest.
 
     Attributes:
         result: The detection result the digest summarizes.
-        headline: e.g. ``"3 new, 1 worsening"``.
+        headline: e.g. ``"New kind of problem: 0 · More serious than usual: 0 ·
+            Reports suddenly increased: 1"``.
         new_count: Product codes classified ``new_signal``.
-        worsening_count: Product codes classified ``spike`` or
-            ``severity_escalation``.
+        serious_count: Product codes classified ``severity_escalation``
+            ("more serious than usual").
+        increased_count: Product codes classified ``spike`` ("reports
+            suddenly increased").
         stable_count: Product codes classified ``stable``.
         source: Human-readable description of the data source.
         fetch_summary: Optional ``product_code -> records newly stored`` from
@@ -88,7 +93,8 @@ class Digest:
     result: DetectionResult
     headline: str
     new_count: int
-    worsening_count: int
+    serious_count: int
+    increased_count: int
     stable_count: int
     source: str
     fetch_summary: dict[str, int] = field(default_factory=dict)
@@ -139,30 +145,33 @@ def rule_evidence(signal: ProductCodeSignal) -> str:
         signal: A non-stable signal.
 
     Returns:
-        e.g. ``"volume spike: 33 reports this window vs a baseline weekly mean
+        e.g. ``"reports suddenly increased: 33 reports this window vs a baseline weekly mean
         of 8.75 (3.77x; the rule needs >= 2x and >= 3 reports)"``.
     """
     if signal.classification == "new_signal":
         if signal.prior_report_count == 0:
-            return f"new signal: first {signal.current_count} report(s) ever stored for this code"
+            return (
+                f"new kind of problem: first {signal.current_count} report(s) ever stored "
+                f"for this code"
+            )
         return (
-            f"new signal: event type(s) never seen before for this code "
+            f"new kind of problem: event type(s) never seen before for this code "
             f"({', '.join(signal.new_event_types)}) despite {signal.prior_report_count} "
             f"earlier reports"
         )
     if signal.classification == "severity_escalation":
         delta = signal.severe_share_delta_pp or 0.0
         return (
-            f"severity escalation: Injury/Death share {_pct(signal.current_severe_share)} "
+            f"more serious than usual: Injury/Death share {_pct(signal.current_severe_share)} "
             f"({signal.current_severe_count}/{signal.current_count}) vs baseline "
             f"{_pct(signal.baseline_severe_share)} "
             f"({signal.baseline_severe_count}/{signal.baseline_count}), {delta:+.1f} pp; "
             f"the rule needs >= +{SEVERITY_ESCALATION_PP} pp"
         )
     return (
-        f"volume spike: {signal.current_count} reports this window vs a baseline weekly mean "
-        f"of {signal.baseline_weekly_mean:.2f} ({_ratio_text(signal)}; the rule needs "
-        f">= {SPIKE_MULTIPLIER}x and >= {SPIKE_MIN_REPORTS} reports)"
+        f"reports suddenly increased: {signal.current_count} reports this window vs a "
+        f"baseline weekly mean of {signal.baseline_weekly_mean:.2f} ({_ratio_text(signal)}; "
+        f"the rule needs >= {SPIKE_MULTIPLIER}x and >= {SPIKE_MIN_REPORTS} reports)"
     )
 
 
@@ -170,7 +179,7 @@ def _deciding_step(a: ProductCodeSignal, b: ProductCodeSignal) -> str:
     """Why ``a`` ranks above ``b``: the first ranking step where they differ."""
     ka, kb = _rank_key(a), _rank_key(b)
     if ka[0] != kb[0]:
-        return f"{_TITLES[a.classification]} outranks {_TITLES[b.classification]}"
+        return f"{CHANGE_LABELS[a.classification]} outranks {CHANGE_LABELS[b.classification]}"
     if ka[1] != kb[1]:
         return (
             f"more Injury/Death reports this window "
@@ -262,9 +271,8 @@ def build_digest(
         The digest.
     """
     new_count = sum(1 for s in result.signals if s.classification == "new_signal")
-    worsening = sum(
-        1 for s in result.signals if s.classification in ("spike", "severity_escalation")
-    )
+    serious = sum(1 for s in result.signals if s.classification == "severity_escalation")
+    increased = sum(1 for s in result.signals if s.classification == "spike")
     stable = sum(1 for s in result.signals if s.is_stable)
     ranked = rank_signals(result.signals)
     brands = report_brands or {}
@@ -281,9 +289,13 @@ def build_digest(
                 window_sources[sig.product_code] = dict(sorted(counts.items()))
     return Digest(
         result=result,
-        headline=f"{new_count} new, {worsening} worsening",
+        headline=(
+            f"New kind of problem: {new_count} · More serious than usual: {serious} · "
+            f"Reports suddenly increased: {increased}"
+        ),
         new_count=new_count,
-        worsening_count=worsening,
+        serious_count=serious,
+        increased_count=increased,
         stable_count=stable,
         source=source,
         fetch_summary=dict(sorted((fetch_summary or {}).items())),
@@ -356,7 +368,7 @@ def _signal_section(
     brands: list[tuple[str, int]] | None = None,
     sources: dict[str, int] | None = None,
 ) -> list[str]:
-    title = _TITLES[signal.classification]
+    title = CHANGE_LABELS[signal.classification]
     lines = [f"## {signal.product_code} — {title}", ""]
     device = _device_line(device_type, brands or [], signal.current_count)
     if device:
@@ -367,7 +379,7 @@ def _signal_section(
     if reason:
         lines.append(f"- Why this rank: {reason}")
     if len(signal.triggers) > 1:
-        fired = ", ".join(_TITLES[t] for t in signal.triggers)
+        fired = ", ".join(CHANGE_LABELS[t] for t in signal.triggers)
         lines.append(f"- Rules fired: {fired}")
 
     ratio = (
@@ -414,7 +426,7 @@ def render_markdown(digest: Digest) -> str:
     """
     w = digest.result.window
     lines = [
-        f"# MaudeSignal overnight digest — data as of {w.as_of.isoformat()}",
+        f"# MaudeSignal — what changed, data as of {w.as_of.isoformat()}",
         "",
         f"**{digest.headline}**",
         "",
@@ -424,9 +436,10 @@ def render_markdown(digest: Digest) -> str:
         f"({BASELINE_WEEKS} weeks)",
         f"- Source: {digest.source}; {digest.result.events_considered} reports considered "
         f"across {len(digest.result.signals)} product codes",
-        f"- Rules: new signal = first reports / never-seen event type; "
-        f"spike = >= {SPIKE_MULTIPLIER}x baseline weekly mean and >= {SPIKE_MIN_REPORTS} reports; "
-        f"severity escalation = Injury/Death share up >= {SEVERITY_ESCALATION_PP} pp",
+        f"- Rules: new kind of problem = first reports / never-seen event type; "
+        f"reports suddenly increased = >= {SPIKE_MULTIPLIER}x baseline weekly mean and "
+        f">= {SPIKE_MIN_REPORTS} reports; more serious than usual = Injury/Death share up "
+        f">= {SEVERITY_ESCALATION_PP} pp",
         f"- Ranking (most urgent first): {'; then '.join(RANKING_ORDER)}",
     ]
     if digest.fetch_summary:
@@ -453,7 +466,7 @@ def render_markdown(digest: Digest) -> str:
 
     stable = [s for s in digest.result.signals if s.is_stable]
     if stable:
-        lines.append("## Stable")
+        lines.append("## No change")
         lines.append("")
         lines.append(", ".join(f"{s.product_code} ({s.current_count} this window)" for s in stable))
         lines.append("")
@@ -471,6 +484,7 @@ def _signal_to_dict(signal: ProductCodeSignal) -> dict[str, Any]:
     return {
         "product_code": signal.product_code,
         "classification": signal.classification,
+        "label": CHANGE_LABELS[signal.classification],
         "triggers": list(signal.triggers),
         "current_count": signal.current_count,
         "current_report_ids": list(signal.current_report_ids),
@@ -509,7 +523,8 @@ def digest_to_dict(digest: Digest) -> dict[str, Any]:
         "headline": digest.headline,
         "counts": {
             "new": digest.new_count,
-            "worsening": digest.worsening_count,
+            "more_serious_than_usual": digest.serious_count,
+            "reports_suddenly_increased": digest.increased_count,
             "stable": digest.stable_count,
         },
         "window": {
@@ -546,6 +561,7 @@ def digest_to_dict(digest: Digest) -> dict[str, Any]:
                 "rank": i + 1,
                 "product_code": s.product_code,
                 "classification": s.classification,
+                "label": CHANGE_LABELS[s.classification],
                 "reason": digest.rank_reasons.get(s.product_code, ""),
             }
             for i, s in enumerate(digest.ranked)

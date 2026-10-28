@@ -95,7 +95,7 @@ def weekly_chart_svg(bars: tuple[WeeklyBar, ...], mean: Figure, threshold: Figur
         )
     for fig, dash, label in (
         (mean, "6,4", "baseline weekly mean"),
-        (threshold, "2,3", "spike threshold (2×)"),
+        (threshold, "2,3", "sudden-increase threshold (2×)"),
     ):
         yy = y(fig.value)
         parts.append(

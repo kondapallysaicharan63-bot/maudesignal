@@ -8,7 +8,7 @@ so CAPA-need evidence records created during recording never touch the committed
 
     python scripts/record_demo_transcripts.py --out demo/transcripts
 
-Voice: ``--voice-file demo/voice/question.wav --voice-label 00-voice-overnight``
+Voice: ``--voice-file demo/voice/question.wav --voice-label 00-voice-what-changed``
 transcribes the WAV with Meta Voice Transcribe, asks the transcript text, and
 saves the transcript with a ``voice`` block (what was heard). With
 ``--voice-file`` the typed demo questions are skipped unless ``--only`` names some.
@@ -42,7 +42,7 @@ from maudesignal.storage.database import Database  # noqa: E402
 # One analyst's Monday morning, in order. The last question deliberately
 # invites unverifiable claims so the gate's block is shown on real output.
 DEMO_QUESTIONS: list[tuple[str, str]] = [
-    ("01-overnight", "What came in overnight? Is anything worsening?"),
+    ("01-what-changed", "What changed this week? Did reports suddenly increase for any device?"),
     ("02-why-first", "Why is the top signal ranked first? Show me the reports behind it."),
     ("03-quote", "Quote the single report that best describes the failure, word for word."),
     (

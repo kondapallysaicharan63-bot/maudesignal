@@ -1,6 +1,7 @@
 """HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
-Deterministic overnight deterioration monitor for MAUDE adverse-event reports.
+Deterministic daily monitor for MAUDE adverse-event reports: reports suddenly
+increased, more serious than usual, or a new kind of problem.
 
 * :mod:`maudesignal.monitor.deterioration` — classifies each product code's
   last 7 days against a trailing 4-week baseline (pure functions, no I/O

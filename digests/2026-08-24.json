@@ -1,10 +1,11 @@
 {
-  "schema_version": "1.1",
+  "schema_version": "1.2",
   "as_of": "2026-08-24",
-  "headline": "0 new, 0 worsening",
+  "headline": "New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 0",
   "counts": {
     "new": 0,
-    "worsening": 0,
+    "more_serious_than_usual": 0,
+    "reports_suddenly_increased": 0,
     "stable": 4
   },
   "window": {
@@ -25,7 +26,7 @@
       "injury"
     ],
     "ranking_order": [
-      "rule precedence: new signal, then severity escalation, then volume spike",
+      "rule precedence: new kind of problem, then more serious than usual, then reports suddenly increased",
       "more Injury/Death reports this window",
       "higher ratio of this window's count to the baseline weekly mean",
       "more reports this window",
@@ -42,6 +43,7 @@
     {
       "product_code": "LLZ",
       "classification": "stable",
+      "label": "no change",
       "triggers": [],
       "current_count": 6,
       "current_report_ids": [
@@ -118,6 +120,7 @@
     {
       "product_code": "MYN",
       "classification": "stable",
+      "label": "no change",
       "triggers": [],
       "current_count": 0,
       "current_report_ids": [],
@@ -141,6 +144,7 @@
     {
       "product_code": "POK",
       "classification": "stable",
+      "label": "no change",
       "triggers": [],
       "current_count": 0,
       "current_report_ids": [],
@@ -164,6 +168,7 @@
     {
       "product_code": "QIH",
       "classification": "stable",
+      "label": "no change",
       "triggers": [],
       "current_count": 0,
       "current_report_ids": [],
@@ -188,8 +193,7 @@
   "device_types": {
     "LLZ": "System, Image Processing, Radiological",
     "MYN": "Analyzer, Medical Image",
-    "POK": "Computer-Assisted Diagnostic Software For Lesions Suspicious For Cancer",
-    "QIH": "Automated Radiological Image Processing Software"
+    "POK": "Computer-Assisted Diagnostic Software For Lesions Suspicious For Cancer"
   },
   "window_brands": {},
   "window_sources": {

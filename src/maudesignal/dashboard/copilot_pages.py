@@ -1,4 +1,4 @@
-"""Dashboard pages for the hackathon features: Overnight, Copilot, Actions & Audit.
+"""Dashboard pages for the hackathon features: What changed, Copilot, Actions & Audit.
 
 HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
@@ -52,8 +52,9 @@ FRAMING_BANNER = (
     '<div style="border:1px solid #c9d3df;border-left:6px solid #1877F2;border-radius:8px;'
     'padding:10px 14px;margin:0 0 14px 0;background:#f5f8fc;font-size:14px;color:#1c2b33">'
     "<b>B2B regulatory triage aid for QA/RA teams.</b> Not medical advice. "
-    "Every number, quote, device id and CFR section is re-checked against stored openFDA "
-    "records before it is shown. Every action is a draft that a named human approves. "
+    "It only shows facts it can match to the FDA record: every number, quote, device id "
+    "and CFR section is checked against stored openFDA records first. "
+    "Every action is a draft that a named human approves. "
     "Nothing is filed with FDA automatically.</div>"
 )
 
@@ -101,19 +102,20 @@ def _evidence_link(eid: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Overnight
+# What changed
 # ---------------------------------------------------------------------------
 
 
-def page_overnight(db: Database) -> None:
-    """Overnight deterioration digest (deterministic, no model)."""
+def page_changes(db: Database) -> None:
+    """What changed this week: the deterministic digest (no model)."""
     st.html(FRAMING_BANNER)
     result = detect_from_database(db)
     digest = digest_from_database(db, result)
-    c1, c2, c3 = st.columns(3)
-    c1.metric("New signals", digest.new_count)
-    c2.metric("Worsening", digest.worsening_count)
-    c3.metric("Stable", digest.stable_count)
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Reports suddenly increased", digest.increased_count)
+    c2.metric("More serious than usual", digest.serious_count)
+    c3.metric("New kind of problem", digest.new_count)
+    c4.metric("No change", digest.stable_count)
     w = result.window
     st.caption(
         f"As of {w.as_of.isoformat()} (latest openFDA date_received in this database). "

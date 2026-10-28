@@ -24,6 +24,7 @@ from maudesignal.dashboard.copilot_pages import FRAMING_BANNER
 from maudesignal.dashboard.spend_ui import guard as spend_guard
 from maudesignal.dashboard.spend_ui import guarded_client
 from maudesignal.monitor.deterioration import ProductCodeSignal, detect_from_database
+from maudesignal.monitor.digest import CHANGE_LABELS
 from maudesignal.storage.database import Database
 from maudesignal.vision import DEMO_K_NUMBERS
 from maudesignal.vision.label import SESSION_ONLY_FIELDS, LabelResult
@@ -227,10 +228,12 @@ def render_signal(db: Database, product_code: str) -> None:
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Reports, last 7 days", sig.current_count)
     c2.metric("Baseline weekly mean", f"{sig.baseline_weekly_mean:.1f}")
-    c3.metric("Spike ratio", "—" if sig.spike_ratio is None else f"{sig.spike_ratio:.2f}×")
+    c3.metric(
+        "Ratio to the weekly mean", "—" if sig.spike_ratio is None else f"{sig.spike_ratio:.2f}×"
+    )
     share = sig.current_severe_share
     c4.metric("Injury/death share", "—" if share is None else f"{100 * share:.0f}%")
-    st.caption(f"Classification: {sig.classification} (deterministic monitor, no model).")
+    st.caption(f"Result: {CHANGE_LABELS[sig.classification]} (deterministic monitor, no model).")
 
 
 def render_label(result: LabelResult, image: bytes | None, *, session: bool) -> None:
