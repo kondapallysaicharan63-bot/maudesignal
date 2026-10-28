@@ -28,7 +28,7 @@ Everything under `src/maudesignal/copilot/`, `src/maudesignal/gate/` and
 | `tests/unit/test_copilot_agent.py` | Agent loop, repair turn, withheld sentences, CAPA approval rules, audit tamper detection, tools, transcripts (scripted fake client — no credits) |
 | `copilot/voice.py` | Second Meta AI surface: spoken question → **Muse Voice Transcribe** (`POST /v1/asr/transcribe`, `muse-voice-transcribe-1.0`) → transcript text → the same copilot + claim-level gate. Audio never goes to the chat model. Local WAV validation before upload, $0.18/audio-hour cost estimate, key never logged |
 | `dashboard/copilot_pages.py` (voice) | "Ask live" mic input when a key is present; recorded runs show "🎙 Heard: …" so the analyst sees what was transcribed |
-| `scripts/record_demo_transcripts.py --voice-file`, `demo/voice/question.wav` | Records the spoken demo question through Voice Transcribe + Muse Spark in CI (key from secrets). The WAV is a synthetic placeholder voice |
+| `scripts/record_demo_transcripts.py --voice-file`, `demo/voice/question-a.wav`, `question-b.wav` | Records the spoken demo question through Voice Transcribe + Muse Spark in CI (key from secrets). Both WAVs are ElevenLabs text-to-speech samples, not a real practitioner |
 | `tests/unit/test_voice.py` | 29 tests: request format, errors, validation, voice → gated answer end to end (mock transport, no network) |
 | `docs/hackathon/VOICE_API_NOTES.md` | What Meta's Voice Transcribe docs say vs what is unverified |
 | `monitor/deterioration.py` | Deterministic per-product-code detector: last 7 days vs trailing 4-week baseline → `new_signal` / `spike` / `severity_escalation` / `stable`, returning every count, share and report id used |
@@ -118,6 +118,22 @@ Small pre-existing changes: `NormalizedEventRecord.report_source` column (with a
 one-time `ALTER TABLE` + backfill in `Database`), `ingestion/pipeline.py` stores it.
 
 Plus this manifest, the demo video, and the submission write-up.
+
+### Added Oct 28, later (design system, themes, memory, compare, MHRA)
+
+| File(s) | What |
+|---|---|
+| `design-system/` (from Charan's design branch) | Bento layout, editorial Paper/Night/High-contrast tokens, Newsreader + Geist, component markup. Black and Pink themes added to `tokens.json` (same token names, AA contrast) |
+| `dashboard/theme.py`, `dashboard/streamlit_bridge.css` | Theme picker in the top bar (Light, Dark, Black, System, Pink, High contrast; `?theme=` link); Streamlit widgets coloured from the tokens |
+| `dashboard/app.py` | Top bar (wordmark, five product pages, theme picker, dateline); classic tools in the sidebar; serif page headers, no emoji |
+| `dashboard/copilot_pages.py` | Hero tile for the top signal; "Compare the device types you choose"; "Remember these device types"; MHRA (UK) context section; live Ask streams progress and verified sentences |
+| `copilot/memory.py` | Memory replayed from the hash-chained audit trail (`MEMORY` entries): device types a named person chose, pinned notes |
+| `monitor/compare.py` | Deterministic side-by-side numbers for chosen device types |
+| `sources/mhra.py`, `scripts/fetch_mhra_alerts.py`, `.github/workflows/mhra-fetch.yml`, `data/demo/mhra_queries.json` | MHRA (UK) device safety alerts via the GOV.UK search API, stored as gated, labelled context |
+| `copilot/tools.py`, `skills/safety-copilot` 1.3.0 | Tools `my_device_types`, `compare_signals`, `mhra_alerts` (13 tools) |
+| `copilot/agent.py` | `ask(on_event=…)` progress events for streaming |
+| `demo/voice/question-a.wav`, `question-b.wav` | Charan's two ElevenLabs text-to-speech samples (not a real practitioner) |
+| `tests/unit/test_theme.py`, `test_memory_compare.py`, `test_mhra.py` | Contrast for every theme, memory/compare/tools/streaming, MHRA parsing/storage/gate |
 
 ## What is PRE-EXISTING (the base — NOT presented as hackathon work)
 

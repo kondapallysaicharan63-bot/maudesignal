@@ -10,12 +10,14 @@ import re
 from typing import Any
 
 from maudesignal.gate.evidence import (
+    AlertRef,
     DeviceRef,
     EvidenceRecord,
     EvidenceStore,
     LiteratureRef,
     RecallRef,
 )
+from maudesignal.sources.mhra import SOURCE_MHRA
 from maudesignal.sources.openfda_sources import SOURCE_510K, SOURCE_RECALL
 from maudesignal.storage.database import Database
 from maudesignal.storage.models import ExternalSourceRecord
@@ -88,6 +90,18 @@ def article_from_row(row: ExternalSourceRecord) -> LiteratureRef:
     )
 
 
+def alert_from_row(row: ExternalSourceRecord) -> AlertRef:
+    """Convert a stored ``mhra_alert`` row to gate evidence (UK context, not FDA)."""
+    return AlertRef(
+        alert_id=row.source_id,
+        title=row.title or "",
+        description=row.abstract or "",
+        issued=row.publication_date,
+        product_code=row.product_code,
+        url=row.url,
+    )
+
+
 def store_from_database(db: Database, *, product_code: str | None = None) -> EvidenceStore:
     """Load stored MAUDE events, the 510(k) catalog and fetched sources as gate evidence.
 
@@ -131,4 +145,5 @@ def store_from_database(db: Database, *, product_code: str | None = None) -> Evi
         recalls=[recall_from_row(r) for r in rows(SOURCE_RECALL)],
         clearances=[clearance_from_row(r) for r in rows(SOURCE_510K)],
         literature=[article_from_row(r) for r in rows(SOURCE_PUBMED)],
+        alerts=[alert_from_row(r) for r in rows(SOURCE_MHRA)],
     )

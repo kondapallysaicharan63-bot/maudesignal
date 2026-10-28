@@ -30,6 +30,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -174,6 +175,10 @@ def _unparsed(content: str) -> GateReport:
     return GateReport([SentenceVerdict(text, "block", (), (UNPARSED_REASON,))])
 
 
+EventFn = Callable[[str, dict[str, Any]], None]
+"""Progress callback: ``(kind, data)`` with kind in model / tool / gate / repair / done."""
+
+
 class CopilotAgent:
     """Muse Spark tool-use loop + citation gate + one repair turn."""
 
@@ -224,6 +229,7 @@ class CopilotAgent:
         self._reasoning_effort = reasoning_effort
         self._response_format = response_format_from_schema(self._skill.output_schema)
         self._history: list[dict[str, Any]] = []
+        self._on_event: EventFn | None = None
 
     @property
     def context(self) -> ToolContext:
@@ -270,8 +276,26 @@ class CopilotAgent:
             result.length_stops += 1  # hit max_tokens: the JSON is cut off
         return str(resp.choices[0].message.content or "")
 
-    def ask(self, question: str) -> CopilotResult:
-        """Answer one question (multi-turn: earlier Q/A pairs are kept as context)."""
+    def _emit(self, kind: str, **data: Any) -> None:
+        if self._on_event is not None:
+            self._on_event(kind, data)
+
+    def ask(self, question: str, on_event: EventFn | None = None) -> CopilotResult:
+        """Answer one question (multi-turn: earlier Q/A pairs are kept as context).
+
+        Args:
+            question: The analyst's question.
+            on_event: Optional progress callback, called as the work happens (model
+                calls, each tool call, each gate pass, the repair turn), so a UI can
+                stream progress. Only gate-verified sentences are ever in the result.
+        """
+        self._on_event = on_event
+        try:
+            return self._ask(question)
+        finally:
+            self._on_event = None
+
+    def _ask(self, question: str) -> CopilotResult:
         messages: list[dict[str, Any]] = [
             {"role": "system", "content": self._skill.system_prompt},
             *self._history,
@@ -291,16 +315,19 @@ class CopilotAgent:
         result.parse_failed = not ok
         report = verify_answer(sentences, self._ctx.store) if ok else _unparsed(content)
         result.first_pass_report = report
+        self._emit("gate", stage="first pass", passed=report.passed, blocked=report.blocked)
 
         repairs = 0
         while report.blocked and repairs < self._max_repairs:
             repairs += 1
+            self._emit("repair", blocked=report.blocked)
             messages.append({"role": "user", "content": _repair_message(report)})
             content = self._run_until_answer(messages, result)
             repaired, ok = self._parse_or_retry(content, messages, result)
             if not ok:
                 break
             report = verify_answer(repaired, self._ctx.store)
+            self._emit("gate", stage="after repair", passed=report.passed, blocked=report.blocked)
             result.repaired = True
             result.parse_failed = False
 
@@ -313,10 +340,12 @@ class CopilotAgent:
         ]
         self._history = self._history[-8:]
         self._audit(result)
+        self._emit("done", passed=report.passed, blocked=report.blocked)
         return result
 
     def _run_until_answer(self, messages: list[dict[str, Any]], result: CopilotResult) -> str:
-        for _ in range(self._max_tool_rounds):
+        for n in range(self._max_tool_rounds):
+            self._emit("model", round=n + 1)
             resp = self._create(messages, tools=True)
             self._count(resp, result)
             msg = resp.choices[0].message
@@ -345,6 +374,7 @@ class CopilotAgent:
                 }
             )
             for tc in tool_calls:
+                self._emit("tool", name=tc.function.name, arguments=tc.function.arguments)
                 out = call_tool(self._ctx, tc.function.name, tc.function.arguments)
                 payload = json.dumps(out, default=str)
                 try:

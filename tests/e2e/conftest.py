@@ -17,6 +17,7 @@ from playwright.sync_api import Page
 
 BASE_URL = "http://localhost:8501"
 SIDEBAR_SELECTOR = "section[data-testid='stSidebar']"
+TOPBAR_SELECTOR = ".st-key-ms_topbar"
 LOAD_TIMEOUT = 20_000
 NAV_SETTLE = 4_500
 
@@ -51,10 +52,13 @@ def ms_page(page: Page, _require_server: None) -> Page:  # type: ignore[misc]
 
 
 def navigate(page: Page, nav_text: str) -> None:
-    """Click a sidebar nav button and wait for the page to settle."""
-    sidebar = page.locator(SIDEBAR_SELECTOR)
-    btn = sidebar.get_by_role("button", name=nav_text, exact=False).first
-    btn.click()
+    """Click a top-bar page (or a sidebar "More tools" button) and wait for it to settle."""
+    top = page.locator(TOPBAR_SELECTOR).get_by_role("radio", name=nav_text, exact=False)
+    if top.count():
+        top.first.click()
+    else:
+        sidebar = page.locator(SIDEBAR_SELECTOR)
+        sidebar.get_by_role("button", name=nav_text, exact=False).first.click()
     page.wait_for_timeout(NAV_SETTLE)
     try:
         page.wait_for_load_state("networkidle", timeout=8_000)

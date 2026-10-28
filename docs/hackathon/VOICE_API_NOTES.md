@@ -79,17 +79,18 @@ mis-hearing before trusting the answer. A clip with no speech raises
 
 ## Demo audio
 
-The committed `demo/voice/question.wav` (3.2 s, mono 16 kHz 16-bit) is a
-robotic placeholder synthesized offline with ffmpeg's `flite` filter, and it
-still asks the old-wording question. The question for the video (wording
-review, 2026-10-28) is:
+The demo questions are two text-to-speech samples Charan made with
+ElevenLabs (not a recording of a real practitioner, and the demo never says
+otherwise): `demo/voice/question-a.wav` (14.2 s) and `demo/voice/question-b.wav`
+(10.2 s), both converted to mono 16 kHz 16-bit with metadata stripped:
 
-> What changed this week? Did reports suddenly increase for any device?
+    ffmpeg -i sample.mp3 -ac 1 -ar 16000 -c:a pcm_s16le -map_metadata -1 demo/voice/question-a.wav
 
-Charan records it in their own voice and replaces the file, keeping the format:
-`ffmpeg -i mine.m4a -ac 1 -ar 16000 -c:a pcm_s16le -map_metadata -1 demo/voice/question.wav`.
+The earlier robotic `flite` placeholder (`question.wav`) was removed; Piper is
+not used. The record workflow transcribes every `demo/voice/question-*.wav`
+and answers each, labelled `00-voice-a`, `00-voice-b`.
 
 Record (needs the key; CI does this from the repository secret):
 
-    python scripts/record_demo_transcripts.py --voice-file demo/voice/question.wav \
-        --voice-label 00-voice-what-changed
+    python scripts/record_demo_transcripts.py --voice-file demo/voice/question-a.wav \
+        --voice-label 00-voice-a

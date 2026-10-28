@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en" data-theme="light"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../maudesignal.css"><title>Button</title>
+<style>body{padding:24px} .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center} .stack{display:flex;flex-direction:column;gap:14px}</style>
+</head><body>
+<div class="stack"><div class="row"><a class="ms-btn ms-btn--primary" href="#">Open investigation <span class="ms-i" aria-hidden="true">arrow_forward</span></a><a class="ms-btn ms-btn--secondary" href="#">Download evidence pack</a><button class="ms-btn ms-btn--primary ms-btn--sm">Run extraction</button><button class="ms-btn ms-btn--secondary" disabled>Generating…</button></div>
+<div class="row" style="background:var(--inverse);padding:16px;border-radius:var(--radius-md)"><a class="ms-btn ms-btn--on-inverse" href="#">Open investigation <span class="ms-i" aria-hidden="true">arrow_forward</span></a><a class="ms-btn ms-btn--ghost-inverse" href="#">Evidence pack</a></div></div>
+<div style="position:fixed;right:12px;bottom:12px;display:flex;gap:4px;font:600 12px system-ui;z-index:9"><button onclick="document.documentElement.dataset.theme='light'">Paper</button><button onclick="document.documentElement.dataset.theme='dark'">Night</button><button onclick="document.documentElement.dataset.theme='contrast'">Contrast</button></div>
+</body></html>

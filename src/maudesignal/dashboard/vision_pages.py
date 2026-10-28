@@ -41,11 +41,7 @@ def vision_dir() -> Path:
     return Path(os.environ.get("MAUDESIGNAL_VISION_DIR", str(DEMO_VISION_DIR)))
 
 
-_PILL = {
-    "VERIFIED": ("#e7f6ec", "#1e7b3a"),
-    "CONFLICT": ("#fff4e5", "#a15c00"),
-    "UNVERIFIABLE": ("#eef1f4", "#4b5563"),
-}
+_PILL = {"VERIFIED": "ok", "CONFLICT": "warn", "UNVERIFIABLE": "info"}
 _KEY_NOTE = (
     "Live reading needs a Meta Model API key (`META_MODEL_API_KEY`). Without one this page "
     "shows readings recorded from real Muse Spark and SAM 3.1 runs by "
@@ -58,12 +54,9 @@ def _has_key() -> bool:
 
 
 def pill(status: str) -> str:
-    """HTML pill for a field status."""
-    bg, fg = _PILL.get(status, _PILL["UNVERIFIABLE"])
-    return (
-        f'<span style="background:{bg};color:{fg};border-radius:10px;padding:1px 8px;'
-        f'font-size:12px;font-weight:600">{html.escape(status)}</span>'
-    )
+    """HTML pill for a field status (design-system colours, word always shown)."""
+    cls = _PILL.get(status, _PILL["UNVERIFIABLE"])
+    return f'<span class="ms-pill {cls}">{html.escape(status)}</span>'
 
 
 def _fmt(value: Any) -> str:
@@ -95,7 +88,7 @@ def field_rows_html(fields: list[FieldVerdict]) -> str:
             f"<td style='vertical-align:top'>{pill(f.status)}</td>"
             f"<td style='vertical-align:top'><code>{html.escape(f.name)}</code></td>"
             f"<td style='vertical-align:top'>{shown}{note}</td>"
-            f"<td style='vertical-align:top;font-size:12px;color:#4b5563'>{checks}</td>"
+            f"<td class='ms-muted' style='vertical-align:top;font-size:12px'>{checks}</td>"
             "</tr>"
         )
     return (

@@ -267,8 +267,8 @@ def test_sentence_html_marks_withheld() -> None:
     from maudesignal.dashboard.copilot_pages import _evidence_links, _sentence_html
 
     blocked = _sentence_html({"text": "x <b>", "status": "block", "reasons": ["count: no"]})
-    assert "WITHHELD" in blocked and "&lt;b&gt;" in blocked and "count: no" in blocked
-    assert "VERIFIED" in _sentence_html({"text": "ok", "status": "pass"})
+    assert "Withheld" in blocked and "&lt;b&gt;" in blocked and "count: no" in blocked
+    assert "Verified" in _sentence_html({"text": "ok", "status": "pass"})
     s = {"claims": [{"evidence_ids": ["50426770", "21 CFR 803.50"]}]}
     assert "50426770" in _evidence_links(s) and "CFR" not in _evidence_links(s)
     mixed = _evidence_links(

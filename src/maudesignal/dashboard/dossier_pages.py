@@ -190,7 +190,7 @@ def page_dossier(db: Database) -> None:
             b64 = base64.b64encode(out.html.encode("utf-8")).decode("ascii")
             st.html(
                 f'<iframe src="data:text/html;base64,{b64}" style="width:100%;height:900px;'
-                'border:1px solid #c9d3df"></iframe>'
+                'border:1px solid var(--rule)"></iframe>'
             )
     with right:
         st.markdown("**Independent reviewer — Muse Wonder 1.0**")

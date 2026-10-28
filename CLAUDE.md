@@ -122,11 +122,18 @@ Full list: [docs/01_vision_mission.md §6](docs/01_vision_mission.md).
 > Hackathon (Oct 26 – Nov 4, 2026) a scoped conversational surface was added:
 > the `safety-copilot` (Muse Spark via the Meta Model API, `src/maudesignal/copilot/`).
 > It is not a general chatbot. It is a B2B regulatory triage aid that answers
-> only through 9 deterministic tools over stored records, emits structured
+> only through 13 deterministic tools over stored records, emits structured
 > claims, and shows nothing that the claim-level gate (`src/maudesignal/gate/`)
 > has not verified. It never gives medical advice; its actions are drafts that
 > a named human approves; nothing is filed with FDA. Every other boundary
 > above still holds. File-by-file list: [HACKATHON.md](HACKATHON.md).
+>
+> **MHRA scope note (adopted by the owner, Oct 2026).** One non-FDA source was
+> adopted: MHRA (UK) device safety alerts from the public GOV.UK search API
+> (`src/maudesignal/sources/mhra.py`). They are labelled "MHRA (UK)", shown as
+> regulator context only, never counted in a MAUDE number or signal, and quotes
+> from them pass the same gate. No other regulator (EU MDR, Health Canada,
+> PMDA, NMPA) is in scope, and no surface may claim their coverage.
 
 ---
 
@@ -328,6 +335,23 @@ skipped at construction with a warning. Pool config errors raise
 Other useful env vars: `LLM_PROVIDER`, `GROQ_MODEL`, `OPENAI_MODEL`,
 `CLAUDE_MODEL_EXTRACTION`, `GEMINI_MODEL`, `PROVIDER_FALLBACK_ORDER`.
 See `maudesignal/config.py` for the authoritative list.
+
+---
+
+## 8.5 Design System (all UI work)
+
+Every user-facing surface (the website, the Streamlit dashboard, PSUR
+report HTML) uses [design-system/](design-system/README.md): bento layout,
+editorial paper theme, Newsreader + Geist. Themes: Paper (Light), Night
+(Dark), High contrast, plus Black and Pink (added for the dashboard's theme
+picker; same token names, AA contrast checked by `tests/unit/test_theme.py`).
+Link `design-system/tokens.css` and `design-system/maudesignal.css`, use the
+`.ms-*` classes and `var(--token)` values, and copy markup from
+`design-system/components/*.html`. The dashboard loads them through
+`src/maudesignal/dashboard/theme.py` (+ `streamlit_bridge.css`). Do not
+introduce other palettes, fonts, background images or gradients. Change
+the look by editing `design-system/tokens.json` and regenerating
+`tokens.css` (`python3.12 design-system/build_tokens.py`).
 
 ---
 

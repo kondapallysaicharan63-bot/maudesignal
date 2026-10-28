@@ -19,6 +19,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
+from typing import Any
 
 import pytest
 from playwright.sync_api import Locator, Page, expect
@@ -32,7 +33,7 @@ from maudesignal.monitor.digest import RANKING_ORDER, digest_from_database
 from maudesignal.storage.database import Database
 from maudesignal.vision import DEMO_K_NUMBERS
 from maudesignal.vision.pipeline import DEMO_VISION_DIR
-from tests.e2e.conftest import SIDEBAR_SELECTOR, navigate
+from tests.e2e.conftest import BASE_URL, SIDEBAR_SELECTOR, TOPBAR_SELECTOR, navigate
 
 pytestmark = pytest.mark.e2e
 
@@ -71,11 +72,17 @@ def _open(page: Page, nav: str) -> Locator:
 
 
 class TestHackathonNav:
-    def test_sidebar_labels_the_new_pages(self, ms_page: Page) -> None:
-        sidebar = ms_page.locator(SIDEBAR_SELECTOR)
-        expect(sidebar).to_contain_text("NEW — built during the Meta hackathon")
+    def test_top_bar_lists_the_product_pages(self, ms_page: Page) -> None:
+        bar = ms_page.locator(TOPBAR_SELECTOR)
+        expect(bar).to_contain_text("MaudeSignal")
         for name in ("What changed", "Copilot", "Actions & Audit", "Dossier", "Vision"):
-            expect(sidebar.get_by_role("button", name=name, exact=False).first).to_be_visible()
+            expect(bar.get_by_role("radio", name=name, exact=False).first).to_be_visible()
+        expect(bar.get_by_role("radio", name="What changed", exact=False)).to_have_attribute(
+            "aria-checked", "true"
+        )
+        sidebar = ms_page.locator(SIDEBAR_SELECTOR)
+        expect(sidebar).to_contain_text("More tools")
+        expect(sidebar.get_by_role("button", name="PSUR Reports", exact=False)).to_be_visible()
 
     @pytest.mark.parametrize(
         "nav", ["What changed", "Copilot", "Actions & Audit", "Dossier", "Vision"]
@@ -176,7 +183,7 @@ class TestCopilot:
         # The page's default claim (50 reports) — expected verdict from the gate itself.
         expected = verify_sentence(f"{code} has 50 reports.", [CountClaim(code, 50)], store)
         assert expected.status == "block", "test premise: the default claim is wrong"
-        expect(panel).to_contain_text("WITHHELD")
+        expect(panel).to_contain_text("Withheld")
         expect(panel).to_contain_text(f"{code} has 50 reports.")
 
         box = panel.get_by_label("Claimed number of reports")
@@ -189,7 +196,7 @@ class TestCopilot:
             ).status
             == "pass"
         )
-        expect(panel).to_contain_text("VERIFIED")
+        expect(panel).to_contain_text("Verified")
         expect(panel).to_contain_text(f"{code} has {true_count} reports.")
 
     def test_gate_cfr_section_matches_gate_verdict(self, ms_page: Page, db: Database) -> None:
@@ -201,7 +208,7 @@ class TestCopilot:
         panel = ms_page.get_by_role("tabpanel").filter(has_text="Claim type").first
         verdict = verify_sentence("See 21 CFR 820.100.", [RegulationClaim("820.100")], store)
         expect(panel).to_contain_text("See 21 CFR 820.100.")
-        expect(panel).to_contain_text("VERIFIED" if verdict.status == "pass" else "WITHHELD")
+        expect(panel).to_contain_text("Verified" if verdict.status == "pass" else "Withheld")
 
     @keyless
     def test_ask_live_is_stored_first_without_a_key(self, ms_page: Page) -> None:
@@ -296,7 +303,10 @@ class TestVision:
         main = _open(ms_page, "Vision")
         expect(main).to_contain_text("Live reading needs a Meta Model API key")
         box = main.locator("[data-testid='stSelectbox']").filter(has_text="510(k) number").first
-        box.click()
+        box.scroll_into_view_if_needed()
+        ms_page.wait_for_timeout(500)
+        box.get_by_role("button", name="Open").click()
+        ms_page.get_by_role("option").first.wait_for()
         options = " ".join(ms_page.get_by_role("option").all_inner_texts())
         for k, _ in DEMO_K_NUMBERS:
             assert k in options, f"{k} missing from the 510(k) selector"
@@ -335,3 +345,66 @@ class TestWhoFiled:
         expect(_main(ms_page)).to_contain_text(
             f"Manufacturer: {len(manufacturer)} stored report(s)"
         )
+
+
+# ---------------------------------------------------------------------------
+# Themes (design-system tokens; top-bar picker)
+# ---------------------------------------------------------------------------
+
+
+def _css_var(page: Page, name: str) -> str:
+    return str(
+        page.evaluate(
+            f"getComputedStyle(document.documentElement).getPropertyValue('--{name}').trim()"
+        )
+    ).lower()
+
+
+def _bg(page: Page, selector: str) -> str:
+    return str(
+        page.evaluate(f'getComputedStyle(document.querySelector("{selector}")).backgroundColor')
+    )
+
+
+class TestThemes:
+    @pytest.mark.parametrize("label", ["Light", "Dark", "Black", "Pink", "High contrast"])
+    def test_theme_from_link_sets_design_tokens(self, page: Page, label: str) -> None:
+        from maudesignal.dashboard.theme import THEME_IDS, theme_values
+
+        tid = THEME_IDS[label]
+        assert tid is not None
+        page.goto(f"{BASE_URL}/?theme={tid}", wait_until="networkidle")
+        page.wait_for_selector(TOPBAR_SELECTOR, timeout=20_000)
+        page.wait_for_timeout(2_000)
+        want = theme_values(tid)
+        assert _css_var(page, "paper") == want["paper"].lower()
+        assert _css_var(page, "ink") == want["ink"].lower()
+        # The page itself is painted with the theme's paper colour.
+        r, g, b = (int(want["paper"][i : i + 2], 16) for i in (1, 3, 5))
+        assert _bg(page, ".stApp") == f"rgb({r}, {g}, {b})"
+        main = _main(page)
+        expect(main).to_contain_text(FRAMING)
+        assert page.locator(EXCEPTION).count() == 0
+
+    def test_system_follows_the_os(self, browser: Any) -> None:
+        from maudesignal.dashboard.theme import theme_values
+
+        for scheme, tid in (("light", "light"), ("dark", "dark")):
+            ctx = browser.new_context(color_scheme=scheme)
+            page = ctx.new_page()
+            page.goto(f"{BASE_URL}/?theme=system", wait_until="networkidle")
+            page.wait_for_selector(TOPBAR_SELECTOR, timeout=20_000)
+            page.wait_for_timeout(2_000)
+            assert _css_var(page, "paper") == theme_values(tid)["paper"].lower()
+            ctx.close()
+
+    def test_picker_switches_theme_and_link(self, ms_page: Page) -> None:
+        from maudesignal.dashboard.theme import theme_values
+
+        box = ms_page.locator(".st-key-theme_select")
+        box.get_by_role("button", name="Open").click()
+        ms_page.get_by_role("option", name="Pink", exact=True).first.click()
+        ms_page.wait_for_timeout(2_500)
+        assert _css_var(ms_page, "paper") == theme_values("pink")["paper"].lower()
+        assert _css_var(ms_page, "surface") == "#ffffff"  # white solid cards
+        assert "theme=pink" in ms_page.url

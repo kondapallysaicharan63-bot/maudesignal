@@ -16,6 +16,7 @@ from maudesignal.gate.claims import (
     claim_from_dict,
 )
 from maudesignal.gate.evidence import (
+    AlertRef,
     DeviceRef,
     EvidenceRecord,
     EvidenceStore,
@@ -44,6 +45,7 @@ __all__ = [
     "EvidenceStore",
     "GateReport",
     "LiteratureClaim",
+    "AlertRef",
     "LiteratureRef",
     "QuoteClaim",
     "RecallClaim",

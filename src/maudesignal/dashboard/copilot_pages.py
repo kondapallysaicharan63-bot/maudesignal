@@ -15,6 +15,7 @@ import html
 import json
 import os
 import re
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
@@ -37,7 +38,12 @@ from maudesignal.gate import (
 )
 from maudesignal.gate.loader import store_from_database
 from maudesignal.monitor.deterioration import detect_from_database
-from maudesignal.monitor.digest import RANKING_ORDER, digest_from_database, render_markdown
+from maudesignal.monitor.digest import (
+    CHANGE_LABELS,
+    RANKING_ORDER,
+    digest_from_database,
+    render_markdown,
+)
 from maudesignal.monitor.sources import not_by_manufacturer, source_counts, sourced_reports
 from maudesignal.sources.openfda_sources import k510_url
 from maudesignal.storage.database import Database
@@ -49,8 +55,7 @@ TRANSCRIPT_DIR = Path(
 MAUDE_URL = "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id={}"
 
 FRAMING_BANNER = (
-    '<div style="border:1px solid #c9d3df;border-left:6px solid #1877F2;border-radius:8px;'
-    'padding:10px 14px;margin:0 0 14px 0;background:#f5f8fc;font-size:14px;color:#1c2b33">'
+    '<div class="ms-frame">'
     "<b>B2B regulatory triage aid for QA/RA teams.</b> Not medical advice. "
     "It only shows facts it can match to the FDA record: every number, quote, device id "
     "and CFR section is checked against stored openFDA records first. "
@@ -58,18 +63,12 @@ FRAMING_BANNER = (
     "Nothing is filed with FDA automatically.</div>"
 )
 
-_PILL = {
-    "pass": ("#e7f6ec", "#1e7b3a", "VERIFIED"),
-    "block": ("#fdecea", "#b3261e", "WITHHELD"),
-}
+_PILL = {"pass": ("ok", "Verified"), "block": ("err", "Withheld")}
 
 
 def _pill(status: str) -> str:
-    bg, fg, label = _PILL[status]
-    return (
-        f'<span style="background:{bg};color:{fg};font-weight:600;font-size:11px;'
-        f'padding:2px 8px;border-radius:10px;margin-right:6px">{label}</span>'
-    )
+    cls, label = _PILL[status]
+    return f'<span class="ms-pill {cls}">{label}</span>'
 
 
 def _sentence_html(s: dict[str, Any]) -> str:
@@ -77,9 +76,9 @@ def _sentence_html(s: dict[str, Any]) -> str:
     if s["status"] == "pass":
         body = text
     else:
-        body = f'<span style="text-decoration:line-through;color:#8a8d91">{text}</span>'
+        body = f'<span class="ms-strike">{text}</span>'
         reasons = "".join(f"<li>{html.escape(r)}</li>" for r in s.get("reasons", []))
-        body += f'<ul style="margin:4px 0 0 18px;color:#b3261e;font-size:13px">{reasons}</ul>'
+        body += f'<ul class="ms-err-text" style="margin:4px 0 0 18px;font-size:13px">{reasons}</ul>'
     return f'<div style="margin:6px 0">{_pill(s["status"])}{body}</div>'
 
 
@@ -106,11 +105,55 @@ def _evidence_link(eid: str) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _hero_html(digest: Any) -> str:
+    """The page's one ink tile (design-system HeroSignal): the top-ranked change and why."""
+    top = digest.ranked[0]
+    device = digest.device_types.get(top.product_code)
+    label = CHANGE_LABELS[top.classification]
+    brands = digest.window_brands.get(top.product_code, [])
+    reason = digest.rank_reasons[top.product_code].replace(">=", "≥")
+    fig = (
+        f"{top.spike_ratio:.2f}×"
+        if top.classification == "spike" and top.spike_ratio is not None
+        else str(top.current_count)
+    )
+    named = (
+        "Devices named on this week's reports: "
+        + ", ".join(f"{html.escape(b)} ({n} of {top.current_count} reports)" for b, n in brands)
+        + "."
+        if brands
+        else ""
+    )
+    return (
+        '<article class="ms-tile ms-hero" style="margin-bottom:var(--space-2)">'
+        '<svg class="ms-hero__rings" viewBox="0 0 300 300" aria-hidden="true">'
+        '<circle cx="150" cy="150" r="40"/><circle cx="150" cy="150" r="70"/>'
+        '<circle cx="150" cy="150" r="100"/><circle cx="150" cy="150" r="130"/></svg>'
+        '<div class="ms-kicker"><span class="ms-i" aria-hidden="true">trending_up</span>'
+        f"Top signal: {top.product_code}"
+        + (f" · {html.escape(device)}" if device else "")
+        + "</div>"
+        f'<h2 class="ms-hero__title">{html.escape(label[:1].upper() + label[1:])}</h2>'
+        f'<p class="ms-hero__deck"><b>Why it is ranked first.</b> {html.escape(reason)}</p>'
+        '<div class="ms-hero__foot">'
+        f'<div class="ms-hero__fig ms-num">{fig}<small>'
+        f"{top.current_count} reports this week · weekly mean "
+        f"{top.baseline_weekly_mean:.2f} before</small></div></div>"
+        f'<p class="ms-hero__deck" style="margin:var(--space-4) 0 0;font-size:13px">{named} '
+        f"Ranking order: {html.escape('; then '.join(RANKING_ORDER))}. "
+        "Deterministic — no model involved. Flagged for a person to review; it does not "
+        "decide whether a report or a CAPA is required.</p>"
+        "</article>"
+    )
+
+
 def page_changes(db: Database) -> None:
     """What changed this week: the deterministic digest (no model)."""
     st.html(FRAMING_BANNER)
     result = detect_from_database(db)
     digest = digest_from_database(db, result)
+    if digest.ranked:
+        st.html(_hero_html(digest))
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Reports suddenly increased", digest.increased_count)
     c2.metric("More serious than usual", digest.serious_count)
@@ -122,27 +165,8 @@ def page_changes(db: Database) -> None:
         f"This week: {w.current_start} → {w.current_end}; baseline: "
         f"{w.baseline_start} → {w.baseline_end}."
     )
-    if digest.ranked:
-        top = digest.ranked[0]
-        device = digest.device_types.get(top.product_code)
-        brands = digest.window_brands.get(top.product_code, [])
-        with st.container(border=True):
-            st.markdown(
-                f"**Top signal: {top.product_code}**"
-                + (f" · {html.escape(device)}" if device else "")
-            )
-            st.markdown(f"**Why it is ranked first.** {digest.rank_reasons[top.product_code]}")
-            if brands:
-                st.caption(
-                    "Devices named on this week's reports: "
-                    + ", ".join(f"{b} ({n} of {top.current_count} reports)" for b, n in brands)
-                    + "."
-                )
-            st.caption(
-                "Ranking order: "
-                + "; then ".join(RANKING_ORDER)
-                + ". Deterministic — no model involved."
-            )
+    _compare_section(db)
+    _mhra_section(db)
     st.markdown(render_markdown(digest))
     _who_filed(db, digest)
     digests = sorted((PROJECT_ROOT / "digests").glob("*.md"))
@@ -151,6 +175,90 @@ def page_changes(db: Database) -> None:
             for p in reversed(digests):
                 st.markdown(f"**{p.stem}**")
                 st.code(p.read_text(encoding="utf-8")[:4000], language="markdown")
+
+
+def _compare_section(db: Database) -> None:
+    """Signal compare for the device types the user chooses, and the remembered list."""
+    from maudesignal.copilot.memory import CopilotMemoryError, load_memory, set_device_types
+    from maudesignal.monitor.compare import compare_signals
+
+    codes = sorted({e.product_code for e in db.list_normalized_events() if e.product_code})
+    mem = load_memory(db)
+    st.subheader("Compare the device types you choose")
+    st.caption(
+        "You pick the product codes; MaudeSignal does not decide which devices are similar. "
+        "Same 7-day window and rules as above. Deterministic — no model involved."
+    )
+    default = [c for c in mem.device_types if c in codes] or codes
+    chosen = st.multiselect("Device types (FDA product codes)", codes, default=default, key="cmp")
+    if chosen:
+        cmp = compare_signals(db, chosen)
+        st.dataframe(
+            pd.DataFrame(
+                [
+                    {
+                        "device type": r.product_code,
+                        "change": r.change,
+                        "this week": r.this_week,
+                        "weekly mean before": r.baseline_weekly_mean,
+                        "ratio": r.ratio_to_baseline,
+                        "injury/death this week": r.injury_death_this_week,
+                        "not filed by a manufacturer": r.not_by_manufacturer_this_week,
+                        "stored, all dates": r.stored_total,
+                    }
+                    for r in cmp.rows
+                ]
+            ),
+            hide_index=True,
+            use_container_width=True,
+        )
+    with st.expander(
+        "Remember these device types"
+        + (f" (remembered: {', '.join(mem.device_types)})" if mem.device_types else "")
+    ):
+        st.caption(
+            "Saved as an entry in the tamper-evident audit trail with your name. The copilot "
+            "can read this list (tool `my_device_types`) but cannot change it."
+        )
+        who = st.text_input("Your name", key="mem_actor")
+        if st.button("Remember this list", key="mem_save"):
+            try:
+                set_device_types(db, chosen, actor=who)
+                st.success(f"Remembered: {', '.join(sorted(chosen)) or 'none'}.")
+            except CopilotMemoryError as exc:
+                st.error(str(exc))
+
+
+def _mhra_section(db: Database) -> None:
+    """MHRA (UK) device safety alerts: regulator context, clearly separate from FDA data."""
+    from maudesignal.sources.mhra import SOURCE_MHRA
+
+    rows = db.list_external_sources(source_type=SOURCE_MHRA, limit=200)
+    with st.expander(f"UK regulator context: MHRA device safety alerts ({len(rows)} stored)"):
+        st.caption(
+            "From the MHRA (UK) via the public GOV.UK search API, searched with terms a person "
+            "chose for each device type (`data/demo/mhra_queries.json`). Context only: not FDA "
+            "data, not counted in any number on this page."
+        )
+        if not rows:
+            st.caption("None stored yet (`scripts/fetch_mhra_alerts.py`).")
+            return
+        st.dataframe(
+            pd.DataFrame(
+                [
+                    {
+                        "searched for (FDA product code)": r.product_code or "",
+                        "issued": r.publication_date or "",
+                        "MHRA alert": r.title or "",
+                        "link": r.url or "",
+                    }
+                    for r in sorted(rows, key=lambda r: r.publication_date or "", reverse=True)
+                ]
+            ),
+            hide_index=True,
+            use_container_width=True,
+            column_config={"link": st.column_config.LinkColumn("link")},
+        )
 
 
 CAPA_NEED_NOTE = (
@@ -248,9 +356,9 @@ def _voice_html(voice: dict[str, Any]) -> str:
         facts.append(str(voice["language"]))
     facts.append("Meta Voice Transcribe")
     return (
-        '<div style="font-size:14px;color:#1c2b33;margin:0 0 4px 0">'
+        '<div style="font-size:14px;margin:0 0 4px 0">'
         f"🎙 <b>Heard:</b> “{html.escape(str(voice.get('transcript_text', '')))}”"
-        f' <span style="color:#65676b;font-size:12px">({html.escape(" · ".join(facts))})</span>'
+        f' <span class="ms-muted" style="font-size:12px">({html.escape(" · ".join(facts))})</span>'
         "</div>"
     )
 
@@ -328,7 +436,7 @@ def _gate_playground(db: Database) -> None:
     st.html(
         _sentence_html({"text": sentence, "status": v.status, "reasons": v.reasons})
         + (
-            f'<div style="font-size:13px;color:#1e7b3a">{html.escape(cv.reason)}</div>'
+            f'<div class="ms-ok-text" style="font-size:13px">{html.escape(cv.reason)}</div>'
             if v.status == "pass"
             else ""
         )
@@ -379,14 +487,51 @@ def _live_copilot(db: Database) -> None:  # pragma: no cover - needs a live key
     if q:
         try:
             spend_guard(db).check("copilot")
-            with st.spinner("Muse Spark is working…"):
-                res = st.session_state["copilot_agent"].ask(q)
+            with st.status("Muse Spark is working…", expanded=True) as status:
+                res = st.session_state["copilot_agent"].ask(
+                    q, on_event=lambda kind, data: status.write(progress_line(kind, data))
+                )
+                status.update(label="Checked by the citation gate", state="complete")
+            st.write_stream(stream_verified(result_to_dict(res)))
             st.session_state["copilot_log"].append(result_to_dict(res))
         except SpendLimitError as exc:
             _fallback(q, str(exc))
     for t in reversed(st.session_state["copilot_log"]):
         with st.container(border=True):
             _render_transcript(t)
+
+
+def progress_line(kind: str, data: dict[str, Any]) -> str:
+    """One line of live progress for the Ask tab (what the agent is doing right now)."""
+    if kind == "model":
+        return f"Muse Spark, step {data.get('round')}…"
+    if kind == "tool":
+        return f"Looking up stored records: `{data.get('name')}`"
+    if kind == "gate":
+        return (
+            f"Citation gate ({data.get('stage')}): {data.get('passed', 0)} sentence(s) "
+            f"matched the FDA record, {data.get('blocked', 0)} withheld"
+        )
+    if kind == "repair":
+        return "Asking Muse Spark to correct the withheld sentences (one repair turn)…"
+    if kind == "done":
+        return "Done."
+    return kind
+
+
+def stream_verified(t: dict[str, Any]) -> Iterator[str]:
+    """Yield only gate-verified sentences, word by word (nothing unverified is streamed)."""
+    import time
+
+    shown = [s["text"] for s in t.get("final", {}).get("sentences", []) if s["status"] == "pass"]
+    if not shown:
+        yield "Nothing could be matched to the FDA record, so nothing is shown."
+        return
+    for sentence in shown:
+        for word in sentence.split(" "):
+            yield word + " "
+            time.sleep(0.015)
+        yield "\n\n"
 
 
 def _fallback(question: str, message: str) -> None:

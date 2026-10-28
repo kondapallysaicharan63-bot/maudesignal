@@ -368,6 +368,69 @@ def report_sources(
     }
 
 
+def my_device_types(ctx: ToolContext) -> dict[str, Any]:
+    """The device types a person chose to watch, and their pinned notes (read-only)."""
+    from maudesignal.copilot.memory import load_memory
+
+    mem = load_memory(ctx.db).to_dict()
+    mem["note"] = (
+        "Chosen by a person; the copilot cannot change this list and never decides which "
+        "devices are similar."
+    )
+    return mem
+
+
+def compare_signals(
+    ctx: ToolContext, product_codes: list[str] | None = None, as_of: str | None = None
+) -> dict[str, Any]:
+    """Side-by-side numbers for the chosen device types (default: the remembered list)."""
+    from maudesignal.copilot.memory import load_memory
+    from maudesignal.monitor.compare import compare_signals as _compare
+
+    codes = list(product_codes or load_memory(ctx.db).device_types)
+    if not codes:
+        return {
+            "error": "no device types given and none remembered; ask the user which "
+            "product codes to compare"
+        }
+    out = _compare(ctx.db, codes, parse_yyyymmdd(as_of) if as_of else None).to_dict()
+    out["claim_hint"] = (
+        "state this-week counts with count claims (date_from/date_to = window) and "
+        "shares with share claims; label each change with its `change` words"
+    )
+    return out
+
+
+def mhra_alerts(
+    ctx: ToolContext, product_code: str | None = None, query: str | None = None
+) -> dict[str, Any]:
+    """Stored MHRA (UK) device safety alerts: regulator context, never FDA evidence."""
+    q = (query or "").lower()
+    rows = [
+        a
+        for a in ctx.store.alerts
+        if (not product_code or (a.product_code or "").upper() == product_code.upper())
+        and (not q or q in a.text.lower())
+    ]
+    rows.sort(key=lambda a: (a.issued or "", a.alert_id), reverse=True)
+    return {
+        "regulator": "MHRA (UK)",
+        "note": "UK regulator context only: not FDA data, not counted in any MAUDE number. "
+        "Quote with a quote claim whose source_id is 'mhra:<alert_id>'.",
+        "alert_count": len(rows),
+        "alerts": [
+            {
+                "alert_id": a.alert_id,
+                "title": a.title,
+                "issued": a.issued,
+                "description": a.description[:ABSTRACT_CHARS],
+                "url": a.url,
+            }
+            for a in rows[:MAX_IDS]
+        ],
+    }
+
+
 TOOLS: dict[str, ToolFn] = {
     "overnight_signals": overnight_signals,
     "product_summary": product_summary,
@@ -379,6 +442,9 @@ TOOLS: dict[str, ToolFn] = {
     "device_510k": device_510k,
     "literature": literature,
     "report_sources": report_sources,
+    "my_device_types": my_device_types,
+    "compare_signals": compare_signals,
+    "mhra_alerts": mhra_alerts,
 }
 
 _STR = {"type": "string"}
@@ -542,6 +608,45 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
                 "type": "object",
                 "properties": {"product_code": _STR, "date_from": _YMD, "date_to": _YMD},
                 "required": ["product_code"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "my_device_types",
+            "description": "The device types (FDA product codes) the user chose to watch, "
+            "and notes they pinned. Read-only: only a person changes this list.",
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "compare_signals",
+            "description": "Compare device types side by side for the current 7-day window: "
+            "this week's count, baseline weekly mean, ratio, Injury/Death count and share, "
+            "reports not filed by a manufacturer, and the plain-words change. Omit "
+            "product_codes to use the device types the user chose.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "product_codes": {"type": "array", "items": _STR},
+                    "as_of": _YMD,
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "mhra_alerts",
+            "description": "Stored MHRA (UK regulator) medical device safety alerts, filtered "
+            "by the product code they were fetched for and/or a keyword. UK context only: "
+            "never FDA evidence and never counted in MAUDE numbers.",
+            "parameters": {
+                "type": "object",
+                "properties": {"product_code": _STR, "query": _STR},
             },
         },
     },

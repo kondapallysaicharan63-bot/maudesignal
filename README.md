@@ -50,7 +50,7 @@ what a manufacturer would still do): [docs/VALIDATION_EVIDENCE.md](docs/VALIDATI
    of the reports **not filed by a manufacturer**. On the demo data all 33 LLZ
    reports this week, and all 121 stored, were filed by manufacturers; the
    non-manufacturer reports on file are 3 MYN, 3 QIH and 1 POK (all voluntary).
-3. **Ask the copilot,** typed or by voice. Muse Spark calls 10 tools over
+3. **Ask the copilot,** typed or by voice. Muse Spark calls 13 tools over
    stored MAUDE reports, FDA recalls, 510(k) records and PubMed abstracts and
    answers in a strict JSON schema: sentences, each tagged with the claims it
    makes.
@@ -155,7 +155,7 @@ flowchart LR
 
     subgraph copilot["Copilot (Meta Model API)"]
         Q["Analyst question"] --> SPARK["Muse Spark 1.3<br/>tool calling"]
-        SPARK <--> TOOLS["10 deterministic tools<br/>signals, summary, search, report,<br/>report sources, recalls, 510(k),<br/>literature, MDR clock,<br/>CAPA-need evidence pack"]
+        SPARK <--> TOOLS["13 deterministic tools<br/>signals, summary, search, report,<br/>report sources, recalls, 510(k),<br/>literature, MDR clock, compare,<br/>my device types, MHRA (UK) alerts,<br/>CAPA-need evidence pack"]
         TOOLS --> DB
         SPARK --> ANS["Structured answer<br/>sentences + claims"]
         ANS --> GATE{"Claim-level gate<br/>recompute numbers ·<br/>verbatim quotes · ids · CFR"}

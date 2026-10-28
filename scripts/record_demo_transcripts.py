@@ -8,7 +8,7 @@ so CAPA-need evidence packs created during recording never touch the committed s
 
     python scripts/record_demo_transcripts.py --out demo/transcripts
 
-Voice: ``--voice-file demo/voice/question.wav --voice-label 00-voice-what-changed``
+Voice: ``--voice-file demo/voice/question-a.wav --voice-label 00-voice-a``
 transcribes the WAV with Meta Voice Transcribe, asks the transcript text, and
 saves the transcript with a ``voice`` block (what was heard). With
 ``--voice-file`` the typed demo questions are skipped unless ``--only`` names some.

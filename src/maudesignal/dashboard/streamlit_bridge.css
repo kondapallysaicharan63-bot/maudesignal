@@ -1,0 +1,140 @@
+/* Streamlit widgets and the older --ms-* names, mapped onto the design-system tokens.
+   HACKATHON-BUILT. Loaded by maudesignal.dashboard.theme after tokens + maudesignal.css. */
+:root{
+  --ms-canvas:var(--paper); --ms-card:var(--surface); --ms-surface-soft:var(--surface-sunk);
+  --ms-hairline:var(--rule-strong); --ms-hairline-soft:var(--rule);
+  --ms-ink-deep:var(--ink); --ms-ink:var(--ink); --ms-charcoal:var(--ink-2);
+  --ms-slate:var(--ink-2); --ms-steel:var(--ink-3); --ms-stone:var(--ink-3);
+  --ms-muted:var(--ink-3);
+  --ms-primary:var(--inverse); --ms-primary-deep:var(--ink-2); --ms-on-primary:var(--on-inverse);
+  --ms-primary-soft:var(--accent-soft); --ms-link:var(--accent);
+  --ms-sidebar-bg:var(--surface); --ms-sidebar-ink:var(--ink);
+  --ms-ok-bg:var(--success-soft); --ms-ok-fg:var(--success);
+  --ms-err-bg:var(--critical-soft); --ms-err-fg:var(--critical);
+  --ms-warn-bg:var(--warning-soft); --ms-warn-fg:var(--warning);
+}
+html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"],
+[data-testid="stAppViewContainer"] > .main, [data-testid="stHeader"] {
+  background: var(--paper) !important; }
+.stApp, .stApp p, .stApp li, .stApp span, .stApp label, .stApp td, .stApp th, .stApp div {
+  font-family: var(--font-sans) !important; }
+.stApp .ms-i, .stApp [data-testid="stIconMaterial"], .stApp span.material-symbols-outlined {
+  font-family: var(--font-icons) !important; }
+.stApp, .stApp p, .stApp li, .stApp span, .stApp label, .stApp td, .stApp th {
+  color: var(--ink); }
+.stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h1 *, .stApp h2 *, .stApp h3 * {
+  font-family: var(--font-serif) !important; color: var(--ink) !important;
+  font-weight: 500 !important; letter-spacing: -.4px; }
+.stApp code, .stApp pre, .stApp .ms-code { font-family: var(--font-mono) !important; }
+.stApp code, [data-testid="stCode"] pre { background: var(--surface-sunk) !important;
+  color: var(--ink) !important; }
+section[data-testid="stSidebar"] { background: var(--surface) !important;
+  border-right: 1px solid var(--rule) !important; }
+section[data-testid="stSidebar"] * { color: var(--ink) !important; }
+[data-testid="stMetric"], [data-testid="stExpander"] details, [data-testid="stForm"],
+[data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"]) {
+  background: var(--surface) !important; border-color: var(--rule) !important;
+  border-radius: var(--radius-md) !important; box-shadow: none !important; }
+[data-testid="stMetric"] { border: 1px solid var(--rule); padding: var(--space-4) var(--space-5); }
+[data-testid="stMetricValue"], [data-testid="stMetricValue"] * {
+  font-family: var(--font-serif) !important; color: var(--ink) !important; }
+[data-testid="stMetricLabel"], [data-testid="stMetricLabel"] * { color: var(--ink-2) !important; }
+[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] * {
+  color: var(--ink-2) !important; }
+[data-testid="stMarkdownContainer"] a, .stApp a { color: var(--accent) !important; }
+div[data-baseweb="select"] > div, div[data-baseweb="input"], div[data-baseweb="textarea"],
+.stApp input, .stApp textarea {
+  background: var(--surface) !important; color: var(--ink) !important;
+  border-color: var(--rule-strong) !important; border-radius: var(--radius-sm) !important; }
+div[data-baseweb="popover"] ul, div[data-baseweb="popover"] li, div[data-baseweb="menu"] {
+  background: var(--surface) !important; color: var(--ink) !important; }
+div[data-baseweb="popover"] > div { box-shadow: var(--shadow-pop) !important; }
+[data-testid="stAlert"] { background: var(--surface) !important;
+  border: 1px solid var(--rule) !important; border-radius: var(--radius-sm) !important; }
+[data-testid="stDataFrame"], [data-testid="stTable"] { background: var(--surface) !important;
+  border: 1px solid var(--rule) !important; border-radius: var(--radius-md) !important; }
+[data-testid="stTable"] table, [data-testid="stTable"] th, [data-testid="stTable"] td {
+  color: var(--ink) !important; border-color: var(--rule) !important; }
+.stButton > button, .stFormSubmitButton > button, .stDownloadButton > button,
+[data-testid="stBaseButton-primary"], [data-testid="stBaseButton-secondary"] {
+  background: var(--inverse) !important; color: var(--on-inverse) !important;
+  border: 1px solid var(--inverse) !important; border-radius: var(--radius-xs) !important;
+  font: 600 14px/1 var(--font-sans) !important; min-height: 42px !important;
+  padding: 0 18px !important; box-shadow: none !important; }
+.stButton > button *, .stDownloadButton > button *, .stFormSubmitButton > button * {
+  color: var(--on-inverse) !important; }
+.stButton > button:hover, .stDownloadButton > button:hover { opacity: .9; }
+section[data-testid="stSidebar"] .stButton > button {
+  background: transparent !important; color: var(--ink) !important;
+  border: 1px solid transparent !important; justify-content: flex-start !important; }
+section[data-testid="stSidebar"] .stButton > button * { color: var(--ink-2) !important; }
+section[data-testid="stSidebar"] .stButton > button:hover {
+  background: var(--surface-sunk) !important; }
+[data-testid="stTabs"] button[role="tab"] { border-radius: 0 !important; background: none !important;
+  color: var(--ink-3) !important; font: 600 14px/1 var(--font-sans) !important; }
+[data-testid="stTabs"] button[role="tab"][aria-selected="true"] { color: var(--ink) !important;
+  border-bottom: 2px solid var(--ink) !important; }
+.stApp *:focus-visible { outline: 2px solid var(--focus-ring) !important; outline-offset: 2px; }
+/* Top navigation: the design-system Bar, built from Streamlit widgets */
+.st-key-ms_topbar { border-bottom: 3px double var(--rule-strong); padding-bottom: var(--space-3);
+  margin-bottom: var(--space-2); }
+.st-key-ms_topbar [data-testid="stButtonGroup"] [role="radiogroup"] { background: var(--surface);
+  border: 1px solid var(--rule); border-radius: var(--radius-sm); padding: 3px;
+  display: inline-flex; flex-wrap: wrap; gap: 2px; }
+.st-key-ms_topbar [data-testid="stButtonGroup"] button {
+  background: transparent !important; border: 0 !important; border-radius: var(--radius-xs) !important;
+  color: var(--ink-2) !important; font: 600 14px/1 var(--font-sans) !important; min-height: 34px; }
+.st-key-ms_topbar [data-testid="stButtonGroup"] button * { color: var(--ink-2) !important; }
+.st-key-ms_topbar [data-testid="stButtonGroup"] button:hover { background: var(--surface-sunk) !important; }
+.st-key-ms_topbar [data-testid="stButtonGroup"] button[aria-checked="true"] {
+  background: var(--inverse) !important; }
+.st-key-ms_topbar [data-testid="stButtonGroup"] button[aria-checked="true"] * {
+  color: var(--on-inverse) !important; }
+.ms-dateline { margin-bottom: var(--space-5); }
+/* Shared status pills and framing banner used by the hackathon pages */
+.ms-pill { display:inline-block; font:600 11px/1.4 var(--font-sans); letter-spacing:.08em;
+  text-transform:uppercase; padding:2px 8px; border-radius:var(--radius-xs); margin-right:6px; }
+.ms-pill.ok { background: var(--success-soft); color: var(--success) !important; }
+.ms-pill.err { background: var(--critical-soft); color: var(--critical) !important; }
+.ms-pill.warn { background: var(--warning-soft); color: var(--warning) !important; }
+.ms-pill.info { background: var(--accent-soft); color: var(--accent) !important; }
+.ms-frame { border:1px solid var(--rule); border-left:4px solid var(--accent);
+  border-radius:var(--radius-sm); padding:var(--space-3) var(--space-4); margin:0 0 var(--space-5) 0;
+  background: var(--surface); font:400 14px/1.5 var(--font-sans); color: var(--ink); }
+.ms-frame * { color: var(--ink) !important; }
+.ms-muted, .ms-muted * { color: var(--ink-3) !important; }
+.ms-ok-text, .ms-ok-text * { color: var(--success) !important; }
+.ms-err-text, .ms-err-text * { color: var(--critical) !important; }
+.ms-strike { text-decoration: line-through; color: var(--ink-3) !important; }
+/* Whitespace: a calm, centred column (design max width 1220px) */
+[data-testid="stMainBlockContainer"], .block-container {
+  max-width: 1220px; padding-top: var(--space-6) !important;
+  padding-left: var(--space-10) !important; padding-right: var(--space-10) !important;
+  padding-bottom: var(--space-12) !important; }
+@media (max-width: 640px) {
+  [data-testid="stMainBlockContainer"], .block-container {
+    padding-left: var(--space-4) !important; padding-right: var(--space-4) !important; }
+}
+/* Streamlit's header strip sits over the page: keep it, but leave room for the Bar. */
+[data-testid="stMainBlockContainer"], .block-container { padding-top: 4rem !important; }
+/* Stat tiles (st.metric) in the design's StatTile style */
+[data-testid="stMetric"] { min-height: 140px; display: flex; flex-direction: column; }
+[data-testid="stMetricLabel"] p { font: 600 11px/1.4 var(--font-sans) !important;
+  letter-spacing: .1em !important; text-transform: uppercase; color: var(--ink-3) !important; }
+[data-testid="stMetricValue"], [data-testid="stMetricValue"] div {
+  font: 500 52px/1 var(--font-serif) !important; letter-spacing: -1.5px;
+  font-variant-numeric: tabular-nums lining-nums; margin-top: auto; }
+/* Sidebar navigation reads left to right */
+section[data-testid="stSidebar"] .stButton > button > div,
+section[data-testid="stSidebar"] .stButton > button [data-testid="stMarkdownContainer"] {
+  justify-content: flex-start !important; text-align: left !important; }
+/* Headings inside rendered Markdown stay in proportion */
+[data-testid="stMarkdownContainer"] h1 { font-size: 30px !important; line-height: 1.15 !important; }
+[data-testid="stMarkdownContainer"] h2 { font-size: 23px !important; line-height: 1.2 !important;
+  border-bottom: 1px solid var(--ink); padding-bottom: var(--space-2); margin-top: var(--space-6); }
+[data-testid="stMarkdownContainer"] h3 { font-size: 19px !important; }
+.ms-hero .ms-hero__deck b { color: var(--on-inverse) !important; }
+.ms-hero, .ms-hero * { color: var(--on-inverse); }
+.ms-hero .ms-kicker, .ms-hero .ms-kicker * { color: var(--accent-on-inverse) !important; }
+.ms-hero .ms-hero__deck, .ms-hero small { color: var(--on-inverse-2) !important; }
+.ms-hero .ms-hero__title, .ms-hero .ms-hero__fig { color: var(--on-inverse) !important; }

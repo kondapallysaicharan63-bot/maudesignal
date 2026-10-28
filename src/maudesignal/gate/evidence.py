@@ -145,6 +145,23 @@ class LiteratureRef:
         return f"{self.title} {self.abstract}".strip()
 
 
+@dataclass(frozen=True)
+class AlertRef:
+    """One stored MHRA (UK) device safety alert: context, never counted as FDA evidence."""
+
+    alert_id: str  # GOV.UK slug
+    title: str
+    description: str = ""
+    issued: str | None = None  # YYYY-MM-DD
+    product_code: str | None = None  # product code the search was run for
+    url: str | None = None
+
+    @property
+    def text(self) -> str:
+        """Quotable text: title + description."""
+        return f"{self.title} {self.description}".strip()
+
+
 @dataclass
 class EvidenceStore:
     """In-memory index over evidence records, devices, recalls and literature.
@@ -159,6 +176,7 @@ class EvidenceStore:
     recalls: list[RecallRef] = field(default_factory=list)
     clearances: list[DeviceRef] = field(default_factory=list)
     literature: list[LiteratureRef] = field(default_factory=list)
+    alerts: list[AlertRef] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         """Build lookup indexes."""
@@ -168,6 +186,7 @@ class EvidenceStore:
         self._by_pmid = {a.pmid: a for a in self.literature}
         self._recall_norm = {id(r): normalize_text(r.text) for r in self.recalls}
         self._lit_norm = {a.pmid: normalize_text(a.text) for a in self.literature}
+        self._alert_norm = {a.alert_id: normalize_text(a.text) for a in self.alerts}
 
     @classmethod
     def from_iterables(
@@ -178,6 +197,7 @@ class EvidenceStore:
         recalls: Iterable[RecallRef] = (),
         clearances: Iterable[DeviceRef] = (),
         literature: Iterable[LiteratureRef] = (),
+        alerts: Iterable[AlertRef] = (),
     ) -> EvidenceStore:
         """Build a store from any iterables."""
         return cls(
@@ -186,6 +206,7 @@ class EvidenceStore:
             recalls=list(recalls),
             clearances=list(clearances),
             literature=list(literature),
+            alerts=list(alerts),
         )
 
     def record(self, report_id: str) -> EvidenceRecord | None:
@@ -233,10 +254,15 @@ class EvidenceStore:
     def source_text(self, source_id: str) -> tuple[str, str] | None:
         """Return ``(normalized_text, label)`` for a stored literature or recall source.
 
-        ``source_id`` is a PMID (optionally prefixed ``PMID:``) or a recall /
-        recall event number.
+        ``source_id`` is a PMID (optionally prefixed ``PMID:``), a recall /
+        recall event number, or an MHRA alert id (``mhra:<slug>``).
         """
         sid = source_id.strip()
+        if sid.lower().startswith("mhra:"):
+            aid = sid[5:].strip()
+            if aid in self._alert_norm:
+                return self._alert_norm[aid], f"MHRA (UK) alert {aid}"
+            return None
         pmid = sid[4:].lstrip(" :") if sid.lower().startswith("pmid") else sid
         if pmid in self._lit_norm:
             return self._lit_norm[pmid], f"PMID {pmid}"
@@ -253,6 +279,7 @@ class EvidenceStore:
             return []
         out = [f"PMID {p}" for p, t in self._lit_norm.items() if q in t]
         out += [f"recall {r.recall_number}" for r in self.recalls if q in self._recall_norm[id(r)]]
+        out += [f"MHRA (UK) alert {a}" for a, t in self._alert_norm.items() if q in t]
         return out
 
     def select(
