@@ -84,11 +84,11 @@ guidance, 510(k) history and MAUDE). MaudeSignal differs in three ways:
 - **It withholds what it cannot match.** Every number is recomputed, every
   quote matched word for word, every report id, 510(k), recall, PMID and CFR
   section checked against stored FDA records — or the sentence is not shown.
-  Adversarial set: 99 cases, 0 false passes, 0 false blocks.
+  Adversarial set: 101 cases, 0 false passes, 0 false blocks.
 - **It reads scanned 510(k) documents with a two-read accuracy check.**
 - **It is open source and self-hostable** (MIT), on public FDA data only.
 
-## Real-run numbers (2026-10-28 recording)
+## Real-run numbers (2026-10-28, second recording)
 
 From [`demo/transcripts/`](demo/transcripts/), [`demo/vision/`](demo/vision/),
 [`demo/dossier/`](demo/dossier/) and the hand-check
@@ -96,14 +96,20 @@ From [`demo/transcripts/`](demo/transcripts/), [`demo/vision/`](demo/vision/),
 
 | | |
 |---|---|
-| Recording runs | 1 (GitHub Actions run 40616911177): 21 copilot answers (20 typed, 1 spoken) |
-| Gate, first pass | 30/30 shown sentences passed — but 11 of the 21 replies never parsed and were wrongly counted as passed by that build; fixed since |
-| Hand-check | 6 of 21 answers fully correct (28.6%); no shown sentence stated a false fact |
-| Cost per answer | $0.0353 (21 answers, $0.7416) |
-| 510(k) reading | 1 of 5 summaries read (K261677): 80% agreement between the two reads, 8 fields verified, 2 conflicts flagged for a person |
+| Recording run | GitHub Actions run 40638240641: 21 copilot answers (20 typed, 1 spoken) |
+| Replies that never parsed | 0 of 21 |
+| Gate, first pass | 45/48 sentences passed (93.8%); after at most one repair turn 49/50 (98.0%) |
+| Hand-check | **19 of 21 answers fully correct (90.5%)**; of 50 sentences, 48 correct, 1 incomplete, 1 wrong |
+| Cost per answer | $0.0509 (21 answers, $1.0695) |
+| 510(k) reading | 2 of 5 summaries read: K031779 (100% agreement between the two reads, all 10 fields verified) and K261677 (80%, 8 verified, 2 conflicts flagged for a person); 3 hit the reader's 4096-token cap |
+| Dossier review (Muse Wonder) | 4 findings on the PDF (1 high: empty narrative section; 2 medium; 1 low) |
 
-The fixes found by this run (token caps, unparsed replies, the week window)
-are in; the next recording replaces these numbers.
+The wrong sentence (12-literature) said no relevant papers were on file when
+there are; a negative answer with no claim cannot be checked by the gate (see
+[docs/VALIDATION_EVIDENCE.md](docs/VALIDATION_EVIDENCE.md)). Fixed since this run,
+not yet re-recorded: the gate's false block on a date before "reports" (the
+incomplete answer), the reader's own 4096-token default, an empty narrative now
+withheld instead of shown, and the four review findings.
 
 ## Tomorrow
 
@@ -184,14 +190,14 @@ model calls. For every sentence the copilot wants to show:
 - a sentence that mentions a number, K-number, report id or CFR section
   **without** a matching structured claim is blocked as ungrounded.
 
-**Adversarial test set:** [99 cases](tests/fixtures/gate/adversarial.jsonl)
-(61 must block, 38 must pass): fabricated and drifted quotes, real quotes on
+**Adversarial test set:** [101 cases](tests/fixtures/gate/adversarial.jsonl)
+(62 must block, 39 must pass): fabricated and drifted quotes, real quotes on
 the wrong report, stale / inflated counts, wrong shares, fake and mismatched
 K-numbers, hallucinated and superseded CFR sections, fake recall numbers and
 PMIDs, real ones on the wrong product or year, wrong report-source counts,
-untagged mentions (including "N hospital reports").
+untagged mentions (including "N hospital reports"), and dates that look like counts.
 Result: **0 false passes, 0 false blocks**
-([`tests/unit/test_gate.py`](tests/unit/test_gate.py), 116 tests).
+([`tests/unit/test_gate.py`](tests/unit/test_gate.py), 118 tests).
 
 Real verdicts on the demo database (137 MAUDE reports):
 
@@ -244,7 +250,7 @@ openFDA pipeline below predates the event. The file-by-file list is in
 
 ## Tests
 
-**537 unit tests pass, 76% line + branch coverage** (2026-10-28)
+**540 unit tests pass, 76% line + branch coverage** (2026-10-28)
 (`pytest tests/unit`; CI also runs ruff, black and `mypy --strict` on Python
 3.11 and 3.12).
 

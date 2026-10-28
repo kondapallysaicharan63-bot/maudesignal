@@ -118,7 +118,7 @@ a { color: #1a5fb4; }
   <h3>Device</h3>
   <table class="kv">
     <tr><th>Product code / classification</th><td>{{ d.device.product_code }}{% if d.device.classification_name %} — {{ d.device.classification_name }}{% endif %}{% if d.device.regulation_number %} (21 CFR {{ d.device.regulation_number }}{% if d.device.device_class %}, Class {{ d.device.device_class }}{% endif %}, per openFDA){% endif %}</td></tr>
-    <tr><th>Device name(s) in reports</th><td>{{ d.device.brand_names|join("; ") or "—" }}</td></tr>
+    <tr><th>Device name(s) in reports</th><td>{{ d.device.brand_names|join("; ") or "—" }} <span class="small">(spellings that differ only in capitals are grouped)</span></td></tr>
     <tr><th>510(k) number(s) in reports</th><td>{{ d.device.k_numbers|join(", ") or "Not stated in the cited reports" }} <span class="small">(openFDA <span class="mono">pma_pmn_number</span>)</span></td></tr>
     <tr><th>Manufacturer(s)</th><td>{{ d.device.manufacturers[:3]|join("; ") or "—" }}</td></tr>
   </table>
@@ -240,7 +240,7 @@ a { color: #1a5fb4; }
   <p class="small">Effectiveness criteria, monitoring period and result:</p>
   {{ tbc(3) }}
   <h3>4.7 Records of results of investigation and action (§8.5.2, final paragraph)</h3>
-  <p>This document, its revision history and the audit trail in Appendix A. Reporting to management review: {{ "pending" if d.status != "approved" else "required — schedule with management review" }}.</p>
+  <p>This document (revision {{ d.revision }}, shown in document control) and the audit trail in Appendix A. Reporting to management review: {{ "pending" if d.status != "approved" else "required — schedule with management review" }}.</p>
   <h3>4.8 Preventive action (§8.5.3) — potential nonconformities in similar devices / product codes</h3>
   {{ tbc(2) }}
   <h3>4.9 Complaint handling link (§8.2.2; 21 CFR 820.35(a))</h3>

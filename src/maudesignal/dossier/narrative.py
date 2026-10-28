@@ -22,7 +22,7 @@ from maudesignal.copilot.agent import default_skills_root, parse_answer
 from maudesignal.copilot.meta_provider import SPARK_USD_PER_M_INPUT, SPARK_USD_PER_M_OUTPUT
 from maudesignal.dossier.model import DossierData, NarrativeSection, NarrativeSentence
 from maudesignal.extraction.skill_loader import LoadedSkill, SkillLoader
-from maudesignal.gate import EvidenceStore, verify_answer
+from maudesignal.gate import EvidenceStore, GateReport, SentenceVerdict, verify_answer
 
 SKILL_NAME = "dossier-narrative"
 DEFAULT_MODEL = "muse-spark-1.3"
@@ -144,7 +144,7 @@ def draft_narrative(
     *,
     model: str = DEFAULT_MODEL,
     skill: LoadedSkill | None = None,
-    max_tokens: int = 4000,
+    max_tokens: int = 16000,
 ) -> NarrativeRecording:
     """Ask Muse Spark for the narrative (one call, temperature 0).
 
@@ -154,8 +154,8 @@ def draft_narrative(
         excerpts: report_id -> narrative excerpt.
         model: Standard-tier model id; Contributor models are refused.
         skill: Pre-loaded skill (loaded from ``skills/`` if omitted).
-        max_tokens: Output cap (reasoning counts toward it; the 2026-10-28 recording used
-            all 1200 and returned no text).
+        max_tokens: Output cap (reasoning counts toward it; on 2026-10-28 the narrative
+            used all 1200, then all 4000, and returned no text both times).
 
     Raises:
         ValueError: a Contributor-tier model was requested.
@@ -199,11 +199,21 @@ def gate_narrative(
     """
     try:
         pairs = parse_answer(rec.raw_output)
+        report = verify_answer(pairs, store)
     except (ValueError, json.JSONDecodeError):
-        # Unparseable prose is gated as one claim-less sentence; anything checkable in it
-        # is then blocked as ungrounded.
-        pairs = [(rec.raw_output.strip(), [])]
-    report = verify_answer(pairs, store)
+        # A reply that never parsed (empty, cut off by max_tokens, prose) is withheld,
+        # never shown as one claim-less "verified" sentence. The 2026-10-28 dossier
+        # printed "Shown: 1" over a blank body this way, and Muse Wonder flagged it.
+        report = GateReport(
+            [
+                SentenceVerdict(
+                    rec.raw_output.strip()[:300] or "(empty model reply)",
+                    "block",
+                    (),
+                    ("the model did not return a structured narrative, so nothing is shown",),
+                )
+            ]
+        )
     sentences = tuple(
         NarrativeSentence(
             text=sv.text,

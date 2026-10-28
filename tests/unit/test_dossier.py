@@ -705,3 +705,22 @@ def test_dossier_page_renders_keyless(tmp_path: Path, monkeypatch: pytest.Monkey
     assert any(m.value == out.doc_id for m in at.metric)
     assert len(at.dataframe) == 1  # recorded reviewer findings
     assert any("Recorded run" in c.value for c in at.caption)
+
+
+def test_empty_narrative_is_withheld_not_shown() -> None:
+    # 2026-10-28: the narrative used its whole token cap and returned "", and the PDF
+    # printed "Shown: 1" over a blank body (Muse Wonder flagged it).
+    from maudesignal.dossier.narrative import NarrativeRecording, gate_narrative
+    from maudesignal.gate import EvidenceStore
+
+    rec = NarrativeRecording(
+        doc_id="SER-X",
+        model="muse-spark-1.3",
+        skill_version="1.1.0",
+        created_at="2026-10-28T05:51:55Z",
+        raw_output="",
+        output_tokens=4000,
+    )
+    section = gate_narrative(rec, EvidenceStore.from_iterables([], []), source="live")
+    assert [s.status for s in section.sentences] == ["block"]
+    assert "did not return a structured narrative" in section.sentences[0].reasons[0]

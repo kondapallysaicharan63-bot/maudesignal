@@ -235,7 +235,7 @@ def review_dossier(
     model: str = WONDER_MODEL,
     mode: str = "pdf",
     skill: LoadedSkill | None = None,
-    max_tokens: int = 16000,
+    max_tokens: int = 24000,
 ) -> ReviewResult:
     """Run the independent reviewer once.
 
@@ -250,7 +250,7 @@ def review_dossier(
         mode: ``"pdf"`` or ``"text"``.
         skill: Pre-loaded ``dossier-reviewer`` skill.
         max_tokens: Output cap (reasoning counts toward it; the 2026-10-28 recording used
-            all 4000 and returned no JSON).
+            all 4000 and returned no JSON; at 16000 it used 15,588).
 
     Raises:
         ReviewError: Contributor model requested.

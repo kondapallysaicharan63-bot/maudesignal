@@ -149,7 +149,7 @@ def read_510k_summary(
     label: str = "A",
     reverse: bool = False,
     max_side: int = 1600,
-    max_tokens: int = 4096,
+    max_tokens: int = 16000,
 ) -> Reading:
     """Read the summary fields from page images in one Muse Spark call.
 
@@ -161,7 +161,8 @@ def read_510k_summary(
         label: Pass label stored with the reading.
         reverse: Send the pages last-to-first.
         max_side: Longest image side sent, in pixels.
-        max_tokens: Output token cap.
+        max_tokens: Output token cap (reasoning counts toward it; 4096 cut off 3 of 5
+            summaries on 2026-10-28).
 
     Returns:
         The reading (every field present; pages are source page numbers).
