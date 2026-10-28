@@ -152,7 +152,7 @@ def test_draft_capa_tool_and_human_approval(tmp_path: Path) -> None:
                     )
                 ]
             ),
-            *_final(_answer(("A CAPA draft is awaiting your approval.", []))),
+            *_final(_answer(("A CAPA-need evidence pack is awaiting your approval.", []))),
         ]
     )
     res = CopilotAgent(client, ctx).ask("Open a CAPA for the alert failures")

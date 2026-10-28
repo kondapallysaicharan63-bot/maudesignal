@@ -2,7 +2,7 @@
 
 HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
-Before a human approves a CAPA draft, the rendered dossier is sent to
+Before a human approves a CAPA-need evidence pack, the rendered dossier is sent to
 ``muse-wonder-1.0`` together with the full stored narratives of every cited
 report. Wonder returns a findings list (``skills/dossier-reviewer``). Findings
 are shown next to the dossier and stored in the hash-chained audit trail; they

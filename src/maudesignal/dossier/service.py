@@ -78,7 +78,7 @@ def produce(
 
     Args:
         db: Open database.
-        capa_id: CAPA draft to document (None → signal-only dossier).
+        capa_id: CAPA-need evidence pack to document (None → signal-only dossier).
         product_code: Signal to document when no CAPA is given.
         awareness_date: Human-entered awareness date for the MDR clock.
         awareness_basis: How that date was obtained.

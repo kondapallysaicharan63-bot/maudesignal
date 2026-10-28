@@ -39,9 +39,9 @@ def draft_capa(
     report_ids: list[str],
     actor: str,
 ) -> CapaDraftRecord:
-    """Create a CAPA draft (audit-first)."""
+    """Create a CAPA-need evidence pack (audit-first)."""
     if not report_ids:
-        raise ActionError("a CAPA draft must cite at least one report")
+        raise ActionError("a CAPA-need evidence pack must cite at least one report")
     capa_id = f"CAPA-DRAFT-{uuid.uuid4().hex[:8].upper()}"
     return db.create_capa_draft(
         capa_id=capa_id,
@@ -59,10 +59,10 @@ def decide_capa(
     """Approve or reject a draft. Only a named human reviewer may do this."""
     reviewer = reviewer.strip()
     if not reviewer or reviewer.lower().startswith("copilot"):
-        raise ActionError("only a named human reviewer can decide a CAPA draft")
+        raise ActionError("only a named human reviewer can decide a CAPA-need evidence pack")
     row = db.get_capa_draft(capa_id)
     if row is None:
-        raise ActionError(f"unknown CAPA draft {capa_id}")
+        raise ActionError(f"unknown CAPA-need evidence pack {capa_id}")
     if decision not in ALLOWED_TRANSITIONS.get(row.status, frozenset()):
         raise ActionError(f"illegal transition {row.status} -> {decision}")
     return db.decide_capa_draft(

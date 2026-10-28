@@ -4,7 +4,7 @@ HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
 Needs META_MODEL_API_KEY in the environment (in CI it comes from a GitHub
 Actions secret; it is never written anywhere). Works on a COPY of the demo DB
-so CAPA-need evidence records created during recording never touch the committed seed.
+so CAPA-need evidence packs created during recording never touch the committed seed.
 
     python scripts/record_demo_transcripts.py --out demo/transcripts
 
@@ -47,7 +47,7 @@ DEMO_QUESTIONS: list[tuple[str, str]] = [
     ("03-quote", "Quote the single report that best describes the failure, word for word."),
     (
         "05-capa-need-evidence",
-        "Prepare the CAPA-need evidence for this change, citing the supporting reports.",
+        "Prepare the CAPA-need evidence pack for this change, citing the supporting reports.",
     ),
     (
         "06-trap",

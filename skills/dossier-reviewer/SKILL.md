@@ -16,7 +16,7 @@ You receive:
 
 1. The dossier itself — as a PDF file and/or as extracted text with section
    numbers (1 Document control & approvals, 2 Signal evaluation, 3 Evidence,
-   4 CAPA-need evidence and blank CAPA sections, 5 MDR assessment worksheet, 6 Narrative summary,
+   4 CAPA-need evidence pack and blank CAPA sections, 5 MDR assessment worksheet, 6 Narrative summary,
    Appendix A Audit trail).
 2. A JSON object `evidence` with the full stored narrative of every MAUDE report
    the dossier cites (`report_id`, `date_received`, `event_type`, `brand_name`,
@@ -68,5 +68,6 @@ Return ONE JSON object, no prose around it:
 
 ## Changelog
 
+- 1.1.1 (2026-10-28): wording — "CAPA-need evidence pack"; flags any text that defines similar devices instead of the device types the user chose.
 - 1.1.0 (2026-10-28): wording: reviews "Signal Evaluation & CAPA-need Evidence"; flags any statement that decides CAPA need, reportability or similarity.
 - 1.0.0 (2026-10-27): initial version.

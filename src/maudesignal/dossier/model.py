@@ -89,7 +89,7 @@ class EvidenceRow:
 
 @dataclass(frozen=True)
 class CapaInfo:
-    """The CAPA draft this dossier documents (None fields while undecided)."""
+    """The CAPA-need evidence pack this dossier documents (None fields while undecided)."""
 
     capa_id: str
     title: str
@@ -214,7 +214,7 @@ class DossierData:
 
     @property
     def is_approved(self) -> bool:
-        """True once a named human approved the CAPA draft."""
+        """True once a named human approved the CAPA-need evidence pack."""
         return self.status == "approved"
 
     @property

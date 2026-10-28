@@ -284,7 +284,7 @@ class PsurReportRecord(Base):
 
 
 class CapaDraftRecord(Base):
-    """A CAPA draft proposed by the copilot. Only a named human can approve it.
+    """A CAPA-need evidence pack proposed by the copilot. Only a named human can approve it.
 
     Status is forward-only: ``draft`` -> ``approved`` | ``rejected``.
     """

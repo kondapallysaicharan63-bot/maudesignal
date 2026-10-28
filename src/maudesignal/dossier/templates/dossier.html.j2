@@ -205,7 +205,7 @@ a { color: #1a5fb4; }
 
 {# ======================= 4. CAPA RECORD ======================= #}
 <section class="newpage" id="sec-capa">
-  <h2>4. CAPA-need evidence and blank CAPA sections for the CAPA owner (ISO 13485:2016 §8.5.2 / §8.5.3, incorporated by 21 CFR Part 820 — QMSR)</h2>
+  <h2>4. CAPA-need evidence pack and blank CAPA sections for the CAPA owner (ISO 13485:2016 §8.5.2 / §8.5.3, incorporated by 21 CFR Part 820 — QMSR)</h2>
   <p class="small"><b>Whether a CAPA is required is decided by the company&#39;s own CAPA-need form. This document is evidence only.</b> The sections below are left blank for the CAPA owner if their form decides a CAPA is needed.</p>
   {% if d.capa %}
   <table class="kv">
@@ -215,13 +215,13 @@ a { color: #1a5fb4; }
     <tr><th>Source</th><td colspan="3">Postmarket surveillance signal {{ d.doc_id }} (§2) · complaint/MDR data (§3) · MDR worksheet (§5)</td></tr>
   </table>
   {% else %}
-  <div class="note">No CAPA-need evidence record exists for this signal yet. The headings below are the blank CAPA template; ask the copilot to prepare the CAPA-need evidence to populate §4.1.</div>
+  <div class="note">No CAPA-need evidence pack exists for this signal yet. The headings below are the blank CAPA template; ask the copilot to prepare the CAPA-need evidence pack to populate §4.1.</div>
   {% endif %}
   <p class="small">Under the QMSR (effective 2026-02-02) CAPA requirements are those of ISO 13485:2016 §8.5.2 and §8.5.3; the former 21 CFR 820.100 is superseded and is not cited.</p>
 
   <h3>4.1 (a) Review of nonconformities, including complaints</h3>
   {% if d.capa %}
-  <p><b>Problem statement as prepared</b> <span class="small">({{ d.capa.created_by }}, recorded verbatim from the CAPA-need evidence record)</span>:</p>
+  <p><b>Problem statement as prepared</b> <span class="small">({{ d.capa.created_by }}, recorded verbatim from the CAPA-need evidence pack)</span>:</p>
   <div class="note">{{ d.capa.problem_statement }}</div>
   {% if d.capa.problem_statement_flags %}<div class="gap"><b>Gate:</b> the drafted text contains figures or identifiers without a structured claim — treat as unverified: {{ d.capa.problem_statement_flags|join("; ") }}</div>{% endif %}
   {% endif %}
@@ -241,7 +241,7 @@ a { color: #1a5fb4; }
   {{ tbc(3) }}
   <h3>4.7 Records of results of investigation and action (§8.5.2, final paragraph)</h3>
   <p>This document (revision {{ d.revision }}, shown in document control) and the audit trail in Appendix A. Reporting to management review: {{ "pending" if d.status != "approved" else "required — schedule with management review" }}.</p>
-  <h3>4.8 Preventive action (§8.5.3) — potential nonconformities in similar devices / product codes</h3>
+  <h3>4.8 Preventive action (§8.5.3) — potential nonconformities in other device types you choose (product codes)</h3>
   {{ tbc(2) }}
   <h3>4.9 Complaint handling link (§8.2.2; 21 CFR 820.35(a))</h3>
   <p class="small">Complaint records for events reportable under Part 803 must hold device name, date received, UDI/identifiers, complainant contact, nature and details, correction/corrective action and any reply. MaudeSignal supplies the public MAUDE view only; link the manufacturer's complaint file numbers here:</p>

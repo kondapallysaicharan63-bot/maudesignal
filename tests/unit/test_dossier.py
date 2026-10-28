@@ -331,7 +331,7 @@ def test_signal_only_dossier_and_errors(tmp_path: Path) -> None:
     d = build_dossier(db).data
     assert d.status == "no-capa" and d.revision == "0.1" and d.capa is None
     html = render_html(d)
-    assert "No CAPA-need evidence record exists" in html
+    assert "No CAPA-need evidence pack exists" in html
     assert "This document is evidence only." in html
     with pytest.raises(DossierError):
         build_dossier(db, capa_id="CAPA-DRAFT-NOPE")

@@ -462,15 +462,15 @@ def _voice_question(db: Database, agent: Any) -> None:  # pragma: no cover - nee
 
 
 def page_actions(db: Database) -> None:
-    """CAPA drafts awaiting a named human decision, plus the tamper-evident audit trail."""
+    """CAPA-need evidence packs awaiting a named person's decision, and the audit trail."""
     st.html(FRAMING_BANNER)
     drafts = db.list_capa_drafts()
     st.subheader(
-        f"CAPA-need evidence ({sum(1 for d in drafts if d.status == 'draft')} awaiting review)"
+        f"CAPA-need evidence pack ({sum(1 for d in drafts if d.status == 'draft')} awaiting review)"
     )
     st.caption(CAPA_NEED_NOTE)
     if not drafts:
-        st.caption("None yet. Ask the copilot to prepare the CAPA-need evidence for a signal.")
+        st.caption("None yet. Ask the copilot to prepare the CAPA-need evidence pack for a signal.")
     reviewer = st.text_input("Your name (recorded as the approver)", key="capa_reviewer")
     for d in drafts:
         with st.container(border=True):
@@ -535,7 +535,8 @@ def _recorded_audit_trails() -> None:
         return
     st.caption(
         "This public demo database has no live actions, so these are the trails written "
-        "during the recorded Meta runs (voice transcription, copilot answers, CAPA-need evidence). "
+        "during the recorded Meta runs (voice transcription, copilot answers, "
+        "CAPA-need evidence packs). "
         "Every hash is recomputed here from the stored fields."
     )
     for doc in exports:

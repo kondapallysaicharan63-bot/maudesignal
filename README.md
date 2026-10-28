@@ -10,8 +10,9 @@
 > regulatory-affairs teams at medical-device makers, working on public openFDA
 > MAUDE adverse-event data.
 > **What it is not:** medical advice, clinical decision support, or an
-> FDA-cleared device. It never decides whether an event is reportable, which
-> devices are similar, or whether a CAPA is needed.
+> FDA-cleared device. It never decides whether an event is reportable or
+> whether a CAPA is needed, and it does not define "similar devices": it works
+> on the device types you choose.
 > **People decide:** whether a CAPA is required is decided by the company's own
 > CAPA-need form; MaudeSignal prepares evidence only, and a named person accepts
 > it. Nothing is filed with FDA automatically.
@@ -56,7 +57,7 @@ what a manufacturer would still do): [docs/VALIDATION_EVIDENCE.md](docs/VALIDATI
 4. **The gate checks every claim.** A made-up quote or count is withheld with
    the reason (*"claimed 500, records show 121"*); a reply that does not parse
    is withheld too. The model gets one repair turn with the gate's values.
-5. **CAPA-need evidence.** The copilot can prepare the evidence (the
+5. **CAPA-need evidence pack.** The copilot can prepare the evidence (the
    supporting reports and a problem statement); a named person accepts or
    rejects it on the Actions page. The model cannot.
 6. **Evidence pack (PDF).** *Signal Evaluation & CAPA-need Evidence*, laid out
@@ -119,8 +120,8 @@ withheld instead of shown, and the four review findings.
 - **Open source, self-hosted:** free.
 - **Hosted plan:** priced in the range practitioners we spoke to quoted,
   about $200–300/month, against existing tools from $499/month.
-- **Pilot metric:** time to prepare the similar-device / signal-evidence
-  section of a PMS report, with and without MaudeSignal.
+- **Pilot metric:** time to prepare the signal-evidence section for the device types you choose
+  in a PMS report, with and without MaudeSignal.
 
 ## How Meta AI is used
 
@@ -154,7 +155,7 @@ flowchart LR
 
     subgraph copilot["Copilot (Meta Model API)"]
         Q["Analyst question"] --> SPARK["Muse Spark 1.3<br/>tool calling"]
-        SPARK <--> TOOLS["10 deterministic tools<br/>signals, summary, search, report,<br/>report sources, recalls, 510(k),<br/>literature, MDR clock,<br/>CAPA-need evidence"]
+        SPARK <--> TOOLS["10 deterministic tools<br/>signals, summary, search, report,<br/>report sources, recalls, 510(k),<br/>literature, MDR clock,<br/>CAPA-need evidence pack"]
         TOOLS --> DB
         SPARK --> ANS["Structured answer<br/>sentences + claims"]
         ANS --> GATE{"Claim-level gate<br/>recompute numbers ·<br/>verbatim quotes · ids · CFR"}
@@ -164,7 +165,7 @@ flowchart LR
     end
 
     DIG --> UI
-    UI --> ACT["A named person accepts / rejects<br/>CAPA-need evidence"]
+    UI --> ACT["A named person accepts / rejects<br/>CAPA-need evidence pack"]
     ACT --> AUDIT[("Hash-chained<br/>audit trail")]
     GATE --> AUDIT
 ```

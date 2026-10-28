@@ -84,7 +84,7 @@ def main() -> int:
         )
         assert capa.created_at is not None
         awareness = capa.created_at.date()
-        basis = "assumed = CAPA draft creation date (demo); confirm"
+        basis = "assumed = CAPA-need evidence pack creation date (demo); confirm"
 
         illus: Illustration | None = None
         if args.illustration and key:

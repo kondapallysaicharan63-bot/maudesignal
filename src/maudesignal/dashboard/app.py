@@ -42,7 +42,7 @@ _PAGES: list[tuple[str, str, str]] = [
     (
         "✅",
         "Actions & Audit",
-        "CAPA-need evidence a named person accepts, and the tamper-evident audit trail",
+        "CAPA-need evidence pack a named person accepts, and the tamper-evident audit trail",
     ),
     ("📄", "Dossier", "Audit-ready Signal Evaluation & CAPA record (PDF) + Muse Wonder review"),
     ("📷", "Vision", "510(k) summary reader and device-label camera (Muse Spark + SAM)"),

@@ -23,7 +23,7 @@ The user message is ONE JSON object:
 - `classification` and `triggers` from the deterministic monitor
 - `evidence` — the cited MAUDE reports: `report_id`, `date_received`,
   `event_type`, `brand_name`, `narrative_excerpt`
-- `capa` — CAPA-need evidence record id, title and status (may be null)
+- `capa` — CAPA-need evidence pack id, title and status (may be null)
 
 ## Hard rules
 
@@ -64,5 +64,6 @@ Claim kinds: `count`, `share`, `quote`, `record`, `device`, `regulation`
 
 ## Changelog
 
+- 1.1.1 (2026-10-28): wording — "CAPA-need evidence pack"; device types the user chooses, never "similar devices".
 - 1.1.0 (2026-10-28): wording: the record is "Signal Evaluation & CAPA-need Evidence"; never say a CAPA is needed, an event is reportable or devices are similar.
 - 1.0.0 (2026-10-27): initial version.

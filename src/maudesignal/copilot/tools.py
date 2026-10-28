@@ -465,10 +465,10 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
         "type": "function",
         "function": {
             "name": "draft_capa",
-            "description": "Record CAPA-need evidence for a named person to review: the "
+            "description": "Record a CAPA-need evidence pack for a named person to review: the "
             "supporting report ids and a factual problem statement. It does not decide that a "
             "CAPA is needed (the company's own CAPA-need form decides). Use only when the user "
-            "asks for CAPA-need evidence or a corrective action.",
+            "asks for a CAPA-need evidence pack or a corrective action.",
             "parameters": {
                 "type": "object",
                 "properties": {

@@ -1012,7 +1012,7 @@ class Database:
             return list(session.execute(stmt).scalars().all())
 
     # ------------------------------------------------------------------
-    # HACKATHON-BUILT: copilot actions (CAPA drafts) + hash-chained audit
+    # HACKATHON-BUILT: copilot actions (CAPA-need evidence packs) + hash-chained audit
     # ------------------------------------------------------------------
 
     @staticmethod
@@ -1133,12 +1133,12 @@ class Database:
             return row
 
     def get_capa_draft(self, capa_id: str) -> CapaDraftRecord | None:
-        """Return one CAPA draft by id."""
+        """Return one CAPA-need evidence pack by id."""
         with self._session() as session:
             return session.get(CapaDraftRecord, capa_id)
 
     def list_capa_drafts(self, *, status: str | None = None) -> list[CapaDraftRecord]:
-        """Return CAPA drafts, newest first."""
+        """Return CAPA-need evidence packs, newest first."""
         with self._session() as session:
             stmt = select(CapaDraftRecord).order_by(CapaDraftRecord.created_at.desc())
             if status:

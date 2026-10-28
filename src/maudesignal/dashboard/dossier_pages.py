@@ -50,7 +50,7 @@ def _client(db: Database) -> Any | None:
 
 
 def _subject_options(db: Database) -> list[tuple[str, str | None, str | None]]:
-    """(label, capa_id, product_code) choices: every CAPA draft, then the top signal."""
+    """(label, capa_id, product_code) choices: every CAPA-need evidence pack, then top signal."""
     opts: list[tuple[str, str | None, str | None]] = [
         (f"{c.capa_id} · {c.product_code} · {c.status} · {c.title[:60]}", c.capa_id, None)
         for c in db.list_capa_drafts()
@@ -117,7 +117,7 @@ def page_dossier(db: Database) -> None:
     )
     opts = _subject_options(db)
     if not opts:
-        st.info("No CAPA-need evidence records and no flagged change in this database.")
+        st.info("No CAPA-need evidence packs and no flagged change in this database.")
         return
     labels = [o[0] for o in opts]
     choice = st.selectbox("Document", labels, key="dossier_subject")
@@ -224,7 +224,7 @@ def page_dossier(db: Database) -> None:
                 "the reviewer live; findings are stored in the audit trail."
             )
     st.caption(
-        "Accept or reject the CAPA-need evidence on the Actions & Audit page, then return here: "
-        "the regenerated PDF carries the reviewer's printed name, UTC time and meaning. The MDR "
-        "worksheet keeps its NOT FOR SUBMISSION stamp."
+        "Accept or reject the CAPA-need evidence pack on the Actions & Audit page, then return "
+        "here: the regenerated PDF carries the reviewer's printed name, UTC time and meaning. "
+        "The MDR worksheet keeps its NOT FOR SUBMISSION stamp."
     )

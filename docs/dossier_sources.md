@@ -51,4 +51,4 @@ human QA/RA reviewer; nothing in it is filed with FDA.
   instructions page (form revision current on 2026-10-27); older form revisions
   number some G/H items differently.
 - Awareness date is never inferred by the software: it is an input (the demo
-  script uses the CAPA draft's creation date and labels it as such).
+  script uses the CAPA-need evidence pack's creation date and labels it as such).

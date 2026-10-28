@@ -16,9 +16,10 @@ records and papers, each tied to the stored FDA record.
 
 - Medical advice, diagnosis or treatment. It is not clinical decision support
   and not an FDA-cleared device.
-- **Decisions.** It never decides whether an event is reportable, which devices
-  are similar, or whether a CAPA is needed. Whether a CAPA is required is
-  decided by the company's own CAPA-need form; the evidence pack is evidence
+- **Decisions.** It never decides whether an event is reportable or whether a
+  CAPA is needed, and it does not define similar devices: it works on the
+  device types the user chooses. Whether a CAPA is required is
+  decided by the company's own CAPA-need form; the CAPA-need evidence pack is evidence
   only. A named person accepts or rejects every record.
 - **Data beyond public FDA records.** Only public openFDA data (MAUDE, recalls,
   510(k)) and PubMed abstracts. No PHI, no complaint files, no private data.

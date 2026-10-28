@@ -222,7 +222,7 @@ class TestActionsAudit:
     def test_capa_header_counts_drafts_awaiting_review(self, ms_page: Page, db: Database) -> None:
         waiting = sum(1 for d in db.list_capa_drafts() if d.status == "draft")
         main = _open(ms_page, "Actions & Audit")
-        expect(main).to_contain_text(f"CAPA-need evidence ({waiting} awaiting review)")
+        expect(main).to_contain_text(f"CAPA-need evidence pack ({waiting} awaiting review)")
         expect(main).to_contain_text("This document is evidence only.")
         expect(main.get_by_label("Your name (recorded as the approver)")).to_be_visible()
 

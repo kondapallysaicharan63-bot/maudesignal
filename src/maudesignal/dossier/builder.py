@@ -306,11 +306,11 @@ def build_dossier(
     illustration: Illustration | None = None,
     generated_at: datetime | None = None,
 ) -> DossierBuild:
-    """Build the dossier for one CAPA draft, or for a signal when no CAPA is given.
+    """Build the dossier for one CAPA-need evidence pack, or for a signal when no CAPA is given.
 
     Args:
         db: Open MaudeSignal database.
-        capa_id: CAPA draft to document. Its product code selects the signal.
+        capa_id: CAPA-need evidence pack to document. Its product code selects the signal.
         product_code: Signal to document when no CAPA is given (default: the top flagged change).
         as_of: Detection as-of date (default: latest stored ``date_received``).
         awareness_date: Manufacturer awareness date for the MDR clock (human input).
@@ -326,7 +326,7 @@ def build_dossier(
     """
     capa_row = db.get_capa_draft(capa_id) if capa_id else None
     if capa_id and capa_row is None:
-        raise DossierError(f"unknown CAPA draft {capa_id}")
+        raise DossierError(f"unknown CAPA-need evidence pack {capa_id}")
     try:
         detection = detect_from_database(db, as_of)
     except ValueError as exc:
@@ -335,7 +335,7 @@ def build_dossier(
     if pc is None:
         top = top_flagged_signal(db, as_of)
         if top is None:
-            raise DossierError("no flagged change and no CAPA-need evidence to document")
+            raise DossierError("no flagged change and no CAPA-need evidence pack to document")
         pc = top.product_code
     sig = next((s for s in detection.signals if s.product_code == pc), None)
     if sig is None:

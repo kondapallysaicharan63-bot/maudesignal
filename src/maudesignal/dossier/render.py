@@ -44,7 +44,7 @@ _ENV.globals["change_labels"] = CHANGE_LABELS
 
 STATUS_LABELS = {
     "no-capa": "Draft — signal evaluation evidence only",
-    "draft": "Draft — CAPA-need evidence awaiting QA/RA review",
+    "draft": "Draft — CAPA-need evidence pack awaiting QA/RA review",
     "approved": "Evidence accepted by reviewer (CAPA need decided on the company's form)",
     "rejected": "Evidence rejected by reviewer",
 }
