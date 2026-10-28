@@ -52,6 +52,9 @@ SESSION_ONLY_FIELDS = frozenset({"lot", "serial"})
 SAM_PROMPTS: tuple[str, ...] = ("label", "text", "barcode")
 SAM_MAX_SIDE = 1600
 READ_MAX_SIDE = 1600
+#: Output cap for one label read. Reasoning counts toward it: at 1024, 6 of 7 photos in
+#: the 2026-10-28 label run stopped with no JSON (finish_reason=length). ≤ $0.034 per read.
+LABEL_MAX_TOKENS = 8000
 MIN_BOX_SHARE = 0.01  # ignore specks under 1% of the image
 
 KStatus = Literal["verified", "not_in_openfda", "bad_format", "illegible", "not_printed"]
@@ -304,7 +307,7 @@ def read_device_label(
         skill=skill,
         parts=[image_part(encode(fit(crop, READ_MAX_SIDE), fmt="PNG"))],
         model=model,
-        max_tokens=1024,
+        max_tokens=LABEL_MAX_TOKENS,
     )
     raw_fields = out.data.get("fields") or {}
     fields = {

@@ -11,6 +11,10 @@ on:
       - "demo/vision/labels/**.jpeg"
       - "demo/vision/labels/**.png"
       - "demo/vision/labels/**.webp"
+      # Re-read the photos when the reader itself changes.
+      - "src/maudesignal/vision/label.py"
+      - "skills/device-label-reader/**"
+      - ".github/workflows/vision-labels.yml"
 
 permissions:
   contents: write
