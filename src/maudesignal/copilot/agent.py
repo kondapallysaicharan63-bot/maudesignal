@@ -191,7 +191,7 @@ class CopilotAgent:
         skill: LoadedSkill | None = None,
         max_tool_rounds: int = 6,
         max_repairs: int = 1,
-        max_tokens: int = 4000,
+        max_tokens: int = 8000,
         structured_output: bool = True,
         reasoning_effort: str | None = None,
     ) -> None:
@@ -206,7 +206,9 @@ class CopilotAgent:
             max_repairs: Repair turns after a gate block.
             max_tokens: Output cap per model call. Reasoning tokens count toward it:
                 at 1500, 11 of the 21 answers in the 2026-10-28 recording never returned
-                parseable JSON, so the default is 4000 (≤ $0.017 of output per call);
+                parseable JSON, so it went to 4000; in the third recording 4 calls
+                still stopped at 4000 and one answer came back empty, so the default
+                is 8000 (≤ $0.034 of output per call, paid only when used);
                 ``length_stops`` records whether the cap was the cause.
             structured_output: Request the final answer with the strict
                 ``json_schema`` response_format (no tools on that call).

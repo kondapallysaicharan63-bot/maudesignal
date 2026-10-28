@@ -29,14 +29,17 @@ Output tokens are capped by `max_tokens` in code, so the output side of each cal
 
 | Call | `max_tokens` (code) | Output-cost ceiling |
 |---|---|---|
-| Copilot turn (`copilot/agent.py`) | 4,000 (was 1,500) | 4,000 × $4.25 / 1M = $0.0170 |
-| 510(k) / label read (`vision/spark.py`) | 16,000 (was 4,096) | $0.0680 |
-| Dossier narrative (`dossier/narrative.py`) | 4,000 (was 1,200) | $0.0170 |
-| Dossier reviewer, Wonder (`dossier/review.py`) | 16,000 (was 4,000) | 16,000 × $20 / 1M = $0.3200 |
+| Copilot turn (`copilot/agent.py`) | 8,000 (was 1,500, then 4,000) | 8,000 × $4.25 / 1M = $0.0340 |
+| 510(k) / label read (`vision/reader.py`, `vision/spark.py`) | 16,000 (was 4,096) | $0.0680 |
+| Dossier narrative (`dossier/narrative.py`) | 16,000 (was 1,200, then 4,000) | $0.0680 |
+| Dossier reviewer, Wonder (`dossier/review.py`) | 24,000 (was 4,000, then 16,000) | 24,000 × $20 / 1M = $0.4800 |
 
-The caps were raised after the 2026-10-28 recording (section 4): Muse Spark and
+The caps were raised after the 2026-10-28 recordings (section 4): Muse Spark and
 Muse Wonder count reasoning tokens toward `max_tokens`, and at the old caps the
-narrative and the review used every token and returned no text.
+narrative and the review used every token and returned no text; in the third
+recording 4 copilot calls still stopped at 4,000. A cap is a ceiling: only the
+tokens actually generated are paid for (the third recording averaged $0.0458 per
+answer).
 
 Input tokens have no ceiling in code (tool results and page images vary), so
 the real per-answer cost comes from the recorded runs (section 4).
