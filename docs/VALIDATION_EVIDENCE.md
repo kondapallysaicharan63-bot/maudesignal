@@ -44,12 +44,13 @@ records and papers, each tied to the stored FDA record.
 
 | Check | Result | Source |
 |---|---|---|
-| Unit tests | 540 pass; 76% line + branch coverage (run 2026-10-28) | `pytest tests/unit --cov=src/maudesignal --cov-branch` |
+| Unit tests | 695 pass; 77% line + branch coverage (run 2026-10-28) | `pytest tests/unit --cov=src/maudesignal --cov-branch` |
 | CI | ruff, black, `mypy --strict`, tests on Python 3.11 and 3.12 | `.github/workflows/ci.yml` |
-| Adversarial gate set | 101 cases (62 must be withheld, 39 must pass): 0 false passes, 0 false blocks | `tests/fixtures/gate/adversarial.jsonl`, `tests/unit/test_gate.py` |
-| Gate on real model output | second 2026-10-28 recording (run 40638240641), 21 answers: 0 replies failed to parse; 45/48 sentences passed first time (93.8%), 49/50 after at most one repair turn (98.0%). The first recording that day exposed unparsed replies counted as passed; fixed before this run | `docs/hackathon/HAND_CHECK.md` |
-| Hand-check of the recorded answers | 19 of 21 answers fully correct (90.5%); of 50 sentences 48 correct, 1 incomplete (a gate false block, fixed since with adversarial cases d01/d02), 1 wrong (see Known limits). First recording: 6 of 21 | `docs/hackathon/HAND_CHECK.md` |
-| Independent review of the evidence PDF | Muse Wonder 1.0 raised 4 findings on the recorded PDF (empty narrative shown as passed; date of event wording; revision history reference; brand capitalization); all four addressed in code, not yet re-recorded | `demo/dossier/*-review.json` |
+| Adversarial gate set | 109 cases (68 must be withheld, 41 must pass): 0 false passes, 0 false blocks | `tests/fixtures/gate/adversarial.jsonl`, `tests/unit/test_gate.py` |
+| Gate on real model output | third 2026-10-28 recording (run 40683010813), 24 answers: 52/53 sentences passed first time (98.1%), no repair needed; 1 reply never parsed and was withheld. Earlier runs that day: 45/48 (second), and the first exposed unparsed replies counted as passed (fixed) | `docs/hackathon/HAND_CHECK.md` |
+| Hand-check of the recorded answers | 21 of 24 answers fully correct (87.5%; typed only 20 of 22, 90.9%); of 53 sentences 50 correct, 2 incomplete, 1 wrong (see Known limits). Second run: 19 of 21; first run: 6 of 21 | `docs/hackathon/HAND_CHECK.md` |
+| Independent review of the evidence PDF | Muse Wonder 1.0: 0 findings on the third recording's PDF (the second recording's 4 findings were fixed in code first) | `demo/dossier/*-review.json` |
+| 510(k) reading | 5 of 5 summaries read; agreement between the two reads 100% / 90% / 80% / 80% / 80%; every disagreement left for a person | `demo/vision/510k-*.json` |
 | Audit-chain tamper test | editing any stored entry breaks the chain at that entry; detected in the database and in exported trails | `tests/unit/test_copilot_agent.py::test_audit_chain_detects_tampering`, `tests/unit/test_voice.py::test_audit_export_roundtrip_and_tamper_detection` |
 | Spend caps on live calls | $1 and 20 Meta calls per browser session, $10 per day; no call starts once a cap is reached; checked in the running app with the call cap at 0 | `tests/unit/test_spend.py`, `src/maudesignal/copilot/spend.py` |
 | Browser tests | Playwright tests of the five new pages against the keyless demo app; expected values computed from the demo database | `tests/e2e/test_08_hackathon_pages.py` |
@@ -67,11 +68,14 @@ records and papers, each tied to the stored FDA record.
   found correct-but-misleading answers that the gate passed.
 - **Negative answers are not gated.** A sentence that says something is *absent*
   ("no relevant papers are on file") carries no claim to check. In the second
-  recording one such sentence was wrong: relevant abstracts were stored.
-- 510(k) reading: in the second 2026-10-28 recording, 2 of 5 summaries were read
-  (K031779: both reads agreed on all 10 fields, all verified; K261677: 80%
-  agreement, 2 conflicts left for a person). The other 3 stopped at the reader's
-  own 4096-token default, which has since been raised to 16000.
+  and third recordings one such sentence was wrong: relevant abstracts were
+  stored.
+- 510(k) reading: every summary was read in the third recording, but two reads
+  agree on only 80–100% of the fields; the rest are shown as conflicts for a
+  person to settle, never auto-resolved.
+- Completeness: the gate checks what is said, not what is left out. In the
+  third recording a recall answer missed three stored recalls for the device
+  it was asked about.
 - The approval step records a typed name with a timestamp in a hash-chained
   log. It is not an authenticated electronic signature.
 

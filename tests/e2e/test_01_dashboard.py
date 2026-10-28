@@ -5,12 +5,16 @@ from __future__ import annotations
 import pytest
 from playwright.sync_api import Page, expect
 
+from tests.e2e.conftest import navigate
+
 pytestmark = pytest.mark.e2e
 
 
 @pytest.fixture()
 def dash(ms_page: Page) -> Page:
-    """Dashboard is the default landing page — no navigation required."""
+    """The classic Dashboard sits under "More tools" in the sidebar (the hackathon build
+    lands on What changed)."""
+    navigate(ms_page, "Dashboard")
     return ms_page
 
 

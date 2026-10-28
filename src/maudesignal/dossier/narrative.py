@@ -23,6 +23,7 @@ from maudesignal.copilot.meta_provider import SPARK_USD_PER_M_INPUT, SPARK_USD_P
 from maudesignal.dossier.model import DossierData, NarrativeSection, NarrativeSentence
 from maudesignal.extraction.skill_loader import LoadedSkill, SkillLoader
 from maudesignal.gate import EvidenceStore, GateReport, SentenceVerdict, verify_answer
+from maudesignal.monitor.digest import CHANGE_LABELS
 
 SKILL_NAME = "dossier-narrative"
 DEFAULT_MODEL = "muse-spark-1.3"
@@ -116,8 +117,9 @@ def narrative_input(data: DossierData, excerpts: dict[str, str]) -> dict[str, An
             "current": [f"{s.current_start:%Y%m%d}", f"{s.current_end:%Y%m%d}"],
             "baseline": [f"{s.baseline_start:%Y%m%d}", f"{s.baseline_end:%Y%m%d}"],
         },
-        "classification": s.classification,
-        "triggers": list(s.triggers),
+        # Plain words only ("reports suddenly increased"), never the internal labels.
+        "change": CHANGE_LABELS[s.classification],
+        "rules_fired": [CHANGE_LABELS[t] for t in s.triggers],
         "figures": {k: {"display": f.display, "claim": f.claim} for k, f in figures.items()},
         "evidence": [
             {

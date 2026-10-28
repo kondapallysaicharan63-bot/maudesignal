@@ -477,16 +477,16 @@ def _ungrounded_mentions(text: str, claims: list[Claim]) -> list[str]:
             # "... to 20260831, including reports 504..." is a date, not "20260831 reports"
             # (a false block in the 2026-10-28 recording).
             continue
-        v = _number_value(token)
-        if v is None or v not in count_claimed:
+        n = _number_value(token)
+        if n is None or n not in count_claimed:
             out.append(f"'{m.group(0)}' has no count claim")
     recall_count_claimed = {c.value for c in claims if isinstance(c, RecallCountClaim)}
     for m in _RECALL_COUNT_RE.finditer(text):
         token = m.group(1).rstrip(",")
         if _looks_like_date(token):
             continue
-        v = _number_value(token)
-        if v is None or v not in recall_count_claimed:
+        n = _number_value(token)
+        if n is None or n not in recall_count_claimed:
             out.append(f"'{m.group(0)}' has no recall_count claim")
     recall_claimed = {c.recall_number.strip().upper() for c in claims if isinstance(c, RecallClaim)}
     for m in _RECALL_NO_RE.finditer(text):

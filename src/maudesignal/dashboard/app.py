@@ -738,7 +738,7 @@ def _page_dashboard(db: Database) -> None:
                 )
                 .properties(height=240)
             )
-            st.altair_chart(chart, use_container_width=True)
+            st.altair_chart(chart, width="stretch")
 
     with col_right:
         _section("AI Failure Mode Breakdown")
@@ -764,7 +764,7 @@ def _page_dashboard(db: Database) -> None:
                 )
                 .properties(height=240)
             )
-            st.altair_chart(chart_fm, use_container_width=True)
+            st.altair_chart(chart_fm, width="stretch")
 
     _section("Recent Signals")
     pc_lookup = _product_code_lookup(db)
@@ -795,7 +795,7 @@ def _page_dashboard(db: Database) -> None:
     )
     st.dataframe(
         display_recent,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         column_config={
             "extraction_ts": st.column_config.DatetimeColumn("Extracted At"),
@@ -893,7 +893,7 @@ def _page_signal_explorer(db: Database) -> None:
     ]
     st.dataframe(
         filtered[display_cols].sort_values("extraction_ts", ascending=False),
-        use_container_width=True,
+        width="stretch",
         height=340,
         hide_index=True,
         column_config={
@@ -1222,9 +1222,7 @@ def _run_extraction_batch(db: Database, cfg: Config, queue: list[Any]) -> None:
                 }
             )
 
-        results_placeholder.dataframe(
-            pd.DataFrame(result_rows), use_container_width=True, hide_index=True
-        )
+        results_placeholder.dataframe(pd.DataFrame(result_rows), width="stretch", hide_index=True)
 
     progress_bar.progress(1.0, text="Extraction complete.")
     if failures == 0:
@@ -1295,7 +1293,7 @@ def _psur_existing_reports(db: Database) -> None:
         )
     df = pd.DataFrame(rows)
     display_cols = [c for c in df.columns if c != "_out"]
-    st.dataframe(df[display_cols], use_container_width=True, hide_index=True)
+    st.dataframe(df[display_cols], width="stretch", hide_index=True)
 
     st.divider()
     _section("Report Preview")
@@ -1466,7 +1464,7 @@ def _alerts_rules(db: Database) -> None:
     ]
     st.dataframe(
         pd.DataFrame(rule_rows),
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )
 
@@ -1509,7 +1507,7 @@ def _alerts_test(db: Database) -> None:
                 f"rules evaluated. {result.alerts_delivered} delivered."
             )
         if result.details:
-            st.dataframe(pd.DataFrame(result.details), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(result.details), width="stretch", hide_index=True)
 
 
 def _alerts_history(db: Database) -> None:
@@ -1532,7 +1530,7 @@ def _alerts_history(db: Database) -> None:
     ]
     df_ev = pd.DataFrame(event_rows)
     st.caption(f"**{len(df_ev)}** alert event(s) on record")
-    st.dataframe(df_ev, use_container_width=True, hide_index=True)
+    st.dataframe(df_ev, width="stretch", hide_index=True)
 
 
 # ── Page 7: Settings ──────────────────────────────────────────────────────────
@@ -1724,7 +1722,7 @@ def _settings_catalog(db: Database) -> None:
                 "k_number": "510(k) Number",
             }
         ),
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         height=380,
     )
@@ -1764,7 +1762,7 @@ def _settings_sources(db: Database) -> None:
                 }
                 for s in pubmed
             ]
-            st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
 
     with tab_ct:
         trials = [s for s in all_sources if s.source_type == "clinicaltrials"]
@@ -1782,7 +1780,7 @@ def _settings_sources(db: Database) -> None:
                 }
                 for s in trials
             ]
-            st.dataframe(pd.DataFrame(rows_ct), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(rows_ct), width="stretch", hide_index=True)
 
 
 # ── App shell ─────────────────────────────────────────────────────────────────
@@ -1875,15 +1873,14 @@ def _render_app(db: Database) -> None:  # noqa: PLR0912
 
     # ── Sidebar: the classic tools, data status and the live-call quota ───────
     with st.sidebar:
+        st.caption("AI-Powered Postmarket Surveillance · public FDA data")
         st.html('<div class="ms-kicker">More tools</div>')
         for icon, page_name, _ in _PAGES:
             if page_name in _TOP_PAGES:
                 continue
             is_active = st.session_state["nav_page"] == page_name
             label = f"**{page_name}**" if is_active else page_name
-            if st.button(
-                label, key=f"nav_{page_name}", icon=f":material/{icon}:", use_container_width=True
-            ):
+            if st.button(label, key=f"nav_{page_name}", icon=f":material/{icon}:", width="stretch"):
                 st.session_state["nav_page"] = page_name
                 st.rerun()
 

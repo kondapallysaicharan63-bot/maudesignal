@@ -87,11 +87,11 @@ guidance, 510(k) history and MAUDE). MaudeSignal differs in three ways:
 - **It withholds what it cannot match.** Every number is recomputed, every
   quote matched word for word, every report id, 510(k), recall, PMID and CFR
   section checked against stored FDA records — or the sentence is not shown.
-  Adversarial set: 101 cases, 0 false passes, 0 false blocks.
+  Adversarial set: 109 cases, 0 false passes, 0 false blocks.
 - **It reads scanned 510(k) documents with a two-read accuracy check.**
 - **It is open source and self-hostable** (MIT), on public FDA data only.
 
-## Real-run numbers (2026-10-28, second recording)
+## Real-run numbers (2026-10-28, third recording)
 
 From [`demo/transcripts/`](demo/transcripts/), [`demo/vision/`](demo/vision/),
 [`demo/dossier/`](demo/dossier/) and the hand-check
@@ -99,20 +99,22 @@ From [`demo/transcripts/`](demo/transcripts/), [`demo/vision/`](demo/vision/),
 
 | | |
 |---|---|
-| Recording run | GitHub Actions run 40638240641: 21 copilot answers (20 typed, 1 spoken) |
-| Replies that never parsed | 0 of 21 |
-| Gate, first pass | 45/48 sentences passed (93.8%); after at most one repair turn 49/50 (98.0%) |
-| Hand-check | **19 of 21 answers fully correct (90.5%)**; of 50 sentences, 48 correct, 1 incomplete, 1 wrong |
-| Cost per answer | $0.0509 (21 answers, $1.0695) |
-| 510(k) reading | 2 of 5 summaries read: K031779 (100% agreement between the two reads, all 10 fields verified) and K261677 (80%, 8 verified, 2 conflicts flagged for a person); 3 hit the reader's 4096-token cap |
-| Dossier review (Muse Wonder) | 4 findings on the PDF (1 high: empty narrative section; 2 medium; 1 low) |
+| Recording run | GitHub Actions run 40683010813: 24 copilot answers (22 typed, 2 spoken) |
+| Gate, first pass | 52/53 sentences passed (98.1%); no repair turn was needed |
+| Replies that never parsed | 1 of 24 (withheld, nothing shown) |
+| Hand-check | **21 of 24 answers fully correct (87.5%)**; typed questions only: 20 of 22 (90.9%). Of 53 sentences: 50 correct, 2 incomplete, 1 wrong |
+| Cost per answer | $0.0458 (24 answers, $1.0988) |
+| 510(k) reading | **5 of 5 summaries read**: agreement between the two reads 100% (K031779, all 10 fields verified), 90% (K210666), 80% (K043333, K261677, K190442); every disagreement is flagged for a person, never guessed |
+| Evidence pack (PDF) | Muse Spark summary: 5 sentences shown, 0 withheld; Muse Wonder review: 0 findings |
+| Report sources vs openFDA | 0 mismatches |
 
-The wrong sentence (12-literature) said no relevant papers were on file when
-there are; a negative answer with no claim cannot be checked by the gate (see
-[docs/VALIDATION_EVIDENCE.md](docs/VALIDATION_EVIDENCE.md)). Fixed since this run,
-not yet re-recorded: the gate's false block on a date before "reports" (the
-incomplete answer), the reader's own 4096-token default, an empty narrative now
-withheld instead of shown, and the four review findings.
+The wrong sentence (12-literature) again said no relevant papers were on file
+when there are: a negative answer carries no claim, so the gate cannot check it
+(see [docs/VALIDATION_EVIDENCE.md](docs/VALIDATION_EVIDENCE.md)). The two
+incomplete ones: an answer withheld because the reply never parsed, and a recall
+answer that missed three stored IntelliSpace Cardiovascular recalls. The two
+spoken clips were greetings, not product questions; Voice Transcribe heard both
+correctly and the copilot claimed no facts.
 
 ## Tomorrow
 
@@ -193,14 +195,15 @@ model calls. For every sentence the copilot wants to show:
 - a sentence that mentions a number, K-number, report id or CFR section
   **without** a matching structured claim is blocked as ungrounded.
 
-**Adversarial test set:** [101 cases](tests/fixtures/gate/adversarial.jsonl)
-(62 must block, 39 must pass): fabricated and drifted quotes, real quotes on
+**Adversarial test set:** [109 cases](tests/fixtures/gate/adversarial.jsonl)
+(68 must block, 41 must pass): fabricated and drifted quotes, real quotes on
 the wrong report, stale / inflated counts, wrong shares, fake and mismatched
 K-numbers, hallucinated and superseded CFR sections, fake recall numbers and
 PMIDs, real ones on the wrong product or year, wrong report-source counts,
-untagged mentions (including "N hospital reports"), and dates that look like counts.
+untagged mentions (including "N hospital reports"), dates that look like counts,
+and counts written in words or scientific notation ("thirty-three reports", "1e3 reports").
 Result: **0 false passes, 0 false blocks**
-([`tests/unit/test_gate.py`](tests/unit/test_gate.py), 118 tests).
+([`tests/unit/test_gate.py`](tests/unit/test_gate.py), 126 tests).
 
 Real verdicts on the demo database (137 MAUDE reports):
 
@@ -253,7 +256,8 @@ openFDA pipeline below predates the event. The file-by-file list is in
 
 ## Tests
 
-**540 unit tests pass, 76% line + branch coverage** (2026-10-28)
+**695 unit tests pass, 77% line + branch coverage** (2026-10-28); all 21 test types
+are reported in [docs/hackathon/TESTING.md](docs/hackathon/TESTING.md)
 (`pytest tests/unit`; CI also runs ruff, black and `mypy --strict` on Python
 3.11 and 3.12).
 

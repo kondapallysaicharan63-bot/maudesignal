@@ -64,6 +64,11 @@ class TestPsurGenerateTab:
 
     def test_product_code_field_in_generate(self, psur: Page) -> None:
         click_tab(psur, "Generate")
+        # Generating needs an LLM provider key; the keyless demo says so instead of a form.
+        keyless = psur.get_by_text("LLM provider is not configured", exact=False)
+        if keyless.count():
+            expect(keyless.first).to_be_visible()
+            return
         expect(psur.get_by_text("Product Code", exact=False)).to_be_visible()
 
     def test_generate_action_present(self, psur: Page) -> None:

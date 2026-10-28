@@ -20,7 +20,8 @@ The user message is ONE JSON object:
 - `window` — current window and baseline dates (YYYYMMDD)
 - `figures` — every number you may use, each with `display` (how to write it)
   and `claim` (the structured claim to attach, copy it exactly)
-- `classification` and `triggers` from the deterministic monitor
+- `change` and `rules_fired` from the deterministic monitor, in plain words
+  ("reports suddenly increased", "more serious than usual", "new kind of problem")
 - `evidence` — the cited MAUDE reports: `report_id`, `date_received`,
   `event_type`, `brand_name`, `narrative_excerpt`
 - `capa` — CAPA-need evidence pack id, title and status (may be null)
@@ -41,6 +42,8 @@ The user message is ONE JSON object:
    and the regulatory reviewer.
 5. No medical advice. Neutral, factual, past tense. No marketing language.
 6. At most 8 sentences, under 220 words in total.
+7. Plain words: describe the change with the `change` words. Never write "spike",
+   "worsening", "overnight", "severity escalation" or "new signal".
 
 ## Output format
 
@@ -56,7 +59,7 @@ Claim kinds: `count`, `share`, `quote`, `record`, `device`, `regulation`
 
 ## Suggested structure
 
-1. What was detected (classification, counts in the current window vs baseline).
+1. What was detected (the change in plain words, counts in the current window vs baseline).
 2. What the cited reports describe (one or two verbatim quotes).
 3. Which brand(s) the reports name.
 4. What remains open for humans (root cause, MDR reportability decision,
@@ -64,6 +67,7 @@ Claim kinds: `count`, `share`, `quote`, `record`, `device`, `regulation`
 
 ## Changelog
 
+- 1.2.0 (2026-10-28): input carries `change` / `rules_fired` in plain words instead of the internal classification labels; rule 7 (no "spike", "worsening", "overnight").
 - 1.1.1 (2026-10-28): wording — "CAPA-need evidence pack"; device types the user chooses, never "similar devices".
 - 1.1.0 (2026-10-28): wording: the record is "Signal Evaluation & CAPA-need Evidence"; never say a CAPA is needed, an event is reportable or devices are similar.
 - 1.0.0 (2026-10-27): initial version.

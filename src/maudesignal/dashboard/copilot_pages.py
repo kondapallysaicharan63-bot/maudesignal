@@ -210,7 +210,7 @@ def _compare_section(db: Database) -> None:
                 ]
             ),
             hide_index=True,
-            use_container_width=True,
+            width="stretch",
         )
     with st.expander(
         "Remember these device types"
@@ -256,7 +256,7 @@ def _mhra_section(db: Database) -> None:
                 ]
             ),
             hide_index=True,
-            use_container_width=True,
+            width="stretch",
             column_config={"link": st.column_config.LinkColumn("link")},
         )
 
@@ -302,7 +302,7 @@ def _who_filed(db: Database, digest: Any) -> None:
             ]
         ),
         hide_index=True,
-        use_container_width=True,
+        width="stretch",
     )
     c1, c2 = st.columns(2)
     choice = c1.selectbox("Show reports filed by", list(SOURCE_FILTERS), key="src_filter")
@@ -334,7 +334,7 @@ def _who_filed(db: Database, digest: Any) -> None:
                 "report": st.column_config.LinkColumn("FDA record", display_text="open")
             },
             hide_index=True,
-            use_container_width=True,
+            width="stretch",
         )
 
 
@@ -668,7 +668,7 @@ def page_actions(db: Database) -> None:
                 ]
             ),
             hide_index=True,
-            use_container_width=True,
+            width="stretch",
         )
 
 
@@ -709,7 +709,7 @@ def _recorded_audit_trails() -> None:
                     ]
                 ),
                 hide_index=True,
-                use_container_width=True,
+                width="stretch",
             )
 
 
