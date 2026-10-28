@@ -87,7 +87,7 @@ otherwise): `demo/voice/question-a.wav` (14.2 s) and `demo/voice/question-b.wav`
     ffmpeg -i sample.mp3 -ac 1 -ar 16000 -c:a pcm_s16le -map_metadata -1 demo/voice/question-a.wav
 
 The earlier robotic `flite` placeholder (`question.wav`) was removed; Piper is
-not used. The record workflow transcribes every `demo/voice/question-*.wav`
+not used. The record workflow transcribes every `demo/voice/question*.wav` (`question.wav` is labelled `00-voice-main`)
 and answers each, labelled `00-voice-a`, `00-voice-b`.
 
 Record (needs the key; CI does this from the repository secret):
