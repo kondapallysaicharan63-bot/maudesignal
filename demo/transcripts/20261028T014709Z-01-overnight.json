@@ -1,0 +1,122 @@
+{
+  "schema_version": "1.0",
+  "label": "01-overnight",
+  "recorded_at_utc": "2026-10-28T01:47:09+00:00",
+  "model": "muse-spark-1.3",
+  "question": "What came in overnight? Is anything worsening?",
+  "answer": "Overnight for 20261022 to 20261028, LLZ had 0 reports and MYN had 0 reports, with no new or worsening signals. In the same window, POK had 0 reports and QIH had 0 reports, all classifications stable.",
+  "tool_calls": [
+    {
+      "name": "overnight_signals",
+      "arguments": {
+        "as_of": "20261028"
+      },
+      "result_preview": "{\"as_of\": \"20261028\", \"headline\": \"0 new, 0 worsening\", \"current_window\": {\"date_from\": \"20261022\", \"date_to\": \"20261028\"}, \"baseline_window\": {\"date_from\": \"20260924\", \"date_to\": \"20261021\"}, \"rules\": {\"current_window_days\": 7, \"baseline_weeks\": 4, \"spike_multiplier\": 2, \"spike_min_reports\": 3, \"se"
+    }
+  ],
+  "first_pass": {
+    "passed": 2,
+    "blocked": 0,
+    "claims": {
+      "pass": 4,
+      "block": 0
+    },
+    "sentences": [
+      {
+        "text": "Overnight for 20261022 to 20261028, LLZ had 0 reports and MYN had 0 reports, with no new or worsening signals.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 0",
+            "evidence_ids": []
+          },
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 0",
+            "evidence_ids": []
+          }
+        ]
+      },
+      {
+        "text": "In the same window, POK had 0 reports and QIH had 0 reports, all classifications stable.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 0",
+            "evidence_ids": []
+          },
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 0",
+            "evidence_ids": []
+          }
+        ]
+      }
+    ]
+  },
+  "final": {
+    "passed": 2,
+    "blocked": 0,
+    "claims": {
+      "pass": 4,
+      "block": 0
+    },
+    "sentences": [
+      {
+        "text": "Overnight for 20261022 to 20261028, LLZ had 0 reports and MYN had 0 reports, with no new or worsening signals.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 0",
+            "evidence_ids": []
+          },
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 0",
+            "evidence_ids": []
+          }
+        ]
+      },
+      {
+        "text": "In the same window, POK had 0 reports and QIH had 0 reports, all classifications stable.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 0",
+            "evidence_ids": []
+          },
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 0",
+            "evidence_ids": []
+          }
+        ]
+      }
+    ]
+  },
+  "repaired": false,
+  "sentences_repaired": 0,
+  "capa_ids": [],
+  "parse_failed": false,
+  "usage": {
+    "input_tokens": 12828,
+    "output_tokens": 4606,
+    "cost_usd": 0.035611
+  }
+}
