@@ -93,6 +93,12 @@ def build(transcripts: list[dict[str, Any]], known: dict[str, str], old: dict[st
     clean_first = sum(1 for t in transcripts if t["first_pass"]["blocked"] == 0)
     clean_final = sum(1 for t in transcripts if t["final"]["blocked"] == 0)
     repaired = sum(1 for t in transcripts if t.get("repaired"))
+    unparsed = [t["label"] for t in transcripts if t.get("parse_failed")]
+    if any("length_stops" in t for t in transcripts):
+        stops = str(sum(int(t.get("length_stops") or 0) for t in transcripts))
+    else:
+        stops = "not recorded (these transcripts predate the field)"
+    unparsed_passed = sum(t["final"]["passed"] for t in transcripts if t.get("parse_failed"))
     cost = sum(float(t.get("usage", {}).get("cost_usd") or 0.0) for t in transcripts)
     models = sorted({str(t.get("model")) for t in transcripts})
     lines += [
@@ -105,10 +111,21 @@ def build(transcripts: list[dict[str, Any]], known: dict[str, str], old: dict[st
         f"- Answers with nothing blocked, first pass: {clean_first}/{len(transcripts)}; "
         f"final: {clean_final}/{len(transcripts)}",
         f"- Answers that used the repair turn: {repaired}",
+        f"- Answers whose reply never parsed as the required JSON: {len(unparsed)}"
+        + (f" ({', '.join(unparsed)})" if unparsed else ""),
+        f"- Final-answer calls stopped by max_tokens: {stops}",
         f"- Recorded model cost: ${cost:.4f}",
+    ]
+    if unparsed_passed:
+        lines.append(
+            f"- **Caution:** {unparsed_passed} of the passing sentences come from replies that "
+            "never parsed; the gate version used for this recording counted those as passed "
+            "(current code withholds them)"
+        )
+    lines += [
         "",
-        "| Answer | Recorded (UTC) | Tools | First pass | Final | Repaired |",
-        "|---|---|---|---|---|---|",
+        "| Answer | Recorded (UTC) | Tools | First pass | Final | Repaired | Parsed |",
+        "|---|---|---|---|---|---|---|",
     ]
     for t in transcripts:
         tools = ", ".join(c["name"] for c in t.get("tool_calls", [])) or "—"
@@ -116,7 +133,8 @@ def build(transcripts: list[dict[str, Any]], known: dict[str, str], old: dict[st
             f"| {t['label']} | {t.get('recorded_at_utc', '')} | {tools} | "
             f"{_rate(t['first_pass']['passed'], t['first_pass']['blocked'])} | "
             f"{_rate(t['final']['passed'], t['final']['blocked'])} | "
-            f"{'yes' if t.get('repaired') else 'no'} |"
+            f"{'yes' if t.get('repaired') else 'no'} | "
+            f"{'no' if t.get('parse_failed') else 'yes'} |"
         )
     lines.append("")
 
@@ -145,7 +163,26 @@ def build(transcripts: list[dict[str, Any]], known: dict[str, str], old: dict[st
             )
         lines.append("")
     tally = ", ".join(f"{k} {v}" for k, v in sorted(verdicts.items()) if v)
-    lines += ["## Hand verdict tally", "", tally, ""]
+    lines += ["## Hand verdict tally", "", f"Sentences: {tally}", ""]
+    checked = [
+        t
+        for t in transcripts
+        if all(f"{t['label']}#{i}" in old for i in range(1, len(t["final"]["sentences"]) + 1))
+    ]
+    if checked:
+        fully = sum(
+            1
+            for t in checked
+            if all(
+                old[f"{t['label']}#{i}"].startswith("correct")
+                for i in range(1, len(t["final"]["sentences"]) + 1)
+            )
+        )
+        lines += [
+            f"Answers hand-checked: {len(checked)} of {len(transcripts)}; every sentence "
+            f"correct: {fully}/{len(checked)} ({100 * fully / len(checked):.1f}%)",
+            "",
+        ]
     return "\n".join(lines)
 
 

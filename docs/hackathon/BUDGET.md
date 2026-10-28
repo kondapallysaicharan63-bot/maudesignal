@@ -29,10 +29,14 @@ Output tokens are capped by `max_tokens` in code, so the output side of each cal
 
 | Call | `max_tokens` (code) | Output-cost ceiling |
 |---|---|---|
-| Copilot turn (`copilot/agent.py`) | 1,500 | 1,500 × $4.25 / 1M = $0.0064 |
-| 510(k) / label read (`vision/spark.py`) | 4,096 | $0.0174 |
-| Dossier narrative (`dossier/narrative.py`) | 1,200 | $0.0051 |
-| Dossier reviewer, Wonder (`dossier/review.py`) | 4,000 | 4,000 × $20 / 1M = $0.0800 |
+| Copilot turn (`copilot/agent.py`) | 4,000 (was 1,500) | 4,000 × $4.25 / 1M = $0.0170 |
+| 510(k) / label read (`vision/spark.py`) | 16,000 (was 4,096) | $0.0680 |
+| Dossier narrative (`dossier/narrative.py`) | 4,000 (was 1,200) | $0.0170 |
+| Dossier reviewer, Wonder (`dossier/review.py`) | 16,000 (was 4,000) | 16,000 × $20 / 1M = $0.3200 |
+
+The caps were raised after the 2026-10-28 recording (section 4): Muse Spark and
+Muse Wonder count reasoning tokens toward `max_tokens`, and at the old caps the
+narrative and the review used every token and returned no text.
 
 Input tokens have no ceiling in code (tool results and page images vary), so
 the real per-answer cost comes from the recorded runs (section 4).
@@ -65,7 +69,11 @@ the real per-answer cost comes from the recorded runs (section 4).
 |---|---|---|---|---|
 | 2026-10-27 | Meta smoke test, run 40560284301 (3 attempts) | `models.list` + one streamed answer | not logged (the smoke test prints no token usage) | Actions log |
 | 2026-10-27 | Record live Meta runs, run 40560284763 | copilot and dossier calls returned 404 (old key); 510(k) reader stopped before any model call (FDA refused the PDFs) | vision step printed `total estimated cost $0.0000`; copilot step printed none (the run stopped at the 404) | Actions log |
-| — | next Record run (after the push) | 20 typed questions + 1 voice question, 510(k) reader, dossier narrative + reviewer | **pending**: fill in from the run's printed costs and `HAND_CHECK.md` | — |
+| 2026-10-28 | Record live Meta runs, run 40616911177 | 20 typed questions + 1 voice question (21 answers) | $0.7416 (sum of the transcripts' usage; the voice answer is $0.0359, of which transcription $0.000150) | `HAND_CHECK.md`, Actions log |
+| 2026-10-28 | same run | 510(k) reader: K261677 read and checked; 4 others failed (no valid JSON) | $0.0662 logged for K261677; the 4 failed reads are **not logged** (the error is raised before the cost is counted) | Actions log |
+| 2026-10-28 | same run | dossier narrative (Muse Spark) | 4,097 in / 1,200 out tokens → $0.0102 (arithmetic on the recorded tokens) | `demo/dossier/*-narrative.json` |
+| 2026-10-28 | same run | dossier review (Muse Wonder) | $0.1927 (28,166 in / 4,000 out); output not parseable | `demo/dossier/*-review.json` |
+| | **run total logged** | | **$1.0107**, plus the unlogged failed 510(k) reads; check the console balance | |
 
 ## 5. Allocation of the $150 (PROPOSED: Charan to confirm)
 

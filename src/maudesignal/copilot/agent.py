@@ -37,7 +37,14 @@ from typing import Any
 from maudesignal.copilot.meta_provider import SPARK_USD_PER_M_INPUT, SPARK_USD_PER_M_OUTPUT
 from maudesignal.copilot.tools import TOOL_SCHEMAS, ToolContext, call_tool
 from maudesignal.extraction.skill_loader import LoadedSkill, SkillLoader
-from maudesignal.gate import Claim, ClaimParseError, GateReport, claim_from_dict, verify_answer
+from maudesignal.gate import (
+    Claim,
+    ClaimParseError,
+    GateReport,
+    SentenceVerdict,
+    claim_from_dict,
+    verify_answer,
+)
 
 SKILL_NAME = "safety-copilot"
 RESPONSE_FORMAT_NAME = "safety_copilot_answer"
@@ -77,6 +84,7 @@ class CopilotResult:
     output_tokens: int = 0
     model: str = ""
     parse_failed: bool = False
+    length_stops: int = 0
 
     @property
     def cost_usd(self) -> float:
@@ -153,6 +161,19 @@ def _repair_message(report: GateReport) -> str:
     return "\n".join(lines)
 
 
+UNPARSED_REASON = "the model did not return a structured answer, so nothing from it is shown"
+
+
+def _unparsed(content: str) -> GateReport:
+    """A reply that never parsed is withheld, never passed as one claim-less sentence.
+
+    Passing it would let an empty reply, or claims hidden inside JSON-looking text,
+    count as verified (both happened in the 2026-10-28 recording).
+    """
+    text = content.strip()[:300] or "(empty reply)"
+    return GateReport([SentenceVerdict(text, "block", (), (UNPARSED_REASON,))])
+
+
 class CopilotAgent:
     """Muse Spark tool-use loop + citation gate + one repair turn."""
 
@@ -165,7 +186,7 @@ class CopilotAgent:
         skill: LoadedSkill | None = None,
         max_tool_rounds: int = 6,
         max_repairs: int = 1,
-        max_tokens: int = 1500,
+        max_tokens: int = 4000,
         structured_output: bool = True,
         reasoning_effort: str | None = None,
     ) -> None:
@@ -178,7 +199,10 @@ class CopilotAgent:
             skill: Loaded ``safety-copilot`` skill (loaded from ``skills/`` if omitted).
             max_tool_rounds: Cap on model turns that call tools.
             max_repairs: Repair turns after a gate block.
-            max_tokens: Output cap per model call (reasoning tokens count toward it).
+            max_tokens: Output cap per model call. Reasoning tokens count toward it:
+                at 1500, 11 of the 21 answers in the 2026-10-28 recording never returned
+                parseable JSON, so the default is 4000 (≤ $0.017 of output per call);
+                ``length_stops`` records whether the cap was the cause.
             structured_output: Request the final answer with the strict
                 ``json_schema`` response_format (no tools on that call).
             reasoning_effort: Optional Chat Completions ``reasoning_effort``
@@ -242,6 +266,8 @@ class CopilotAgent:
         """Final-answer call: no tools, schema-constrained when structured output is on."""
         resp = self._create(messages, tools=False)
         self._count(resp, result)
+        if getattr(resp.choices[0], "finish_reason", None) == "length":
+            result.length_stops += 1  # hit max_tokens: the JSON is cut off
         return str(resp.choices[0].message.content or "")
 
     def ask(self, question: str) -> CopilotResult:
@@ -263,7 +289,7 @@ class CopilotAgent:
         content = self._run_until_answer(messages, result)
         sentences, ok = self._parse_or_retry(content, messages, result)
         result.parse_failed = not ok
-        report = verify_answer(sentences, self._ctx.store)
+        report = verify_answer(sentences, self._ctx.store) if ok else _unparsed(content)
         result.first_pass_report = report
 
         repairs = 0
@@ -276,6 +302,7 @@ class CopilotAgent:
                 break
             report = verify_answer(repaired, self._ctx.store)
             result.repaired = True
+            result.parse_failed = False
 
         result.report = report
         result.answer = report.render()

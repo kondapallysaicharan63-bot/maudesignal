@@ -125,7 +125,7 @@ def call_spark_json(
     skill: LoadedSkill,
     parts: list[dict[str, Any]],
     model: str = DEFAULT_VISION_MODEL,
-    max_tokens: int = 4096,
+    max_tokens: int = 16000,
 ) -> SparkJson:
     """Send one user message (text + images) and return schema-valid JSON.
 
@@ -134,7 +134,10 @@ def call_spark_json(
         skill: The Skill supplying the system prompt and output schema.
         parts: User content parts (``text_part`` / ``image_part``).
         model: Muse Spark model id (Standard tier only).
-        max_tokens: Output token cap.
+        max_tokens: Output token cap. Reasoning tokens count toward it: at 4096, 4 of
+            5 summaries in the 2026-10-28 recording returned no valid JSON (one cut off
+            mid-object), so the default is 16000 (≤ $0.068 of output per read); the
+            error now names ``finish_reason`` to confirm the cause.
 
     Raises:
         ValueError: Contributor-tier model or too many images.
@@ -170,7 +173,11 @@ def call_spark_json(
     in_tok = int(getattr(usage, "prompt_tokens", 0) or 0) if usage is not None else 0
     out_tok = int(getattr(usage, "completion_tokens", 0) or 0) if usage is not None else 0
     content = str(resp.choices[0].message.content or "")
-    data = parse_json_object(content)
+    finish = getattr(resp.choices[0], "finish_reason", None)
+    try:
+        data = parse_json_object(content)
+    except VisionModelError as exc:
+        raise VisionModelError(f"{exc} (finish_reason={finish}, output_tokens={out_tok})") from exc
     try:
         jsonschema.validate(instance=data, schema=schema)
     except jsonschema.ValidationError as exc:

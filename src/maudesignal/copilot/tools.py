@@ -56,7 +56,17 @@ class ToolContext:
 
 def overnight_signals(ctx: ToolContext, as_of: str | None = None) -> dict[str, Any]:
     """Deterioration digest: which product codes are new / spiking / escalating."""
+    latest = detect_from_database(ctx.db).window.as_of
     as_of_date = parse_yyyymmdd(as_of) if as_of else None
+    note = None
+    if as_of_date is not None and as_of_date > latest:
+        # openFDA lags real time by weeks: a window ending "today" holds no reports and
+        # would hide the real signal, so the latest stored date is used instead.
+        note = (
+            f"requested as_of {_ymd(as_of_date)} is after the latest stored report "
+            f"({_ymd(latest)}); the window ends on {_ymd(latest)}"
+        )
+        as_of_date = None
     digest = digest_from_database(ctx.db, detect_from_database(ctx.db, as_of_date))
     d = digest_to_dict(digest)
     w = digest.result.window
@@ -69,6 +79,7 @@ def overnight_signals(ctx: ToolContext, as_of: str | None = None) -> dict[str, A
             "date_to": _ymd(w.baseline_end),
         },
         "rules": d["rules"],
+        **({"note": note} if note else {}),
         # Flagged codes most urgent first, each with the sentence explaining its rank.
         "ranking": d["ranking"],
         "device_types": d["device_types"],
@@ -335,8 +346,18 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
         "function": {
             "name": "overnight_signals",
             "description": "Deterioration digest: new / spiking / severity-escalating product "
-            "codes in the last 7 days vs a 4-week baseline, with exact counts and report ids.",
-            "parameters": {"type": "object", "properties": {"as_of": _YMD}},
+            "codes in the 7 days ending on the latest stored report date vs a 4-week baseline, "
+            "with exact counts, report ids and the ranking with its reasons. Omit as_of: "
+            "openFDA lags real time, so the default is the latest stored date, not today.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "as_of": {
+                        "type": "string",
+                        "description": "YYYYMMDD; optional, only for an earlier week",
+                    }
+                },
+            },
         },
     },
     {

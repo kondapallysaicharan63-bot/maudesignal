@@ -592,3 +592,56 @@ def test_agent_cross_source_answer_is_gated(tmp_path: Path) -> None:
     assert [t.name for t in res.tool_calls] == ["recalls", "literature"]
     assert res.report.passed == 2 and res.report.blocked == 1
     assert "90000002" in res.answer and "Withheld" in res.answer
+
+
+# ---------------------------------------------------------------------------
+# Regressions from the 2026-10-28 live recording
+# ---------------------------------------------------------------------------
+
+
+def _cut(content: str = "") -> Any:
+    """A final-answer response stopped by max_tokens."""
+    m = _msg(content)
+    m.choices[0].finish_reason = "length"
+    return m
+
+
+def test_empty_or_unparsed_reply_is_withheld_not_passed(tmp_path: Path) -> None:
+    # 8 recorded answers were an empty string counted as 1/1 passed.
+    ctx = _ctx(tmp_path)
+    script = [_msg(""), _cut(""), _cut(""), _msg(""), _cut(""), _cut("")]
+    res = CopilotAgent(FakeClient(script), ctx).ask("what came in overnight?")
+    assert res.parse_failed
+    assert (res.report.passed, res.report.blocked) == (0, 1)
+    assert res.first_pass_report.blocked == 1
+    assert "did not return a structured answer" in res.answer
+    assert res.length_stops == 4
+
+
+def test_claims_hidden_in_json_looking_text_are_not_passed(tmp_path: Path) -> None:
+    # Recorded answers 02 and 19 showed raw JSON text whose count claims were never checked.
+    ctx = _ctx(tmp_path)
+    leaked = '{"sentences": [{"claims": [{"kind": "count", "value": 99}], "text": "x"'
+    res = CopilotAgent(FakeClient([_msg(leaked) for _ in range(6)]), ctx).ask("why first?")
+    assert res.parse_failed and res.report.passed == 0 and res.report.blocked == 1
+
+
+def test_unparsed_first_reply_gets_a_repair_turn(tmp_path: Path) -> None:
+    ctx = _ctx(tmp_path)
+    good = _answer(("Human review is required.", []))
+    script = [_msg(""), _msg(""), _msg(""), *_final(good)]
+    res = CopilotAgent(FakeClient(script), ctx).ask("summary?")
+    assert res.repaired and not res.parse_failed
+    assert (res.report.passed, res.report.blocked) == (1, 0)
+    assert res.first_pass_report.blocked == 1
+
+
+def test_overnight_as_of_after_the_data_uses_latest_stored_date(tmp_path: Path) -> None:
+    # The model asked for the week ending "today" (20261028) and reported 0 reports.
+    ctx = _ctx(tmp_path)
+    default = call_tool(ctx, "overnight_signals", "{}")
+    future = call_tool(ctx, "overnight_signals", json.dumps({"as_of": "20991231"}))
+    assert future["as_of"] == default["as_of"]
+    assert future["current_window"] == default["current_window"]
+    assert "after the latest stored report" in future["note"]
+    assert "note" not in default

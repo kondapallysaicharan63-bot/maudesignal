@@ -76,6 +76,7 @@ def result_to_dict(
         "sentences_repaired": result.sentences_repaired,
         "capa_ids": result.capa_ids,
         "parse_failed": result.parse_failed,
+        "length_stops": result.length_stops,
         "usage": {
             "input_tokens": result.input_tokens,
             "output_tokens": result.output_tokens,

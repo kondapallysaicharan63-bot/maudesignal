@@ -144,7 +144,7 @@ def draft_narrative(
     *,
     model: str = DEFAULT_MODEL,
     skill: LoadedSkill | None = None,
-    max_tokens: int = 1200,
+    max_tokens: int = 4000,
 ) -> NarrativeRecording:
     """Ask Muse Spark for the narrative (one call, temperature 0).
 
@@ -154,7 +154,8 @@ def draft_narrative(
         excerpts: report_id -> narrative excerpt.
         model: Standard-tier model id; Contributor models are refused.
         skill: Pre-loaded skill (loaded from ``skills/`` if omitted).
-        max_tokens: Output cap.
+        max_tokens: Output cap (reasoning counts toward it; the 2026-10-28 recording used
+            all 1200 and returned no text).
 
     Raises:
         ValueError: a Contributor-tier model was requested.
