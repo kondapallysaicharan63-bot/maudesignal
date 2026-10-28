@@ -1,18 +1,18 @@
 {
   "kind": "510k_summary_reading",
   "k_number": "K210666",
-  "created_at": "2026-10-28T13:14:18+00:00",
+  "created_at": "2026-10-28T20:49:13+00:00",
   "pdf_url": "https://www.accessdata.fda.gov/cdrh_docs/pdf21/K210666.pdf",
   "page_count": 12,
   "pages_read": 8,
   "has_text_layer": true,
-  "agreement_pct": 100.0,
+  "agreement_pct": 90.0,
   "counts": {
-    "VERIFIED": 10,
-    "CONFLICT": 0,
+    "VERIFIED": 9,
+    "CONFLICT": 1,
     "UNVERIFIABLE": 0
   },
-  "cost_usd": 0.082235,
+  "cost_usd": 0.07688,
   "openfda": {
     "k_number": "K210666",
     "applicant": "Imagen Technologies, Inc.",
@@ -119,7 +119,7 @@
       "value": "MYN",
       "read_a": {
         "value": "MYN",
-        "page": 1,
+        "page": 4,
         "legibility": "clear"
       },
       "read_b": {
@@ -149,7 +149,7 @@
       "value": "892.2070",
       "read_a": {
         "value": "892.2070",
-        "page": 1,
+        "page": 4,
         "legibility": "clear"
       },
       "read_b": {
@@ -266,10 +266,10 @@
     },
     {
       "name": "intended_use",
-      "status": "VERIFIED",
-      "value": "The device is intended for use as a concurrent reading aid for physicians.",
+      "status": "CONFLICT",
+      "value": null,
       "read_a": {
-        "value": "The device is intended for use as a concurrent reading aid for physicians.",
+        "value": "Chest-CAD is a computer-assisted detection (CADe) software device that analyzes chest radiograph studies using machine learning techniques to identify, categorize, and highlight suspicious regions of interest (ROI). Any suspicious ROI identified by Chest-CAD is assigned to one of the following categories: Cardiac, Mediastinum/Hila, Lungs, Pleura, Bones, Soft Tissues, Hardware, or Other. The device is intended for use as a concurrent reading aid for physicians. Chest-CAD is indicated for adults only.",
         "page": 5,
         "legibility": "clear"
       },
@@ -278,43 +278,38 @@
         "page": 5,
         "legibility": "clear"
       },
-      "reads_agree": true,
-      "similarity": 1.0,
+      "reads_agree": false,
+      "similarity": 0.261,
       "checks": [
         {
           "source": "two_reads",
-          "outcome": "pass",
-          "detail": "similarity 1.00"
-        },
-        {
-          "source": "text_layer",
-          "outcome": "pass",
-          "detail": "100% found in text layer"
+          "outcome": "fail",
+          "detail": "similarity 0.26"
         }
       ],
-      "note": ""
+      "note": "reads disagree; low clarity \u2014 human check"
     },
     {
       "name": "technology_summary",
       "status": "VERIFIED",
-      "value": "Chest-CAD is a computer-assisted detection (CADe) software device that analyzes chest radiographs using deep learning algorithms for computer vision and provides relevant annotations to assist physicians with their interpretations. For each image within a study, Chest-CAD generates a DICOM Presentation State file with bounding boxes surrounding each detected suspicious ROI. The Chest-CAD overlay can be toggled on or off by the physician within their Picture Archiving and Communication System (PACS) viewer, allowing for concurrent review of the X-ray study.",
+      "value": "Chest-CAD is a computer-assisted detection (CADe) software device designed to assist physicians in identifying suspicious regions of interest (ROIs) in adult chest X-rays. Chest-CAD detects suspicious ROIs by analyzing radiographs using deep learning algorithms for computer vision and provides relevant annotations to assist physicians with their interpretations.",
       "read_a": {
-        "value": "Chest-CAD is a computer-assisted detection (CADe) software device that analyzes chest radiographs using deep learning algorithms for computer vision and provides relevant annotations to assist physicians with their interpretations. For each image within a study, Chest-CAD generates a DICOM Presentation State file with bounding boxes surrounding each detected suspicious ROI. The Chest-CAD overlay can be toggled on or off by the physician within their Picture Archiving and Communication System (PACS) viewer, allowing for concurrent review of the X-ray study.",
+        "value": "Chest-CAD is a computer-assisted detection (CADe) software device designed to assist physicians in identifying suspicious regions of interest (ROIs) in adult chest X-rays. Chest-CAD detects suspicious ROIs by analyzing radiographs using deep learning algorithms for computer vision and provides relevant annotations to assist physicians with their interpretations.",
         "page": 5,
         "legibility": "clear"
       },
       "read_b": {
-        "value": "Chest-CAD is a computer-assisted detection software device designed to assist physicians in identifying suspicious regions of interest in adult chest X-rays. Chest-CAD detects suspicious ROIs by analyzing radiographs using deep learning algorithms for computer vision and provides relevant annotations to assist physicians with their interpretations. For each image within a study, Chest-CAD generates a DICOM Presentation State file with bounding boxes surrounding each detected suspicious ROI.",
+        "value": "Chest-CAD is a computer-assisted detection (CADe) software device designed to assist physicians in identifying suspicious regions of interest (ROIs) in adult chest X-rays. Suspicious ROIs identified by Chest-CAD are assigned to one of the following categories: Cardiac, Mediastinum/Hila, Lungs, Pleura, Bones, Soft Tissues, Hardware, or Other. Chest-CAD detects suspicious ROIs by analyzing radiographs using deep learning algorithms for computer vision and provides relevant annotations to assist physicians with their interpretations.",
         "page": 5,
         "legibility": "clear"
       },
       "reads_agree": true,
-      "similarity": 0.579,
+      "similarity": 0.695,
       "checks": [
         {
           "source": "two_reads",
           "outcome": "pass",
-          "detail": "similarity 0.58"
+          "detail": "similarity 0.69"
         }
       ],
       "note": "two independent reads agree (no other source covers it)"
@@ -341,12 +336,12 @@
         },
         "product_code": {
           "value": "MYN",
-          "page": 1,
+          "page": 4,
           "legibility": "clear"
         },
         "regulation_number": {
           "value": "892.2070",
-          "page": 1,
+          "page": 4,
           "legibility": "clear"
         },
         "decision_date": {
@@ -367,12 +362,12 @@
           "legibility": "clear"
         },
         "intended_use": {
-          "value": "The device is intended for use as a concurrent reading aid for physicians.",
+          "value": "Chest-CAD is a computer-assisted detection (CADe) software device that analyzes chest radiograph studies using machine learning techniques to identify, categorize, and highlight suspicious regions of interest (ROI). Any suspicious ROI identified by Chest-CAD is assigned to one of the following categories: Cardiac, Mediastinum/Hila, Lungs, Pleura, Bones, Soft Tissues, Hardware, or Other. The device is intended for use as a concurrent reading aid for physicians. Chest-CAD is indicated for adults only.",
           "page": 5,
           "legibility": "clear"
         },
         "technology_summary": {
-          "value": "Chest-CAD is a computer-assisted detection (CADe) software device that analyzes chest radiographs using deep learning algorithms for computer vision and provides relevant annotations to assist physicians with their interpretations. For each image within a study, Chest-CAD generates a DICOM Presentation State file with bounding boxes surrounding each detected suspicious ROI. The Chest-CAD overlay can be toggled on or off by the physician within their Picture Archiving and Communication System (PACS) viewer, allowing for concurrent review of the X-ray study.",
+          "value": "Chest-CAD is a computer-assisted detection (CADe) software device designed to assist physicians in identifying suspicious regions of interest (ROIs) in adult chest X-rays. Chest-CAD detects suspicious ROIs by analyzing radiographs using deep learning algorithms for computer vision and provides relevant annotations to assist physicians with their interpretations.",
           "page": 5,
           "legibility": "clear"
         }
@@ -391,8 +386,8 @@
       "model": "muse-spark-1.3",
       "skill_version": "1.0.0",
       "input_tokens": 21974,
-      "output_tokens": 5133,
-      "cost_usd": 0.049283
+      "output_tokens": 4014,
+      "cost_usd": 0.044527
     },
     {
       "label": "B",
@@ -445,7 +440,7 @@
           "legibility": "clear"
         },
         "technology_summary": {
-          "value": "Chest-CAD is a computer-assisted detection software device designed to assist physicians in identifying suspicious regions of interest in adult chest X-rays. Chest-CAD detects suspicious ROIs by analyzing radiographs using deep learning algorithms for computer vision and provides relevant annotations to assist physicians with their interpretations. For each image within a study, Chest-CAD generates a DICOM Presentation State file with bounding boxes surrounding each detected suspicious ROI.",
+          "value": "Chest-CAD is a computer-assisted detection (CADe) software device designed to assist physicians in identifying suspicious regions of interest (ROIs) in adult chest X-rays. Suspicious ROIs identified by Chest-CAD are assigned to one of the following categories: Cardiac, Mediastinum/Hila, Lungs, Pleura, Bones, Soft Tissues, Hardware, or Other. Chest-CAD detects suspicious ROIs by analyzing radiographs using deep learning algorithms for computer vision and provides relevant annotations to assist physicians with their interpretations.",
           "page": 5,
           "legibility": "clear"
         }
@@ -464,8 +459,8 @@
       "model": "muse-spark-1.3",
       "skill_version": "1.0.0",
       "input_tokens": 11830,
-      "output_tokens": 4274,
-      "cost_usd": 0.032952
+      "output_tokens": 4133,
+      "cost_usd": 0.032353
     }
   ],
   "thumbnails": [

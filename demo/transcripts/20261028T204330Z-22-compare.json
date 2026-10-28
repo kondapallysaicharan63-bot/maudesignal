@@ -1,27 +1,33 @@
 {
   "schema_version": "1.0",
-  "label": "01-what-changed",
-  "recorded_at_utc": "2026-10-28T13:04:16+00:00",
+  "label": "22-compare",
+  "recorded_at_utc": "2026-10-28T20:43:30+00:00",
   "model": "muse-spark-1.3",
-  "question": "What changed this week? Did reports suddenly increase for any device?",
-  "answer": "Yes, product code LLZ reports suddenly increased this week with 33 reports. A named human must review whether any action is needed.",
+  "question": "Compare LLZ, QIH and MYN this week. Where did reports suddenly increase?",
+  "answer": "LLZ reports suddenly increased this week with 33 reports, while QIH had 0 reports with no change and MYN had 0 reports with no change. A named human must review these reports before any CAPA-need decision.",
   "tool_calls": [
     {
-      "name": "overnight_signals",
-      "arguments": {},
-      "result_preview": "{\"as_of\": \"20260831\", \"headline\": \"New kind of problem: 0 \\u00b7 More serious than usual: 0 \\u00b7 Reports suddenly increased: 1\", \"current_window\": {\"date_from\": \"20260825\", \"date_to\": \"20260831\"}, \"baseline_window\": {\"date_from\": \"20260728\", \"date_to\": \"20260824\"}, \"rules\": {\"current_window_days\":"
+      "name": "compare_signals",
+      "arguments": {
+        "product_codes": [
+          "LLZ",
+          "QIH",
+          "MYN"
+        ]
+      },
+      "result_preview": "{\"as_of\": \"20260831\", \"window\": {\"date_from\": \"20260825\", \"date_to\": \"20260831\"}, \"rows\": [{\"product_code\": \"LLZ\", \"change\": \"reports suddenly increased\", \"this_week\": 33, \"baseline_weekly_mean\": 8.75, \"ratio_to_baseline\": 3.77, \"injury_death_this_week\": 0, \"injury_death_share_pct\": 0.0, \"injury_dea"
     }
   ],
   "first_pass": {
     "passed": 2,
     "blocked": 0,
     "claims": {
-      "pass": 1,
+      "pass": 3,
       "block": 0
     },
     "sentences": [
       {
-        "text": "Yes, product code LLZ reports suddenly increased this week with 33 reports.",
+        "text": "LLZ reports suddenly increased this week with 33 reports, while QIH had 0 reports with no change and MYN had 0 reports with no change.",
         "status": "pass",
         "reasons": [],
         "claims": [
@@ -51,11 +57,23 @@
               "50513025",
               "50513122"
             ]
+          },
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 0",
+            "evidence_ids": []
+          },
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 0",
+            "evidence_ids": []
           }
         ]
       },
       {
-        "text": "A named human must review whether any action is needed.",
+        "text": "A named human must review these reports before any CAPA-need decision.",
         "status": "pass",
         "reasons": [],
         "claims": []
@@ -66,12 +84,12 @@
     "passed": 2,
     "blocked": 0,
     "claims": {
-      "pass": 1,
+      "pass": 3,
       "block": 0
     },
     "sentences": [
       {
-        "text": "Yes, product code LLZ reports suddenly increased this week with 33 reports.",
+        "text": "LLZ reports suddenly increased this week with 33 reports, while QIH had 0 reports with no change and MYN had 0 reports with no change.",
         "status": "pass",
         "reasons": [],
         "claims": [
@@ -101,11 +119,23 @@
               "50513025",
               "50513122"
             ]
+          },
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 0",
+            "evidence_ids": []
+          },
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 0",
+            "evidence_ids": []
           }
         ]
       },
       {
-        "text": "A named human must review whether any action is needed.",
+        "text": "A named human must review these reports before any CAPA-need decision.",
         "status": "pass",
         "reasons": [],
         "claims": []
@@ -118,8 +148,8 @@
   "parse_failed": false,
   "length_stops": 0,
   "usage": {
-    "input_tokens": 14052,
-    "output_tokens": 3263,
-    "cost_usd": 0.031433
+    "input_tokens": 13607,
+    "output_tokens": 4230,
+    "cost_usd": 0.034986
   }
 }

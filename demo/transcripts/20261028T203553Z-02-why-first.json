@@ -1,10 +1,10 @@
 {
   "schema_version": "1.0",
   "label": "02-why-first",
-  "recorded_at_utc": "2026-10-28T13:04:48+00:00",
+  "recorded_at_utc": "2026-10-28T20:35:53+00:00",
   "model": "muse-spark-1.3",
   "question": "Why is the top signal ranked first? Show me the reports behind it.",
-  "answer": "Product code LLZ is ranked first this week with reports suddenly increased, with 33 reports from 20260825 to 20260831. Example report 50426770 states \"indicating that they have a case that needs to be corrected.\" Example report 50426773 states \"unable to finalize report on Echo Module and encounter an error 500.\" Example report 50448213 states \"an error 500 occurs for one study, preventing the doctor from processing the report.\" A named human must review whether any action is needed.",
+  "answer": "LLZ is ranked first because reports suddenly increased this week with 33 reports from August 25 to August 31, 2026. Report 50426770 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that they have a case that needs to be corrected.\" Report 50426773 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that unable to finalize report on Echo Module and encounter an error 500.\" Report 50448213 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that an error 500 occurs for one study, preventing the doctor from processing the report.\"",
   "tool_calls": [
     {
       "name": "overnight_signals",
@@ -34,7 +34,7 @@
     }
   ],
   "first_pass": {
-    "passed": 5,
+    "passed": 4,
     "blocked": 0,
     "claims": {
       "pass": 7,
@@ -42,7 +42,7 @@
     },
     "sentences": [
       {
-        "text": "Product code LLZ is ranked first this week with reports suddenly increased, with 33 reports from 20260825 to 20260831.",
+        "text": "LLZ is ranked first because reports suddenly increased this week with 33 reports from August 25 to August 31, 2026.",
         "status": "pass",
         "reasons": [],
         "claims": [
@@ -76,7 +76,7 @@
         ]
       },
       {
-        "text": "Example report 50426770 states \"indicating that they have a case that needs to be corrected.\"",
+        "text": "Report 50426770 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that they have a case that needs to be corrected.\"",
         "status": "pass",
         "reasons": [],
         "claims": [
@@ -99,7 +99,7 @@
         ]
       },
       {
-        "text": "Example report 50426773 states \"unable to finalize report on Echo Module and encounter an error 500.\"",
+        "text": "Report 50426773 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that unable to finalize report on Echo Module and encounter an error 500.\"",
         "status": "pass",
         "reasons": [],
         "claims": [
@@ -122,7 +122,7 @@
         ]
       },
       {
-        "text": "Example report 50448213 states \"an error 500 occurs for one study, preventing the doctor from processing the report.\"",
+        "text": "Report 50448213 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that an error 500 occurs for one study, preventing the doctor from processing the report.\"",
         "status": "pass",
         "reasons": [],
         "claims": [
@@ -143,17 +143,11 @@
             ]
           }
         ]
-      },
-      {
-        "text": "A named human must review whether any action is needed.",
-        "status": "pass",
-        "reasons": [],
-        "claims": []
       }
     ]
   },
   "final": {
-    "passed": 5,
+    "passed": 4,
     "blocked": 0,
     "claims": {
       "pass": 7,
@@ -161,7 +155,7 @@
     },
     "sentences": [
       {
-        "text": "Product code LLZ is ranked first this week with reports suddenly increased, with 33 reports from 20260825 to 20260831.",
+        "text": "LLZ is ranked first because reports suddenly increased this week with 33 reports from August 25 to August 31, 2026.",
         "status": "pass",
         "reasons": [],
         "claims": [
@@ -195,7 +189,7 @@
         ]
       },
       {
-        "text": "Example report 50426770 states \"indicating that they have a case that needs to be corrected.\"",
+        "text": "Report 50426770 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that they have a case that needs to be corrected.\"",
         "status": "pass",
         "reasons": [],
         "claims": [
@@ -218,7 +212,7 @@
         ]
       },
       {
-        "text": "Example report 50426773 states \"unable to finalize report on Echo Module and encounter an error 500.\"",
+        "text": "Report 50426773 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that unable to finalize report on Echo Module and encounter an error 500.\"",
         "status": "pass",
         "reasons": [],
         "claims": [
@@ -241,7 +235,7 @@
         ]
       },
       {
-        "text": "Example report 50448213 states \"an error 500 occurs for one study, preventing the doctor from processing the report.\"",
+        "text": "Report 50448213 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that an error 500 occurs for one study, preventing the doctor from processing the report.\"",
         "status": "pass",
         "reasons": [],
         "claims": [
@@ -262,12 +256,6 @@
             ]
           }
         ]
-      },
-      {
-        "text": "A named human must review whether any action is needed.",
-        "status": "pass",
-        "reasons": [],
-        "claims": []
       }
     ]
   },
@@ -277,8 +265,8 @@
   "parse_failed": false,
   "length_stops": 0,
   "usage": {
-    "input_tokens": 20902,
-    "output_tokens": 9637,
-    "cost_usd": 0.067085
+    "input_tokens": 21054,
+    "output_tokens": 7957,
+    "cost_usd": 0.060135
   }
 }

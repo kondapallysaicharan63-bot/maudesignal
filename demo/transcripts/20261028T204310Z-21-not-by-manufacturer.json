@@ -1,15 +1,22 @@
 {
   "schema_version": "1.0",
   "label": "21-not-by-manufacturer",
-  "recorded_at_utc": "2026-10-28T13:10:37+00:00",
+  "recorded_at_utc": "2026-10-28T20:43:10+00:00",
   "model": "muse-spark-1.3",
   "question": "Which reports about LLZ devices this month were not filed by a manufacturer?",
-  "answer": "For LLZ from 20260801 to 20260831, 0 reports were filed by a non-manufacturer and 49 reports were filed by a manufacturer.",
+  "answer": "No stored LLZ reports from 20260801 to 20260831 were filed outside the manufacturer channel: 0 were non-manufacturer and 49 were manufacturer-filed.",
   "tool_calls": [
     {
       "name": "overnight_signals",
       "arguments": {},
       "result_preview": "{\"as_of\": \"20260831\", \"headline\": \"New kind of problem: 0 \\u00b7 More serious than usual: 0 \\u00b7 Reports suddenly increased: 1\", \"current_window\": {\"date_from\": \"20260825\", \"date_to\": \"20260831\"}, \"baseline_window\": {\"date_from\": \"20260728\", \"date_to\": \"20260824\"}, \"rules\": {\"current_window_days\":"
+    },
+    {
+      "name": "product_summary",
+      "arguments": {
+        "product_code": "LLZ"
+      },
+      "result_preview": "{\"product_code\": \"LLZ\", \"date_from\": null, \"date_to\": null, \"report_count\": 121, \"event_type_counts\": {\"malfunction\": 119, \"injury\": 2}, \"event_type_share_pct\": {\"malfunction\": 98.3, \"injury\": 1.7}, \"earliest_date_received\": \"20260701\", \"latest_date_received\": \"20260831\", \"devices_510k\": [], \"exampl"
     },
     {
       "name": "report_sources",
@@ -37,7 +44,7 @@
     },
     "sentences": [
       {
-        "text": "For LLZ from 20260801 to 20260831, 0 reports were filed by a non-manufacturer and 49 reports were filed by a manufacturer.",
+        "text": "No stored LLZ reports from 20260801 to 20260831 were filed outside the manufacturer channel: 0 were non-manufacturer and 49 were manufacturer-filed.",
         "status": "pass",
         "reasons": [],
         "claims": [
@@ -87,7 +94,7 @@
     },
     "sentences": [
       {
-        "text": "For LLZ from 20260801 to 20260831, 0 reports were filed by a non-manufacturer and 49 reports were filed by a manufacturer.",
+        "text": "No stored LLZ reports from 20260801 to 20260831 were filed outside the manufacturer channel: 0 were non-manufacturer and 49 were manufacturer-filed.",
         "status": "pass",
         "reasons": [],
         "claims": [
@@ -134,8 +141,8 @@
   "parse_failed": false,
   "length_stops": 0,
   "usage": {
-    "input_tokens": 21668,
-    "output_tokens": 4245,
-    "cost_usd": 0.045126
+    "input_tokens": 22261,
+    "output_tokens": 3570,
+    "cost_usd": 0.042999
   }
 }

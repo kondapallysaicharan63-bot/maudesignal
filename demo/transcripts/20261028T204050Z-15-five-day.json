@@ -1,0 +1,213 @@
+{
+  "schema_version": "1.0",
+  "label": "15-five-day",
+  "recorded_at_utc": "2026-10-28T20:40:50+00:00",
+  "model": "muse-spark-1.3",
+  "question": "When does 21 CFR 803 require a 5-day report, and does anything on file meet that bar?",
+  "answer": "A manufacturer 5-day report is addressed by 21 CFR 803.53, which asks in which circumstances a 5-day report must be submitted. A manufacturer 30-day report is addressed by 21 CFR 803.50, which covers what reporting requirements apply. These clocks are advisory only and reportability is a human regulatory decision. This week LLZ had 33 reports, described as reports suddenly increased. A human must review whether any stored event meets the 5-day bar, and I do not decide reportability.",
+  "tool_calls": [
+    {
+      "name": "overnight_signals",
+      "arguments": {},
+      "result_preview": "{\"as_of\": \"20260831\", \"headline\": \"New kind of problem: 0 \\u00b7 More serious than usual: 0 \\u00b7 Reports suddenly increased: 1\", \"current_window\": {\"date_from\": \"20260825\", \"date_to\": \"20260831\"}, \"baseline_window\": {\"date_from\": \"20260728\", \"date_to\": \"20260824\"}, \"rules\": {\"current_window_days\":"
+    },
+    {
+      "name": "deadline_check",
+      "arguments": {
+        "awareness_date": "20261028",
+        "five_day_trigger": true
+      },
+      "result_preview": "{\"awareness_date\": \"20261028\", \"due_date\": \"20261104\", \"basis\": \"5 work days\", \"regulation_section\": \"803.53\", \"regulation_title\": \"If I am a manufacturer, in which circumstances must I submit a 5-day report?\", \"advisory\": \"Reportability is a human regulatory decision; this is a clock only.\"}"
+    },
+    {
+      "name": "deadline_check",
+      "arguments": {
+        "awareness_date": "20261028",
+        "five_day_trigger": false
+      },
+      "result_preview": "{\"awareness_date\": \"20261028\", \"due_date\": \"20261127\", \"basis\": \"30 calendar days\", \"regulation_section\": \"803.50\", \"regulation_title\": \"If I am a manufacturer, what reporting requirements apply to me?\", \"advisory\": \"Reportability is a human regulatory decision; this is a clock only.\"}"
+    }
+  ],
+  "first_pass": {
+    "passed": 5,
+    "blocked": 0,
+    "claims": {
+      "pass": 3,
+      "block": 0
+    },
+    "sentences": [
+      {
+        "text": "A manufacturer 5-day report is addressed by 21 CFR 803.53, which asks in which circumstances a 5-day report must be submitted.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "regulation",
+            "status": "pass",
+            "reason": "21 CFR 803.53: If I am a manufacturer, in which circumstances must I submit a 5-day report?",
+            "evidence_ids": [
+              "21 CFR 803.53"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "A manufacturer 30-day report is addressed by 21 CFR 803.50, which covers what reporting requirements apply.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "regulation",
+            "status": "pass",
+            "reason": "21 CFR 803.50: If I am a manufacturer, what reporting requirements apply to me?",
+            "evidence_ids": [
+              "21 CFR 803.50"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "These clocks are advisory only and reportability is a human regulatory decision.",
+        "status": "pass",
+        "reasons": [],
+        "claims": []
+      },
+      {
+        "text": "This week LLZ had 33 reports, described as reports suddenly increased.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 33",
+            "evidence_ids": [
+              "50426770",
+              "50426773",
+              "50448213",
+              "50448215",
+              "50448216",
+              "50448217",
+              "50451032",
+              "50453041",
+              "50502511",
+              "50502514",
+              "50502888",
+              "50503657",
+              "50503658",
+              "50503662",
+              "50504539",
+              "50504540",
+              "50504541",
+              "50504545",
+              "50513025",
+              "50513122"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "A human must review whether any stored event meets the 5-day bar, and I do not decide reportability.",
+        "status": "pass",
+        "reasons": [],
+        "claims": []
+      }
+    ]
+  },
+  "final": {
+    "passed": 5,
+    "blocked": 0,
+    "claims": {
+      "pass": 3,
+      "block": 0
+    },
+    "sentences": [
+      {
+        "text": "A manufacturer 5-day report is addressed by 21 CFR 803.53, which asks in which circumstances a 5-day report must be submitted.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "regulation",
+            "status": "pass",
+            "reason": "21 CFR 803.53: If I am a manufacturer, in which circumstances must I submit a 5-day report?",
+            "evidence_ids": [
+              "21 CFR 803.53"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "A manufacturer 30-day report is addressed by 21 CFR 803.50, which covers what reporting requirements apply.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "regulation",
+            "status": "pass",
+            "reason": "21 CFR 803.50: If I am a manufacturer, what reporting requirements apply to me?",
+            "evidence_ids": [
+              "21 CFR 803.50"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "These clocks are advisory only and reportability is a human regulatory decision.",
+        "status": "pass",
+        "reasons": [],
+        "claims": []
+      },
+      {
+        "text": "This week LLZ had 33 reports, described as reports suddenly increased.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 33",
+            "evidence_ids": [
+              "50426770",
+              "50426773",
+              "50448213",
+              "50448215",
+              "50448216",
+              "50448217",
+              "50451032",
+              "50453041",
+              "50502511",
+              "50502514",
+              "50502888",
+              "50503657",
+              "50503658",
+              "50503662",
+              "50504539",
+              "50504540",
+              "50504541",
+              "50504545",
+              "50513025",
+              "50513122"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "A human must review whether any stored event meets the 5-day bar, and I do not decide reportability.",
+        "status": "pass",
+        "reasons": [],
+        "claims": []
+      }
+    ]
+  },
+  "repaired": false,
+  "sentences_repaired": 0,
+  "capa_ids": [],
+  "parse_failed": false,
+  "length_stops": 0,
+  "usage": {
+    "input_tokens": 15784,
+    "output_tokens": 8833,
+    "cost_usd": 0.05727
+  }
+}

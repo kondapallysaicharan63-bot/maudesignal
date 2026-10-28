@@ -1,10 +1,10 @@
 {
   "schema_version": "1.0",
   "label": "23-mhra",
-  "recorded_at_utc": "2026-10-28T13:11:05+00:00",
+  "recorded_at_utc": "2026-10-28T20:43:41+00:00",
   "model": "muse-spark-1.3",
   "question": "Are there MHRA alerts on file about imaging software? Quote one.",
-  "answer": "No stored MHRA (UK) alerts about imaging software were found, so no quote can be provided. MHRA (UK) alerts are UK context only and are not FDA data.",
+  "answer": "No stored MHRA (UK) alerts about imaging software were found, so there is nothing to quote.",
   "tool_calls": [
     {
       "name": "mhra_alerts",
@@ -15,7 +15,7 @@
     }
   ],
   "first_pass": {
-    "passed": 2,
+    "passed": 1,
     "blocked": 0,
     "claims": {
       "pass": 0,
@@ -23,13 +23,7 @@
     },
     "sentences": [
       {
-        "text": "No stored MHRA (UK) alerts about imaging software were found, so no quote can be provided.",
-        "status": "pass",
-        "reasons": [],
-        "claims": []
-      },
-      {
-        "text": "MHRA (UK) alerts are UK context only and are not FDA data.",
+        "text": "No stored MHRA (UK) alerts about imaging software were found, so there is nothing to quote.",
         "status": "pass",
         "reasons": [],
         "claims": []
@@ -37,7 +31,7 @@
     ]
   },
   "final": {
-    "passed": 2,
+    "passed": 1,
     "blocked": 0,
     "claims": {
       "pass": 0,
@@ -45,13 +39,7 @@
     },
     "sentences": [
       {
-        "text": "No stored MHRA (UK) alerts about imaging software were found, so no quote can be provided.",
-        "status": "pass",
-        "reasons": [],
-        "claims": []
-      },
-      {
-        "text": "MHRA (UK) alerts are UK context only and are not FDA data.",
+        "text": "No stored MHRA (UK) alerts about imaging software were found, so there is nothing to quote.",
         "status": "pass",
         "reasons": [],
         "claims": []
@@ -64,8 +52,8 @@
   "parse_failed": false,
   "length_stops": 0,
   "usage": {
-    "input_tokens": 12972,
-    "output_tokens": 3134,
-    "cost_usd": 0.029534
+    "input_tokens": 12940,
+    "output_tokens": 2411,
+    "cost_usd": 0.026422
   }
 }
