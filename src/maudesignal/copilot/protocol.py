@@ -48,7 +48,10 @@ _NO_COUNT = frozenset({"overnight_signals", "compare_signals", "deadline_check",
 NOT_RECORDED = "not recorded"
 
 # Tool names as shown on screen and in documents (one place; the stored name is unchanged).
-TOOL_LABELS: dict[str, str] = {"overnight_signals": "weekly_signals"}
+TOOL_LABELS: dict[str, str] = {
+    "overnight_signals": "weekly_signals",
+    "draft_capa": "capa_need_evidence",
+}
 
 
 def tool_label(name: str) -> str:

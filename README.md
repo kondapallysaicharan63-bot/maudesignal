@@ -54,7 +54,8 @@ what a manufacturer would still do): [docs/VALIDATION_EVIDENCE.md](docs/VALIDATI
 3. **Who filed the reports.** Counts per device type by openFDA report source
    (manufacturer, user facility, voluntary, distributor) and a filterable list
    of the reports **not filed by a manufacturer**. On the demo data all 33 LLZ
-   reports this week, and all 121 stored, were filed by manufacturers; the
+   reports this week, and all 121 LLZ reports in the stored demo sample, were filed by
+   manufacturers (openFDA as a whole: 19,970 LLZ reports, 99.3% manufacturer-filed); the
    non-manufacturer reports on file are 3 MYN, 3 QIH and 1 POK (all voluntary).
 4. **Ask the copilot,** typed or by voice. Muse Spark calls 13 tools over
    stored MAUDE reports, FDA recalls, 510(k) records and PubMed abstracts and
@@ -126,21 +127,34 @@ From [`demo/transcripts/`](demo/transcripts/), [`demo/vision/`](demo/vision/),
 
 | | |
 |---|---|
-| Recording run | GitHub Actions run 40764365995 (fifth recording, 2026-10-28): 28 copilot answers (22 typed, 6 spoken) |
+| Recording run | GitHub Actions run 40764365995 (fifth recording, 2026-10-28): 28 copilot answers (22 typed, 6 text-to-speech clips, mostly not shown in the app any more) |
 | Gate, first pass | 63/65 sentences passed (96.9%); after one repair turn: 64/65 (one true sentence wrongly withheld — a year read as a count; fixed in the gate since) |
 | Replies that never parsed | 0 of 28; 0 answers stopped by the token cap |
-| Hand-check | **27 of 28 answers fully correct (96.4%)**; typed 21 of 22, spoken 6 of 6. Of 65 sentences: 64 correct, 1 incomplete (the wrongly withheld one); none wrong. Checked against the demo database by Claude; an independent check by Charan is pending. Earlier recordings: 24/24, 21/24, 19/21, 6/21 |
+| Hand-check | **27 of 28 answers fully correct (96.4%)**; typed 21 of 22, text-to-speech clips 6 of 6. Of 65 sentences: 64 correct, 1 incomplete (the wrongly withheld one); none wrong. Checked against the demo database by Claude; an independent check by Charan is pending. Earlier recordings: 24/24, 21/24, 19/21, 6/21 |
 | Cost per answer | $0.0454 (28 answers, $1.2717) |
 | 510(k) reading | **5 of 5 summaries read**: the two reads agree on 100% of fields for K031779, 90% for K190442, K210666 and K261677, and 80% for K043333; the 6 conflicting fields are flagged for a person, never guessed |
 | Label camera (SAM 3.1 + Muse Spark) | **7 of 7 photos read**: 4 devices read correctly (CareSens N, HoMedics thermometer ×2, Welch Allyn 802 LTR), thermometers matched to FDA product code FLL; 1 left for a person to pick; 1 returned nothing (rotated label); 1 misread (Welch module: wrong text, every field marked only partly legible, no product code); no lot/serial stored |
 | Evidence pack (PDF) | Muse Spark summary: 5 sentences shown, 0 withheld, in plain words (no "spike"); Muse Wonder review: 0 findings |
 | Report sources vs openFDA | 0 mismatches |
 
-Spoken questions: Charan's text-to-speech clips (six recorded, four of them product questions) were transcribed word for
-word by Voice Transcribe and answered correctly (what changed, why ranked first,
-and the "50 injury reports" trap, which the copilot rejects: 33 reports, 0
-injuries). One clip uses wording the project no longer uses; its answer is correct, but it
-is not used in the video. The one incomplete
+Oct-29 voice run (GitHub Actions run 40965201781, 3 answers, stored in the repo
+alongside the fifth recording; the table above stays the fifth recording's): the gate passed
+8 of 8 sentences, first pass and final. All 8 sentences were hand-checked against the demo
+database by Claude (8 correct, 0 wrong); an independent check by Charan is pending.
+
+Spoken questions: the spoken questions the app and the walkthrough show are Charan's own
+recordings, public with his consent (`demo/voice/question-take1.wav`, `-take4.wav`,
+`-take6.wav`). They were not heard word for word: Voice Transcribe wrote "LLG" and "LLC"
+for LLZ and added stray words ("devices? devices?", "week. week."). The product code is
+corrected by a fixed one-letter rule (`src/maudesignal/copilot/product_code.py`), and the
+screen states it ("Heard LLG; asked about LLZ (one letter different; the only close code
+on file)."); the heard text is kept next to the question. In live mode the analyst
+confirms a corrected code before anything is sent. Take 4 is the "50 injury reports" trap
+the copilot rejects: 33 reports, 0 injuries (in the stored demo sample). Take 6's answer, "all 121 stored LLZ
+reports were filed by a manufacturer", is about the stored demo sample of 121 LLZ reports,
+not openFDA as a whole (19,970 LLZ reports, 99.3% manufacturer-filed). The earlier
+text-to-speech clips (ElevenLabs, not a person) are kept only in the audit trail, except
+one question (`question-d`) that no recording of Charan's covers. The one incomplete
 answer (06-trap) lost a true sentence because the gate read "August 31, 2026,
 all malfunction" as a count of 2026; the gate now treats a year after a month
 as a date (adversarial cases dt03–dt05).

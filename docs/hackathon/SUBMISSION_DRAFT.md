@@ -38,12 +38,16 @@ recorded run or a test in this repository (sources in brackets).
 ## Results (real runs, 2026-10-28)
 
 - Gate on live answers: 63 of 65 sentences matched the FDA records on the first
-  try (96.9%), 64 of 65 after one repair turn, across 28 answers including 6
-  spoken (run 40764365995) [`docs/hackathon/HAND_CHECK.md`]. The one withheld
+  try (96.9%), 64 of 65 after one repair turn, across 28 answers (fifth recording, run 40764365995) [`docs/hackathon/HAND_CHECK.md`]. The one withheld
   sentence was true (a year read as a count) and the gate was fixed.
-- Every answer checked by hand against the database: 27 of 28 fully correct,
-  none wrong; spoken questions 6 of 6 [same]. _(Checked by Claude; Charan
-  to re-check before quoting this as a person's check.)_
+- Every answer of the fifth recording (run 40764365995) checked by hand against the
+  database: 27 of 28 fully correct, none wrong. _(Checked by Claude; Charan to
+  re-check before quoting this as a person's check.)_
+- Spoken questions: Charan's own three recordings (Oct-29 run 40965201781; public with
+  his consent): gate 8 of 8 sentences, first pass and final; hand-checked 8 of 8
+  correct by Claude, Charan's check pending [`docs/hackathon/HAND_CHECK.md`].
+  Voice Transcribe misheard the product code (LLG, LLC for LLZ); the screen says
+  so and states the one-letter correction.
 - Adversarial gate set: 112 made-up or tricky sentences, 0 let through wrongly, 0
   blocked wrongly [`tests/unit/test_gate.py`].
 - 510(k) summaries: 5 of 5 read; two reads agree on 80–100% of fields (100% on 4 of
@@ -75,8 +79,9 @@ published estimates disagree by almost three times.
 - MAUDE has no field for an AI-specific failure such as drift; MaudeSignal adds an
   AI-failure taxonomy (peer-reviewed and industry sources say the current system is
   insufficient for AI/ML devices).
-- For one AI product code (LLZ), 19,970 reports, 99.3% filed by a manufacturer
-  [`docs/hackathon/SOURCE_COUNTS.md`, our run].
+- For one AI product code (LLZ), 19,970 reports on openFDA, 99.3% filed by a manufacturer
+  [`docs/hackathon/SOURCE_COUNTS.md`, our run]. The demo's stored sample is smaller (121 LLZ
+  reports); figures in recorded answers name that scope.
 - Who uses it: regulatory and quality (postmarket / complaint-handling) leads at makers
   of FDA-cleared AI devices, many of them small teams. MDR, CAPA and complaint-handling
   procedures are long-standing top FDA inspection findings; QMSR (in force 2 Feb 2026)
@@ -119,7 +124,7 @@ recorder has the exact start times; read along with `walkthrough.mp4`.
 | 0:00 | Title card | "I'm Charan. MaudeSignal helps medical-device safety teams watch FDA data. Not medical advice: a person makes every decision." |
 | 0:09 | Problem card (2M+ reports a year; 1,614 AI devices on FDA's list; 19,970 LLZ reports) | "FDA gets over two million device reports a year, and its list of AI devices has 1,614 entries. MAUDE has no field for an AI failure." |
 | 0:21 | Signals: "Across FDA's AI device list" (6 of 181 flagged), LLZ increase, then MYN → "Not filed by a manufacturer" | "Monday morning. Across all 181 AI device types on FDA's list, 6 were flagged in openFDA's latest week. For the types I chose, LLZ reports suddenly increased: 33 against a normal 9. And here are the reports the manufacturer didn't file." |
-| 0:43 | Copilot: spoken question "my colleague says LLZ had 50 injury reports…" → "That claim is not correct" | "I can just ask. Meta's Voice Transcribe hears the question; Muse Spark calls tools over the stored FDA records. A colleague's claim of 50 injuries? The records say otherwise." |
+| 0:43 | Copilot: spoken question "my colleague says LLZ had 50 injury reports…" → "No, that is not correct for LLZ this week." | "I can just ask. Meta's Voice Transcribe hears the question; Muse Spark calls tools over the stored FDA records. A colleague's claim of 50 injuries? The records say otherwise." |
 | 1:04 | Copilot: typed trap answer, "after a repair turn", first-pass expander with the withheld sentence | "Every sentence passes a gate that recomputes each number from the records. Here Spark itself said something the records didn't support. The gate withheld it and showed why; Spark got one repair turn, and anything still unmatched stays struck out." |
 | 1:27 | Try to fool the gate: CFR 820.100 → superseded by QMSR | "You can try to fool it yourself: cite 21 CFR 820.100, and it's blocked, because QMSR replaced it this February." |
 | 1:46 | Vision: two-read agreement; label camera → thermometer → product code FLL | "Muse Spark reads scanned 510(k) summaries twice and compares the reads. Point a camera at a device label: SAM finds it, Spark reads it, and you land on that device's signals. Anything unclear goes to a person." |
