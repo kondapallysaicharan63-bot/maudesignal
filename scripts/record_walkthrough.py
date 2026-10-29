@@ -281,8 +281,8 @@ def beats(live_url: str, repo_url: str) -> list[Beat]:
             "If anything — the model or a colleague — states something the records don't "
             "support, it's withheld, with the reason: the records show 2 LLZ injury "
             "reports, and 820.100 was replaced this February. In our latest recording, 63 "
-            "of 65 sentences matched the FDA records on the first try, and every answer was "
-            "checked by hand against the records.",
+            "of 65 sentences matched the FDA records on the first try, and a line-by-line check "
+            "of every answer against the records found none wrong.",
             gate,
         ),
         Beat(
