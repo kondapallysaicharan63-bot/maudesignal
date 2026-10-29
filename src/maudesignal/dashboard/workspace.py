@@ -262,6 +262,10 @@ def _answers(code: str) -> None:
         + short(str(labels[k]["question"]), 110),
         key=f"ans_{code}",
     )
+    st.caption(
+        "Counts in these answers come from the stored demo sample, not from every report "
+        "openFDA holds for the device type."
+    )
     with st.container(border=True):
         render_transcript(labels[pick])
 

@@ -38,8 +38,8 @@ in for live answers, so no hackathon credit is spent on them.
 | Check | Result |
 |---|---|
 | Claim-level gate, adversarial set | 112 cases (70 must be withheld, 42 must pass): 0 false passes, 0 false blocks (`tests/unit/test_gate.py`) |
-| Gate on real model output | fifth 2026-10-28 recording (run 40764365995), 28 answers (6 spoken): 63/65 first pass (96.9%), 64/65 after repair; 1 false block (a year read as a count) found and fixed (dt03–dt05); 0 unparsed (fourth: 49/50) |
-| Hand-check of recorded answers | 27 of 28 answers fully correct (96.4%); typed 21 of 22, spoken 6 of 6; 64 of 65 sentences correct, 1 incomplete (withheld by the false block), 0 wrong (checked by Claude against the database; Charan's independent check PENDING). Fourth: 24 of 24; third: 21 of 24 |
+| Gate on real model output | fifth 2026-10-28 recording (run 40764365995), 28 answers (22 typed, 6 text-to-speech): 63/65 first pass (96.9%), 64/65 after repair; 1 false block (a year read as a count) found and fixed (dt03–dt05); 0 unparsed (fourth: 49/50) |
+| Hand-check of recorded answers | 27 of 28 answers fully correct (96.4%); typed 21 of 22, text-to-speech 6 of 6; Oct-29 voice run 40965201781 (Charan's takes 1/4/6): 3 of 3, 8 of 8 sentences correct; 64 of 65 sentences correct, 1 incomplete (withheld by the false block), 0 wrong (checked by Claude against the database; Charan's independent check PENDING). Fourth: 24 of 24; third: 21 of 24 |
 | Report sources vs openFDA | stored counts equal openFDA `count=report_source_code.exact` for every stored code |
 | Audit trail | editing any stored entry breaks the chain at that entry; detected in the database and in exported trails |
 | Spend caps | $1 and 20 Meta calls per browser session, $10 per day; no call starts once a cap is reached |

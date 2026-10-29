@@ -464,6 +464,8 @@ def answer_prepared(
     """
     check, transcript, entry = prepared.check, prepared.transcript, dict(prepared.audit_entry)
     apply = use_suggestion and check.status == "corrected"
+    # "declined": a correction was suggested and the analyst chose to ask as heard.
+    status = "declined" if check.status == "corrected" and not use_suggestion else check.status
     question = check.corrected_text if apply else transcript.text
     if check.heard_code is not None:
         used = check.suggested_code if apply else check.heard_code
@@ -472,14 +474,14 @@ def answer_prepared(
             heard_code=check.heard_code,
             suggested_code=check.suggested_code,
             used_code=used,
-            product_code_status=check.status,
+            product_code_status=status,
         )
         entry.update(
             {
                 "heard_code": check.heard_code,
                 "suggested_code": check.suggested_code,
                 "used_code": used,
-                "product_code_status": check.status,
+                "product_code_status": status,
             }
         )
     # What was heard goes into the chain before the answer, linked by entity id,

@@ -116,13 +116,40 @@ def test_far_code_not_corrected_and_scan_continues() -> None:
     assert later.status == "known" and later.used_code == "LLZ"
 
 
-def test_tie_at_distance_one_not_corrected() -> None:
+def test_tie_rule_with_two_close_codes_on_file_is_ambiguous() -> None:
+    # Made-up code set (QAS on file) that exercises the tie rule only; it is not the app's set.
     two_close = CodeSets.of(["QIH", "QAS"])
     check = check_product_code("What changed this week for QAH devices?", two_close)
     assert (check.heard_code, check.suggested_code, check.status) == ("QAH", None, "ambiguous")
     assert check.used_code == "QAH"
     assert check.corrected_text == "What changed this week for QAH devices?"
     assert not check.needs_confirmation
+
+
+def test_qah_on_the_demo_database_is_corrected_to_qih() -> None:
+    # Deviation from the milestone text ("QAH (tie, unchanged)"): correction targets are the
+    # codes on file only, and on the real code set QAS is not on file, so QAH is exactly one
+    # edit from exactly one code (QIH) and is corrected (confirmed by the analyst in live mode).
+    sets = code_sets_from_db(Database(DEMO_DB))
+    assert "QAS" not in sets.on_file
+    check = check_product_code("What changed this week for QAH devices?", sets)
+    assert (check.heard_code, check.suggested_code, check.status) == ("QAH", "QIH", "corrected")
+    assert check.needs_confirmation
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["What did the FDA say?", "Is this a USA device?", "Any MDR, PMA, CFR or UDI news?"],
+)
+def test_regulatory_acronyms_are_not_candidates(text: str) -> None:
+    check = check_product_code(text, CODES)
+    assert (check.heard_code, check.status, check.display) == (None, "none", None)
+    assert check.corrected_text == text
+
+
+def test_acronym_is_skipped_but_a_later_code_is_still_found() -> None:
+    check = check_product_code("Did the FDA flag LLG devices?", CODES)
+    assert (check.heard_code, check.suggested_code) == ("LLG", "LLZ")
 
 
 def test_no_code_found() -> None:
@@ -235,6 +262,14 @@ def test_live_mode_asks_what_the_analyst_chose(
     (entry,) = agent.context.db.list_audit()
     payload = json.loads(entry.payload_json)
     assert payload["used_code"] == used and payload["transcript_text"].endswith("LLG devices?")
+    # Declining the suggestion is recorded as such, never as an applied correction.
+    expected = "corrected" if use_suggestion else "declined"
+    assert payload["product_code_status"] == expected == block["product_code_status"]
+
+
+def test_declined_status_reads_as_a_statement() -> None:
+    text = describe_check("LLG", "LLZ", "LLG", "declined")
+    assert text == "Heard LLG; the suggested code LLZ was declined, asked as heard."
 
 
 def test_voice_block_and_html_carry_heard_suggested_used() -> None:

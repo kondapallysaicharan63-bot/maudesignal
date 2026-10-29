@@ -23,7 +23,8 @@ Rules, in order:
    rewritten (rule 2) but is not offered as a correction target, because
    suggesting a code with nothing behind it does not help the analyst. Two close
    codes on file is a tie: nothing is changed.
-4. A code-shaped token that is more than one edit from every code is skipped and
+4. Common regulatory acronyms (FDA, USA, MDR, PMA, CFR, UDI) are skipped.
+5. A code-shaped token that is more than one edit from every code is skipped and
    the scan continues; if nothing else is found it is reported as not
    recognised.
 
@@ -43,6 +44,12 @@ if TYPE_CHECKING:
 
 # Exactly three capital letters standing alone: LLZ, not "The" or "any".
 _CODE_SHAPED_RE = re.compile(r"(?<![A-Za-z])[A-Z]{3}(?![A-Za-z])")
+
+
+# Regulatory acronyms that are three capitals but never a product code in a question.
+# Not a list of product codes (rule 2 forbids a hand list of those); it only keeps
+# "What did the FDA say?" from showing a confusing "product code not recognised" line.
+_NOT_CODES = frozenset({"FDA", "USA", "MDR", "PMA", "CFR", "UDI"})
 
 
 def levenshtein_distance(a: str, b: str) -> int:
@@ -97,7 +104,8 @@ class ProductCodeCheck:
     heard_code: str | None
     suggested_code: str | None
     used_code: str | None
-    # "none" | "known" | "corrected" | "ambiguous" | "unknown"
+    # "none" | "known" | "corrected" | "ambiguous" | "unknown"; the voice layer records
+    # "declined" when the analyst chose to ask as heard instead of the suggestion.
     status: str
     # The question with the suggestion applied (equals the input unless "corrected").
     corrected_text: str
@@ -127,6 +135,8 @@ def describe_check(
             f"Heard {heard}; asked about {suggested} "
             "(one letter different; the only close code on file)."
         )
+    if status == "declined":
+        return f"Heard {heard}; the suggested code {suggested or ''} was declined, asked as heard."
     if status == "ambiguous":
         return f"Heard {heard}; two codes on file are one letter away, so it was asked as heard."
     if status == "unknown":
@@ -166,6 +176,8 @@ def check_product_code(text: str, codes: CodeSets) -> ProductCodeCheck:
     first_far: str | None = None
     for match in _CODE_SHAPED_RE.finditer(text):
         token = match.group(0)
+        if token in _NOT_CODES and token not in codes.known:
+            continue
         if token in codes.known:
             return ProductCodeCheck(token, None, token, "known", text)
         close = sorted(c for c in codes.on_file if levenshtein_distance(token, c) == 1)
