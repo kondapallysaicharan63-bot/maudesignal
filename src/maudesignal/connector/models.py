@@ -65,6 +65,9 @@ class WithheldSentence(BaseModel):
 
     text: str = Field(description="NOT VERIFIED. Do not state or speak this as fact.")
     reason: str = Field(description="Why the gate withheld it.")
+    claim_kinds: list[str] = Field(
+        default_factory=list, description="Kinds of claim the sentence made (e.g. count, quote)."
+    )
     status: Literal["withheld"] = "withheld"
 
 

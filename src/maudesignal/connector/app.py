@@ -39,6 +39,7 @@ from maudesignal.monitor.live_check import LiveCheck, check_product_code
 logger = get_logger(__name__)
 
 API_VERSION = "0.1.0"
+TRUST_FORWARDED_ENV = "MAUDESIGNAL_TRUST_FORWARDED"
 REPO_URL = "https://github.com/kondapallysaicharan63-bot/maudesignal"
 READ_ONLY = {"x-maudesignal-read-only": True, "x-maudesignal-scope": "read"}
 PRODUCT_CODE_PATTERN = r"^[A-Za-z]{3}$"
@@ -120,11 +121,17 @@ class ApiError(Exception):
 
 
 def _client_address(request: Request) -> str:
-    """Caller address: Vercel sets the first X-Forwarded-For entry; else the socket peer."""
-    forwarded: str = str(request.headers.get("x-forwarded-for", ""))
-    first = forwarded.split(",")[0].strip()
-    if first:
-        return str(first[:64])
+    """Caller address for rate limiting.
+
+    The first X-Forwarded-For entry is used only when ``MAUDESIGNAL_TRUST_FORWARDED=1`` (set
+    it on Vercel, whose edge sets the header); otherwise any caller could send a made-up
+    value to dodge the limiter, so the socket peer is used.
+    """
+    if os.environ.get(TRUST_FORWARDED_ENV, "").strip() == "1":
+        forwarded: str = str(request.headers.get("x-forwarded-for", ""))
+        first = forwarded.split(",")[0].strip()
+        if first:
+            return str(first[:64])
     return str(request.client.host) if request.client else "unknown"
 
 

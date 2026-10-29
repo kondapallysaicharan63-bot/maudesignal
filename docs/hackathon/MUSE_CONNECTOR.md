@@ -26,7 +26,15 @@ live openFDA with the query time, or a recorded answer, or a live model answer).
 * An answer is only spoken if the claim gate passed it **and** it has an openFDA or record
   link. A sentence that passed but has no link is listed under `withheld` ("not spoken").
 * Words this service never uses (`connector/forbidden.py`) are screened out of recorded and
-  live text, and the tests scan every stored question and every banned term.
+  live text, including the left-out (`withheld`) sentences and their reasons: a left-out
+  sentence that contains one is replaced by "Sentence left out: it contains a term this
+  service does not use." Tests scan the whole response (speakable, facts, withheld, provenance)
+  for every banned term on every stored question and on a scripted live answer.
+* In live mode the text of a left-out sentence is never returned, whatever the reason (gate
+  block, banned term, no link). `withheld` holds a neutral placeholder, the gate's reason with
+  any quoted part removed, and the claim kinds. A test checks that no 20-character piece of
+  such a sentence is anywhere in the response or the raw REST body. (Recorded answers still
+  list the recorded text of gate-blocked sentences, labelled not verified.)
 
 ## Recorded answers (no model key, or cost cap reached)
 
@@ -51,6 +59,11 @@ and window number exactly what the gate recomputed.
    answers (`provenance.kind = recorded_answer`). No shared store is built yet; before enabling
    live mode on Vercel, back the limiter and ledger with one (Vercel KV / Upstash) or put a hard
    spending limit on the Meta key itself.
+   When the key is set but live mode is not accepted, the recorded answer says live calls are
+   switched off on this server (`live_off`); with no key it says none is configured (`no_model`).
+   `MAUDESIGNAL_TRUST_FORWARDED=1`: use the first `X-Forwarded-For` entry as the client address
+   for rate limiting. **Set it on Vercel** (its edge sets the header); leave it unset anywhere
+   else, where the header is caller-controlled and the socket address is used instead.
    Other settings: `MAUDESIGNAL_KEY_PEPPER` (server-side secret for the key ids that appear in
    ledger file names and audit session ids; set it), `MAUDESIGNAL_FAILED_AUTH_PER_MIN` (wrong or
    missing keys per client address per minute before 429, default 10). Plain keys shorter than 32

@@ -237,6 +237,14 @@
         "additionalProperties": false,
         "description": "A sentence the gate did not verify. It is never part of ``speakable``.",
         "properties": {
+          "claim_kinds": {
+            "description": "Kinds of claim the sentence made (e.g. count, quote).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Claim Kinds",
+            "type": "array"
+          },
           "reason": {
             "description": "Why the gate withheld it.",
             "title": "Reason",

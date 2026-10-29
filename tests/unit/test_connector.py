@@ -326,7 +326,8 @@ def test_live_ask_gate_blocks_wrong_number_and_it_is_not_speakable(tmp_path: Pat
         a.provenance.kind == "live_model" and a.provenance.queried_at_utc == "2026-10-29T12:00:00Z"
     )
     assert "33 reports" in a.speakable and "99" not in a.speakable
-    assert len(a.withheld) == 1 and "99" in a.withheld[0].text
+    assert len(a.withheld) == 1 and "99" not in a.withheld[0].text  # text never returned live
+    assert a.withheld[0].claim_kinds == ["count"]
     assert a.facts and "device/event.json" in a.facts[0].link
     # the spend was recorded against this key's ledger
     assert rt.ledger_for("abc").spent_today() > 0

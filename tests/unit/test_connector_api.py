@@ -327,7 +327,10 @@ def test_health_states_that_limits_are_per_instance(data: ConnectorData, tmp_pat
     assert make_client(data, tmp_path).get("/v1/health").json()["limits_scope"] == "per_instance"
 
 
-def test_repeated_wrong_keys_get_429_before_key_check(data: ConnectorData, tmp_path: Path) -> None:
+def test_repeated_wrong_keys_get_429_before_key_check(
+    data: ConnectorData, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("MAUDESIGNAL_TRUST_FORWARDED", raising=False)
     settings = Settings(
         keys=KeyStore.from_env({"MAUDESIGNAL_API_KEYS": KEY}),
         limiter=RateLimiter(100),
@@ -344,7 +347,10 @@ def test_repeated_wrong_keys_get_429_before_key_check(data: ConnectorData, tmp_p
     r = c.get(url, headers=guess)
     assert r.status_code == 429 and int(r.headers["Retry-After"]) >= 1
     assert "guess" not in r.text and KEY not in r.text
-    # a different client address is not affected
+    # X-Forwarded-For is ignored unless MAUDESIGNAL_TRUST_FORWARDED=1: no way to dodge the limit
+    spoof = c.get(url, headers={**H, "X-Forwarded-For": "203.0.113.9"})
+    assert spoof.status_code == 429
+    monkeypatch.setenv("MAUDESIGNAL_TRUST_FORWARDED", "1")
     other = c.get(url, headers={**H, "X-Forwarded-For": "203.0.113.9"})
     assert other.status_code == 200
     assert c.get(url).status_code == 429  # missing key counts from the blocked address too

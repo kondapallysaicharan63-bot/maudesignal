@@ -13,7 +13,8 @@ Rules this module enforces:
   cap is reached, or if the model call fails, a *recorded* answer (a real, gated run stored
   in ``demo/transcripts``) is returned, labelled recorded, with the recorded question in the
   spoken lead. A recording is used only when it is about the same thing as the question.
-* No forbidden term (``forbidden.py``) reaches a response.
+* No forbidden term (``forbidden.py``) reaches a response: left-out sentences and reasons
+  are screened too. In live answers a left-out sentence's text is never returned.
 * The model prompt lives in ``skills/safety-copilot`` (loaded by the copilot agent);
   nothing is prompted from here, and the copilot runs at temperature 0.
 """
@@ -71,19 +72,45 @@ _RECORDED = "this is a recorded answer to a different, similar question"
 _LEADS = {
     "cap": f"Today's live-answer budget is used up, so {_RECORDED}",
     "no_model": f"Live answers are not switched on here, so {_RECORDED}",
+    "live_off": f"Live answers are switched off on this server, so {_RECORDED}",
     "model_error": f"The live model is not available just now, so {_RECORDED}",
 }
 _REASON_NOTES = {
     "cap": "The daily cost cap for this key was reached, so no live model call was made.",
     "no_model": "No live model key is configured on this server, so no live model call was made.",
+    "live_off": (
+        "Live model calls are switched off on this server (limits are per instance), "
+        "so no live model call was made."
+    ),
     "model_error": "The live model call failed, so no live answer is shown.",
 }
 _UNLINKED_REASON = "passed the claim gate but has no openFDA or record link, so it is not spoken"
 _FORBIDDEN_REASON = "contains a term this service does not use, so it is not spoken"
+_FORBIDDEN_TEXT = "Sentence left out: it contains a term this service does not use."
+_GATE_TEXT = "Sentence left out by the claim gate."
+_GENERIC_REASON = "could not be verified"
+_RUN = 20  # a shared run of this many characters counts as quoting the sentence
 _MAX_QUOTED_Q = 140
 _CODE_WORD = re.compile(r"\b[A-Za-z]{3}\b")
 
-Item = tuple[str, list[tuple[str, str]], str | None]
+Item = tuple[str, list[tuple[str, str]], str | None, list[str]]
+
+
+def _quotes(reason: str, text: str) -> bool:
+    """True when ``reason`` repeats a run of ``_RUN`` or more characters of ``text``."""
+    a, b = " ".join(reason.lower().split()), " ".join(text.lower().split())
+    return any(b[i : i + _RUN] in a for i in range(max(len(b) - _RUN + 1, 0)))
+
+
+def _safe_reason(reason: str, text: str) -> str:
+    """The gate's reason with any part that quotes the sentence or a banned term dropped."""
+    kept: list[str] = []
+    for part in reason.split("; "):
+        if _quotes(part, text) or not is_clean(part):
+            head = part.split(":", 1)[0].strip()
+            part = f"{head}: {_GENERIC_REASON}" if head and len(head) <= 24 else _GENERIC_REASON
+        kept.append(part)
+    return "; ".join(dict.fromkeys(kept)) or _GENERIC_REASON
 
 
 def default_agent_factory(
@@ -221,22 +248,40 @@ def _speakable(lead: str | None, passed: list[str], withheld: int) -> str:
     return compose(parts)
 
 
-def _split(items: list[Item]) -> tuple[list[str], list[Fact], list[WithheldSentence]]:
+def _split(
+    items: list[Item], *, hide_withheld_text: bool
+) -> tuple[list[str], list[Fact], list[WithheldSentence]]:
     """Sort sentences into spoken (gate-passed, linked, clean) and left out.
 
-    Each item is ``(text, links, withheld_reason)``. A spoken sentence is the text of at
-    least one fact, so everything spoken has an openFDA or record link.
+    Each item is ``(text, links, withheld_reason, claim_kinds)``. A spoken sentence is the
+    text of at least one fact, so everything spoken has an openFDA or record link. With
+    ``hide_withheld_text`` (live answers) a left-out sentence is replaced by a neutral
+    placeholder whatever the reason; a sentence with a banned term is always replaced.
+    Every left-out text and reason is screened with the banned-term list.
     """
     passed: list[str] = []
     facts: list[Fact] = []
     withheld: list[WithheldSentence] = []
-    for text, found, reason in items:
+    for text, found, reason, kinds in items:
         if reason is None and not is_clean(text):
             reason = _FORBIDDEN_REASON
         if reason is None and not found:
             reason = _UNLINKED_REASON
         if reason is not None:
-            withheld.append(WithheldSentence(text=text, reason=reason))
+            shown = text
+            if not is_clean(text):
+                shown = _FORBIDDEN_TEXT
+            elif hide_withheld_text:
+                shown = _GATE_TEXT
+            if reason not in (_UNLINKED_REASON, _FORBIDDEN_REASON):
+                reason = _safe_reason(reason, text)
+            if not is_clean(shown):  # defensive: the screen has the last word
+                shown = _FORBIDDEN_TEXT
+            if not is_clean(reason):
+                reason = _GENERIC_REASON
+            withheld.append(
+                WithheldSentence(text=shown, reason=reason, claim_kinds=sorted(set(kinds)))
+            )
             continue
         passed.append(text)
         for link, label in dict.fromkeys(found):
@@ -248,15 +293,16 @@ def _from_live(res: CopilotResult, data: ConnectorData, now: datetime) -> ToolAn
     items: list[Item] = []
     for s in res.report.sentences:
         if s.status != "pass":
-            items.append((s.text, [], "; ".join(s.reasons) or "not verified"))
+            kinds: list[str] = [cv.claim.kind for cv in s.claim_verdicts if cv.status != "pass"]
+            items.append((s.text, [], "; ".join(s.reasons) or "not verified", kinds))
             continue
         found = [
             lk
             for cv in s.claim_verdicts
             if cv.status == "pass" and (lk := links.claim_link(cv.claim)) is not None
         ]
-        items.append((s.text, found, None))
-    passed, facts, withheld = _split(items)
+        items.append((s.text, found, None, [str(cv.claim.kind) for cv in s.claim_verdicts]))
+    passed, facts, withheld = _split(items, hide_withheld_text=True)
     latest = str(data.manifest().get("max_date_received") or "")
     return ToolAnswer(
         tool="ask",
@@ -294,7 +340,8 @@ def _from_recorded(t: dict[str, Any], reason: str, data: ConnectorData) -> ToolA
         text = str(s.get("text") or "")
         if s.get("status") != "pass":
             reasons = [str(r) for r in s.get("reasons") or []]
-            items.append((text, [], "; ".join(reasons) or "not verified"))
+            kinds = [str(c.get("kind")) for c in s.get("claims") or [] if isinstance(c, dict)]
+            items.append((text, [], "; ".join(reasons) or "not verified", kinds))
             continue
         claims = [c for c in s.get("claims") or [] if isinstance(c, dict)]
         found: list[tuple[str, str]] = []
@@ -303,8 +350,8 @@ def _from_recorded(t: dict[str, Any], reason: str, data: ConnectorData) -> ToolA
             if lk and claim.get("kind") != "count":
                 found.append(lk)
         found += links.recover_count_links(text, claims, data.store, windows)
-        items.append((text, found, None))
-    passed, facts, withheld = _split(items)
+        items.append((text, found, None, [str(c.get("kind")) for c in claims]))
+    passed, facts, withheld = _split(items, hide_withheld_text=False)
     if not passed and all(w.reason in (_UNLINKED_REASON, _FORBIDDEN_REASON) for w in withheld):
         return _no_recording(reason)  # nothing here can be shown with a link: do not offer it
     through = speak_date(str(data.manifest().get("max_date_received") or ""))
@@ -374,7 +421,7 @@ def ask(
         raise InvalidInputError(
             f"Ask a question of {MIN_QUESTION_CHARS} to {MAX_QUESTION_CHARS} characters."
         )
-    reason = "no_model"
+    reason = "live_off" if os.environ.get("META_MODEL_API_KEY") else "no_model"
     if runtime.live_enabled():
         guard = SpendGuard(
             session_id=f"api-{key_id}",

@@ -208,17 +208,16 @@ def test_live_sentence_with_a_forbidden_term_is_withheld_not_spoken(tmp_path: Pa
         ]
     )
     a = ask(d, "How many LLZ reports this week?", key_id="abc", runtime=live_rt(tmp_path, client))
-    _assert_clean(
-        a.model_copy(update={"withheld": []})
-    )  # the withheld text is shown as NOT VERIFIED
+    _assert_whole_clean(a)
     assert "validated" not in a.speakable and "33 reports" in a.speakable
-    assert len(a.withheld) == 1 and "validated" in a.withheld[0].text
+    assert len(a.withheld) == 1 and "validated" not in a.withheld[0].text
 
 
 # --- every spoken sentence has a linked fact ----------------------------------------------
 
 _LEAD = re.compile(
-    r"^(?:Live answers are not switched on here|Today's live-answer budget is used up"
+    r"^(?:Live answers are not switched on here|Live answers are switched off on this server"
+    r"|Today's live-answer budget is used up"
     r"|The live model is not available just now), so this is a recorded answer to a "
     r"different, similar question: \".*?\"(?:, using stored reports through [A-Za-z]+ \d+, "
     r"\d{4})?\.\s*"
@@ -284,7 +283,7 @@ def test_live_sentence_without_a_link_is_left_out_of_speakable(tmp_path: Path) -
     a = ask(d, "How many LLZ reports this week?", key_id="abc", runtime=live_rt(tmp_path, client))
     assert_every_spoken_sentence_has_a_fact(a)
     assert "named human" not in a.speakable
-    assert [w.text for w in a.withheld] == ["A named human must review this."]
+    assert [w.text for w in a.withheld] == ["Sentence left out by the claim gate."]
     assert "no openFDA or record link" in a.withheld[0].reason
 
 
@@ -330,3 +329,160 @@ def test_spoken_lead_names_the_recorded_question_and_the_data_date(
     assert a.speakable.startswith("Live answers are not switched on here")
     assert "What changed this week" in a.speakable
     assert "stored reports through August 31, 2026" in a.speakable
+
+
+# --- whole-response screening and no withheld text in live mode ---------------------------
+
+
+def _whole(a: ToolAnswer) -> str:
+    """Everything the caller can read: speakable, facts, withheld, provenance, advisory."""
+    return json.dumps(a.model_dump(mode="json"))
+
+
+def _assert_whole_clean(a: ToolAnswer) -> None:
+    body = _whole(a)
+    assert forbidden_in(body) == []
+    plain = body.lower().replace("-", " ")
+    for term in FORBIDDEN_TERMS:
+        assert term.lower().replace("-", " ") not in plain, term
+    assert a.advisory == ADVISORY
+
+
+def test_whole_response_is_clean_on_every_stored_question(
+    data: ConnectorData, tmp_path: Path
+) -> None:
+    qs = stored_questions(data)
+    assert qs
+    for q in qs:
+        _assert_whole_clean(ask(data, q, key_id="k", runtime=recorded_runtime(tmp_path)))
+
+
+def test_recorded_withheld_sentence_with_a_term_is_replaced_by_a_neutral_text() -> None:
+    from maudesignal.connector.ask import _split
+
+    p, f, w = _split(
+        [
+            ("It was official and validated.", [], "count: mismatch", ["count"]),
+            ("Clean but blocked sentence here.", [], "count: mismatch", ["count"]),
+        ],
+        hide_withheld_text=False,
+    )
+    assert (p, f) == ([], [])
+    assert w[0].text == "Sentence left out: it contains a term this service does not use."
+    assert w[1].text == "Clean but blocked sentence here."  # recorded text kept when it is clean
+
+
+GOOD_SENTENCE = "LLZ had 33 reports from August 25 to August 31, 2026."
+BLOCKED = [
+    "LLZ logged exactly 4711 device events during the final week of August.",
+    "A reviewer wrote that the pump software silently overwrote the alarm threshold twice.",
+    "Under 21 CFR 999.77 every manufacturer must retrain its algorithm monthly.",
+    "The LLZ device was validated and official for every clinical use anywhere.",
+]
+BLOCKED_SCRIPT: list[dict[str, Any]] = [
+    {"text": GOOD_SENTENCE, "claims": [LLZ_33]},
+    {"text": BLOCKED[0], "claims": [{**LLZ_33, "value": 4711}]},
+    {
+        "text": BLOCKED[1],
+        "claims": [
+            {
+                "kind": "quote",
+                "quote": "pump software silently overwrote the alarm threshold twice",
+                "report_id": REPORT_ID,
+                "source_id": None,
+            }
+        ],
+    },
+    {"text": BLOCKED[2], "claims": [{"kind": "regulation", "section": "999.77"}]},
+    {"text": BLOCKED[3], "claims": [LLZ_33]},
+]
+
+
+def _windows(text: str, n: int = 20) -> set[str]:
+    t = " ".join(text.lower().split())
+    return {t[i : i + n] for i in range(len(t) - n + 1)}
+
+
+def _assert_no_sentence_text(body: str) -> None:
+    low = " ".join(body.lower().split())
+    for s in BLOCKED:
+        for w in _windows(s):
+            assert w not in low, f"20+ characters of a withheld sentence are in the body: {w!r}"
+        assert s not in body
+
+
+def test_live_withheld_text_never_appears_in_the_response(tmp_path: Path) -> None:
+    d = ConnectorData(work_dir=tmp_path / "w")
+    rt = live_rt(tmp_path, OneAnswerClient(BLOCKED_SCRIPT))
+    a = ask(d, "How many LLZ reports this week?", key_id="abc", runtime=rt)
+    assert a.provenance.kind == "live_model"
+    assert "33 reports" in a.speakable
+    assert len(a.withheld) == 4, [w.reason for w in a.withheld]
+    for w in a.withheld:
+        assert w.text in (
+            "Sentence left out by the claim gate.",
+            "Sentence left out: it contains a term this service does not use.",
+        )
+        assert w.reason and w.status == "withheld"
+    assert any("term this service does not use" in w.reason for w in a.withheld)
+    assert {k for w in a.withheld for k in w.claim_kinds} >= {"count", "quote", "regulation"}
+    _assert_whole_clean(a)
+    _assert_no_sentence_text(_whole(a))
+    _assert_no_sentence_text(json.dumps(a.model_dump()))  # the MCP-ready dict
+
+
+def test_live_answer_with_every_forbidden_term_is_clean_everywhere(tmp_path: Path) -> None:
+    d = ConnectorData(work_dir=tmp_path / "w")
+    script: list[dict[str, Any]] = [{"text": GOOD_SENTENCE, "claims": [LLZ_33]}]
+    script += [
+        {"text": f"The LLZ report count of 33 is {t} in that week.", "claims": [LLZ_33]}
+        for t in FORBIDDEN_TERMS
+    ]
+    rt = live_rt(tmp_path, OneAnswerClient(script))
+    a = ask(d, "How many LLZ reports this week?", key_id="abc", runtime=rt)
+    assert a.provenance.kind == "live_model" and len(a.withheld) >= 1
+    _assert_whole_clean(a)
+    for t in FORBIDDEN_TERMS:
+        assert f"is {t} in" not in _whole(a)
+
+
+def test_rest_raw_body_never_holds_a_withheld_sentence(tmp_path: Path) -> None:
+    pytest.importorskip("fastapi")
+    from fastapi.testclient import TestClient
+
+    from maudesignal.connector.app import Settings, create_app
+    from maudesignal.connector.security import KeyStore, RateLimiter
+    from tests.unit.test_connector import KEY, fake_check
+
+    settings = Settings(
+        keys=KeyStore.from_env({"MAUDESIGNAL_API_KEYS": KEY}),
+        limiter=RateLimiter(100),
+        data=ConnectorData(work_dir=tmp_path / "w"),
+        ask_runtime=live_rt(tmp_path, OneAnswerClient(BLOCKED_SCRIPT)),
+        live_checker=fake_check,
+    )
+    c = TestClient(create_app(settings), raise_server_exceptions=False)
+    r = c.post(
+        "/v1/tools/ask",
+        json={"question": "How many LLZ reports this week?"},
+        headers={"X-API-Key": KEY},
+    )
+    assert r.status_code == 200 and r.json()["provenance"]["kind"] == "live_model"
+    assert len(r.json()["withheld"]) == 4
+    _assert_no_sentence_text(r.text)
+    _assert_no_sentence_text(r.content.decode("utf-8"))
+    assert forbidden_in(r.text) == []
+
+
+def test_live_off_reason_when_key_is_set_but_live_is_switched_off(
+    data: ConnectorData, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    q = "What changed this week for LLZ?"
+    monkeypatch.setenv("META_MODEL_API_KEY", "x" * 12)
+    a = ask(data, q, key_id="k", runtime=recorded_runtime(tmp_path))
+    assert "switched off on this server" in a.speakable
+    assert "limits are per instance" in a.provenance.note
+    monkeypatch.delenv("META_MODEL_API_KEY")
+    b = ask(data, q, key_id="k", runtime=recorded_runtime(tmp_path))
+    assert "not switched on here" in b.speakable
+    assert "No live model key is configured" in b.provenance.note
