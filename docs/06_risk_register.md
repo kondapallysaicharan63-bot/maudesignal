@@ -111,7 +111,7 @@ This document enumerates everything that could kill or derail the project. Each 
 These are the P1 risks that deserve the most attention. Revisit weekly:
 
 1. **R-01 — Scope creep.** Checked every Sunday against Charter §4.
-2. **R-10 — MAUDE data sparsity.** Validated by Monday of Week 1 via pilot query.
+2. **R-10 — MAUDE data sparsity.** Confirmed by Monday of Week 1 via pilot query.
 3. **R-11 — Hallucinated citations.** Verifier built first; zero-tolerance test on every sample.
 4. **R-18 / R-21 — Discovery failure.** 20 outreaches in Week 1 is non-negotiable.
 5. **R-27 — Coursework crunch.** Calendar blocks protected from Day 1.

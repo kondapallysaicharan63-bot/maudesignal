@@ -312,7 +312,7 @@ class Database:
         confidence_score: float,
         requires_review: bool,
     ) -> None:
-        """Insert a validated extraction result (append-only)."""
+        """Insert a schema-checked extraction result (append-only)."""
         with self._session() as session:
             record = ExtractionRecord(
                 extraction_id=extraction_id,

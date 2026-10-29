@@ -207,7 +207,7 @@ The 8 weeks are structured into 4 phases. Each phase ends with a **go/no-go gate
 **Goal:** The differentiator — AI-specific signals MAUDE can't show.
 
 **Deliverables:**
-- F3 (AI failure taxonomy & classifier) implemented and validated
+- F3 (AI failure taxonomy & classifier) implemented and checked
 - F4 (Drift simulation + detection harness) working end-to-end
 - Refined extraction accuracy: ≥90% on gold set
 
@@ -320,9 +320,9 @@ Things outside your control that this project depends on. If any break, the proj
 
 ## 12. Assumptions (If These Are Wrong, Scope Changes)
 
-1. MAUDE data for product codes QIH/QAS/QFM is sufficient in volume to demonstrate patterns (validated Week 2)
+1. MAUDE data for product codes QIH/QAS/QFM is sufficient in volume to demonstrate patterns (confirmed Week 2)
 2. Claude Sonnet is sufficient for extraction quality at 90%+ (if not, upgrade to Opus for bulk)
-3. At least 3 RA/QA professionals on LinkedIn will respond to cold outreach (validated Week 1)
+3. At least 3 RA/QA professionals on LinkedIn will respond to cold outreach (confirmed Week 1)
 4. Open-source MIT is acceptable to all future employers (it is — no-compete issues at this scope)
 5. No FDA policy change invalidates the approach within 8 weeks (low probability)
 

@@ -182,7 +182,6 @@ This is the most important gate in the whole plan. Skipping it is how students b
 - **i-GENTIC AI** — Submission consistency, not postmarket. Different gap.
 - **Complizen** — Predicate research / guidance retrieval. Different gap.
 - **Legacy eQMS (Greenlight, MasterControl, Veeva)** — Document management; do not solve signal detection.
-- **FDA Elsa** — Internal FDA tool, does not train on industry data, not accessible externally.
 
 **Your differentiator:** Open-source + AI-specific failure taxonomy + reproducible methodology + student-accessible. No one occupies this space publicly.
 

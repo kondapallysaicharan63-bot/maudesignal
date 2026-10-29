@@ -7,7 +7,7 @@ accessdata.fda.gov answers plain HTTP clients from cloud runners with an
 510(k) database page for the K-number picks up the cookies that page sets and
 can then request the PDF the way a person clicking the summary link would.
 
-This is only the download route; the PDF is validated exactly like a plain
+This is only the download route; the PDF is checked exactly like a plain
 download (``store_pdf``: magic bytes, size limit). If Playwright or Chromium
 is missing, or FDA still refuses, the caller gets a ``BrowserFetchError`` and
 decides what to do (the recorder skips that K-number).

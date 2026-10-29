@@ -97,12 +97,14 @@ guidance, 510(k) history and MAUDE). MaudeSignal differs in three ways:
 - **It reads scanned 510(k) documents with a two-read accuracy check.**
 - **It is open source and self-hostable** (MIT), on public FDA data only.
 
-[BEUDAMED](https://beudamed.com/psur-reports) is also worth knowing: it is free
-and uses no AI. You enter a product code and get charts plus an audit-ready
-methodology. MaudeSignal differs plainly: an agent runs the investigation
-(weekly, or when a recall appears), every fact it writes is matched to the FDA
-record or withheld, and the search protocol behind each answer (dataset, filters,
-dates, counts) is written down so a person can repeat it.
+[BEUDAMED](https://beudamed.com/psur-reports) is also worth knowing: it describes
+itself as a free tool with no AI, where you enter a product code and get charts
+plus a methodology. MaudeSignal differs plainly: an agent can run the
+investigation for a device type the weekly check flagged, or for a given recall
+(run on request; recordings pending). Every fact it writes is matched to the
+stored source record (FDA, MHRA or literature) or withheld, and the search
+protocol behind each answer (dataset, filters, dates, counts) is written down
+so a person can repeat it.
 
 ### Three agentic workflows (status)
 

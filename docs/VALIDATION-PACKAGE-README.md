@@ -45,8 +45,8 @@ This validation package is designed to support compliance with:
 
 ## Important Notes
 
-- The validation package covers **MaudeSignal as a decision-support tool**.
-- Validated outputs (PSURs, PMS Plans) are **drafts** that require human expert review
+- The validation package covers **MaudeSignal as a signal-review aid**.
+- Outputs (PSUR drafts, PMS plan drafts) are **drafts** that require human expert review
   before use in regulatory submissions.
 - Re-validation is required after: major version upgrades, configuration changes,
   or changes to the underlying LLM model.
