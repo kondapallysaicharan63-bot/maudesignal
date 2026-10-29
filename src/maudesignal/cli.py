@@ -1337,6 +1337,89 @@ def monitor(
     console.print(f"[green]Wrote[/green] {md_path} and {json_path}")
 
 
+DEFAULT_INVESTIGATIONS_DIR = Path("demo/investigations")
+
+
+@app.command()
+def investigate(
+    product_code: list[str] = typer.Option(  # noqa: B008
+        [], "--product-code", "-p", help="Device type (FDA product code) to investigate."
+    ),
+    flagged: bool = typer.Option(
+        False, "--flagged", help="Investigate every device type the weekly check flagged."
+    ),
+    db_path: Path = typer.Option(  # noqa: B008
+        DEFAULT_MONITOR_DB, "--db", help="SQLite database to read (a copy is used)."
+    ),
+    out_dir: Path = typer.Option(  # noqa: B008
+        DEFAULT_INVESTIGATIONS_DIR, "--out-dir", help="Directory for <ts>-weekly-<code>.json."
+    ),
+) -> None:
+    """Weekly investigator: Muse Spark writes the digest entry for a flagged device type.
+
+    It pulls the type's new reports, groups them by kind of problem, checks recalls,
+    510(k)s and reports not filed by a manufacturer, and passes every sentence through
+    the claim gate (sentences that still fail are withheld). Needs META_MODEL_API_KEY;
+    without it nothing runs and nothing is written.
+
+    Examples:
+        maudesignal investigate --product-code QIH
+
+        maudesignal investigate --flagged
+    """
+    import os
+    import shutil
+    import tempfile
+
+    key = os.environ.get("META_MODEL_API_KEY", "")
+    if not key:
+        console.print("needs META_MODEL_API_KEY (Meta Model API key); nothing was run.")
+        raise typer.Exit(code=2)
+    if not product_code and not flagged:
+        console.print("[red]Give --product-code X or --flagged.[/red]")
+        raise typer.Exit(code=2)
+    if not db_path.exists():
+        console.print(f"[red]Database not found:[/red] {db_path}")
+        raise typer.Exit(code=2)
+
+    from maudesignal.copilot.investigator import (
+        flagged_codes,
+        save_investigation,
+    )
+    from maudesignal.copilot.investigator import (
+        investigate as run,
+    )
+    from maudesignal.copilot.meta_provider import MetaProvider
+    from maudesignal.copilot.tools import ToolContext
+    from maudesignal.gate.loader import store_from_database
+
+    configure_logging("WARNING")
+    model = os.environ.get("META_MODEL_API_MODEL", "muse-spark-1.3")
+    base_url = os.environ.get("META_MODEL_API_BASE_URL", "https://api.meta.ai/v1")
+    with tempfile.TemporaryDirectory() as tmp:
+        db_copy = Path(tmp) / "investigate.db"
+        shutil.copy(db_path, db_copy)  # audit rows go to the copy, never the committed seed
+        db = Database(db_copy)
+        ctx = ToolContext(db=db, store=store_from_database(db))
+        codes = [c.strip().upper() for c in product_code if c.strip()]
+        if flagged:
+            codes += [
+                f["product_code"] for f in flagged_codes(ctx) if f["product_code"] not in codes
+            ]
+        if not codes:
+            console.print("The weekly check flagged no device type; nothing to investigate.")
+            return
+        provider = MetaProvider(api_key=key, model=model, base_url=base_url)
+        for code in codes:
+            res = run(provider.client, ctx, code, model=model)
+            path = save_investigation(res, out_dir)
+            rep = res.copilot.report
+            console.print(
+                f"{code}: {rep.passed} sentences verified, {rep.blocked} withheld, "
+                f"{len(res.groups)} groups, ${res.copilot.cost_usd:.4f} -> {path}"
+            )
+
+
 @app.command()
 def status() -> None:
     """Print current config, database contents, and LLM spend."""

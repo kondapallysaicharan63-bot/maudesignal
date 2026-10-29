@@ -24,6 +24,7 @@ ClaimKind = Literal[
     "recall_count",
     "literature",
     "source_count",
+    "group_count",
 ]
 
 
@@ -146,6 +147,24 @@ class SourceCountClaim:
     kind: ClaimKind = "source_count"
 
 
+@dataclass(frozen=True)
+class GroupCountClaim:
+    """'N reports describe <label>', with the report ids that make up the group.
+
+    The gate recomputes ``value`` as the number of distinct listed ids and checks
+    that every id is a stored report of ``product_code`` (and inside the dates, when
+    given), so a group label can never carry a count the listed reports do not back.
+    """
+
+    product_code: str
+    label: str
+    report_ids: tuple[str, ...]
+    value: int
+    date_from: str | None = None
+    date_to: str | None = None
+    kind: ClaimKind = "group_count"
+
+
 Claim = (
     QuoteClaim
     | CountClaim
@@ -157,6 +176,7 @@ Claim = (
     | RecallCountClaim
     | LiteratureClaim
     | SourceCountClaim
+    | GroupCountClaim
 )
 
 
@@ -235,6 +255,18 @@ def claim_from_dict(d: dict[str, Any]) -> Claim:
             return SourceCountClaim(
                 product_code=str(d["product_code"]),
                 source=str(d["source"]),
+                value=int(d["value"]),
+                date_from=_opt_str(d.get("date_from")),
+                date_to=_opt_str(d.get("date_to")),
+            )
+        if kind == "group_count":
+            ids = d["report_ids"]
+            if not isinstance(ids, list | tuple):
+                raise TypeError("report_ids must be a list")
+            return GroupCountClaim(
+                product_code=str(d["product_code"]),
+                label=str(d["label"]).strip(),
+                report_ids=tuple(str(i).strip() for i in ids),
                 value=int(d["value"]),
                 date_from=_opt_str(d.get("date_from")),
                 date_to=_opt_str(d.get("date_to")),
