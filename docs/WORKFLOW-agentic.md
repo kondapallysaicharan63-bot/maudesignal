@@ -7,7 +7,7 @@ Status: **approved by Charan on Oct 29** (design system kept; deploy steps go to
 > here. The coordinator updates this file after every milestone and re-reads it after any
 > context compaction before acting.
 
-## Live status (updated 2026-10-29 ~23:00 UTC)
+## Live status (updated 2026-10-29 ~22:50 UTC)
 
 | Track / item | Branch | State | Evidence | Next |
 |---|---|---|---|---|
@@ -20,6 +20,7 @@ Status: **approved by Charan on Oct 29** (design system kept; deploy steps go to
 | Coordinator: live-app Settings fix + CI on PRs into `hackathon-day2` | merged (`e59f126`) | **PASS, live** | advisor report; settings screenshots | — |
 | Coordinator fix 2: `draft_capa` shown as `capa_need_evidence`; retired clip 00-voice-main hidden (chain still verified) | `coordinator-fix-2` (`e8da075`) | Advisor review running | 11 e2e pass; rendered pages contain no drop-list words | Merge on PASS |
 | Vercel web project `maudesignal` (prj_x1NDkrSG6VoZ4Ax7OrQugC1DVHeu) | — | Connector has team access (Oct 29). `track-b-ui` preview READY at f621f7c; other branches fail by design (no `web/`) | build log read via connector | Browser check gets 403 from openFDA → web app will call the API's public check endpoint (C2); npm audit: 5 vulns (2 critical) → Track B |
+| Incident: commit `2aa8382` pushed to `hackathon-day2` by Meta Muse under Charan's name (unsigned, unreviewed): product-code check for voice, 7 voice takes, `RECORD_REQUEST` 6→7 | `hackathon-day2` | Advisor review running; triggered recording run 40965201781 (full re-record: replaces all transcripts, vision, dossier, HAND_CHECK; re-records the retired 00-voice-main) could not be cancelled from here (403) | GitHub Actions | Coordinator takes over voice: after the run commits, keep only the 7 take transcripts (+ audit exports), restore the fifth recording / vision / dossier / HAND_CHECK unless Charan chooses the sixth; reconcile with `coordinator-fix-2` |
 | Daily monitor on `main` | `main` | Ran Oct 29 | commit `be05711` digest | Watch tomorrow's 11:17 UTC run (check-in 11:50 UTC) |
 
 ### Decisions (with date)
