@@ -3,6 +3,52 @@
 Coordinator plan for Oct 29 – Nov 4, 2026 (submit Nov 4, about 5 PM PT).
 Status: **approved by Charan on Oct 29** (design system kept; deploy steps go to Charan).
 
+> **Single source of truth.** Tracks, status, decisions, open items and next steps live
+> here. The coordinator updates this file after every milestone and re-reads it after any
+> context compaction before acting.
+
+## Live status (updated 2026-10-29 ~21:30 UTC)
+
+| Track / item | Branch | State | Evidence | Next |
+|---|---|---|---|---|
+| A core: A1b search protocol (#3), A2 weekly investigator (#1), A3 recall sweep (#2), A4 doc to-dos | `track-a-core` (head `3d89089`) | **All PASS** (advisor; A4 on 2nd round) | workflow `wf_2a36efa4-681` journal | Draft PR → `hackathon-day2` once CI runs on PRs into it; merge on green |
+| A follow-up: real Muse Spark runs | `hackathon-day2` after merge | Not started | — | Push `demo/INVESTIGATE_REQUEST` (weekly + recall) and `demo/RECORD_REQUEST` (re-record evidence-pack narrative + Wonder review with pack binding); Meta credit, cents |
+| B workspace: B1 shell, B2 chat, B3 artifacts | `track-b-ui` | **PASS** | `wf_d5c47891-d4b` | — |
+| B4: Charan's 6 preview fixes | `track-b-ui-wip` → fast-forward `track-b-ui` after PASS | **Running** | `wf_41350c6f-170` | Send Charan screenshots + preview link |
+| C Muse connector: C1 REST, C2 MCP, C3 hosting + submission pack | `track-c-muse` | **Running** | `wf_f2a3790d-566` | Deploy steps, "add to your Muse" steps, shot list in `claude/video-script-v1.md`, rubric delta |
+| Coordinator: live-app Settings fix + CI on PRs into `hackathon-day2` | `coordinator-settings-fix` (`61cd56b`, `210a4ab`) | Advisor review running | local screenshots `docs/hackathon/img/settings-keyless-*.png` | On PASS: merge into `hackathon-day2` (live app picks it up) |
+| Daily monitor on `main` | `main` | Ran Oct 29 | commit `be05711` digest | Watch tomorrow's 11:17 UTC run (check-in 11:50 UTC) |
+
+### Decisions (with date)
+- Oct 29: plan approved; keep the design system (Newsreader + Geist); Charan deploys Vercel himself (connector has no access to team `kondapallysaicharan63-9868s-projects`).
+- Oct 29: research doc "PMS Market Research & Agentic Workflow Plan" first: workflows 1–3 + BEUDAMED + Elsa check (no Elsa line without an FDA source).
+- Oct 29: deployed Streamlit shows product pages only (`SHOW_ALL_PAGES_BY_DEFAULT = False`; `?tools=all` for the rest).
+- Oct 29: Track C = Meta Muse connector (REST + MCP on Vercel), replaces Telegram intake; `api/` moved from B to C.
+- Oct 29: commits: author Saicharan Kondapally, committer Claude <noreply@anthropic.com> (Verified on GitHub).
+- Deadline: Nov 4, about 5 PM PT. Nothing into `main` without Charan's OK.
+
+### Open items needing Charan
+1. Add the four `claude/` docs (RUBRIC-100, PRD-v2-final, TASK-oct28, daily-status) to the repo, or paste them.
+2. Vercel: web project Root Directory `web`, Vite, deploy `track-b-ui`; send the preview URL. Later a second project for the API (Track C steps).
+3. Practitioner quotes (1–3), with written permission before naming anyone.
+4. Voiceover on the latest walkthrough; independent re-check of the hand-check.
+5. FDA source for any Elsa 4.0 line (until then none is used).
+6. Muse connector: submit only when ready; status stays "Not submitted" until then.
+7. Optional: `OPENFDA_API_KEY` in Streamlit Secrets; Upstash Redis for shared API limits/audit.
+
+### Next steps (coordinator, in order)
+1. Settings fix PASS → merge into `hackathon-day2`.
+2. PR `track-a-core` → `hackathon-day2`, CI green, merge; then trigger the real recordings.
+3. After A merges: re-run `scripts/export_web_data.py` on Track B so the workspace shows the new protocol and, once recorded, the investigator and recall runs.
+4. B4 PASS → screenshots + preview link to Charan; PR `track-b-ui` → `hackathon-day2`.
+5. C3 PASS → API deploy steps, Muse steps, `claude/video-script-v1.md` shot list, rubric delta; PR `track-c-muse` → `hackathon-day2`.
+6. Evening status at 03:00 UTC: score log below + `HACKATHON.md` manifest.
+
+### Score log
+| Date | Impact | Meta tooling | Demo | Technical | What moved it | Still missing |
+|---|---|---|---|---|---|---|
+| Oct 29 (coordinator estimate, not measured) | 7.5 | 8.5 | 8 (after voiceover) | 9.5 | AI device sweep (6 of 181), live check, 2:53 video, search protocol | Practitioner quotes; real investigator/recall recordings; deployed workspace |
+
 ## 0. Where things stand (checked Oct 29, 13:00 UTC)
 
 | Item | State | Evidence |
