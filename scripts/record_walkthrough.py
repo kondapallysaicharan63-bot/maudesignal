@@ -1,5 +1,5 @@
 # ruff: noqa: E501 — the embedded cursor script and card CSS are kept on readable lines.
-"""Record a slow, narrated walkthrough of the keyless demo app (video script v3 beats).
+"""Record a slow, narrated 3-minute walkthrough of the keyless demo app (video script v4).
 
 HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import html
+import re
 import shutil
 import subprocess
 import time
@@ -103,7 +104,7 @@ class Driver:
         """Load an app page and wait until ``wait_for`` is on screen."""
         self.page.goto(self.base + path)
         self.page.wait_for_selector(wait_for, timeout=90_000)
-        self.pause(2.5)
+        self.pause(2.0)
         self.cursor()
 
     def card(self, body: str) -> None:
@@ -114,12 +115,12 @@ class Driver:
         self.page.wait_for_timeout(1500)  # web fonts
         self.cursor()
 
-    def show(self, loc: Any, settle: float = 1.2) -> None:
+    def show(self, loc: Any, settle: float = 0.8) -> None:
         """Scroll the element into the middle of the screen, smoothly."""
         loc.first.evaluate("e => e.scrollIntoView({behavior: 'smooth', block: 'center'})")
         self.pause(settle)
 
-    def glide(self, loc: Any, pause: float = 1.0) -> tuple[float, float]:
+    def glide(self, loc: Any, pause: float = 0.6) -> tuple[float, float]:
         """Move the cursor slowly onto ``loc`` and rest there."""
         self.show(loc)
         box = loc.first.bounding_box()
@@ -127,10 +128,10 @@ class Driver:
         x, y = box["x"] + min(box["width"] / 2, 60), box["y"] + box["height"] / 2
         self.cursor()
         self.page.evaluate(f"window.__msMove({x}, {y})")
-        self.pause(1.3 + pause)
+        self.pause(1.15 + pause)
         return x, y
 
-    def click(self, loc: Any, after: float = 2.5) -> None:
+    def click(self, loc: Any, after: float = 2.0) -> None:
         """Glide to ``loc``, show a click ripple, click, then hold."""
         x, y = self.glide(loc)
         self.page.evaluate(f"window.__msRipple({x}, {y})")
@@ -140,17 +141,17 @@ class Driver:
 
     def top_nav(self, name: str) -> None:
         """Open a page from the top bar."""
-        self.click(self.page.locator(".st-key-top_nav").get_by_role("radio", name=name), 4)
+        self.click(self.page.locator(".st-key-top_nav").get_by_role("radio", name=name), 3)
 
     def tab(self, name: str) -> None:
         """Open a tab by its label."""
-        self.click(self.page.get_by_role("tab", name=name), 4)
+        self.click(self.page.get_by_role("tab", name=name), 2.5)
 
     def select(self, label: str, option: str) -> None:
         """Open the selectbox labelled ``label`` and pick ``option``."""
         box = self.page.locator("[data-testid='stSelectbox']").filter(has_text=label).first
-        self.click(box.get_by_role("button", name="Open"), 1.5)
-        self.click(self.page.get_by_role("option", name=option, exact=True), 3)
+        self.click(box.get_by_role("button", name="Open"), 1.0)
+        self.click(self.page.get_by_role("option", name=option, exact=True), 2)
 
     def scroll_main(self, dy: int, settle: float = 2.0) -> None:
         """Scroll the page body smoothly by ``dy`` pixels."""
@@ -161,147 +162,149 @@ class Driver:
 
 
 def beats(live_url: str, repo_url: str) -> list[Beat]:
-    """The video script v3 beats, in order, with what to say and how to drive each."""
+    """The 3-minute cut (video script v4), in order, with what to say and how to drive each."""
 
     def title(d: Driver) -> None:
         d.card(
             '<div class="card"><div class="kicker">Meta Global AI Developer Hackathon · '
-            "Solo Indie Dev</div><h1>Maude<em>Signal</em></h1><p>A safety copilot for "
-            "medical-device quality and regulatory teams, on public FDA data.</p><div "
-            'class="rule"></div><p class="src">Triage aid · not medical advice · a named '
-            "person makes every decision · nothing is filed with FDA</p></div>"
+            "Solo Indie Dev · Build for Your World</div><h1>Maude<em>Signal</em></h1><p>A "
+            "safety copilot for medical-device quality and regulatory teams, on public FDA "
+            'data.</p><div class="rule"></div><p class="src">Triage aid · not medical advice · '
+            "a named person makes every decision · nothing is filed with FDA</p></div>"
         )
-        d.pause(10)
+        d.pause(7)
 
     def stat(d: Driver) -> None:
         d.card(
-            '<div class="card"><div class="kicker">LLZ · image-processing software</div>'
-            '<div class="fig">19,970</div><h2>FDA adverse-event reports — 99.3% filed by '
-            "the manufacturers about their own devices.</h2><p>What happens to other "
-            "companies' devices of the same type, and the few reports filed by hospitals "
-            'or users, is buried in there.</p><div class="rule"></div><p class="src">'
-            "Source: openFDA device/event counts by report source "
-            "(docs/hackathon/SOURCE_COUNTS.md)</p></div>"
+            '<div class="card"><div class="kicker">The problem</div>'
+            '<div class="fig">2,000,000+</div><h2>device reports reach FDA every year. '
+            "More than 1,500 AI-enabled devices are on FDA's list.</h2><p>MAUDE has no field "
+            "for an AI failure. For one AI product code alone (LLZ) there are 19,970 reports, "
+            '99.3% filed by the manufacturers themselves.</p><div class="rule"></div><p '
+            'class="src">Sources: FDA / openFDA; FDA AI-Enabled Device List (public counts, '
+            "2026); openFDA report-source counts, 28 Oct 2026 (docs/hackathon/SOURCE_COUNTS.md)"
+            "</p></div>"
         )
-        d.pause(16)
+        d.pause(11)
 
     def signals(d: Driver) -> None:
         p = d.page
         d.open("/?theme=light&tools=demo", ".st-key-ms_siglist")
-        d.glide(p.locator(".ms-sig-head"), 3)
-        d.glide(p.locator(".ms-stats"), 2.5)
+        d.glide(p.locator(".ms-sig-head"), 1.5)
+        d.glide(p.locator(".ms-stats"), 1.2)
         cards = p.locator(".st-key-ms_siglist label[data-testid='stRadioOption']")
-        d.click(cards.filter(has_text="MYN"), 3)
-        d.click(p.get_by_role("radio", name="Not filed by a manufacturer"), 4)
-        d.glide(p.locator("[data-testid='stDataFrame']"), 2)
+        d.click(cards.filter(has_text="MYN"), 2)
+        d.click(p.get_by_role("radio", name="Not filed by a manufacturer"), 3)
 
-    def copilot(d: Driver) -> None:
+    def voice(d: Driver) -> None:
         p = d.page
         d.top_nav("Copilot")
-        item = p.locator(".st-key-ms_qlist label[data-testid='stRadioOption']").filter(
-            has_text="What changed this week"
-        )
-        d.click(item.last, 4)  # the spoken clip (listed after the typed questions)
-        d.glide(p.get_by_text("Heard:"), 3)
-        d.glide(p.locator(".ms-pill").first, 4)
-        d.scroll_main(300, 4)
+        items = p.locator(".st-key-ms_qlist label[data-testid='stRadioOption']")
+        d.click(items.filter(has_text=re.compile(r"last week\. Confirm")), 3.5)
+        d.glide(p.get_by_text("Heard:"), 1.5)
+        d.glide(p.get_by_text("That claim is not correct", exact=False), 3)
+
+    def repair(d: Driver) -> None:
+        p = d.page
+        items = p.locator(".st-key-ms_qlist label[data-testid='stRadioOption']")
+        d.click(items.filter(has_text="that we must open"), 3.5)
+        d.glide(p.get_by_text("after a repair turn", exact=False), 2)
+        d.click(p.get_by_text("What the gate blocked on the first pass"), 2.5)
+        d.glide(p.get_by_text("all malfunction", exact=False).first, 4)
 
     def gate(d: Driver) -> None:
         p = d.page
         d.page.locator("[data-testid='stMain']").evaluate("e => e.scrollTo({top: 0})")
         d.tab("Try to fool the gate")
-        d.select("Event type", "Injury")
-        d.glide(p.get_by_text("claimed 50, records show 2"), 6)
         d.select("Claim type", "CFR section")
-        d.glide(p.get_by_text("superseded by QMSR"), 7)
+        d.glide(p.get_by_text("superseded by QMSR"), 4)
 
     def vision(d: Driver) -> None:
         p = d.page
         d.top_nav("Vision")
-        d.glide(p.get_by_text("TWO-READ AGREEMENT", exact=False), 3)
-        d.scroll_main(500, 3)
-        d.page.locator("[data-testid='stMain']").evaluate("e => e.scrollTo({top: 0})")
-        d.pause(1)
+        d.glide(p.get_by_text("TWO-READ AGREEMENT", exact=False), 1.5)
         d.tab("Device label camera")
-        d.show(p.get_by_text("label-thermometer-1.jpg"), 4)
-        d.glide(p.get_by_text("Signals for product code FLL").first, 5)
+        d.show(p.get_by_text("label-thermometer-1.jpg"), 2)
+        d.glide(p.get_by_text("Signals for product code FLL").first, 3)
 
     def evidence(d: Driver) -> None:
         p = d.page
         d.top_nav("Signals")
         d.tab("Evidence pack")
-        d.pause(4)
-        d.glide(p.locator(".ms-stats--text"), 3)
-        d.show(p.get_by_text("Preview — page 1"), 4)
-        d.glide(p.get_by_text("Independent reviewer", exact=False), 4)
+        d.pause(2)
+        d.glide(p.get_by_text("Independent reviewer", exact=False), 2)
         d.top_nav("Audit")
-        d.glide(p.get_by_text("Hash chain intact", exact=False), 5)
+        d.glide(p.get_by_text("Hash chain intact", exact=False), 3)
 
     def close(d: Driver) -> None:
         d.card(
             '<div class="card"><div class="kicker">Built this week on four Meta models</div>'
-            "<h2>Muse Spark · Muse Wonder · Voice Transcribe · SAM</h2><p>on the open-source "
+            "<h2>It shows you which of its own sentences it refused to say, and why.</h2>"
+            "<p>Muse Spark · Muse Wonder · Voice Transcribe · SAM 3.1, on the open-source "
             'MaudeSignal pipeline.</p><div class="rule"></div>'
             f'<p class="src">Live demo: {html.escape(live_url)}<br>'
             f"Code: {html.escape(repo_url)}</p></div>"
         )
-        d.pause(14)
+        d.pause(9)
 
     return [
         Beat(
             "Title",
             "I'm Charan. MaudeSignal helps medical-device safety teams watch FDA data. "
-            "It's a B2B tool — not medical advice — and people make every decision.",
+            "Not medical advice: a person makes every decision.",
             title,
         ),
         Beat(
-            "Why",
-            "Device makers already know their own complaints — they're the ones who report "
-            "them to FDA. What they can't easily see is what's happening to other companies' "
-            "devices of the same type, and the few reports about their device filed by "
-            "hospitals or users. That's buried in tens of thousands of reports.",
+            "Problem",
+            "FDA gets over two million device reports a year, and over fifteen hundred AI "
+            "devices are authorized. MAUDE has no field for an AI failure.",
             stat,
         ),
         Beat(
             "Signals",
-            "Monday morning. For the device types I chose, it compared this week with the "
-            "last four. Reports suddenly increased for one type: 33 against a normal 9. And "
-            "here are reports that weren't filed by the manufacturer.",
+            "Monday morning. For the device types I chose, it compares this week with the "
+            "last four. LLZ reports suddenly increased: 33 against a normal 9. And here are "
+            "the reports the manufacturer didn't file.",
             signals,
         ),
         Beat(
-            "Copilot",
-            "I just ask. Meta's Voice Transcribe hears the question, Muse Spark looks "
-            "through FDA reports, recalls, 510(k)s and papers — and every number and quote "
-            "comes back tied to the exact FDA record.",
-            copilot,
+            "Voice",
+            "I can just ask. Meta's Voice Transcribe hears the question; Muse Spark calls "
+            "tools over the stored FDA records. A colleague's claim of 50 injuries? The "
+            "records say otherwise.",
+            voice,
+        ),
+        Beat(
+            "Repair",
+            "Every sentence passes a gate that recomputes each number from the records. Here "
+            "Spark itself said something the records didn't support. The gate withheld it and "
+            "showed why; Spark got one repair turn, and anything still unmatched stays struck "
+            "out.",
+            repair,
         ),
         Beat(
             "Gate",
-            "If anything — the model or a colleague — states something the records don't "
-            "support, it's withheld, with the reason: the records show 2 LLZ injury "
-            "reports, and 820.100 was replaced this February. In our latest recording, 63 "
-            "of 65 sentences matched the FDA records on the first try, and a line-by-line check "
-            "of every answer against the records found none wrong.",
+            "You can try to fool it yourself: cite 21 CFR 820.100, and it's blocked, because "
+            "QMSR replaced it this February.",
             gate,
         ),
         Beat(
             "Vision",
-            "It also reads scanned FDA documents and device labels — Muse Spark reads, SAM "
-            "finds the label — and anything unclear is flagged for a person, never guessed.",
+            "Muse Spark reads scanned 510(k) summaries twice and compares the reads. Point a "
+            "camera at a device label: SAM finds it, Spark reads it, and you land on that "
+            "device's signals. Anything unclear goes to a person.",
             vision,
         ),
         Beat(
             "Evidence pack",
-            "For the jump it prepares a CAPA-need evidence pack in a quality-record layout; "
-            "Muse Wonder reviews it first. Whether a CAPA is needed is our decision, on our "
-            "own form — and every step is logged.",
+            "It drafts a CAPA-need evidence pack, Muse Wonder reviews it independently, and "
+            "every step goes into an audit trail that shows if anything was changed.",
             evidence,
         ),
         Beat(
             "Close",
-            "Built this week on four Meta models — Muse Spark, Muse Wonder, Voice Transcribe "
-            "and SAM — on my open-source MaudeSignal pipeline. Live demo and code below.",
+            "AI tools that summarize MAUDE already exist. MaudeSignal shows you which of its "
+            "own sentences it refused to say, and why.",
             close,
         ),
     ]
