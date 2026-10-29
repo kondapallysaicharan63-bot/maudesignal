@@ -202,9 +202,9 @@ def beats(live_url: str, repo_url: str) -> list[Beat]:
         p = d.page
         d.top_nav("Copilot")
         items = p.locator(".st-key-ms_qlist label[data-testid='stRadioOption']")
-        d.click(items.filter(has_text=re.compile(r"last week\. Confirm")), 3.5)
+        d.click(items.filter(has_text=re.compile(r"50 injury reported last week")), 3.5)
         d.glide(p.get_by_text("Heard:"), 1)
-        d.glide(p.get_by_text("That claim is not correct", exact=False), 3)
+        d.glide(p.get_by_text("that is not correct", exact=False), 3)
 
     def repair(d: Driver) -> None:
         p = d.page
@@ -348,8 +348,8 @@ def write_script(bs: list[Beat], path: Path, total: float) -> None:
         "# Walkthrough voiceover (read along with walkthrough.mp4)",
         "",
         f"Length {_mmss(total)}. Each line starts when its screen appears; take your time —",
-        "the video pauses on every screen. The voice clip in the Copilot beat is",
-        'text-to-speech, so say "Voice Transcribe hears the question", not that a person asked.',
+        "the video pauses on every screen. The voice clip in the Copilot beat is Charan's",
+        "own recording (public with his consent); the screen shows what Voice Transcribe heard.",
         "",
         "| Starts | Screen | Say |",
         "|---|---|---|",
