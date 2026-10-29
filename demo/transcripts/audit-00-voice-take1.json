@@ -1,0 +1,27 @@
+{
+  "run_label": "00-voice-take1",
+  "chain_ok_at_export": true,
+  "first_bad_seq_at_export": null,
+  "entries": [
+    {
+      "seq": 1,
+      "ts": "2026-10-29T22:32:25.399746",
+      "actor": "voice:muse-voice-transcribe-1.0",
+      "action": "voice.transcribed",
+      "entity_id": "V-cc5de68d782df449",
+      "payload_json": "{\"audio_seconds\": 7.68, \"audio_sha256\": \"cc5de68d782df449c217aee4027c6ccd3f854a3c4a540192605d5f081af48b78\", \"estimated_cost_usd\": 0.00035, \"heard_code\": \"LLG\", \"language\": \"English\", \"model\": \"muse-voice-transcribe-1.0\", \"product_code_status\": \"corrected\", \"question_entity_id\": \"Q-040ee5af6aac18fd\", \"suggested_code\": \"LLZ\", \"transcript_text\": \"What changed this week for LLG? devices? devices? The report suddenly increases?\", \"used_code\": \"LLZ\"}",
+      "prev_hash": "GENESIS",
+      "entry_hash": "3d573d98b5b531d74416bf6833cf7ee718dcbe2a316d85c3ae194392a0e79ead"
+    },
+    {
+      "seq": 2,
+      "ts": "2026-10-29T22:32:50.513666",
+      "actor": "copilot:muse-spark",
+      "action": "copilot.answer",
+      "entity_id": "Q-040ee5af6aac18fd",
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 4}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 4}, \"input_tokens\": 22117, \"model\": \"muse-spark-1.3\", \"output_tokens\": 6075, \"question\": \"What changed this week for LLZ? devices? devices? The report suddenly increases?\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.3.1\", \"structured_output\": true, \"tools\": [\"overnight_signals\", \"product_summary\", \"my_device_types\", \"search_reports\", \"get_report\", \"report_sources\"]}",
+      "prev_hash": "3d573d98b5b531d74416bf6833cf7ee718dcbe2a316d85c3ae194392a0e79ead",
+      "entry_hash": "607af53a2f11735f41f3956a9aa2e38bddbad9bce14425e7c0aa0dbbfaba6267"
+    }
+  ]
+}

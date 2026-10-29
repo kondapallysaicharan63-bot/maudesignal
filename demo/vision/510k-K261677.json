@@ -1,18 +1,18 @@
 {
   "kind": "510k_summary_reading",
   "k_number": "K261677",
-  "created_at": "2026-10-28T20:48:31+00:00",
+  "created_at": "2026-10-29T22:37:41+00:00",
   "pdf_url": "https://www.accessdata.fda.gov/cdrh_docs/pdf26/K261677.pdf",
   "page_count": 12,
   "pages_read": 8,
   "has_text_layer": true,
-  "agreement_pct": 90.0,
+  "agreement_pct": 80.0,
   "counts": {
-    "VERIFIED": 9,
-    "CONFLICT": 1,
+    "VERIFIED": 8,
+    "CONFLICT": 2,
     "UNVERIFIABLE": 0
   },
-  "cost_usd": 0.070033,
+  "cost_usd": 0.070832,
   "openfda": {
     "k_number": "K261677",
     "applicant": "Aramis Global AI Consultancies, LLC",
@@ -241,33 +241,28 @@
     },
     {
       "name": "indications_for_use",
-      "status": "VERIFIED",
-      "value": "Non-invasive processing of CT kidney images using automatic image segmentation and measurement of anatomical structures utilizing artificial intelligence/machine-learning algorithms. The system automatically calculates the renal parenchymal volume. AIRA is intended for adult patients who require volumetric measurement of the kidneys for further clinical assessment.",
+      "status": "CONFLICT",
+      "value": null,
       "read_a": {
         "value": "Non-invasive processing of CT kidney images using automatic image segmentation and measurement of anatomical structures utilizing artificial intelligence/machine-learning algorithms. The system automatically calculates the renal parenchymal volume. AIRA is intended for adult patients who require volumetric measurement of the kidneys for further clinical assessment.",
         "page": 4,
         "legibility": "clear"
       },
       "read_b": {
-        "value": "Non-invasive processing of CT kidney images using automatic image segmentation and measurement of anatomical structures utilizing artificial intelligence/machine-learning algorithms. The system automatically calculates the renal parenchymal volume. AIRA is intended for adult patients who require volumetric measurement of the kidneys for further clinical assessment.",
-        "page": 4,
+        "value": "Non-invasive processing of CT kidney images using automatic image segmentation and measurement of anatomical structures utilizing artificial intelligence/machine-learning algorithms. The system automatically calculates the renal parenchymal volume.",
+        "page": 6,
         "legibility": "clear"
       },
-      "reads_agree": true,
-      "similarity": 1.0,
+      "reads_agree": false,
+      "similarity": 0.807,
       "checks": [
         {
           "source": "two_reads",
-          "outcome": "pass",
-          "detail": "similarity 1.00"
-        },
-        {
-          "source": "text_layer",
-          "outcome": "pass",
-          "detail": "100% found in text layer"
+          "outcome": "fail",
+          "detail": "similarity 0.81"
         }
       ],
-      "note": ""
+      "note": "reads disagree; low clarity \u2014 human check"
     },
     {
       "name": "intended_use",
@@ -304,17 +299,17 @@
         "legibility": "clear"
       },
       "read_b": {
-        "value": "AIRA operates by using medical imaging data (CT scans) to analyze the size and shape of the kidney. It utilizes a deep learning algorithm to accurately estimate the renal parenchymal volume of the kidney.",
+        "value": "AIRA operates by using medical imaging data (CT scans) to analyze the size and shape of the kidney. It utilizes a deep learning algorithm to accurately estimate the renal parenchymal volume of the kidney. Both utilize artificial intelligence/machine-learning algorithms to perform automatic image segmentation and measurement of anatomical structures.",
         "page": 6,
         "legibility": "clear"
       },
       "reads_agree": true,
-      "similarity": 0.667,
+      "similarity": 0.509,
       "checks": [
         {
           "source": "two_reads",
           "outcome": "pass",
-          "detail": "similarity 0.67"
+          "detail": "similarity 0.51"
         }
       ],
       "note": "two independent reads agree (no other source covers it)"
@@ -391,8 +386,8 @@
       "model": "muse-spark-1.3",
       "skill_version": "1.0.0",
       "input_tokens": 21974,
-      "output_tokens": 2435,
-      "cost_usd": 0.037816
+      "output_tokens": 3055,
+      "cost_usd": 0.040451
     },
     {
       "label": "B",
@@ -435,8 +430,8 @@
           "legibility": "clear"
         },
         "indications_for_use": {
-          "value": "Non-invasive processing of CT kidney images using automatic image segmentation and measurement of anatomical structures utilizing artificial intelligence/machine-learning algorithms. The system automatically calculates the renal parenchymal volume. AIRA is intended for adult patients who require volumetric measurement of the kidneys for further clinical assessment.",
-          "page": 4,
+          "value": "Non-invasive processing of CT kidney images using automatic image segmentation and measurement of anatomical structures utilizing artificial intelligence/machine-learning algorithms. The system automatically calculates the renal parenchymal volume.",
+          "page": 6,
           "legibility": "clear"
         },
         "intended_use": {
@@ -445,7 +440,7 @@
           "legibility": "clear"
         },
         "technology_summary": {
-          "value": "AIRA operates by using medical imaging data (CT scans) to analyze the size and shape of the kidney. It utilizes a deep learning algorithm to accurately estimate the renal parenchymal volume of the kidney.",
+          "value": "AIRA operates by using medical imaging data (CT scans) to analyze the size and shape of the kidney. It utilizes a deep learning algorithm to accurately estimate the renal parenchymal volume of the kidney. Both utilize artificial intelligence/machine-learning algorithms to perform automatic image segmentation and measurement of anatomical structures.",
           "page": 6,
           "legibility": "clear"
         }
@@ -464,8 +459,8 @@
       "model": "muse-spark-1.3",
       "skill_version": "1.0.0",
       "input_tokens": 11830,
-      "output_tokens": 4101,
-      "cost_usd": 0.032217
+      "output_tokens": 3669,
+      "cost_usd": 0.030381
     }
   ],
   "thumbnails": [

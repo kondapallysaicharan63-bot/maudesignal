@@ -1,0 +1,175 @@
+{
+  "schema_version": "1.0",
+  "label": "01-what-changed",
+  "recorded_at_utc": "2026-10-29T22:22:42+00:00",
+  "model": "muse-spark-1.3",
+  "question": "What changed this week? Did reports suddenly increase for any device?",
+  "answer": "Yes, product code LLZ reports suddenly increased this week with 33 reports. MYN, POK and QIH showed no change this week with 0 reports each. A named human must decide any next steps.",
+  "tool_calls": [
+    {
+      "name": "overnight_signals",
+      "arguments": {},
+      "result_preview": "{\"as_of\": \"20260831\", \"headline\": \"New kind of problem: 0 \\u00b7 More serious than usual: 0 \\u00b7 Reports suddenly increased: 1\", \"current_window\": {\"date_from\": \"20260825\", \"date_to\": \"20260831\"}, \"baseline_window\": {\"date_from\": \"20260728\", \"date_to\": \"20260824\"}, \"rules\": {\"current_window_days\":"
+    }
+  ],
+  "first_pass": {
+    "passed": 3,
+    "blocked": 0,
+    "claims": {
+      "pass": 4,
+      "block": 0
+    },
+    "sentences": [
+      {
+        "text": "Yes, product code LLZ reports suddenly increased this week with 33 reports.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 33",
+            "evidence_ids": [
+              "50426770",
+              "50426773",
+              "50448213",
+              "50448215",
+              "50448216",
+              "50448217",
+              "50451032",
+              "50453041",
+              "50502511",
+              "50502514",
+              "50502888",
+              "50503657",
+              "50503658",
+              "50503662",
+              "50504539",
+              "50504540",
+              "50504541",
+              "50504545",
+              "50513025",
+              "50513122"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "MYN, POK and QIH showed no change this week with 0 reports each.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 0",
+            "evidence_ids": []
+          },
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 0",
+            "evidence_ids": []
+          },
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 0",
+            "evidence_ids": []
+          }
+        ]
+      },
+      {
+        "text": "A named human must decide any next steps.",
+        "status": "pass",
+        "reasons": [],
+        "claims": []
+      }
+    ]
+  },
+  "final": {
+    "passed": 3,
+    "blocked": 0,
+    "claims": {
+      "pass": 4,
+      "block": 0
+    },
+    "sentences": [
+      {
+        "text": "Yes, product code LLZ reports suddenly increased this week with 33 reports.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 33",
+            "evidence_ids": [
+              "50426770",
+              "50426773",
+              "50448213",
+              "50448215",
+              "50448216",
+              "50448217",
+              "50451032",
+              "50453041",
+              "50502511",
+              "50502514",
+              "50502888",
+              "50503657",
+              "50503658",
+              "50503662",
+              "50504539",
+              "50504540",
+              "50504541",
+              "50504545",
+              "50513025",
+              "50513122"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "MYN, POK and QIH showed no change this week with 0 reports each.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 0",
+            "evidence_ids": []
+          },
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 0",
+            "evidence_ids": []
+          },
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 0",
+            "evidence_ids": []
+          }
+        ]
+      },
+      {
+        "text": "A named human must decide any next steps.",
+        "status": "pass",
+        "reasons": [],
+        "claims": []
+      }
+    ]
+  },
+  "repaired": false,
+  "sentences_repaired": 0,
+  "capa_ids": [],
+  "parse_failed": false,
+  "length_stops": 0,
+  "usage": {
+    "input_tokens": 14050,
+    "output_tokens": 3848,
+    "cost_usd": 0.033917
+  }
+}

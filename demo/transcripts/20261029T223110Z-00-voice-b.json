@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "label": "00-voice-b",
+  "recorded_at_utc": "2026-10-29T22:31:10+00:00",
+  "model": "muse-spark-1.3",
+  "question": "Hi there, and welcome. We're really glad you stopped by. Take your time, have a look around, and if you need anything at all, or just a message away..",
+  "answer": "Welcome, I support quality and regulatory professionals with postmarket surveillance across stored reports, recalls, clearances, and literature. Tell me which product codes you watch and what you would like to check this week.",
+  "tool_calls": [],
+  "first_pass": {
+    "passed": 2,
+    "blocked": 0,
+    "claims": {
+      "pass": 0,
+      "block": 0
+    },
+    "sentences": [
+      {
+        "text": "Welcome, I support quality and regulatory professionals with postmarket surveillance across stored reports, recalls, clearances, and literature.",
+        "status": "pass",
+        "reasons": [],
+        "claims": []
+      },
+      {
+        "text": "Tell me which product codes you watch and what you would like to check this week.",
+        "status": "pass",
+        "reasons": [],
+        "claims": []
+      }
+    ]
+  },
+  "final": {
+    "passed": 2,
+    "blocked": 0,
+    "claims": {
+      "pass": 0,
+      "block": 0
+    },
+    "sentences": [
+      {
+        "text": "Welcome, I support quality and regulatory professionals with postmarket surveillance across stored reports, recalls, clearances, and literature.",
+        "status": "pass",
+        "reasons": [],
+        "claims": []
+      },
+      {
+        "text": "Tell me which product codes you watch and what you would like to check this week.",
+        "status": "pass",
+        "reasons": [],
+        "claims": []
+      }
+    ]
+  },
+  "repaired": false,
+  "sentences_repaired": 0,
+  "capa_ids": [],
+  "parse_failed": false,
+  "length_stops": 0,
+  "usage": {
+    "input_tokens": 7526,
+    "output_tokens": 1136,
+    "cost_usd": 0.014235
+  },
+  "voice": {
+    "transcript_text": "Hi there, and welcome. We're really glad you stopped by. Take your time, have a look around, and if you need anything at all, or just a message away..",
+    "language": "English",
+    "audio_seconds": 10.16
+  }
+}

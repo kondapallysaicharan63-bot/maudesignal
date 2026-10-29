@@ -5,23 +5,23 @@
   "entries": [
     {
       "seq": 1,
-      "ts": "2026-10-28T20:45:35.499593",
+      "ts": "2026-10-29T22:34:55.969564",
       "actor": "voice:muse-voice-transcribe-1.0",
       "action": "voice.transcribed",
       "entity_id": "V-2b401bc1dc401b48",
       "payload_json": "{\"audio_seconds\": 3.36, \"audio_sha256\": \"2b401bc1dc401b485ac5a5e5621293166a0796c6d0d928774aad6b2dccd79ed4\", \"estimated_cost_usd\": 0.00015, \"language\": \"English\", \"model\": \"muse-voice-transcribe-1.0\", \"question_entity_id\": \"Q-6e3059e0d7373548\", \"transcript_text\": \"What came in overnight? Is anything worsening?\"}",
       "prev_hash": "GENESIS",
-      "entry_hash": "ffbdbda82e9e1522dc9732dfeaf2e2322bfc618d54eb518c712d825861c9137d"
+      "entry_hash": "e03463ab51534a9d5d406f0b7db17dab0bad7a66b98def8e1415775cc9f2ab61"
     },
     {
       "seq": 2,
-      "ts": "2026-10-28T20:45:59.589087",
+      "ts": "2026-10-29T22:35:28.195480",
       "actor": "copilot:muse-spark",
       "action": "copilot.answer",
       "entity_id": "Q-6e3059e0d7373548",
-      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 3}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 3}, \"input_tokens\": 14035, \"model\": \"muse-spark-1.3\", \"output_tokens\": 4910, \"question\": \"What came in overnight? Is anything worsening?\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.3.1\", \"structured_output\": true, \"tools\": [\"overnight_signals\"]}",
-      "prev_hash": "ffbdbda82e9e1522dc9732dfeaf2e2322bfc618d54eb518c712d825861c9137d",
-      "entry_hash": "d83201beaf3abfea296ba5e2f103b94af4e33eddb478ddc6bd2e9d553184071f"
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 4}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 4}, \"input_tokens\": 14037, \"model\": \"muse-spark-1.3\", \"output_tokens\": 7414, \"question\": \"What came in overnight? Is anything worsening?\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.3.1\", \"structured_output\": true, \"tools\": [\"overnight_signals\"]}",
+      "prev_hash": "e03463ab51534a9d5d406f0b7db17dab0bad7a66b98def8e1415775cc9f2ab61",
+      "entry_hash": "df852549a96462820e6eab1329cfffcaffd69058af4d2259566fe57147e3d210"
     }
   ]
 }
