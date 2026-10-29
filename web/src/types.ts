@@ -96,7 +96,7 @@ export interface WorkspaceData {
 }
 
 export type WorkflowId =
-  | 'overnight-signals'
+  | 'weekly-signals'
   | 'ask-copilot'
   | 'capa-need-evidence'
   | 'weekly-investigator'

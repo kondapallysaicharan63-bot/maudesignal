@@ -44,7 +44,7 @@ GREETING_LABELS = ("00-voice-a", "00-voice-b")
 # (see docs/hackathon/PRD.md). They stay in demo/transcripts; only the display skips them.
 DISPLAY_EXCLUDED_LABELS = ("00-voice-main",)
 WORKFLOW_TITLES = {
-    "overnight-signals": "What changed this week",
+    "weekly-signals": "What changed this week",
     "ask-copilot": "Ask the copilot",
     "capa-need-evidence": "CAPA-need evidence",
 }
@@ -169,7 +169,7 @@ def workflow_for(label: str) -> str:
     if label.startswith("00-voice-"):
         return "ask-copilot"
     if label.split("-", 1)[0] in OVERNIGHT_LABELS:
-        return "overnight-signals"
+        return "weekly-signals"
     if label.split("-", 1)[0] in CAPA_LABELS:
         return "capa-need-evidence"
     return "ask-copilot"
@@ -376,6 +376,17 @@ def build_briefs(root: Path) -> dict[str, Any]:
     return {"schema_version": SCHEMA_VERSION, "briefs": briefs, "notes": notes}
 
 
+def relabel_tools(value: Any) -> Any:
+    """Show tool names by their display label inside an audit payload (display copy only)."""
+    if isinstance(value, str):
+        return TOOL_LABELS.get(value, value)
+    if isinstance(value, list):
+        return [relabel_tools(v) for v in value]
+    if isinstance(value, dict):
+        return {k: relabel_tools(v) for k, v in value.items()}
+    return value
+
+
 def build_audit(root: Path) -> dict[str, Any]:
     """``audit.json``: audit exports with the hash chain re-verified here."""
     runs = []
@@ -383,6 +394,11 @@ def build_audit(root: Path) -> dict[str, Any]:
     for p in sorted((root / "demo" / "transcripts").glob("audit-*.json")):
         d = read_json(p)
         ok, bad = verify_entries(d["entries"])
+        if d["run_label"] in DISPLAY_EXCLUDED_LABELS:
+            # Chain was verified above; the run itself is not exported (its question text uses
+            # words the product does not show).
+            notes.append(f"{d['run_label']}: not exported (display-excluded); chain re-verified")
+            continue
         if ok != d.get("chain_ok_at_export"):
             notes.append(f"{d['run_label']}: re-verified chain_ok={ok} differs from the export")
         entries = [
@@ -392,7 +408,7 @@ def build_audit(root: Path) -> dict[str, Any]:
                 "actor": e["actor"],
                 "action": e["action"],
                 "entity_id": e["entity_id"],
-                "payload": json.loads(e["payload_json"]),
+                "payload": relabel_tools(json.loads(e["payload_json"])),
                 "prev_hash": e["prev_hash"],
                 "entry_hash": e["entry_hash"],
             }
@@ -515,10 +531,7 @@ def build_investigations(root: Path) -> dict[str, Any]:
     runs = [read_json(p) for p in files]
     notes = []
     if not runs:
-        notes.append(
-            "No recorded runs yet. Weekly-investigator and recall-sweep runs appear here once "
-            "Track A records them under demo/investigations/."
-        )
+        notes.append("No recorded runs yet.")
     return {"schema_version": SCHEMA_VERSION, "investigations": runs, "notes": notes}
 
 

@@ -42,11 +42,15 @@ function Composer() {
 
 function SentenceLine({ s }: { s: Sentence }) {
   const ok = s.status === 'pass'
+  const noClaims = ok && s.claims.length === 0
+  const pill = !ok
+    ? 'bg-critical-soft text-critical'
+    : noClaims
+      ? 'bg-sunk text-ink-2'
+      : 'bg-success-soft text-success'
   return (
     <li className="py-1.5">
-      <span className={`ws-pill mr-2 ${ok ? 'bg-success-soft text-success' : 'bg-critical-soft text-critical'}`}>
-        {ok ? 'Verified' : 'Withheld'}
-      </span>
+      <span className={`ws-pill mr-2 ${pill}`}>{!ok ? 'Withheld' : noClaims ? 'No factual claim' : 'Verified'}</span>
       <span className={`ws-wrap ${ok ? '' : 'text-ink-3 line-through'}`}>{s.text}</span>
       {!ok && s.reasons.length > 0 && (
         <ul className="ws-wrap m-0 mt-1 list-disc pl-8 text-[15px] text-critical">
@@ -96,15 +100,16 @@ function WorkflowView(p: Props & { def: WorkflowDef }) {
     <div>
       <h1 className="t-title-lg m-0">{p.def.title}</h1>
       <p className="mt-2 text-ink-2">{p.def.blurb}</p>
-      {p.def.comingSoon && (
-        <p className="ms-banner ms-banner--info mt-4">Coming soon. Nothing is stored here yet.</p>
-      )}
-      {agentic && (
+      {agentic && p.recordedRuns === 0 && (
         <p className="ms-banner ms-banner--info mt-4">
-          {p.recordedRuns === 0
-            ? (p.investigationNotes[0] ?? 'No recorded runs yet.')
-            : `${p.recordedRuns} recorded runs.`}
+          Coming soon. {p.investigationNotes[0] ?? 'No recorded runs yet.'}
         </p>
+      )}
+      {agentic && p.recordedRuns > 0 && (
+        <p className="ms-banner ms-banner--info mt-4">{`${p.recordedRuns} recorded runs.`}</p>
+      )}
+      {p.def.comingSoon && !agentic && (
+        <p className="ms-banner ms-banner--info mt-4">Coming soon. Nothing is stored here yet.</p>
       )}
       {p.def.id === 'vision' && (
         <p className="ms-banner ms-banner--info mt-4">
@@ -141,8 +146,9 @@ function Welcome({ onWorkflow }: { onWorkflow: (id: WorkflowId) => void }) {
         What do you want to look into?
       </h1>
       <p className="mt-3 max-w-xl text-ink-2">
-        Every answer here was written from stored public records (MAUDE reports, recalls, 510(k)s, PubMed,
-        MHRA (UK) alerts) and checked sentence by sentence before it was shown. Pick a workflow to start.
+        Answers here are written from stored public records (MAUDE reports, recalls, 510(k)s, PubMed,
+        MHRA (UK) alerts). Each sentence is checked before it is shown; a sentence with no factual claim
+        is marked as such. Pick a workflow to start.
       </p>
       <ul className="m-0 mt-6 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2">
         {WORKFLOWS.map((w) => (

@@ -28,7 +28,15 @@ function scheduleResult(s: Schedule): string {
 }
 
 export function Sidebar(p: Props) {
-  const counts = new Map(p.threads.workflows.map((w) => [w.id, w.thread_ids.length]))
+  // Greetings (no tool steps, no claims) are not answers, so they are not counted.
+  const greeting = new Set(
+    p.threads.threads
+      .filter((t) => t.tool_steps.length === 0 && t.sentences.every((s) => s.claims.length === 0))
+      .map((t) => t.id),
+  )
+  const counts = new Map(
+    p.threads.workflows.map((w) => [w.id, w.thread_ids.filter((id) => !greeting.has(id)).length]),
+  )
   return (
     <>
       {p.open && (

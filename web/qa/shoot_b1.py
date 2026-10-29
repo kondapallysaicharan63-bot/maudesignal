@@ -24,6 +24,7 @@ SCRATCH = WEB / "qa" / "tmp"  # gitignored scratch dir for drawer/sheet/palette 
 
 
 def serve() -> tuple[socketserver.TCPServer, int]:
+    """Serve ``dist/`` on a free local port and return the server and its port."""
 
     class Quiet(http.server.SimpleHTTPRequestHandler):
         def log_message(self, format: str, *args: object) -> None:  # noqa: A002
@@ -36,6 +37,7 @@ def serve() -> tuple[socketserver.TCPServer, int]:
 
 
 def local_only(route: Route) -> None:
+    """Let local requests through and abort everything else."""
     if route.request.url.startswith("http://127.0.0.1"):
         route.continue_()
     else:
@@ -43,6 +45,7 @@ def local_only(route: Route) -> None:
 
 
 def open_page(page: Page, url: str) -> None:
+    """Open the app with network blocked and wait for the header strip and fonts."""
     page.route("**/*", local_only)
     page.goto(url, wait_until="load")
     page.wait_for_selector("text=claims verified")
@@ -50,6 +53,7 @@ def open_page(page: Page, url: str) -> None:
 
 
 def main() -> None:
+    """Take the four B1 screenshots and print the checks as JSON."""
     OUT.mkdir(parents=True, exist_ok=True)
     SCRATCH.mkdir(parents=True, exist_ok=True)
     manifest = json.loads((WEB / "public/data/manifest.json").read_text())["header"]
@@ -90,7 +94,7 @@ def main() -> None:
                 ctx.close()
         browser.close()
     srv.shutdown()
-    print(json.dumps(report, indent=2))
+    print(json.dumps(report, indent=2))  # noqa: T201
 
 
 if __name__ == "__main__":

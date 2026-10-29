@@ -44,7 +44,7 @@ export function useWorkspaceData(): { data: WorkspaceData | null; error: string 
 
 export const WORKFLOWS: WorkflowDef[] = [
   {
-    id: 'overnight-signals',
+    id: 'weekly-signals',
     title: 'What changed this week',
     blurb: 'Which device types had a new kind of problem, more serious reports than usual, or a sudden rise in reports.',
   },

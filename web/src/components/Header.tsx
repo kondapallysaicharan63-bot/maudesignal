@@ -65,7 +65,7 @@ export function Header(p: Props) {
             <span className="ws-wrap">
               Every sentence checked against stored source records ·{' '}
               <strong className="ms-num">{h.claims_verified}</strong> claims verified ·{' '}
-              <strong className="ms-num">{h.sentences_withheld}</strong> withheld
+              <strong className="ms-num">{h.sentences_withheld}</strong> {h.sentences_withheld === 1 ? 'sentence' : 'sentences'} withheld
             </span>
             {h.audit_chain_ok ? (
               <span className="ms-chip ms-chip--ok">

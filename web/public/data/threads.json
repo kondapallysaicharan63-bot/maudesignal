@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "workflows": [
     {
-      "id": "overnight-signals",
+      "id": "weekly-signals",
       "title": "What changed this week",
       "thread_ids": [
         "01-what-changed",
@@ -50,7 +50,7 @@
   "threads": [
     {
       "id": "01-what-changed",
-      "workflow": "overnight-signals",
+      "workflow": "weekly-signals",
       "question": "What changed this week? Did reports suddenly increase for any device?",
       "voice": null,
       "recorded_at_utc": "2026-10-28T20:35:23+00:00",
@@ -209,7 +209,7 @@
     },
     {
       "id": "02-why-first",
-      "workflow": "overnight-signals",
+      "workflow": "weekly-signals",
       "question": "Why is the top signal ranked first? Show me the reports behind it.",
       "voice": null,
       "recorded_at_utc": "2026-10-28T20:35:53+00:00",
@@ -1827,7 +1827,7 @@
     },
     {
       "id": "13-llz-severity",
-      "workflow": "overnight-signals",
+      "workflow": "weekly-signals",
       "question": "Compare the LLZ Injury/Death share this week with the 4-week baseline.",
       "voice": null,
       "recorded_at_utc": "2026-10-28T20:39:35+00:00",
@@ -2288,7 +2288,7 @@
     },
     {
       "id": "15-five-day",
-      "workflow": "overnight-signals",
+      "workflow": "weekly-signals",
       "question": "When does 21 CFR 803 require a 5-day report, and does anything on file meet that bar?",
       "voice": null,
       "recorded_at_utc": "2026-10-28T20:40:50+00:00",
@@ -2857,7 +2857,7 @@
     },
     {
       "id": "20-briefing",
-      "workflow": "overnight-signals",
+      "workflow": "weekly-signals",
       "question": "Write a three-sentence summary of this week for the safety meeting, citing report ids.",
       "voice": null,
       "recorded_at_utc": "2026-10-28T20:42:53+00:00",
@@ -3206,7 +3206,7 @@
     },
     {
       "id": "22-compare",
-      "workflow": "overnight-signals",
+      "workflow": "weekly-signals",
       "question": "Compare LLZ, QIH and MYN this week. Where did reports suddenly increase?",
       "voice": null,
       "recorded_at_utc": "2026-10-28T20:43:30+00:00",

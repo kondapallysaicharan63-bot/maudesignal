@@ -76,7 +76,7 @@ def test_header_counts_equal_direct_count_over_transcripts(out: Path) -> None:
 def test_workflows_follow_the_contract(out: Path) -> None:
     wf = {w["id"]: w["thread_ids"] for w in load(out, "threads.json")["workflows"]}
     assert wf["capa-need-evidence"] == ["05-capa-need-evidence"]
-    assert wf["overnight-signals"] == [
+    assert wf["weekly-signals"] == [
         f"{n}-{s}"
         for n, s in [
             ("01", "what-changed"),
@@ -212,3 +212,21 @@ def test_committed_manifest_assets_exist_on_disk() -> None:
         assert (data / asset).is_file(), asset
         if tracked:  # empty outside a git checkout
             assert f"web/public/data/{asset}" in tracked, f"{asset} is not committed"
+
+
+FORBIDDEN = re.compile(
+    r"fda-approved|part 11 compliant|validated|overnight|worsening signals|citation-checked"
+    r"|complaint data",
+    re.I,
+)
+
+
+def test_no_forbidden_words_in_any_exported_json(out: Path) -> None:
+    for name in JSON_FILES:
+        hit = FORBIDDEN.search((out / name).read_text(encoding="utf-8"))
+        assert hit is None, f"{name}: {hit and hit.group(0)}"
+
+
+def test_display_excluded_audit_run_is_not_exported_but_chain_still_checked(out: Path) -> None:
+    labels = [r["run_label"] for r in load(out, "audit.json")["runs"]]
+    assert "00-voice-main" not in labels and "typed" in labels

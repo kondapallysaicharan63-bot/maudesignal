@@ -157,7 +157,7 @@
             "skill_version": "1.3.1",
             "structured_output": true,
             "tools": [
-              "overnight_signals"
+              "weekly_signals"
             ]
           },
           "prev_hash": "4dd6d1aff5d9b98def232f4496f6606e6b63af5c18afcb24975013b668b675e7",
@@ -213,7 +213,7 @@
             "skill_version": "1.3.1",
             "structured_output": true,
             "tools": [
-              "overnight_signals",
+              "weekly_signals",
               "get_report",
               "get_report",
               "get_report",
@@ -273,7 +273,7 @@
             "skill_version": "1.3.1",
             "structured_output": true,
             "tools": [
-              "overnight_signals",
+              "weekly_signals",
               "my_device_types",
               "compare_signals",
               "product_summary"
@@ -281,62 +281,6 @@
           },
           "prev_hash": "76270b08828375f700cea00d81b5b08d9e166974162b7df5a814bfcc542c5132",
           "entry_hash": "56c1b87b2bbee5c72015fb71474cca92c240032e38c03a4c0ddca27c78ebf3ab"
-        }
-      ]
-    },
-    {
-      "run_label": "00-voice-main",
-      "chain_ok": true,
-      "first_bad_seq": null,
-      "entries": [
-        {
-          "seq": 1,
-          "ts": "2026-10-28T20:45:35.499593",
-          "actor": "voice:muse-voice-transcribe-1.0",
-          "action": "voice.transcribed",
-          "entity_id": "V-2b401bc1dc401b48",
-          "payload": {
-            "audio_seconds": 3.36,
-            "audio_sha256": "2b401bc1dc401b485ac5a5e5621293166a0796c6d0d928774aad6b2dccd79ed4",
-            "estimated_cost_usd": 0.00015,
-            "language": "English",
-            "model": "muse-voice-transcribe-1.0",
-            "question_entity_id": "Q-6e3059e0d7373548",
-            "transcript_text": "What came in overnight? Is anything worsening?"
-          },
-          "prev_hash": "GENESIS",
-          "entry_hash": "ffbdbda82e9e1522dc9732dfeaf2e2322bfc618d54eb518c712d825861c9137d"
-        },
-        {
-          "seq": 2,
-          "ts": "2026-10-28T20:45:59.589087",
-          "actor": "copilot:muse-spark",
-          "action": "copilot.answer",
-          "entity_id": "Q-6e3059e0d7373548",
-          "payload": {
-            "capa_ids": [],
-            "gate_final": {
-              "blocked": 0,
-              "passed": 3
-            },
-            "gate_first_pass": {
-              "blocked": 0,
-              "passed": 3
-            },
-            "input_tokens": 14035,
-            "model": "muse-spark-1.3",
-            "output_tokens": 4910,
-            "question": "What came in overnight? Is anything worsening?",
-            "reasoning_effort": null,
-            "repaired": false,
-            "skill_version": "1.3.1",
-            "structured_output": true,
-            "tools": [
-              "overnight_signals"
-            ]
-          },
-          "prev_hash": "ffbdbda82e9e1522dc9732dfeaf2e2322bfc618d54eb518c712d825861c9137d",
-          "entry_hash": "d83201beaf3abfea296ba5e2f103b94af4e33eddb478ddc6bd2e9d553184071f"
         }
       ]
     },
@@ -370,7 +314,7 @@
             "skill_version": "1.3.1",
             "structured_output": true,
             "tools": [
-              "overnight_signals"
+              "weekly_signals"
             ]
           },
           "prev_hash": "GENESIS",
@@ -401,7 +345,7 @@
             "skill_version": "1.3.1",
             "structured_output": true,
             "tools": [
-              "overnight_signals",
+              "weekly_signals",
               "get_report",
               "get_report",
               "get_report"
@@ -435,7 +379,7 @@
             "skill_version": "1.3.1",
             "structured_output": true,
             "tools": [
-              "overnight_signals",
+              "weekly_signals",
               "get_report",
               "get_report",
               "get_report"
@@ -490,7 +434,7 @@
             "skill_version": "1.3.1",
             "structured_output": true,
             "tools": [
-              "overnight_signals",
+              "weekly_signals",
               "get_report",
               "get_report",
               "get_report",
@@ -525,7 +469,7 @@
             "skill_version": "1.3.1",
             "structured_output": true,
             "tools": [
-              "overnight_signals",
+              "weekly_signals",
               "product_summary",
               "search_reports",
               "product_summary"
@@ -748,7 +692,7 @@
             "structured_output": true,
             "tools": [
               "compare_signals",
-              "overnight_signals",
+              "weekly_signals",
               "product_summary"
             ]
           },
@@ -780,7 +724,7 @@
             "skill_version": "1.3.1",
             "structured_output": true,
             "tools": [
-              "overnight_signals",
+              "weekly_signals",
               "search_reports",
               "search_reports",
               "search_reports",
@@ -824,7 +768,7 @@
             "skill_version": "1.3.1",
             "structured_output": true,
             "tools": [
-              "overnight_signals",
+              "weekly_signals",
               "deadline_check",
               "deadline_check"
             ]
@@ -953,7 +897,7 @@
             "structured_output": true,
             "tools": [
               "my_device_types",
-              "overnight_signals",
+              "weekly_signals",
               "product_summary",
               "product_summary",
               "product_summary",
@@ -989,7 +933,7 @@
             "structured_output": true,
             "tools": [
               "my_device_types",
-              "overnight_signals",
+              "weekly_signals",
               "compare_signals"
             ]
           },
@@ -1021,7 +965,7 @@
             "skill_version": "1.3.1",
             "structured_output": true,
             "tools": [
-              "overnight_signals",
+              "weekly_signals",
               "product_summary",
               "report_sources",
               "report_sources"
@@ -1095,5 +1039,7 @@
       ]
     }
   ],
-  "notes": []
+  "notes": [
+    "00-voice-main: not exported (display-excluded); chain re-verified"
+  ]
 }
