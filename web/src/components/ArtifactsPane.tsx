@@ -52,7 +52,7 @@ export function ArtifactsPane({ open, data, tab, onTab, thread, produced, briefD
           <Icon name="close" />
         </button>
       </div>
-      <div role="tablist" aria-label="Artifacts" className="flex shrink-0 gap-1 overflow-x-auto border-b border-rule px-2">
+      <div role="tablist" aria-label="Artifacts" className="ws-tabfade flex shrink-0 gap-0.5 overflow-x-auto border-b border-rule px-2">
         {TABS.map((t) => {
           const selected = t.id === tab
           return (
@@ -64,7 +64,7 @@ export function ArtifactsPane({ open, data, tab, onTab, thread, produced, briefD
               aria-controls="artifact-panel"
               onClick={() => onTab(t.id)}
               className={[
-                'relative min-h-11 shrink-0 whitespace-nowrap border-b-2 px-3 text-[15px]',
+                'relative min-h-11 shrink-0 whitespace-nowrap border-b-2 px-2.5 text-[15px]',
                 selected ? 'border-ink font-semibold text-ink' : 'border-transparent text-ink-2 hover:text-ink',
               ].join(' ')}
             >

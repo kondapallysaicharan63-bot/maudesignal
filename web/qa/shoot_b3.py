@@ -23,7 +23,7 @@ TABS = [
     ("vision", "Vision"),
     ("audit", "Audit trail"),
     ("capa", "CAPA draft"),
-    ("protocol", "Search protocol"),
+    ("protocol", "Protocol"),
 ]
 
 

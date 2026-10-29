@@ -179,9 +179,9 @@ export type ReadStatus = 'VERIFIED' | 'CONFLICT' | 'UNVERIFIABLE'
 export interface K510Field {
   name: string
   status: ReadStatus
-  value: string
-  read_a: { value: string; page: number | null; legibility: string } | null
-  read_b: { value: string; page: number | null; legibility: string } | null
+  value: string | string[] | null
+  read_a: { value: string | string[] | null; page: number | null; legibility: string } | null
+  read_b: { value: string | string[] | null; page: number | null; legibility: string } | null
   reads_agree: boolean
   similarity: number | null
   checks: LabelCheck[]

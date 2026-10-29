@@ -79,11 +79,11 @@ export function DigestTab({ sweep, brief }: { sweep: Sweep; brief: Brief | null 
       )}
       <h2 className="t-title-lg m-0 mt-4">AI device sweep</h2>
       <p className="ws-wrap mt-1 text-ink-2">
-        Every product code on FDA's AI-enabled device list, checked against stored MAUDE counts: week{' '}
+        Every product code on FDA's AI-enabled device list, openFDA counts saved at <span className="ms-num">{m.generated_utc}</span>: week{' '}
         <span className="ms-num">
           {m.window.current_start} to {m.window.current_end}
         </span>{' '}
-        against the 4 weeks before. Generated <span className="ms-num">{m.generated_utc}</span>.
+        against the 4 weeks before. This is a different week from the daily brief above.
       </p>
       <dl className="m-0 mt-3 grid grid-cols-3 gap-2">
         {(
@@ -114,7 +114,7 @@ export function DigestTab({ sweep, brief }: { sweep: Sweep; brief: Brief | null 
                   </Pill>
                 </span>
                 <span className="ms-num text-ink-2">
-                  {r.current_count} this week · {r.baseline_weekly_mean} a week before
+                  {r.current_count} this week · {r.baseline_weekly_mean} a week on average in the 4 weeks before
                 </span>
               </div>
               {r.queries && r.queries.length > 0 && (

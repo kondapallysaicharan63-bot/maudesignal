@@ -10,7 +10,7 @@ export const TABS: { id: TabId; label: string }[] = [
   { id: 'vision', label: 'Vision' },
   { id: 'audit', label: 'Audit trail' },
   { id: 'capa', label: 'CAPA draft' },
-  { id: 'protocol', label: 'Search protocol' },
+  { id: 'protocol', label: 'Protocol' },
 ]
 
 /** Which artifact tabs a stored thread produced, most specific first (the first one opens). */

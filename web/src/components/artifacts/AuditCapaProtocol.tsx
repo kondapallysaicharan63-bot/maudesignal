@@ -93,6 +93,7 @@ function CapaCard({
       </div>
       <h3 className="ws-wrap m-0 mt-2 text-[17px] font-semibold">{d.title}</h3>
       <p className="ws-wrap mt-1 text-ink-2">{d.problem}</p>
+      <p className="m-0 text-[14px] text-ink-3">Drafted text, not checked claim by claim.</p>
       <p className="m-0 text-[14px] text-ink-3">
         Product code <span className="ms-code">{d.productCode}</span> · drafted {d.ts} by {d.actor}
       </p>

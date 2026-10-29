@@ -23,11 +23,16 @@ export function DossierTab({ dossier }: { dossier: Dossier }) {
           value={which}
           options={[
             { id: 'draft', label: 'Draft PDF' },
-            { id: 'approved', label: 'Approved PDF' },
+            { id: 'approved', label: 'Approved PDF (demo reviewer)' },
           ]}
           onChange={setWhich}
         />
       </div>
+      {which === 'approved' && (
+        <p className="mt-2 text-[14px] text-ink-3">
+          The approval in this copy is by a demo reviewer. It is a demonstration, not a Part 11 signature.
+        </p>
+      )}
       <div className="mt-3">
         <PdfView url={url} title={`${which} evidence pack ${dossier.doc_id}`} />
       </div>
@@ -176,17 +181,32 @@ function LabelView({ l }: { l: LabelReading }) {
   )
 }
 
+function fmt(v: string | string[] | null | undefined): string {
+  if (v === null || v === undefined) return ''
+  return Array.isArray(v) ? v.join(', ') : v
+}
+
 function ReadLine({ f }: { f: K510Field }) {
+  const sources = Array.from(
+    new Set(f.checks.filter((c) => c.outcome === 'pass' && c.source !== 'two_reads').map((c) => c.source.replace(/_/g, ' '))),
+  )
+  const basis = sources.length > 0 ? `Both reads agree; also checked against ${sources.join(', ')}` : 'Two reads only: no other source covers this field'
   return (
     <li className="border-t border-rule py-2">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <span className="text-[15px] text-ink-2">{f.name.replace(/_/g, ' ')}</span>
         <Pill tone={READ_TONE[f.status]}>{READ_LABEL[f.status]}</Pill>
       </div>
-      <p className="ws-wrap m-0">{f.value || <span className="text-ink-3">no value</span>}</p>
+      <p className="ws-wrap m-0">{fmt(f.value) || <span className="text-ink-3">no value</span>}</p>
       {f.status !== 'VERIFIED' && (
         <p className="ws-wrap m-0 mt-1 text-[14px] text-ink-2">
-          Read A: {f.read_a?.value || 'none'} · Read B: {f.read_b?.value || 'none'}
+          Read A: {fmt(f.read_a?.value) || 'none'} · Read B: {fmt(f.read_b?.value) || 'none'}
+          {f.note ? ` · ${f.note}` : ''}
+        </p>
+      )}
+      {f.status === 'VERIFIED' && (
+        <p className="ws-wrap m-0 mt-1 text-[14px] text-ink-2">
+          {basis}
           {f.note ? ` · ${f.note}` : ''}
         </p>
       )}
@@ -208,8 +228,9 @@ function K510View({ k }: { k: K510Reading }) {
   return (
     <div>
       <p className="ws-wrap m-0 text-ink-2">
-        The summary page was read twice, independently. A field is verified when both reads agree and openFDA agrees;
-        conflict when they differ; unverifiable when there is nothing to check against.
+        The summary page was read twice, independently. Verified: both reads agree and every available independent source
+        (the openFDA record, the PDF text layer) agrees; where no source covers a field, two agreeing reads are the basis
+        and the field says so. Conflict: the reads disagree or a source disagrees. Unverifiable: illegible or not found.
       </p>
       <dl className="m-0 mt-3 grid grid-cols-3 gap-2">
         {(['VERIFIED', 'CONFLICT', 'UNVERIFIABLE'] as const).map((s) => (
