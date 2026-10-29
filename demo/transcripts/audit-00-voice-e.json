@@ -5,23 +5,23 @@
   "entries": [
     {
       "seq": 1,
-      "ts": "2026-10-29T22:32:05.276201",
+      "ts": "2026-10-28T20:45:08.806305",
       "actor": "voice:muse-voice-transcribe-1.0",
       "action": "voice.transcribed",
       "entity_id": "V-9f2dfdf545d58a4f",
-      "payload_json": "{\"audio_seconds\": 5.36, \"audio_sha256\": \"9f2dfdf545d58a4f16503d70d90466e8bc6ceab21c99037b83dd714ef9c6d9c2\", \"estimated_cost_usd\": 0.00025, \"heard_code\": \"LLZ\", \"language\": \"English\", \"model\": \"muse-voice-transcribe-1.0\", \"product_code_status\": \"known\", \"question_entity_id\": \"Q-7cf3ef5cf82b9be2\", \"suggested_code\": null, \"transcript_text\": \"My colleague says LLZ had 50 injury reports last week. Confirm that.\", \"used_code\": \"LLZ\"}",
+      "payload_json": "{\"audio_seconds\": 5.36, \"audio_sha256\": \"9f2dfdf545d58a4f16503d70d90466e8bc6ceab21c99037b83dd714ef9c6d9c2\", \"estimated_cost_usd\": 0.00025, \"language\": \"English\", \"model\": \"muse-voice-transcribe-1.0\", \"question_entity_id\": \"Q-38f8ec02e530975b\", \"transcript_text\": \"my colleague says LLZ had 50 injury reports last week. Confirm that.\"}",
       "prev_hash": "GENESIS",
-      "entry_hash": "c29d33c37493767aef6b8ab730ea15ced0eda46e39665dbf09096c62fafd2c63"
+      "entry_hash": "76270b08828375f700cea00d81b5b08d9e166974162b7df5a814bfcc542c5132"
     },
     {
       "seq": 2,
-      "ts": "2026-10-29T22:32:22.303776",
+      "ts": "2026-10-28T20:45:33.387576",
       "actor": "copilot:muse-spark",
       "action": "copilot.answer",
-      "entity_id": "Q-7cf3ef5cf82b9be2",
-      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 2}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 2}, \"input_tokens\": 14999, \"model\": \"muse-spark-1.3\", \"output_tokens\": 3976, \"question\": \"My colleague says LLZ had 50 injury reports last week. Confirm that.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.3.1\", \"structured_output\": true, \"tools\": [\"overnight_signals\", \"compare_signals\", \"product_summary\"]}",
-      "prev_hash": "c29d33c37493767aef6b8ab730ea15ced0eda46e39665dbf09096c62fafd2c63",
-      "entry_hash": "938fc3e76fb4d7f3bb6c103055b1d43b69eebbd9367216580d8481a2c214d775"
+      "entity_id": "Q-38f8ec02e530975b",
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 3}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 3}, \"input_tokens\": 20556, \"model\": \"muse-spark-1.3\", \"output_tokens\": 5078, \"question\": \"my colleague says LLZ had 50 injury reports last week. Confirm that.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.3.1\", \"structured_output\": true, \"tools\": [\"overnight_signals\", \"my_device_types\", \"compare_signals\", \"product_summary\"]}",
+      "prev_hash": "76270b08828375f700cea00d81b5b08d9e166974162b7df5a814bfcc542c5132",
+      "entry_hash": "56c1b87b2bbee5c72015fb71474cca92c240032e38c03a4c0ddca27c78ebf3ab"
     }
   ]
 }
