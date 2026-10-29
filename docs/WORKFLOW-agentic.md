@@ -7,14 +7,14 @@ Status: **approved by Charan on Oct 29** (design system kept; deploy steps go to
 > here. The coordinator updates this file after every milestone and re-reads it after any
 > context compaction before acting.
 
-## Live status (updated 2026-10-29 ~21:30 UTC)
+## Live status (updated 2026-10-29 ~22:15 UTC)
 
 | Track / item | Branch | State | Evidence | Next |
 |---|---|---|---|---|
 | A core: A1b search protocol (#3), A2 weekly investigator (#1), A3 recall sweep (#2), A4 doc to-dos | `track-a-core` (head `3d89089`) | **All PASS** (advisor; A4 on 2nd round) | workflow `wf_2a36efa4-681` journal | Draft PR → `hackathon-day2` once CI runs on PRs into it; merge on green |
 | A follow-up: real Muse Spark runs | `hackathon-day2` after merge | Not started | — | Push `demo/INVESTIGATE_REQUEST` (weekly + recall) and `demo/RECORD_REQUEST` (re-record evidence-pack narrative + Wonder review with pack binding); Meta credit, cents |
 | B workspace: B1 shell, B2 chat, B3 artifacts | `track-b-ui` | **PASS** | `wf_d5c47891-d4b` | — |
-| B4: Charan's 6 preview fixes | `track-b-ui-wip` → fast-forward `track-b-ui` after PASS | **Running** | `wf_41350c6f-170` | Send Charan screenshots + preview link |
+| B4: Charan's 6 preview fixes | `track-b-ui` (fast-forwarded to `f621f7c`) | **PASS** (2nd advisor round) | `wf_41350c6f-170`; screenshots `web/qa/screenshots/B4-*.png`; 47 vitest incl. TS↔Python parity (320 cases); 0 "coming soon" | Browser CORS to openFDA untested here (sandbox); Charan checks on the preview. PR `track-b-ui` → `hackathon-day2` after Track A merges |
 | C Muse connector: C1 REST, C2 MCP, C3 hosting + submission pack | `track-c-muse` | **Running** | `wf_f2a3790d-566` | Deploy steps, "add to your Muse" steps, shot list in `claude/video-script-v1.md`, rubric delta |
 | Coordinator: live-app Settings fix + CI on PRs into `hackathon-day2` | `coordinator-settings-fix` (`61cd56b`, `210a4ab`) | Advisor review running | local screenshots `docs/hackathon/img/settings-keyless-*.png` | On PASS: merge into `hackathon-day2` (live app picks it up) |
 | Daily monitor on `main` | `main` | Ran Oct 29 | commit `be05711` digest | Watch tomorrow's 11:17 UTC run (check-in 11:50 UTC) |
