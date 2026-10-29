@@ -35,9 +35,9 @@ _MAUDE_DETAIL_URL = (
 _PAGES: list[tuple[str, str, str]] = [
     # HACKATHON-BUILT pages (Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026)
     (
-        "trending_up",
-        "What changed",
-        "Reports suddenly increased, more serious than usual, or a new kind of problem — no model",
+        "insights",
+        "Signals",
+        "Your device types, what changed this week, and everything behind one signal",
     ),
     (
         "shield",
@@ -45,19 +45,14 @@ _PAGES: list[tuple[str, str, str]] = [
         "Muse Spark copilot that only shows facts it can match to the FDA record",
     ),
     (
-        "task_alt",
-        "Actions & Audit",
-        "CAPA-need evidence pack a named person accepts, and the tamper-evident audit trail",
-    ),
-    (
-        "description",
-        "Dossier",
-        "Audit-ready Signal Evaluation & CAPA record (PDF) + Muse Wonder review",
-    ),
-    (
         "document_scanner",
         "Vision",
         "510(k) summary reader and device-label camera (Muse Spark + SAM)",
+    ),
+    (
+        "verified_user",
+        "Audit",
+        "Every decision and model answer, in one tamper-evident trail",
     ),
     ("dashboard", "Dashboard", "Executive summary of postmarket signal activity"),
     ("search", "Signal Explorer", "Browse, filter, and export AI extraction results"),
@@ -1789,7 +1784,7 @@ def _settings_sources(db: Database) -> None:
 
 
 #: Pages in the top navigation (built during the hackathon); the rest sit in the sidebar.
-_TOP_PAGES: tuple[str, ...] = ("What changed", "Copilot", "Actions & Audit", "Dossier", "Vision")
+_TOP_PAGES: tuple[str, ...] = ("Signals", "Copilot", "Vision", "Audit")
 
 _WORDMARK = (
     '<a class="ms-wordmark" href="?" aria-label="MaudeSignal home">'
@@ -1821,7 +1816,8 @@ def _on_theme() -> None:
 
 
 def _top_bar(db: Database) -> None:
-    """Design-system Bar: wordmark, the five product pages, theme picker; then the dateline."""
+    """Design-system Bar: wordmark, the product pages, theme picker; then the dateline."""
+    from maudesignal.dashboard.copilot_pages import FRAMING_LINE
     from maudesignal.dashboard.theme import THEME_NAMES
 
     page = st.session_state["nav_page"]
@@ -1851,6 +1847,7 @@ def _top_bar(db: Database) -> None:
         f"<span>{datetime.now().strftime('%A, %B %d, %Y')}</span>"
         f"<span>openFDA data as of {as_of}</span>"
         f"<span>{db.count_raw_reports():,} MAUDE records on file</span></div>"
+        f'<p class="ms-frame-line">{html.escape(FRAMING_LINE)}</p>'
     )
 
 
@@ -1887,7 +1884,7 @@ def _render_app(db: Database) -> None:  # noqa: PLR0912
     if "nav_page" not in st.session_state or (
         not classic and st.session_state["nav_page"] not in _TOP_PAGES
     ):
-        st.session_state["nav_page"] = "What changed"
+        st.session_state["nav_page"] = "Signals"
 
     _top_bar(db)
 
@@ -1915,15 +1912,14 @@ def _render_app(db: Database) -> None:  # noqa: PLR0912
     page: str = st.session_state["nav_page"]
 
     # ── Page routing ──────────────────────────────────────────────────────────
-    from maudesignal.dashboard.copilot_pages import page_actions, page_changes, page_copilot
-    from maudesignal.dashboard.dossier_pages import page_dossier
+    from maudesignal.dashboard.copilot_pages import page_audit, page_copilot
     from maudesignal.dashboard.vision_pages import page_vision
+    from maudesignal.dashboard.workspace import page_signals
 
     page_fn_map: dict[str, Callable[[], None]] = {
-        "What changed": lambda: page_changes(db),
+        "Signals": lambda: page_signals(db),
         "Copilot": lambda: page_copilot(db),
-        "Actions & Audit": lambda: page_actions(db),
-        "Dossier": lambda: page_dossier(db),
+        "Audit": lambda: page_audit(db),
         "Vision": lambda: page_vision(db),
         "Dashboard": lambda: _page_dashboard(db),
         "Signal Explorer": lambda: _page_signal_explorer(db),
@@ -1939,9 +1935,8 @@ def _render_app(db: Database) -> None:  # noqa: PLR0912
         st.error(f"Unknown page: {page!r}")
         return
 
-    if page in _TOP_PAGES:
-        _, title, subtitle = next(p for p in _PAGES if p[1] == page)
-        _page_header("", title, subtitle)
+    # Product pages carry no big title: the top bar names the page and the dateline
+    # carries the one framing line (it used to be a banner repeated on every page).
     with st.spinner(""):
         fn()
 

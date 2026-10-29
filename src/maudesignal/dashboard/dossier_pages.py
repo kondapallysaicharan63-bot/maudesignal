@@ -5,18 +5,15 @@ HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 Stored-first like the other hackathon pages: with no ``META_MODEL_API_KEY`` the
 page renders the deterministic dossier, a recorded Muse Spark narrative if one
 exists, and recorded Muse Wonder reviewer findings. With a key it can draft the
-narrative live and run the reviewer live. Approve / Reject stays on the
-Actions page; regenerating here after approval shows the signature block.
-
-Wire-up (in ``dashboard/app.py``)::
-
-    from maudesignal.dashboard.dossier_pages import page_dossier
-    page_dossier(db)
+narrative live and run the reviewer live. The Signals workspace shows it in a
+device type's "Evidence pack" tab (``render_dossier``) next to the Accept /
+Reject decision; regenerating after a decision shows the signature block.
 """
 
 from __future__ import annotations
 
 import base64
+import html
 import os
 from datetime import UTC, date, datetime
 from typing import Any
@@ -25,7 +22,7 @@ import pandas as pd
 import streamlit as st
 
 from maudesignal.copilot.spend import SpendLimitError
-from maudesignal.dashboard.copilot_pages import CAPA_NEED_NOTE, FRAMING_BANNER
+from maudesignal.dashboard.copilot_pages import CAPA_NEED_NOTE
 from maudesignal.dashboard.spend_ui import guarded_client
 from maudesignal.dossier.builder import DossierError, top_flagged_signal
 from maudesignal.dossier.render import pdf_page_png
@@ -106,15 +103,7 @@ def _show_review(r: ReviewResult, *, source: str) -> None:
 
 
 def page_dossier(db: Database) -> None:
-    """Signal Evaluation & CAPA dossier page."""
-    st.html(FRAMING_BANNER)
-    st.subheader("Signal Evaluation & CAPA-need Evidence")
-    st.caption(CAPA_NEED_NOTE)
-    st.caption(
-        "A controlled-record style PDF: document control, approval block (modeled on 21 CFR "
-        "11.50), signal numbers re-verified by the gate, evidence table, CAPA record mapped to "
-        "ISO 13485 §8.5.2, Form 3500A worksheet (not for submission), audit-trail appendix."
-    )
+    """Pick a CAPA-need evidence pack (or the top flagged change) and show its dossier."""
     opts = _subject_options(db)
     if not opts:
         st.info("No CAPA-need evidence packs and no flagged change in this database.")
@@ -122,14 +111,25 @@ def page_dossier(db: Database) -> None:
     labels = [o[0] for o in opts]
     choice = st.selectbox("Document", labels, key="dossier_subject")
     _, capa_id, product_code = opts[labels.index(choice)]
+    render_dossier(db, capa_id=capa_id, product_code=product_code)
+
+
+def render_dossier(db: Database, *, capa_id: str | None, product_code: str | None) -> None:
+    """Signal Evaluation & CAPA-need Evidence PDF for one subject, with the AI review."""
+    st.caption(
+        f"{CAPA_NEED_NOTE} Controlled-record style PDF: document control, approval block "
+        "(modeled on 21 CFR 11.50), figures re-verified by the gate, evidence table, CAPA "
+        "record mapped to ISO 13485 §8.5.2, Form 3500A worksheet (not for submission)."
+    )
+    key = capa_id or product_code or "top"
     c1, c2 = st.columns([1, 2])
-    use_aw = c1.checkbox("Set awareness date", value=True, key="dossier_aw_on")
+    use_aw = c1.checkbox("Set awareness date", value=True, key=f"dossier_aw_on_{key}")
     aw: date | None = None
     if use_aw:
         aw = c2.date_input(
             "Awareness date (MDR clock start — human input)",
             value=datetime.now(UTC).date(),
-            key="dossier_aw",
+            key=f"dossier_aw_{key}",
         )
     client = _client(db)
     live_narr = False
@@ -160,11 +160,20 @@ def page_dossier(db: Database) -> None:
         return
 
     d = out.build.data
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Document", d.doc_id)
-    m2.metric("Status", d.status)
-    m3.metric("Figures re-verified", f"{d.figures_checked - d.figures_failed}/{d.figures_checked}")
-    m4.metric("Audit chain", "intact" if d.audit_chain_ok else "BROKEN")
+    stats = (
+        ("Document", d.doc_id),
+        ("Status", d.status),
+        ("Figures re-verified", f"{d.figures_checked - d.figures_failed}/{d.figures_checked}"),
+        ("Audit chain", "intact" if d.audit_chain_ok else "BROKEN"),
+    )
+    st.html(
+        '<div class="ms-stats ms-stats--text">'
+        + "".join(
+            f'<div><span class="ms-num">{html.escape(v)}</span>{html.escape(k)}</div>'
+            for k, v in stats
+        )
+        + "</div>"
+    )
     st.download_button(
         "Download PDF",
         data=out.pdf,
@@ -180,7 +189,7 @@ def page_dossier(db: Database) -> None:
     else:
         st.caption(d.narrative.note)
 
-    left, right = st.columns([3, 2])
+    left, right = st.columns([3, 2], gap="large")
     with left:
         st.markdown("**Preview — page 1**")
         png = pdf_page_png(out.pdf, 1)
@@ -224,7 +233,7 @@ def page_dossier(db: Database) -> None:
                 "the reviewer live; findings are stored in the audit trail."
             )
     st.caption(
-        "Accept or reject the CAPA-need evidence pack on the Actions & Audit page, then return "
-        "here: the regenerated PDF carries the reviewer's printed name, UTC time and meaning. "
-        "The MDR worksheet keeps its NOT FOR SUBMISSION stamp."
+        "After a named person accepts or rejects the evidence pack, the regenerated PDF "
+        "carries their printed name, UTC time and meaning. The MDR worksheet keeps its "
+        "NOT FOR SUBMISSION stamp."
     )

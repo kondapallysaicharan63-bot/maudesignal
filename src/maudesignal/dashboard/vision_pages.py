@@ -20,7 +20,6 @@ from typing import Any
 import streamlit as st
 
 from maudesignal.copilot.spend import SpendLimitError
-from maudesignal.dashboard.copilot_pages import FRAMING_BANNER
 from maudesignal.dashboard.spend_ui import guard as spend_guard
 from maudesignal.dashboard.spend_ui import guarded_client
 from maudesignal.monitor.deterioration import ProductCodeSignal, detect_from_database
@@ -370,7 +369,6 @@ def _label_live(db: Database) -> None:  # pragma: no cover - needs a live key
 
 def page_vision(db: Database) -> None:
     """Vision page: 510(k) summary reader and device-label camera."""
-    st.html(FRAMING_BANNER)
     tab_doc, tab_label = st.tabs(["510(k) summary reader", "Device label camera"])
     with tab_doc:
         st.caption(
