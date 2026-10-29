@@ -1,0 +1,710 @@
+{
+  "components": {
+    "schemas": {
+      "AskRequest": {
+        "additionalProperties": false,
+        "description": "Body of ``ask``.",
+        "properties": {
+          "question": {
+            "description": "A question about stored MAUDE reports, recalls, 510(k)s or the MDR clock.",
+            "examples": [
+              "What changed this week for LLZ?"
+            ],
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Question",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "title": "AskRequest",
+        "type": "object"
+      },
+      "ErrorBody": {
+        "description": "Error detail (never contains a key).",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorBody",
+        "type": "object"
+      },
+      "ErrorResponse": {
+        "description": "Error envelope for 4xx and 5xx responses.",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorBody"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "type": "object"
+      },
+      "Fact": {
+        "additionalProperties": false,
+        "description": "One checkable statement with the link a reader can open to see it.",
+        "properties": {
+          "link": {
+            "description": "https link to the openFDA query or record behind the fact.",
+            "title": "Link",
+            "type": "string"
+          },
+          "link_label": {
+            "default": "openFDA",
+            "description": "What the link opens.",
+            "title": "Link Label",
+            "type": "string"
+          },
+          "text": {
+            "description": "One plain-language fact; every number comes from the source.",
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "link"
+        ],
+        "title": "Fact",
+        "type": "object"
+      },
+      "Health": {
+        "description": "``GET /v1/health`` body.",
+        "properties": {
+          "read_only": {
+            "title": "Read Only",
+            "type": "boolean"
+          },
+          "service": {
+            "title": "Service",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "tools": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tools",
+            "type": "array"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "service",
+          "version",
+          "read_only",
+          "tools"
+        ],
+        "title": "Health",
+        "type": "object"
+      },
+      "Provenance": {
+        "additionalProperties": false,
+        "description": "Where the data came from and how fresh it is.",
+        "properties": {
+          "data_dates": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Dates the data covers (a stored snapshot, or the live window).",
+            "title": "Data Dates"
+          },
+          "kind": {
+            "description": "stored_demo_snapshot, live_openfda, recorded_answer or live_model.",
+            "enum": [
+              "stored_demo_snapshot",
+              "live_openfda",
+              "recorded_answer",
+              "live_model"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why this source was used, if not obvious.",
+            "title": "Note"
+          },
+          "queried_at_utc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "UTC time of the live openFDA query or live model call.",
+            "title": "Queried At Utc"
+          },
+          "source": {
+            "description": "Plain description of the source.",
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "source"
+        ],
+        "title": "Provenance",
+        "type": "object"
+      },
+      "ToolAnswer": {
+        "additionalProperties": false,
+        "description": "What every tool returns.",
+        "properties": {
+          "advisory": {
+            "default": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+            "title": "Advisory",
+            "type": "string"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/Fact"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "speakable": {
+            "description": "1 to 3 plain sentences, no markdown, written to be read aloud.",
+            "title": "Speakable",
+            "type": "string"
+          },
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "withheld": {
+            "description": "Only ask() uses this; gate-withheld sentences.",
+            "items": {
+              "$ref": "#/components/schemas/WithheldSentence"
+            },
+            "title": "Withheld",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tool",
+          "speakable",
+          "provenance"
+        ],
+        "title": "ToolAnswer",
+        "type": "object"
+      },
+      "WithheldSentence": {
+        "additionalProperties": false,
+        "description": "A sentence the gate did not verify. It is never part of ``speakable``.",
+        "properties": {
+          "reason": {
+            "description": "Why the gate withheld it.",
+            "title": "Reason",
+            "type": "string"
+          },
+          "status": {
+            "const": "withheld",
+            "default": "withheld",
+            "title": "Status",
+            "type": "string"
+          },
+          "text": {
+            "description": "NOT VERIFIED. Do not state or speak this as fact.",
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "reason"
+        ],
+        "title": "WithheldSentence",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "APIKeyHeader": {
+        "description": "Read-only API key. Send it only in this header.",
+        "in": "header",
+        "name": "X-API-Key",
+        "type": "apiKey"
+      }
+    }
+  },
+  "info": {
+    "contact": {
+      "name": "MaudeSignal (open source)",
+      "url": "https://github.com/kondapallysaicharan63-bot/maudesignal"
+    },
+    "description": "Read-only MaudeSignal tools for a Meta Muse connector. Each answer has a short speakable summary, facts that each carry an openFDA or record link, a fixed advisory line and provenance (stored demo snapshot with dates, or live openFDA with the query time). Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA. Every key is read-only. Sentences from ask are checked by a deterministic claim gate; withheld sentences are listed separately and are never part of the speakable text.",
+    "title": "MaudeSignal connector API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/v1/health": {
+      "get": {
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Service status (no key needed)",
+        "tags": [
+          "service"
+        ]
+      }
+    },
+    "/v1/tools/ask": {
+      "post": {
+        "description": "Read-only (POST only because the question is in the body). Muse Spark answers through deterministic tools over stored records; every sentence passes the claim gate. Withheld sentences are listed in `withheld` and are never in `speakable`. With no model key, or after the key's daily cost cap, the closest recorded answer is returned and labelled recorded.",
+        "operationId": "ask",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolAnswer"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Missing or invalid X-API-Key."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Input not usable."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Rate limit reached; see Retry-After."
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Nothing to answer from."
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Ask the Muse Spark copilot",
+        "tags": [
+          "tools"
+        ],
+        "x-maudesignal-read-only": true,
+        "x-maudesignal-scope": "read"
+      }
+    },
+    "/v1/tools/check_device_type": {
+      "get": {
+        "description": "Read-only. Live openFDA report counts for any product code, using the same four rules, windows and thresholds as the weekly detector.",
+        "operationId": "check_device_type",
+        "parameters": [
+          {
+            "description": "Three-letter FDA product code, e.g. LLZ.",
+            "in": "query",
+            "name": "product_code",
+            "required": true,
+            "schema": {
+              "description": "Three-letter FDA product code, e.g. LLZ.",
+              "pattern": "^[A-Za-z]{3}$",
+              "title": "Product Code",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolAnswer"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Missing or invalid X-API-Key."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Input not usable."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Rate limit reached; see Retry-After."
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "openFDA unreachable."
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Check any device type live on openFDA",
+        "tags": [
+          "tools"
+        ],
+        "x-maudesignal-read-only": true,
+        "x-maudesignal-scope": "read"
+      }
+    },
+    "/v1/tools/get_report": {
+      "get": {
+        "description": "Read-only. Key fields and the start of the narrative of one stored report.",
+        "operationId": "get_report",
+        "parameters": [
+          {
+            "description": "MAUDE report id (mdr_report_key).",
+            "in": "query",
+            "name": "report_id",
+            "required": true,
+            "schema": {
+              "description": "MAUDE report id (mdr_report_key).",
+              "pattern": "^[A-Za-z0-9-]{1,24}$",
+              "title": "Report Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolAnswer"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Missing or invalid X-API-Key."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Report not stored."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Input not usable."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Rate limit reached; see Retry-After."
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "One stored MAUDE report",
+        "tags": [
+          "tools"
+        ],
+        "x-maudesignal-read-only": true,
+        "x-maudesignal-scope": "read"
+      }
+    },
+    "/v1/tools/recalls": {
+      "get": {
+        "description": "Read-only. Stored openFDA recalls for a product code, newest first.",
+        "operationId": "recalls",
+        "parameters": [
+          {
+            "description": "Three-letter FDA product code, e.g. LLZ.",
+            "in": "query",
+            "name": "product_code",
+            "required": true,
+            "schema": {
+              "description": "Three-letter FDA product code, e.g. LLZ.",
+              "pattern": "^[A-Za-z]{3}$",
+              "title": "Product Code",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolAnswer"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Missing or invalid X-API-Key."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Input not usable."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Rate limit reached; see Retry-After."
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "FDA recalls for a product code",
+        "tags": [
+          "tools"
+        ],
+        "x-maudesignal-read-only": true,
+        "x-maudesignal-scope": "read"
+      }
+    },
+    "/v1/tools/what_changed_this_week": {
+      "get": {
+        "description": "Read-only. Latest stored week from the demo snapshot (labelled with its dates). A product code outside the stored set is checked live on openFDA.",
+        "operationId": "what_changed_this_week",
+        "parameters": [
+          {
+            "description": "Optional three-letter product code.",
+            "in": "query",
+            "name": "product_code",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^[A-Za-z]{3}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional three-letter product code.",
+              "title": "Product Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolAnswer"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Missing or invalid X-API-Key."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Input not usable."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Rate limit reached; see Retry-After."
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "openFDA unreachable."
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "What changed this week",
+        "tags": [
+          "tools"
+        ],
+        "x-maudesignal-read-only": true,
+        "x-maudesignal-scope": "read"
+      }
+    }
+  }
+}

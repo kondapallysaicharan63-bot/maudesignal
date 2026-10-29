@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 60,
+      "includeFiles": "{src,skills,demo/transcripts,digests,data/demo}/**"
+    }
+  },
+  "rewrites": [{ "source": "/v1/(.*)", "destination": "/api/index" }]
+}
