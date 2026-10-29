@@ -32,6 +32,7 @@ from typing import TYPE_CHECKING, Any
 import httpx
 
 from maudesignal.common.exceptions import MaudeSignalError
+from maudesignal.copilot.product_code import ProductCodeCheck, check_product_code
 
 if TYPE_CHECKING:  # pragma: no cover
     from maudesignal.copilot.agent import CopilotAgent, CopilotResult
@@ -106,6 +107,12 @@ class Transcript:
     duration_s: float | None
     session_id: str | None = None
     raw: dict[str, Any] = field(default_factory=dict)
+    # Deterministic product-code check (see product_code.py), filled in by
+    # ask_by_voice. None means no code candidate was found in the transcript.
+    heard_code: str | None = None
+    suggested_code: str | None = None
+    used_code: str | None = None
+    product_code_status: str | None = None
 
     @property
     def cost_usd(self) -> float:
@@ -114,11 +121,21 @@ class Transcript:
 
     def to_voice_block(self) -> dict[str, Any]:
         """The ``voice`` block stored in a copilot transcript JSON."""
-        return {
+        block: dict[str, Any] = {
             "transcript_text": self.text,
             "language": self.language,
             "audio_seconds": self.duration_s,
         }
+        if self.heard_code is not None:
+            block.update(
+                {
+                    "heard_code": self.heard_code,
+                    "suggested_code": self.suggested_code,
+                    "used_code": self.used_code,
+                    "product_code_status": self.product_code_status,
+                }
+            )
+        return block
 
 
 @dataclass(frozen=True)
@@ -424,12 +441,37 @@ def ask_by_voice(
             payload={**entry, "reason": "no speech recognised; the model was not called"},
         )
         raise VoiceTranscribeError("no speech was recognised in the recording")
+    # Deterministic product-code check BEFORE the agent is asked: a misheard
+    # code (LLG/LNZ for LLZ) is corrected only by the 1-edit-unique rule in
+    # product_code.py — never by model guesswork. The verbatim transcript
+    # stays in the audit trail and in the voice block; only the question
+    # actually sent to the agent uses the corrected text.
+    from dataclasses import replace as _replace
+
+    code_check: ProductCodeCheck = check_product_code(transcript.text)
+    if code_check.heard_code is not None:
+        transcript = _replace(
+            transcript,
+            heard_code=code_check.heard_code,
+            suggested_code=code_check.suggested_code,
+            used_code=code_check.used_code,
+            product_code_status=code_check.status,
+        )
+        entry.update(
+            {
+                "heard_code": code_check.heard_code,
+                "suggested_code": code_check.suggested_code,
+                "used_code": code_check.used_code,
+                "product_code_status": code_check.status,
+            }
+        )
+    question_to_ask = code_check.corrected_text
     # What was heard goes into the chain before the answer, linked by entity id,
     # so a reviewer can tie each spoken question to the copilot.answer it produced.
     db.append_audit(
         actor=f"voice:{transcriber.model}",
         action="voice.transcribed",
         entity_id=f"V-{audio_sha256[:16]}",
-        payload={**entry, "question_entity_id": agent.question_entity_id(transcript.text)},
+        payload={**entry, "question_entity_id": agent.question_entity_id(question_to_ask)},
     )
-    return VoiceAnswer(transcript=transcript, result=agent.ask(transcript.text))
+    return VoiceAnswer(transcript=transcript, result=agent.ask(question_to_ask))

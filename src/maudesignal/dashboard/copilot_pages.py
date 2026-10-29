@@ -129,20 +129,56 @@ def _ymd(d: Any) -> str:
 # ---------------------------------------------------------------------------
 
 
+#: Voice transcript labels hidden from the Copilot page (file kept on disk).
+#: 00-voice-main is the old TTS clip "What came in overnight? Is anything
+#: worsening?" — the user put its wording on the drop list, and it is
+#: superseded by the three user-voice answers. Hiding, not deleting, so
+#: recorded history stays auditable and the hide itself is explicit here.
+HIDDEN_VOICE_LABELS = frozenset({"00-voice-main"})
+
+
 def _voice_html(voice: dict[str, Any]) -> str:
-    """Render the "Heard: …" line so the analyst sees exactly what the ASR produced."""
+    """Render the "Heard: …" line so the analyst sees exactly what the ASR produced.
+
+    When a deterministic product-code check ran (see copilot/product_code.py),
+    a second line always shows BOTH forms: the heard code, the suggested code
+    (if any), and the code actually used — never the corrected code alone.
+    An unrecognised/ambiguous code is shown with a clarification request,
+    not silently corrected.
+    """
     facts = []
     if voice.get("audio_seconds") is not None:
         facts.append(f"{float(voice['audio_seconds']):.1f} s")
     if voice.get("language"):
         facts.append(str(voice["language"]))
     facts.append("Meta Voice Transcribe")
-    return (
+    out = (
         '<div style="font-size:14px;margin:0 0 4px 0">'
         f"🎙 <b>Heard:</b> “{html.escape(str(voice.get('transcript_text', '')))}”"
         f' <span class="ms-muted" style="font-size:12px">({html.escape(" · ".join(facts))})</span>'
         "</div>"
     )
+    heard = voice.get("heard_code")
+    if heard:
+        suggested = voice.get("suggested_code")
+        used = voice.get("used_code")
+        status = voice.get("product_code_status")
+        if suggested and used:
+            code_line = (
+                f"Heard: {html.escape(str(heard))} → did you mean "
+                f"{html.escape(str(suggested))}? Using {html.escape(str(used))}."
+            )
+        elif status in {"unknown", "ambiguous"}:
+            code_line = (
+                f"Heard: {html.escape(str(heard))} — product code not recognised; "
+                "please clarify the product code."
+            )
+        elif used:
+            code_line = f"Product code: {html.escape(str(used))}."
+        else:
+            code_line = f"Heard: {html.escape(str(heard))}."
+        out += f'<div style="font-size:14px;margin:0 0 4px 0">{code_line}</div>'
+    return out
 
 
 def render_transcript(t: dict[str, Any]) -> None:
@@ -238,8 +274,15 @@ def page_copilot(db: Database) -> None:
     )
     with tab_replay:
         # Typed questions first (the demo's story order); spoken clips after them.
+        # HIDDEN_VOICE_LABELS: the old overnight/worsening clip is excluded
+        # here (not deleted) so it can never be the default/shown voice answer
+        # once the three user-voice answers are in.
         transcripts = sorted(
-            load_transcripts(TRANSCRIPT_DIR),
+            (
+                t
+                for t in load_transcripts(TRANSCRIPT_DIR)
+                if str(t.get("label", "")) not in HIDDEN_VOICE_LABELS
+            ),
             key=lambda t: (str(t.get("label", "")).startswith("00-voice"), str(t.get("label", ""))),
         )
         if not transcripts:
@@ -345,7 +388,14 @@ def stream_verified(t: dict[str, Any]) -> Iterator[str]:
 def _fallback(question: str, message: str) -> None:
     """Cap reached: show the closest recorded answer; no Meta call is made."""
     cap_notice(message)
-    t = recorded_fallback(question, load_transcripts(TRANSCRIPT_DIR))
+    # Same hide as the replay tab: the old overnight clip must not surface
+    # as a fallback voice answer either.
+    available = [
+        t
+        for t in load_transcripts(TRANSCRIPT_DIR)
+        if str(t.get("label", "")) not in HIDDEN_VOICE_LABELS
+    ]
+    t = recorded_fallback(question, available)
     if t is None:
         st.info("No recorded answers are available yet.")
         return
