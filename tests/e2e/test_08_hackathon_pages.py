@@ -96,7 +96,7 @@ class TestHackathonNav:
         ctx.close()
 
     def test_full_website_by_default(self, browser: Any) -> None:
-        """Without a link choice every page is reachable: the sidebar lists More tools."""
+        """Without a link choice the sidebar follows SHOW_ALL_PAGES_BY_DEFAULT (product only)."""
         from maudesignal.dashboard.app import SHOW_ALL_PAGES_BY_DEFAULT
 
         ctx = browser.new_context()

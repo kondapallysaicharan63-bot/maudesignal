@@ -49,35 +49,24 @@ class TestSettingsTabs:
 
 
 class TestSettingsProvidersTab:
-    def test_active_provider_section(self, settings: Page) -> None:
-        assert "Active Provider" in settings.content() or "Active provider" in settings.content()
+    """Key status only (set / not set), Meta first, and no error banner in keyless demo mode."""
 
-    def test_active_provider_is_gemini(self, settings: Page) -> None:
+    def test_meta_model_api_listed_first(self, settings: Page) -> None:
         content = settings.content()
-        assert (
-            "GEMINI" in content.upper()
-        ), "Expected active provider to be Gemini per .env LLM_PROVIDER=gemini"
+        assert "Meta Model API" in content and "META_MODEL_API_KEY" in content
+        assert content.index("Meta Model API") < content.index("Groq")
 
-    def test_model_name_gemini_flash(self, settings: Page) -> None:
+    def test_openfda_key_status_listed(self, settings: Page) -> None:
+        assert "OPENFDA_API_KEY" in settings.content()
+
+    def test_no_config_error_banner(self, settings: Page) -> None:
+        assert "Configuration could not be loaded" not in settings.content()
+        assert "Not Configured" not in settings.content()
+
+    def test_extraction_providers_are_optional(self, settings: Page) -> None:
         content = settings.content()
-        assert (
-            "gemini-2.5-flash" in content or "flash" in content.lower()
-        ), "Expected GEMINI_MODEL=gemini-2.5-flash from .env to appear in Settings"
-
-    def test_provider_status_section(self, settings: Page) -> None:
-        expect(settings.get_by_text("Provider Status", exact=False)).to_be_visible()
-
-    def test_groq_card_shows_key_set(self, settings: Page) -> None:
-        content = settings.content()
-        assert (
-            "Groq" in content and "Key Set" in content
-        ), "Expected Groq provider with 'Key Set' pill — GROQ_API_KEY is configured"
-
-    def test_anthropic_shows_not_configured(self, settings: Page) -> None:
-        content = settings.content()
-        assert (
-            "Not Configured" in content
-        ), "Expected 'Not Configured' pill — ANTHROPIC_API_KEY is absent from .env"
+        assert "pre-hackathon pipeline, optional" in content
+        assert "Groq" in content and "Anthropic" in content
 
     def test_openai_card_present(self, settings: Page) -> None:
         assert "OpenAI" in settings.content()
@@ -86,16 +75,12 @@ class TestSettingsProvidersTab:
         content = settings.content()
         assert "Gemini" in content or "Google Gemini" in content
 
-    def test_api_keys_are_masked(self, settings: Page) -> None:
-        content = settings.content()
-        # The UI shows masked keys like "gsk_....Hgnm" — verify "..." ellipsis is present
-        # (indicates masking), and no full-length key is exposed (> 20 chars of key chars)
+    def test_no_part_of_any_key_is_shown(self, settings: Page) -> None:
         import re
 
-        raw_key_pattern = re.compile(r"(gsk_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9]{20,})")
-        assert not raw_key_pattern.search(
-            content
-        ), "A full unmasked API key was found in the Settings page"
+        content = settings.content()
+        key_like = re.compile(r"(gsk_[A-Za-z0-9]{4,}|sk-[A-Za-z0-9]{4,}|AIza[0-9A-Za-z_\-]{4,})")
+        assert not key_like.search(content), "Part of an API key is shown on Settings"
 
     def test_cost_section_present(self, settings: Page) -> None:
         # "Cost" appears in multiple elements; use content check to avoid strict mode violation
