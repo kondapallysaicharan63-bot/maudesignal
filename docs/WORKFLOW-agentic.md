@@ -1,7 +1,7 @@
 # MaudeSignal final build week: agentic workflow
 
 Coordinator plan for Oct 29 – Nov 4, 2026 (submit Nov 4, about 5 PM PT).
-Status: **proposed, waiting for Charan's approval**. Nothing below has started.
+Status: **approved by Charan on Oct 29** (design system kept; deploy steps go to Charan).
 
 ## 0. Where things stand (checked Oct 29, 13:00 UTC)
 
@@ -37,16 +37,24 @@ The data contract (`web/DATA_CONTRACT.md`) is written by the coordinator
 **before** either track starts, so A and B build against the same schema
 without touching each other's files.
 
-## 2. Track A "core": finish TASK-oct28, then feed the web app
+## 2. Track A "core": the three agentic workflows, then polish
+
+Priorities follow Charan's research doc "PMS Market Research & Agentic Workflow Plan"
+(build workflows 1–3 by about Oct 31 so they can be recorded). The four `claude/`
+docs are not in the repo, so TASK-oct28 is checked against what landed (§0) instead
+of section by section.
 
 | Milestone | Work | Done when (paste the command + real output) | Rubric line |
 |---|---|---|---|
-| A0 Audit | Compare all six TASK-oct28 sections with what landed; list the gaps with file paths. Needs the task file in the repo. | Gap table with evidence per item | all |
-| A1 Wording | PRD v2.1 §9 words to use / avoid across UI, README, docs, skills, video script; "CAPA-need evidence" everywhere | `grep` for every avoided word returns 0 hits (output pasted) | Demo, Impact |
-| A2 Demo story | Any remaining question changes; re-record through `copilot-record.yml` by editing `demo/RECORD_REQUEST` (runs only on `hackathon-day2`, so A2 is triggered by the coordinator after merging A1) | New transcripts committed; gate first-pass and hand-check numbers recomputed by script | Meta tooling, Demo |
-| A3 Evidence | `docs/VALIDATION_EVIDENCE.md` and README numbers from real runs only (tests, gate, hand-check, AI device sweep 6 of 181, live check) | Every number in README traced to a file or run id | Technical, Impact |
-| A4 Artifacts for the web app | Digests, transcripts, audit exports, dossier, vision results complete and valid per `web/DATA_CONTRACT.md`; a contract test under `tests/` | `pytest tests/unit/test_data_contract.py` passes | Demo |
-| A5 Green PR | ruff, black, `mypy --strict`, unit tests, coverage ≥55%; PR `track-a-core → hackathon-day2` | CI run id green | Technical |
+| A1 Search protocol (workflow 3, ~½ day) | Every tool call already records dataset, filters, dates and counts. Turn that log into a "Search methodology" appendix in the evidence-pack PDF and a `protocol` field per answer, so an auditor can repeat each search | Unit tests; a regenerated PDF shows the appendix (page image path) | Impact, Technical |
+| A2 Weekly investigator (workflow 1, ~1 day) | When the weekly check flags a device type, Muse Spark pulls the new reports, groups them by kind of problem, checks recalls, 510(k)s and non-manufacturer reports, and writes the digest entry through the gate. Code + mocked tests here; a recording workflow (`.github/workflows/investigator-record.yml`, Track A may add it) records real runs to `demo/investigations/` | Mocked tests pass; workflow file valid | Meta tooling, Impact |
+| A3 Recall-triggered sweep (workflow 2, ~1 day) | On a new recall in a watched type, Spark reads the recall reason and searches stored narratives for the same failure: "N reports describe the same problem", quotes matched word for word, counts recomputed by the gate, links | Mocked tests; adversarial gate cases for the new claims (0 false pass / 0 false block kept) | Meta tooling, Impact |
+| A4 Words and docs | PRD wording (drop list: "worsening signals", "overnight", "citation-checked", "complaint data"; never "FDA-approved", "Part 11 compliant", "validated"); BEUDAMED added to README "How it's different"; deadline Nov 4 in the submission draft; `VALIDATION_EVIDENCE.md` and README numbers from real runs only; the FDA Elsa 4.0 line used only if an FDA source confirms it | `grep` for each dropped word returns 0 hits; every README number traced to a file or run id | Demo, Impact |
+| A5 Inputs for the web app + green PR | Inputs complete per `web/DATA_CONTRACT.md`; `tests/unit/test_data_contract.py`; ruff, black, `mypy --strict`, coverage ≥55%; PR `track-a-core → hackathon-day2` | CI run id green | Technical |
+
+Real Muse Spark runs for A2/A3 happen in GitHub Actions (the key is a repository
+secret); the coordinator triggers them after merging A2/A3, and only real recorded
+runs are shown.
 
 Helpers A may spawn: `Explore` (find code), `validator` (repo FTI check),
 `general-purpose` (research). A never runs `advisor` on itself.
@@ -104,8 +112,8 @@ reasoning never reaches it.
 - Commits: author "Saicharan Kondapally <kondapallysaicharan63@gmail.com>" with
   `Co-Authored-By: Claude`.
 
-- One Workflow per batch of milestones (A1–A3 with B1–B2 in parallel; then
-  A4–A5 with B3–B5), so I read results between batches and you can redirect.
+- One Workflow per batch of milestones (A1–A3 with B1–B3 in parallel; then
+  A4–A5 with B4–B5), so I read results between batches and you can redirect.
 - Builders: sonnet, `isolation: worktree`. Advisor: opus. ui-critic: sonnet.
 - Estimated size: about 10 milestones × (1 builder + 1–3 advisor/fix rounds) ≈
   25–40 agents over the week. Meta API spend: one re-record, cents.
