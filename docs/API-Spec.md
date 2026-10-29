@@ -1,5 +1,9 @@
 # API Specification
 
+> **Pre-existing planning draft (May 2026), not implemented.** MaudeSignal has no accounts,
+> login, tenants or hosted API: it is an open-source CLI and dashboard that runs on a laptop
+> ([CLAUDE.md §3](../CLAUDE.md)). Kept for history only; not part of the hackathon submission.
+
 **Base URL:** `/api/v1`
 **Auth:** Bearer JWT token (obtained via OAuth2/OIDC login)
 **Tenant:** Derived from JWT claims — no `tenant_id` in URL paths

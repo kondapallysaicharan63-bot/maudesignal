@@ -12,7 +12,6 @@ Everything under `src/maudesignal/copilot/`, `src/maudesignal/gate/` and
 | File | What it is |
 |---|---|
 | `copilot/meta_provider.py` | Meta Model API provider (OpenAI-compatible client, streaming) implementing the existing `LLMProvider` interface |
-| `copilot/copilot.py` | Conversational safety copilot: plain-English questions → streamed, grounded answers |
 | `copilot/__init__.py` | Package exports |
 | `copilot/agent.py` | Muse Spark tool-use loop → structured answer (sentences + claims) → claim-level gate → one repair turn with the gate's recomputed values → unrepaired sentences withheld; every answer written to the audit trail |
 | `copilot/tools.py` | 13 deterministic tools (first six listed here) the model calls: what changed this week, product summary, report search, report fetch, MDR deadline clock (21 CFR 803.50 / 803.53, advisory), CAPA-need evidence pack |

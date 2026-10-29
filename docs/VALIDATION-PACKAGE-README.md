@@ -1,5 +1,9 @@
 # Tool Validation Package
 
+> **Pre-existing planning draft (May 2026), not implemented.** MaudeSignal has no accounts,
+> login, tenants or hosted API: it is an open-source CLI and dashboard that runs on a laptop
+> ([CLAUDE.md §3](../CLAUDE.md)). Kept for history only; not part of the hackathon submission.
+
 This directory (`validation_package/`) contains everything a MedTech company needs to
 formally validate MaudeSignal within their Quality Management System (QMS).
 
