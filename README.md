@@ -45,33 +45,39 @@ what a manufacturer would still do): [docs/VALIDATION_EVIDENCE.md](docs/VALIDATI
    week vs a weekly mean of 8.75 (3.77x)"*
    ([digests/2026-08-31.md](digests/2026-08-31.md)), with the reason it is
    ranked first.
-2. **Who filed the reports.** Counts per device type by openFDA report source
+2. **Any device type, live.** Type any FDA product code on the Signals page:
+   MaudeSignal asks openFDA for counts (about 5 requests, no report text,
+   nothing stored, no model) and applies the same four rules, with a link to
+   the openFDA query behind every figure. A weekly GitHub Actions job runs the
+   same check for every product code on FDA's AI-Enabled Medical Device List
+   ([docs/hackathon/AI_SWEEP.md](docs/hackathon/AI_SWEEP.md)).
+3. **Who filed the reports.** Counts per device type by openFDA report source
    (manufacturer, user facility, voluntary, distributor) and a filterable list
    of the reports **not filed by a manufacturer**. On the demo data all 33 LLZ
    reports this week, and all 121 stored, were filed by manufacturers; the
    non-manufacturer reports on file are 3 MYN, 3 QIH and 1 POK (all voluntary).
-3. **Ask the copilot,** typed or by voice. Muse Spark calls 13 tools over
+4. **Ask the copilot,** typed or by voice. Muse Spark calls 13 tools over
    stored MAUDE reports, FDA recalls, 510(k) records and PubMed abstracts and
    answers in a strict JSON schema: sentences, each tagged with the claims it
    makes.
-4. **The gate checks every claim.** A made-up quote or count is withheld with
+5. **The gate checks every claim.** A made-up quote or count is withheld with
    the reason (*"claimed 500, records show 121"*); a reply that does not parse
    is withheld too. The model gets one repair turn with the gate's values.
-5. **CAPA-need evidence pack.** The copilot can prepare the evidence (the
+6. **CAPA-need evidence pack.** The copilot can prepare the evidence (the
    supporting reports and a problem statement); a named person accepts or
    rejects it in the Signals workspace (Evidence pack tab); the Audit page keeps the trail. The model cannot.
-6. **Evidence pack (PDF).** *Signal Evaluation & CAPA-need Evidence*, laid out
+7. **Evidence pack (PDF).** *Signal Evaluation & CAPA-need Evidence*, laid out
    like a controlled quality record: document control, signal evaluation,
    evidence table, the ISO 13485:2016 §8.5.2 sections left blank for the CAPA
    owner, an MDR worksheet mapped to FDA Form 3500A (stamped *not for
    submission*) and the audit trail. Every printed number is re-verified by the
    gate. **Muse Wonder 1.0** reviews the whole PDF before a person accepts it.
-7. **Vision.** Muse Spark reads FDA 510(k) summary PDFs (many are scanned)
+8. **Vision.** Muse Spark reads FDA 510(k) summary PDFs (many are scanned)
    twice, independently; a field is *verified* only if both reads agree and
    openFDA / the PDF text layer agree, otherwise it is flagged for a person.
    A photo of a device label → **SAM 3.1** finds the label → Muse Spark reads
    it → the K-number is checked against FDA.
-8. **Audit trail.** Every answer, spoken question, live-call cost and decision
+9. **Audit trail.** Every answer, spoken question, live-call cost and decision
    is appended to a SHA-256 hash-chained log; the dashboard re-verifies it.
 
 ## How it's different

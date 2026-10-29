@@ -12,8 +12,11 @@ gets a fixed number of checks, so the public demo stays inside openFDA's limits.
 from __future__ import annotations
 
 import html
+import json
 from collections.abc import Callable
 from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
 
 import streamlit as st
 
@@ -26,6 +29,9 @@ from maudesignal.monitor.live_check import (
     check_product_code,
     normalize_code,
 )
+
+#: Written by ``scripts/ai_device_sweep.py`` (GitHub Actions); shown when present.
+SWEEP_FILE = Path(__file__).resolve().parents[3] / "demo" / "sweep" / "ai-device-sweep.json"
 
 #: Live checks one browser session may run (cached repeats are free).
 SESSION_CHECKS = 10
@@ -173,3 +179,61 @@ def _run(text: str) -> None:
         return
     st.session_state[_COUNT_KEY] = used + 1
     st.session_state[_RESULT_KEY] = r
+
+
+def load_sweep(path: Path = SWEEP_FILE) -> dict[str, Any] | None:
+    """The latest AI-device sweep, or None when it has not run yet."""
+    try:
+        data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return data if data.get("rows") else None
+
+
+def sweep_summary(data: dict[str, Any]) -> str:
+    """One sentence: how many AI device types were flagged, in which week."""
+    m = data["meta"]
+    flagged = [r for r in data["rows"] if r["classification"] != "stable"]
+    w = m["window"]
+    return (
+        f"{len(flagged)} of {len(data['rows'])} AI device types on FDA's list were flagged "
+        f"for {w['current_start']} – {w['current_end']} (the latest week on openFDA), "
+        f"checked {m['generated_utc'][:10]}."
+    )
+
+
+def render_sweep() -> None:
+    """Every product code on FDA's AI device list, checked for the same week."""
+    data = load_sweep()
+    if data is None:
+        return
+    flagged = sorted(
+        (r for r in data["rows"] if r["classification"] != "stable"),
+        key=lambda r: (-r["current_count"], r["product_code"]),
+    )
+    with st.expander("Across FDA's AI device list: " + sweep_summary(data)):
+        m = data["meta"]
+        st.caption(
+            f"FDA's AI-Enabled Medical Device List: {m['devices_on_list']} devices, "
+            f"{m['codes_on_list']} product codes; {m['codes_checked']} checked"
+            + (" (keyless run, capped)" if m.get("capped") else "")
+            + ". Same rules, counts only. A triage signal for a person to review, not a "
+            "finding about any device or company."
+        )
+        if flagged:
+            st.dataframe(
+                [
+                    {
+                        "Product code": r["product_code"],
+                        "AI devices on list": r["ai_devices_on_list"],
+                        "Change": r["change"],
+                        "This week": r["current_count"],
+                        "Weekly mean before": round(r["baseline_weekly_mean"], 2),
+                        "Injury / death this week": r["current_severe_count"],
+                        "openFDA query": r["queries"][1][1] if len(r["queries"]) > 1 else "",
+                    }
+                    for r in flagged
+                ],
+                hide_index=True,
+                column_config={"openFDA query": st.column_config.LinkColumn(display_text="open")},
+            )

@@ -82,3 +82,18 @@ def test_report_lists_only_flagged_codes_with_their_query(tmp_path: Path) -> Non
     )
     assert "| QIH |" not in text
     assert "not a finding about any device or company" in text
+
+
+def test_app_summary_reads_the_sweep_file(tmp_path: Path) -> None:
+    from maudesignal.dashboard.live_check_ui import load_sweep, sweep_summary
+
+    assert load_sweep(tmp_path / "missing.json") is None
+    f = tmp_path / "s.json"
+    f.write_text(
+        '{"meta": {"generated_utc": "2026-10-29T12:00:00Z", "window": {"current_start": '
+        '"2026-08-25", "current_end": "2026-08-31"}}, "rows": [{"classification": "spike"}, '
+        '{"classification": "stable"}]}'
+    )
+    data = load_sweep(f)
+    assert data is not None
+    assert sweep_summary(data).startswith("1 of 2 AI device types on FDA's list were flagged")
