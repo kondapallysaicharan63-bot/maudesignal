@@ -138,25 +138,34 @@ def render_dossier(db: Database, *, capa_id: str | None, product_code: str | Non
             "Draft the narrative live with Muse Spark (≈ $0.01)", key="dossier_live_narr"
         )
 
-    def build(live: Any | None) -> DossierOutput:
-        with st.spinner("Building dossier…"):
+    def build(live: Any | None, *, pdf: bool = True) -> DossierOutput:
+        with st.spinner("Building the evidence pack…"):
             return produce(
                 db,
                 capa_id=capa_id,
                 product_code=product_code,
                 awareness_date=aw,
-                awareness_basis="entered on the dossier page",
+                awareness_basis="entered on the evidence pack tab",
                 live_client=live,
+                pdf=pdf,
             )
 
+    no_pdf = ""
     try:
         try:
             out = build(client if live_narr else None)
         except SpendLimitError as exc:
             st.warning(f"{exc} No Meta call was made; the narrative is left out.")
             out = build(None)
+        except RuntimeError as exc:
+            # WeasyPrint needs system libraries (Pango); without them the pack is still
+            # built and shown as HTML, and the PDF recorded in demo/dossier is offered.
+            if "WeasyPrint" not in str(exc):
+                raise
+            no_pdf = str(exc)
+            out = build(None, pdf=False)
     except (DossierError, RuntimeError) as exc:
-        st.error(f"Could not build the dossier: {exc}")
+        st.error(f"Could not build the evidence pack: {exc}")
         return
 
     d = out.build.data
@@ -174,13 +183,24 @@ def render_dossier(db: Database, *, capa_id: str | None, product_code: str | Non
         )
         + "</div>"
     )
-    st.download_button(
-        "Download PDF",
-        data=out.pdf,
-        file_name=f"{d.doc_id}-{d.status}.pdf",
-        mime="application/pdf",
-        key="dossier_dl",
-    )
+    pdf_bytes = out.pdf
+    if not pdf_bytes:
+        candidates = [recorded_dir() / f"{d.doc_id}-{s}.pdf" for s in (d.status, "draft")]
+        recorded_pdf = next((f for f in candidates if f.is_file()), None)
+        if recorded_pdf is not None:
+            pdf_bytes = recorded_pdf.read_bytes()
+            st.caption(
+                f"The PDF could not be rendered here ({no_pdf}); the download is the PDF "
+                "recorded for this document in `demo/dossier/`."
+            )
+    if pdf_bytes:
+        st.download_button(
+            "Download PDF",
+            data=pdf_bytes,
+            file_name=f"{d.doc_id}-{d.status}.pdf",
+            mime="application/pdf",
+            key="dossier_dl",
+        )
     if d.narrative.available:
         st.caption(
             f"Narrative: {d.narrative.source} {d.narrative.model} · shown {d.narrative.passed} · "
@@ -192,7 +212,7 @@ def render_dossier(db: Database, *, capa_id: str | None, product_code: str | Non
     left, right = st.columns([3, 2], gap="large")
     with left:
         st.markdown("**Preview — page 1**")
-        png = pdf_page_png(out.pdf, 1)
+        png = pdf_page_png(pdf_bytes, 1) if pdf_bytes else None
         if png is not None:
             st.image(png, width="stretch")
         else:

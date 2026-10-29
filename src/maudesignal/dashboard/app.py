@@ -1851,17 +1851,28 @@ def _top_bar(db: Database) -> None:
     )
 
 
+#: Full website (every page) by default. Set False, or MAUDESIGNAL_DEMO_MODE=1, to show
+#: only the product pages for the submission demo.
+SHOW_ALL_PAGES_BY_DEFAULT = True
+
+
 def _classic_tools_enabled() -> bool:
     """The "More tools" pages (pipeline, extraction, PSUR, alerts, settings).
 
-    Hidden in the public demo, where they are empty without provider keys; shown with
-    ``?tools=all`` (kept for the browser session) or ``MAUDESIGNAL_CLASSIC_TOOLS=1``.
+    Shown by default (:data:`SHOW_ALL_PAGES_BY_DEFAULT`). ``?tools=demo`` hides them
+    for the browser session and ``?tools=all`` shows them; with no link choice,
+    ``MAUDESIGNAL_DEMO_MODE=1`` hides them and ``MAUDESIGNAL_CLASSIC_TOOLS=1`` shows them.
     """
-    if st.query_params.get("tools") == "all":
-        st.session_state["classic_tools"] = True
-    return bool(st.session_state.get("classic_tools")) or (
-        os.environ.get("MAUDESIGNAL_CLASSIC_TOOLS") == "1"
-    )
+    choice = st.query_params.get("tools")
+    if choice in ("all", "demo"):
+        st.session_state["classic_tools"] = choice == "all"
+    if "classic_tools" in st.session_state:
+        return bool(st.session_state["classic_tools"])
+    if os.environ.get("MAUDESIGNAL_CLASSIC_TOOLS") == "1":
+        return True
+    if os.environ.get("MAUDESIGNAL_DEMO_MODE") == "1":
+        return False
+    return SHOW_ALL_PAGES_BY_DEFAULT
 
 
 def _render_app(db: Database) -> None:  # noqa: PLR0912

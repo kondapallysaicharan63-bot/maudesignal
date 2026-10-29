@@ -59,7 +59,7 @@ what a manufacturer would still do): [docs/VALIDATION_EVIDENCE.md](docs/VALIDATI
    is withheld too. The model gets one repair turn with the gate's values.
 5. **CAPA-need evidence pack.** The copilot can prepare the evidence (the
    supporting reports and a problem statement); a named person accepts or
-   rejects it on the Actions page. The model cannot.
+   rejects it in the Signals workspace (Evidence pack tab); the Audit page keeps the trail. The model cannot.
 6. **Evidence pack (PDF).** *Signal Evaluation & CAPA-need Evidence*, laid out
    like a controlled quality record: document control, signal evaluation,
    evidence table, the ISO 13485:2016 §8.5.2 sections left blank for the CAPA
@@ -91,7 +91,7 @@ guidance, 510(k) history and MAUDE). MaudeSignal differs in three ways:
 - **It reads scanned 510(k) documents with a two-read accuracy check.**
 - **It is open source and self-hostable** (MIT), on public FDA data only.
 
-## Real-run numbers (2026-10-28, third recording)
+## Real-run numbers (2026-10-28, fifth recording)
 
 From [`demo/transcripts/`](demo/transcripts/), [`demo/vision/`](demo/vision/),
 [`demo/dossier/`](demo/dossier/) and the hand-check
@@ -109,11 +109,11 @@ From [`demo/transcripts/`](demo/transcripts/), [`demo/vision/`](demo/vision/),
 | Evidence pack (PDF) | Muse Spark summary: 5 sentences shown, 0 withheld, in plain words (no "spike"); Muse Wonder review: 0 findings |
 | Report sources vs openFDA | 0 mismatches |
 
-Spoken questions: Charan's four text-to-speech clips were transcribed word for
+Spoken questions: Charan's text-to-speech clips (six recorded, four of them product questions) were transcribed word for
 word by Voice Transcribe and answered correctly (what changed, why ranked first,
 and the "50 injury reports" trap, which the copilot rejects: 33 reports, 0
-injuries). One clip asks "What came in overnight? Is anything worsening?" — the
-answer is correct, but the wording is not used in the video. The one incomplete
+injuries). One clip uses wording the project no longer uses; its answer is correct, but it
+is not used in the video. The one incomplete
 answer (06-trap) lost a true sentence because the gate read "August 31, 2026,
 all malfunction" as a count of 2026; the gate now treats a year after a month
 as a date (adversarial cases dt03–dt05).
@@ -131,7 +131,7 @@ as a date (adversarial cases dt03–dt05).
 
 | Step | Meta model / API | Why |
 |---|---|---|
-| Answering a question | **Muse Spark 1.3** (`muse-spark-1.3`) via the **Meta Model API** (OpenAI-compatible, `https://api.meta.ai/v1`) | Tool calling over 10 deterministic tools; **strict `json_schema` structured output** (sentences + typed claims, [`skills/safety-copilot`](skills/safety-copilot/SKILL.md)); a **repair turn** after a gate block, fed the gate's reasons and recomputed values |
+| Answering a question | **Muse Spark 1.3** (`muse-spark-1.3`) via the **Meta Model API** (OpenAI-compatible, `https://api.meta.ai/v1`) | Tool calling over 13 deterministic tools; **strict `json_schema` structured output** (sentences + typed claims, [`skills/safety-copilot`](skills/safety-copilot/SKILL.md)); a **repair turn** after a gate block, fed the gate's reasons and recomputed values |
 | Reading scanned FDA documents | **Muse Spark 1.3 image understanding** ([`skills/fda-document-reader`](skills/fda-document-reader/SKILL.md)) | 510(k) summary pages → structured fields with per-field legibility; two independent reads + openFDA + text layer decide VERIFIED / CONFLICT / UNVERIFIABLE |
 | Device-label camera | **SAM 3.1** (`sam-3.1`) + **Muse Spark 1.3 vision** | SAM locates the label in the photo, Spark reads the crop, the K-number / GTIN is checked against FDA |
 | Dossier narrative | **Muse Spark 1.3** ([`skills/dossier-narrative`](skills/dossier-narrative/SKILL.md)) | One-page summary drafted as claims and passed through the gate |
@@ -259,7 +259,7 @@ openFDA pipeline below predates the event. The file-by-file list is in
 
 ## Tests
 
-**701 unit tests pass, 77% line + branch coverage** (2026-10-28); all 21 test types
+**706 unit tests pass, 77% line + branch coverage** (2026-10-29); all 21 test types
 are reported in [docs/hackathon/TESTING.md](docs/hackathon/TESTING.md)
 (`pytest tests/unit`; CI also runs ruff, black and `mypy --strict` on Python
 3.11 and 3.12).

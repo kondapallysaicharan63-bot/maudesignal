@@ -84,15 +84,28 @@ class TestHackathonNav:
         expect(sidebar).to_contain_text("More tools")
         expect(sidebar.get_by_role("button", name="PSUR Reports", exact=False)).to_be_visible()
 
-    def test_public_demo_has_no_sidebar(self, browser: Any) -> None:
-        """Without ?tools=all (and without a key) only the five product pages show."""
+    def test_demo_mode_has_no_sidebar(self, browser: Any) -> None:
+        """With ?tools=demo (and without a key) only the product pages show."""
+        ctx = browser.new_context()
+        page = ctx.new_page()
+        page.goto(f"{BASE_URL}/?tools=demo", wait_until="networkidle")
+        page.wait_for_selector(TOPBAR_SELECTOR, timeout=30_000)
+        page.wait_for_timeout(2_000)
+        expect(page.locator(SIDEBAR_SELECTOR)).to_have_count(0)
+        expect(page.get_by_text("More tools", exact=False)).to_have_count(0)
+        ctx.close()
+
+    def test_full_website_by_default(self, browser: Any) -> None:
+        """Without a link choice every page is reachable: the sidebar lists More tools."""
+        from maudesignal.dashboard.app import SHOW_ALL_PAGES_BY_DEFAULT
+
         ctx = browser.new_context()
         page = ctx.new_page()
         page.goto(BASE_URL, wait_until="networkidle")
         page.wait_for_selector(TOPBAR_SELECTOR, timeout=30_000)
         page.wait_for_timeout(2_000)
-        expect(page.locator(SIDEBAR_SELECTOR)).to_have_count(0)
-        expect(page.get_by_text("More tools", exact=False)).to_have_count(0)
+        want = 1 if SHOW_ALL_PAGES_BY_DEFAULT else 0
+        expect(page.locator(SIDEBAR_SELECTOR)).to_have_count(want)
         ctx.close()
 
     @pytest.mark.parametrize("nav", ["Signals", "Copilot", "Vision", "Audit"])
@@ -237,6 +250,21 @@ class TestCopilot:
         )
         expect(panel).to_contain_text("Verified")
         expect(panel).to_contain_text(f"{code} has {true_count} reports.")
+
+    def test_gate_injury_count_shows_the_recomputed_number(
+        self, ms_page: Page, db: Database
+    ) -> None:
+        store = store_from_database(db)
+        code = sorted({r.product_code for r in store.records})[0]
+        _open(ms_page, "Copilot")
+        ms_page.get_by_role("tab", name="Try to fool the gate").click()
+        ms_page.wait_for_timeout(1_500)
+        _select(ms_page, "Event type", "Injury")
+        panel = ms_page.get_by_role("tabpanel").filter(has_text="Claim type").first
+        sentence = f"{code} has 50 Injury reports."
+        verdict = verify_sentence(sentence, [CountClaim(code, 50, "Injury")], store)
+        expect(panel).to_contain_text(sentence)
+        expect(panel).to_contain_text("Verified" if verdict.status == "pass" else "Withheld")
 
     def test_gate_cfr_section_matches_gate_verdict(self, ms_page: Page, db: Database) -> None:
         store = store_from_database(db)

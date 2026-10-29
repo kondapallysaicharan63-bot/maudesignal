@@ -13,7 +13,7 @@ Live, browsable version (private to the owner until shared): https://claude.ai/a
 | `maudesignal.css` | Component styles (`.ms-*` classes). Loads Newsreader, Geist, Geist Mono and Material Symbols from Google Fonts. |
 | `components/<Name>.html` | A standalone page per component. Open in a browser; the buttons bottom-right switch theme. |
 | `components/<Name>.md` | Usage guidelines per component: what to pass in, which tokens, do and don't. |
-| `components/OvernightDigest.html` | The reference overview page, all components together. |
+| `components/OvernightDigest.html` | The reference overview page (weekly digest), all components together; its figures are illustrative layout values. |
 
 ## Using it on a web page
 

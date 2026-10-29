@@ -55,6 +55,16 @@ FRAMING_LINE = (
 _PILL = {"pass": ("ok", "Verified"), "block": ("err", "Withheld")}
 
 
+#: Display names for tool ids whose wording the product no longer uses. The id stays
+#: in the Skill and in recorded runs; only the label on screen changes.
+_TOOL_LABELS = {"overnight_signals": "weekly_signals"}
+
+
+def tool_label(name: str) -> str:
+    """Name of a copilot tool as shown on screen."""
+    return _TOOL_LABELS.get(name, name)
+
+
 def short(text: str, limit: int) -> str:
     """Cut at a word boundary with an ellipsis (list labels)."""
     if len(text) <= limit:
@@ -152,8 +162,9 @@ def render_transcript(t: dict[str, Any]) -> None:
             st.caption(f"Evidence: {links}")
     fp, fin = t["first_pass"], t["final"]
     u = t["usage"]
+    tools = ", ".join(tool_label(c["name"]) for c in t["tool_calls"]) or "none"
     meta = (
-        f"Model `{t['model']}` · tools: {', '.join(c['name'] for c in t['tool_calls']) or 'none'}"
+        f"Model `{t['model']}` · tools: {tools}"
         f" · gate first pass {fp['passed']}/{fp['passed'] + fp['blocked']} sentences"
         f" → final {fin['passed']}/{fin['passed'] + fin['blocked']}"
         f"{' (after a repair turn)' if t['repaired'] else ''}"
@@ -167,7 +178,7 @@ def render_transcript(t: dict[str, Any]) -> None:
                 st.html(_sentence_html(s))
     with st.expander("Tool calls"):
         for c in t["tool_calls"]:
-            st.markdown(f"`{c['name']}` `{json.dumps(c['arguments'])}`")
+            st.markdown(f"`{tool_label(c['name'])}` `{json.dumps(c['arguments'])}`")
             st.code(c["result_preview"], language="json")
 
 
@@ -186,8 +197,12 @@ def _gate_playground(db: Database) -> None:
     sentence: str
     if kind == "Report count":
         pc = st.selectbox("Product code", codes)
+        et = st.selectbox("Event type", ["Any", "Injury", "Death", "Malfunction"])
         n = int(st.number_input("Claimed number of reports", min_value=0, value=50))
-        claim, sentence = CountClaim(pc, n), f"{pc} has {n} reports."
+        if et == "Any":
+            claim, sentence = CountClaim(pc, n), f"{pc} has {n} reports."
+        else:
+            claim, sentence = CountClaim(pc, n, et), f"{pc} has {n} {et} reports."
     elif kind == "Share of event type":
         pc = st.selectbox("Product code", codes)
         et = st.selectbox("Event type", ["Malfunction", "Injury", "Death"])

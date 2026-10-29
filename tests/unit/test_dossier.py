@@ -725,3 +725,30 @@ def test_empty_narrative_is_withheld_not_shown() -> None:
     section = gate_narrative(rec, EvidenceStore.from_iterables([], []), source="live")
     assert [s.status for s in section.sentences] == ["block"]
     assert "did not return a structured narrative" in section.sentences[0].reasons[0]
+
+
+def test_dossier_page_without_weasyprint_still_renders(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Streamlit Cloud without Pango: the pack is shown as HTML, the recorded PDF offered."""
+    from streamlit.testing.v1 import AppTest
+
+    import maudesignal.dossier.service as service
+
+    db = _db(tmp_path)
+    capa_id = _capa(db)
+    out = produce(db, capa_id=capa_id, narrative_dir=tmp_path, pdf=False)
+    (tmp_path / f"{out.doc_id}-draft.pdf").write_bytes(b"%PDF-1.7 recorded")
+
+    def no_weasyprint(html: str) -> bytes:
+        raise RuntimeError("WeasyPrint unavailable: cannot load library 'libpango-1.0-0'")
+
+    monkeypatch.setattr(service, "render_pdf", no_weasyprint)
+    monkeypatch.delenv("META_MODEL_API_KEY", raising=False)
+    monkeypatch.setenv("DOSSIER_TEST_DB", str(tmp_path / "d.db"))
+    monkeypatch.setenv("MAUDESIGNAL_DOSSIER_DIR", str(tmp_path))
+    at = AppTest.from_function(_page_script, default_timeout=60).run()
+    assert not at.exception
+    stats = " ".join(e.proto.body for e in at.get("html"))
+    assert out.doc_id in stats
+    assert any("could not be rendered here" in c.value for c in at.caption)

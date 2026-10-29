@@ -107,10 +107,10 @@ the real per-answer cost comes from the recorded runs (section 4).
 
 | Bucket | Proposed cap | How it is held |
 |---|---|---|
-| Recording runs (demo transcripts, vision, dossier) until the Nov 1 video | to be set after the first measured run: (measured cost per run) × planned re-runs | push-gated workflow |
+| Recording runs (demo transcripts, vision, dossier) until the video (recorded before the Oct 30 deadline) | to be set after the first measured run: (measured cost per run) × planned re-runs | push-gated workflow |
 | Public live demo, if a key is ever added to the deployed app | at most `MAUDESIGNAL_CAP_DAILY_USD` per day (default $10) × days live | spend guard |
 | Development and tuning calls | from the same measured per-answer cost | manual |
-| Reserve for video day (Nov 1) and submission (Nov 4) | keep a reserve, size set after the first measured run | not spent without Charan's yes |
+| Reserve for video day and the submission (Oct 30) | keep a reserve, size set after the first measured run | not spent without Charan's yes |
 
 Worst case for the public app at the default caps: $10 per day. Lower
 `MAUDESIGNAL_CAP_DAILY_USD` before adding a key to the deployed app if the

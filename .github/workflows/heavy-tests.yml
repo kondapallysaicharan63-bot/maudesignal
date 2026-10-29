@@ -1,0 +1,46 @@
+# HACKATHON-BUILT — scale and load tests (docs/hackathon/TESTING.md, types 10–12, 17).
+# Heavy, so they run on demand and weekly instead of on every push. No Meta calls:
+# the app runs keyless on the committed demo database.
+name: Heavy tests (scale, load)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "41 6 * * 0" # weekly, Sunday 06:41 UTC (runs from the default branch)
+
+jobs:
+  scale-load:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - name: Install package and Chromium
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -m playwright install --with-deps chromium
+      - name: Scale (seeded 1k → 100k records)
+        run: python scripts/scale_test.py --json scale_results.json
+      - name: Start the keyless demo app
+        run: |
+          nohup streamlit run streamlit_app.py --server.headless true --server.port 8501 \
+            > streamlit.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:8501/ > /dev/null && break
+            sleep 2
+          done
+      - name: Load and stress (1 → 40 simultaneous browser sessions)
+        run: python scripts/load_test.py --levels 1 5 10 20 40 --json load_results.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: heavy-test-results
+          path: |
+            scale_results.json
+            load_results.json
+            streamlit.log
+          retention-days: 30

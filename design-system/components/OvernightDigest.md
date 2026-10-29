@@ -1,4 +1,6 @@
-# OvernightDigest
+# OvernightDigest (weekly digest layout sample)
+
+Figures on this page are illustrative layout values, not data; the app shows real ones.
 
 The overview page: Bar and dateline, then a 12-column bento grid.
 

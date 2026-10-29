@@ -44,7 +44,7 @@ records and papers, each tied to the stored FDA record.
 
 | Check | Result | Source |
 |---|---|---|
-| Unit tests | 701 pass; 77% line + branch coverage (run 2026-10-28) | `pytest tests/unit --cov=src/maudesignal --cov-branch` |
+| Unit tests | 706 pass; 77% line + branch coverage (run 2026-10-29) | `pytest tests/unit --cov=src/maudesignal --cov-branch` |
 | CI | ruff, black, `mypy --strict`, tests on Python 3.11 and 3.12 | `.github/workflows/ci.yml` |
 | Adversarial gate set | 112 cases (70 must be withheld, 42 must pass): 0 false passes, 0 false blocks | `tests/fixtures/gate/adversarial.jsonl`, `tests/unit/test_gate.py` |
 | Gate on real model output | fifth 2026-10-28 recording (run 40764365995), 28 answers (6 spoken): 63/65 sentences passed first time (96.9%), 64/65 after repair; the one withheld sentence was true (a false block: a year read as a count, fixed with cases dt03–dt05); 0 unparsed, 0 token-cap stops. Earlier runs that day: 49/50 (fourth), 52/53 (third, 1 unparsed), 45/48 (second), and the first exposed unparsed replies counted as passed (fixed) | `docs/hackathon/HAND_CHECK.md` |
@@ -54,7 +54,7 @@ records and papers, each tied to the stored FDA record.
 | Label camera | 7 of 7 photos read (run 40792998780): CareSens N, both HoMedics thermometers and Welch Allyn 802 LTR read correctly; thermometers matched to product code FLL; NOMAD Pro 2 left for a person to pick (device name only partly legible); Spot Vital Signs (label rotated 90°) returned nothing; the Welch module was misread ("AEROSOL, VASCULAR AND PULMONARY EQUIPMENT" for "MEDICAL-CARDIO VASCULAR AND PULMONARY EQUIPMENT"), every field marked only partly legible and no product code assigned. No lot or serial stored; checked against each photo by Claude | `demo/vision/label-*.json`, `demo/vision/labels/` |
 | Audit-chain tamper test | editing any stored entry breaks the chain at that entry; detected in the database and in exported trails | `tests/unit/test_copilot_agent.py::test_audit_chain_detects_tampering`, `tests/unit/test_voice.py::test_audit_export_roundtrip_and_tamper_detection` |
 | Spend caps on live calls | $1 and 20 Meta calls per browser session, $10 per day; no call starts once a cap is reached; checked in the running app with the call cap at 0 | `tests/unit/test_spend.py`, `src/maudesignal/copilot/spend.py` |
-| Browser tests | Playwright tests of the five new pages against the keyless demo app; expected values computed from the demo database | `tests/e2e/test_08_hackathon_pages.py` |
+| Browser tests | Playwright tests of the product pages (Signals, Copilot, Vision, Audit) against the keyless demo app; expected values computed from the demo database | `tests/e2e/test_08_hackathon_pages.py` |
 | Report-source counts vs openFDA | stored counts compared with openFDA `count=report_source_code.exact` over the stored window, each run of the record workflow | `scripts/check_source_counts.py` → `docs/hackathon/SOURCE_COUNTS.md` |
 
 ## Known limits

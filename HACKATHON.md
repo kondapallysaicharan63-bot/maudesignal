@@ -15,7 +15,7 @@ Everything under `src/maudesignal/copilot/`, `src/maudesignal/gate/` and
 | `copilot/copilot.py` | Conversational safety copilot: plain-English questions → streamed, grounded answers |
 | `copilot/__init__.py` | Package exports |
 | `copilot/agent.py` | Muse Spark tool-use loop → structured answer (sentences + claims) → claim-level gate → one repair turn with the gate's recomputed values → unrepaired sentences withheld; every answer written to the audit trail |
-| `copilot/tools.py` | 6 deterministic tools the model calls: what changed this week, product summary, report search, report fetch, MDR deadline clock (21 CFR 803.50 / 803.53, advisory), CAPA-need evidence pack |
+| `copilot/tools.py` | 13 deterministic tools (first six listed here) the model calls: what changed this week, product summary, report search, report fetch, MDR deadline clock (21 CFR 803.50 / 803.53, advisory), CAPA-need evidence pack |
 | `copilot/actions.py` | CAPA-need evidence packs: audit-first, forward-only (`draft → approved / rejected`), only a named human can decide. Whether a CAPA is required is decided by the company's own CAPA-need form |
 | `copilot/transcript.py` | Records real Muse Spark runs so the keyless public demo replays them honestly |
 | `skills/safety-copilot/` | Versioned behavior contract (prompt, output schema, examples) for the copilot |
@@ -91,13 +91,13 @@ Small pre-existing changes: `Database.delete_external_sources`, `Database.list_r
 
 | File | What it is |
 |---|---|
-| `monitor/digest.py` (schema 1.1), `catalog/names.py` | Flagged codes ranked by a fixed, documented key; each rank carries a "why" sentence built from the detector's numbers; digest names the FDA device type and the brands on this window's reports. What changed page shows "Why it is ranked first"; the `overnight_signals` tool returns the ranking |
+| `monitor/digest.py` (schema 1.2), `catalog/names.py` | Flagged codes ranked by a fixed, documented key; each rank carries a "why" sentence built from the detector's numbers; digest names the FDA device type and the brands on this window's reports. The Signals workspace shows why each device type is flagged; the `overnight_signals` tool returns the ranking |
 | `copilot/voice.py`, `copilot/audit_export.py` | Each spoken question appends a hash-chained `voice.transcribed` entry (model, audio SHA-256, duration, text heard) linked to its `copilot.answer`; silence appends `voice.rejected`. Recording runs export their trail; the Actions page re-verifies and shows it |
-| `scripts/hand_check.py`, `docs/hackathon/HAND_CHECK.md` | 20-answer hand-check worksheet: gate pass rates computed from the recorded transcripts, every cited id looked up in stored records, a hand-verdict column per sentence |
+| `scripts/hand_check.py`, `docs/hackathon/HAND_CHECK.md` | Hand-check worksheet for every recorded answer: gate pass rates computed from the recorded transcripts, every cited id looked up in stored records, a hand-verdict column per sentence |
 | `vision/browser_fetch.py` | Headless-Chromium fallback for 510(k) PDFs that FDA refuses to plain HTTP clients; the recorder skips (not fails) a K-number whose PDF cannot be obtained |
 | `scripts/record_demo_transcripts.py`, `.github/workflows/copilot-record.yml` | 20 typed demo questions; one failed question no longer stops a run; commit step hardened |
 | `copilot/spend.py`, `dashboard/spend_ui.py` | Live-call caps per browser session ($1 and 20 Meta calls, whichever first) and per day ($10), configurable by env vars; a cap hit makes no call and shows the recorded answer; usage in the audit trail; quota in the sidebar |
-| `tests/e2e/test_08_hackathon_pages.py` | Playwright tests for the five new pages, expected values computed from the demo DB |
+| `tests/e2e/test_08_hackathon_pages.py` | Playwright tests for the product pages (Signals, Copilot, Vision, Audit), expected values computed from the demo DB |
 | `docs/hackathon/BUDGET.md`, `docs/hackathon/PRD.md` | $150 budget (prices from code, measured ledger) and feature status with evidence |
 
 Small pre-existing changes: `catalog/fetcher.py` no longer writes made-up names for

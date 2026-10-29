@@ -24,7 +24,7 @@ recorded run or a test in this repository (sources in brackets).
   `HACKATHON.md`).
 - **Live demo:** https://maudesignal-4vniqswm9ptaxqtf2iawox.streamlit.app/ (keyless: recorded
   Muse runs, no live model calls unless a key is set).
-- **Video:** _[link — to be recorded Nov 1]_
+- **Video:** _[link — Charan records it before the Oct 30, 11:15 PM PT deadline; a narrated screen walkthrough is ready to record over]_
 
 ## Meta models used
 
@@ -49,7 +49,7 @@ recorded run or a test in this repository (sources in brackets).
 - 510(k) summaries: 5 of 5 read; two reads agree on 80–100% of fields (100% on 4 of
   5), the rest are flagged for a person [`demo/vision/`].
 - Report sources vs openFDA: 0 mismatches [`docs/hackathon/SOURCE_COUNTS.md`].
-- Tests: 701 unit tests, 77% coverage; Playwright on every page and theme; all 21
+- Tests: 706 unit tests, 77% coverage; Playwright on every page and theme; all 21
   test types reported, with the external ones marked PENDING
   [`docs/hackathon/TESTING.md`].
 - Spend so far: about $8.35 of the $150 credit (estimates) [`docs/hackathon/BUDGET.md`].
@@ -68,7 +68,7 @@ Charan's v2 wording is kept everywhere else.
 | 0:12–0:30 | Stat card: "LLZ (imaging software): 19,970 FDA reports — 99.3% filed by manufacturers about their own devices" | "Device makers already know their own complaints — they're the ones who report them to FDA. What they can't easily see is what's happening to other companies' devices of the same type, and the few reports about their device filed by hospitals or users. That's buried in tens of thousands of reports." |
 | 0:30–0:50 | **Signals** workspace: the device-type list on the left, LLZ selected → "Reports suddenly increased 3.77×: 33 this week · 8.75 weekly mean before"; then select MYN or QIH → **Reports** tab → "Not filed by a manufacturer" (3 voluntary reports each) | "Monday morning. For the device types I chose, it compared this week with the last four. Reports suddenly increased for one type: 33 against a normal 9. And here are reports that weren't filed by the manufacturer." |
 | 0:50–1:15 | **Copilot**: voice question (Heard: …) → answer with Verified pills + FDA links | "I just ask. Meta's Voice Transcribe hears the question, Muse Spark looks through FDA reports, recalls, 510(k)s and papers — and every number and quote comes back tied to the exact FDA record." |
-| 1:15–1:50 | **Gate playground**: "LLZ had 50 injury reports" and "21 CFR 820.100" → Withheld with reasons | "If anything — the model or a colleague — states something the records don't support, it's withheld, with the reason: the records show 2 LLZ injury reports, and 820.100 was replaced this February. In our latest recording, 63 of 65 sentences matched the FDA records on the first try, and every answer was checked by hand against the records." |
+| 1:15–1:50 | **Gate playground**: "LLZ had 50 injury reports" and "21 CFR 820.100" → Withheld with reasons | "If anything — the model or a colleague — states something the records don't support, it's withheld, with the reason: the records show 2 LLZ injury reports, and 820.100 was replaced this February. In our latest recording, 63 of 65 sentences matched the FDA records on the first try, and a line-by-line check of every answer against the records found none wrong." |
 | 1:50–2:10 | **Vision**: 510(k) summary fields Verified / Conflict; label photo → SAM box → device found | "It also reads scanned FDA documents and device labels — Muse Spark reads, SAM finds the label — and anything unclear is flagged for a person, never guessed." |
 | 2:10–2:35 | Signals → LLZ → **Evidence pack** tab: PDF (Signal Evaluation & CAPA-need Evidence) and the Muse Wonder review side by side, then type name → Accept → **Audit**: "Hash chain intact" | "For the jump it prepares a CAPA-need evidence pack in a quality-record layout; Muse Wonder reviews it first. Whether a CAPA is needed is our decision, on our own form — I accept, and every step is logged." |
 | 2:35–2:55 | Architecture, 2 lines | "Built this week on four Meta models — Muse Spark, Muse Wonder, Voice Transcribe and SAM — on my open-source MaudeSignal pipeline. Live demo and code below." |

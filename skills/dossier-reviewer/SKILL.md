@@ -1,6 +1,6 @@
 # Skill: dossier-reviewer
 
-**Version:** 1.1.0 (HACKATHON-BUILT — Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026)
+**Version:** 1.1.1 (HACKATHON-BUILT — Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026)
 **Model:** Meta Muse Wonder (`muse-wonder-1.0`, Standard tier) via the Meta Model API
 **Consumers:** `maudesignal.dossier.review.review_dossier`
 
