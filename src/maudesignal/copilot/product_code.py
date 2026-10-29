@@ -2,71 +2,54 @@
 
 HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
-Why this exists: Meta Voice Transcribe regularly mishears the FDA product
-code LLZ as LLG or LNZ (see the user's own voice-note auto-transcript:
-"LNZ has 15 jury" for "LLZ had fifty injury"). A language model must NOT
-be asked to guess which code was meant — that guess is unverifiable and
-the citation gate cannot check it. This module is pure, deterministic
-string logic, run *before* the agent query is sent:
+Why this exists: Meta Voice Transcribe sometimes mishears an FDA product code
+(LLZ heard as LLG or LLC). A language model must NOT be asked to guess which code
+was meant: that guess is unverifiable and the claim gate cannot check it. This
+module is pure string logic, run before the question reaches the agent.
 
-- a token that IS a known code is used unchanged, no suggestion;
-- a token that is exactly 1 Levenshtein edit away from exactly ONE known
-  code is corrected to that code, and both forms are shown on screen;
-- anything else (distance > 1, or a tie at distance 1) is NOT auto-corrected:
-  the heard code is shown alone and the analyst is asked to clarify.
+Rules, in order:
 
-Known-code vocabulary (documented, not invented):
-- Demo DB catalog (``data/demo/maudesignal_demo.db``, device_catalog):
-  JAK, LLZ, MYN, POK, QIH. These are the codes with records on file.
-- Seed list (``src/maudesignal/catalog/fetcher.py``, ``_SEED_PRODUCT_CODES``):
-  QAS is included from that list.
-- Voice-task brief (2026-10-29): DQK and OEB are included as named in the
-  brief, even though the demo DB has no records for them yet. A corrected
-  question for such a code will still go through the citation gate, which
-  will block any count the stored records cannot support — the correction
-  never invents records.
-- Deliberately NOT in the vocabulary: other seed codes such as LLN and QFM.
-  Including LLN would make "LLG" tie at distance 1 between LLZ and LLN, so
-  the LLG → LLZ example in the task could never auto-correct. The
-  vocabulary here is the *correction* vocabulary, not the full FDA catalog;
-  adding a code later is a one-line change, and the tie rule then applies
-  to it automatically.
+1. Only code-shaped tokens are candidates: exactly three letters, written in
+   capitals in the transcript (``LLZ``). Ordinary words ("any", "the", "all",
+   "new", "Jan", "pos") are never candidates, so they are never rewritten and
+   never trigger a clarify line.
+2. A token that is itself a known code is never corrected. Known codes are the
+   codes stored in the demo database (device catalog and report rows) plus the
+   seed list in ``catalog/fetcher.py`` (``_SEED_PRODUCT_CODES``). There is no
+   hand-written list here.
+3. A candidate that is not known is corrected only when it is exactly one edit
+   from exactly one code *on file* (a code that has records in the demo
+   database). A seed code with no stored records is protected from being
+   rewritten (rule 2) but is not offered as a correction target, because
+   suggesting a code with nothing behind it does not help the analyst. Two close
+   codes on file is a tie: nothing is changed.
+4. Common regulatory acronyms (FDA, USA, MDR, PMA, CFR, UDI) are skipped.
+5. A code-shaped token that is more than one edit from every code is skipped and
+   the scan continues; if nothing else is found it is reported as not
+   recognised.
 
-Candidate extraction: a full sentence contains many 3-letter English words
-("DID", "HAD", "THE"), so scanning every 3-letter token would flag ordinary
-words as codes. A candidate is therefore, in order:
-1. a token immediately before "devices" or immediately after "for"/"about"
-   (the pattern in every demo voice question, e.g. "for LLZ devices");
-2. otherwise the first token in the text that is a known code or exactly
-   1 edit away from a known code.
-If neither pattern finds a candidate, the result is "none" — no code is
-invented from an ordinary English word.
+The correction is a suggestion. In recorded runs it is applied and shown as a
+statement. In live mode the analyst chooses (see ``copilot/voice.py``).
 """
 
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-# Correction vocabulary, in the order documented above. Sorted in the
-# module docstring order is not required; keep this list explicit so a
-# reviewer can see exactly what a correction can produce.
-KNOWN_PRODUCT_CODES: tuple[str, ...] = (
-    "LLZ",
-    "QIH",
-    "MYN",
-    "POK",
-    "QAS",
-    "DQK",
-    "JAK",
-    "OEB",
-)
+if TYPE_CHECKING:
+    from maudesignal.storage.database import Database
 
-_TOKEN_RE = re.compile(r"\b([A-Za-z]{3})\b")
-_CONTEXT_RE = re.compile(
-    r"\b([A-Za-z]{3})\s+devices?\b|\bfor\s+([A-Za-z]{3})\b|\babout\s+([A-Za-z]{3})\b",
-    re.IGNORECASE,
-)
+# Exactly three capital letters standing alone: LLZ, not "The" or "any".
+_CODE_SHAPED_RE = re.compile(r"(?<![A-Za-z])[A-Z]{3}(?![A-Za-z])")
+
+
+# Regulatory acronyms that are three capitals but never a product code in a question.
+# Not a list of product codes (rule 2 forbids a hand list of those); it only keeps
+# "What did the FDA say?" from showing a confusing "product code not recognised" line.
+_NOT_CODES = frozenset({"FDA", "USA", "MDR", "PMA", "CFR", "UDI"})
 
 
 def levenshtein_distance(a: str, b: str) -> int:
@@ -87,75 +70,125 @@ def levenshtein_distance(a: str, b: str) -> int:
 
 
 @dataclass(frozen=True)
+class CodeSets:
+    """The product codes a check works against.
+
+    Attributes:
+        on_file: Codes with records in the demo database; the only correction targets.
+        known: Every real code the system knows (``on_file`` plus the seed list);
+            a token in this set is never rewritten.
+    """
+
+    on_file: frozenset[str]
+    known: frozenset[str]
+
+    @classmethod
+    def of(cls, on_file: Iterable[str], extra_known: Iterable[str] = ()) -> CodeSets:
+        """Build from codes on file plus extra known (seed) codes."""
+        filed = frozenset(c.upper() for c in on_file)
+        return cls(on_file=filed, known=filed | frozenset(c.upper() for c in extra_known))
+
+
+def code_sets_from_db(db: Database) -> CodeSets:
+    """Known codes from the database's device catalog, stored report rows and the seed list."""
+    from maudesignal.catalog.fetcher import _SEED_PRODUCT_CODES
+
+    on_file = {d.product_code for d in db.list_catalog_devices()} | set(db.list_product_codes())
+    return CodeSets.of(on_file, _SEED_PRODUCT_CODES)
+
+
+@dataclass(frozen=True)
 class ProductCodeCheck:
     """Result of checking one transcribed question for a product code."""
 
     heard_code: str | None
     suggested_code: str | None
     used_code: str | None
-    # "none" | "known" | "corrected" | "ambiguous" | "unknown"
+    # "none" | "known" | "corrected" | "ambiguous" | "unknown"; the voice layer records
+    # "declined" when the analyst chose to ask as heard instead of the suggestion.
     status: str
+    # The question with the suggestion applied (equals the input unless "corrected").
     corrected_text: str
 
     @property
     def display(self) -> str | None:
-        """On-screen line, or None when no code was found.
+        """On-screen statement, or None when no code was found."""
+        return describe_check(self.heard_code, self.suggested_code, self.used_code, self.status)
 
-        Always shows both forms when a correction happened, e.g.
-        "Heard: LLG → did you mean LLZ?" — never the corrected code alone.
-        """
-        if self.heard_code is None:
-            return None
-        if self.status == "corrected" and self.suggested_code:
-            return f"Heard: {self.heard_code} → did you mean {self.suggested_code}?"
-        return f"Heard: {self.heard_code}"
+    @property
+    def needs_confirmation(self) -> bool:
+        """True when live mode must ask the analyst before using the suggestion."""
+        return self.status == "corrected" and self.suggested_code is not None
 
 
-def _candidate(text: str) -> str | None:
-    """Pick the product-code candidate token from a transcript, or None."""
-    for match in _CONTEXT_RE.finditer(text):
-        for group in match.groups():
-            if group:
-                return group.upper()
-    upper = text.upper()
-    for match in _TOKEN_RE.finditer(upper):
-        token = match.group(1)
-        if token in KNOWN_PRODUCT_CODES:
-            return token
-        distances = [levenshtein_distance(token, code) for code in KNOWN_PRODUCT_CODES]
-        if min(distances) == 1:
-            return token
-    return None
+def describe_check(
+    heard: str | None, suggested: str | None, used: str | None, status: str | None
+) -> str | None:
+    """One statement (not a question) describing what was heard and what was asked.
+
+    Shared by live and recorded runs so both read the same way.
+    """
+    if not heard:
+        return None
+    if suggested and used and used == suggested and heard != suggested:
+        return (
+            f"Heard {heard}; asked about {suggested} "
+            "(one letter different; the only close code on file)."
+        )
+    if status == "declined":
+        return f"Heard {heard}; the suggested code {suggested or ''} was declined, asked as heard."
+    if status == "ambiguous":
+        return f"Heard {heard}; two codes on file are one letter away, so it was asked as heard."
+    if status == "unknown":
+        return f"Heard {heard}; product code not recognised, asked as heard."
+    if used:
+        return f"Product code: {used}."
+    return f"Heard {heard}."
 
 
-def check_product_code(
-    text: str, *, known_codes: tuple[str, ...] = KNOWN_PRODUCT_CODES
-) -> ProductCodeCheck:
+def confirm_prompt(check: ProductCodeCheck) -> tuple[str, str, str] | None:
+    """Live-mode confirm step: (question, label for the suggestion, label for as heard).
+
+    Returns None when no confirmation is needed. Nothing is sent to the model until
+    the analyst picks one of the two labels.
+    """
+    if not check.needs_confirmation or check.suggested_code is None:
+        return None
+    heard, suggested = check.heard_code or "", check.suggested_code
+    return (
+        f"Heard {heard}. Did you mean {suggested}?",
+        f"Ask about {suggested}",
+        f"Ask as heard ({heard})",
+    )
+
+
+def check_product_code(text: str, codes: CodeSets) -> ProductCodeCheck:
     """Check a transcribed question for a product code.
 
     Args:
         text: The transcript text, verbatim from Voice Transcribe.
-        known_codes: Correction vocabulary (defaults to KNOWN_PRODUCT_CODES).
+        codes: Known and on-file codes (see ``code_sets_from_db``).
 
     Returns:
-        A ProductCodeCheck. ``corrected_text`` is the text to actually ask
-        the agent: identical to ``text`` unless status is "corrected", in
-        which case the first occurrence of the heard code is replaced by
-        the suggested code.
+        A ProductCodeCheck. ``corrected_text`` is identical to ``text`` unless the
+        status is "corrected", in which case the heard code is replaced by the suggestion.
     """
-    candidate = _candidate(text)
-    if candidate is None:
-        return ProductCodeCheck(None, None, None, "none", text)
-    if candidate in known_codes:
-        return ProductCodeCheck(candidate, None, candidate, "known", text)
-    distances = {code: levenshtein_distance(candidate, code) for code in known_codes}
-    best = min(distances.values())
-    if best > 1:
-        return ProductCodeCheck(candidate, None, candidate, "unknown", text)
-    winners = [code for code, d in distances.items() if d == best]
-    if len(winners) != 1:
-        # Tie at distance 1: do not guess. Show the heard code only.
-        return ProductCodeCheck(candidate, None, candidate, "ambiguous", text)
-    suggested = winners[0]
-    corrected = re.sub(rf"\b{candidate}\b", suggested, text, count=1, flags=re.IGNORECASE)
-    return ProductCodeCheck(candidate, suggested, suggested, "corrected", corrected)
+    first_far: str | None = None
+    for match in _CODE_SHAPED_RE.finditer(text):
+        token = match.group(0)
+        if token in _NOT_CODES and token not in codes.known:
+            continue
+        if token in codes.known:
+            return ProductCodeCheck(token, None, token, "known", text)
+        close = sorted(c for c in codes.on_file if levenshtein_distance(token, c) == 1)
+        if len(close) == 1:
+            suggested = close[0]
+            fixed = text[: match.start()] + suggested + text[match.end() :]
+            return ProductCodeCheck(token, suggested, suggested, "corrected", fixed)
+        if len(close) > 1:
+            return ProductCodeCheck(token, None, token, "ambiguous", text)
+        if first_far is None:
+            first_far = token
+    if first_far is not None:
+        return ProductCodeCheck(first_far, None, first_far, "unknown", text)
+    return ProductCodeCheck(None, None, None, "none", text)

@@ -25,14 +25,19 @@ import json
 import math
 import wave
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import httpx
 
 from maudesignal.common.exceptions import MaudeSignalError
-from maudesignal.copilot.product_code import ProductCodeCheck, check_product_code
+from maudesignal.copilot.product_code import (
+    CodeSets,
+    ProductCodeCheck,
+    check_product_code,
+    code_sets_from_db,
+)
 
 if TYPE_CHECKING:  # pragma: no cover
     from maudesignal.copilot.agent import CopilotAgent, CopilotResult
@@ -382,37 +387,30 @@ class MetaTranscriber:
         )
 
 
-def ask_by_voice(
+@dataclass(frozen=True)
+class PreparedVoiceQuestion:
+    """A transcribed clip whose product code has been checked; the model is not asked yet."""
+
+    transcript: Transcript
+    check: ProductCodeCheck
+    audio_sha256: str
+    audit_entry: dict[str, Any]
+
+
+def prepare_voice_question(
     transcriber: MetaTranscriber,
     agent: CopilotAgent,
     audio: Path | str | bytes,
     *,
     filename: str = "question.wav",
     on_transcribed: Callable[[Transcript], None] | None = None,
-) -> VoiceAnswer:
-    """Transcribe a spoken question, then ask the copilot the transcript text.
+    codes: CodeSets | None = None,
+) -> PreparedVoiceQuestion:
+    """Transcribe a clip and check its product code, without asking the copilot.
 
-    Args:
-        transcriber: Voice Transcribe client.
-        agent: The copilot (text only — audio never reaches the chat model).
-        audio: Path to a WAV file, or the WAV bytes (e.g. from ``st.audio_input``).
-        filename: Name used for validation/upload when ``audio`` is bytes.
-        on_transcribed: Called with the transcript right after transcription and
-            before the copilot is asked (the dashboard counts the call against
-            its spend caps here, so it is counted even if the answer is refused).
-
-    Returns:
-        The transcript (shown to the analyst) and the gated copilot result.
-
-    Raises:
-        AudioValidationError: Clip rejected locally.
-        VoiceTranscribeError: Transcription failed or nothing intelligible was heard
-            (the model is not called in either case).
-
-    Each transcribed clip appends a ``voice.transcribed`` entry (model, audio
-    SHA-256, duration, the exact text heard, and the entity id of the
-    ``copilot.answer`` entry that follows) to the hash-chained audit trail; a
-    clip with no recognised speech appends ``voice.rejected``.
+    Live mode uses this so a corrected product code can be confirmed by the analyst
+    before anything is sent to the model. Arguments and errors are those of
+    ``ask_by_voice``; a clip with no recognised speech appends ``voice.rejected``.
     """
     if isinstance(audio, bytes):
         data = audio
@@ -424,7 +422,7 @@ def ask_by_voice(
         on_transcribed(transcript)
     audio_sha256 = hashlib.sha256(data).hexdigest()
     db = agent.context.db
-    entry = {
+    entry: dict[str, Any] = {
         "model": transcriber.model,
         "audio_sha256": audio_sha256,
         "audio_seconds": transcript.duration_s,
@@ -441,37 +439,99 @@ def ask_by_voice(
             payload={**entry, "reason": "no speech recognised; the model was not called"},
         )
         raise VoiceTranscribeError("no speech was recognised in the recording")
-    # Deterministic product-code check BEFORE the agent is asked: a misheard
-    # code (LLG/LNZ for LLZ) is corrected only by the 1-edit-unique rule in
-    # product_code.py — never by model guesswork. The verbatim transcript
-    # stays in the audit trail and in the voice block; only the question
-    # actually sent to the agent uses the corrected text.
-    from dataclasses import replace as _replace
+    check = check_product_code(transcript.text, codes or code_sets_from_db(db))
+    return PreparedVoiceQuestion(transcript, check, audio_sha256, entry)
 
-    code_check: ProductCodeCheck = check_product_code(transcript.text)
-    if code_check.heard_code is not None:
-        transcript = _replace(
+
+def answer_prepared(
+    transcriber_model: str,
+    agent: CopilotAgent,
+    prepared: PreparedVoiceQuestion,
+    *,
+    use_suggestion: bool,
+) -> VoiceAnswer:
+    """Ask the copilot a prepared question, with or without the suggested product code.
+
+    Args:
+        transcriber_model: Model name recorded in the audit trail.
+        agent: The copilot.
+        prepared: Result of ``prepare_voice_question``.
+        use_suggestion: Replace the heard code by the suggested one. When False the
+            question is asked exactly as transcribed.
+
+    Returns:
+        The transcript (with the heard / suggested / used code) and the gated result.
+    """
+    check, transcript, entry = prepared.check, prepared.transcript, dict(prepared.audit_entry)
+    apply = use_suggestion and check.status == "corrected"
+    # "declined": a correction was suggested and the analyst chose to ask as heard.
+    status = "declined" if check.status == "corrected" and not use_suggestion else check.status
+    question = check.corrected_text if apply else transcript.text
+    if check.heard_code is not None:
+        used = check.suggested_code if apply else check.heard_code
+        transcript = replace(
             transcript,
-            heard_code=code_check.heard_code,
-            suggested_code=code_check.suggested_code,
-            used_code=code_check.used_code,
-            product_code_status=code_check.status,
+            heard_code=check.heard_code,
+            suggested_code=check.suggested_code,
+            used_code=used,
+            product_code_status=status,
         )
         entry.update(
             {
-                "heard_code": code_check.heard_code,
-                "suggested_code": code_check.suggested_code,
-                "used_code": code_check.used_code,
-                "product_code_status": code_check.status,
+                "heard_code": check.heard_code,
+                "suggested_code": check.suggested_code,
+                "used_code": used,
+                "product_code_status": status,
             }
         )
-    question_to_ask = code_check.corrected_text
     # What was heard goes into the chain before the answer, linked by entity id,
     # so a reviewer can tie each spoken question to the copilot.answer it produced.
-    db.append_audit(
-        actor=f"voice:{transcriber.model}",
+    agent.context.db.append_audit(
+        actor=f"voice:{transcriber_model}",
         action="voice.transcribed",
-        entity_id=f"V-{audio_sha256[:16]}",
-        payload={**entry, "question_entity_id": agent.question_entity_id(question_to_ask)},
+        entity_id=f"V-{prepared.audio_sha256[:16]}",
+        payload={**entry, "question_entity_id": agent.question_entity_id(question)},
     )
-    return VoiceAnswer(transcript=transcript, result=agent.ask(question_to_ask))
+    return VoiceAnswer(transcript=transcript, result=agent.ask(question))
+
+
+def ask_by_voice(
+    transcriber: MetaTranscriber,
+    agent: CopilotAgent,
+    audio: Path | str | bytes,
+    *,
+    filename: str = "question.wav",
+    on_transcribed: Callable[[Transcript], None] | None = None,
+    apply_correction: bool = True,
+) -> VoiceAnswer:
+    """Transcribe a spoken question, then ask the copilot the transcript text.
+
+    Args:
+        transcriber: Voice Transcribe client.
+        agent: The copilot (text only — audio never reaches the chat model).
+        audio: Path to a WAV file, or the WAV bytes (e.g. from ``st.audio_input``).
+        filename: Name used for validation/upload when ``audio`` is bytes.
+        on_transcribed: Called with the transcript right after transcription and
+            before the copilot is asked (the dashboard counts the call against
+            its spend caps here, so it is counted even if the answer is refused).
+        apply_correction: Apply a one-letter product-code correction (recorded runs).
+            Interactive callers use ``prepare_voice_question`` and ``answer_prepared``
+            so the analyst decides first.
+
+    Returns:
+        The transcript (shown to the analyst) and the gated copilot result.
+
+    Raises:
+        AudioValidationError: Clip rejected locally.
+        VoiceTranscribeError: Transcription failed or nothing intelligible was heard
+            (the model is not called in either case).
+
+    Each transcribed clip appends a ``voice.transcribed`` entry (model, audio
+    SHA-256, duration, the exact text heard, product-code check and the entity id of
+    the ``copilot.answer`` entry that follows) to the hash-chained audit trail; a
+    clip with no recognised speech appends ``voice.rejected``.
+    """
+    prepared = prepare_voice_question(
+        transcriber, agent, audio, filename=filename, on_transcribed=on_transcribed
+    )
+    return answer_prepared(transcriber.model, agent, prepared, use_suggestion=apply_correction)
