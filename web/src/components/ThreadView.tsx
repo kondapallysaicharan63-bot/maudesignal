@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { chipState, fmtDate, resolveClaim, type ChipState } from '../claims'
 import { Icon } from '../icons'
 import type { Evidence, Sentence, Thread } from '../types'
@@ -11,7 +11,7 @@ const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matc
 
 /** Reveals `words` one at a time (streaming look). Instant with prefers-reduced-motion or when skipped. */
 function useWordReveal(total: number, runKey: string, instant: boolean): number {
-  const [n, setN] = useState(instant ? total : 0)
+  const [n, setN] = useState(instant || reduced() ? total : 0)
   useEffect(() => {
     if (instant || reduced()) {
       setN(total)
@@ -104,20 +104,47 @@ function EvidencePanel({ s, ev }: { s: Sentence; ev: Evidence }) {
   )
 }
 
-function SentenceLine({ s, ev, instant, onDone }: { s: Sentence; ev: Evidence; instant: boolean; onDone?: () => void }) {
+export function SentenceLine({
+  s,
+  ev,
+  instant,
+  onDone,
+  focus = false,
+  id,
+}: {
+  s: Sentence
+  ev: Evidence
+  instant: boolean
+  onDone?: () => void
+  /** Highlighted and scrolled to (the withheld sentence the top strip points at). */
+  focus?: boolean
+  id?: string
+}) {
   const words = s.text.split(' ')
   const n = useWordReveal(words.length, s.text, instant)
   const done = n >= words.length
   const [hover, setHover] = useState(false)
-  const [pinned, setPinned] = useState(false)
+  const [pinned, setPinned] = useState(focus)
+  const ref = useRef<HTMLLIElement>(null)
   useEffect(() => {
     if (done && onDone) onDone()
   }, [done]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!focus) return
+    setPinned(true)
+    const t = window.setTimeout(() => ref.current?.scrollIntoView({ block: 'center' }), 60)
+    return () => window.clearTimeout(t)
+  }, [focus])
   const state = chipState(s)
   const c = CHIP[state]
   const open = hover || pinned
   return (
-    <li className="py-1.5">
+    <li
+      ref={ref}
+      id={id}
+      data-focus={focus ? 'true' : undefined}
+      className={focus ? 'my-1 rounded-md bg-critical-soft px-3 py-2 outline outline-2 outline-critical' : 'py-1.5'}
+    >
       <span className={`ws-wrap ${state === 'withheld' ? 'text-ink-3 line-through' : ''}`}>
         {words.slice(0, n).join(' ')}
       </span>
@@ -176,16 +203,26 @@ function FirstPass({ t }: { t: Thread }) {
   )
 }
 
-export function ThreadView({ t, ev, siblings, onThread }: {
+export function ThreadView({ t, ev, siblings, onThread, highlight = null, withheldNav, snapshot }: {
   t: Thread
   ev: Evidence
   siblings: Thread[]
   onThread: (id: string) => void
+  /** Index of the sentence to highlight (opened from the "withheld" button). */
+  highlight?: number | null
+  /** Position among all withheld sentences, with a way to the next one. */
+  withheldNav?: { pos: number; total: number; onNext: () => void }
+  /** Label for answers built from the demo database, e.g. "Demo snapshot · reports to 2026-08-31". */
+  snapshot?: string
 }) {
-  const instant = played.has(t.id)
+  const instant = played.has(t.id) || highlight !== null
   // Units: tool steps first, then sentences one after another.
   const [stage, setStage] = useState(instant || reduced() ? 1000 : 0)
   const [replay, setReplay] = useState(0)
+  // Opened from the "withheld" button while still streaming: show everything so the sentence exists.
+  useEffect(() => {
+    if (highlight !== null) setStage((s) => Math.max(s, 1000))
+  }, [highlight])
   useEffect(() => {
     if (stage >= t.tool_steps.length + t.sentences.length) played.add(t.id)
   }, [stage, t])
@@ -202,6 +239,25 @@ export function ThreadView({ t, ev, siblings, onThread }: {
 
   return (
     <div className="space-y-5">
+      {withheldNav && (
+        <div role="status" className="ms-banner ms-banner--info flex flex-wrap items-center justify-between gap-2 text-[15px]">
+          <span>
+            Withheld sentence <strong className="ms-num">{withheldNav.pos}</strong> of{' '}
+            <strong className="ms-num">{withheldNav.total}</strong>. The gate did not let it through; the reason is shown.
+          </span>
+          {withheldNav.total > 1 && (
+            <button type="button" className="ms-btn ms-btn--secondary" style={{ height: 36 }} onClick={withheldNav.onNext}>
+              Next withheld sentence
+            </button>
+          )}
+        </div>
+      )}
+      {snapshot && (
+        <p className="m-0">
+          <span className="ws-pill bg-warning-soft text-warning">{snapshot}</span>
+          <span className="ml-2 text-[13px] text-ink-3">Recorded against the demo database, not this week's openFDA data.</span>
+        </p>
+      )}
       {siblings.length > 1 && (
         <details className="text-[15px]">
           <summary className="cursor-pointer text-ink-2">
@@ -262,6 +318,8 @@ export function ThreadView({ t, ev, siblings, onThread }: {
             s={s}
             ev={ev}
             instant={instant}
+            focus={highlight === i}
+            id={`sentence-${i}`}
             onDone={() => setStage((c) => Math.max(c, t.tool_steps.length + i + 1))}
           />
         ))}
@@ -269,6 +327,7 @@ export function ThreadView({ t, ev, siblings, onThread }: {
       <FirstPass t={t} />
       <p className="m-0 text-[13px] text-ink-3">
         Stored run · {t.model} · {t.recorded_at_utc.slice(0, 10)} · replayed from a recording, no live model call
+        {snapshot ? ` · ${snapshot.toLowerCase()}` : ''}
       </p>
     </div>
   )

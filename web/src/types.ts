@@ -103,8 +103,30 @@ export interface Schedule {
   last_result: { date: string; headline?: string; flagged?: number; checked?: number } | null
 }
 
+export type InvestigationKind = 'weekly-investigator' | 'recall-sweep'
+
+export interface InvestigationGroup {
+  label: string
+  report_ids: string[]
+  count: number
+}
+
+/** One recorded agentic run (investigations.json; written by Track A's recorder, never by the exporter). */
+export interface InvestigationRun {
+  id: string
+  kind: InvestigationKind
+  product_code: string
+  trigger: string | Record<string, unknown> | null
+  recorded_at_utc: string
+  model: string
+  tool_steps: ToolStep[]
+  sentences: Sentence[]
+  groups: InvestigationGroup[]
+  protocol?: unknown
+}
+
 export interface Investigations {
-  investigations: unknown[]
+  investigations: InvestigationRun[]
   notes: string[]
 }
 
@@ -225,6 +247,7 @@ export interface Sweep {
     codes_checked: number
     errors: number
     as_of: string
+    source: string
     window: { current_start: string; current_end: string; baseline_start: string; baseline_end: string }
   }
   rows: SweepRow[]
@@ -261,18 +284,17 @@ export interface WorkspaceData {
 }
 
 export type WorkflowId =
+  | 'ai-sweep'
+  | 'check-device'
   | 'weekly-signals'
   | 'ask-copilot'
   | 'capa-need-evidence'
   | 'weekly-investigator'
   | 'recall-sweep'
   | 'vision'
-  | 'intake'
 
 export interface WorkflowDef {
   id: WorkflowId
   title: string
   blurb: string
-  /** Not implemented yet: shown as "coming soon", never faked. */
-  comingSoon?: boolean
 }

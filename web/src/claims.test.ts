@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { chipState, resolveClaim, sentenceResolves, sortReports } from './claims'
+import { chipState, resolveClaim, sentenceResolves, sortReports, withheldSentences } from './claims'
 import type { Evidence, Threads } from './types'
 
 const dir = resolve(__dirname, '../public/data')
@@ -39,6 +39,18 @@ describe('claim chips resolve against the built data', () => {
   it('no claim lists an id that is missing from evidence', () => {
     for (const t of threads.threads)
       for (const s of t.sentences) for (const c of s.claims) expect(resolveClaim(c, ev).missing).toEqual([])
+  })
+})
+
+describe('withheld sentences', () => {
+  it('lists exactly the sentences manifest.json counts, each pointing at a withheld sentence', () => {
+    const manifest = load<{ header: { sentences_withheld: number } }>('manifest.json')
+    const refs = withheldSentences(threads.threads)
+    expect(refs.length).toBe(manifest.header.sentences_withheld)
+    for (const r of refs) {
+      const s = threads.threads.find((t) => t.id === r.threadId)?.sentences[r.index]
+      expect(s?.status).toBe('block')
+    }
   })
 })
 

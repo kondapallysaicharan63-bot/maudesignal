@@ -1,6 +1,7 @@
-import { describeCron, WORKFLOWS } from '../data'
+import { describeCron, isoDay, demoSnapshotLabel, visibleWorkflows } from '../data'
+import { flaggedRows } from '../artifacts'
 import { Icon } from '../icons'
-import type { Brief, Schedule, Source, Threads, WorkflowId } from '../types'
+import type { Brief, InvestigationRun, Schedule, Source, Sweep, Threads, Vision, WorkflowId } from '../types'
 
 interface Props {
   open: boolean
@@ -9,7 +10,9 @@ interface Props {
   briefs: Brief[]
   sources: Source[]
   schedules: Schedule[]
-  recordedRuns: number
+  runs: InvestigationRun[]
+  vision: Vision
+  sweep: Sweep
   activeWorkflow: WorkflowId | null
   activeBrief: string | null
   isRead: (date: string) => boolean
@@ -24,7 +27,7 @@ function scheduleResult(s: Schedule): string {
   if (!r) return 'No result yet'
   if (r.flagged !== undefined && r.checked !== undefined)
     return `Last: ${r.flagged} flagged of ${r.checked} device types · ${r.date.slice(0, 10)}`
-  return `Newest brief: ${r.date}${r.headline ? ` · ${r.headline}` : ''}`
+  return `Newest brief: ${r.date} · demo snapshot`
 }
 
 export function Sidebar(p: Props) {
@@ -34,9 +37,14 @@ export function Sidebar(p: Props) {
       .filter((t) => t.tool_steps.length === 0 && t.sentences.every((s) => s.claims.length === 0))
       .map((t) => t.id),
   )
-  const counts = new Map(
+  const counts = new Map<string, number>(
     p.threads.workflows.map((w) => [w.id, w.thread_ids.filter((id) => !greeting.has(id)).length]),
   )
+  counts.set('ai-sweep', flaggedRows(p.sweep).length)
+  counts.set('vision', p.vision.k510.length + p.vision.labels.length)
+  for (const kind of ['weekly-investigator', 'recall-sweep'])
+    counts.set(kind, p.runs.filter((r) => r.kind === kind).length)
+  const workflows = visibleWorkflows(p.runs)
   return (
     <>
       {p.open && (
@@ -68,12 +76,11 @@ export function Sidebar(p: Props) {
           </button>
         </div>
 
-        <nav className="min-h-0 flex-1 overflow-y-auto px-2 pb-6" aria-label="Sections">
+        <nav className="min-h-0 flex-1 overflow-y-auto px-2 pb-24" aria-label="Sections">
           <h2 className="ws-heading">Workflows</h2>
           <ul className="m-0 list-none p-0">
-            {WORKFLOWS.map((w) => {
+            {workflows.map((w) => {
               const n = counts.get(w.id)
-              const runs = w.id === 'weekly-investigator' || w.id === 'recall-sweep' ? p.recordedRuns : null
               return (
                 <li key={w.id}>
                   <button
@@ -82,20 +89,18 @@ export function Sidebar(p: Props) {
                     onClick={() => p.onWorkflow(w.id)}
                   >
                     <span className="min-w-0">{w.title}</span>
-                    {w.comingSoon ? (
-                      <span className="ws-pill bg-sunk text-ink-2">coming soon</span>
-                    ) : n !== undefined ? (
-                      <span className="ms-num shrink-0 text-[14px] text-ink-3">{n}</span>
-                    ) : runs !== null ? (
-                      <span className="shrink-0 text-[14px] text-ink-3">{runs === 0 ? 'no runs yet' : runs}</span>
-                    ) : null}
+                    {n !== undefined && (
+                      <span className="ms-num shrink-0 text-[14px] text-ink-3">
+                        {w.id === 'ai-sweep' ? `${n} flagged` : n}
+                      </span>
+                    )}
                   </button>
                 </li>
               )
             })}
           </ul>
 
-          <h2 className="ws-heading">Daily briefs</h2>
+          <h2 className="ws-heading">Daily briefs · demo snapshot</h2>
           {p.briefs.length === 0 ? (
             <p className="px-3 text-[15px] text-ink-3">No briefs stored yet.</p>
           ) : (
@@ -109,7 +114,9 @@ export function Sidebar(p: Props) {
                   >
                     <span className="min-w-0">
                       <span className="ms-num block">{b.date}</span>
-                      <span className="block truncate text-[14px] text-ink-3">{b.headline}</span>
+                      <span className="block truncate text-[14px] text-ink-3">
+                        Demo snapshot · week {isoDay(b.window.current_start)} to {isoDay(b.window.current_end)}
+                      </span>
                     </span>
                     {!p.isRead(b.date) && <span className="ws-dot" role="img" aria-label="unread" />}
                   </button>
@@ -129,7 +136,7 @@ export function Sidebar(p: Props) {
             ))}
           </ul>
 
-          <h2 className="ws-heading">Sources</h2>
+          <h2 className="ws-heading">Sources · demo database</h2>
           <ul className="m-0 list-none p-0 px-3">
             {p.sources.map((s) => (
               <li key={s.id} className="flex justify-between gap-3 py-[3px] text-[15px]">
@@ -139,7 +146,8 @@ export function Sidebar(p: Props) {
             ))}
           </ul>
           <p className="px-3 pt-2 text-[13px] leading-snug text-ink-3">
-            Stored records. MHRA (UK) is regulator context only and never counted in a MAUDE number.
+            {demoSnapshotLabel(p.sources)}: stored records in the demo database, not live openFDA. MHRA (UK) is regulator
+            context only and never counted in a MAUDE number.
           </p>
         </nav>
       </aside>

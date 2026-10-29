@@ -54,6 +54,22 @@ export function sentenceResolves(s: Sentence, ev: Evidence): boolean {
   return s.claims.every((c) => c.status === 'pass' && resolveClaim(c, ev).missing.length === 0)
 }
 
+export interface WithheldRef {
+  threadId: string
+  /** Index into the thread's final `sentences`. */
+  index: number
+}
+
+/** Every withheld sentence of the final answers, in stored order (the same set manifest.json counts). */
+export function withheldSentences(threads: { id: string; sentences: Sentence[] }[]): WithheldRef[] {
+  const out: WithheldRef[] = []
+  for (const t of threads)
+    t.sentences.forEach((s, index) => {
+      if (s.status === 'block') out.push({ threadId: t.id, index })
+    })
+  return out
+}
+
 /** 20260825 -> 2026-08-25 */
 export function fmtDate(d: string): string {
   return /^\d{8}$/.test(d) ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}` : d

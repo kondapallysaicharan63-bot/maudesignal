@@ -1,5 +1,21 @@
 import { useEffect, useState } from 'react'
-import type { Audit, Brief, Dossier, Protocol, Sweep, Vision, Evidence, Investigations, Manifest, Schedule, Source, Threads, WorkspaceData, WorkflowDef } from './types'
+import type {
+  Audit,
+  Brief,
+  Dossier,
+  Evidence,
+  InvestigationRun,
+  Investigations,
+  Manifest,
+  Protocol,
+  Schedule,
+  Source,
+  Sweep,
+  Threads,
+  Vision,
+  WorkflowDef,
+  WorkspaceData,
+} from './types'
 
 const base = import.meta.env.BASE_URL
 
@@ -54,16 +70,29 @@ export function useWorkspaceData(): { data: WorkspaceData | null; error: string 
   return { data, error }
 }
 
+/** Where live questions run (the copilot calls the model there; the key stays on that server). */
+export const STREAMLIT_URL = 'https://maudesignal-4vniqswm9ptaxqtf2iawox.streamlit.app/'
+
 export const WORKFLOWS: WorkflowDef[] = [
+  {
+    id: 'ai-sweep',
+    title: 'AI device sweep',
+    blurb: "Every product code on FDA's AI-enabled device list, checked against openFDA. The newest real data in this workspace.",
+  },
+  {
+    id: 'check-device',
+    title: 'Check any device type',
+    blurb: 'Type any FDA product code. Your browser asks openFDA for counts and applies the same four rules. Nothing is sent to a MaudeSignal server.',
+  },
   {
     id: 'weekly-signals',
     title: 'What changed this week',
-    blurb: 'Which device types had a new kind of problem, more serious reports than usual, or a sudden rise in reports.',
+    blurb: 'Recorded answers about which device types had a new kind of problem, more serious reports than usual, or a sudden rise in reports.',
   },
   {
     id: 'ask-copilot',
     title: 'Ask the copilot',
-    blurb: 'Questions answered from stored records. Each sentence is checked before you see it.',
+    blurb: 'Recorded questions answered from stored records. Each sentence is checked before you see it.',
   },
   {
     id: 'capa-need-evidence',
@@ -74,27 +103,41 @@ export const WORKFLOWS: WorkflowDef[] = [
     id: 'weekly-investigator',
     title: 'Weekly investigator',
     blurb: 'Groups new reports for a flagged device type by kind of problem and checks recalls and 510(k)s.',
-    comingSoon: true,
   },
   {
     id: 'recall-sweep',
     title: 'Recall sweep',
     blurb: 'When a recall is posted, finds stored reports that describe the same problem.',
-    comingSoon: true,
   },
   {
     id: 'vision',
     title: 'Label & 510(k) vision',
-    blurb: 'Reads a 510(k) summary page or a device label photo and checks each field against openFDA.',
-    comingSoon: true,
-  },
-  {
-    id: 'intake',
-    title: 'Intake inbox',
-    blurb: 'Reports arriving from chat channels.',
-    comingSoon: true,
+    blurb: 'Stored readings of 510(k) summary pages and device label photos; each field is checked against openFDA where a source covers it.',
   },
 ]
+
+/** The two agentic workflows appear only once a recorded run of that kind exists (no placeholder before). */
+export function visibleWorkflows(runs: InvestigationRun[]): WorkflowDef[] {
+  const kinds = new Set<string>(runs.map((r) => r.kind))
+  return WORKFLOWS.filter((w) => (w.id === 'weekly-investigator' || w.id === 'recall-sweep' ? kinds.has(w.id) : true))
+}
+
+/** Workflows whose recorded answers were made against the demo database, not this week's openFDA. */
+export const DEMO_WORKFLOWS = ['weekly-signals', 'ask-copilot', 'capa-need-evidence']
+
+/** "2026-09-24" from "20260924"; other text is returned as is. */
+export function isoDay(d: string): string {
+  return /^\d{8}$/.test(d) ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}` : d
+}
+
+/**
+ * The label every view built from the demo database or the August digests carries, with the date
+ * the stored reports run to (newest date_received in the demo database, from sources.json).
+ */
+export function demoSnapshotLabel(sources: Source[]): string {
+  const maude = sources.find((s) => s.id === 'maude')
+  return maude?.last_refresh ? `Demo snapshot · reports to ${isoDay(maude.last_refresh)}` : 'Demo snapshot'
+}
 
 /** Plain-words reading of the two cron expressions the monitor uses; falls back to the raw text. */
 export function describeCron(cron: string | null): string {

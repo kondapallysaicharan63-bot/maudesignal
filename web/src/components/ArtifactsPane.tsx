@@ -5,6 +5,8 @@ import type { Thread, WorkspaceData } from '../types'
 import { AuditTab, CapaTab, ProtocolTab } from './artifacts/AuditCapaProtocol'
 import { BriefTab, DigestTab } from './artifacts/BriefTabs'
 import { DossierTab, VisionTab } from './artifacts/DossierVision'
+import { demoSnapshotLabel } from '../data'
+import type { VisionSel } from './VisionWorkflow'
 
 interface Props {
   open: boolean
@@ -16,11 +18,13 @@ interface Props {
   /** Tabs whose artifact this thread itself created (they get a dot). */
   produced: TabId[]
   briefDate: string | null
+  /** Reading the Vision workflow page asked to open (with a counter so the same one can be reopened). */
+  vision: (VisionSel & { nonce: number }) | null
   onBriefDate: (d: string) => void
   onClose: () => void
 }
 
-export function ArtifactsPane({ open, data, tab, onTab, thread, produced, briefDate, onBriefDate, onClose }: Props) {
+export function ArtifactsPane({ open, data, tab, onTab, thread, produced, briefDate, onBriefDate, vision, onClose }: Props) {
   const drafts = useMemo(() => capaDrafts(data.audit), [data.audit])
   const [pick, setPick] = useState<string | null>(null)
   const threadId = thread?.id ?? null
@@ -30,6 +34,10 @@ export function ArtifactsPane({ open, data, tab, onTab, thread, produced, briefD
   useEffect(() => {
     document.getElementById(`tab-${tab}`)?.scrollIntoView({ inline: 'nearest', block: 'nearest' })
   }, [tab, open])
+  // A new tab or a newly opened reading starts at the top of the panel.
+  useEffect(() => {
+    document.getElementById('artifact-panel')?.scrollTo({ top: 0 })
+  }, [tab, vision?.nonce])
   const activeRun = auditRunFor(data.audit, thread)?.run_label ?? null
 
   return (
@@ -83,12 +91,16 @@ export function ArtifactsPane({ open, data, tab, onTab, thread, produced, briefD
         id="artifact-panel"
         role="tabpanel"
         aria-labelledby={`tab-${tab}`}
-        className="min-h-0 flex-1 overflow-y-auto px-4 py-4"
+        className="min-h-0 flex-1 overflow-y-auto px-4 pb-24 pt-4"
       >
-        {tab === 'brief' && <BriefTab briefs={data.briefs} date={briefDate} onDate={onBriefDate} />}
-        {tab === 'digest' && <DigestTab sweep={data.sweep} brief={brief} />}
+        {tab === 'brief' && (
+          <BriefTab briefs={data.briefs} date={briefDate} onDate={onBriefDate} snapshot={demoSnapshotLabel(data.sources)} />
+        )}
+        {tab === 'digest' && <DigestTab sweep={data.sweep} brief={brief} snapshot={demoSnapshotLabel(data.sources)} />}
         {tab === 'dossier' && <DossierTab dossier={data.dossier} />}
-        {tab === 'vision' && <VisionTab vision={data.vision} />}
+        {tab === 'vision' && (
+          <VisionTab key={vision ? vision.nonce : 0} vision={data.vision} initial={vision ?? undefined} />
+        )}
         {tab === 'audit' && (
           <AuditTab audit={data.audit} activeRun={activeRun} generatedUtc={data.manifest.generated_utc} />
         )}

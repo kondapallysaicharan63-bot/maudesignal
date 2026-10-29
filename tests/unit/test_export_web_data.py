@@ -227,6 +227,28 @@ def test_no_forbidden_words_in_any_exported_json(out: Path) -> None:
         assert hit is None, f"{name}: {hit and hit.group(0)}"
 
 
+def test_parity_fixtures_are_current_and_cover_every_rule() -> None:
+    """The cases the TypeScript detector is tested on come from the Python code and are fresh."""
+    fresh = json.loads(json.dumps(exporter.parity_fixtures()))  # tuples become lists, as on disk
+    committed = json.loads(exporter.PARITY_FILE.read_text(encoding="utf-8"))
+    assert committed == fresh, "run: python3 scripts/export_web_data.py --parity-fixtures"
+    cases = fresh["classify"]
+    assert len(cases) >= 200
+    assert {c["expected"]["classification"] for c in cases} == {
+        "new_signal",
+        "severity_escalation",
+        "spike",
+        "stable",
+    }
+    triggers = {t for c in cases for t in c["expected"]["triggers"]}
+    assert triggers == {"new_signal", "severity_escalation", "spike"}
+    # boundaries: exactly three reports, exactly twice the weekly mean, exactly +15 points
+    assert any(c["expected"]["current_count"] == 3 for c in cases)
+    assert any(c["expected"]["spike_ratio"] == 2.0 for c in cases)
+    assert any(c["expected"]["severe_share_delta_pp"] == 15.0 for c in cases)
+    assert len(fresh["norm"]) >= 50 and len(fresh["windows"]) >= 30 and len(fresh["urls"]) >= 20
+
+
 def test_display_excluded_audit_run_is_not_exported_but_chain_still_checked(out: Path) -> None:
     labels = [r["run_label"] for r in load(out, "audit.json")["runs"]]
     assert "00-voice-main" not in labels and "typed" in labels

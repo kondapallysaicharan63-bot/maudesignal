@@ -11,6 +11,8 @@ interface Props {
   onToggleArtifacts: () => void
   onTheme: () => void
   onPalette: () => void
+  /** Opens the thread holding the first withheld sentence (omitted when none is stored). */
+  onWithheld?: () => void
 }
 
 const THEME_ICON = { system: 'auto', light: 'sun', dark: 'moon' } as const
@@ -65,7 +67,22 @@ export function Header(p: Props) {
             <span className="ws-wrap">
               Every sentence checked against stored source records ·{' '}
               <strong className="ms-num">{h.claims_verified}</strong> claims verified ·{' '}
-              <strong className="ms-num">{h.sentences_withheld}</strong> {h.sentences_withheld === 1 ? 'sentence' : 'sentences'} withheld
+              {p.onWithheld && h.sentences_withheld > 0 ? (
+                <button
+                  type="button"
+                  onClick={p.onWithheld}
+                  className="inline-flex min-h-8 items-center rounded-xs border border-rule-strong bg-surface px-2 font-semibold text-ink underline decoration-dotted underline-offset-4 hover:bg-paper"
+                  aria-label={`${h.sentences_withheld} ${h.sentences_withheld === 1 ? 'sentence' : 'sentences'} withheld: open the withheld sentence`}
+                >
+                  <span className="ms-num">{h.sentences_withheld}</span>&nbsp;
+                  {h.sentences_withheld === 1 ? 'sentence' : 'sentences'} withheld
+                </button>
+              ) : (
+                <>
+                  <strong className="ms-num">{h.sentences_withheld}</strong>{' '}
+                  {h.sentences_withheld === 1 ? 'sentence' : 'sentences'} withheld
+                </>
+              )}
             </span>
             {h.audit_chain_ok ? (
               <span className="ms-chip ms-chip--ok">

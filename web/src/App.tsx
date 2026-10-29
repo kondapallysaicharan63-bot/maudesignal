@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { producedTabs, relatedTabs, type TabId } from './artifacts'
 import { ArtifactsPane } from './components/ArtifactsPane'
-import { ChatPane, type View } from './components/ChatPane'
+import { ChatPane, type View, type WithheldNav } from './components/ChatPane'
 import { CommandPalette } from './components/CommandPalette'
 import { Header } from './components/Header'
 import { Sidebar } from './components/Sidebar'
-import { useWorkspaceData } from './data'
+import type { VisionSel } from './components/VisionWorkflow'
+import { withheldSentences } from './claims'
+import { useWorkspaceData, visibleWorkflows } from './data'
 import { useReadBriefs, useTheme } from './storage'
 import type { WorkflowId } from './types'
 
@@ -21,7 +23,11 @@ export default function App() {
   const [collapsed, setCollapsed] = useState(false) // desktop sidebar
   const [artifacts, setArtifacts] = useState(isDesktop)
   const [palette, setPalette] = useState(false)
-  const [tab, setTab] = useState<TabId>('brief')
+  // The newest real data (the AI device sweep) is what the artifacts pane opens on.
+  const [tab, setTab] = useState<TabId>('digest')
+  // Which withheld sentence the top strip opened (index into the list of all withheld sentences).
+  const [wIdx, setWIdx] = useState<number | null>(null)
+  const [visionSel, setVisionSel] = useState<(VisionSel & { nonce: number }) | null>(null)
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -34,14 +40,34 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  const withheldRefs = useMemo(() => (data ? withheldSentences(data.threads.threads) : []), [data])
+
   const toggleSidebar = () => {
     if (window.matchMedia('(min-width: 768px)').matches) setCollapsed((c) => !c)
     else setDrawer((o) => !o)
   }
+  const openThread = useCallback((id: string) => {
+    setWIdx(null)
+    setView({ kind: 'thread', id })
+  }, [])
   const openWorkflow = (id: WorkflowId) => {
-    // A workflow with stored threads opens its first thread; the others show their "coming soon" page.
+    setWIdx(null)
+    // A workflow with stored threads opens its first thread; the others open their own page.
     const first = data?.threads.workflows.find((w) => w.id === id)?.thread_ids[0]
     setView(first ? { kind: 'thread', id: first } : { kind: 'workflow', id })
+    if (id === 'vision') setTab('vision')
+    if (id === 'ai-sweep') setTab('digest')
+    setDrawer(false)
+  }
+  const openRun = (id: string) => {
+    setWIdx(null)
+    setView({ kind: 'run', id })
+  }
+  const openWithheld = (i: number) => {
+    const ref = withheldRefs[i]
+    if (!ref) return
+    setWIdx(i)
+    setView({ kind: 'thread', id: ref.threadId })
     setDrawer(false)
   }
   const openBrief = (date: string) => {
@@ -50,6 +76,11 @@ export default function App() {
     markRead(date)
     setArtifacts(true)
     setDrawer(false)
+  }
+  const openVision = (sel: VisionSel) => {
+    setVisionSel((cur) => ({ ...sel, nonce: (cur?.nonce ?? 0) + 1 }))
+    setTab('vision')
+    setArtifacts(true)
   }
 
   const thread = (view.kind === 'thread' && data?.threads.threads.find((t) => t.id === view.id)) || null
@@ -77,13 +108,25 @@ export default function App() {
       </div>
     )
 
-  const recordedRuns = data?.investigations.investigations.length ?? 0
+  const runs = data?.investigations.investigations ?? []
   const activeWorkflow: WorkflowId | null =
     view.kind === 'workflow'
       ? view.id
-      : view.kind === 'thread'
-        ? ((data?.threads.threads.find((t) => t.id === view.id)?.workflow as WorkflowId | undefined) ?? null)
-        : null
+      : view.kind === 'run'
+        ? (runs.find((r) => r.id === view.id)?.kind ?? null)
+        : view.kind === 'thread'
+          ? ((data?.threads.threads.find((t) => t.id === view.id)?.workflow as WorkflowId | undefined) ?? null)
+          : null
+
+  const withheld: WithheldNav | null =
+    wIdx !== null && withheldRefs[wIdx]
+      ? {
+          highlight: withheldRefs[wIdx],
+          pos: wIdx + 1,
+          total: withheldRefs.length,
+          onNext: () => openWithheld((wIdx + 1) % withheldRefs.length),
+        }
+      : null
 
   return (
     <div className="flex h-full flex-col">
@@ -96,6 +139,7 @@ export default function App() {
         onToggleArtifacts={() => setArtifacts((o) => !o)}
         onTheme={next}
         onPalette={() => setPalette(true)}
+        onWithheld={withheldRefs.length > 0 ? () => openWithheld(0) : undefined}
       />
       {data && (
         <div className="flex min-h-0 flex-1">
@@ -106,11 +150,14 @@ export default function App() {
             briefs={data.briefs}
             sources={data.sources}
             schedules={data.schedules}
-            recordedRuns={recordedRuns}
+            runs={runs}
+            vision={data.vision}
+            sweep={data.sweep}
             activeWorkflow={activeWorkflow}
             activeBrief={briefDate}
             isRead={isRead}
             onNewChat={() => {
+              setWIdx(null)
               setView({ kind: 'new' })
               setDrawer(false)
             }}
@@ -120,12 +167,12 @@ export default function App() {
           />
           <ChatPane
             view={view}
-            threads={data.threads}
-            evidence={data.evidence}
-            investigationNotes={data.investigations.notes}
-            recordedRuns={recordedRuns}
+            data={data}
+            withheld={withheld}
             onWorkflow={openWorkflow}
-            onThread={(id) => setView({ kind: 'thread', id })}
+            onThread={openThread}
+            onRun={openRun}
+            onVision={openVision}
           />
           <ArtifactsPane
             open={artifacts}
@@ -136,11 +183,17 @@ export default function App() {
             produced={produced}
             briefDate={briefDate}
             onBriefDate={setBriefDate}
+            vision={visionSel}
             onClose={() => setArtifacts(false)}
           />
         </div>
       )}
-      <CommandPalette open={palette} onClose={() => setPalette(false)} onWorkflow={openWorkflow} />
+      <CommandPalette
+        open={palette}
+        onClose={() => setPalette(false)}
+        onWorkflow={openWorkflow}
+        workflows={visibleWorkflows(runs)}
+      />
     </div>
   )
 }

@@ -1,21 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { WORKFLOWS } from '../data'
 import { Icon } from '../icons'
-import type { WorkflowId } from '../types'
+import type { WorkflowDef, WorkflowId } from '../types'
 
 interface Props {
+  workflows: WorkflowDef[]
   open: boolean
   onClose: () => void
   onWorkflow: (id: WorkflowId) => void
 }
 
-export function CommandPalette({ open, onClose, onWorkflow }: Props) {
+export function CommandPalette({ open, onClose, onWorkflow, workflows }: Props) {
   const [q, setQ] = useState('')
   const [idx, setIdx] = useState(0)
   const input = useRef<HTMLInputElement>(null)
   const items = useMemo(
-    () => WORKFLOWS.filter((w) => w.title.toLowerCase().includes(q.trim().toLowerCase())),
-    [q],
+    () => workflows.filter((w) => w.title.toLowerCase().includes(q.trim().toLowerCase())),
+    [q, workflows],
   )
 
   useEffect(() => {
@@ -82,7 +82,6 @@ export function CommandPalette({ open, onClose, onWorkflow }: Props) {
                 onClick={() => pick(i)}
               >
                 <span>{w.title}</span>
-                {w.comingSoon && <span className="ws-pill bg-sunk text-ink-2">coming soon</span>}
               </button>
             </li>
           ))}

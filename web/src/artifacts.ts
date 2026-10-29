@@ -4,8 +4,8 @@ import type { Audit, AuditRun, Protocol, ProtocolStep, Sweep, SweepRow, Thread }
 export type TabId = 'brief' | 'digest' | 'dossier' | 'vision' | 'audit' | 'capa' | 'protocol'
 
 export const TABS: { id: TabId; label: string }[] = [
+  { id: 'digest', label: 'AI sweep' },
   { id: 'brief', label: 'Brief' },
-  { id: 'digest', label: 'Digest' },
   { id: 'dossier', label: 'Dossier' },
   { id: 'vision', label: 'Vision' },
   { id: 'audit', label: 'Audit' },

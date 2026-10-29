@@ -10,18 +10,20 @@ a missing input becomes ``null`` plus a line in that file's ``notes``.
 
     python3 scripts/export_web_data.py
     python3 scripts/export_web_data.py --out /tmp/web-data
+    python3 scripts/export_web_data.py --parity-fixtures   # TypeScript detector parity cases
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import random
 import re
 import shutil
 import sqlite3
 import subprocess
 import sys
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -681,6 +683,220 @@ def export(root: Path, out: Path, *, generated_utc: str | None = None) -> dict[s
     return manifest
 
 
+# ── TypeScript parity fixtures ───────────────────────────────────────────────
+PARITY_FILE = ROOT / "web" / "src" / "fixtures" / "liveCheckParity.json"
+_KINDS = ("injury", "malfunction", "death", "other", "unknown", "no answer provided")
+
+
+def _split(
+    rng: random.Random, total: int, kinds: tuple[str, ...], must: tuple[str, ...] = ()
+) -> list[list[Any]]:
+    """Spread ``total`` reports over some of ``kinds`` (sorted, zero buckets dropped).
+
+    ``must`` kinds are always among those chosen (when ``total`` allows one report each).
+    """
+    chosen = rng.sample(kinds, rng.randint(1, len(kinds))) if total else []
+    chosen = list(dict.fromkeys([*must[:total], *chosen]))
+    counts = dict.fromkeys(chosen, 0)
+    for k in must[:total]:
+        counts[k] += 1
+    for _ in range(total - sum(counts.values())):
+        counts[rng.choice(chosen)] += 1
+    return [[k, v] for k, v in sorted(counts.items()) if v > 0]
+
+
+def _parity_counts(rng: random.Random, edge: dict[str, Any] | None) -> dict[str, Any]:
+    if edge is not None:
+        return edge
+    scale = rng.choice((3, 8, 30, 200))
+    cur = rng.randint(0, scale)
+    base = rng.choice((0, rng.randint(0, scale * 4), rng.randint(0, 8)))
+    prior = rng.choice((0, rng.randint(0, 5), rng.randint(0, scale * 20)))
+    current_types = _split(rng, cur, _KINDS)
+    # Most of the time the history already holds every kind seen this week (so "new kind of
+    # problem" fires in a minority of cases, as it does on real data).
+    seen = tuple(k for k, _ in current_types) if rng.random() < 0.75 else ()
+    return {
+        "current_total": cur,
+        "baseline_total": base,
+        "prior_total": prior,
+        "current_types": current_types,
+        "baseline_types": _split(rng, base, _KINDS[:5]),
+        "prior_types": _split(rng, prior, _KINDS, seen) if cur else [],
+    }
+
+
+def _edge_cases() -> list[dict[str, Any]]:
+    """Boundaries of every rule: 3 reports, exactly 2x the weekly mean, exactly +15 points."""
+
+    def c(
+        cur: int, base: int, prior: int, ct: list[Any], bt: list[Any], pt: list[Any]
+    ) -> dict[str, Any]:
+        return {
+            "current_total": cur,
+            "baseline_total": base,
+            "prior_total": prior,
+            "current_types": ct,
+            "baseline_types": bt,
+            "prior_types": pt if cur else [],
+        }
+
+    m = [["malfunction", 1]]
+    return [
+        c(0, 0, 0, [], [], []),
+        c(0, 12, 400, [], [["malfunction", 12]], []),
+        c(3, 0, 10, [["malfunction", 3]], [], [["malfunction", 10]]),
+        c(3, 6, 50, [["malfunction", 3]], [["malfunction", 6]], [["malfunction", 50]]),
+        c(3, 7, 50, [["malfunction", 3]], [["malfunction", 7]], [["malfunction", 50]]),
+        c(2, 0, 50, [["malfunction", 2]], [], [["malfunction", 50]]),
+        c(
+            20,
+            40,
+            90,
+            [["injury", 3], ["malfunction", 17]],
+            [["malfunction", 40]],
+            [["injury", 5], ["malfunction", 85]],
+        ),
+        c(
+            20,
+            20,
+            90,
+            [["injury", 3], ["malfunction", 17]],
+            [["malfunction", 20]],
+            [["injury", 5], ["malfunction", 85]],
+        ),
+        c(
+            20,
+            20,
+            90,
+            [["injury", 2], ["malfunction", 18]],
+            [["malfunction", 20]],
+            [["injury", 5], ["malfunction", 85]],
+        ),
+        c(1, 8, 9, [["death", 1]], [["malfunction", 8]], [["malfunction", 9]]),
+        c(5, 5, 0, [["malfunction", 5]], [["malfunction", 5]], []),
+        c(
+            4,
+            1,
+            1278,
+            [["injury", 4]],
+            [["malfunction", 1]],
+            [["injury", 100], ["malfunction", 1178]],
+        ),
+        c(1, 0, 3, m, [], [["injury", 3]]),
+        c(8, 16, 3, [["malfunction", 8]], [["malfunction", 16]], [["malfunction", 3]]),
+        c(
+            7,
+            16,
+            700,
+            [["death", 1], ["injury", 1], ["malfunction", 5]],
+            [["malfunction", 16]],
+            [["malfunction", 700]],
+        ),
+        c(1000, 4, 1, [["malfunction", 1000]], [["malfunction", 4]], [["malfunction", 1]]),
+        c(3, 1, 8, [["unknown", 3]], [["malfunction", 1]], [["malfunction", 8]]),
+        c(
+            3,
+            3,
+            3,
+            [["injury", 1], ["malfunction", 2]],
+            [["injury", 1], ["malfunction", 2]],
+            [["injury", 1], ["malfunction", 2]],
+        ),
+        c(7, 7, 7, [["injury", 7]], [["injury", 7]], [["injury", 7]]),
+        c(
+            6,
+            3,
+            12,
+            [["injury", 1], ["malfunction", 5]],
+            [["malfunction", 3]],
+            [["malfunction", 12]],
+        ),
+    ]
+
+
+def parity_fixtures() -> dict[str, Any]:
+    """Cases for the TypeScript port of ``monitor.live_check``, computed by the Python code.
+
+    Each case is inputs plus the answer ``classify_counts`` / ``_norm`` / ``build_window`` /
+    ``verify_url`` give; ``web/src/liveCheck.test.ts`` requires the same from the TypeScript.
+    Deterministic (seeded), so a unit test can check the committed file is current.
+    """
+    from maudesignal.monitor.deterioration import build_window
+    from maudesignal.monitor.live_check import (
+        WindowCounts,
+        _norm,
+        classify_counts,
+        verify_url,
+    )
+
+    rng = random.Random(20261029)
+    edges = _edge_cases()
+    classify: list[dict[str, Any]] = []
+    for i in range(320):
+        counts = _parity_counts(rng, edges[i] if i < len(edges) else None)
+        as_of = date(2026, 9, 30) - timedelta(days=rng.randint(0, 400))
+        window = build_window(as_of)
+        wc = WindowCounts(
+            current_total=counts["current_total"],
+            baseline_total=counts["baseline_total"],
+            prior_total=counts["prior_total"],
+            current_types=tuple((k, n) for k, n in counts["current_types"]),
+            baseline_types=tuple((k, n) for k, n in counts["baseline_types"]),
+            prior_types=tuple((k, n) for k, n in counts["prior_types"]),
+        )
+        code = "".join(rng.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ") for _ in range(3))
+        want = classify_counts(code, wc, window).to_dict()
+        want.pop("queries")
+        want.pop("change")
+        classify.append(
+            {"code": code, "counts": counts, "as_of": as_of.strftime("%Y%m%d"), "expected": want}
+        )
+
+    norm: list[dict[str, Any]] = []
+    terms = ("Injury", "injury ", " MALFUNCTION", "Death", "", "Other", "No answer provided", "  ")
+    for _ in range(60):
+        rows = [[rng.choice(terms), rng.randint(0, 40)] for _ in range(rng.randint(0, 6))]
+        total = sum(n for _, n in rows) + rng.choice((0, 0, 1, 7))
+        norm.append(
+            {
+                "rows": rows,
+                "total": total,
+                "expected": [list(x) for x in _norm([(t, n) for t, n in rows], total)],
+            }
+        )
+
+    windows: list[dict[str, Any]] = []
+    for _ in range(40):
+        d = date(2024, 1, 1) + timedelta(days=rng.randint(0, 1100))
+        w = build_window(d)
+        windows.append(
+            {
+                "as_of": d.strftime("%Y%m%d"),
+                "expected": {k: v.strftime("%Y%m%d") for k, v in vars(w).items()},
+            }
+        )
+    windows.append(
+        {
+            "as_of": "20240229",
+            "expected": {
+                k: v.strftime("%Y%m%d") for k, v in vars(build_window(date(2024, 2, 29))).items()
+            },
+        }
+    )
+
+    urls: list[dict[str, Any]] = []
+    for _ in range(30):
+        code = "".join(rng.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ") for _ in range(3))
+        start = rng.choice((None, "19900101", "20241029", "20260827"))
+        end = rng.choice((None, "20260923", "20261029"))
+        count = rng.choice((None, "event_type.exact", "date_received"))
+        urls.append(
+            {"args": [code, start, end, count], "expected": verify_url(code, start, end, count)}
+        )
+    return {"classify": classify, "norm": norm, "windows": windows, "urls": urls}
+
+
 def main() -> int:
     """CLI entry point."""
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
@@ -688,7 +904,19 @@ def main() -> int:
     ap.add_argument(
         "--out", type=Path, default=ROOT / "web" / "public" / "data", help="output directory"
     )
+    ap.add_argument(
+        "--parity-fixtures",
+        action="store_true",
+        help="write web/src/fixtures/liveCheckParity.json (cases for the TypeScript detector)",
+    )
     args = ap.parse_args()
+    if args.parity_fixtures:
+        PARITY_FILE.parent.mkdir(parents=True, exist_ok=True)
+        PARITY_FILE.write_text(
+            json.dumps(parity_fixtures(), separators=(",", ":")) + "\n", encoding="utf-8"
+        )
+        print(f"wrote {PARITY_FILE.relative_to(ROOT)}")
+        return 0
     manifest = export(args.root, args.out)
     h = manifest["header"]
     print(

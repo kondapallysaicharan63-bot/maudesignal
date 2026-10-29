@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Dossier, K510Field, K510Reading, LabelReading, ReadStatus, Vision } from '../../types'
+import { labelName, type VisionSel } from '../VisionWorkflow'
 import { PdfView } from './PdfView'
 import { Empty, Pill, Segmented, type Tone } from './common'
 
@@ -256,13 +257,12 @@ function K510View({ k }: { k: K510Reading }) {
   )
 }
 
-const labelName = (l: LabelReading): string =>
-  l.fields.device_name?.value || l.fields.model_number?.value || l.image.replace(/^vision\/label-|\.jpg$/g, '')
 
-export function VisionTab({ vision }: { vision: Vision }) {
-  const [mode, setMode] = useState<'labels' | 'k510'>('labels')
-  const [li, setLi] = useState(0)
-  const [ki, setKi] = useState(0)
+/** Stored vision readings. `initial` (from the Vision workflow page) picks which one opens first. */
+export function VisionTab({ vision, initial }: { vision: Vision; initial?: VisionSel }) {
+  const [mode, setMode] = useState<'labels' | 'k510'>(initial?.mode ?? 'labels')
+  const [li, setLi] = useState(initial?.mode === 'labels' ? initial.index : 0)
+  const [ki, setKi] = useState(initial?.mode === 'k510' ? initial.index : 0)
   const label = vision.labels[li]
   const k = vision.k510[ki]
   return (
