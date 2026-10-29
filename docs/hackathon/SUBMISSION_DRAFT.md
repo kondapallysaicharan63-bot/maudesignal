@@ -22,7 +22,7 @@ recorded run or a test in this repository (sources in brackets).
 - **Repository:** https://github.com/kondapallysaicharan63-bot/maudesignal
   (branch `hackathon-day2`; what was built during the hackathon is listed in
   `HACKATHON.md`).
-- **Live demo:** _[Streamlit Cloud link — pending deploy]_ (keyless: recorded
+- **Live demo:** https://maudesignal-4vniqswm9ptaxqtf2iawox.streamlit.app/ (keyless: recorded
   Muse runs, no live model calls unless a key is set).
 - **Video:** _[link — to be recorded Nov 1]_
 
@@ -79,12 +79,12 @@ changed this week? Did reports suddenly increase for any device?"), recorded as
 overnight? Is anything worsening?" — both words are on the drop list). The
 clips are ElevenLabs text-to-speech, so say "Voice Transcribe hears the
 question", not that a practitioner asked it. (2) Vision beat: use `label-thermometer-1.jpg` (SAM box → HoMedics TIE-240 →
-FDA product code FLL); (3) the deployed link. Check the "2 LLZ injury reports" line against the
+FDA product code FLL); (3) open the deployed link once before recording (Streamlit Cloud sleeps when idle). Check the "2 LLZ injury reports" line against the
 gate playground on the day.
 
 ## Not done / still needed from Charan
 
-- Deployed Streamlit link; external beta and expert sign-off (Harish / PSM QA).
+- External beta and expert sign-off (Harish / PSM QA).
 - Making `hackathon-day2` the default branch (or an OK to merge) so the daily
   monitor cron can run.
 - The final submit click.

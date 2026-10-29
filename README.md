@@ -243,7 +243,7 @@ recorded Muse Spark runs (from [`demo/transcripts/`](demo/), once recorded)
 and lets you try to fool the gate live. Set `META_MODEL_API_KEY` to ask live
 questions.
 
-**Live demo:** _[Streamlit Community Cloud link — pending deploy]_
+**Live demo:** <https://maudesignal-4vniqswm9ptaxqtf2iawox.streamlit.app/>
 
 **Deploy (Streamlit Community Cloud):** entry point `streamlit_app.py`,
 dependencies from `requirements.txt`, no secrets required.
