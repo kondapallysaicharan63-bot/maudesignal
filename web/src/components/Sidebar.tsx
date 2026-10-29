@@ -24,7 +24,7 @@ function scheduleResult(s: Schedule): string {
   if (!r) return 'No result yet'
   if (r.flagged !== undefined && r.checked !== undefined)
     return `Last: ${r.flagged} flagged of ${r.checked} device types · ${r.date.slice(0, 10)}`
-  return `Last: ${r.date}${r.headline ? ` · ${r.headline}` : ''}`
+  return `Newest brief: ${r.date}${r.headline ? ` · ${r.headline}` : ''}`
 }
 
 export function Sidebar(p: Props) {

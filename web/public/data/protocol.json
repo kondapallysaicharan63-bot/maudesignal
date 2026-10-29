@@ -877,17 +877,6 @@
         "run_at": "2026-10-28T20:45:33+00:00"
       }
     ],
-    "00-voice-main": [
-      {
-        "tool": "weekly_signals",
-        "dataset": "openFDA MAUDE (stored copy)",
-        "filters": {},
-        "date_from": "20260825",
-        "date_to": "20260831",
-        "count": null,
-        "run_at": "2026-10-28T20:45:59+00:00"
-      }
-    ],
     "00-voice-a": [],
     "00-voice-b": []
   }

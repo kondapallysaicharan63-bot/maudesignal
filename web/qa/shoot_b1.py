@@ -20,7 +20,7 @@ from playwright.sync_api import Page, Route, sync_playwright
 
 WEB = Path(__file__).resolve().parents[1]
 OUT = WEB / "qa" / "screenshots"
-SCRATCH = Path("/tmp/claude-0/-home-user-maudesignal/e8f516e9-363c-5cd6-b49e-957804d514a6/scratchpad")
+SCRATCH = WEB / "qa" / "tmp"  # gitignored scratch dir for drawer/sheet/palette shots
 
 
 def serve() -> tuple[socketserver.TCPServer, int]:

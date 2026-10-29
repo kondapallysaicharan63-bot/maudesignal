@@ -40,6 +40,9 @@ TOOL_LABELS = {"overnight_signals": "weekly_signals"}
 OVERNIGHT_LABELS = ("01", "02", "13", "15", "20", "22")
 CAPA_LABELS = ("05",)
 GREETING_LABELS = ("00-voice-a", "00-voice-b")
+# Clips kept out of the web data: the question text uses words the product does not show
+# (see docs/hackathon/PRD.md). They stay in demo/transcripts; only the display skips them.
+DISPLAY_EXCLUDED_LABELS = ("00-voice-main",)
 WORKFLOW_TITLES = {
     "overnight-signals": "What changed this week",
     "ask-copilot": "Ask the copilot",
@@ -186,7 +189,8 @@ def load_transcripts(root: Path) -> list[dict[str, Any]]:
     files = sorted(
         p for p in (root / "demo" / "transcripts").glob("2*.json") if not p.name.startswith("audit")
     )
-    return [read_json(p) for p in files]
+    docs = [read_json(p) for p in files]
+    return [d for d in docs if d["label"] not in DISPLAY_EXCLUDED_LABELS]
 
 
 def build_threads(transcripts: list[dict[str, Any]]) -> dict[str, Any]:

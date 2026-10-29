@@ -134,7 +134,6 @@ function WorkflowView(p: Props & { def: WorkflowDef }) {
 }
 
 function Welcome({ onWorkflow }: { onWorkflow: (id: WorkflowId) => void }) {
-  const live = WORKFLOWS.filter((w) => !w.comingSoon)
   return (
     <div>
       <p className="ms-kicker">Postmarket surveillance · FDA-cleared AI/ML devices</p>
@@ -142,17 +141,20 @@ function Welcome({ onWorkflow }: { onWorkflow: (id: WorkflowId) => void }) {
         What do you want to look into?
       </h1>
       <p className="mt-3 max-w-xl text-ink-2">
-        Every answer here was written from stored FDA adverse-event records and checked sentence by sentence
-        before it was shown. Pick a workflow to start.
+        Every answer here was written from stored public records (MAUDE reports, recalls, 510(k)s, PubMed,
+        MHRA (UK) alerts) and checked sentence by sentence before it was shown. Pick a workflow to start.
       </p>
       <ul className="m-0 mt-6 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2">
-        {live.map((w) => (
+        {WORKFLOWS.map((w) => (
           <li key={w.id}>
             <button
               onClick={() => onWorkflow(w.id)}
               className="h-full w-full rounded-md border border-rule bg-surface p-4 text-left hover:border-rule-strong"
             >
-              <span className="t-title block">{w.title}</span>
+              <span className="t-title block">
+                {w.title}
+                {w.comingSoon && <span className="ws-pill ml-2 bg-sunk text-ink-2">coming soon</span>}
+              </span>
               <span className="mt-1 block text-[15px] leading-snug text-ink-2">{w.blurb}</span>
             </button>
           </li>

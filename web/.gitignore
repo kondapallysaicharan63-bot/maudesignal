@@ -2,3 +2,5 @@ node_modules
 dist
 *.tsbuildinfo
 .vite
+!public/data/dossier/*.pdf
+qa/tmp

@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "generated_utc": "2026-10-29T19:22:38Z",
-  "source_commit": "7525400af196e5359410462e01a71190239f1e39",
+  "generated_utc": "2026-10-29T19:35:00Z",
+  "source_commit": "c609dbfe0772a41421e71dc5dad0fc80467ebe09",
   "files": [
     "threads.json",
     "evidence.json",
@@ -27,10 +27,10 @@
     "vision/label-welch-module.jpg"
   ],
   "header": {
-    "claims_verified": 95,
-    "sentences_verified": 64,
+    "claims_verified": 89,
+    "sentences_verified": 61,
     "sentences_withheld": 1,
-    "answers": 28,
+    "answers": 27,
     "audit_chain_ok": true
   },
   "notes": []

@@ -63,7 +63,7 @@ export function Header(p: Props) {
         {h ? (
           <>
             <span className="ws-wrap">
-              Every sentence checked against FDA data ·{' '}
+              Every sentence checked against stored source records ·{' '}
               <strong className="ms-num">{h.claims_verified}</strong> claims verified ·{' '}
               <strong className="ms-num">{h.sentences_withheld}</strong> withheld
             </span>

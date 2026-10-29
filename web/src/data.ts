@@ -62,16 +62,19 @@ export const WORKFLOWS: WorkflowDef[] = [
     id: 'weekly-investigator',
     title: 'Weekly investigator',
     blurb: 'Groups new reports for a flagged device type by kind of problem and checks recalls and 510(k)s.',
+    comingSoon: true,
   },
   {
     id: 'recall-sweep',
     title: 'Recall sweep',
     blurb: 'When a recall is posted, finds stored reports that describe the same problem.',
+    comingSoon: true,
   },
   {
     id: 'vision',
     title: 'Label & 510(k) vision',
     blurb: 'Reads a 510(k) summary page or a device label photo and checks each field against openFDA.',
+    comingSoon: true,
   },
   {
     id: 'intake',

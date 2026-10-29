@@ -58,6 +58,8 @@ def test_header_counts_equal_direct_count_over_transcripts(out: Path) -> None:
     claims = verified = withheld = answers = 0
     for p in sorted((ROOT / "demo" / "transcripts").glob("2*.json")):
         doc = json.loads(p.read_text(encoding="utf-8"))
+        if doc["label"] in exporter.DISPLAY_EXCLUDED_LABELS:
+            continue
         answers += 1
         for s in doc["final"]["sentences"]:
             verified += s["status"] == "pass"
@@ -86,7 +88,8 @@ def test_workflows_follow_the_contract(out: Path) -> None:
         ]
     ]
     assert wf["ask-copilot"][-2:] == ["00-voice-a", "00-voice-b"]
-    assert "00-voice-main" in wf["ask-copilot"]
+    assert "00-voice-main" not in wf["ask-copilot"]
+    assert "00-voice-main" not in [t["id"] for t in load(out, "threads.json")["threads"]]
 
 
 def test_tool_names_use_display_labels_and_summaries_use_stored_numbers(out: Path) -> None:
@@ -191,3 +194,21 @@ def test_missing_inputs_become_null_with_notes(tmp_path: Path) -> None:
     sweep = exporter.build_sweep(tmp_path)
     assert sweep["rows"] is None and sweep["notes"]
     shutil.rmtree(tmp_path)
+
+
+def test_committed_manifest_assets_exist_on_disk() -> None:
+    """Every asset the committed manifest advertises is a committed file (not git-ignored)."""
+    import subprocess
+
+    data = ROOT / "web" / "public" / "data"
+    manifest = json.loads((data / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["assets"]
+    tracked = set(
+        subprocess.run(
+            ["git", "ls-files", "web/public/data"], cwd=ROOT, capture_output=True, text=True
+        ).stdout.split()
+    )
+    for asset in manifest["assets"]:
+        assert (data / asset).is_file(), asset
+        if tracked:  # empty outside a git checkout
+            assert f"web/public/data/{asset}" in tracked, f"{asset} is not committed"
