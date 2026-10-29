@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { producedTabs, type TabId } from './artifacts'
 import { ArtifactsPane } from './components/ArtifactsPane'
 import { ChatPane, type View } from './components/ChatPane'
 import { CommandPalette } from './components/CommandPalette'
@@ -20,6 +21,7 @@ export default function App() {
   const [collapsed, setCollapsed] = useState(false) // desktop sidebar
   const [artifacts, setArtifacts] = useState(isDesktop)
   const [palette, setPalette] = useState(false)
+  const [tab, setTab] = useState<TabId>('brief')
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -44,10 +46,25 @@ export default function App() {
   }
   const openBrief = (date: string) => {
     setBriefDate(date)
+    setTab('brief')
     markRead(date)
     setArtifacts(true)
     setDrawer(false)
   }
+
+  const thread = (view.kind === 'thread' && data?.threads.threads.find((t) => t.id === view.id)) || null
+  const produced = useMemo(() => producedTabs(thread), [thread])
+
+  // A thread opens the artifact it produced (on desktop; on a phone the sheet stays closed and the tab gets a dot).
+  const threadKey = thread?.id ?? null
+  useEffect(() => {
+    if (!threadKey) return
+    const first = produced[0]
+    if (first) {
+      setTab(first)
+      if (isDesktop()) setArtifacts(true)
+    }
+  }, [threadKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (error)
     return (
@@ -58,7 +75,6 @@ export default function App() {
       </div>
     )
 
-  const brief = data?.briefs.find((b) => b.date === briefDate) ?? null
   const recordedRuns = data?.investigations.investigations.length ?? 0
   const activeWorkflow: WorkflowId | null =
     view.kind === 'workflow'
@@ -109,7 +125,17 @@ export default function App() {
             onWorkflow={openWorkflow}
             onThread={(id) => setView({ kind: 'thread', id })}
           />
-          <ArtifactsPane open={artifacts} brief={brief} onClose={() => setArtifacts(false)} />
+          <ArtifactsPane
+            open={artifacts}
+            data={data}
+            tab={tab}
+            onTab={setTab}
+            thread={thread}
+            produced={produced}
+            briefDate={briefDate}
+            onBriefDate={setBriefDate}
+            onClose={() => setArtifacts(false)}
+          />
         </div>
       )}
       <CommandPalette open={palette} onClose={() => setPalette(false)} onWorkflow={openWorkflow} />

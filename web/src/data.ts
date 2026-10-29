@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { Brief, Evidence, Investigations, Manifest, Schedule, Source, Threads, WorkspaceData, WorkflowDef } from './types'
+import type { Audit, Brief, Dossier, Protocol, Sweep, Vision, Evidence, Investigations, Manifest, Schedule, Source, Threads, WorkspaceData, WorkflowDef } from './types'
 
 const base = import.meta.env.BASE_URL
 
@@ -23,8 +23,13 @@ export function useWorkspaceData(): { data: WorkspaceData | null; error: string 
       getJson<{ schedules: Schedule[] }>('schedules.json'),
       getJson<Investigations>('investigations.json'),
       getJson<Evidence>('evidence.json'),
+      getJson<Audit>('audit.json'),
+      getJson<Dossier>('dossier.json'),
+      getJson<Vision>('vision.json'),
+      getJson<Sweep>('sweep.json'),
+      getJson<Protocol>('protocol.json'),
     ])
-      .then(([manifest, threads, briefs, sources, schedules, investigations, evidence]) => {
+      .then(([manifest, threads, briefs, sources, schedules, investigations, evidence, audit, dossier, vision, sweep, protocol]) => {
         if (live)
           setData({
             manifest,
@@ -34,6 +39,11 @@ export function useWorkspaceData(): { data: WorkspaceData | null; error: string 
             schedules: schedules.schedules,
             investigations,
             evidence,
+            audit,
+            dossier,
+            vision,
+            sweep,
+            protocol,
           })
       })
       .catch((e: unknown) => live && setError(e instanceof Error ? e.message : String(e)))

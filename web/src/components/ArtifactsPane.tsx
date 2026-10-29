@@ -1,55 +1,37 @@
+import { useEffect, useMemo, useState } from 'react'
+import { auditRunFor, capaDrafts, protocolFor, TABS, type TabId } from '../artifacts'
 import { Icon } from '../icons'
-import type { Brief } from '../types'
+import type { Thread, WorkspaceData } from '../types'
+import { AuditTab, CapaTab, ProtocolTab } from './artifacts/AuditCapaProtocol'
+import { BriefTab, DigestTab } from './artifacts/BriefTabs'
+import { DossierTab, VisionTab } from './artifacts/DossierVision'
 
 interface Props {
   open: boolean
-  brief: Brief | null
+  data: WorkspaceData
+  tab: TabId
+  onTab: (t: TabId) => void
+  /** The stored thread on screen, if any. */
+  thread: Thread | null
+  /** Tabs that thread produced (they get a dot). */
+  produced: TabId[]
+  briefDate: string | null
+  onBriefDate: (d: string) => void
   onClose: () => void
 }
 
-const COUNT_LABELS: [keyof Brief['counts'], string][] = [
-  ['new', 'New kind of problem'],
-  ['more_serious_than_usual', 'More serious than usual'],
-  ['reports_suddenly_increased', 'Reports suddenly increased'],
-  ['stable', 'No change'],
-]
+export function ArtifactsPane({ open, data, tab, onTab, thread, produced, briefDate, onBriefDate, onClose }: Props) {
+  const drafts = useMemo(() => capaDrafts(data.audit), [data.audit])
+  const [pick, setPick] = useState<string | null>(null)
+  const threadId = thread?.id ?? null
+  useEffect(() => setPick(null), [threadId])
+  const protocolId = pick ?? threadId
+  const brief = data.briefs.find((b) => b.date === briefDate) ?? data.briefs[0] ?? null
+  useEffect(() => {
+    document.getElementById(`tab-${tab}`)?.scrollIntoView({ inline: 'nearest', block: 'nearest' })
+  }, [tab, open])
+  const activeRun = auditRunFor(data.audit, thread)?.run_label ?? null
 
-function BriefView({ b }: { b: Brief }) {
-  return (
-    <article>
-      <p className="ms-kicker">Daily brief</p>
-      <h2 className="t-title-lg ms-num m-0 mt-1">{b.date}</h2>
-      <p className="ws-wrap mt-2 text-ink-2">{b.headline}</p>
-      <p className="m-0 text-[14px] text-ink-3">
-        Week {b.window.current_start} to {b.window.current_end}, compared with {b.window.baseline_start} to{' '}
-        {b.window.baseline_end}.
-      </p>
-      <dl className="m-0 mt-4 grid grid-cols-2 gap-2">
-        {COUNT_LABELS.map(([k, label]) => (
-          <div key={k} className="rounded-md border border-rule bg-surface p-3">
-            <dt className="text-[14px] leading-snug text-ink-2">{label}</dt>
-            <dd className="t-index ms-num m-0 mt-1">{b.counts[k]}</dd>
-          </div>
-        ))}
-      </dl>
-      <h3 className="ms-kicker mt-6">Device types · {b.signals.length}</h3>
-      <ul className="m-0 mt-2 list-none p-0">
-        {b.signals.map((s) => (
-          <li key={s.product_code} className="flex items-baseline justify-between gap-3 border-t border-rule py-2">
-            <span>
-              <span className="ms-code mr-2">{s.product_code}</span>
-              {s.label}
-            </span>
-            <span className="ms-num shrink-0 text-ink-2">{s.current_count} this week</span>
-          </li>
-        ))}
-      </ul>
-      {b.footer && <p className="ws-wrap mt-4 text-[13px] leading-snug text-ink-3">{b.footer}</p>}
-    </article>
-  )
-}
-
-export function ArtifactsPane({ open, brief, onClose }: Props) {
   return (
     <aside
       id="artifacts"
@@ -57,10 +39,10 @@ export function ArtifactsPane({ open, brief, onClose }: Props) {
       className={[
         'z-30 flex flex-col border-rule bg-surface',
         // phone and tablet: bottom sheet
-        'max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:max-h-[78dvh] max-lg:rounded-t-md max-lg:border-t max-lg:transition-transform max-lg:duration-200',
+        'max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:h-[82dvh] max-lg:rounded-t-md max-lg:border-t max-lg:transition-transform max-lg:duration-200',
         open ? '' : 'max-lg:invisible max-lg:translate-y-full',
         // desktop: docked on the right
-        'lg:static lg:w-[26rem] lg:shrink-0 lg:border-l',
+        'lg:static lg:w-[28rem] lg:shrink-0 lg:border-l xl:w-[34rem]',
         open ? '' : 'lg:hidden',
       ].join(' ')}
     >
@@ -70,17 +52,55 @@ export function ArtifactsPane({ open, brief, onClose }: Props) {
           <Icon name="close" />
         </button>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-        {brief ? (
-          <BriefView b={brief} />
-        ) : (
-          <div className="text-ink-2">
-            <p className="m-0 font-semibold text-ink">Nothing open</p>
-            <p className="mt-2">
-              Open a daily brief from the sidebar to read it here. Dossier, vision readings, the audit trail and
-              CAPA drafts are coming soon.
-            </p>
-          </div>
+      <div role="tablist" aria-label="Artifacts" className="flex shrink-0 gap-1 overflow-x-auto border-b border-rule px-2">
+        {TABS.map((t) => {
+          const selected = t.id === tab
+          return (
+            <button
+              key={t.id}
+              role="tab"
+              id={`tab-${t.id}`}
+              aria-selected={selected}
+              aria-controls="artifact-panel"
+              onClick={() => onTab(t.id)}
+              className={[
+                'relative min-h-11 shrink-0 whitespace-nowrap border-b-2 px-3 text-[15px]',
+                selected ? 'border-ink font-semibold text-ink' : 'border-transparent text-ink-2 hover:text-ink',
+              ].join(' ')}
+            >
+              {t.label}
+              {produced.includes(t.id) && (
+                <>
+                  <span className="ws-dot ml-1.5 inline-block align-middle" aria-hidden="true" />
+                  <span className="sr-only"> (produced by this thread)</span>
+                </>
+              )}
+            </button>
+          )
+        })}
+      </div>
+      <div
+        id="artifact-panel"
+        role="tabpanel"
+        aria-labelledby={`tab-${tab}`}
+        className="min-h-0 flex-1 overflow-y-auto px-4 py-4"
+      >
+        {tab === 'brief' && <BriefTab briefs={data.briefs} date={briefDate} onDate={onBriefDate} />}
+        {tab === 'digest' && <DigestTab sweep={data.sweep} brief={brief} />}
+        {tab === 'dossier' && <DossierTab dossier={data.dossier} />}
+        {tab === 'vision' && <VisionTab vision={data.vision} />}
+        {tab === 'audit' && (
+          <AuditTab audit={data.audit} activeRun={activeRun} generatedUtc={data.manifest.generated_utc} />
+        )}
+        {tab === 'capa' && <CapaTab drafts={drafts} evidence={data.evidence} />}
+        {tab === 'protocol' && (
+          <ProtocolTab
+            threadIds={Object.keys(data.protocol.protocols)}
+            threadId={protocolId}
+            onThread={setPick}
+            steps={protocolFor(data.protocol, protocolId)}
+            notes={data.investigations.notes}
+          />
         )}
       </div>
     </aside>
