@@ -43,9 +43,10 @@ def _require_server() -> None:
 
 @pytest.fixture()
 def ms_page(page: Page, _require_server: None) -> Page:  # type: ignore[misc]
-    """Navigate to the dashboard root and wait for Streamlit to fully hydrate."""
+    """Open the app with every tool shown and wait for Streamlit to fully hydrate."""
     page.set_default_timeout(LOAD_TIMEOUT)
-    page.goto(BASE_URL, wait_until="networkidle", timeout=LOAD_TIMEOUT)
+    # ?tools=all shows the sidebar's "More tools", hidden in the public demo.
+    page.goto(f"{BASE_URL}/?tools=all", wait_until="networkidle", timeout=LOAD_TIMEOUT)
     page.wait_for_selector(SIDEBAR_SELECTOR, timeout=LOAD_TIMEOUT)
     page.wait_for_timeout(NAV_SETTLE)
     return page

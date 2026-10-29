@@ -84,6 +84,17 @@ class TestHackathonNav:
         expect(sidebar).to_contain_text("More tools")
         expect(sidebar.get_by_role("button", name="PSUR Reports", exact=False)).to_be_visible()
 
+    def test_public_demo_has_no_sidebar(self, browser: Any) -> None:
+        """Without ?tools=all (and without a key) only the five product pages show."""
+        ctx = browser.new_context()
+        page = ctx.new_page()
+        page.goto(BASE_URL, wait_until="networkidle")
+        page.wait_for_selector(TOPBAR_SELECTOR, timeout=30_000)
+        page.wait_for_timeout(2_000)
+        expect(page.locator(SIDEBAR_SELECTOR)).to_have_count(0)
+        expect(page.get_by_text("More tools", exact=False)).to_have_count(0)
+        ctx.close()
+
     @pytest.mark.parametrize(
         "nav", ["What changed", "Copilot", "Actions & Audit", "Dossier", "Vision"]
     )

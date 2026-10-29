@@ -1854,6 +1854,19 @@ def _top_bar(db: Database) -> None:
     )
 
 
+def _classic_tools_enabled() -> bool:
+    """The "More tools" pages (pipeline, extraction, PSUR, alerts, settings).
+
+    Hidden in the public demo, where they are empty without provider keys; shown with
+    ``?tools=all`` (kept for the browser session) or ``MAUDESIGNAL_CLASSIC_TOOLS=1``.
+    """
+    if st.query_params.get("tools") == "all":
+        st.session_state["classic_tools"] = True
+    return bool(st.session_state.get("classic_tools")) or (
+        os.environ.get("MAUDESIGNAL_CLASSIC_TOOLS") == "1"
+    )
+
+
 def _render_app(db: Database) -> None:  # noqa: PLR0912
     from maudesignal.dashboard.theme import normalize_theme, theme_css
 
@@ -1868,26 +1881,36 @@ def _render_app(db: Database) -> None:  # noqa: PLR0912
     st.html(_CSS)
     st.html(theme_css(st.session_state["theme"]))
 
-    if "nav_page" not in st.session_state:
+    from maudesignal.dashboard.spend_ui import has_key
+
+    classic = _classic_tools_enabled()
+    if "nav_page" not in st.session_state or (
+        not classic and st.session_state["nav_page"] not in _TOP_PAGES
+    ):
         st.session_state["nav_page"] = "What changed"
 
     _top_bar(db)
 
-    # ── Sidebar: the classic tools and, when a key is set, the live-call quota ─
-    with st.sidebar:
-        st.caption("AI-Powered Postmarket Surveillance · public FDA data")
-        st.html('<div class="ms-kicker">More tools</div>')
-        for icon, page_name, _ in _PAGES:
-            if page_name in _TOP_PAGES:
-                continue
-            is_active = st.session_state["nav_page"] == page_name
-            label = f"**{page_name}**" if is_active else page_name
-            if st.button(label, key=f"nav_{page_name}", icon=f":material/{icon}:", width="stretch"):
-                st.session_state["nav_page"] = page_name
-                st.rerun()
-
-        # Filled after the page runs, so it reflects calls made on this rerun.
-        quota_slot = st.empty()
+    # ── Sidebar: the classic tools (when enabled) and, with a key, the live-call
+    # quota. The keyless public demo has neither, so it shows no sidebar at all.
+    quota_slot = None
+    if classic or has_key():
+        with st.sidebar:
+            if classic:
+                st.caption("AI-Powered Postmarket Surveillance · public FDA data")
+                st.html('<div class="ms-kicker">More tools</div>')
+                for icon, page_name, _ in _PAGES:
+                    if page_name in _TOP_PAGES:
+                        continue
+                    is_active = st.session_state["nav_page"] == page_name
+                    label = f"**{page_name}**" if is_active else page_name
+                    if st.button(
+                        label, key=f"nav_{page_name}", icon=f":material/{icon}:", width="stretch"
+                    ):
+                        st.session_state["nav_page"] = page_name
+                        st.rerun()
+            # Filled after the page runs, so it reflects calls made on this rerun.
+            quota_slot = st.empty()
 
     page: str = st.session_state["nav_page"]
 
@@ -1924,8 +1947,9 @@ def _render_app(db: Database) -> None:  # noqa: PLR0912
 
     from maudesignal.dashboard.spend_ui import sidebar_quota
 
-    with quota_slot.container():
-        sidebar_quota(db)
+    if quota_slot is not None:
+        with quota_slot.container():
+            sidebar_quota(db)
 
     st.markdown(
         '<div class="ms-footer">'
