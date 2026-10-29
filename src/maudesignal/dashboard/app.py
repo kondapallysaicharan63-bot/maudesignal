@@ -1553,51 +1553,71 @@ def _page_settings(db: Database) -> None:
         _settings_sources(db)
 
 
+def _key_pill(present: bool) -> str:
+    """Key status only: whether it is set, never any part of its value."""
+    if present:
+        return '<span class="pill-ok">✓ Key set</span>'
+    return '<span class="pill-warn">Not set</span>'
+
+
 def _settings_providers(db: Database) -> None:
+    from maudesignal.config import openfda_api_key_from_env
+
     cfg = _try_load_config()
+    meta_key = bool(os.environ.get("META_MODEL_API_KEY", "").strip())
 
-    _section("Active Provider")
-    if cfg is None:
-        st.error("Configuration could not be loaded. Check your `.env` file.")
+    _section("Meta Model API (hackathon build)")
+    if not meta_key:
+        st.info(
+            "Demo mode: no Meta key is set on this deployment. The Signals, Copilot, Vision "
+            "and Audit pages replay recorded Muse Spark, Muse Wonder, Voice Transcribe and "
+            "SAM 3.1 runs; live calls are off."
+        )
+    meta_model = os.environ.get("META_MODEL_API_MODEL", "").strip() or "—"
+    openfda_key = openfda_api_key_from_env() is not None
+    for name, env_var, present, detail in (
+        ("Meta Model API", "META_MODEL_API_KEY", meta_key, f"Model: {meta_model}"),
+        ("openFDA", "OPENFDA_API_KEY", openfda_key, "Optional: raises openFDA's daily limit"),
+    ):
+        st.markdown(
+            f'<div class="prov-card">{_key_pill(present)}&nbsp;&nbsp;'
+            f'<div><div class="prov-name">{name}</div>'
+            f'<div class="prov-model">{env_var} &nbsp;|&nbsp; {detail}</div>'
+            f"</div></div>",
+            unsafe_allow_html=True,
+        )
+
+    _section("Extraction providers (pre-hackathon pipeline, optional)")
+    if cfg is not None:
+        st.caption(f"Active extraction provider: {cfg.llm_provider} / {_active_model(cfg)}")
     else:
-        st.success(f"Active provider: **{cfg.llm_provider.upper()}** / **{_active_model(cfg)}**")
-
-    _section("Provider Status")
-
-    providers: list[tuple[str, str, str | None, str]] = [
-        ("Groq", "GROQ_API_KEY", cfg.groq_api_key if cfg else None, cfg.groq_model if cfg else "—"),
+        st.caption("Used only by the pre-hackathon extraction pages; none is needed for the demo.")
+    providers: list[tuple[str, str, bool, str]] = [
+        ("Groq", "GROQ_API_KEY", bool(cfg and cfg.groq_api_key), cfg.groq_model if cfg else "—"),
         (
             "Anthropic (Claude)",
             "ANTHROPIC_API_KEY",
-            cfg.anthropic_api_key if cfg else None,
+            bool(cfg and cfg.anthropic_api_key),
             cfg.claude_model_extraction if cfg else "—",
         ),
         (
             "OpenAI",
             "OPENAI_API_KEY",
-            cfg.openai_api_key if cfg else None,
+            bool(cfg and cfg.openai_api_key),
             cfg.openai_model if cfg else "—",
         ),
         (
             "Google Gemini",
             "GEMINI_API_KEY",
-            cfg.gemini_api_key if cfg else None,
+            bool(cfg and cfg.gemini_api_key),
             cfg.gemini_model if cfg else "—",
         ),
     ]
-
-    for name, env_var, key_val, model in providers:
-        has_key = key_val is not None
-        pill = (
-            '<span class="pill-ok">✓ Key Set</span>'
-            if has_key
-            else '<span class="pill-err">✗ Not Configured</span>'
-        )
-        masked = _mask(key_val)
+    for name, env_var, present, model in providers:
         st.markdown(
-            f'<div class="prov-card">{pill}&nbsp;&nbsp;'
+            f'<div class="prov-card">{_key_pill(present)}&nbsp;&nbsp;'
             f'<div><div class="prov-name">{name}</div>'
-            f'<div class="prov-model">{env_var}: {masked} &nbsp;|&nbsp; Model: {model}</div>'
+            f'<div class="prov-model">{env_var} &nbsp;|&nbsp; Model: {model}</div>'
             f"</div></div>",
             unsafe_allow_html=True,
         )
@@ -1608,14 +1628,6 @@ def _settings_providers(db: Database) -> None:
         c1, c2 = st.columns(2)
         _kpi_card(c1, f"${cost:.2f}", "Extraction LLM cost")
         _kpi_card(c2, f"${cfg.cost_ceiling_usd:.2f}", "Cost Ceiling")
-
-
-def _mask(val: str | None) -> str:
-    if not val:
-        return "—"
-    if len(val) <= 8:
-        return "****"
-    return f"{val[:4]}...{val[-4:]}"
 
 
 def _settings_system(db: Database) -> None:
@@ -1630,8 +1642,10 @@ def _settings_system(db: Database) -> None:
     if cfg:
         st.markdown(f"**DB Path:** `{cfg.db_path}`")
         st.markdown(f"**Log Level:** `{cfg.log_level}`")
-        openfda_status = "Set" if cfg.openfda_api_key else "Not set (rate-limited)"
-        st.markdown(f"**OpenFDA API Key:** {openfda_status}")
+    from maudesignal.config import openfda_api_key_from_env
+
+    openfda_status = "Set" if openfda_api_key_from_env() else "Not set (keyless openFDA limits)"
+    st.markdown(f"**openFDA API key:** {openfda_status}")
 
     _section("System Health")
     if st.button("Run Health Check", key="health_check_btn"):
@@ -1648,10 +1662,10 @@ def _settings_system(db: Database) -> None:
         if cfg:
             checks.append(("Configuration", True, f"Provider: {cfg.llm_provider}"))
         else:
-            checks.append(("Configuration", False, "Could not load config"))
+            checks.append(("Configuration", True, "Demo mode (no LLM key; recorded runs)"))
 
         # Skills directory
-        skills_ok = (cfg.project_root / "skills").exists() if cfg else False
+        skills_ok = (Path(__file__).resolve().parents[3] / "skills").exists()
         checks.append(("Skills directory", skills_ok, "Found" if skills_ok else "Not found"))
 
         for name, ok, detail in checks:
@@ -1851,15 +1865,15 @@ def _top_bar(db: Database) -> None:
     )
 
 
-#: Full website (every page) by default. Set False, or MAUDESIGNAL_DEMO_MODE=1, to show
-#: only the product pages for the submission demo.
-SHOW_ALL_PAGES_BY_DEFAULT = True
+#: Product pages only by default (the submission shows hackathon work). ``?tools=all``
+#: or MAUDESIGNAL_CLASSIC_TOOLS=1 brings back the pre-hackathon "More tools" pages.
+SHOW_ALL_PAGES_BY_DEFAULT = False
 
 
 def _classic_tools_enabled() -> bool:
     """The "More tools" pages (pipeline, extraction, PSUR, alerts, settings).
 
-    Shown by default (:data:`SHOW_ALL_PAGES_BY_DEFAULT`). ``?tools=demo`` hides them
+    Hidden by default (:data:`SHOW_ALL_PAGES_BY_DEFAULT`). ``?tools=demo`` hides them
     for the browser session and ``?tools=all`` shows them; with no link choice,
     ``MAUDESIGNAL_DEMO_MODE=1`` hides them and ``MAUDESIGNAL_CLASSIC_TOOLS=1`` shows them.
     """
