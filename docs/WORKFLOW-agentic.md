@@ -7,7 +7,7 @@ Status: **approved by Charan on Oct 29** (design system kept; deploy steps go to
 > here. The coordinator updates this file after every milestone and re-reads it after any
 > context compaction before acting.
 
-## Live status (updated 2026-10-30 ~00:30 UTC)
+## Live status (updated 2026-10-30 ~01:10 UTC)
 
 | Track / item | Branch | State | Evidence | Next |
 |---|---|---|---|---|
@@ -24,6 +24,9 @@ Status: **approved by Charan on Oct 29** (design system kept; deploy steps go to
 | Incident: `2aa8382` pushed by Meta Muse under Charan's name (unsigned, unreviewed) → bot recording `f53b64a` (run 40965201781) replaced all stored data | `hackathon-day2` | Advisor **BLOCK** on 2aa8382 (product-code correction rewrites real codes/words; any 3-letter word taken as a code). Data reverted to the fifth recording in `54a95fe` (byte-identical to `f53b64a^`); 2aa8382 code still on the branch pending V1 | advisor report | V1 fix running on `coordinator-voice` (`wf_3bf07d9b-6e1`); process: Muse should push to its own branch, never to `hackathon-day2`, and never bump `RECORD_REQUEST` |
 | Track A merge | PR [#10](https://github.com/kondapallysaicharan63-bot/maudesignal/pull/10) `track-a-core` → `hackathon-day2` | CI: Audit regression fixed (`4bce6f3`); Copilot count failure comes from the base (2aa8382) and is fixed by `coordinator-voice` | PR comments | Merge order: `coordinator-voice` first (after V1 PASS), then #10 on green; Vercel check on #10 fails by design until Track B merges |
 | B6 (low priority, after voice fix + C2): sweep card states the rules + "148 of 181 codes had fewer than 3 reports this week (132 had none)"; artifacts tab row wraps, no horizontal scroll | `track-b-ui` | Queued | MUD and MQB meet the detector rules (checked) | Charan to decide: minimum count for "more serious than usual"? |
+| B6 + C4 (Charan, Oct 30; build freeze Sun Nov 1): B6a layout (home dashboard, mini-dashboards, expand/collapse, alert bell, sweep rules + skipped-codes line, tab wrap); B6b agent trace (per-step model badge; time/tokens/cost only where stored), camera + mic (recorded fallback labelled "recorded run", patient-data warning), type-ahead | `track-b-ui-wip` → `track-b-ui` | **Running** (ui-critic then advisor per milestone) | `wf_2db2118c-d37` | B6c after A10 lands: possible-matches + confirm UI for labels |
+| A10 label match (Charan, Oct 30): label fields → openFDA 510(k) / registration & listing / classification / UDI → up to 3 possible matches with reasons (and mismatches); a person confirms, never auto-pick; device-type view (reports, recalls, 510(k), this week's change) gated; step trace with measured timings | `track-a-label-match` | **Running** | `wf_ba4f4413-d6e` | After PASS: Charan asked to re-record the 7 labels in CI → bump `demo/vision/LABEL_MATCH_REQUEST` (paid SAM + Spark, cents); C4 `/v1/label` builds on it. Found: stored thermometer-1 (HoMedics) shows Hetaida 510(k)s as candidates by device name only - A10 must show the manufacturer mismatch |
+| C4 `/v1/label` + `/v1/voice` | `track-c-muse` | Queued after C3 | — | per-IP 5/day, global cost cap, recorded fallback, no image stored unless opt-in, EXIF stripped, patient-data warning |
 | Feature "Does this apply to us?" (§3c) | A6–A9, B7 | Planned, starts after voice fix + C2 | — | D0 contract first |
 | Daily monitor on `main` | `main` | Ran Oct 29 | commit `be05711` digest | Watch tomorrow's 11:17 UTC run (check-in 11:50 UTC) |
 
@@ -40,6 +43,7 @@ Status: **approved by Charan on Oct 29** (design system kept; deploy steps go to
 - Oct 29: commits: author Saicharan Kondapally, committer Claude <noreply@anthropic.com> (Verified on GitHub).
 - Oct 29 (voice, for Charan to accept): the product-code check corrects only to codes that have records on file (JAK, LLZ, MYN, POK, QIH on the demo DB). The spec said "exactly one known code", but with the seed code LLN counted as a target, LLG and LLC would tie (LLN) and never become LLZ. So on the real code set QAH is corrected to QIH (the "QAH tie" test uses a made-up set; a separate test pins the real behaviour). In live mode the analyst confirms first.
 - Oct 29 (voice): `.github/workflows/copilot-record.yml`'s voice loop now finds only `question-a..e` and `question-take1/4/6`. A new recording run would re-record the takes (overwriting them) and recreate the hidden TTS transcripts (a, b, c, e); restrict the loop before the next `RECORD_REQUEST`.
+- Oct 30: Charan asked to re-record the 7 device labels through the new match step in CI (paid SAM 3.1 + Muse Spark run, approved by that request).
 - Deadline: Nov 4, about 5 PM PT. Nothing into `main` without Charan's OK.
 
 ### Open items needing Charan
