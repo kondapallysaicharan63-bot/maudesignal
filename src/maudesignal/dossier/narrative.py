@@ -39,6 +39,7 @@ STALE_NARRATIVE_NOTE = (
     "evidence pack (different id, cited reports or problem statement), so it is not shown. "
     "All other sections are deterministic."
 )
+UNBOUND_RECORDING_NOTE = "recorded before pack binding; a re-record is pending"
 
 
 @dataclass

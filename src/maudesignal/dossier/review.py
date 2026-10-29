@@ -87,6 +87,15 @@ class ReviewResult:
         return bool(pdf) and self.reviewed_sha256 == sha256_hex(pdf or b"")
 
     @property
+    def predates_binding(self) -> bool:
+        """True for a PDF-mode recording made before ``reviewed_sha256`` was stored.
+
+        Such a review can not be matched to a PDF; it is still shown, with a visible note
+        (``UNBOUND_REVIEW_NOTE``). A recording that carries a hash must match the PDF.
+        """
+        return self.mode == "pdf" and not self.reviewed_sha256
+
+    @property
     def cost_usd(self) -> float:
         """Estimated Muse Wonder (Standard) cost: $4 / $20 per 1M input / output tokens."""
         return round(
@@ -94,6 +103,9 @@ class ReviewResult:
             + self.output_tokens * WONDER_USD_PER_M_OUTPUT / 1e6,
             6,
         )
+
+
+UNBOUND_REVIEW_NOTE = "recorded before pack binding; a re-record is pending"
 
 
 def sha256_hex(data: bytes) -> str:

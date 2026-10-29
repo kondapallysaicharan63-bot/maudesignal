@@ -18,6 +18,7 @@ import streamlit as st
 
 from maudesignal.catalog.names import classification_names, report_brands
 from maudesignal.config import Config
+from maudesignal.dashboard.demo_db import demo_copy_with_recorded_packs, keyless
 from maudesignal.ingestion.openfda_client import OpenFDAClient
 from maudesignal.ingestion.pipeline import IngestionResult, ingest_product_code
 from maudesignal.storage.database import Database
@@ -554,6 +555,9 @@ def _load_db() -> Database:
         and not (_PROJECT_ROOT / _DEFAULT_DB_RELPATH).exists()
         and _DEMO_DB_PATH.exists()
     ):
+        if keyless():
+            # Never modify the committed demo DB: work on a copy with the recorded packs.
+            return Database(demo_copy_with_recorded_packs(_DEMO_DB_PATH))
         return Database(_DEMO_DB_PATH)
     try:
         cfg = Config.load()

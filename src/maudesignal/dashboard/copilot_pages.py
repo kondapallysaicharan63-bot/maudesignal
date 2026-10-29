@@ -167,12 +167,11 @@ def render_transcript(t: dict[str, Any]) -> None:
         with st.expander("What the gate blocked on the first pass"):
             for s in t["first_pass"]["sentences"]:
                 st.html(_sentence_html(s))
-    # Stored transcripts made before the field existed get it rebuilt from their stored calls.
-    proto = t.get("protocol")
-    if not isinstance(proto, list):
-        proto = [r.to_dict() for r in protocol_from_transcript(t)]
-    if proto:
-        with st.expander(f"Search protocol ({len(proto)} searches)"):
+    # Always rebuilt from the stored calls (deterministic), so a count fixed in the builder
+    # shows here too and the filters and times print the same way as in the PDF.
+    rows = protocol_from_transcript(t)
+    if rows:
+        with st.expander(f"Search protocol ({len(rows)} searches)"):
             st.caption(
                 "What was searched, so a reviewer can repeat it. "
                 '"not recorded" means the stored log did not keep that value.'
@@ -180,15 +179,15 @@ def render_transcript(t: dict[str, Any]) -> None:
             st.dataframe(
                 [
                     {
-                        "Search": tool_label(str(r["tool"])),
-                        "Dataset": r["dataset"],
-                        "Filters": "; ".join(f"{k}={v}" for k, v in sorted(r["filters"].items()))
-                        or "none",
-                        "From": r["date_from"] or "",
-                        "To": r["date_to"] or "",
-                        "Count": "not recorded" if r["count"] is None else r["count"],
+                        "Search": row.label,
+                        "Dataset": row.dataset,
+                        "Filters": row.filters_text,
+                        "From": row.date_from or "",
+                        "To": row.date_to or "",
+                        "Count": row.count_text,
+                        "Run at (UTC)": row.run_at or "not recorded",
                     }
-                    for r in proto
+                    for row in rows
                 ],
                 hide_index=True,
             )
@@ -430,6 +429,23 @@ def _voice_question(db: Database, agent: Any) -> None:  # pragma: no cover - nee
 # ---------------------------------------------------------------------------
 
 
+def _restored_note(db: Database, capa_id: str) -> str:
+    """'Restored from demo/transcripts/<file> (recorded <UTC>)' for a replayed pack, else ''."""
+    for a in db.list_audit(entity_id=capa_id):
+        if a.action != "capa.draft":
+            continue
+        try:
+            payload = json.loads(a.payload_json)
+        except ValueError:
+            return ""
+        src = payload.get("restored_from")
+        if not src:
+            return ""
+        when = payload.get("recorded_at_utc")
+        return f"Restored from demo/transcripts/{src}" + (f" (recorded {when})" if when else "")
+    return ""
+
+
 def render_approvals(db: Database, drafts: list[Any]) -> None:
     """CAPA-need evidence packs with the named-person Accept / Reject decision."""
     st.caption(CAPA_NEED_NOTE)
@@ -444,6 +460,9 @@ def render_approvals(db: Database, drafts: list[Any]) -> None:
                 + ", ".join(f"[{i}]({MAUDE_URL.format(i.split('-')[0])})" for i in ids)
             )
             st.caption(f"Prepared by {d.created_by} at {d.created_at:%Y-%m-%d %H:%M} UTC")
+            restored = _restored_note(db, d.capa_id)
+            if restored:
+                st.caption(restored)
             if d.status == "draft":
                 c1, c2, _ = st.columns([1, 1, 4])
                 for col, decision, label in (

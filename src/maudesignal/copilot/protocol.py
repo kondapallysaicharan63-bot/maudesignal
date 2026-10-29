@@ -41,7 +41,7 @@ NOT_SEARCHES = frozenset({"draft_capa"})
 # Argument names printed as their own columns, not as filters.
 _DATE_ARGS = ("date_from", "date_to")
 # Result keys that hold the count of what the search matched, in priority order.
-_COUNT_KEYS = ("report_count", "matched", "stored_recall_count", "alert_count")
+_COUNT_KEYS = ("report_count", "matched", "alert_count")
 # Tools whose result has no single matched-count.
 _NO_COUNT = frozenset({"overnight_signals", "compare_signals", "deadline_check", "my_device_types"})
 
@@ -131,9 +131,15 @@ def _window(preview: str, key: str) -> tuple[str | None, str | None]:
     return obj.get("date_from"), obj.get("date_to")
 
 
-def _count(name: str, preview: str) -> int | None:
+def _count(name: str, preview: str, args: Mapping[str, Any] | None = None) -> int | None:
     if preview.startswith('{"error"'):
         return None  # the search did not run
+    if name == "recalls":
+        # A keyword search counts its keyword matches; the stored product-code total
+        # (``stored_recall_count``) is not the size of what this search matched.
+        if (args or {}).get("query"):
+            return _preview_int(preview, "matching_recalls")
+        return None
     if name == "get_report":
         return 1 if preview.startswith('{"report_id"') else None
     if name in _NO_COUNT:
@@ -166,7 +172,7 @@ def row_from_call(call: Mapping[str, Any], run_at: str | None = None) -> Protoco
         filters=filters,
         date_from=date_from,
         date_to=date_to,
-        count=_count(name, preview),
+        count=_count(name, preview, args),
         run_at=iso_z(run_at),
     )
 

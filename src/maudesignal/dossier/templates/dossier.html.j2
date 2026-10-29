@@ -126,7 +126,7 @@ a { color: #1a5fb4; }
   <h3>Approvals <span class="small">(signature manifestation modeled on 21 CFR 11.50: printed name, date/time, meaning)</span></h3>
   <table class="sig">
     <tr><th style="width:17%">Role</th><th style="width:27%">Printed name</th><th style="width:21%">Date / time (UTC)</th><th style="width:15%">Meaning</th><th>Audit reference</th></tr>
-    <tr><td>Prepared by</td><td class="mono">{{ d.prepared_by }}</td><td>{{ d.prepared_at.strftime("%Y-%m-%d %H:%M:%S") if d.prepared_at else d.generated_at.strftime("%Y-%m-%d %H:%M:%S") }}</td><td>Authorship (software draft)</td><td class="small">{% if d.capa %}capa.draft entry in Appendix{% else %}deterministic monitor{% endif %}</td></tr>
+    <tr><td>Prepared by</td><td class="mono">{{ d.prepared_by }}</td><td>{{ d.prepared_at.strftime("%Y-%m-%d %H:%M:%S") if d.prepared_at else d.generated_at.strftime("%Y-%m-%d %H:%M:%S") }}</td><td>Authorship (software draft)</td><td class="small">{% if d.capa %}capa.draft entry in Appendix{% else %}deterministic monitor{% endif %}{% if d.capa and d.capa.restored_from %}<br><b>Restored from demo/transcripts/{{ d.capa.restored_from }}</b>{% if d.capa.recorded_at_utc %} (recorded {{ d.capa.recorded_at_utc }}){% endif %}: a replay of a stored copilot run, written by the restore step, not by the model at this time.{% endif %}</td></tr>
     {% if d.capa and d.capa.status in ("approved", "rejected") %}
     <tr><td>QA/RA reviewer</td><td><b>{{ d.capa.decided_by }}</b></td><td>{{ d.capa.decided_at.strftime("%Y-%m-%d %H:%M:%S") }}</td><td><b>{{ "Approved" if d.capa.status == "approved" else "Rejected" }}</b></td><td class="mono">seq {{ d.capa.decision_audit_seq }} · {{ (d.capa.decision_audit_hash or "")[:12] }}</td></tr>
     {% if d.capa.decision_note %}<tr><td>Reviewer comment</td><td colspan="4">{{ d.capa.decision_note }}</td></tr>{% endif %}
@@ -283,7 +283,7 @@ a { color: #1a5fb4; }
 <section class="newpage" id="sec-narrative">
   <h2>6. Narrative summary</h2>
   {% if d.narrative.available %}
-  <div class="note">AI-drafted ({{ d.narrative.source }} run, {{ d.narrative.recorded_at }}). {{ d.narrative.note }} Shown: {{ d.narrative.passed }} · withheld: {{ d.narrative.withheld }}.</div>
+  <div class="note">AI-drafted ({{ d.narrative.source }} run, {{ d.narrative.recorded_at }}). {{ d.narrative.note }} Shown: {{ d.narrative.passed }} · withheld: {{ d.narrative.withheld }}.{% if d.narrative.binding_note %} <b>Note: {{ d.narrative.binding_note }}.</b>{% endif %}</div>
   {% for s in d.narrative.sentences %}
   <div data-claims="{{ s.claims_json }}" data-status="{{ s.status }}">
     <span class="pill {{ s.status }}">{{ "VERIFIED" if s.status == "pass" else "WITHHELD" }}</span>{% if s.status == "pass" %}{{ s.text }}{% else %}<span class="withheld">{{ s.text }}</span>{% endif %}
@@ -309,6 +309,7 @@ a { color: #1a5fb4; }
   {% else %}
   <p class="small">No audit entries reference this document yet.</p>
   {% endif %}
+  {% if d.capa and d.capa.restored_from %}<div class="note" id="restored-note">The <span class="mono">capa.draft</span> entry is a replay: restored from demo/transcripts/{{ d.capa.restored_from }}{% if d.capa.recorded_at_utc %} (recorded {{ d.capa.recorded_at_utc }}){% endif %}, written under the actor <span class="mono">demo-restore</span>. Its table time is the replay time; the recording time is in the entry payload.</div>{% endif %}
   <div class="{{ 'note' if d.audit_chain_ok else 'stamp' }}"><b>Chain verification</b> (<span class="mono">Database.verify_audit_chain()</span>, all entries recomputed): {% if d.audit_chain_ok %}INTACT{% else %}BROKEN at seq {{ d.audit_chain_first_bad }} — this record cannot be relied on{% endif %}.</div>
   <div class="gap">Modeled on 21 CFR 11.10(e) (secure, computer-generated, time-stamped audit trails). Not claimed as Part 11 compliant: the system is not validated, has no user authentication, and a database administrator could rewrite the whole chain consistently; the hash chain detects edits to individual entries only.</div>
   {% for n in d.extra_notes %}<div class="gap">{{ n }}</div>{% endfor %}

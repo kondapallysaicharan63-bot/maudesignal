@@ -27,6 +27,7 @@ from maudesignal.dashboard.spend_ui import guarded_client
 from maudesignal.dossier.builder import DossierError, top_flagged_signal
 from maudesignal.dossier.render import pdf_page_png
 from maudesignal.dossier.review import (
+    UNBOUND_REVIEW_NOTE,
     WONDER_MODEL,
     ReviewError,
     ReviewResult,
@@ -206,6 +207,8 @@ def render_dossier(db: Database, *, capa_id: str | None, product_code: str | Non
             f"Narrative: {d.narrative.source} {d.narrative.model} · shown {d.narrative.passed} · "
             f"withheld {d.narrative.withheld}"
         )
+        if d.narrative.binding_note:
+            st.caption(d.narrative.binding_note.capitalize() + ".")
     else:
         st.caption(d.narrative.note)
 
@@ -268,6 +271,9 @@ def render_dossier(db: Database, *, capa_id: str | None, product_code: str | Non
             _show_review(live, source="Live run")
         elif recorded is not None and recorded.reviewed(out.pdf):
             _show_review(recorded, source="Recorded run")
+        elif recorded is not None and recorded.predates_binding:
+            _show_review(recorded, source="Recorded run")
+            st.caption(UNBOUND_REVIEW_NOTE.capitalize() + ".")
         elif recorded is not None:
             st.warning(
                 f"A recorded reviewer run ({recorded.created_at}) reviewed an earlier revision "

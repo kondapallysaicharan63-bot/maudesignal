@@ -23,6 +23,8 @@ from maudesignal.storage.database import Database
 from maudesignal.storage.models import CapaDraftRecord
 
 COPILOT_ACTOR = "copilot:muse-spark"
+#: Actor of a pack replayed from a stored transcript (the copilot did not write it today).
+RESTORE_ACTOR = "demo-restore"
 
 ALLOWED_TRANSITIONS: dict[str, frozenset[str]] = {
     "draft": frozenset({"approved", "rejected"}),
@@ -103,9 +105,10 @@ def restore_recorded_capas(db: Database, transcripts: Iterable[Mapping[str, Any]
     The stored ``draft_capa`` call (title, problem statement, cited reports) is replayed under
     the id the transcript recorded in ``capa_ids``, so the pack and the searches that prepared
     it share a real id. Packs already present, or whose cited reports are not all in ``db``,
-    are skipped. The restored pack keeps the time the transcript recorded (not the replay
-    time), and its audit entry names the transcript file in ``restored_from``. Returns the
-    ids restored.
+    are skipped. The replay is written under its own actor (``demo-restore``), never as
+    ``copilot:muse-spark``: the copilot did not act at replay time. The restored pack keeps the
+    time the transcript recorded (not the replay time), and its audit entry names the transcript
+    file in ``restored_from``. Returns the ids restored.
     """
     restored: list[str] = []
     for t in transcripts:
@@ -124,7 +127,7 @@ def restore_recorded_capas(db: Database, transcripts: Iterable[Mapping[str, Any]
                 title=str(args.get("title", "")),
                 problem_statement=str(args.get("problem_statement", "")),
                 report_ids=report_ids,
-                actor=COPILOT_ACTOR,
+                actor=RESTORE_ACTOR,
                 capa_id=capa_id,
                 created_at=_recorded_at(t),
                 restored_from=str(t.get("_file") or t.get("label") or "transcript"),

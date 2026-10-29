@@ -10,6 +10,8 @@ import re
 from datetime import datetime
 from pathlib import Path
 
+import pytest
+
 from maudesignal.copilot.actions import draft_capa
 from maudesignal.copilot.protocol import (
     TOOL_DATASETS,
@@ -209,3 +211,84 @@ def test_transcript_dict_carries_protocol() -> None:
     assert [r["tool"] for r in d["protocol"]] == ["get_report"]
     assert d["protocol"][0]["count"] == 1 and d["protocol"][0]["run_at"].endswith("Z")
     assert [r.tool for r in res.protocol] == ["get_report"]
+
+
+def test_filtered_recall_count_is_the_keyword_matches_not_the_stored_total() -> None:
+    """Transcript 18: recalls(query=...) matched 3; the product code has 561 stored recalls."""
+    rows = protocol_from_transcript(_by_label("18-trap-recall"))
+    recall = next(r for r in rows if r.tool == "recalls")
+    assert recall.filters == {"product_code": "LLZ", "query": "IntelliSpace Cardiovascular"}
+    assert recall.count == 3
+    assert recall.count_text == "3"
+    # without a query the matched count is not in the log: never fall back to the stored total
+    bare = protocol_from_calls(
+        [
+            {
+                "name": "recalls",
+                "arguments": {"product_code": "LLZ"},
+                "result_preview": '{"product_code": "LLZ", "stored_recall_count": 561}',
+            }
+        ]
+    )[0]
+    assert bare.count is None and bare.count_text == "not recorded"
+
+
+def test_restored_pack_is_a_labelled_replay_not_a_copilot_write(tmp_path: Path) -> None:
+    import shutil
+
+    from maudesignal.copilot.actions import RESTORE_ACTOR, restore_recorded_capas
+    from maudesignal.storage.database import Database
+
+    root = Path(__file__).resolve().parents[2]
+    db_path = tmp_path / "demo.db"
+    shutil.copy(root / "data" / "demo" / "maudesignal_demo.db", db_path)
+    db = Database(db_path)
+    restore_recorded_capas(db, load_transcripts(TRANSCRIPTS))
+    row = db.get_capa_draft("CAPA-DRAFT-CB63076E")
+    assert row is not None and row.created_by == RESTORE_ACTOR == "demo-restore"
+    assert not any(
+        a.actor == "copilot:muse-spark" and a.entity_id == "CAPA-DRAFT-CB63076E"
+        for a in db.list_audit()
+    )
+    b = build_dossier(db, capa_id="CAPA-DRAFT-CB63076E", transcripts=TRANSCRIPTS)
+    assert b.data.capa is not None and b.data.capa.restored_from is not None
+    html = render_html(b.data)
+    src = f"demo/transcripts/{b.data.capa.restored_from}"
+    assert f"Restored from {src}" in html
+    assert "(recorded 2026-10-28T20:36:53Z)" in html
+    assert 'id="restored-note"' in html and "demo-restore" in html
+    assert "copilot:muse-spark" not in html
+
+
+def test_keyless_demo_shows_recorded_narrative_review_and_linked_searches(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The committed recordings predate the pack binding: still shown, with the note."""
+    from maudesignal.dashboard.demo_db import demo_copy_with_recorded_packs
+    from maudesignal.dossier.review import load_review
+    from maudesignal.dossier.service import recorded_dir
+    from maudesignal.storage.database import Database
+
+    monkeypatch.setattr("maudesignal.dashboard.demo_db._COPIES", {})
+    root = Path(__file__).resolve().parents[2]
+    source = root / "data" / "demo" / "maudesignal_demo.db"
+    before = source.read_bytes()
+    copy = demo_copy_with_recorded_packs(source)
+    assert source.read_bytes() == before and copy != source
+    db = Database(copy)
+    b = build_dossier(
+        db,
+        capa_id="CAPA-DRAFT-CB63076E",
+        recorded_dir=recorded_dir(),
+        transcripts=TRANSCRIPTS,
+    )
+    assert b.data.narrative.available and b.data.narrative.source == "recorded"
+    assert b.data.narrative.binding_note == "recorded before pack binding; a re-record is pending"
+    assert [r.label for r in b.data.protocol][-4:] == [
+        "weekly_signals",
+        "get_report",
+        "get_report",
+        "get_report",
+    ]
+    review = load_review(recorded_dir() / f"{b.data.doc_id}-review.json", b.store)
+    assert review is not None and review.predates_binding

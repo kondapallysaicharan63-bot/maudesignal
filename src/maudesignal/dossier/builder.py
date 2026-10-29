@@ -15,7 +15,7 @@ import json
 import os
 from collections import Counter
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -48,6 +48,7 @@ from maudesignal.dossier.model import (
 )
 from maudesignal.dossier.narrative import (
     STALE_NARRATIVE_NOTE,
+    UNBOUND_RECORDING_NOTE,
     gate_narrative,
     load_recording,
     omitted_section,
@@ -343,6 +344,18 @@ def _capa_info(db: Database, row: CapaDraftRecord, store: EvidenceStore) -> Capa
         None,
     )
     flags = verify_sentence(row.problem_statement, [], store).ungrounded
+    created = next(
+        (a for a in db.list_audit(entity_id=row.capa_id) if a.action == "capa.draft"), None
+    )
+    restored_from: str | None = None
+    recorded_at: str | None = None
+    if created is not None:
+        try:
+            payload = json.loads(created.payload_json)
+        except ValueError:
+            payload = {}
+        restored_from = payload.get("restored_from") or None
+        recorded_at = payload.get("recorded_at_utc") or None
     return CapaInfo(
         capa_id=row.capa_id,
         title=row.title,
@@ -357,6 +370,8 @@ def _capa_info(db: Database, row: CapaDraftRecord, store: EvidenceStore) -> Capa
         decision_audit_seq=decision.seq if decision and row.status != "draft" else None,
         decision_audit_hash=decision.entry_hash if decision and row.status != "draft" else None,
         report_ids=tuple(json.loads(row.report_ids_json)),
+        restored_from=restored_from,
+        recorded_at_utc=recorded_at,
     )
 
 
@@ -484,12 +499,15 @@ def build_dossier(
         )
         if recording is None:
             narrative = omitted_section()
-        elif recording.pack_hash != expected:
+        elif recording.pack_hash and recording.pack_hash != expected:
             narrative = omitted_section(STALE_NARRATIVE_NOTE)
         else:
             narrative = gate_narrative(
                 recording, store, source="recorded", cited_report_ids=[r.report_id for r in rows]
             )
+            if not recording.pack_hash:
+                # Predates the pack binding: still shown (every sentence is re-gated), flagged.
+                narrative = replace(narrative, binding_note=UNBOUND_RECORDING_NOTE)
 
     entity_ids = {doc_id} | ({capa.capa_id} if capa else set())
     audit = _audit_rows(db, entity_ids, capa.capa_id if capa else None)

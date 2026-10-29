@@ -443,13 +443,19 @@ def test_recorded_narrative_is_regated_and_missing_is_omitted(tmp_path: Path) ->
     assert loaded is not None and loaded.raw_output == rec.raw_output
     again = build_dossier(db, capa_id=capa_id, recorded_dir=rdir)
     assert again.data.narrative.source == "recorded" and again.data.narrative.withheld == 2
-    # a recording drafted for another pack (or before the binding existed) is discarded
-    for bad in ("", pack_hash("CAPA-DRAFT-OTHER", ["1"], "other problem")):
-        rec.pack_hash = bad
-        save_recording(rec, rdir / f"{first.data.doc_id}-narrative.json")
-        stale = build_dossier(db, capa_id=capa_id, recorded_dir=rdir)
-        assert not stale.data.narrative.available
-        assert "different evidence pack" in stale.data.narrative.note
+    assert again.data.narrative.binding_note == ""
+    # a recording that carries a hash for another pack is discarded
+    rec.pack_hash = pack_hash("CAPA-DRAFT-OTHER", ["1"], "other problem")
+    save_recording(rec, rdir / f"{first.data.doc_id}-narrative.json")
+    stale = build_dossier(db, capa_id=capa_id, recorded_dir=rdir)
+    assert not stale.data.narrative.available
+    assert "different evidence pack" in stale.data.narrative.note
+    # a recording made before the binding existed (no hash) is still shown, with a visible note
+    rec.pack_hash = ""
+    save_recording(rec, rdir / f"{first.data.doc_id}-narrative.json")
+    old = build_dossier(db, capa_id=capa_id, recorded_dir=rdir)
+    assert old.data.narrative.available and old.data.narrative.withheld == 2
+    assert "recorded before pack binding; a re-record is pending" in render_html(old.data)
     assert load_recording(tmp_path / "nope.json") is None
 
 
@@ -579,6 +585,10 @@ def test_reviewer_sends_pdf_parses_findings_and_records(tmp_path: Path) -> None:
     # the review is bound to the exact PDF it saw
     assert again.reviewed_sha256 and again.reviewed(pdf) and not again.reviewed(pdf + b"x")
     assert not again.reviewed(None) and not again.reviewed(b"")
+    assert not again.predates_binding
+    # a PDF-mode recording without a hash predates the binding (shown with a note, not matched)
+    again.reviewed_sha256 = ""
+    assert again.predates_binding and not again.reviewed(pdf)
 
     record_review(db, r)
     entries = [a for a in db.list_audit() if a.action == "dossier.review"]
