@@ -101,8 +101,8 @@ def main(mode: str) -> None:
                         page.locator("main article").first.inner_text().split()
                     )[:240]
                     r["success_links"] = page.locator("main details a").count()
-                    r["success_first_link"] = (
-                        page.locator("main details a").first.get_attribute("href")
+                    r["success_first_link"] = page.locator("main details a").first.get_attribute(
+                        "href"
                     )
                     page.locator("main article").first.scroll_into_view_if_needed()
                     page.evaluate(banner)
@@ -136,9 +136,9 @@ def main(mode: str) -> None:
                 r["x_overflow"] = xo(page)
                 go_workflow(page, phone, "CAPA-need evidence")
                 open_artifacts_tab(page, phone, "CAPA-need evidence")
-                r["capa_tab_has_label"] = "capa-need evidence" in page.locator(
-                    "#artifact-panel"
-                ).inner_text().lower()
+                r["capa_tab_has_label"] = (
+                    "capa-need evidence" in page.locator("#artifact-panel").inner_text().lower()
+                )
                 r["capa_draft_text_on_page"] = bool(
                     re.search("CAPA draft", page.evaluate("document.body.innerText"))
                 )

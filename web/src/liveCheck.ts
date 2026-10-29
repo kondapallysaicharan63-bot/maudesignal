@@ -3,7 +3,7 @@
 // (classify_counts, build_window, _norm, verify_url) and kept only to re-derive wording and to prove
 // parity with the Python code; they never produce a number shown to a reader. Same windows, same
 // thresholds, same exact integer arithmetic. src/fixtures/liveCheckParity.json is generated from the
-// Python code (python3 scripts/export_web_data.py --parity-fixtures) and liveCheck.test.ts checks
+// Python code (python3 scripts/export_web_data.py --parity-fixtures) and liveCheck.test.tsx checks
 // that this file gives identical answers on every case.
 
 export type Classification = 'new_signal' | 'severity_escalation' | 'spike' | 'stable'
@@ -16,7 +16,8 @@ export const SEVERITY_ESCALATION_PP = 15
 export const SEVERE_EVENT_TYPES = ['injury', 'death']
 export const UNKNOWN_EVENT_TYPE = 'unknown'
 export const EARLIEST = '19900101'
-export const OPENFDA_EVENT_ENDPOINT = 'https://api.fda.gov/device/event.json'
+export const OPENFDA_ORIGIN = 'https://api.fda.gov/'
+export const OPENFDA_EVENT_ENDPOINT = `${OPENFDA_ORIGIN}device/event.json`
 
 /** Order in which a flag outranks another (same as CLASSIFICATION_PRECEDENCE). */
 export const PRECEDENCE: Classification[] = ['new_signal', 'severity_escalation', 'spike']
@@ -253,7 +254,7 @@ export function parseCheck(body: unknown, code: string): LiveCheckResult | null 
     Array.isArray(c.new_event_types) &&
     Array.isArray(c.current_event_type_counts) &&
     Array.isArray(c.queries) &&
-    c.queries.every((q) => Array.isArray(q) && typeof q[0] === 'string' && typeof q[1] === 'string')
+    c.queries.every((q) => Array.isArray(q) && typeof q[0] === 'string' && typeof q[1] === 'string' && q[1].startsWith(OPENFDA_ORIGIN))
   return ok ? (c as unknown as LiveCheckResult) : null
 }
 

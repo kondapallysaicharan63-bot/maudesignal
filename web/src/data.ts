@@ -82,7 +82,7 @@ export const WORKFLOWS: WorkflowDef[] = [
   {
     id: 'check-device',
     title: 'Check any device type',
-    blurb: 'Type any FDA product code. Your browser asks openFDA for counts and applies the same four rules. Nothing is sent to a MaudeSignal server.',
+    blurb: 'Type any FDA product code. The MaudeSignal API reads report counts from openFDA and applies the same four rules. Only the three-letter code is sent.',
   },
   {
     id: 'weekly-signals',

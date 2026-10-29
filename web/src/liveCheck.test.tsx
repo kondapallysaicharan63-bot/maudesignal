@@ -145,8 +145,8 @@ const CHECK = {
   new_event_types: [],
   current_event_type_counts: [['malfunction', 11], ['injury', 1]],
   queries: [
-    ['This week, by event type', 'https://example.test/q1'],
-    ['Everything before this week', 'https://example.test/q2'],
+    ['This week, by event type', 'https://api.fda.gov/device/event.json?search=q1'],
+    ['Everything before this week', 'https://api.fda.gov/device/event.json?search=q2'],
   ],
 }
 const ANSWER = { speakable: 'x', facts: [], advisory: 'Advisory text for a person to review.', provenance: 'p', check: CHECK }
@@ -186,8 +186,8 @@ describe('checkDevice against the MaudeSignal API', () => {
     expect(page).toContain('12.00×') // spike_ratio from "check"
     expect(page).toContain('>12<') // current_count
     expect(page).toContain('1.00') // baseline_weekly_mean
-    expect(page).toContain('href="https://example.test/q1"')
-    expect(page).toContain('href="https://example.test/q2"')
+    expect(page).toContain('href="https://api.fda.gov/device/event.json?search=q1"')
+    expect(page).toContain('href="https://api.fda.gov/device/event.json?search=q2"')
     expect(page).toContain('12 reports this week against a weekly mean of 1.00')
     expect(page).toContain('Advisory text for a person to review.')
     expect(page).toContain('2026-09-24') // window from "check"
@@ -261,7 +261,8 @@ describe('checkDevice against the MaudeSignal API', () => {
     ['not JSON', () => Promise.resolve(new Response('<html>', { status: 200 })), 'bad-response'],
     ['no "check"', () => json({ speakable: 'x' }), 'bad-response'],
     ['another code', () => json({ check: { ...CHECK, product_code: 'QIH' } }), 'bad-response'],
-    ['a number missing', () => json({ check: { ...CHECK, current_count: null } }), 'bad-response'],
+    ['a query that is not an openFDA link', () => json({ check: { ...CHECK, queries: [['Reports', 'javascript:alert(1)']] } }), 'bad-response'],
+    ['a number missing',() => json({ check: { ...CHECK, current_count: null } }), 'bad-response'],
   ])('%s is a failure, never a faked result', async (_n, f, kind) => {
     const out = await checkDevice('LLZ', { fetcher: f, apiBase: BASE, session: memStore(), local: memStore(), now })
     expect(!out.ok && out.kind === kind).toBe(true)
@@ -308,6 +309,30 @@ describe('checkDevice against the MaudeSignal API', () => {
     const out = await checkDevice('QQQ', { fetcher, apiBase: BASE, session: boom, local: boom, now })
     expect(!out.ok && out.kind === 'limit').toBe(true)
     expect(fetcher.mock.calls.length).toBe(n)
+  })
+
+  it('a withheld sentence in the live answer never appears anywhere in the rendered result', async () => {
+    const WITHHELD = 'LLZ caused 50 patient deaths this week and must be recalled.'
+    const body = {
+      ...ANSWER,
+      speakable: `LLZ reports suddenly increased. ${WITHHELD}`,
+      facts: [
+        { text: '12 reports this week.', link: 'https://example.test/q1' },
+        { text: WITHHELD, link: 'https://example.test/q9', status: 'block', withheld: true },
+      ],
+      withheld: [{ text: WITHHELD, reasons: ['no source record supports this number'] }],
+    }
+    const out = await checkDevice('LLZ', { fetcher: () => json(body), apiBase: BASE, session: memStore(), local: memStore(), now })
+    expect(out.ok).toBe(true)
+    const page = html(out)
+    expect(page).not.toContain(WITHHELD)
+    expect(page).not.toContain('50 patient deaths')
+    expect(page).not.toContain('https://example.test/q9')
+    // The cached copy (what a repeat check renders) does not carry it either.
+    const again = await checkDevice('LLZ', { fetcher: () => json(body), apiBase: BASE, session: memStore(), local: memStore(), now })
+    expect(again.ok && again.cached).toBe(true)
+    expect(html(again)).not.toContain(WITHHELD)
+    expect(JSON.stringify(again)).not.toContain(WITHHELD)
   })
 
   it('rejects a code that is not three letters before any request', async () => {
