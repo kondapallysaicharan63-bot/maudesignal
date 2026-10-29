@@ -28,6 +28,13 @@ class OpenFDAUnavailableError(OpenFDAAPIError):
     """Raised when openFDA returns 5xx; eligible for retry with backoff."""
 
 
+class OpenFDAForbiddenError(OpenFDAAPIError):
+    """Raised when openFDA refuses a request (403), e.g. a keyless call from a blocked network.
+
+    Added during the Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
+    """
+
+
 # --- Extraction layer ---
 
 

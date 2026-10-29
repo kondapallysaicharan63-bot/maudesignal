@@ -174,3 +174,15 @@ def test_a_sweep_date_compares_every_code_on_the_same_week() -> None:
     assert r.as_of == date(2026, 8, 20)
     assert r.current_count == 0 and r.baseline_count == 4 and r.classification == "stable"
     assert r.all_dates_total == 4  # the report after the sweep date is not counted
+
+
+def test_a_refused_request_says_why() -> None:
+    from maudesignal.common.exceptions import OpenFDAForbiddenError
+
+    client = OpenFDAClient()
+    client._client = httpx.Client(
+        transport=httpx.MockTransport(lambda r: httpx.Response(403, text="API_KEY_MISSING"))
+    )
+    with pytest.raises(OpenFDAForbiddenError, match="403.*API_KEY_MISSING"):
+        check_product_code(client, "LLZ", today=date(2026, 10, 29))
+    assert "MaudeSignal" in OpenFDAClient()._client.headers["User-Agent"]

@@ -21,6 +21,7 @@ from tenacity import (
 
 from maudesignal.common.exceptions import (
     OpenFDAAPIError,
+    OpenFDAForbiddenError,
     OpenFDARateLimitError,
     OpenFDAUnavailableError,
 )
@@ -31,6 +32,8 @@ logger = get_logger(__name__)
 OPENFDA_EVENT_ENDPOINT = "https://api.fda.gov/device/event.json"
 DEFAULT_PAGE_SIZE = 100  # openFDA max per page
 MAX_RETRIES = 3
+#: Sent with every request so openFDA can identify the tool (added during the hackathon).
+USER_AGENT = "MaudeSignal (open-source; github.com/kondapallysaicharan63-bot/maudesignal)"
 
 
 class OpenFDAClient:
@@ -51,7 +54,7 @@ class OpenFDAClient:
         """
         self._api_key = api_key
         self._page_size = min(page_size, 100)
-        self._client = httpx.Client(timeout=timeout_seconds)
+        self._client = httpx.Client(timeout=timeout_seconds, headers={"User-Agent": USER_AGENT})
 
     def close(self) -> None:
         """Close the underlying HTTP client."""
@@ -242,8 +245,12 @@ class OpenFDAClient:
             raise OpenFDARateLimitError("openFDA returned 429")
         if response.status_code in (500, 503):
             raise OpenFDAUnavailableError(f"openFDA server error {response.status_code}")
+        if response.status_code == 403:
+            raise OpenFDAForbiddenError(f"openFDA refused the request (403): {response.text[:200]}")
         if response.status_code != 200:
-            raise OpenFDAAPIError(f"Unexpected openFDA status {response.status_code}")
+            raise OpenFDAAPIError(
+                f"Unexpected openFDA status {response.status_code}: {response.text[:200]}"
+            )
         payload: dict[str, Any] = response.json()
         return payload
 

@@ -79,6 +79,9 @@ jobs:
     name: Browser tests (product pages)
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      # The live "Check any device type" panel calls openFDA; the public site uses a key too.
+      OPENFDA_API_KEY: ${{ secrets.OPENFDA_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -90,6 +93,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
           python -m playwright install --with-deps chromium
+      - name: openFDA without a key from this runner (reported, not blocking)
+        continue-on-error: true
+        run: >
+          curl -sS -A "MaudeSignal (open-source)" -w "\nHTTP %{http_code}\n"
+          "https://api.fda.gov/device/event.json?search=device.device_report_product_code:LLZ&limit=1"
+          | tail -c 400
       - name: Start the keyless demo app
         run: |
           nohup streamlit run streamlit_app.py --server.headless true --server.port 8501 \

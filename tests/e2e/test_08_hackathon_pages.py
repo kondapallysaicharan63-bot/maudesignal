@@ -217,6 +217,8 @@ class TestLiveCheck:
         text = outcome.inner_text()
         if "HTTP error contacting openFDA" in text:  # no network to openFDA (sandboxes)
             pytest.skip(f"openFDA not reachable from this runner: {text}")
+        if "refused the request (403)" in text and not os.environ.get("OPENFDA_API_KEY"):
+            pytest.skip(f"keyless openFDA call refused from this network: {text}")
         assert "could not be reached" not in text, text  # any other openFDA error is a bug
         expect(panel).to_contain_text("Live from openFDA · LLZ", ignore_case=True)
         expect(panel).to_contain_text("This week")

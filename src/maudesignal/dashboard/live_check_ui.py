@@ -20,7 +20,11 @@ from typing import Any
 
 import streamlit as st
 
-from maudesignal.common.exceptions import OpenFDAAPIError, OpenFDARateLimitError
+from maudesignal.common.exceptions import (
+    OpenFDAAPIError,
+    OpenFDAForbiddenError,
+    OpenFDARateLimitError,
+)
 from maudesignal.config import openfda_api_key_from_env
 from maudesignal.ingestion.openfda_client import OpenFDAClient
 from maudesignal.monitor.live_check import (
@@ -171,6 +175,12 @@ def _run(text: str) -> None:
     try:
         with st.spinner(f"Asking openFDA about {code}…"):
             r = _cached_check(code, datetime.now(UTC).strftime("%Y-%m-%d"))
+    except OpenFDAForbiddenError:
+        st.error(
+            "openFDA refused the request (403). It can refuse calls without an API key from "
+            "shared cloud networks; the site owner sets a free openFDA key as OPENFDA_API_KEY."
+        )
+        return
     except OpenFDARateLimitError:
         st.error("openFDA's rate limit was reached. Try again in a minute.")
         return
