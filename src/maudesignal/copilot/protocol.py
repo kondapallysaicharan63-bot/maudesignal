@@ -16,6 +16,7 @@ import json
 import re
 from collections.abc import Iterable, Mapping
 from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -46,6 +47,31 @@ _NO_COUNT = frozenset({"overnight_signals", "compare_signals", "deadline_check",
 
 NOT_RECORDED = "not recorded"
 
+# Tool names as shown on screen and in documents (one place; the stored name is unchanged).
+TOOL_LABELS: dict[str, str] = {"overnight_signals": "weekly_signals"}
+
+
+def tool_label(name: str) -> str:
+    """Name of a copilot tool as shown on screen."""
+    return TOOL_LABELS.get(name, name)
+
+
+def iso_z(stamp: str | None) -> str | None:
+    """A recorded timestamp as UTC ISO text with a ``Z`` suffix (None stays None).
+
+    ``2026-10-28T20:36:53+00:00`` and ``2026-10-28T20:36:53Z`` both print as
+    ``2026-10-28T20:36:53Z``. Text that is not a timestamp is returned unchanged.
+    """
+    if not stamp:
+        return None
+    try:
+        dt = datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+    except ValueError:
+        return stamp
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(UTC).replace(tzinfo=None)
+    return dt.isoformat(timespec="seconds") + "Z"
+
 
 @dataclass(frozen=True)
 class ProtocolRow:
@@ -62,6 +88,11 @@ class ProtocolRow:
     def to_dict(self) -> dict[str, Any]:
         """JSON-ready dict."""
         return asdict(self)
+
+    @property
+    def label(self) -> str:
+        """Search name as shown to a reader (``overnight_signals`` shows as ``weekly_signals``)."""
+        return tool_label(self.tool)
 
     @property
     def filters_text(self) -> str:
@@ -136,7 +167,7 @@ def row_from_call(call: Mapping[str, Any], run_at: str | None = None) -> Protoco
         date_from=date_from,
         date_to=date_to,
         count=_count(name, preview),
-        run_at=run_at,
+        run_at=iso_z(run_at),
     )
 
 

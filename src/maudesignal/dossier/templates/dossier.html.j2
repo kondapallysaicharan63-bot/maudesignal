@@ -318,12 +318,12 @@ a { color: #1a5fb4; }
 {# ======================= APPENDIX: SEARCH METHODOLOGY ======================= #}
 <section class="newpage" id="sec-protocol">
   <h2>Appendix B. Search methodology</h2>
-  <p>Every search behind this pack, so a reviewer can repeat it. Rows marked <span class="mono">dossier:</span> are the queries this document ran over the stored reports; the other rows are the copilot tool calls stored in the transcript(s) that prepared {{ d.capa.capa_id if d.capa else "this signal" }}. Dates are FDA <i>date_received</i> (YYYYMMDD). “not recorded” means the stored log did not keep that value; nothing is estimated. No model call produced this table.</p>
+  <p>Every search behind this pack, so a reviewer can repeat it. Rows marked <span class="mono">dossier:</span> are the queries this document ran over the stored reports; the other rows are the copilot tool calls stored in the transcript(s) whose recorded CAPA id is {{ d.capa.capa_id if d.capa else "this signal" }}. Dates are FDA <i>date_received</i> (YYYYMMDD). “not recorded” means the stored log did not keep that value; nothing is estimated. No model call produced this table.</p>
   {% if d.protocol %}
   <table class="small" id="search-methodology">
     <thead><tr><th>#</th><th>Search</th><th>Dataset</th><th>Filters</th><th>From</th><th>To</th><th>Count</th><th>Run at (UTC)</th></tr></thead>
     {% for r in d.protocol %}
-    <tr><td>{{ loop.index }}</td><td class="mono">{{ r.tool }}</td><td>{{ r.dataset }}</td><td class="mono">{{ r.filters_text }}</td><td>{{ r.date_from or "—" }}</td><td>{{ r.date_to or "—" }}</td><td>{{ r.count_text }}</td><td class="mono">{{ r.run_at or "not recorded" }}</td></tr>
+    <tr><td>{{ loop.index }}</td><td class="mono">{{ r.label }}</td><td>{{ r.dataset }}</td><td class="mono">{{ r.filters_text }}</td><td>{{ r.date_from or "—" }}</td><td>{{ r.date_to or "—" }}</td><td>{{ r.count_text }}</td><td class="mono">{{ r.run_at or "not recorded" }}</td></tr>
     {% endfor %}
   </table>
   {% else %}

@@ -27,8 +27,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from maudesignal.copilot.actions import decide_capa, draft_capa  # noqa: E402
-from maudesignal.dossier.builder import top_flagged_signal  # noqa: E402
+from maudesignal.copilot.actions import (  # noqa: E402
+    decide_capa,
+    draft_capa,
+    restore_recorded_capas,
+)
+from maudesignal.copilot.protocol import load_transcripts  # noqa: E402
+from maudesignal.dossier.builder import top_flagged_signal, transcripts_dir  # noqa: E402
 from maudesignal.dossier.illustration import IllustrationError, generate_illustration  # noqa: E402
 from maudesignal.dossier.model import Illustration  # noqa: E402
 from maudesignal.dossier.review import WONDER_MODEL, review_dossier, save_review  # noqa: E402
@@ -66,22 +71,34 @@ def main() -> int:
             print("no flagged change in the demo DB")
             return 1
         week_end = datetime.strptime(str(db.max_date_received()), "%Y%m%d").date()
-        capa = draft_capa(
-            db,
-            product_code=sig.product_code,
-            title=(
-                f"{sig.product_code}: {CHANGE_LABELS[sig.classification]} — "
-                "evaluate for corrective action"
+        # The pack the recorded copilot run created (transcript 05) is restored under its own
+        # recorded id, so the dossier's search methodology links to the searches that prepared it.
+        restored = restore_recorded_capas(db, load_transcripts(transcripts_dir()))
+        capa = next(
+            (
+                c
+                for cid in restored
+                if (c := db.get_capa_draft(cid)) and c.product_code == sig.product_code
             ),
-            problem_statement=(
-                f"The daily monitor flagged product code {sig.product_code} as "
-                f"'{CHANGE_LABELS[sig.classification]}' for the week ending "
-                f"{week_end.isoformat()}. "
-                "The cited MAUDE reports from that week are attached for complaint review."
-            ),
-            report_ids=list(sig.current_report_ids),
-            actor=DEMO_ACTOR,
+            None,
         )
+        if capa is None:
+            capa = draft_capa(
+                db,
+                product_code=sig.product_code,
+                title=(
+                    f"{sig.product_code}: {CHANGE_LABELS[sig.classification]} — "
+                    "evaluate for corrective action"
+                ),
+                problem_statement=(
+                    f"The daily monitor flagged product code {sig.product_code} as "
+                    f"'{CHANGE_LABELS[sig.classification]}' for the week ending "
+                    f"{week_end.isoformat()}. "
+                    "The cited MAUDE reports from that week are attached for complaint review."
+                ),
+                report_ids=list(sig.current_report_ids),
+                actor=DEMO_ACTOR,
+            )
         assert capa.created_at is not None
         awareness = capa.created_at.date()
         basis = "assumed = CAPA-need evidence pack creation date (demo); confirm"

@@ -217,7 +217,7 @@ def render_dossier(db: Database, *, capa_id: str | None, product_code: str | Non
         st.dataframe(
             [
                 {
-                    "Search": r.tool,
+                    "Search": r.label,
                     "Dataset": r.dataset,
                     "Filters": r.filters_text,
                     "From": r.date_from or "",

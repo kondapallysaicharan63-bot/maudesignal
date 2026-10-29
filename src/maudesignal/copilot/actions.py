@@ -14,10 +14,14 @@ One pattern for every action: **audit-first, forward-only, human-decided.**
 from __future__ import annotations
 
 import uuid
+from collections.abc import Iterable, Mapping
+from typing import Any
 
 from maudesignal.common.exceptions import MaudeSignalError
 from maudesignal.storage.database import Database
 from maudesignal.storage.models import CapaDraftRecord
+
+COPILOT_ACTOR = "copilot:muse-spark"
 
 ALLOWED_TRANSITIONS: dict[str, frozenset[str]] = {
     "draft": frozenset({"approved", "rejected"}),
@@ -38,11 +42,16 @@ def draft_capa(
     problem_statement: str,
     report_ids: list[str],
     actor: str,
+    capa_id: str | None = None,
 ) -> CapaDraftRecord:
-    """Create a CAPA-need evidence pack (audit-first)."""
+    """Create a CAPA-need evidence pack (audit-first).
+
+    ``capa_id`` is only for restoring a pack that a stored transcript recorded (see
+    ``restore_recorded_capas``); a new pack always gets a fresh random id.
+    """
     if not report_ids:
         raise ActionError("a CAPA-need evidence pack must cite at least one report")
-    capa_id = f"CAPA-DRAFT-{uuid.uuid4().hex[:8].upper()}"
+    capa_id = capa_id or f"CAPA-DRAFT-{uuid.uuid4().hex[:8].upper()}"
     return db.create_capa_draft(
         capa_id=capa_id,
         product_code=product_code,
@@ -68,3 +77,35 @@ def decide_capa(
     return db.decide_capa_draft(
         capa_id=capa_id, new_status=decision, decided_by=reviewer, note=note
     )
+
+
+def restore_recorded_capas(db: Database, transcripts: Iterable[Mapping[str, Any]]) -> list[str]:
+    """Re-create, in ``db``, the packs that stored transcripts recorded their copilot drafting.
+
+    The stored ``draft_capa`` call (title, problem statement, cited reports) is replayed under
+    the id the transcript recorded in ``capa_ids``, so the pack and the searches that prepared
+    it share a real id. Packs already present, or whose cited reports are not all in ``db``,
+    are skipped. Returns the ids restored.
+    """
+    restored: list[str] = []
+    for t in transcripts:
+        ids = [str(i) for i in t.get("capa_ids") or []]
+        calls = [c for c in t.get("tool_calls") or [] if c.get("name") == "draft_capa"]
+        for capa_id, call in zip(ids, calls, strict=False):
+            args = call.get("arguments") or {}
+            report_ids = [str(r) for r in args.get("report_ids") or []]
+            if db.get_capa_draft(capa_id) is not None or not report_ids:
+                continue
+            if len(db.list_raw_reports(report_ids)) != len(set(report_ids)):
+                continue
+            draft_capa(
+                db,
+                product_code=str(args.get("product_code", "")),
+                title=str(args.get("title", "")),
+                problem_statement=str(args.get("problem_statement", "")),
+                report_ids=report_ids,
+                actor=COPILOT_ACTOR,
+                capa_id=capa_id,
+            )
+            restored.append(capa_id)
+    return restored

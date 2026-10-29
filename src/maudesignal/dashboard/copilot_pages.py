@@ -24,6 +24,7 @@ import streamlit as st
 
 from maudesignal.copilot.actions import ActionError, decide_capa
 from maudesignal.copilot.audit_export import load_exports
+from maudesignal.copilot.protocol import protocol_from_transcript, tool_label
 from maudesignal.copilot.spend import SpendLimitError
 from maudesignal.copilot.transcript import load_transcripts
 from maudesignal.dashboard.spend_ui import cap_notice, guarded_client, recorded_fallback
@@ -57,14 +58,6 @@ _PILL = {"pass": ("ok", "Verified"), "block": ("err", "Withheld")}
 
 #: Display names for tool ids whose wording the product no longer uses. The id stays
 #: in the Skill and in recorded runs; only the label on screen changes.
-_TOOL_LABELS = {"overnight_signals": "weekly_signals"}
-
-
-def tool_label(name: str) -> str:
-    """Name of a copilot tool as shown on screen."""
-    return _TOOL_LABELS.get(name, name)
-
-
 def short(text: str, limit: int) -> str:
     """Cut at a word boundary with an ellipsis (list labels)."""
     if len(text) <= limit:
@@ -176,6 +169,31 @@ def render_transcript(t: dict[str, Any]) -> None:
         with st.expander("What the gate blocked on the first pass"):
             for s in t["first_pass"]["sentences"]:
                 st.html(_sentence_html(s))
+    # Stored transcripts made before the field existed get it rebuilt from their stored calls.
+    proto = t.get("protocol")
+    if not isinstance(proto, list):
+        proto = [r.to_dict() for r in protocol_from_transcript(t)]
+    if proto:
+        with st.expander(f"Search protocol ({len(proto)} searches)"):
+            st.caption(
+                "What was searched, so a reviewer can repeat it. "
+                '"not recorded" means the stored log did not keep that value.'
+            )
+            st.dataframe(
+                [
+                    {
+                        "Search": tool_label(str(r["tool"])),
+                        "Dataset": r["dataset"],
+                        "Filters": "; ".join(f"{k}={v}" for k, v in sorted(r["filters"].items()))
+                        or "none",
+                        "From": r["date_from"] or "",
+                        "To": r["date_to"] or "",
+                        "Count": "not recorded" if r["count"] is None else r["count"],
+                    }
+                    for r in proto
+                ],
+                hide_index=True,
+            )
     with st.expander("Tool calls"):
         for c in t["tool_calls"]:
             st.markdown(f"`{tool_label(c['name'])}` `{json.dumps(c['arguments'])}`")

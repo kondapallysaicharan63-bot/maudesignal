@@ -36,6 +36,7 @@ from pathlib import Path
 from typing import Any
 
 from maudesignal.copilot.meta_provider import SPARK_USD_PER_M_INPUT, SPARK_USD_PER_M_OUTPUT
+from maudesignal.copilot.protocol import ProtocolRow, protocol_from_calls
 from maudesignal.copilot.tools import TOOL_SCHEMAS, ToolContext, call_tool
 from maudesignal.extraction.skill_loader import LoadedSkill, SkillLoader
 from maudesignal.gate import (
@@ -86,6 +87,16 @@ class CopilotResult:
     model: str = ""
     parse_failed: bool = False
     length_stops: int = 0
+
+    @property
+    def protocol(self) -> list[ProtocolRow]:
+        """Search protocol of this answer: one row per search tool call, from stored values."""
+        return protocol_from_calls(
+            [
+                {"name": t.name, "arguments": t.arguments, "result_preview": t.result_preview}
+                for t in self.tool_calls
+            ]
+        )
 
     @property
     def cost_usd(self) -> float:

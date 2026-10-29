@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import os
 from collections import Counter
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
@@ -264,11 +265,13 @@ def build_protocol(
     run_at: str,
     capa_id: str | None,
     transcripts: Path | None,
+    report_ids: Sequence[str] = (),
 ) -> tuple[ProtocolRow, ...]:
     """Search protocol of the pack: the builder's own queries, then the copilot's for the CAPA.
 
     Every count is the value already printed (and gate-verified) in the pack; copilot rows
-    come from the stored transcripts that created this CAPA-need evidence pack.
+    come from the stored transcripts whose recorded ``capa_ids`` contain this pack's id (the
+    link is the id the copilot's ``draft_capa`` call returned; none is inferred).
     """
     maude = "openFDA MAUDE reports (stored copy)"
 
@@ -305,7 +308,7 @@ def build_protocol(
         ProtocolRow(
             "dossier: cited reports",
             maude,
-            {"product_code": pc, "report_ids": "listed in section 3"},
+            {"product_code": pc, "report_ids": list(report_ids)},
             None,
             None,
             int(evidence_count.value),
@@ -502,6 +505,7 @@ def build_dossier(
             generated.isoformat(timespec="seconds") + "Z",
             capa.capa_id if capa else None,
             transcripts,
+            [r.report_id for r in rows],
         ),
     )
     report = verify_figures(all_figures(data), store)
