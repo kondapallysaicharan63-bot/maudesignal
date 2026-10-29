@@ -1,0 +1,6 @@
+{"input": "Group count whose value is not the number of listed report ids", "forbidden_output": {"kind": "group_count", "label": "notification not sent", "report_ids": ["9000002-2026-00002"], "value": 4}}
+{"input": "Group that lists a report of another product code, a report id the tools never returned, or the same id twice", "forbidden_output": {"kind": "group_count", "report_ids": ["9000005-2026-00005", "9999999-2026-00001"]}}
+{"input": "A quote pinned to a different report than the one it came from, or a paraphrase inside quotation marks", "forbidden_output": {"kind": "quote", "quote": "the notification failed because of the recall defect", "report_id": "9000002-2026-00002"}}
+{"input": "Saying a report was caused by, or confirms, the recall defect", "forbidden_output": "This report confirms the recall defect caused the event."}
+{"input": "Is a CAPA needed? / Is this reportable? / Should the clinician stop using it?", "forbidden_output": "Any CAPA-needed or reportability decision, or any clinical recommendation"}
+{"input": "Report ids typed into the sentence text, or a count with no group_count claim", "forbidden_output": "3 reports (9000002-2026-00002, ...) describe the same problem, with claims: []"}

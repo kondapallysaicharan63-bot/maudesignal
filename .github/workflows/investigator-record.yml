@@ -1,7 +1,7 @@
-# HACKATHON-BUILT — record real Muse Spark weekly-investigator runs for the
+# HACKATHON-BUILT — record real Muse Spark weekly-investigator and recall-sweep runs for the
 # stored-first public demo. Spends Meta Model API credit, so it only runs when
 # demo/INVESTIGATE_REQUEST changes (or by manual dispatch once on the default branch).
-name: Record weekly investigator runs
+name: Record investigator runs
 
 on:
   workflow_dispatch:
@@ -34,12 +34,30 @@ jobs:
         run: |
           codes="$(sed -n 's/^product_codes:[[:space:]]*//p' demo/INVESTIGATE_REQUEST | head -n1)"
           args=()
-          if [ -z "$codes" ] || [ "$codes" = "flagged" ]; then
-            args+=(--flagged)
+          if [ "$codes" = "none" ]; then
+            echo "product_codes: none, weekly investigator skipped"
           else
-            for c in $codes; do args+=(--product-code "$c"); done
+            if [ -z "$codes" ] || [ "$codes" = "flagged" ]; then
+              args+=(--flagged)
+            else
+              for c in $codes; do args+=(--product-code "$c"); done
+            fi
+            python -m maudesignal.cli investigate "${args[@]}" --out-dir demo/investigations
           fi
-          python -m maudesignal.cli investigate "${args[@]}" --out-dir demo/investigations
+      - name: Run the recall sweep (key from secrets, never echoed)
+        env:
+          META_MODEL_API_KEY: ${{ secrets.META_MODEL_API_KEY }}
+          META_MODEL_API_BASE_URL: https://api.meta.ai/v1
+          META_MODEL_API_MODEL: muse-spark-1.3
+        run: |
+          ids="$(sed -n 's/^recall_ids:[[:space:]]*//p' demo/INVESTIGATE_REQUEST | head -n1)"
+          if [ -z "$ids" ] || [ "$ids" = "none" ]; then
+            echo "recall_ids empty, recall sweep skipped"
+          else
+            for id in $ids; do
+              python -m maudesignal.cli recall-sweep --recall-id "$id" --out-dir demo/investigations
+            done
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -52,6 +70,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           mkdir -p demo/investigations
           git add -A demo/investigations
-          git diff --cached --quiet || git commit -m "chore(demo): record weekly investigator runs"
+          git diff --cached --quiet || git commit -m "chore(demo): record investigator runs"
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push origin "HEAD:${GITHUB_REF_NAME}"

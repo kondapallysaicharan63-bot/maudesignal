@@ -1420,6 +1420,68 @@ def investigate(
             )
 
 
+@app.command(name="recall-sweep")
+def recall_sweep(
+    recall_id: str = typer.Option(
+        ..., "--recall-id", help="Stored recall number to sweep (for example Z-0186-2027)."
+    ),
+    db_path: Path = typer.Option(  # noqa: B008
+        DEFAULT_MONITOR_DB, "--db", help="SQLite database to read (a copy is used)."
+    ),
+    out_dir: Path = typer.Option(  # noqa: B008
+        DEFAULT_INVESTIGATIONS_DIR, "--out-dir", help="Directory for <ts>-recall-<code>.json."
+    ),
+) -> None:
+    """Recall sweep: find stored reports that describe the same failure as a recall.
+
+    Muse Spark reads the recall's stated reason and searches the stored narratives for
+    the same failure. Every sentence passes the claim gate: quotes are matched word for
+    word to the cited report or recall, and the count is recomputed from the listed
+    report ids. Needs META_MODEL_API_KEY; without it nothing runs and nothing is written.
+
+    Examples:
+        maudesignal recall-sweep --recall-id Z-0186-2027
+    """
+    import os
+    import shutil
+    import tempfile
+
+    key = os.environ.get("META_MODEL_API_KEY", "")
+    if not key:
+        console.print("needs META_MODEL_API_KEY (Meta Model API key); nothing was run.")
+        raise typer.Exit(code=2)
+    if not db_path.exists():
+        console.print(f"[red]Database not found:[/red] {db_path}")
+        raise typer.Exit(code=2)
+
+    from maudesignal.copilot.meta_provider import MetaProvider
+    from maudesignal.copilot.recall_sweep import save_sweep, sweep
+    from maudesignal.copilot.tools import ToolContext
+    from maudesignal.gate.loader import store_from_database
+
+    configure_logging("WARNING")
+    model = os.environ.get("META_MODEL_API_MODEL", "muse-spark-1.3")
+    base_url = os.environ.get("META_MODEL_API_BASE_URL", "https://api.meta.ai/v1")
+    with tempfile.TemporaryDirectory() as tmp:
+        db_copy = Path(tmp) / "recall_sweep.db"
+        shutil.copy(db_path, db_copy)  # audit rows go to the copy, never the committed seed
+        db = Database(db_copy)
+        ctx = ToolContext(db=db, store=store_from_database(db))
+        provider = MetaProvider(api_key=key, model=model, base_url=base_url)
+        try:
+            res = sweep(provider.client, ctx, recall_id, model=model)
+        except MaudeSignalError as exc:
+            console.print(f"[red]Recall sweep not run:[/red] {exc}")
+            raise typer.Exit(code=2) from exc
+        path = save_sweep(res, out_dir)
+        rep = res.copilot.report
+        console.print(
+            f"{res.recall.recall_number} ({res.product_code}): {rep.passed} sentences verified, "
+            f"{rep.blocked} withheld, {len(res.groups)} groups, "
+            f"${res.copilot.cost_usd:.4f} -> {path}"
+        )
+
+
 @app.command()
 def status() -> None:
     """Print current config, database contents, and LLM spend."""
