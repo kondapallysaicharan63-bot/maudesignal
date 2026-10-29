@@ -117,7 +117,8 @@ For the Muse connector form: base URL = `$BASE`, auth = API key in the header `X
   tool (`monitor/live_check.py`), same query links, plus a `check` field equal to
   `LiveCheck.to_dict()` (classification, change, counts, shares, window, `queries` as
   `[label, url]`). openFDA is called from the server with `OPENFDA_API_KEY` and the MaudeSignal
-  User-Agent. Per-address limit (default 10 per hour, `MAUDESIGNAL_PUBLIC_CHECK_PER_HOUR`), a
+  User-Agent. Per-address limit (default 10 per hour, `MAUDESIGNAL_PUBLIC_CHECK_PER_HOUR`; **per
+  server instance without Upstash, so the effective limit is that number times the instances**), a
   six-hour cache per code, CORS only for origins in `MAUDESIGNAL_WEB_ORIGINS`. It never reaches
   `ask` or the model, so it cannot spend Meta credit. A stored-snapshot fallback (openFDA
   unreachable, code is stored) has `check: null` and is not cached.
@@ -386,6 +387,10 @@ and window number exactly what the gate recomputed.
    Outside Vercel, also run uvicorn with `--no-proxy-headers` (or `--forwarded-allow-ips` set to
    the real proxy only): by default uvicorn rewrites the client address from `X-Forwarded-For`
    when the peer is `127.0.0.1`, which lets a caller behind a local reverse proxy rotate it.
+   With Upstash the per-key limit uses fixed one-minute windows (up to twice the limit can pass
+   across a window edge); the in-memory limiter is sliding. The daily cost cap reserves the per-call
+   cap in Redis before each model call and releases it afterwards, so concurrent instances cannot
+   all pass a read-only check.
    Other settings: `MAUDESIGNAL_KEY_PEPPER` (server-side secret for the key ids that appear in
    ledger file names and audit session ids; set it), `MAUDESIGNAL_FAILED_AUTH_PER_MIN` (wrong or
    missing keys per client address per minute before 429, default 10). Plain keys shorter than 32

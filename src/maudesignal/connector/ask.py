@@ -38,7 +38,7 @@ from maudesignal.connector.forbidden import is_clean
 from maudesignal.connector.models import Fact, Provenance, ToolAnswer, WithheldSentence
 from maudesignal.connector.readonly import make_read_only
 from maudesignal.connector.speech import compose, speak_date
-from maudesignal.connector.store import ConnectorState, shared_store_configured
+from maudesignal.connector.store import ConnectorState, UpstashLedger, shared_store_configured
 from maudesignal.connector.tools import Clock, _stamp, utc_now
 from maudesignal.copilot.agent import CopilotAgent, CopilotResult
 from maudesignal.copilot.spend import (
@@ -464,8 +464,16 @@ def ask(
             ledger=runtime.ledger_for(key_id),
             db=data.db,
         )
+        hold = 0.0
+        ledger = guard.ledger
         try:
             guard.check("connector.ask")
+            if isinstance(ledger, UpstashLedger):
+                # Shared ledger: reserve the per-call cap first so instances running at the
+                # same moment cannot all pass a read-only check; released in `finally`.
+                if not ledger.reserve(runtime.caps.session_usd, runtime.caps.daily_usd):
+                    raise SpendLimitError("daily_usd", "Today's live-call budget is used up.")
+                hold = runtime.caps.session_usd
             agent = runtime.agent_factory(data, guard)
             make_read_only(agent)  # whatever the factory built: no tool that writes
             res = agent.ask(q)
@@ -479,6 +487,9 @@ def ask(
         ) as exc:  # noqa: BLE001 - any model/network failure falls back to a recording
             logger.warning("connector_ask_live_failed", error_type=type(exc).__name__)
             reason = "model_error"
+        finally:
+            if hold and isinstance(ledger, UpstashLedger):
+                ledger.release(hold)
     transcripts = data.transcripts()
     if not transcripts:
         raise SourceUnavailableError(

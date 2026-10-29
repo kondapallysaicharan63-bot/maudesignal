@@ -104,10 +104,17 @@ def set_vercel_env(key: str, env: Mapping[str, str], http: HttpFn) -> int | None
     return None if status in (200, 201) else (status or 0)
 
 
+def _inside_repository(target_dir: Path) -> bool:
+    """True when ``target_dir`` is in this source tree or under any directory with a VCS entry."""
+    if target_dir == REPO_ROOT or REPO_ROOT in target_dir.parents:
+        return True
+    return any((p / ".git").exists() for p in (target_dir, *target_dir.parents))
+
+
 def write_key_file(key: str, directory: Path, now: datetime) -> Path:
     """Write the key to a new mode-600 file in ``directory`` (never inside the repository)."""
     target_dir = directory.expanduser().resolve()
-    if target_dir == REPO_ROOT or REPO_ROOT in target_dir.parents:
+    if _inside_repository(target_dir):
         raise ValueError("refusing to write a key inside the repository")
     target_dir.mkdir(parents=True, exist_ok=True)
     path = target_dir / f"maudesignal-connector-key-{now:%Y%m%dT%H%M%SZ}.txt"

@@ -87,7 +87,14 @@ def render_docs_page(
         if shared
         else "kept in each server instance's memory: per instance, reset on a cold start"
     )
+    window = (
+        " (counted in fixed one-minute windows, so a burst across a window edge"
+        " can reach twice that)"
+        if shared
+        else " (sliding window, per server instance)"
+    )
     values = {
+        "WINDOW": html.escape(window),
         "STYLE": "\n".join(_read(p) for p in CSS_FILES),
         "VERSION": html.escape(version),
         "SCOPE": html.escape(scope),

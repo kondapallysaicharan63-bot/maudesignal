@@ -108,6 +108,9 @@ def test_docs_page_renders_without_a_key(data: ConnectorData, tmp_path: Path, pa
         r"<style>\n.*?</style>", "", page, count=1, flags=re.S
     )
     assert KEY not in page
+    auth = re.search(r'<h2 id="auth">.*?</section>|<h2 id="auth">.*?<h2', page, flags=re.S)
+    assert auth and "HMAC" in auth.group(0) and "12 hex" in auth.group(0)
+    assert "SHA-256" not in auth.group(0) and "8 hex" not in auth.group(0)
 
 
 def test_docs_page_shows_real_captured_examples() -> None:
@@ -363,6 +366,8 @@ def test_shared_ledger_is_used_by_ask_and_a_redis_outage_falls_back_to_recorded(
     ok = c.post("/v1/tools/ask", json={"question": "How many LLZ reports this week?"}, headers=H)
     assert ok.json()["provenance"]["kind"] == "live_model"
     assert any(k.startswith("maudesignal:connector:spend:") for k in fake.kv)
+    usd = [float(v) for k, v in fake.kv.items() if k.endswith(":usd") and ":spend:" in k]
+    assert usd and all(u < rt.caps.session_usd for u in usd)  # the hold was released
     fake.fail = True  # cap cannot be read: no live spend, the recorded answer is returned
     down = c.post("/v1/tools/ask", json={"question": "What changed this week for LLZ?"}, headers=H)
     assert down.status_code == 200 and down.json()["provenance"]["kind"] == "recorded_answer"

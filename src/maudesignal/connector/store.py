@@ -118,7 +118,10 @@ def shared_store_configured(env: dict[str, str] | None = None) -> bool:
 
 
 class SharedRateLimiter(RateLimiter):
-    """Fixed-window limiter kept in Redis, with the in-memory limiter as fallback."""
+    """Fixed-window limiter kept in Redis, with the in-memory limiter as fallback.
+
+    Fixed windows: around a window boundary up to twice the limit can pass in a short span.
+    """
 
     def __init__(
         self,
@@ -142,10 +145,9 @@ class SharedRateLimiter(RateLimiter):
         self._client, self._name, self._wall = client, name, wall
 
     def _key(self, who: str) -> tuple[str, float]:
-        idx = int(self._wall() // self.window)
-        return f"{NAMESPACE}:rl:{self._name}:{who}:{idx}", self.window - (
-            self._wall() % self.window
-        )
+        now = self._wall()  # read once: the bucket index and the time left must agree
+        idx = int(now // self.window)
+        return f"{NAMESPACE}:rl:{self._name}:{who}:{idx}", self.window - (now % self.window)
 
     def _count(self, who: str, *, add: bool) -> tuple[int, int]:
         key, left = self._key(who)
@@ -209,6 +211,32 @@ class UpstashLedger(DailyLedger):
             return float(self._client.command("INCRBYFLOAT", self._key("usd"), repr(float(usd))))
         except UpstashError:
             return float(self._client.command("INCRBYFLOAT", self._key("usd"), repr(float(usd))))
+
+    def reserve(self, usd: float, daily_cap: float) -> bool:
+        """Hold ``usd`` of today's budget before a model call (atomic INCRBYFLOAT).
+
+        Returns False, with nothing held, when the hold would take today's total over
+        ``daily_cap``. Concurrent instances therefore cannot all pass a read-only check.
+        Raises ``UpstashError`` if Redis is unreachable.
+        """
+        total = float(self._client.command("INCRBYFLOAT", self._key("usd"), repr(float(usd))))
+        self._client.command("EXPIRE", self._key("usd"), 3 * 86_400)
+        if total > daily_cap + 1e-9:
+            self._client.command("INCRBYFLOAT", self._key("usd"), repr(-float(usd)))
+            return False
+        return True
+
+    def release(self, usd: float) -> None:
+        """Give back a hold from :meth:`reserve` (the real cost is added by ``add``)."""
+        try:
+            self._add_usd(-float(usd))
+        except UpstashError as exc:
+            logger.critical(
+                "connector_spend_hold_not_released",
+                usd=round(float(usd), 6),
+                day=self._today().isoformat(),
+                error=str(exc),
+            )
 
     def add(self, usd: float, calls: int) -> float:
         """Add spend for today and return today's new total."""

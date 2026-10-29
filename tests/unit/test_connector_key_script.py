@@ -167,3 +167,13 @@ def test_the_key_it_makes_is_accepted_by_the_server_key_store(tmp_path: Path) ->
 def test_no_key_literal_in_the_script_and_no_print_of_the_key() -> None:
     text = SCRIPT.read_text(encoding="utf-8")
     assert "print(key" not in text and 'print(f"{key' not in text
+
+
+def test_refuses_any_directory_under_a_git_working_tree(tmp_path: Path) -> None:
+    """Also protects a different checkout than the one this module was imported from."""
+    other = tmp_path / "other-checkout"
+    (other / ".git").mkdir(parents=True)
+    mod = load()
+    code, out, err = run(mod, ["--out-dir", str(other / "keys")], {})
+    assert code == 1 and "Nothing was written" in err and out == ""
+    assert not (other / "keys").exists()

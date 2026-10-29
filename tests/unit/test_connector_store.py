@@ -285,3 +285,40 @@ def test_ledger_add_logs_critical_with_the_amount_when_redis_fails_after_the_spe
     assert kw["usd"] == 0.125 and kw["calls"] == 3 and kw["day"] == "2026-10-29"
     dumped = json.dumps(kw, default=str)
     assert TOKEN not in dumped and "abc" not in dumped
+
+
+def test_two_interleaved_guards_cannot_both_pass_the_last_of_the_daily_budget() -> None:
+    """Reserve-before-call: instance B is refused while A's call is still running."""
+    fake = FakeRedis()
+    day = date(2026, 10, 29)
+    a = UpstashLedger(make_state(fake)._client, "abc", today=lambda: day)  # type: ignore[arg-type]
+    b = UpstashLedger(make_state(fake)._client, "abc", today=lambda: day)  # type: ignore[arg-type]
+    assert a.reserve(0.25, 0.30) is True  # A holds its per-call cap, then calls the model
+    assert b.reserve(0.25, 0.30) is False  # B's hold would pass the cap: refused, nothing held
+    assert a.spent_today() == pytest.approx(0.25)
+    a.add(0.04, 1)  # A's real cost
+    a.release(0.25)
+    assert a.spent_today() == pytest.approx(0.04)
+    assert b.reserve(0.25, 0.30) is True  # the rest of the budget is available again
+    b.release(0.25)
+
+
+def test_release_failure_is_logged_not_raised() -> None:
+    fake = FakeRedis()
+    led = UpstashLedger(make_state(fake)._client, "abc", today=lambda: date(2026, 10, 29))  # type: ignore[arg-type]
+    assert led.reserve(0.25, 2.0)
+    fake.fail = True
+    led.release(0.25)  # must not raise
+
+
+def test_rate_limit_bucket_and_time_left_use_one_clock_read() -> None:
+    reads = iter([119.999, 120.001, 120.001])  # a second read would land in the next window
+    lim = SharedRateLimiter(
+        make_state(FakeRedis())._client,  # type: ignore[arg-type]
+        "t",
+        5,
+        60,
+        wall=lambda: next(reads),
+    )
+    key, left = lim._key("k")
+    assert key.endswith(":1") and 0 < left <= 1.0
