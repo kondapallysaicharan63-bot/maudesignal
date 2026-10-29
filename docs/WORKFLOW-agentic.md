@@ -15,7 +15,7 @@ Status: **approved by Charan on Oct 29** (design system kept; deploy steps go to
 | A follow-up: real Muse Spark runs | `hackathon-day2` after merge | Not started | — | Push `demo/INVESTIGATE_REQUEST` (weekly + recall) and `demo/RECORD_REQUEST` (re-record evidence-pack narrative + Wonder review with pack binding); Meta credit, cents |
 | B workspace: B1 shell, B2 chat, B3 artifacts | `track-b-ui` | **PASS** | `wf_d5c47891-d4b` | — |
 | B4: Charan's 6 preview fixes | `track-b-ui` (fast-forwarded to `f621f7c`) | **PASS** (2nd advisor round) | `wf_41350c6f-170`; screenshots `web/qa/screenshots/B4-*.png`; 47 vitest incl. TS↔Python parity (320 cases); 0 "coming soon" | Browser CORS to openFDA untested here (sandbox); Charan checks on the preview. PR `track-b-ui` → `hackathon-day2` after Track A merges |
-| C Muse connector: C1 REST, C2 MCP, C3 hosting + submission pack | `track-c-muse` | **Running** | `wf_f2a3790d-566` | Deploy steps, "add to your Muse" steps, shot list in `claude/video-script-v1.md`, rubric delta |
+| C Muse connector (reordered Oct 29 by Charan): C1 REST + auth/limits, **C2 deployable REST pack** (/openapi.json, docs page, Vercel config, key script, verify a read call), **C3 MCP** only after REST passes | `track-c-muse` | C1 building | `wf_f2a3790d-566` (script edited; resume after C1) | Charan deploys the API project + creates the key with `scripts/new_connector_key.py`; then verify `GET /v1/health` and one tool call; MCP; Muse steps; shot list |
 | Coordinator: live-app Settings fix + CI on PRs into `hackathon-day2` | `coordinator-settings-fix` (`61cd56b`, `210a4ab`) | Advisor review running | local screenshots `docs/hackathon/img/settings-keyless-*.png` | On PASS: merge into `hackathon-day2` (live app picks it up) |
 | Daily monitor on `main` | `main` | Ran Oct 29 | commit `be05711` digest | Watch tomorrow's 11:17 UTC run (check-in 11:50 UTC) |
 
@@ -24,6 +24,7 @@ Status: **approved by Charan on Oct 29** (design system kept; deploy steps go to
 - Oct 29: research doc "PMS Market Research & Agentic Workflow Plan" first: workflows 1–3 + BEUDAMED + Elsa check (no Elsa line without an FDA source).
 - Oct 29: deployed Streamlit shows product pages only (`SHOW_ALL_PAGES_BY_DEFAULT = False`; `?tools=all` for the rest).
 - Oct 29: Track C = Meta Muse connector (REST + MCP on Vercel), replaces Telegram intake; `api/` moved from B to C.
+- Oct 29: Track C order: REST API + OpenAPI + docs page deployed and verified first; MCP second. Connector key lives only in a Vercel env var (`MAUDESIGNAL_API_KEYS`), never in chat or git.
 - Oct 29: commits: author Saicharan Kondapally, committer Claude <noreply@anthropic.com> (Verified on GitHub).
 - Deadline: Nov 4, about 5 PM PT. Nothing into `main` without Charan's OK.
 
