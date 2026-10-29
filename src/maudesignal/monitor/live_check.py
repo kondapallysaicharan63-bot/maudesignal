@@ -210,13 +210,17 @@ def normalize_code(text: str) -> str:
     return code
 
 
-def check_product_code(client: OpenFDAClient, product_code: str, today: date) -> LiveCheck:
-    """Check one product code on openFDA as of its latest report.
+def check_product_code(
+    client: OpenFDAClient, product_code: str, today: date, as_of: date | None = None
+) -> LiveCheck:
+    """Check one product code on openFDA as of its latest report (or a given date).
 
     Args:
         client: openFDA client (an API key raises the rate limit; none is needed).
         product_code: Three-letter FDA product code.
         today: Wall-clock date, used only to bound the search for the latest report.
+        as_of: Last day of the current window. Defaults to the code's latest report;
+            a sweep passes one date so every code compares the same week.
 
     Returns:
         The classification, its figures, and the queries behind them. When the code
@@ -229,8 +233,8 @@ def check_product_code(client: OpenFDAClient, product_code: str, today: date) ->
     code = normalize_code(product_code)
     look_from = _ymd(today - timedelta(days=LOOKBACK_DAYS))
     days = [(d, n) for d, n in client.count_field(code, "date_received", look_from, _ymd(today))]
-    days = [(d, n) for d, n in days if n > 0]
-    if not days:
+    days = [(d, n) for d, n in days if n > 0 and (as_of is None or parse_yyyymmdd(d) <= as_of)]
+    if not days and as_of is None:
         prior_all = client.total(code)
         return LiveCheck(
             product_code=code,
@@ -252,8 +256,7 @@ def check_product_code(client: OpenFDAClient, product_code: str, today: date) ->
             current_event_type_counts=(),
             queries=(("Reports, all dates", verify_url(code, None, None)),),
         )
-    as_of = max(parse_yyyymmdd(d) for d, _ in days)
-    w = build_window(as_of)
+    w = build_window(as_of or max(parse_yyyymmdd(d) for d, _ in days))
     cs, ce = _ymd(w.current_start), _ymd(w.current_end)
     bs, be = _ymd(w.baseline_start), _ymd(w.baseline_end)
     before = _ymd(w.current_start - timedelta(days=1))
@@ -267,15 +270,21 @@ def check_product_code(client: OpenFDAClient, product_code: str, today: date) ->
     else:  # the windows reach past the per-day lookback
         cur_total, base_total = client.total(code, cs, ce), client.total(code, bs, be)
     prior_total = client.total(code, _EARLIEST, before)
+
+    # Event-type counts are only needed where there are reports (the rules ignore them
+    # otherwise), which keeps a sweep of quiet codes cheap.
+    def types(a: str, b: str, total: int, needed: bool) -> tuple[tuple[str, int], ...]:
+        if not (needed and total):
+            return ()
+        return _norm(client.count_field(code, "event_type.exact", a, b), total)
+
     counts = WindowCounts(
         current_total=cur_total,
         baseline_total=base_total,
         prior_total=prior_total,
-        current_types=_norm(client.count_field(code, "event_type.exact", cs, ce), cur_total),
-        baseline_types=_norm(client.count_field(code, "event_type.exact", bs, be), base_total),
-        prior_types=_norm(
-            client.count_field(code, "event_type.exact", _EARLIEST, before), prior_total
-        ),
+        current_types=types(cs, ce, cur_total, True),
+        baseline_types=types(bs, be, base_total, True),
+        prior_types=types(_EARLIEST, before, prior_total, cur_total > 0),
     )
     result = classify_counts(code, counts, w)
     queries = (

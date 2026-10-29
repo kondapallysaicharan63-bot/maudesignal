@@ -163,3 +163,14 @@ def test_code_with_no_recent_reports_is_reported_plainly() -> None:
     client._client = _fake_openfda({"20200101": 3}, {"20200101": {"Malfunction": 3}})
     r = check_product_code(client, "LLZ", today=date(2026, 10, 29))
     assert r.as_of is None and r.classification == "stable" and r.prior_report_count == 3
+
+
+def test_a_sweep_date_compares_every_code_on_the_same_week() -> None:
+    days = {"20260810": 4, "20260830": 3}
+    types = {d: {"Malfunction": n} for d, n in days.items()}
+    client = OpenFDAClient()
+    client._client = _fake_openfda(days, types)
+    r = check_product_code(client, "LLZ", today=date(2026, 10, 29), as_of=date(2026, 8, 20))
+    assert r.as_of == date(2026, 8, 20)
+    assert r.current_count == 0 and r.baseline_count == 4 and r.classification == "stable"
+    assert r.all_dates_total == 4  # the report after the sweep date is not counted

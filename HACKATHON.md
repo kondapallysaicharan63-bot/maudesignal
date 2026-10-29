@@ -35,6 +35,7 @@ Everything under `src/maudesignal/copilot/`, `src/maudesignal/gate/` and
 | `monitor/digest.py` | What-changed digest ("New kind of problem: N · More serious than usual: M · Reports suddenly increased: K") rendered to Markdown + JSON with a fixed advisory footer; no LLM |
 | `monitor/fetch.py` | Capped, whole-day incremental openFDA fetch (reuses the existing ingestion pipeline) |
 | `monitor/live_check.py`, `dashboard/live_check_ui.py` | **Check any device type**: any FDA product code, live from openFDA counts (about 5 requests, no report text, nothing stored, no model), the same four detector rules (a 300-case test checks both agree), and the openFDA query behind every figure. Cached 6 h per code; 10 checks per browser session |
+| `scripts/ai_device_sweep.py`, `.github/workflows/ai-sweep.yml`, `demo/sweep/`, `docs/hackathon/AI_SWEEP.md` | **AI device sweep**: every product code on FDA's AI-Enabled Medical Device List, checked on openFDA for the same week with the live check; results committed by the workflow (weekly and on demand) |
 | `monitor/__init__.py` | Package exports |
 | `cli.py` → `maudesignal monitor` | New CLI command: optional capped fetch → detect → `digests/YYYY-MM-DD.{md,json}` |
 | `scripts/seed_demo_data.py` | Keyless seeding of the demo DB from live openFDA via the existing ingestion + catalog code |
