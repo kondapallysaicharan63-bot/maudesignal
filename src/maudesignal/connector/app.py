@@ -53,7 +53,9 @@ DESCRIPTION = (
     "claim gate; withheld sentences are listed separately and are never part of the speakable "
     "text. Limits: the per-key rate limit and the per-key daily cost cap are kept in each "
     "server instance's memory and temporary storage, so they are per instance and reset on a "
-    "cold start; live ask answers stay switched off until a shared store backs them."
+    "cold start. Because of that, live Muse Spark answers stay switched off unless the "
+    "operator sets an explicit per-instance override; otherwise ask returns the closest "
+    "recorded answer, labelled recorded. Repeated wrong keys from one address get 429."
 )
 
 _ERRORS: dict[int | str, dict[str, Any]] = {
@@ -75,6 +77,7 @@ class Settings:
 
     keys: KeyStore = field(default_factory=KeyStore.from_env)
     limiter: RateLimiter = field(default_factory=RateLimiter.from_env)
+    failed_auth: RateLimiter = field(default_factory=RateLimiter.failed_auth_from_env)
     data: ConnectorData = field(default_factory=ConnectorData)
     ask_runtime: AskRuntime = field(default_factory=AskRuntime)
     live_checker: LiveChecker = _default_live_checker
@@ -116,6 +119,15 @@ class ApiError(Exception):
         self.status, self.code, self.message, self.headers = status, code, message, headers or {}
 
 
+def _client_address(request: Request) -> str:
+    """Caller address: Vercel sets the first X-Forwarded-For entry; else the socket peer."""
+    forwarded: str = str(request.headers.get("x-forwarded-for", ""))
+    first = forwarded.split(",")[0].strip()
+    if first:
+        return str(first[:64])
+    return str(request.client.host) if request.client else "unknown"
+
+
 def _error(status: int, code: str, message: str, headers: dict[str, str] | None = None) -> Response:
     body = ErrorResponse(error=ErrorBody(code=code, message=message))
     return JSONResponse(status_code=status, content=body.model_dump(), headers=headers)
@@ -147,12 +159,24 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
 
     def authenticate(
-        response: Response, presented: Annotated[str | None, Security(key_header)]
+        request: Request,
+        response: Response,
+        presented: Annotated[str | None, Security(key_header)],
     ) -> str:
         if not cfg.keys.configured:
             raise ApiError(503, "not_configured", "This server has no API keys configured.")
+        client = _client_address(request)
+        blocked, wait = cfg.failed_auth.blocked(client)
+        if blocked:  # too many bad keys from this address: do not even check this one
+            raise ApiError(
+                429,
+                "rate_limited",
+                f"Too many failed key checks. Retry in {wait} seconds.",
+                {"Retry-After": str(wait)},
+            )
         key_id = cfg.keys.verify(presented)
         if key_id is None:
+            cfg.failed_auth.record(client)
             raise ApiError(
                 401,
                 "unauthorized",

@@ -21,6 +21,7 @@ from maudesignal.common.exceptions import OpenFDAAPIError
 from maudesignal.connector import links
 from maudesignal.connector.data import ConnectorData
 from maudesignal.connector.errors import InvalidInputError, NotFoundError, SourceUnavailableError
+from maudesignal.connector.forbidden import is_clean
 from maudesignal.connector.models import Fact, Provenance, ToolAnswer
 from maudesignal.connector.speech import compose, plain, speak_date, speak_range
 from maudesignal.monitor.digest import CHANGE_LABELS
@@ -40,6 +41,32 @@ TOOL_NAMES = (
 _REPORT_ID = re.compile(r"^[A-Za-z0-9-]{1,24}$")
 NARRATIVE_CHARS = 240
 MAX_RECALL_FACTS = 5
+
+
+LIVE_FAILED_LEAD = "Live openFDA could not be reached, so this is the stored demo snapshot."
+OMITTED_TEXT = (
+    "Text left out because it contains a term this service does not repeat; "
+    "open the link to read the source."
+)
+OMITTED_SPEAKABLE = (
+    "Part of this answer was left out because it contains a term this service does not "
+    "repeat. The facts list has the rest, each with its link."
+)
+
+
+def screen(answer: ToolAnswer) -> ToolAnswer:
+    """Final guard on every outgoing answer: no forbidden term in speakable or facts.
+
+    Stored source text (a narrative, a recall reason, a firm name) is passed on word for
+    word, so it can carry a word this service never uses itself. A fact that does is kept
+    with its link but its text is replaced; a speakable that does is replaced too.
+    """
+    for fact in answer.facts:
+        if not is_clean(fact.text):
+            fact.text = OMITTED_TEXT
+    if not is_clean(answer.speakable):
+        answer.speakable = OMITTED_SPEAKABLE
+    return answer
 
 
 def utc_now() -> datetime:
@@ -283,11 +310,11 @@ def what_changed_this_week(
         SourceUnavailableError: A live check was needed and openFDA could not be reached.
     """
     if product_code is None:
-        return _stored_what_changed(data, None)
+        return screen(_stored_what_changed(data, None))
     code = _code(product_code)
     stored = {str(s["product_code"]) for s in data.digest()["signals"]}
     if code in stored:
-        return _stored_what_changed(data, code)
+        return screen(_stored_what_changed(data, code))
     return _live(code, "what_changed_this_week", live_checker, now)
 
 
@@ -298,7 +325,7 @@ def _live(code: str, tool: str, live_checker: LiveChecker, now: Clock) -> ToolAn
         raise SourceUnavailableError(
             "openFDA could not be reached just now; try again shortly."
         ) from exc
-    return _live_answer(tool, check, now())
+    return screen(_live_answer(tool, check, now()))
 
 
 # ---------------------------------------------------------------------------
@@ -326,10 +353,12 @@ def check_device_type(
             raise
         stored = _stored_what_changed(data, code)
         stored.tool = "check_device_type"
+        rest = re.split(r"(?<=[.!?])\s+", stored.speakable)
+        stored.speakable = compose([LIVE_FAILED_LEAD, *rest[:2]])  # at most three sentences
         stored.provenance.note = (
             "Live openFDA could not be reached, so this is the stored demo snapshot instead."
         )
-        return stored
+        return screen(stored)
 
 
 # ---------------------------------------------------------------------------
@@ -388,17 +417,19 @@ def get_report(data: ConnectorData, report_id: str) -> ToolAnswer:
                 link_label="openFDA report",
             )
         )
-    return ToolAnswer(
-        tool="get_report",
-        speakable=compose(
-            [
-                f"Report {rid} is a {kind} report for product code {record.product_code}, "
-                f"received {received}.",
-                "The start of its narrative is in the facts.",
-            ]
-        ),
-        facts=facts,
-        provenance=snapshot_provenance(data, f"report received {received}"),
+    return screen(
+        ToolAnswer(
+            tool="get_report",
+            speakable=compose(
+                [
+                    f"Report {rid} is a {kind} report for product code {record.product_code}, "
+                    f"received {received}.",
+                    "The start of its narrative is in the facts.",
+                ]
+            ),
+            facts=facts,
+            provenance=snapshot_provenance(data, f"report received {received}"),
+        )
     )
 
 
@@ -428,33 +459,41 @@ def recalls(data: ConnectorData, product_code: str) -> ToolAnswer:
     prov = snapshot_provenance(data, None, recalls=True)
     all_link = links.product_recalls_link(code)
     if not rows:
-        return ToolAnswer(
-            tool="recalls",
-            speakable=compose(
-                [
-                    f"The stored demo snapshot holds no recalls for product code {code}.",
-                    "That does not mean none exist; open the openFDA link to check.",
-                ]
-            ),
-            facts=[
-                Fact(
-                    text=f"openFDA recall query for product code {code}.",
-                    link=all_link,
-                    link_label="openFDA: recalls for this code",
-                )
-            ],
-            provenance=prov,
+        return screen(
+            ToolAnswer(
+                tool="recalls",
+                speakable=compose(
+                    [
+                        f"The stored demo snapshot holds no recalls for product code {code}.",
+                        "That does not mean none exist; open the openFDA link to check.",
+                    ]
+                ),
+                facts=[
+                    Fact(
+                        text=f"openFDA recall query for product code {code}.",
+                        link=all_link,
+                        link_label="openFDA: recalls for this code",
+                    )
+                ],
+                provenance=prov,
+            )
         )
     latest = rows[0]
     started = speak_date(latest.date_initiated) if latest.date_initiated else "an unknown date"
+    events = {r.event_number for r in rows if r.event_number}
+    if events and all(r.event_number for r in rows):
+        # openFDA lists one row per recalled product; several rows can share one recall event
+        counted = f"{len(rows)} recall product records ({len(events)} recall events)"
+    else:
+        counted = f"{len(rows)} recall product records"
     parts = [
-        f"The stored demo snapshot holds {len(rows)} FDA recalls for product code {code}.",
+        f"The stored demo snapshot holds {counted} for product code {code}.",
         f"The most recent started {started}"
         + (f" by {latest.recalling_firm}." if latest.recalling_firm else "."),
     ]
     facts = [
         Fact(
-            text=f"{len(rows)} recalls for product code {code} in the stored snapshot.",
+            text=f"{counted} for product code {code} in the stored snapshot.",
             link=all_link,
             link_label="openFDA: recalls for this code",
         )
@@ -473,4 +512,6 @@ def recalls(data: ConnectorData, product_code: str) -> ToolAnswer:
                 link_label="openFDA recall",
             )
         )
-    return ToolAnswer(tool="recalls", speakable=compose(parts), facts=facts, provenance=prov)
+    return screen(
+        ToolAnswer(tool="recalls", speakable=compose(parts), facts=facts, provenance=prov)
+    )

@@ -204,7 +204,10 @@ def test_get_report_missing_and_invalid(data: ConnectorData) -> None:
 def test_recalls_stored(data: ConnectorData) -> None:
     a = tools.recalls(data, "llz")
     check_shape(a, "recalls")
-    assert "561 FDA recalls" in a.speakable
+    # 561 openFDA recall product records belong to 433 distinct recall events
+    assert "561 recall product records (433 recall events)" in a.speakable
+    assert "561 FDA recalls" not in a.speakable
+    assert any("561 recall product records (433 recall events)" in f.text for f in a.facts)
     assert a.provenance.kind == "stored_demo_snapshot"
     assert "fetched 2026-10-27" in (a.provenance.data_dates or "")
     assert 1 < len(a.facts) <= 6
@@ -357,12 +360,12 @@ def test_live_ask_model_failure_falls_back_without_leaking_error(tmp_path: Path)
 
 
 def test_keystore_plain_and_hashed_entries() -> None:
-    other = "another-key-value"
+    other = "another-key-value-0123456789-abcdefgh"
     env = {"MAUDESIGNAL_API_KEYS": f" {KEY} , sha256:{sha256_hex(other)} ,,"}
     ks = KeyStore.from_env(env)
     assert ks.configured
-    assert ks.verify(KEY) == sha256_hex(KEY)[:12]
-    assert ks.verify(other) == sha256_hex(other)[:12]
+    assert ks.verify(KEY) == ks.key_id(KEY)
+    assert ks.verify(other) == ks.key_id(other)
     assert ks.verify("nope") is None and ks.verify("") is None and ks.verify(None) is None
     assert ks.verify("x" * 1000) is None
     assert not KeyStore.from_env({}).configured
@@ -392,3 +395,89 @@ def test_speech_helpers() -> None:
     )
     assert plain("report 50426770") == "report 5 0 4 2 6 7 7 0"
     assert plain("33 reports, 8.75 average") == "33 reports, 8.75 average"
+
+
+def test_key_id_is_peppered_and_short_keys_are_refused(caplog: pytest.LogCaptureFixture) -> None:
+    plain_prefix = sha256_hex(KEY)[:12]
+    a = KeyStore.from_env({"MAUDESIGNAL_API_KEYS": KEY, "MAUDESIGNAL_KEY_PEPPER": "pepper-one"})
+    b = KeyStore.from_env({"MAUDESIGNAL_API_KEYS": KEY, "MAUDESIGNAL_KEY_PEPPER": "pepper-two"})
+    assert a.verify(KEY) != plain_prefix, "id must not be a plain SHA-256 prefix"
+    assert a.verify(KEY) != b.verify(KEY), "id depends on the server-side pepper"
+    assert a.verify(KEY) == a.key_id(KEY) and len(a.key_id(KEY)) == 12
+    short = "short-key-123"
+    ks = KeyStore.from_env({"MAUDESIGNAL_API_KEYS": f"{short},{KEY}"})
+    assert ks.verify(short) is None and ks.verify(KEY) is not None
+    assert not KeyStore.from_env({"MAUDESIGNAL_API_KEYS": short}).configured
+    assert short not in caplog.text
+
+
+# --- live mode needs more than the model key -------------------------------------------
+
+
+def test_model_key_alone_returns_recorded_answer(
+    data: ConnectorData, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("META_MODEL_API_KEY", "set-but-not-a-real-key")
+    monkeypatch.delenv("MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP", raising=False)
+
+    def boom(*_: object) -> object:
+        raise AssertionError("no live call without the explicit per-instance override")
+
+    rt = AskRuntime(agent_factory=boom, ledger_dir=tmp_path / "led")  # type: ignore[arg-type]
+    assert rt.live_enabled() is False
+    a = ask(data, "What changed this week for LLZ?", key_id="k1", runtime=rt)
+    assert a.provenance.kind == "recorded_answer"
+    assert "no_model" not in a.speakable  # the reason code is not spoken
+    monkeypatch.setenv("MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP", "1")
+    assert rt.live_enabled() is True
+    monkeypatch.delenv("META_MODEL_API_KEY")
+    assert rt.live_enabled() is False, "the override alone does not enable live mode"
+
+
+# --- stored text is screened on every tool ---------------------------------------------
+
+
+def test_screen_replaces_forbidden_terms_but_keeps_links() -> None:
+    from maudesignal.connector.models import Fact, Provenance
+    from maudesignal.connector.tools import OMITTED_SPEAKABLE, OMITTED_TEXT, screen
+
+    ans = ToolAnswer(
+        tool="recalls",
+        speakable="The device was validated by the firm.",
+        facts=[
+            Fact(text="Reason: approved by the board.", link="https://api.fda.gov/x"),
+            Fact(text="Reason: plain wording.", link="https://api.fda.gov/y"),
+        ],
+        provenance=Provenance(kind="stored_demo_snapshot", source="test"),
+    )
+    out = screen(ans)
+    assert out.speakable == OMITTED_SPEAKABLE
+    assert out.facts[0].text == OMITTED_TEXT and out.facts[0].link == "https://api.fda.gov/x"
+    assert out.facts[1].text == "Reason: plain wording."
+
+
+def test_every_stored_report_and_recall_output_is_clean(data: ConnectorData) -> None:
+    ids = sorted({r.report_id for r in data.store.records})
+    assert len(ids) > 100
+    for rid in ids:
+        a = tools.get_report(data, rid)
+        assert forbidden_in(a.speakable) == [], rid
+        assert all(forbidden_in(f.text) == [] and f.link.startswith("https://") for f in a.facts)
+    codes = sorted({r.product_code for r in data.store.recalls})
+    assert codes
+    for code in codes:
+        a = tools.recalls(data, code)
+        assert forbidden_in(a.speakable) == [], code
+        assert all(forbidden_in(f.text) == [] and f.link.startswith("https://") for f in a.facts)
+
+
+def test_check_device_type_fallback_says_live_failed(data: ConnectorData) -> None:
+    from maudesignal.common.exceptions import OpenFDAAPIError
+
+    def down(_: str) -> LiveCheck:
+        raise OpenFDAAPIError("unreachable")
+
+    a = tools.check_device_type(data, "LLZ", live_checker=down)
+    assert a.speakable.startswith("Live openFDA could not be reached, so this is the stored demo")
+    assert a.provenance.kind == "stored_demo_snapshot"
+    assert len(re.split(r"(?<=[.!?])\s+", a.speakable)) <= 3

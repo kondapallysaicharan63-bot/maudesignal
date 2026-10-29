@@ -103,6 +103,22 @@ def default_agent_factory(
     return agent
 
 
+ALLOW_PER_INSTANCE_ENV = "MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP"
+
+
+def live_mode_allowed() -> bool:
+    """True only when the model key is set AND the operator accepted per-instance limits.
+
+    The daily cost cap is a file on one server instance and the rate limit is in memory, so
+    on serverless hosting both reset on a cold start. No shared store is implemented, so the
+    only way to switch live Muse Spark calls on is the explicit override
+    ``MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP=1``. A model key alone returns recorded answers.
+    """
+    return bool(os.environ.get("META_MODEL_API_KEY")) and (
+        os.environ.get(ALLOW_PER_INSTANCE_ENV, "").strip() == "1"
+    )
+
+
 def _env_float(name: str, default: float) -> float:
     try:
         value = float(os.environ.get(name, ""))
@@ -116,9 +132,7 @@ class AskRuntime:
     """Everything ``ask`` needs besides the stored data."""
 
     agent_factory: AgentFactory = default_agent_factory
-    live_enabled: Callable[[], bool] = field(
-        default=lambda: bool(os.environ.get("META_MODEL_API_KEY"))
-    )
+    live_enabled: Callable[[], bool] = field(default=live_mode_allowed)
     caps: SpendCaps = field(
         default_factory=lambda: SpendCaps(
             session_usd=_env_float("MAUDESIGNAL_API_REQUEST_USD", DEFAULT_REQUEST_USD),

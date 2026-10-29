@@ -147,9 +147,7 @@ def test_cost_cap_falls_back_to_recorded_answer_over_http(
 class KeyStoreId:
     @staticmethod
     def of(key: str) -> str:
-        from maudesignal.connector.security import sha256_hex
-
-        return sha256_hex(key)[:12]
+        return KeyStore.from_env({"MAUDESIGNAL_API_KEYS": KEY}).key_id(key)
 
 
 def test_ask_over_http_never_speaks_withheld(data: ConnectorData, tmp_path: Path) -> None:
@@ -327,3 +325,26 @@ def test_key_in_query_is_blanked_before_any_access_log_can_read_it() -> None:
 
 def test_health_states_that_limits_are_per_instance(data: ConnectorData, tmp_path: Path) -> None:
     assert make_client(data, tmp_path).get("/v1/health").json()["limits_scope"] == "per_instance"
+
+
+def test_repeated_wrong_keys_get_429_before_key_check(data: ConnectorData, tmp_path: Path) -> None:
+    settings = Settings(
+        keys=KeyStore.from_env({"MAUDESIGNAL_API_KEYS": KEY}),
+        limiter=RateLimiter(100),
+        failed_auth=RateLimiter(3),
+        data=data,
+        ask_runtime=AskRuntime(live_enabled=lambda: False, ledger_dir=tmp_path / "led"),
+        live_checker=fake_check,
+    )
+    c = TestClient(create_app(settings), raise_server_exceptions=False)
+    url = "/v1/tools/recalls?product_code=LLZ"
+    guess = {"X-API-Key": "wrong-" + "0" * 40}
+    codes = [c.get(url, headers=guess).status_code for _ in range(3)]
+    assert codes == [401, 401, 401]
+    r = c.get(url, headers=guess)
+    assert r.status_code == 429 and int(r.headers["Retry-After"]) >= 1
+    assert "guess" not in r.text and KEY not in r.text
+    # a different client address is not affected
+    other = c.get(url, headers={**H, "X-Forwarded-For": "203.0.113.9"})
+    assert other.status_code == 200
+    assert c.get(url).status_code == 429  # missing key counts from the blocked address too

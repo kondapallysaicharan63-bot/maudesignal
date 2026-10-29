@@ -45,10 +45,22 @@ and window number exactly what the gate recomputed.
    memory and the daily spend ledger is a file in the instance's temporary folder. On Vercel
    each instance has its own, and both reset on a cold start, so a caller can exceed either
    limit across instances or restarts. `/v1/health` reports `limits_scope: per_instance`.
-   **Do not set `META_MODEL_API_KEY` in Vercel until one of these is done:** back the limiter
-   and ledger with a shared store (Vercel KV / Upstash or an Edge Config counter), or put a
-   hard spending limit on the Meta key itself. Without the key, `ask` only returns recordings
-   and no spend is possible.
+   Live Muse Spark calls are therefore **off in code**, not just by convention: `ask` calls the
+   model only when `META_MODEL_API_KEY` is set **and** `MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP=1`
+   is set (an explicit acceptance of per-instance limits). A model key alone returns recorded
+   answers (`provenance.kind = recorded_answer`). No shared store is built yet; before enabling
+   live mode on Vercel, back the limiter and ledger with one (Vercel KV / Upstash) or put a hard
+   spending limit on the Meta key itself.
+   Other settings: `MAUDESIGNAL_KEY_PEPPER` (server-side secret for the key ids that appear in
+   ledger file names and audit session ids; set it), `MAUDESIGNAL_FAILED_AUTH_PER_MIN` (wrong or
+   missing keys per client address per minute before 429, default 10). Plain keys shorter than 32
+   characters are refused at start-up (a warning with a count is logged, never the key).
+   **Audit entry of a live `ask` is not visible from the laptop (open decision).** A live `ask`
+   writes its copilot audit and spend rows to a temporary copy of the demo database on the
+   Vercel instance, which is lost on a cold start. The video beat "laptop shows the same answer
+   plus its audit entry" must not be scripted until the connector's audit entry has a home that
+   the laptop can read (a shared store, or an audit trail returned in the response). Decide this
+   in the next milestone.
 2. **A key in a URL is refused (400) and the query is blanked** before uvicorn's access log
    can print it. Vercel's own request log is outside this code, so send the key only in the
    `X-API-Key` header. Run uvicorn with `--no-access-log` (or a log config that drops the
