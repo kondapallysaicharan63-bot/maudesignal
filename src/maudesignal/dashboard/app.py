@@ -687,23 +687,25 @@ def _page_dashboard(db: Database) -> None:
     n_alerts = len(db.list_alert_rules(active_only=True))
     cost = db.total_llm_cost_usd()
 
-    # KPI row
+    # KPI row. Without extraction rows the AI / confidence / cost tiles would only show
+    # zeros (the keyless demo database has none), so they appear once data exists.
     _section("Key Performance Indicators")
-    c1, c2, c3, c4, c5 = st.columns(5)
-    _kpi_card(c1, f"{n_raw:,}", "MAUDE Records")
-    _kpi_card(c2, str(n_ai), "AI Signals Detected", "red" if n_ai > 0 else "")
-    _kpi_card(c3, f"{avg_conf:.3f}", "Avg Confidence", "green" if avg_conf >= 0.8 else "amber")
-    _kpi_card(c4, str(n_alerts), "Active Alert Rules")
-    _kpi_card(c5, f"${cost:.2f}", "LLM Cost to Date")
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
     if df_ext.empty:
+        c1, _ = st.columns([1, 4])
+        _kpi_card(c1, f"{n_raw:,}", "MAUDE Records")
         st.info(
             "No extraction results yet. Use **MAUDE Ingestion** to pull records, "
             "then **LLM Extraction** to analyse them."
         )
         return
+    c1, c2, c3, c4, c5 = st.columns(5)
+    _kpi_card(c1, f"{n_raw:,}", "MAUDE Records")
+    _kpi_card(c2, str(n_ai), "AI Signals Detected", "red" if n_ai > 0 else "")
+    _kpi_card(c3, f"{avg_conf:.3f}", "Avg Confidence", "green" if avg_conf >= 0.8 else "amber")
+    _kpi_card(c4, str(n_alerts), "Active Alert Rules")
+    _kpi_card(c5, f"${cost:.2f}", "Extraction LLM cost")
+
+    st.markdown("<br>", unsafe_allow_html=True)
 
     col_left, col_right = st.columns(2)
 
@@ -1609,7 +1611,7 @@ def _settings_providers(db: Database) -> None:
         _section("Cost & Limits")
         cost = db.total_llm_cost_usd()
         c1, c2 = st.columns(2)
-        _kpi_card(c1, f"${cost:.2f}", "LLM Cost to Date")
+        _kpi_card(c1, f"${cost:.2f}", "Extraction LLM cost")
         _kpi_card(c2, f"${cfg.cost_ceiling_usd:.2f}", "Cost Ceiling")
 
 
@@ -1871,7 +1873,7 @@ def _render_app(db: Database) -> None:  # noqa: PLR0912
 
     _top_bar(db)
 
-    # ── Sidebar: the classic tools, data status and the live-call quota ───────
+    # ── Sidebar: the classic tools and, when a key is set, the live-call quota ─
     with st.sidebar:
         st.caption("AI-Powered Postmarket Surveillance · public FDA data")
         st.html('<div class="ms-kicker">More tools</div>')
@@ -1884,24 +1886,6 @@ def _render_app(db: Database) -> None:  # noqa: PLR0912
                 st.session_state["nav_page"] = page_name
                 st.rerun()
 
-        st.divider()
-
-        # Sidebar status footer
-        n_raw = db.count_raw_reports()
-        n_rules = len(db.list_alert_rules(active_only=True))
-        cost = db.total_llm_cost_usd()
-        extractions = db.list_extractions()
-        if extractions:
-            last_ts = max(r.extraction_ts for r in extractions)
-            delta = datetime.now() - last_ts
-            freshness = f"{delta.seconds // 3600}h ago" if delta.days == 0 else f"{delta.days}d ago"
-        else:
-            freshness = "never"
-
-        st.caption(f"{n_raw:,} MAUDE records")
-        st.caption(f"{n_rules} active alert rules")
-        st.caption(f"${cost:.4f} extraction LLM spend")
-        st.caption(f"Last extraction: {freshness}")
         # Filled after the page runs, so it reflects calls made on this rerun.
         quota_slot = st.empty()
 

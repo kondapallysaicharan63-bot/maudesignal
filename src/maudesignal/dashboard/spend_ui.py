@@ -54,9 +54,11 @@ def guarded_client(db: Database | None = None) -> GuardedClient:
 
 
 def sidebar_quota(db: Database | None = None) -> None:
-    """Remaining live-call quota for this session and today (rendered in the sidebar slot)."""
+    """Remaining live-call quota for this session and today (rendered in the sidebar slot).
+
+    Shows nothing without a key: the keyless demo makes no live calls.
+    """
     if not has_key():
-        st.caption("Live Meta calls: off (no key) — recorded runs shown.")
         return
     g = guard(db)
     r = g.remaining()
