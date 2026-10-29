@@ -1,5 +1,7 @@
-// "Check any device type": the four detector rules, ported from src/maudesignal/monitor/live_check.py
-// (classify_counts, build_window, _norm, verify_url, check_product_code). Same windows, same
+// "Check any device type". The browser asks the MaudeSignal API (never openFDA) and renders its "check"
+// object. The four detector rules below are ported from src/maudesignal/monitor/live_check.py
+// (classify_counts, build_window, _norm, verify_url) and kept only to re-derive wording and to prove
+// parity with the Python code; they never produce a number shown to a reader. Same windows, same
 // thresholds, same exact integer arithmetic. src/fixtures/liveCheckParity.json is generated from the
 // Python code (python3 scripts/export_web_data.py --parity-fixtures) and liveCheck.test.ts checks
 // that this file gives identical answers on every case.
@@ -13,7 +15,6 @@ export const SPIKE_MIN_REPORTS = 3
 export const SEVERITY_ESCALATION_PP = 15
 export const SEVERE_EVENT_TYPES = ['injury', 'death']
 export const UNKNOWN_EVENT_TYPE = 'unknown'
-export const LOOKBACK_DAYS = 730
 export const EARLIEST = '19900101'
 export const OPENFDA_EVENT_ENDPOINT = 'https://api.fda.gov/device/event.json'
 
@@ -65,6 +66,8 @@ export interface LiveCheckResult {
   new_event_types: string[]
   current_event_type_counts: TypeCounts
   queries: [string, string][]
+  /** Plain-words label sent by the API (LiveCheck.change); the TS table is the fallback. */
+  change?: string
 }
 
 // ── dates (UTC, YYYYMMDD) ────────────────────────────────────────────────────
@@ -207,11 +210,6 @@ export function verifyUrl(code: string, start: string | null, end: string | null
   return `${OPENFDA_EVENT_ENDPOINT}?${p.toString()}`
 }
 
-/** The same request with the bucket limit the Python client sends for counts. */
-function requestUrl(code: string, start: string | null, end: string | null, count?: string): string {
-  return count ? `${verifyUrl(code, start, end, count)}&limit=1000` : verifyUrl(code, start, end)
-}
-
 export const PRODUCT_CODE_RE = /^[A-Z]{3}$/
 
 export function normalizeCode(text: string): string | null {
@@ -219,7 +217,80 @@ export function normalizeCode(text: string): string | null {
   return PRODUCT_CODE_RE.test(code) ? code : null
 }
 
-export type FailureKind = 'network' | 'forbidden' | 'rate' | 'server' | 'bad-response'
+// ── the MaudeSignal API (the browser never calls openFDA itself) ─────────────
+export const API_TIMEOUT_MS = 8000
+export const API_PATH = '/v1/public/check_device_type'
+
+export type FailureKind = 'unconfigured' | 'network' | 'rate' | 'server' | 'bad-response'
+
+type Fetcher = (url: string, init?: { signal?: AbortSignal }) => Promise<Response>
+
+/** The build-time API base without a trailing slash, or null when it is not set. */
+export function apiBaseFrom(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null
+  const base = raw.trim().replace(/\/+$/, '')
+  return /^https?:\/\//.test(base) ? base : null
+}
+
+export function apiUrl(base: string, code: string): string {
+  return `${base}${API_PATH}?product_code=${encodeURIComponent(code)}`
+}
+
+const isNum = (v: unknown): boolean => typeof v === 'number' && Number.isFinite(v)
+const isNumOrNull = (v: unknown): boolean => v === null || isNum(v)
+
+/** Reads "check" (LiveCheck.to_dict()) out of the API answer; null when it is not that shape. */
+export function parseCheck(body: unknown, code: string): LiveCheckResult | null {
+  const c = (body as { check?: Record<string, unknown> } | null)?.check
+  if (!c || typeof c !== 'object') return null
+  const ok =
+    c.product_code === code &&
+    ['stable', 'new_signal', 'severity_escalation', 'spike'].includes(String(c.classification)) &&
+    Array.isArray(c.triggers) &&
+    [c.current_count, c.current_severe_count, c.baseline_count, c.baseline_weekly_mean, c.baseline_severe_count, c.prior_report_count].every(isNum) &&
+    [c.current_severe_share, c.baseline_severe_share, c.severe_share_delta_pp, c.spike_ratio].every(isNumOrNull) &&
+    (c.as_of === null || typeof c.as_of === 'string') &&
+    Array.isArray(c.new_event_types) &&
+    Array.isArray(c.current_event_type_counts) &&
+    Array.isArray(c.queries) &&
+    c.queries.every((q) => Array.isArray(q) && typeof q[0] === 'string' && typeof q[1] === 'string')
+  return ok ? (c as unknown as LiveCheckResult) : null
+}
+
+export interface ApiAnswer {
+  result: LiveCheckResult
+  advisory: string | null
+}
+
+/** One GET to our API. Every failure is a typed error, never a made-up result. */
+export async function fetchCheck(
+  code: string,
+  deps: { fetcher: Fetcher; apiBase: string | null; timeoutMs?: number },
+): Promise<ApiAnswer> {
+  if (!deps.apiBase) throw new LiveCheckFailure('unconfigured', 'This site is not connected to the MaudeSignal API.')
+  const ctl = new AbortController()
+  const timer = setTimeout(() => ctl.abort(), deps.timeoutMs ?? API_TIMEOUT_MS)
+  let res: Response
+  try {
+    res = await deps.fetcher(apiUrl(deps.apiBase, code), { signal: ctl.signal })
+  } catch {
+    throw new LiveCheckFailure('network', 'The MaudeSignal API did not answer (offline, blocked, or it took longer than 8 seconds).')
+  } finally {
+    clearTimeout(timer)
+  }
+  if (res.status === 429) throw new LiveCheckFailure('rate', 'The live check is rate limited right now (429). Try again later.')
+  if (!res.ok) throw new LiveCheckFailure('server', `The MaudeSignal API returned HTTP ${res.status}.`)
+  let body: unknown
+  try {
+    body = await res.json()
+  } catch {
+    throw new LiveCheckFailure('bad-response', 'The MaudeSignal API sent an answer that could not be read.')
+  }
+  const result = parseCheck(body, code)
+  if (!result) throw new LiveCheckFailure('bad-response', 'The MaudeSignal API answer did not contain a readable check.')
+  const adv = (body as { advisory?: unknown }).advisory
+  return { result, advisory: typeof adv === 'string' ? adv : null }
+}
 
 export class LiveCheckFailure extends Error {
   constructor(
@@ -227,120 +298,6 @@ export class LiveCheckFailure extends Error {
     message: string,
   ) {
     super(message)
-  }
-}
-
-type Fetcher = (url: string) => Promise<Response>
-
-async function getJson(fetcher: Fetcher, url: string): Promise<Record<string, unknown> | null> {
-  let res: Response
-  try {
-    res = await fetcher(url)
-  } catch {
-    // CORS blocks and offline both surface as a TypeError with no detail.
-    throw new LiveCheckFailure('network', 'The browser could not reach openFDA (offline, or the browser blocked the cross-origin request).')
-  }
-  if (res.status === 404) return null // openFDA answers 404 when nothing matches
-  if (res.status === 403) throw new LiveCheckFailure('forbidden', 'openFDA refused the request (403).')
-  if (res.status === 429) throw new LiveCheckFailure('rate', "openFDA's rate limit was reached (429).")
-  if (!res.ok) throw new LiveCheckFailure('server', `openFDA returned HTTP ${res.status}.`)
-  try {
-    return (await res.json()) as Record<string, unknown>
-  } catch {
-    throw new LiveCheckFailure('bad-response', 'openFDA sent an answer that could not be read.')
-  }
-}
-
-async function countField(
-  f: Fetcher,
-  code: string,
-  field: string,
-  start: string | null,
-  end: string | null,
-): Promise<[string, number][]> {
-  const payload = await getJson(f, requestUrl(code, start, end, field))
-  const rows = Array.isArray(payload?.results) ? (payload?.results as Record<string, unknown>[]) : []
-  return rows
-    .map((r): [string, number] => [String(r.term ?? r.time), Number(r.count)])
-    .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
-}
-
-async function total(f: Fetcher, code: string, start: string | null, end: string | null): Promise<number> {
-  const payload = await getJson(f, requestUrl(code, start, end))
-  const meta = payload?.meta as { results?: { total?: number } } | undefined
-  return Number(meta?.results?.total ?? 0)
-}
-
-/**
- * One product code, as of its latest report (check_product_code with as_of=None): per-day counts
- * for the last 730 days, event-type counts per window, and the total before the window.
- */
-export async function runLiveCheck(codeIn: string, todayYmd: string, f: Fetcher): Promise<LiveCheckResult> {
-  const code = normalizeCode(codeIn)
-  if (!code) throw new Error('A product code is three letters, for example LLZ or QIH.')
-  const lookFrom = addDays(todayYmd, -LOOKBACK_DAYS)
-  const days = (await countField(f, code, 'date_received', lookFrom, todayYmd)).filter(([, n]) => n > 0)
-  if (days.length === 0) {
-    const all = await total(f, code, null, null)
-    return {
-      product_code: code,
-      as_of: null,
-      window: null,
-      classification: 'stable',
-      triggers: [],
-      current_count: 0,
-      current_severe_count: 0,
-      current_severe_share: null,
-      baseline_count: 0,
-      baseline_weekly_mean: 0,
-      baseline_severe_count: 0,
-      baseline_severe_share: null,
-      severe_share_delta_pp: null,
-      spike_ratio: null,
-      prior_report_count: all,
-      new_event_types: [],
-      current_event_type_counts: [],
-      queries: [['Reports, all dates', verifyUrl(code, null, null)]],
-    }
-  }
-  const asOf = days.reduce((m, [d]) => (d > m ? d : m), days[0][0])
-  const w = buildWindow(asOf)
-  const cs = w.current_start
-  const ce = w.current_end
-  const bs = w.baseline_start
-  const be = w.baseline_end
-  const before = addDays(cs, -1)
-  const inRange = (a: string, b: string) => days.filter(([d]) => d >= a && d <= b).reduce((s, [, n]) => s + n, 0)
-
-  let curTotal: number
-  let baseTotal: number
-  if (bs >= lookFrom) {
-    curTotal = inRange(cs, ce)
-    baseTotal = inRange(bs, be)
-  } else {
-    curTotal = await total(f, code, cs, ce)
-    baseTotal = await total(f, code, bs, be)
-  }
-  const priorTotal = await total(f, code, EARLIEST, before)
-  const types = async (a: string, b: string, n: number, needed: boolean): Promise<TypeCounts> =>
-    needed && n ? normalizeTypes(await countField(f, code, 'event_type.exact', a, b), n) : []
-  const counts: WindowCounts = {
-    current_total: curTotal,
-    baseline_total: baseTotal,
-    prior_total: priorTotal,
-    current_types: await types(cs, ce, curTotal, true),
-    baseline_types: await types(bs, be, baseTotal, true),
-    prior_types: await types(EARLIEST, before, priorTotal, curTotal > 0),
-  }
-  return {
-    ...classifyCounts(code, counts, w),
-    queries: [
-      ['Reports per day (latest date, both windows)', verifyUrl(code, lookFrom, todayYmd, 'date_received')],
-      ['This week, by event type', verifyUrl(code, cs, ce, 'event_type.exact')],
-      ['4 weeks before, by event type', verifyUrl(code, bs, be, 'event_type.exact')],
-      ['Everything before this week', verifyUrl(code, EARLIEST, before)],
-      ['Everything before this week, by event type', verifyUrl(code, EARLIEST, before, 'event_type.exact')],
-    ],
   }
 }
 
@@ -438,20 +395,20 @@ export function browserStore(kind: 'session' | 'local'): KeyStore | null {
 }
 
 export type CheckOutcome =
-  | { ok: true; result: LiveCheckResult; cached: boolean; used: number }
+  | { ok: true; result: LiveCheckResult; advisory: string | null; cached: boolean; used: number }
   | { ok: false; kind: 'limit' | 'invalid' | FailureKind; message: string; used: number }
 
-/** Limit, cache, then openFDA. A failure is returned, never replaced by a made-up result. */
+/** Limit, 6-hour cache, then our API. A failure is returned, never replaced by a made-up result. */
 export async function checkDevice(
   text: string,
-  deps: { fetcher: Fetcher; session: KeyStore | null; local: KeyStore | null; now?: number },
+  deps: { fetcher: Fetcher; apiBase: string | null; session: KeyStore | null; local: KeyStore | null; now?: number; timeoutMs?: number },
 ): Promise<CheckOutcome> {
   const now = deps.now ?? Date.now()
   const code = normalizeCode(text)
   const used = checksUsed(deps.session)
   if (!code) return { ok: false, kind: 'invalid', message: 'A product code is three letters, for example LLZ or QIH.', used }
   const cached = readCache(deps.local, code, now)
-  if (cached) return { ok: true, result: cached, cached: true, used }
+  if (cached) return { ok: true, result: cached, advisory: null, cached: true, used }
   if (used >= SESSION_CHECKS)
     return {
       ok: false,
@@ -460,9 +417,9 @@ export async function checkDevice(
       used,
     }
   try {
-    const result = await runLiveCheck(code, ymd(now), deps.fetcher)
-    writeCache(deps.local, code, now, result)
-    return { ok: true, result, cached: false, used: recordCheck(deps.session) }
+    const a = await fetchCheck(code, deps)
+    writeCache(deps.local, code, now, a.result)
+    return { ok: true, result: a.result, advisory: a.advisory, cached: false, used: recordCheck(deps.session) }
   } catch (e) {
     if (e instanceof LiveCheckFailure) return { ok: false, kind: e.kind, message: e.message, used }
     return { ok: false, kind: 'bad-response', message: e instanceof Error ? e.message : String(e), used }

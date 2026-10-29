@@ -38,7 +38,7 @@ MAUDE_DETAIL_URL = (
     "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id={}"
 )
 # Same renaming the Streamlit app uses (dashboard/copilot_pages.py _TOOL_LABELS).
-TOOL_LABELS = {"overnight_signals": "weekly_signals"}
+TOOL_LABELS = {"overnight_signals": "weekly_signals", "draft_capa": "capa_need_evidence"}
 OVERNIGHT_LABELS = ("01", "02", "13", "15", "20", "22")
 CAPA_LABELS = ("05",)
 GREETING_LABELS = ("00-voice-a", "00-voice-b")
@@ -64,7 +64,7 @@ TOOL_WORDS = {
     "report_sources": "split reports by who filed them",
     "mhra_alerts": "checked MHRA (UK) alerts",
     "deadline_check": "checked a reporting deadline",
-    "draft_capa": "drafted a CAPA record for human review (nothing filed)",
+    "capa_need_evidence": "put together CAPA-need evidence for human review (nothing filed)",
 }
 # Dataset a tool reads, used only when the stored preview carries no "source".
 TOOL_DATASETS = {

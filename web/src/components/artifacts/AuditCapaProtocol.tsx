@@ -171,7 +171,7 @@ export function CapaTab({
   const [states, setStates] = useState<Record<string, CapaLocalState>>({})
   return (
     <article>
-      <p className="ms-kicker">CAPA draft</p>
+      <p className="ms-kicker">CAPA-need evidence</p>
       <p className="ws-wrap mt-2 text-ink-2">
         Drafts only. A person decides whether a corrective action is needed; nothing is filed with FDA.
       </p>
@@ -191,7 +191,7 @@ export function CapaTab({
       )}
       <div className="mt-3 grid gap-3">
         {drafts.length === 0 ? (
-          <Empty title="No CAPA draft in the stored runs" />
+          <Empty title="No CAPA-need evidence in the stored runs" />
         ) : (
           drafts.map((d) => (
             <CapaCard

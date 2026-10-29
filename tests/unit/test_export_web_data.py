@@ -252,3 +252,10 @@ def test_parity_fixtures_are_current_and_cover_every_rule() -> None:
 def test_display_excluded_audit_run_is_not_exported_but_chain_still_checked(out: Path) -> None:
     labels = [r["run_label"] for r in load(out, "audit.json")["runs"]]
     assert "00-voice-main" not in labels and "typed" in labels
+
+
+def test_capa_tool_step_uses_the_display_label(out: Path) -> None:
+    raw = "".join(json.dumps(load(out, n)) for n in ("threads.json", "protocol.json", "audit.json"))
+    assert "draft_capa" not in raw
+    assert "capa_need_evidence" in raw
+    assert exporter.tool_label("draft_capa") == "capa_need_evidence"

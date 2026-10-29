@@ -17,7 +17,7 @@ const thread = (names: string[]): Thread => ({
 
 describe('relatedTabs', () => {
   it('opens CAPA first for a thread that drafted one', () => {
-    expect(relatedTabs(thread(['weekly_signals', 'draft_capa']))).toEqual([
+    expect(relatedTabs(thread(['weekly_signals', 'capa_need_evidence']))).toEqual([
       'capa',
       'dossier',
       'brief',
@@ -34,7 +34,7 @@ describe('relatedTabs', () => {
 
 describe('producedTabs', () => {
   it('marks only what the thread itself created, never the dossier, brief or digest', () => {
-    expect(producedTabs(thread(['weekly_signals', 'draft_capa']))).toEqual(['capa', 'protocol', 'audit'])
+    expect(producedTabs(thread(['weekly_signals', 'capa_need_evidence']))).toEqual(['capa', 'protocol', 'audit'])
     expect(producedTabs(thread(['weekly_signals']))).toEqual(['protocol', 'audit'])
   })
   it('has only the audit tab when no tool ran', () => {

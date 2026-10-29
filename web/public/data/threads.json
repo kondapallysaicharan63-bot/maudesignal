@@ -594,7 +594,7 @@
           "summary": "read report 50448213"
         },
         {
-          "name": "draft_capa",
+          "name": "capa_need_evidence",
           "arguments": {
             "problem_statement": "LLZ reports suddenly increased this week with IntelliSpace Cardiovascular malfunction reports describing error 500 preventing report finalization and processing",
             "product_code": "LLZ",
@@ -605,7 +605,7 @@
             ],
             "title": "LLZ IntelliSpace Cardiovascular error 500 - this week increase"
           },
-          "summary": "drafted a CAPA record for human review (nothing filed)"
+          "summary": "put together CAPA-need evidence for human review (nothing filed)"
         }
       ],
       "sentences": [

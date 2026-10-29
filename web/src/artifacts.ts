@@ -9,7 +9,7 @@ export const TABS: { id: TabId; label: string }[] = [
   { id: 'dossier', label: 'Dossier' },
   { id: 'vision', label: 'Vision' },
   { id: 'audit', label: 'Audit' },
-  { id: 'capa', label: 'CAPA' },
+  { id: 'capa', label: 'CAPA-need evidence' },
   { id: 'protocol', label: 'Protocol' },
 ]
 
@@ -18,7 +18,7 @@ export function relatedTabs(thread: Thread | null): TabId[] {
   if (!thread) return []
   const names = new Set(thread.tool_steps.map((s) => s.name))
   const out: TabId[] = []
-  if (names.has('draft_capa')) out.push('capa', 'dossier')
+  if (names.has('capa_need_evidence')) out.push('capa', 'dossier')
   if (names.has('weekly_signals')) out.push('brief', 'digest')
   if (names.has('device_510k')) out.push('vision')
   if (thread.tool_steps.length > 0) out.push('protocol')
@@ -26,11 +26,11 @@ export function relatedTabs(thread: Thread | null): TabId[] {
   return out
 }
 
-/** Tabs whose artifact this thread itself created: its CAPA draft, its tool-step protocol, its audit entries. */
+/** Tabs whose artifact this thread itself created: its CAPA-need evidence, its tool-step protocol, its audit entries. */
 export function producedTabs(thread: Thread | null): TabId[] {
   if (!thread) return []
   const out: TabId[] = []
-  if (thread.tool_steps.some((s) => s.name === 'draft_capa')) out.push('capa')
+  if (thread.tool_steps.some((s) => s.name === 'capa_need_evidence')) out.push('capa')
   if (thread.tool_steps.length > 0) out.push('protocol')
   out.push('audit')
   return out
@@ -97,7 +97,7 @@ export function protocolFor(protocol: Protocol, threadId: string | null): Protoc
   return threadId ? (protocol.protocols[threadId] ?? []) : []
 }
 
-/** Local-only approval state of a CAPA draft: never saved anywhere. */
+/** Local-only approval state of CAPA-need evidence: never saved anywhere. */
 export type CapaLocalState = { status: 'draft' } | { status: 'approved'; by: string }
 
 export function approveLocally(name: string): CapaLocalState | null {

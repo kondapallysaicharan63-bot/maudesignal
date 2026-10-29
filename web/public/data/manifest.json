@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "generated_utc": "2026-10-29T21:11:03Z",
-  "source_commit": "81b8445b78e433b7e02458eb44a4f4f7977c397b",
+  "generated_utc": "2026-10-29T22:26:27Z",
+  "source_commit": "f621f7c1c914673d77ec5511cef6662336b88a34",
   "files": [
     "threads.json",
     "evidence.json",

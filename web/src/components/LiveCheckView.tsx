@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { isoDay, STREAMLIT_URL } from '../data'
 import {
+  apiBaseFrom,
   browserStore,
   CHANGE_LABELS,
   checkDevice,
@@ -11,9 +12,9 @@ import {
   type LiveCheckResult,
 } from '../liveCheck'
 
-function Result({ r, cached }: { r: LiveCheckResult; cached: boolean }) {
+function Result({ r, cached, advisory }: { r: LiveCheckResult; cached: boolean; advisory: string | null }) {
   const flagged = r.classification !== 'stable'
-  const label = CHANGE_LABELS[r.classification]
+  const label = typeof r.change === 'string' && r.change ? r.change : CHANGE_LABELS[r.classification]
   const figure = r.classification === 'spike' && r.spike_ratio !== null ? `${r.spike_ratio.toFixed(2)}×` : String(r.current_count)
   const stats: [string, string][] = [
     ['This week', String(r.current_count)],
@@ -62,12 +63,44 @@ function Result({ r, cached }: { r: LiveCheckResult; cached: boolean }) {
       <p className="mt-2 text-[13px] leading-snug text-ink-3">
         openFDA lags real time by weeks, so "this week" is the latest week it has. A triage signal for a person to review, not
         a finding.
+        {advisory ? ` ${advisory}` : ''}
       </p>
     </div>
   )
 }
 
-/** "Check any device type": the browser asks openFDA for counts and applies the four rules. */
+/** The answer to one check: the result card, or the honest fallback (never a made-up result). */
+export function OutcomeView({ out }: { out: CheckOutcome }) {
+  if (out.ok) return <Result r={out.result} cached={out.cached} advisory={out.advisory} />
+  return (
+    <div role="alert" className="ms-banner ms-banner--err mt-4">
+        <div>
+          <p className="ws-wrap m-0">{out.message}</p>
+          {out.kind !== 'invalid' && out.kind !== 'limit' && (
+            <p className="ws-wrap m-0 mt-1">
+              No result is shown, because none was read. The Streamlit app runs the same live check from its own server:{' '}
+              <a className="font-semibold underline" href={STREAMLIT_URL} target="_blank" rel="noreferrer">
+                open the live check in the Streamlit app
+              </a>
+              .
+            </p>
+          )}
+          {out.kind === 'limit' && (
+            <p className="m-0 mt-1">
+              <a className="font-semibold underline" href={STREAMLIT_URL} target="_blank" rel="noreferrer">
+                Open the Streamlit app
+              </a>
+            </p>
+          )}
+        </div>
+      </div>
+  )
+}
+
+/** The API base is fixed when the site is built (VITE_MAUDESIGNAL_API_BASE); empty means no live check here. */
+const API_BASE = apiBaseFrom(import.meta.env.VITE_MAUDESIGNAL_API_BASE)
+
+/** "Check any device type": the browser asks the MaudeSignal API, which applies the four rules to openFDA counts. */
 export function LiveCheckView() {
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
@@ -77,7 +110,8 @@ export function LiveCheckView() {
   const go = async () => {
     setBusy(true)
     const o = await checkDevice(code, {
-      fetcher: (u) => fetch(u),
+      fetcher: (u, init) => fetch(u, init),
+      apiBase: API_BASE,
       session: browserStore('session'),
       local: browserStore('local'),
     })
@@ -91,9 +125,9 @@ export function LiveCheckView() {
       <p className="ms-kicker">Live from openFDA</p>
       <h1 className="t-title-lg m-0">Check any device type</h1>
       <p className="mt-2 max-w-xl text-ink-2">
-        Type any FDA product code. Your browser asks openFDA for counts (no report text, no AI model, nothing sent to a
-        MaudeSignal server) and applies the same four rules as the stored device types: a new kind of problem, more serious
-        reports than usual, a sudden rise in reports, or no change.
+        Type any FDA product code. The MaudeSignal API reads report counts from openFDA (no report text, no AI model) and
+        applies the same four rules as the stored device types: a new kind of problem, more serious reports than usual, a
+        sudden rise in reports, or no change. Only the three-letter code is sent.
       </p>
       <form
         className="mt-4 flex flex-wrap items-end gap-2"
@@ -117,38 +151,14 @@ export function LiveCheckView() {
           />
         </label>
         <button type="submit" disabled={busy || code.length !== 3} className="ms-btn ms-btn--primary" style={{ height: 44 }}>
-          {busy ? 'Asking openFDA…' : 'Check on openFDA'}
+          {busy ? 'Checking…' : 'Check device type'}
         </button>
       </form>
       <p className="mt-2 text-[13px] text-ink-3">
         {used} of {SESSION_CHECKS} checks used in this browser session; a code checked in the last 6 hours is shown from this
         browser without asking again.
       </p>
-      {out && !out.ok && (
-        <div role="alert" className="ms-banner ms-banner--err mt-4">
-          <div>
-            <p className="ws-wrap m-0">{out.message}</p>
-            {out.kind !== 'invalid' && out.kind !== 'limit' && (
-              <p className="ws-wrap m-0 mt-1">
-                No result is shown, because none was read from openFDA. The Streamlit app runs the same live check from its
-                own server:{' '}
-                <a className="font-semibold underline" href={STREAMLIT_URL} target="_blank" rel="noreferrer">
-                  open the live check in the Streamlit app
-                </a>
-                .
-              </p>
-            )}
-            {out.kind === 'limit' && (
-              <p className="m-0 mt-1">
-                <a className="font-semibold underline" href={STREAMLIT_URL} target="_blank" rel="noreferrer">
-                  Open the Streamlit app
-                </a>
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-      {out?.ok && <Result r={out.result} cached={out.cached} />}
+      {out && <OutcomeView out={out} />}
     </div>
   )
 }
