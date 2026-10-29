@@ -118,6 +118,23 @@ what is acceptable code.
 
 Full list: [docs/01_vision_mission.md §6](docs/01_vision_mission.md).
 
+> **Hackathon extension (Oct 2026).** For the Meta Global AI Developer
+> Hackathon (Oct 26 – Nov 4, 2026) a scoped conversational surface was added:
+> the `safety-copilot` (Muse Spark via the Meta Model API, `src/maudesignal/copilot/`).
+> It is not a general chatbot. It is a B2B regulatory triage aid that answers
+> only through 13 deterministic tools over stored records, emits structured
+> claims, and shows nothing that the claim-level gate (`src/maudesignal/gate/`)
+> has not verified. It never gives medical advice; its actions are drafts that
+> a named human approves; nothing is filed with FDA. Every other boundary
+> above still holds. File-by-file list: [HACKATHON.md](HACKATHON.md).
+>
+> **MHRA scope note (adopted by the owner, Oct 2026).** One non-FDA source was
+> adopted: MHRA (UK) device safety alerts from the public GOV.UK search API
+> (`src/maudesignal/sources/mhra.py`). They are labelled "MHRA (UK)", shown as
+> regulator context only, never counted in a MAUDE number or signal, and quotes
+> from them pass the same gate. No other regulator (EU MDR, Health Canada,
+> PMDA, NMPA) is in scope, and no surface may claim their coverage.
+
 ---
 
 ## 4. Tech Stack
@@ -181,8 +198,13 @@ maudesignal/
 │   ├── classification/         # F3 (planned)
 │   ├── drift/                  # F4 (planned)
 │   ├── verification/           # F5 — citation verifier
-│   ├── dashboard/              # F6 (planned, Streamlit)
-│   └── reports/                # F7 (planned, PSUR)
+│   ├── dashboard/              # F6 Streamlit (+ copilot_pages.py, hackathon)
+│   ├── reports/                # F7 (planned, PSUR)
+│   ├── copilot/                # Hackathon: Muse Spark agent, tools, CAPA actions
+│   ├── gate/                   # Hackathon: claim-level citation gate
+│   ├── monitor/                # Hackathon: daily what-changed digest
+│   ├── dossier/                # Hackathon: Signal Evaluation & CAPA dossier PDF + Wonder review
+│   └── vision/                 # Hackathon: 510(k) summary reader, label camera (SAM + Spark)
 ├── tests/                      # pytest, gold sets, fixtures
 ├── pyproject.toml              # Project + tool config
 ├── README.md                   # Public-facing
@@ -261,6 +283,12 @@ MaudeSignal does not handle PHI under any circumstances.
 | `drift-analysis-interpreter` | ✅ v1.0.0 (skeleton) | Translates KS/PSI stats into regulator language; not wired into pipeline yet |
 | `fda-guidance-retriever` | 📋 planned | Grounded retrieval over FDA guidance corpus |
 | `psur-report-drafter` | 📋 planned | Final composer; consumes everything |
+| `safety-copilot` | ✅ v1.3.1 (hackathon, Oct 2026) | Copilot contract: tool use + structured claims checked by `gate/`; advisory only |
+| `fda-document-reader` | ✅ v1.0.0 (hackathon, Oct 2026) | Muse Spark reads 510(k) summary page images; checked by `vision/verify.py` (two reads + openFDA + text layer) |
+| `dossier-narrative` | ✅ v1.2.0 (hackathon, Oct 2026) | Muse Spark one-page dossier summary as gated claims |
+| `dossier-reviewer` | ✅ v1.1.1 (hackathon, Oct 2026) | Muse Wonder independent review of the dossier PDF; findings only |
+| `dossier-cover-illustration` | ✅ v1.0.0 (hackathon, Oct 2026) | Optional Muse Image cover; non-evidentiary, off by default |
+| `device-label-reader` | ✅ v1.0.0 (hackathon, Oct 2026) | Muse Spark reads a SAM-cropped device label; K-number / GTIN checked by `vision/label.py` |
 
 If you need to add a new Skill, follow the structure of the existing
 five Skills and update the table above.
@@ -310,6 +338,23 @@ See `maudesignal/config.py` for the authoritative list.
 
 ---
 
+## 8.5 Design System (all UI work)
+
+Every user-facing surface (the website, the Streamlit dashboard, PSUR
+report HTML) uses [design-system/](design-system/README.md): bento layout,
+editorial paper theme, Newsreader + Geist. Themes: Paper (Light), Night
+(Dark), High contrast, plus Black and Pink (added for the dashboard's theme
+picker; same token names, AA contrast checked by `tests/unit/test_theme.py`).
+Link `design-system/tokens.css` and `design-system/maudesignal.css`, use the
+`.ms-*` classes and `var(--token)` values, and copy markup from
+`design-system/components/*.html`. The dashboard loads them through
+`src/maudesignal/dashboard/theme.py` (+ `streamlit_bridge.css`). Do not
+introduce other palettes, fonts, background images or gradients. Change
+the look by editing `design-system/tokens.json` and regenerating
+`tokens.css` (`python3.12 design-system/build_tokens.py`).
+
+---
+
 ## 9. What NOT to Do
 
 - ❌ Do not write inline prompt strings in Python. Use a Skill.
@@ -322,7 +367,8 @@ See `maudesignal/config.py` for the authoritative list.
 - ❌ Do not add PHI handling, multi-tenant, auth, or SaaS scaffolding.
 - ❌ Do not add a new regulator (EU MDR, Health Canada, etc.) without
   going through scope review in the Charter.
-- ❌ Do not add features beyond F1–F7. The 8-week scope is fixed.
+- ❌ Do not add features beyond F1–F7. The 8-week scope is fixed. (The
+  hackathon extension in §3 is the one documented exception.)
 - ❌ Do not return `confidence_score = 1.0` from any Skill. Cap at 0.95.
 - ❌ Do not use LLM training-data knowledge as a citation verification
   source.

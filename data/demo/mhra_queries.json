@@ -1,0 +1,7 @@
+{
+  "_comment": "GOV.UK search terms used to fetch MHRA (UK) device safety alerts for each demo FDA product code. Chosen by a person; edit freely. Alerts are UK context only, never FDA evidence.",
+  "LLZ": "imaging software",
+  "QIH": "software",
+  "MYN": "image analysis",
+  "POK": "diagnostic software"
+}

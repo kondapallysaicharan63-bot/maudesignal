@@ -32,7 +32,7 @@
 **US-04**: As a Quality Engineer, I can import MAUDE adverse events by product code so that I have the complete public signal picture.
 - Acceptance: Import completes for 1,000 records in < 2 minutes.
 
-**US-05**: As a Quality Engineer, I can upload internal complaint data (CSV/JSON) so that I can combine it with MAUDE for a complete analysis.
+**US-05**: As a Quality Engineer, I can upload internal complaint records (CSV/JSON) so that I can combine it with MAUDE for a complete analysis.
 - Acceptance: CSV columns are mapped to the standard schema via a guided mapper.
 
 **US-06**: As an RA Manager, I can run a portfolio analysis across multiple product codes so that I get a single cross-device risk view.

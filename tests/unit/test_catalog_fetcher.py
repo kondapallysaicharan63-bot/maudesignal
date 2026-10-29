@@ -75,9 +75,57 @@ class TestCatalogFetcher:
             mock_get.return_value = _not_found_response()
             result = fetcher.update()
 
-        # 404s produce no API devices; seed list still populates catalog.
+        # 404s everywhere: no API devices, and seed codes whose classification
+        # lookup found nothing are skipped instead of getting a made-up name.
         assert result.errors == []
-        assert result.devices_found > 0  # seed list always adds entries
+        assert result.devices_found == 0
+        assert db.list_catalog_devices() == []
+
+    def test_seed_code_named_from_classification_endpoint(self, tmp_path: Path) -> None:
+        db = Database(tmp_path / "test.db")
+        fetcher = CatalogFetcher(db)
+
+        def fake_get(url: str, params: dict, timeout: float) -> MagicMock:
+            if "classification" in url and params["search"] == 'product_code:"LLZ"':
+                return _fake_response(
+                    [
+                        {
+                            "product_code": "LLZ",
+                            "device_name": "System, Image Processing, Radiological",
+                            "medical_specialty_description": "Radiology",
+                        }
+                    ]
+                )
+            return _not_found_response()
+
+        with (
+            patch("maudesignal.catalog.fetcher.httpx.get", side_effect=fake_get),
+            patch("maudesignal.catalog.fetcher.time.sleep"),
+        ):
+            result = fetcher.update()
+
+        devices = {d.product_code: d for d in db.list_catalog_devices()}
+        assert set(devices) == {"LLZ"}
+        assert devices["LLZ"].device_name == "System, Image Processing, Radiological"
+        assert devices["LLZ"].source_keyword == "openfda_classification"
+        assert result.devices_found == 1
+
+    def test_classification_for_another_code_is_not_used(self, tmp_path: Path) -> None:
+        db = Database(tmp_path / "test.db")
+        fetcher = CatalogFetcher(db)
+
+        def fake_get(url: str, params: dict, timeout: float) -> MagicMock:
+            if "classification" in url:
+                return _fake_response([{"product_code": "ZZZ", "device_name": "Other"}])
+            return _not_found_response()
+
+        with (
+            patch("maudesignal.catalog.fetcher.httpx.get", side_effect=fake_get),
+            patch("maudesignal.catalog.fetcher.time.sleep"),
+        ):
+            fetcher.update()
+
+        assert db.list_catalog_devices() == []
 
     def test_api_error_is_recorded_not_raised(self, tmp_path: Path) -> None:
         db = Database(tmp_path / "test.db")
@@ -90,9 +138,12 @@ class TestCatalogFetcher:
             mock_get.side_effect = RuntimeError("network error")
             result = fetcher.update()
 
-        assert len(result.errors) == result.keywords_searched
-        # Seed list is still merged even when all API calls fail.
-        assert result.devices_found > 0
+        # Every keyword search and every seed-code classification lookup failed;
+        # each failure is recorded and nothing is written under a guessed name.
+        keyword_errors = [e for e in result.errors if e.startswith("keyword=")]
+        assert len(keyword_errors) == result.keywords_searched
+        assert any(e.startswith("classification=") for e in result.errors)
+        assert result.devices_found == 0
 
     def test_seed_list_not_overwritten_by_api(self, tmp_path: Path) -> None:
         db = Database(tmp_path / "test.db")

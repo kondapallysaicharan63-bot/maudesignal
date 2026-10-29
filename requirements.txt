@@ -1,0 +1,5 @@
+# Streamlit Community Cloud reads this file (it handles pyproject.toml only via
+# poetry). It installs this repo in editable mode, so the real dependency list
+# stays in pyproject.toml. WeasyPrint is imported lazily (PSUR PDF export only),
+# so no system packages are needed for the dashboard.
+-e .

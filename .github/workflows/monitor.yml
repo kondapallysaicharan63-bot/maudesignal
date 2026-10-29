@@ -1,0 +1,74 @@
+# HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
+# Daily "what changed" monitor: capped keyless openFDA fetch -> deterministic
+# 7-day vs 4-week detector -> Markdown/JSON digest. No LLM calls in this workflow.
+# OPENFDA_API_KEY is optional (keyless openFDA allows 1,000 requests/day; one run
+# makes ~2 requests per product code plus one per fetched page).
+# Note: GitHub only fires `schedule` from the repository's default branch.
+name: Daily monitor (what changed)
+
+on:
+  schedule:
+    - cron: "17 11 * * *"
+  workflow_dispatch:
+    inputs:
+      max_new:
+        description: "Cap on newly fetched openFDA records (clamped to 100)"
+        required: false
+        default: "20"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-monitor
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install package
+        run: pip install -e .
+
+      - name: Run monitor
+        env:
+          OPENFDA_API_KEY: ${{ secrets.OPENFDA_API_KEY }}
+          MAX_NEW: ${{ github.event.inputs.max_new || '20' }}
+        run: |
+          case "$MAX_NEW" in ''|*[!0-9]*) MAX_NEW=20 ;; esac
+          if [ "$MAX_NEW" -gt 100 ]; then MAX_NEW=100; fi
+          maudesignal monitor \
+            --db data/demo/maudesignal_demo.db \
+            --max-new "$MAX_NEW" \
+            --fetch \
+            --out-dir digests
+
+      - name: Upload digest artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: digest-${{ github.run_id }}
+          path: digests/
+          retention-days: 30
+
+      - name: Commit digest back to the branch
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # The demo DB is committed too so the next run's capped fetch continues
+          # from where this one stopped instead of re-fetching the same days.
+          git add digests/ data/demo/maudesignal_demo.db
+          if git diff --cached --quiet; then
+            echo "No digest changes to commit."
+            exit 0
+          fi
+          git commit -m "chore(monitor): what-changed digest $(date -u +%Y-%m-%d)"
+          git push

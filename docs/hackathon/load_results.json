@@ -1,0 +1,47 @@
+[
+  {
+    "users": 1,
+    "ok": 1,
+    "failed": 0,
+    "median_s": 3.19,
+    "max_s": 3.19,
+    "wall_s": 3.26,
+    "first_error": null
+  },
+  {
+    "users": 5,
+    "ok": 5,
+    "failed": 0,
+    "median_s": 5.18,
+    "max_s": 5.66,
+    "wall_s": 5.77,
+    "first_error": null
+  },
+  {
+    "users": 10,
+    "ok": 10,
+    "failed": 0,
+    "median_s": 10.79,
+    "max_s": 11.45,
+    "wall_s": 11.62,
+    "first_error": null
+  },
+  {
+    "users": 20,
+    "ok": 20,
+    "failed": 0,
+    "median_s": 22.4,
+    "max_s": 23.85,
+    "wall_s": 24.22,
+    "first_error": null
+  },
+  {
+    "users": 40,
+    "ok": 40,
+    "failed": 0,
+    "median_s": 51.68,
+    "max_s": 56.79,
+    "wall_s": 57.35,
+    "first_error": null
+  }
+]

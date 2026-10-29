@@ -1,0 +1,318 @@
+{#- Signal Evaluation & CAPA dossier. HACKATHON-BUILT (Oct 26 – Nov 4, 2026).
+    Every number is printed through the fig() macro, which tags it with the claim
+    that re-derives it (data-claim). Do not print numbers any other way. -#}
+{%- macro fig(f) -%}<span class="fig" data-claim="{{ f.claim_json }}">{{ f.display }}</span>{%- endmacro -%}
+{%- macro tbc(lines=3, who=true) -%}
+<div class="tbc">
+  <div class="tbc-label">{{ TBC }}</div>
+  {%- for _ in range(lines) %}<div class="line"></div>{% endfor %}
+  {%- if who %}<div class="tbc-sign"><span>Name: ______________________</span><span>Date (UTC): ____________</span></div>{% endif %}
+</div>
+{%- endmacro -%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ d.doc_id }} — Signal Evaluation &amp; CAPA-need Evidence</title>
+<style>
+@page {
+  size: Letter;
+  margin: 24mm 15mm 20mm 15mm;
+  @top-left { content: "MaudeSignal · Signal Evaluation & CAPA Record"; font: 7.5pt Helvetica, Arial, sans-serif; color: #444; }
+  @top-center { content: "{{ css.doc_line }}"; font: bold 8pt Helvetica, Arial, sans-serif; color: #1c2b33; }
+  @top-right { content: "{{ css.header_stamp }}"; font: bold 7.5pt Helvetica, Arial, sans-serif; color: {{ css.stamp_color }}; }
+  @bottom-left { content: "{{ css.confidentiality }}"; font: 6.5pt Helvetica, Arial, sans-serif; color: #555; width: 70%; }
+  @bottom-right { content: "Page " counter(page) " of " counter(pages); font: bold 8pt Helvetica, Arial, sans-serif; color: #1c2b33; }
+  @bottom-center { content: ""; }
+  {% if css.wm_default %}background: url("{{ css.wm_default }}") no-repeat center center;{% endif %}
+}
+@page cover {
+  {% if css.wm_cover %}background: url("{{ css.wm_cover }}") no-repeat center center;{% else %}background: none;{% endif %}
+  @top-right { content: "{{ css.cover_stamp }}"; font: bold 7.5pt Helvetica, Arial, sans-serif; color: {{ css.cover_stamp_color }}; }
+}
+@page mdr {
+  background: url("{{ css.wm_mdr }}") no-repeat center center;
+  @top-right { content: "{{ css.mdr_stamp }}"; font: bold 7.5pt Helvetica, Arial, sans-serif; color: #b3261e; }
+}
+html { font-family: Helvetica, Arial, sans-serif; font-size: 9pt; color: #1c2b33; line-height: 1.35; }
+body { margin: 0; }
+section { page-break-inside: auto; }
+section.cover { page: cover; font-size: 8.4pt; }
+section.cover h3 { margin: 2.5mm 0 1mm 0; }
+section.cover .stamp { margin: 0 0 1.5mm 0; padding: 1.5mm; }
+section.cover .note, section.cover .gap { margin: 1.2mm 0; padding: 1mm 2.2mm; }
+table.dc th { width: 17%; } table.dc td { width: 33%; }
+.sig td { height: 6.5mm; }
+.toc { columns: 2; column-gap: 8mm; }
+section.mdr { page: mdr; break-before: page; }
+section.newpage { break-before: page; }
+h1 { font-size: 17pt; margin: 0 0 2mm 0; }
+h2 { font-size: 12pt; border-bottom: 1.5pt solid #1c2b33; padding-bottom: 1mm; margin: 0 0 3mm 0; }
+h3 { font-size: 9.5pt; margin: 4mm 0 1.5mm 0; }
+.sub { color: #555; font-size: 9pt; margin-bottom: 4mm; }
+table { border-collapse: collapse; width: 100%; margin: 1mm 0 3mm 0; }
+th, td { border: 0.6pt solid #9aa4ae; padding: 0.8mm 1.5mm; vertical-align: top; text-align: left; }
+th { background: #eef1f4; font-weight: bold; }
+table.kv th { width: 30%; }
+table.ev { font-size: 7.2pt; }
+table.ev td.ex { font-size: 6.8pt; color: #333; }
+table.mdrt { font-size: 7.4pt; }
+thead { display: table-header-group; }
+tr { page-break-inside: avoid; }
+.fig { font-weight: bold; }
+.stamp { border: 2pt solid #b3261e; color: #b3261e; font-weight: bold; text-align: center; padding: 2mm; margin: 0 0 3mm 0; font-size: 10pt; letter-spacing: 0.5pt; }
+.stamp.big { font-size: 13pt; padding: 3mm; }
+.stamp.ok { border-color: #1e7b3a; color: #1e7b3a; }
+.note { border-left: 3pt solid #c9d3df; background: #f5f8fc; padding: 1.5mm 2.5mm; margin: 2mm 0; font-size: 8pt; }
+.gap { border-left: 3pt solid #e0a100; background: #fff8e6; padding: 1.5mm 2.5mm; margin: 2mm 0; font-size: 7.8pt; }
+.tbc { border: 0.8pt dashed #7b8794; padding: 1.5mm 2.5mm; margin: 1mm 0 3mm 0; }
+.tbc-label { font-style: italic; color: #b3261e; font-weight: bold; font-size: 8pt; }
+.tbc .line { border-bottom: 0.6pt solid #9aa4ae; height: 5.5mm; }
+.tbc-sign { display: flex; justify-content: space-between; font-size: 7.5pt; color: #444; margin-top: 2mm; }
+.sig td { height: 8mm; }
+.sig td.blank { color: #9aa4ae; }
+.toc { list-style: none; padding: 0; margin: 0; }
+.toc li { margin: 0.6mm 0; }
+.toc a { color: #1c2b33; text-decoration: none; }
+.toc a::after { content: leader('.') target-counter(attr(href), page); }
+.pill { font-size: 7pt; font-weight: bold; padding: 0.3mm 1.5mm; border-radius: 2mm; margin-right: 1.5mm; }
+.pill.pass { background: #e7f6ec; color: #1e7b3a; }
+.pill.block { background: #fdecea; color: #b3261e; }
+.withheld { text-decoration: line-through; color: #8a8d91; }
+.reasons { color: #b3261e; font-size: 7.4pt; margin: 0.5mm 0 1.5mm 6mm; }
+.chart { text-align: center; margin: 2mm 0; }
+.caption { font-size: 7.5pt; color: #555; text-align: center; }
+.cb { font-family: DejaVu Sans, sans-serif; }
+.illus img { width: 55mm; border: 0.6pt solid #9aa4ae; }
+.mono { font-family: "DejaVu Sans Mono", Courier, monospace; font-size: 7.4pt; }
+a { color: #1a5fb4; }
+.small { font-size: 7.5pt; color: #444; }
+</style>
+</head>
+<body>
+
+{# ======================= 1. COVER / APPROVAL ======================= #}
+<section class="cover" id="sec-cover">
+  <h1>Signal Evaluation &amp; CAPA-need Evidence</h1>
+  <div class="sub">Product code <b>{{ d.device.product_code }}</b>{% if d.device.classification_name %} — {{ d.device.classification_name }}{% endif %}{% if d.capa %} · {{ d.capa.title }}{% endif %}</div>
+
+  {% if d.status == "approved" %}
+  <div class="stamp ok">EVIDENCE ACCEPTED by {{ d.capa.decided_by }} — the CAPA-need decision is made on the company's own form; open items in §4 remain with the CAPA owner</div>
+  {% elif d.status == "rejected" %}
+  <div class="stamp">EVIDENCE REJECTED BY REVIEWER — this record documents the rejection</div>
+  {% else %}
+  <div class="stamp">{{ DRAFT_STAMP }} — prepared by software; not approved</div>
+  {% endif %}
+
+  <div class="note"><b>Whether a CAPA is required is decided by the company&#39;s own CAPA-need form. This document is evidence only.</b> MaudeSignal never decides whether a CAPA is needed, whether an event is reportable, or which devices are similar.</div>
+
+  <h3>Document control</h3>
+  <table class="dc">
+    <tr><th>Document ID</th><td><b>{{ d.doc_id }}</b></td><th>Revision</th><td>{{ d.revision }}</td></tr>
+    <tr><th>Status</th><td>{{ status_label }}</td><th>Generated (UTC)</th><td>{{ d.generated_at.strftime("%Y-%m-%d %H:%M:%S") }}</td></tr>
+    <tr><th>Effective date</th><td>{% if d.status == "approved" and d.capa.decided_at %}{{ d.capa.decided_at.strftime("%Y-%m-%d") }}{% else %}Not effective — not approved{% endif %}</td>
+        <th>CAPA ID</th><td>{{ d.capa.capa_id if d.capa else "None (signal evaluation only)" }}</td></tr>
+    <tr><th>Signal as-of</th><td>{{ d.signal.as_of.isoformat() }}</td><th>Source data</th><td class="small">openFDA MAUDE device events · {{ d.db_label }}</td></tr>
+  </table>
+
+  <h3>Device</h3>
+  <table class="kv">
+    <tr><th>Product code / classification</th><td>{{ d.device.product_code }}{% if d.device.classification_name %} — {{ d.device.classification_name }}{% endif %}{% if d.device.regulation_number %} (21 CFR {{ d.device.regulation_number }}{% if d.device.device_class %}, Class {{ d.device.device_class }}{% endif %}, per openFDA){% endif %}</td></tr>
+    <tr><th>Device name(s) in reports</th><td>{{ d.device.brand_names|join("; ") or "—" }} <span class="small">(spellings that differ only in capitals are grouped)</span></td></tr>
+    <tr><th>510(k) number(s) in reports</th><td>{{ d.device.k_numbers|join(", ") or "Not stated in the cited reports" }} <span class="small">(openFDA <span class="mono">pma_pmn_number</span>)</span></td></tr>
+    <tr><th>Manufacturer(s)</th><td>{{ d.device.manufacturers[:3]|join("; ") or "—" }}</td></tr>
+  </table>
+
+  <h3>Approvals <span class="small">(signature manifestation modeled on 21 CFR 11.50: printed name, date/time, meaning)</span></h3>
+  <table class="sig">
+    <tr><th style="width:17%">Role</th><th style="width:27%">Printed name</th><th style="width:21%">Date / time (UTC)</th><th style="width:15%">Meaning</th><th>Audit reference</th></tr>
+    <tr><td>Prepared by</td><td class="mono">{{ d.prepared_by }}</td><td>{{ d.prepared_at.strftime("%Y-%m-%d %H:%M:%S") if d.prepared_at else d.generated_at.strftime("%Y-%m-%d %H:%M:%S") }}</td><td>Authorship (software draft)</td><td class="small">{% if d.capa %}capa.draft entry in Appendix{% else %}deterministic monitor{% endif %}</td></tr>
+    {% if d.capa and d.capa.status in ("approved", "rejected") %}
+    <tr><td>QA/RA reviewer</td><td><b>{{ d.capa.decided_by }}</b></td><td>{{ d.capa.decided_at.strftime("%Y-%m-%d %H:%M:%S") }}</td><td><b>{{ "Approved" if d.capa.status == "approved" else "Rejected" }}</b></td><td class="mono">seq {{ d.capa.decision_audit_seq }} · {{ (d.capa.decision_audit_hash or "")[:12] }}</td></tr>
+    {% if d.capa.decision_note %}<tr><td>Reviewer comment</td><td colspan="4">{{ d.capa.decision_note }}</td></tr>{% endif %}
+    {% else %}
+    <tr><td>QA/RA reviewer</td><td class="blank">______________________</td><td class="blank">____________________</td><td class="blank">Approved / Rejected</td><td class="blank">—</td></tr>
+    {% endif %}
+    <tr><td>CAPA owner (acceptance)</td><td class="blank">______________________</td><td class="blank">____________________</td><td class="blank">Responsibility</td><td class="blank">—</td></tr>
+  </table>
+  <div class="gap"><b>Not a 21 CFR Part 11 signature.</b> The reviewer name is recorded by the Actions page without authenticated identity (no 11.100/11.200/11.300 controls, no 11.70 signature-to-record linking, system not validated per 11.10(a)). The block is <i>modeled on</i> 11.50 so a human-readable record shows who decided, when, and what the decision meant; a manufacturer must re-execute approval in its validated eQMS.</div>
+
+  <div class="note"><b>Number integrity.</b> {{ d.figures_checked }} distinct figures printed in this record were recomputed from stored openFDA records by the claim-level gate at generation: {{ d.figures_checked - d.figures_failed }} matched, {{ d.figures_failed }} did not. Each figure carries its claim in the source HTML (<span class="mono">data-claim</span>) for independent re-verification.</div>
+
+  <table style="border:none;margin:0"><tr>
+  <td style="border:none;padding:0">
+  <h3>Contents</h3>
+  <ul class="toc">
+    <li><a href="#sec-cover">1. Document control &amp; approvals </a></li>
+    <li><a href="#sec-signal">2. Signal evaluation </a></li>
+    <li><a href="#sec-evidence">3. Evidence — supporting MAUDE reports </a></li>
+    <li><a href="#sec-capa">4. CAPA record (ISO 13485:2016 §8.5.2 / §8.5.3) </a></li>
+    <li><a href="#sec-mdr">5. MDR assessment worksheet (Form 3500A map) </a></li>
+    <li><a href="#sec-narrative">6. Narrative summary </a></li>
+    <li><a href="#sec-audit">Appendix A. Audit trail </a></li>
+  </ul>
+  </td>
+  {% if d.illustration %}
+  <td style="border:none" class="illus"><img src="data:image/png;base64,{{ d.illustration.png_b64 }}" alt="illustration"><div class="caption">{{ d.illustration.caption }} ({{ d.illustration.model }})</div></td>
+  {% endif %}
+  </tr></table>
+</section>
+
+{# ======================= 2. SIGNAL EVALUATION ======================= #}
+<section class="newpage" id="sec-signal">
+  <h2>2. Signal evaluation</h2>
+  <h3>2.1 Method</h3>
+  <p>Deterministic detector <span class="mono">maudesignal.monitor.deterioration</span> over stored openFDA MAUDE reports, anchored on FDA <i>date_received</i>. Current window: the 7 days ending on the as-of date ({{ d.signal.current_start.isoformat() }} to {{ d.signal.current_end.isoformat() }}). Baseline: the 4 weeks before it ({{ d.signal.baseline_start.isoformat() }} to {{ d.signal.baseline_end.isoformat() }}). Rules (several may fire; precedence: new kind of problem, then more serious than usual, then reports suddenly increased):</p>
+  <table class="kv small">
+    <tr><th>Reports suddenly increased</th><td>current-window count ≥ {{ rules.spike_multiplier }}× the baseline weekly mean <b>and</b> ≥ {{ rules.spike_min }} reports</td></tr>
+    <tr><th>More serious than usual</th><td>Injury + Death share of the current window exceeds the baseline share by ≥ {{ rules.severity_pp }} percentage points (baseline non-empty)</td></tr>
+    <tr><th>New kind of problem</th><td>first-ever reports for the product code, or an event type never seen before the current window</td></tr>
+  </table>
+  <h3>2.2 Result: <span style="color:#b3261e">{{ change_labels[d.signal.classification]|upper }}</span>{% if d.signal.triggers %} <span class="small">(rules fired: {% for t in d.signal.triggers %}{{ change_labels[t] }}{% if not loop.last %}, {% endif %}{% endfor %})</span>{% endif %}</h3>
+  <table>
+    <thead><tr><th>Metric</th><th>Current window</th><th>Baseline (4 weeks)</th></tr></thead>
+    <tr><td>Reports received</td><td>{{ fig(d.signal.current_count) }}</td><td>{{ fig(d.signal.baseline_count) }}</td></tr>
+    <tr><td>Weekly mean (baseline ÷ 4)</td><td>—</td><td>{{ fig(d.signal.baseline_weekly_mean) }}</td></tr>
+    <tr><td>Sudden-increase threshold (2 × weekly mean)</td><td>{{ fig(d.signal.spike_threshold) }}</td><td>—</td></tr>
+    <tr><td>Ratio current ÷ weekly mean</td><td>{% if d.signal.spike_ratio %}{{ fig(d.signal.spike_ratio) }}{% else %}undefined (empty baseline){% endif %}</td><td>—</td></tr>
+    <tr><td>Injury + Death reports</td><td>{{ fig(d.signal.current_severe) }}</td><td>{{ fig(d.signal.baseline_severe) }}</td></tr>
+    <tr><td>Injury + Death share</td><td>{% if d.signal.current_severe_share %}{{ fig(d.signal.current_severe_share) }}{% else %}undefined{% endif %}</td><td>{% if d.signal.baseline_severe_share %}{{ fig(d.signal.baseline_severe_share) }}{% else %}undefined{% endif %}</td></tr>
+    {% for et, f in d.signal.event_type_counts %}
+    <tr><td>Event type “{{ et|capitalize }}” (current window)</td><td>{{ fig(f) }}</td><td>—</td></tr>
+    {% endfor %}
+  </table>
+  <h3>2.3 Weekly report counts</h3>
+  <div class="chart">{{ d.signal.chart_svg|safe }}</div>
+  <div class="caption">Figure 1 — Reports per week by FDA date_received (B1–B4 = baseline weeks). Deterministic chart drawn from the stored records; not an AI-generated image.</div>
+  <div class="note">A sudden increase in reports is a statistical signal for human evaluation. It does not establish a device nonconformity, a root cause, or MDR reportability.</div>
+</section>
+
+{# ======================= 3. EVIDENCE ======================= #}
+<section class="newpage" id="sec-evidence">
+  <h2>3. Evidence — supporting MAUDE reports</h2>
+  <p>{{ fig(d.evidence_count) }} reports {% if d.capa %}cited by {{ d.capa.capa_id }}{% else %}in the current window{% endif %}. Narrative excerpts are verbatim from openFDA (first 300 characters, whitespace collapsed). Report IDs link to the FDA MAUDE record.</p>
+  <table class="ev">
+    <thead><tr><th style="width:3%">#</th><th style="width:12%">MAUDE report</th><th style="width:15%">Mfr report no.</th><th style="width:9%">Received</th><th style="width:8%">Event type</th><th style="width:13%">Brand</th><th>Narrative excerpt (first 300 chars)</th></tr></thead>
+    {% for e in d.evidence %}
+    <tr><td>{{ loop.index }}</td>
+        <td><a href="{{ e.url }}" data-record="{{ e.report_id }}">{{ e.report_id }}</a></td>
+        <td class="mono" style="font-size:6.4pt">{{ e.mfr_report_number or "—" }}</td>
+        <td>{{ e.date_received or "—" }}</td><td>{{ e.event_type or "—" }}</td><td>{{ e.brand_name or "—" }}</td>
+        <td class="ex">{{ e.excerpt }}</td></tr>
+    {% endfor %}
+  </table>
+</section>
+
+{# ======================= 4. CAPA RECORD ======================= #}
+<section class="newpage" id="sec-capa">
+  <h2>4. CAPA-need evidence pack and blank CAPA sections for the CAPA owner (ISO 13485:2016 §8.5.2 / §8.5.3, incorporated by 21 CFR Part 820 — QMSR)</h2>
+  <p class="small"><b>Whether a CAPA is required is decided by the company&#39;s own CAPA-need form. This document is evidence only.</b> The sections below are left blank for the CAPA owner if their form decides a CAPA is needed.</p>
+  {% if d.capa %}
+  <table class="kv">
+    <tr><th>Evidence record ID</th><td>{{ d.capa.capa_id }}</td><th>Status</th><td>{{ d.capa.status|upper }}</td></tr>
+    <tr><th>Title</th><td colspan="3">{{ d.capa.title }}</td></tr>
+    <tr><th>Opened (UTC)</th><td>{{ d.capa.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td><th>Opened by</th><td class="mono">{{ d.capa.created_by }}</td></tr>
+    <tr><th>Source</th><td colspan="3">Postmarket surveillance signal {{ d.doc_id }} (§2) · complaint/MDR data (§3) · MDR worksheet (§5)</td></tr>
+  </table>
+  {% else %}
+  <div class="note">No CAPA-need evidence pack exists for this signal yet. The headings below are the blank CAPA template; ask the copilot to prepare the CAPA-need evidence pack to populate §4.1.</div>
+  {% endif %}
+  <p class="small">Under the QMSR (effective 2026-02-02) CAPA requirements are those of ISO 13485:2016 §8.5.2 and §8.5.3; the former 21 CFR 820.100 is superseded and is not cited.</p>
+
+  <h3>4.1 (a) Review of nonconformities, including complaints</h3>
+  {% if d.capa %}
+  <p><b>Problem statement as prepared</b> <span class="small">({{ d.capa.created_by }}, recorded verbatim from the CAPA-need evidence pack)</span>:</p>
+  <div class="note">{{ d.capa.problem_statement }}</div>
+  {% if d.capa.problem_statement_flags %}<div class="gap"><b>Gate:</b> the drafted text contains figures or identifiers without a structured claim — treat as unverified: {{ d.capa.problem_statement_flags|join("; ") }}</div>{% endif %}
+  {% endif %}
+  <p>Complaint/MDR input reviewed: {{ fig(d.evidence_count) }} MAUDE reports (§3); signal result <b>{{ change_labels[d.signal.classification] }}</b> (§2).</p>
+  <h3>4.2 (b) Determination of the cause(s) of nonconformity</h3>
+  <p class="small">MaudeSignal does not determine root cause.</p>
+  {{ tbc(4) }}
+  <h3>4.3 (c) Evaluation of the need for action to ensure nonconformities do not recur</h3>
+  <p class="small">Input: deterministic rule fired — {% for t in d.signal.triggers %}{{ change_labels[t] }}{% if not loop.last %}, {% endif %}{% else %}none{% endfor %}. Need-for-action decision and risk assessment rationale:</p>
+  {{ tbc(3) }}
+  <h3>4.4 (d) Planning, documenting and implementing action, including updating documentation</h3>
+  {{ tbc(3) }}
+  <h3>4.5 (e) Verification that the action does not adversely affect the ability to meet regulatory requirements or the safety and performance of the device</h3>
+  {{ tbc(3) }}
+  <h3>4.6 (f) Review of the effectiveness of the corrective action</h3>
+  <p class="small">Effectiveness criteria, monitoring period and result:</p>
+  {{ tbc(3) }}
+  <h3>4.7 Records of results of investigation and action (§8.5.2, final paragraph)</h3>
+  <p>This document (revision {{ d.revision }}, shown in document control) and the audit trail in Appendix A. Reporting to management review: {{ "pending" if d.status != "approved" else "required — schedule with management review" }}.</p>
+  <h3>4.8 Preventive action (§8.5.3) — potential nonconformities in other device types you choose (product codes)</h3>
+  {{ tbc(2) }}
+  <h3>4.9 Complaint handling link (§8.2.2; 21 CFR 820.35(a))</h3>
+  <p class="small">Complaint records for events reportable under Part 803 must hold device name, date received, UDI/identifiers, complainant contact, nature and details, correction/corrective action and any reply. MaudeSignal supplies the public MAUDE view only; link the manufacturer's complaint file numbers here:</p>
+  {{ tbc(2, false) }}
+</section>
+
+{# ======================= 5. MDR WORKSHEET ======================= #}
+<section class="mdr" id="sec-mdr">
+  <h2>5. MDR assessment worksheet (FDA Form 3500A map)</h2>
+  <div class="stamp big">{{ MDR_STAMP }}<br><span style="font-size:9pt">Reportability is a human regulatory decision.</span></div>
+  <h3>5.1 Reporting clock (advisory — 21 CFR 803.50 / 803.53)</h3>
+  <table class="kv">
+    <tr><th>Awareness date (803.3 / 803.50)</th><td>{% if d.mdr.awareness_date %}<b>{{ d.mdr.awareness_date.isoformat() }}</b> <span class="small">({{ d.mdr.awareness_basis }})</span>{% else %}____________ <span class="small">(enter the date the manufacturer became aware)</span>{% endif %}</td></tr>
+    <tr><th>30-calendar-day report due (803.50(a))</th><td>{% if d.mdr.due_30 %}{{ iso(d.mdr.due_30.due_date) }}{% else %}____________{% endif %}</td></tr>
+    <tr><th>5-work-day report due, if triggered (803.53(a) remedial action / (b) FDA request)</th><td>{% if d.mdr.due_5 %}{{ iso(d.mdr.due_5.due_date) }}{% else %}____________{% endif %}</td></tr>
+  </table>
+  <p class="small">Dates computed by <span class="mono">copilot.tools.deadline_check</span> (same code as the copilot). A clock only — it does not decide that any event is reportable.</p>
+  <h3>5.2 Reportability determination (human)</h3>
+  <table class="small">
+    <tr><td class="cb">☐</td><td>803.50(a)(1): information reasonably suggests the device may have caused or contributed to a death or serious injury</td></tr>
+    <tr><td class="cb">☐</td><td>803.50(a)(2): the device malfunctioned and would be likely to cause or contribute to a death or serious injury if the malfunction recurred</td></tr>
+    <tr><td class="cb">☐</td><td>803.53(a): remedial action needed to prevent an unreasonable risk of substantial harm (5-day report) · ☐ 803.53(b): FDA written request</td></tr>
+    <tr><td class="cb">☐</td><td>Not reportable — rationale documented in the MDR event file (803.18(b)(1)(i))</td></tr>
+  </table>
+  {{ tbc(2) }}
+  <h3>5.3 Form 3500A fields — pre-filled from openFDA where available</h3>
+  <p class="small">One 3500A is filed per reportable event. Pre-fills are the values common to the cited reports, from openFDA; blank cells require manufacturer information (21 CFR 803.52: “if known or reasonably known”).</p>
+  <table class="mdrt">
+    <thead><tr><th style="width:5%">Sec.</th><th style="width:7%">Item</th><th style="width:27%">Field</th><th style="width:9%">803.52</th><th>Pre-fill</th><th style="width:17%">Source</th></tr></thead>
+    {% for r in d.mdr.rows %}
+    <tr><td>{{ r.section }}</td><td>{{ r.item }}</td><td>{{ r.field_name }}</td><td>{{ r.cfr_para }}</td><td>{% if r.prefill %}{{ r.prefill }}{% else %}<span style="color:#9aa4ae">________________</span>{% endif %}</td><td class="small">{{ r.source }}</td></tr>
+    {% endfor %}
+  </table>
+  <p class="small">MDR procedures and event files: 21 CFR 803.17 (written procedures) and 803.18 (event files incl. the reportability deliberation; retain the longer of 2 years or the expected device life).</p>
+</section>
+
+{# ======================= 6. NARRATIVE ======================= #}
+<section class="newpage" id="sec-narrative">
+  <h2>6. Narrative summary</h2>
+  {% if d.narrative.available %}
+  <div class="note">AI-drafted ({{ d.narrative.source }} run, {{ d.narrative.recorded_at }}). {{ d.narrative.note }} Shown: {{ d.narrative.passed }} · withheld: {{ d.narrative.withheld }}.</div>
+  {% for s in d.narrative.sentences %}
+  <div data-claims="{{ s.claims_json }}" data-status="{{ s.status }}">
+    <span class="pill {{ s.status }}">{{ "VERIFIED" if s.status == "pass" else "WITHHELD" }}</span>{% if s.status == "pass" %}{{ s.text }}{% else %}<span class="withheld">{{ s.text }}</span>{% endif %}
+  </div>
+  {% if s.status != "pass" %}<div class="reasons">Gate: {{ s.reasons|join("; ") }}</div>{% endif %}
+  {% endfor %}
+  {% else %}
+  <div class="note">{{ d.narrative.note }}</div>
+  {% endif %}
+</section>
+
+{# ======================= APPENDIX: AUDIT TRAIL ======================= #}
+<section class="newpage" id="sec-audit">
+  <h2>Appendix A. Audit trail</h2>
+  <p>Entries of the append-only, SHA-256 hash-chained <span class="mono">action_audit</span> table for {{ d.capa.capa_id if d.capa else d.doc_id }}{% if d.capa %} and {{ d.doc_id }}{% endif %}. Time stamps are computer-generated (UTC).</p>
+  {% if d.audit %}
+  <table class="small">
+    <thead><tr><th>Seq</th><th>Time (UTC)</th><th>Actor</th><th>Action</th><th>Entity</th><th>Entry hash (prefix)</th></tr></thead>
+    {% for a in d.audit %}
+    <tr><td>{{ a.seq }}</td><td>{{ a.ts.strftime("%Y-%m-%d %H:%M:%S") }}</td><td class="mono">{{ a.actor }}</td><td class="mono">{{ a.action }}</td><td class="mono">{{ a.entity_id }}</td><td class="mono">{{ a.hash_prefix }}</td></tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p class="small">No audit entries reference this document yet.</p>
+  {% endif %}
+  <div class="{{ 'note' if d.audit_chain_ok else 'stamp' }}"><b>Chain verification</b> (<span class="mono">Database.verify_audit_chain()</span>, all entries recomputed): {% if d.audit_chain_ok %}INTACT{% else %}BROKEN at seq {{ d.audit_chain_first_bad }} — this record cannot be relied on{% endif %}.</div>
+  <div class="gap">Modeled on 21 CFR 11.10(e) (secure, computer-generated, time-stamped audit trails). Not claimed as Part 11 compliant: the system is not validated, has no user authentication, and a database administrator could rewrite the whole chain consistently; the hash chain detects edits to individual entries only.</div>
+  {% for n in d.extra_notes %}<div class="gap">{{ n }}</div>{% endfor %}
+  <p class="small">Generated by {{ d.software }}. Regulatory sources: docs/dossier_sources.md.</p>
+</section>
+
+</body>
+</html>

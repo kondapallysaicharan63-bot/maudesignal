@@ -290,17 +290,14 @@ def extract(
 
     # Skip records already successfully extracted to avoid duplicate rows and wasted API calls.
     already_done = {
-        r.maude_report_id
-        for r in db.list_extractions(skill_name="maude-narrative-extractor")
+        r.maude_report_id for r in db.list_extractions(skill_name="maude-narrative-extractor")
     }
     events = [e for e in events if e.maude_report_id not in already_done]
     if limit:
         events = events[:limit]
 
     if not events:
-        console.print(
-            f"[green]All ingested records for {product_code} already extracted.[/green]"
-        )
+        console.print(f"[green]All ingested records for {product_code} already extracted.[/green]")
         raise typer.Exit(code=0)
 
     extractor = Extractor(config=config, db=db)
@@ -1233,6 +1230,111 @@ def psur_list(
             str(r.drafted_at)[:16],
         )
     console.print(table)
+
+
+# ----------------------------------------------------------------------
+# maudesignal monitor
+# HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
+# ----------------------------------------------------------------------
+
+DEFAULT_MONITOR_DB = Path("data/demo/maudesignal_demo.db")
+DEFAULT_DIGEST_DIR = Path("digests")
+
+
+@app.command()
+def monitor(
+    db_path: Path = typer.Option(  # noqa: B008
+        DEFAULT_MONITOR_DB, "--db", help="SQLite database to read (and update when fetching)."
+    ),
+    as_of: str | None = typer.Option(
+        None,
+        "--as-of",
+        help="Last day of the 7-day window (YYYYMMDD or YYYY-MM-DD). "
+        "Default: latest date_received in the database.",
+    ),
+    max_new: int = typer.Option(
+        20, "--max-new", min=0, help="Cap on records fetched from openFDA this run."
+    ),
+    fetch: bool = typer.Option(
+        True, "--fetch/--no-fetch", help="Fetch new openFDA records before detecting."
+    ),
+    out_dir: Path = typer.Option(  # noqa: B008
+        DEFAULT_DIGEST_DIR, "--out-dir", help="Directory for YYYY-MM-DD.md / .json digests."
+    ),
+) -> None:
+    """Daily "what changed" monitor: optional capped fetch, detect, write digest.
+
+    Deterministic — no LLM call. Needs no API key (OPENFDA_API_KEY is used if set).
+    The digest file is named after the as-of date, not the wall-clock date,
+    because openFDA lags real time.
+
+    Examples:
+        maudesignal monitor --no-fetch
+
+        maudesignal monitor --as-of 20260824 --no-fetch --out-dir digests
+    """
+    from maudesignal.config import openfda_api_key_from_env
+    from maudesignal.monitor.deterioration import detect_from_database, parse_yyyymmdd
+    from maudesignal.monitor.digest import (
+        CHANGE_LABELS,
+        digest_from_database,
+        render_json,
+        render_markdown,
+    )
+    from maudesignal.monitor.fetch import incremental_fetch
+
+    configure_logging("WARNING")
+
+    as_of_date = None
+    if as_of:
+        try:
+            as_of_date = parse_yyyymmdd(as_of)
+        except ValueError as exc:
+            console.print(f"[red]Invalid --as-of {as_of!r}:[/red] use YYYYMMDD or YYYY-MM-DD.")
+            raise typer.Exit(code=2) from exc
+
+    if not db_path.exists() and not fetch:
+        console.print(f"[red]Database not found:[/red] {db_path}")
+        raise typer.Exit(code=2)
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    db = Database(db_path)
+
+    fetch_summary: dict[str, int] = {}
+    notes: tuple[str, ...] = ()
+    if fetch:
+        with OpenFDAClient(api_key=openfda_api_key_from_env()) as client:
+            report = incremental_fetch(db=db, client=client, max_new=max_new)
+        fetch_summary = report.new_by_code
+        notes = report.notes
+        console.print(
+            f"[dim]fetch: {report.total_fetched} fetched, "
+            f"{sum(fetch_summary.values())} new (cap {max_new})[/dim]"
+        )
+        for note in notes:
+            console.print(f"[yellow]{note}[/yellow]")
+
+    try:
+        result = detect_from_database(db, as_of_date)
+    except ValueError as exc:
+        console.print(f"[red]No dated events in {db_path}:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    digest = digest_from_database(db, result, fetch_summary=fetch_summary, notes=notes)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    stem = result.window.as_of.isoformat()
+    md_path = out_dir / f"{stem}.md"
+    json_path = out_dir / f"{stem}.json"
+    md_path.write_text(render_markdown(digest), encoding="utf-8")
+    json_path.write_text(render_json(digest), encoding="utf-8")
+
+    console.print(f"[bold]{digest.headline}[/bold] (as of {stem})")
+    for signal in result.non_stable():
+        console.print(
+            f"  {signal.product_code}: {CHANGE_LABELS[signal.classification]} "
+            f"(this week {signal.current_count}, baseline mean "
+            f"{signal.baseline_weekly_mean:.2f})"
+        )
+    console.print(f"[green]Wrote[/green] {md_path} and {json_path}")
 
 
 @app.command()

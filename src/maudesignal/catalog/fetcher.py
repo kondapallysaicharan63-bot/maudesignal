@@ -42,62 +42,34 @@ _AI_KEYWORDS: list[str] = [
     "algorithm+detection",
 ]
 
-# Known AI/ML product codes seeded from FDA's published list — ensures
-# coverage even when keyword search misses devices by brand/trade name.
-_SEED_PRODUCT_CODES: list[dict[str, str]] = [
-    {
-        "product_code": "QIH",
-        "device_name": "Radiology Computer-Aided Detection Software",
-        "specialty": "Radiology",
-    },
-    {
-        "product_code": "LLZ",
-        "device_name": "Surgical Robotics Imaging AI",
-        "specialty": "General Hospital",
-    },
-    {
-        "product_code": "QFM",
-        "device_name": "Breast Density Assessment AI",
-        "specialty": "Radiology",
-    },
-    {"product_code": "DQA", "device_name": "Digital Pathology AI", "specialty": "Pathology"},
-    {
-        "product_code": "MWI",
-        "device_name": "Wound Care Imaging AI",
-        "specialty": "General Hospital",
-    },
-    {
-        "product_code": "PIE",
-        "device_name": "AI-Assisted Endoscopy",
-        "specialty": "Gastroenterology",
-    },
-    {
-        "product_code": "IYO",
-        "device_name": "Ophthalmology AI Imaging",
-        "specialty": "Ophthalmology",
-    },
-    {"product_code": "OZO", "device_name": "Cardiac Monitoring AI", "specialty": "Cardiovascular"},
-    {
-        "product_code": "KZH",
-        "device_name": "Radiology AI — General Imaging",
-        "specialty": "Radiology",
-    },
-    {"product_code": "IOR", "device_name": "Diagnostic Imaging AI", "specialty": "Radiology"},
-    {"product_code": "QNO", "device_name": "Bone Density AI", "specialty": "Orthopedic"},
-    {"product_code": "MYN", "device_name": "Ophthalmic Disease AI", "specialty": "Ophthalmology"},
-    {"product_code": "QCS", "device_name": "Cardiovascular Risk AI", "specialty": "Cardiovascular"},
-    {"product_code": "QCG", "device_name": "ECG Analysis AI", "specialty": "Cardiovascular"},
-    {
-        "product_code": "GZA",
-        "device_name": "Clinical Decision Support AI",
-        "specialty": "General Hospital",
-    },
-    {"product_code": "LLN", "device_name": "Neurology Imaging AI", "specialty": "Neurology"},
-    {"product_code": "QAS", "device_name": "AI-Assisted Skin Analysis", "specialty": "Dermatology"},
-    {"product_code": "QFP", "device_name": "Dental Radiograph AI", "specialty": "Dental"},
+# Known AI/ML product codes, so coverage does not depend on keyword hits. Only
+# the codes are listed: each code's name comes from the openFDA classification
+# endpoint at fetch time, and a code whose lookup fails is skipped rather than
+# given a made-up label.
+_SEED_PRODUCT_CODES: list[str] = [
+    "QIH",
+    "LLZ",
+    "QFM",
+    "DQA",
+    "MWI",
+    "PIE",
+    "IYO",
+    "OZO",
+    "KZH",
+    "IOR",
+    "QNO",
+    "MYN",
+    "QCS",
+    "QCG",
+    "GZA",
+    "LLN",
+    "QAS",
+    "QFP",
+    "POK",
 ]
 
 _OPENFDA_510K_URL = "https://api.fda.gov/device/510k.json"
+_OPENFDA_CLASSIFICATION_URL = "https://api.fda.gov/device/classification.json"
 _PAGE_LIMIT = 100
 _REQUEST_DELAY = 0.25  # seconds between requests — stay under rate limit
 
@@ -148,18 +120,21 @@ class CatalogFetcher:
             time.sleep(_REQUEST_DELAY)
 
         # Merge seed list — only add, never overwrite live API data
-        for seed in _SEED_PRODUCT_CODES:
-            pc = seed["product_code"]
-            if pc not in seen:
-                seen[pc] = {
-                    "product_code": pc,
-                    "device_name": seed["device_name"],
-                    "company_name": None,
-                    "specialty": seed.get("specialty"),
-                    "decision_date": None,
-                    "k_number": None,
-                    "source_keyword": "seed_list",
-                }
+        for pc in _SEED_PRODUCT_CODES:
+            if pc in seen:
+                continue
+            try:
+                classification = self._classification(pc)
+            except Exception as exc:
+                msg = f"classification={pc}: {exc}"
+                logger.warning("catalog_fetch_error", error=msg)
+                result.errors.append(msg)
+                continue
+            if classification is None:
+                logger.warning("catalog_seed_code_unresolved", product_code=pc)
+                continue
+            seen[pc] = classification
+            time.sleep(_REQUEST_DELAY)
 
         result.devices_found = len(seen)
 
@@ -186,6 +161,37 @@ class CatalogFetcher:
             errors=len(result.errors),
         )
         return result
+
+    def _classification(self, product_code: str) -> dict[str, Any] | None:
+        """Look up one product code's FDA classification name.
+
+        Args:
+            product_code: Three-letter FDA product code.
+
+        Returns:
+            A catalog row built from the openFDA classification record, or None
+            when openFDA has no record for exactly this code.
+        """
+        params: dict[str, Any] = {"search": f'product_code:"{product_code}"', "limit": 1}
+        if self._api_key:
+            params["api_key"] = self._api_key
+        resp = httpx.get(_OPENFDA_CLASSIFICATION_URL, params=params, timeout=15.0)
+        if resp.status_code == 404:
+            return None
+        resp.raise_for_status()
+        for r in resp.json().get("results", []):
+            name = (r.get("device_name") or "").strip()
+            if (r.get("product_code") or "").strip().upper() == product_code and name:
+                return {
+                    "product_code": product_code,
+                    "device_name": name,
+                    "company_name": None,
+                    "specialty": r.get("medical_specialty_description") or None,
+                    "decision_date": None,
+                    "k_number": None,
+                    "source_keyword": "openfda_classification",
+                }
+        return None
 
     def _search_keyword(self, keyword: str) -> list[dict[str, Any]]:
         """Query openFDA 510k for a single keyword, return raw result dicts."""

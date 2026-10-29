@@ -15,10 +15,13 @@ credentials.json
 secrets.yaml
 
 # --- Local data (gitignored per Doc 5 §6) ---
-data/
+data/*
 !data/.gitkeep
 *.db
 *.sqlite
+# Hackathon keyless demo dataset (public openFDA records, no PHI) is committed.
+!data/demo/
+!data/demo/maudesignal_demo.db
 *.sqlite3
 *.sqlite-journal
 
@@ -31,6 +34,8 @@ llm_audit_log.jsonl
 reports/
 *.pdf
 !docs/**/*.pdf
+# Public FDA 510(k) summary PDFs for the vision demo live in docs/510k/ (covered by
+# the docs/**/*.pdf exception above); FDA blocks CI runners from downloading them.
 
 # --- Python ---
 __pycache__/

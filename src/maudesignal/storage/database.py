@@ -9,20 +9,23 @@ writes through this class — no module executes raw SQL elsewhere.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, func, select
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session, sessionmaker
 
 from maudesignal.common.logging import get_logger
 from maudesignal.storage.models import (
+    ActionAuditRecord,
     AlertEventRecord,
     AlertRuleRecord,
     Base,
+    CapaDraftRecord,
     DeviceCatalogRecord,
     ExternalSourceRecord,
     ExtractionRecord,
@@ -60,7 +63,35 @@ class Database:
         )
         self._session_factory = sessionmaker(bind=self._engine, expire_on_commit=False)
         Base.metadata.create_all(self._engine)
+        self._ensure_report_source()
         logger.info("database_initialized", db_path=str(db_path))
+
+    def _ensure_report_source(self) -> None:
+        """Add ``normalized_events.report_source`` to older databases and backfill it.
+
+        The value comes from each stored raw openFDA record (``report_source_code``),
+        so no re-fetch is needed. Rows whose raw record has no source get ``""``
+        so they are not re-read on every start. (Hackathon addition, Oct 2026.)
+        """
+        with self._engine.begin() as conn:
+            cols = {row[1] for row in conn.exec_driver_sql("PRAGMA table_info(normalized_events)")}
+            if "report_source" not in cols:
+                conn.exec_driver_sql(
+                    "ALTER TABLE normalized_events ADD COLUMN report_source VARCHAR"
+                )
+            todo = conn.exec_driver_sql(
+                "SELECT n.maude_report_id, r.raw_json FROM normalized_events n "
+                "LEFT JOIN raw_reports r USING (maude_report_id) WHERE n.report_source IS NULL"
+            ).fetchall()
+            for rid, raw in todo:
+                try:
+                    source = str(json.loads(raw or "{}").get("report_source_code") or "")
+                except ValueError:
+                    source = ""
+                conn.exec_driver_sql(
+                    "UPDATE normalized_events SET report_source = ? WHERE maude_report_id = ?",
+                    (source, rid),
+                )
 
     @property
     def path(self) -> Path:
@@ -115,10 +146,12 @@ class Database:
         mfr_narrative: str | None,
         manufacturer: str | None,
         brand_name: str | None,
+        report_source: str | None = None,
     ) -> None:
         """Insert or replace a normalized event row.
 
         Normalized rows can be regenerated from raw, so replacement is fine.
+        ``report_source`` is kept when a later upsert does not supply one.
         """
         with self._session() as session:
             stmt = sqlite_insert(NormalizedEventRecord).values(
@@ -130,6 +163,7 @@ class Database:
                 mfr_narrative=mfr_narrative,
                 manufacturer=manufacturer,
                 brand_name=brand_name,
+                report_source=report_source,
             )
             stmt = stmt.on_conflict_do_update(
                 index_elements=["maude_report_id"],
@@ -141,6 +175,9 @@ class Database:
                     "mfr_narrative": stmt.excluded.mfr_narrative,
                     "manufacturer": stmt.excluded.manufacturer,
                     "brand_name": stmt.excluded.brand_name,
+                    "report_source": func.coalesce(
+                        stmt.excluded.report_source, NormalizedEventRecord.report_source
+                    ),
                 },
             )
             session.execute(stmt)
@@ -175,6 +212,89 @@ class Database:
             if limit:
                 stmt = stmt.limit(limit)
             return list(session.execute(stmt).scalars().all())
+
+    def date_received_lookup(self) -> dict[str, str]:
+        """Return maude_report_id -> date_received (YYYYMMDD) for every raw report."""
+        with self._session() as session:
+            rows = session.execute(
+                select(RawReportRecord.maude_report_id, RawReportRecord.date_received)
+            ).all()
+            return {rid: d for rid, d in rows if d}
+
+    # HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
+    # Read helpers for the deterioration monitor (maudesignal.monitor).
+
+    def list_event_facts(
+        self, product_code: str | None = None
+    ) -> list[tuple[str, str, str | None, str | None]]:
+        """Return the minimal per-report facts the deterioration monitor needs.
+
+        Joins ``raw_reports`` (authoritative ``date_received``) with
+        ``normalized_events`` (``event_type``). Narratives are not read.
+
+        Args:
+            product_code: Optional product-code filter.
+
+        Returns:
+            Tuples of ``(maude_report_id, product_code, date_received, event_type)``
+            ordered by report id. ``date_received`` is openFDA's YYYYMMDD string;
+            ``event_type`` is lower-cased (e.g. ``"malfunction"``) or None.
+        """
+        with self._session() as session:
+            stmt = (
+                select(
+                    RawReportRecord.maude_report_id,
+                    RawReportRecord.product_code,
+                    RawReportRecord.date_received,
+                    NormalizedEventRecord.event_type,
+                )
+                .outerjoin(
+                    NormalizedEventRecord,
+                    NormalizedEventRecord.maude_report_id == RawReportRecord.maude_report_id,
+                )
+                .order_by(RawReportRecord.maude_report_id)
+            )
+            if product_code:
+                stmt = stmt.where(RawReportRecord.product_code == product_code)
+            return [(rid, pc, dr, et) for rid, pc, dr, et in session.execute(stmt).all()]
+
+    def list_raw_reports(self, report_ids: list[str]) -> list[RawReportRecord]:
+        """Return the raw openFDA rows for the given report ids, ordered by report id.
+
+        HACKATHON-BUILT (dossier): used to read device fields (brand, model,
+        510(k) number) for the Signal Evaluation & CAPA dossier. Unknown ids
+        are skipped.
+
+        Args:
+            report_ids: MAUDE report ids (``mdr_report_key``).
+
+        Returns:
+            Matching raw report rows.
+        """
+        if not report_ids:
+            return []
+        with self._session() as session:
+            stmt = (
+                select(RawReportRecord)
+                .where(RawReportRecord.maude_report_id.in_(report_ids))
+                .order_by(RawReportRecord.maude_report_id)
+            )
+            return list(session.execute(stmt).scalars().all())
+
+    def max_date_received(self, product_code: str | None = None) -> str | None:
+        """Return the latest ``date_received`` (YYYYMMDD) stored, or None if empty."""
+        with self._session() as session:
+            stmt = select(func.max(RawReportRecord.date_received))
+            if product_code:
+                stmt = stmt.where(RawReportRecord.product_code == product_code)
+            value = session.execute(stmt).scalar()
+            return str(value) if value else None
+
+    def list_product_codes(self) -> list[str]:
+        """Return the distinct product codes present in ``raw_reports``, sorted."""
+        with self._session() as session:
+            stmt = select(RawReportRecord.product_code).distinct()
+            return sorted(str(pc) for pc in session.execute(stmt).scalars().all())
 
     # ------------------------------------------------------------------
     # Extractions
@@ -815,6 +935,27 @@ class Database:
         """Return count of external source records."""
         return len(self.list_external_sources(source_type=source_type, limit=100_000))
 
+    def delete_external_sources(self, *, source_type: str) -> int:
+        """Delete every external source row of one type; return how many were removed.
+
+        HACKATHON-BUILT (Oct 2026): lets ``scripts/seed_sources.py`` rebuild the
+        recall / 510(k) / PubMed rows of the demo DB without stale leftovers.
+        """
+        with self._session() as session:
+            rows = list(
+                session.execute(
+                    select(ExternalSourceRecord).where(
+                        ExternalSourceRecord.source_type == source_type
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            for row in rows:
+                session.delete(row)
+            session.commit()
+            return len(rows)
+
     # ------------------------------------------------------------------
     # PSUR reports  (Phase 5)
     # ------------------------------------------------------------------
@@ -869,3 +1010,159 @@ class Database:
                 stmt = stmt.where(PsurReportRecord.product_code == product_code)
             stmt = stmt.limit(limit)
             return list(session.execute(stmt).scalars().all())
+
+    # ------------------------------------------------------------------
+    # HACKATHON-BUILT: copilot actions (CAPA-need evidence packs) + hash-chained audit
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def audit_entry_hash(
+        prev_hash: str, ts: datetime, actor: str, action: str, entity_id: str, payload_json: str
+    ) -> str:
+        """Hash of one audit entry chained to ``prev_hash`` (for re-verifying exports)."""
+        return Database._audit_hash(prev_hash, ts, actor, action, entity_id, payload_json)
+
+    @staticmethod
+    def _audit_hash(
+        prev_hash: str, ts: datetime, actor: str, action: str, entity_id: str, payload_json: str
+    ) -> str:
+        body = json.dumps(
+            {
+                "ts": ts.isoformat(),
+                "actor": actor,
+                "action": action,
+                "entity_id": entity_id,
+                "payload": payload_json,
+            },
+            sort_keys=True,
+        )
+        return hashlib.sha256((prev_hash + body).encode("utf-8")).hexdigest()
+
+    def _append_audit(
+        self, session: Session, *, actor: str, action: str, entity_id: str, payload: dict[str, Any]
+    ) -> ActionAuditRecord:
+        last = session.execute(
+            select(ActionAuditRecord).order_by(ActionAuditRecord.seq.desc()).limit(1)
+        ).scalar_one_or_none()
+        prev_hash = last.entry_hash if last else "GENESIS"
+        ts = datetime.now(UTC).replace(tzinfo=None)
+        payload_json = json.dumps(payload, sort_keys=True)
+        row = ActionAuditRecord(
+            ts=ts,
+            actor=actor,
+            action=action,
+            entity_id=entity_id,
+            payload_json=payload_json,
+            prev_hash=prev_hash,
+            entry_hash=self._audit_hash(prev_hash, ts, actor, action, entity_id, payload_json),
+        )
+        session.add(row)
+        session.flush()
+        return row
+
+    def append_audit(
+        self, *, actor: str, action: str, entity_id: str, payload: dict[str, Any]
+    ) -> ActionAuditRecord:
+        """Append one entry to the hash-chained action audit trail."""
+        with self._session() as session:
+            row = self._append_audit(
+                session, actor=actor, action=action, entity_id=entity_id, payload=payload
+            )
+            session.commit()
+            return row
+
+    def list_audit(self, *, entity_id: str | None = None) -> list[ActionAuditRecord]:
+        """Return audit entries in chain order."""
+        with self._session() as session:
+            stmt = select(ActionAuditRecord).order_by(ActionAuditRecord.seq)
+            if entity_id:
+                stmt = stmt.where(ActionAuditRecord.entity_id == entity_id)
+            return list(session.execute(stmt).scalars().all())
+
+    def verify_audit_chain(self) -> tuple[bool, int | None]:
+        """Recompute every hash. Returns (ok, first_bad_seq)."""
+        prev = "GENESIS"
+        for row in self.list_audit():
+            expected = self._audit_hash(
+                prev, row.ts, row.actor, row.action, row.entity_id, row.payload_json
+            )
+            if row.prev_hash != prev or row.entry_hash != expected:
+                return False, row.seq
+            prev = row.entry_hash
+        return True, None
+
+    def create_capa_draft(
+        self,
+        *,
+        capa_id: str,
+        product_code: str,
+        title: str,
+        problem_statement: str,
+        report_ids: list[str],
+        created_by: str,
+    ) -> CapaDraftRecord:
+        """Audit-first: write the audit entry, then the draft, in one transaction."""
+        with self._session() as session:
+            self._append_audit(
+                session,
+                actor=created_by,
+                action="capa.draft",
+                entity_id=capa_id,
+                payload={
+                    "product_code": product_code,
+                    "title": title,
+                    "problem_statement": problem_statement,
+                    "report_ids": report_ids,
+                },
+            )
+            row = CapaDraftRecord(
+                capa_id=capa_id,
+                product_code=product_code,
+                title=title,
+                problem_statement=problem_statement,
+                report_ids_json=json.dumps(report_ids),
+                status="draft",
+                created_at=datetime.now(UTC).replace(tzinfo=None),
+                created_by=created_by,
+                decided_by=None,
+                decided_at=None,
+                decision_note=None,
+            )
+            session.add(row)
+            session.commit()
+            return row
+
+    def get_capa_draft(self, capa_id: str) -> CapaDraftRecord | None:
+        """Return one CAPA-need evidence pack by id."""
+        with self._session() as session:
+            return session.get(CapaDraftRecord, capa_id)
+
+    def list_capa_drafts(self, *, status: str | None = None) -> list[CapaDraftRecord]:
+        """Return CAPA-need evidence packs, newest first."""
+        with self._session() as session:
+            stmt = select(CapaDraftRecord).order_by(CapaDraftRecord.created_at.desc())
+            if status:
+                stmt = stmt.where(CapaDraftRecord.status == status)
+            return list(session.execute(stmt).scalars().all())
+
+    def decide_capa_draft(
+        self, *, capa_id: str, new_status: str, decided_by: str, note: str | None
+    ) -> CapaDraftRecord:
+        """Audit-first status change. Caller enforces which transitions are legal."""
+        with self._session() as session:
+            row = session.get(CapaDraftRecord, capa_id)
+            if row is None:
+                raise KeyError(capa_id)
+            self._append_audit(
+                session,
+                actor=decided_by,
+                action=f"capa.{new_status}",
+                entity_id=capa_id,
+                payload={"from": row.status, "to": new_status, "note": note},
+            )
+            row.status = new_status
+            row.decided_by = decided_by
+            row.decided_at = datetime.now(UTC).replace(tzinfo=None)
+            row.decision_note = note
+            session.commit()
+            return row

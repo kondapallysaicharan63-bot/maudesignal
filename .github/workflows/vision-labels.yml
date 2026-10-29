@@ -1,0 +1,50 @@
+# HACKATHON-BUILT — read the device-label photos (SAM 3.1 -> Muse Spark -> openFDA).
+# Runs only when photos change under demo/vision/labels/. Spends a little Meta
+# credit per photo. Refuses photos that still carry EXIF/GPS metadata.
+name: Read device-label photos
+
+on:
+  push:
+    branches: [hackathon-day2]
+    paths:
+      - "demo/vision/labels/**.jpg"
+      - "demo/vision/labels/**.jpeg"
+      - "demo/vision/labels/**.png"
+      - "demo/vision/labels/**.webp"
+      # Re-read the photos when the reader itself changes.
+      - "src/maudesignal/vision/label.py"
+      - "skills/device-label-reader/**"
+      - ".github/workflows/vision-labels.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: vision-labels
+  cancel-in-progress: false
+
+jobs:
+  labels:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - name: Refuse photos that still carry metadata
+        run: python scripts/prepare_label_photo.py --check demo/vision/labels
+      - name: Read labels (SAM 3.1 + Muse Spark + openFDA; lot/serial never stored)
+        env:
+          META_MODEL_API_KEY: ${{ secrets.META_MODEL_API_KEY }}
+          META_MODEL_API_BASE_URL: https://api.meta.ai/v1
+        run: python scripts/record_vision_runs.py --skip-510k
+      - name: Commit readings
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add demo/vision/label-*.json 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "chore(demo): read device-label photos (SAM 3.1 + Muse Spark)"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

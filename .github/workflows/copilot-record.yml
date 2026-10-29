@@ -1,0 +1,107 @@
+# HACKATHON-BUILT — record real Muse Spark copilot transcripts for the
+# stored-first public demo. Spends Meta Model API credit, so it only runs when
+# demo/RECORD_REQUEST changes (or by manual dispatch once on the default branch).
+name: Record live Meta runs (copilot, voice, vision, dossier)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [hackathon-copilot, hackathon-day2]
+    paths: ["demo/RECORD_REQUEST"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: copilot-record
+  cancel-in-progress: false
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install poppler (PDF rasterizing for the 510(k) reader + dossier preview)
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+      - run: pip install -e .
+      - name: Start a clean recording (the previous run's transcripts are restored if none are recorded)
+        run: git rm -q --cached demo/transcripts/*.json && mkdir -p /tmp/prev && mv demo/transcripts/*.json /tmp/prev/ || true
+      - name: Record transcripts (key from secrets, never echoed)
+        env:
+          META_MODEL_API_KEY: ${{ secrets.META_MODEL_API_KEY }}
+          META_MODEL_API_BASE_URL: https://api.meta.ai/v1
+          META_MODEL_API_MODEL: muse-spark-1.3
+        continue-on-error: true
+        run: python scripts/record_demo_transcripts.py --out demo/transcripts
+      - name: Record the spoken questions (Meta Voice Transcribe → copilot), one per WAV
+        if: hashFiles('demo/voice/question*.wav') != ''
+        env:
+          META_MODEL_API_KEY: ${{ secrets.META_MODEL_API_KEY }}
+          META_MODEL_API_BASE_URL: https://api.meta.ai/v1
+          META_MODEL_API_MODEL: muse-spark-1.3
+        run: |
+          # question.wav -> 00-voice-main, question-c.wav -> 00-voice-c
+          for wav in demo/voice/question*.wav; do
+            name="$(basename "$wav" .wav)"; suffix="${name#question}"; suffix="${suffix#-}"
+            label="00-voice-${suffix:-main}"
+            python scripts/record_demo_transcripts.py --out demo/transcripts \
+              --voice-file "$wav" --voice-label "$label" || echo "voice $wav failed"
+          done
+        continue-on-error: true
+      - name: Install headless Chromium (510(k) PDF fetch fallback; failure only means skips)
+        continue-on-error: true
+        run: pip install playwright && python -m playwright install --with-deps chromium
+      - name: Record vision runs (510(k) summary reader + label camera; Muse Spark + SAM 3.1)
+        continue-on-error: true
+        env:
+          META_MODEL_API_KEY: ${{ secrets.META_MODEL_API_KEY }}
+          META_MODEL_API_BASE_URL: https://api.meta.ai/v1
+        run: python scripts/record_vision_runs.py
+      - name: Build demo dossier (Muse Spark narrative + Muse Wonder review)
+        continue-on-error: true
+        env:
+          META_MODEL_API_KEY: ${{ secrets.META_MODEL_API_KEY }}
+          META_MODEL_API_BASE_URL: https://api.meta.ai/v1
+        run: python scripts/build_demo_dossier.py
+      - name: Report sources vs openFDA (F12 acceptance; keyless openFDA)
+        continue-on-error: true
+        env:
+          OPENFDA_API_KEY: ${{ secrets.OPENFDA_API_KEY }}
+        run: python scripts/check_source_counts.py
+      - name: Restore the previous transcripts if nothing was recorded
+        run: |
+          if ! ls demo/transcripts/*.json >/dev/null 2>&1; then
+            mv /tmp/prev/*.json demo/transcripts/ 2>/dev/null || true
+            git add demo/transcripts/*.json 2>/dev/null || true
+            echo "No transcripts recorded; previous run restored."
+          fi
+      - name: Hand-check worksheet (gate pass rates from the recorded transcripts)
+        continue-on-error: true
+        run: python scripts/hand_check.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: live-meta-runs
+          path: |
+            demo/transcripts/
+            demo/vision/
+            demo/dossier/
+            docs/hackathon/HAND_CHECK.md
+            docs/hackathon/SOURCE_COUNTS.md
+      - name: Commit transcripts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p demo/transcripts demo/vision demo/dossier
+          git add -A demo/transcripts demo/vision demo/dossier
+          git add docs/hackathon/HAND_CHECK.md 2>/dev/null || true
+          git add docs/hackathon/SOURCE_COUNTS.md 2>/dev/null || true
+          # Public FDA PDFs the browser fallback fetched: cached so no later run needs FDA again.
+          git add docs/510k/*.pdf 2>/dev/null || true
+          git add -f demo/dossier/*.pdf 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "chore(demo): record live Meta runs (copilot, voice, vision, dossier)"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

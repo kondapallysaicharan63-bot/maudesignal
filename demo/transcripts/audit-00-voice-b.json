@@ -1,0 +1,27 @@
+{
+  "run_label": "00-voice-b",
+  "chain_ok_at_export": true,
+  "first_bad_seq_at_export": null,
+  "entries": [
+    {
+      "seq": 1,
+      "ts": "2026-10-28T20:43:59.012815",
+      "actor": "voice:muse-voice-transcribe-1.0",
+      "action": "voice.transcribed",
+      "entity_id": "V-074d514e509a90ad",
+      "payload_json": "{\"audio_seconds\": 10.16, \"audio_sha256\": \"074d514e509a90ad2dea897b81b3d59aaa841c1607013578b656dc7d7433dd54\", \"estimated_cost_usd\": 0.0005, \"language\": \"English\", \"model\": \"muse-voice-transcribe-1.0\", \"question_entity_id\": \"Q-542104587c3ed061\", \"transcript_text\": \"hi there, and welcome. We're really glad you stopped by. Take your time, have a look around, and if you need anything at all, or just a message away..\"}",
+      "prev_hash": "GENESIS",
+      "entry_hash": "5a237baeba6c97c3a2e8b5f1504e2d498d68eb94a94348f934575fdfe58fef02"
+    },
+    {
+      "seq": 2,
+      "ts": "2026-10-28T20:44:04.091418",
+      "actor": "copilot:muse-spark",
+      "action": "copilot.answer",
+      "entity_id": "Q-542104587c3ed061",
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 2}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 2}, \"input_tokens\": 7526, \"model\": \"muse-spark-1.3\", \"output_tokens\": 930, \"question\": \"hi there, and welcome. We're really glad you stopped by. Take your time, have a look around, and if you need anything at all, or just a message away..\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.3.1\", \"structured_output\": true, \"tools\": []}",
+      "prev_hash": "5a237baeba6c97c3a2e8b5f1504e2d498d68eb94a94348f934575fdfe58fef02",
+      "entry_hash": "c10fbe6f0043ec8020d7c4688f8b3e75d58210d69c0a0b015443cba1b603b408"
+    }
+  ]
+}

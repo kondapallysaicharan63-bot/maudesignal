@@ -103,6 +103,7 @@ def ingest_product_code(
             mfr_narrative=normalized["mfr_narrative"],
             manufacturer=normalized["manufacturer"],
             brand_name=normalized["brand_name"],
+            report_source=normalized["report_source"],
         )
 
         if fetched % 25 == 0:
@@ -166,9 +167,14 @@ def _normalize(raw: dict[str, Any], product_code: str) -> dict[str, Any]:
         elif "manufacturer narrative" in text_type and mfr_narrative is None:
             mfr_narrative = text_val
 
-    # event_type in openFDA is a list like ["Injury"]
-    event_types = raw.get("event_type") or []
-    event_type_str = event_types[0].lower() if event_types else None
+    # The live openFDA device/event API returns event_type as a plain string
+    # ("Malfunction"); older fixtures use a list (["Injury"]). Indexing a string
+    # with [0] stored single letters ("m"), so accept both shapes.
+    # (Fix made during the Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026.)
+    raw_event_type = raw.get("event_type")
+    if isinstance(raw_event_type, list):
+        raw_event_type = raw_event_type[0] if raw_event_type else None
+    event_type_str = str(raw_event_type).strip().lower() if raw_event_type else None
 
     return {
         "event_type": event_type_str,
@@ -177,4 +183,5 @@ def _normalize(raw: dict[str, Any], product_code: str) -> dict[str, Any]:
         "mfr_narrative": mfr_narrative,
         "manufacturer": device_0.get("manufacturer_d_name"),
         "brand_name": device_0.get("brand_name"),
+        "report_source": raw.get("report_source_code") or "",
     }

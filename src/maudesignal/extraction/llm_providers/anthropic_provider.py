@@ -86,12 +86,12 @@ class AnthropicProvider(LLMProvider):
         ]
 
         try:
-            response = self._client.messages.create(
+            response = self._client.messages.create(  # type: ignore[call-overload]
                 model=self._model,
                 max_tokens=max_tokens,
                 temperature=temperature,
                 system=system_prompt,
-                messages=api_messages,  # type: ignore[arg-type]
+                messages=api_messages,
             )
         except Exception as exc:  # pragma: no cover - network errors
             raise AnthropicProviderError(f"Anthropic API call failed: {exc}") from exc

@@ -1,0 +1,2 @@
+{"input": "image 1 = page 1 (fictional summary that does not print a decision date)", "forbidden_output": {"fields.decision_date.value": "2019-11-13"}, "why": "decision date recalled from memory / openFDA instead of read from the page"}
+{"input": "image 1 = page 2 (fictional summary)", "forbidden_output": {"fields.indications_for_use.value": "Helps doctors find lung nodules."}, "why": "indications paraphrased instead of copied verbatim"}

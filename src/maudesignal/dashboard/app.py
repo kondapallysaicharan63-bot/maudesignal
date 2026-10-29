@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 import json
 import math
 import os
@@ -15,6 +16,7 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
+from maudesignal.catalog.names import classification_names, report_brands
 from maudesignal.config import Config
 from maudesignal.ingestion.openfda_client import OpenFDAClient
 from maudesignal.ingestion.pipeline import IngestionResult, ingest_product_code
@@ -31,13 +33,39 @@ _MAUDE_DETAIL_URL = (
 
 # ── Page registry: (icon, name, subtitle) ─────────────────────────────────────
 _PAGES: list[tuple[str, str, str]] = [
-    ("🏠", "Dashboard", "Executive summary of postmarket signal activity"),
-    ("🔍", "Signal Explorer", "Browse, filter, and export AI extraction results"),
-    ("📥", "MAUDE Ingestion", "Pull adverse event reports from openFDA"),
-    ("🤖", "LLM Extraction", "Run AI extraction on ingested records"),
-    ("📋", "PSUR Reports", "Periodic safety update report drafts"),
-    ("🔔", "Alerts", "Monitor and test alert rules"),
-    ("⚙️", "Settings", "Configuration, providers, and system health"),
+    # HACKATHON-BUILT pages (Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026)
+    (
+        "trending_up",
+        "What changed",
+        "Reports suddenly increased, more serious than usual, or a new kind of problem — no model",
+    ),
+    (
+        "shield",
+        "Copilot",
+        "Muse Spark copilot that only shows facts it can match to the FDA record",
+    ),
+    (
+        "task_alt",
+        "Actions & Audit",
+        "CAPA-need evidence pack a named person accepts, and the tamper-evident audit trail",
+    ),
+    (
+        "description",
+        "Dossier",
+        "Audit-ready Signal Evaluation & CAPA record (PDF) + Muse Wonder review",
+    ),
+    (
+        "document_scanner",
+        "Vision",
+        "510(k) summary reader and device-label camera (Muse Spark + SAM)",
+    ),
+    ("dashboard", "Dashboard", "Executive summary of postmarket signal activity"),
+    ("search", "Signal Explorer", "Browse, filter, and export AI extraction results"),
+    ("download", "MAUDE Ingestion", "Pull adverse event reports from openFDA"),
+    ("smart_toy", "LLM Extraction", "Run AI extraction on ingested records"),
+    ("summarize", "PSUR Reports", "Periodic safety update report drafts"),
+    ("notifications", "Alerts", "Monitor and test alert rules"),
+    ("settings", "Settings", "Configuration, providers, and system health"),
 ]
 
 _SEVERITY_ORDER = [
@@ -72,11 +100,12 @@ _FAILURE_MODE_COLORS: dict[str, str] = {
 _ASSETS_DIR = Path(__file__).parent / "assets"
 _LOGO_PATH = _ASSETS_DIR / "logo.svg"
 _PROJECT_ROOT = Path(__file__).resolve().parents[3]
+_DEFAULT_DB_RELPATH = Path("data") / "maudesignal.db"
+_DEMO_DB_PATH = _PROJECT_ROOT / "data" / "demo" / "maudesignal_demo.db"
 
 # ── CSS (Meta design-system–aligned) ──────────────────────────────────────────
 _CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
 .material-symbols-outlined {
   font-family: 'Material Symbols Outlined';
@@ -92,35 +121,6 @@ _CSS = """
 }
 /* ── Design tokens ───────────────────────────────────────────────────────── */
 :root {
-  /* Brand & accent */
-  --ms-primary:        #0866FF;              /* cobalt – action CTAs          */
-  --ms-primary-deep:   #0143B5;              /* pressed / dark-surface        */
-  --ms-primary-soft:   rgba(8,102,255,0.12); /* info callout tint             */
-  --ms-ink-button:     #0A1317;              /* black pill – marketing CTAs   */
-  --ms-on-ink-button:  #FFFFFF;
-  --ms-on-primary:     #FFFFFF;
-
-  /* Surface */
-  --ms-canvas:         #FFFFFF;
-  --ms-surface-soft:   #F0F2F5;
-  --ms-hairline:       #CCD0D5;
-  --ms-hairline-soft:  #E4E6EB;
-
-  /* Text */
-  --ms-ink-deep:       #0A1317;
-  --ms-ink:            #1C1E21;
-  --ms-charcoal:       #3C3C3C;
-  --ms-slate:          #606770;
-  --ms-steel:          #767676;
-  --ms-stone:          #9EA3A9;
-
-  /* Semantic */
-  --ms-success:        #2E7D32;
-  --ms-attention:      #E65C00;
-  --ms-warning:        #E6AC00;
-  --ms-critical:       #E02020;
-  --ms-critical-strong:#C62828;
-
   /* Border radius */
   --r-sm:     4px;
   --r-md:     6px;
@@ -130,12 +130,10 @@ _CSS = """
   --r-xxxl:   32px;
   --r-feature:40px;
   --r-full:   100px;
-
   /* Spacing */
   --sp-xs:  8px;  --sp-sm: 10px; --sp-md: 12px;  --sp-base: 16px;
   --sp-lg: 20px;  --sp-xl: 24px; --sp-xxl: 32px; --sp-xxxl: 40px;
   --sp-section-sm: 48px; --sp-section: 64px; --sp-section-lg: 80px;
-
   /* Elevation */
   --shadow-pill:  rgba(0,0,0,0.20) 1px 1px 0px 0px;
   --shadow-panel: rgba(20,22,26,0.30) 0px 1px 4px 0px;
@@ -143,7 +141,7 @@ _CSS = """
 
 /* ── Global typography ───────────────────────────────────────────────────── */
 html, body, [class*="css"] {
-  font-family: 'Montserrat', Helvetica, Arial, 'Noto Sans', sans-serif !important;
+  font-family: var(--font-sans) !important;
   color: var(--ms-ink) !important;
   background-color: var(--ms-canvas) !important;
   -webkit-font-smoothing: antialiased;
@@ -158,14 +156,6 @@ html, body, [class*="css"] {
 footer { display: none !important; }
 
 /* ── Sidebar ─────────────────────────────────────────────────────────────── */
-section[data-testid="stSidebar"] {
-  background: linear-gradient(180deg, #0d2137 0%, #1a3a5c 100%) !important;
-  border-right: 1px solid #2a5080 !important;
-}
-section[data-testid="stSidebar"] * {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
-  color: #c8dff0 !important;
-}
 
 /* Sidebar nav buttons — pill-shaped (Meta {rounded.full}) */
 section[data-testid="stSidebar"] .stButton > button {
@@ -176,7 +166,7 @@ section[data-testid="stSidebar"] .stButton > button {
   font-size: 13px !important;
   font-weight: 500 !important;
   letter-spacing: -0.14px !important;
-  color: #c8dff0 !important;
+  color: var(--ms-sidebar-ink) !important;
   box-shadow: none !important;
   width: 100% !important;
   border-radius: var(--r-full) !important;  /* pill */
@@ -184,9 +174,9 @@ section[data-testid="stSidebar"] .stButton > button {
 }
 section[data-testid="stSidebar"] .stButton > button:hover,
 section[data-testid="stSidebar"] .stButton > button:focus {
-  background: rgba(255,255,255,0.12) !important;
-  border-color: rgba(255,255,255,0.18) !important;
-  color: #fff !important;
+  background: var(--ms-primary-soft) !important;
+  border-color: var(--ms-hairline) !important;
+  color: var(--ms-ink-deep) !important;
 }
 
 /* ── Main content buttons — cobalt pill (uniform across all button types) ─── */
@@ -196,14 +186,14 @@ section[data-testid="stSidebar"] .stButton > button:focus {
 [data-testid="stBaseButton-secondary"],
 [data-testid="stFormSubmitButton"] > button {
   border-radius: 100px !important;
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
+  font-family: var(--font-sans) !important;
   font-size: 14px !important;
   font-weight: 700 !important;
   letter-spacing: -0.14px !important;
   padding: 12px 28px !important;
   line-height: 1.43 !important;
-  background: #0866FF !important;   /* cobalt — explicit hex, avoids CSS-var resolution edge cases */
-  color: #FFFFFF !important;
+  background: var(--ms-primary) !important;   /* cobalt - explicit hex */
+  color: var(--ms-on-primary) !important;
   border: none !important;
   box-shadow: none !important;
   transition: background 0.15s ease-out !important;
@@ -212,13 +202,13 @@ section[data-testid="stSidebar"] .stButton > button:focus {
 .stButton > button:hover,
 .stFormSubmitButton > button:hover,
 [data-testid="stBaseButton-primary"]:hover {
-  background: #0143B5 !important;   /* cobalt-deep on hover */
-  color: #FFFFFF !important;
+  background: var(--ms-primary-deep) !important;   /* cobalt-deep on hover */
+  color: var(--ms-on-primary) !important;
 }
 .stButton > button:active,
 .stFormSubmitButton > button:active {
-  background: #0143B5 !important;
-  color: #FFFFFF !important;
+  background: var(--ms-primary-deep) !important;
+  color: var(--ms-on-primary) !important;
 }
 
 /* ── Page header — Meta {typography.display-lg} hierarchy ───────────────── */
@@ -257,7 +247,7 @@ section[data-testid="stSidebar"] .stButton > button:focus {
 
 /* ── KPI card — Meta card-product-feature ({rounded.xxxl}) ──────────────── */
 .ms-card {
-  background: var(--ms-canvas);
+  background: var(--ms-card);
   border: 1px solid var(--ms-hairline-soft);   /* hairline, no top accent     */
   border-top: 3px solid var(--ms-primary);     /* cobalt accent top rail      */
   border-radius: var(--r-xxxl);                /* 32px — photographic cards   */
@@ -281,16 +271,16 @@ section[data-testid="stSidebar"] .stButton > button:focus {
   text-transform: uppercase !important;
   letter-spacing: 0.06em !important;
   margin-top: 6px !important;
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
+  font-family: var(--font-sans) !important;
 }
 
 /* Card semantic variants */
-.ms-card.red   { border-top-color: var(--ms-critical);   }
-.ms-card.red   .val { color: var(--ms-critical);   }
-.ms-card.green { border-top-color: var(--ms-success);    }
-.ms-card.green .val { color: var(--ms-success);    }
-.ms-card.amber { border-top-color: var(--ms-attention);  }
-.ms-card.amber .val { color: var(--ms-attention);  }
+.ms-card.red   { border-top-color: var(--ms-err-fg);   }
+.ms-card.red   .val { color: var(--ms-err-fg);   }
+.ms-card.green { border-top-color: var(--ms-ok-fg);    }
+.ms-card.green .val { color: var(--ms-ok-fg);    }
+.ms-card.amber { border-top-color: var(--ms-warn-fg);  }
+.ms-card.amber .val { color: var(--ms-warn-fg);  }
 
 /* ── Section heading — Meta {typography.heading-sm} ─────────────────────── */
 .ms-section {
@@ -298,7 +288,7 @@ section[data-testid="stSidebar"] .stButton > button:focus {
   font-weight: 700 !important;
   line-height: 1.44 !important;
   color: var(--ms-ink-deep) !important;
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
+  font-family: var(--font-sans) !important;
   margin: var(--sp-xxl) 0 var(--sp-md) !important;
   padding: 0 !important;
   border-left: none !important;
@@ -309,8 +299,8 @@ section[data-testid="stSidebar"] .stButton > button:focus {
 /* ── Status pills — Meta badge-* pattern ({rounded.full}) ───────────────── */
 .pill-ok {
   display: inline-block;
-  background: #E6F4EA;
-  color: var(--ms-success);
+  background: var(--ms-ok-bg);
+  color: var(--ms-ok-fg);
   border-radius: var(--r-full);
   padding: 4px 10px;
   font-size: 12px;
@@ -320,8 +310,8 @@ section[data-testid="stSidebar"] .stButton > button:focus {
 }
 .pill-warn {
   display: inline-block;
-  background: #FFF3CD;
-  color: #7A4F00;
+  background: var(--ms-warn-bg);
+  color: var(--ms-warn-fg);
   border-radius: var(--r-full);
   padding: 4px 10px;
   font-size: 12px;
@@ -330,8 +320,8 @@ section[data-testid="stSidebar"] .stButton > button:focus {
 }
 .pill-err {
   display: inline-block;
-  background: #FDEDED;
-  color: var(--ms-critical-strong);
+  background: var(--ms-err-bg);
+  color: var(--ms-err-fg);
   border-radius: var(--r-full);
   padding: 4px 10px;
   font-size: 12px;
@@ -341,7 +331,7 @@ section[data-testid="stSidebar"] .stButton > button:focus {
 
 /* ── Provider card — Meta card-icon-feature ({rounded.xl}) ──────────────── */
 .prov-card {
-  background: var(--ms-canvas);
+  background: var(--ms-card);
   border: 1px solid var(--ms-hairline-soft);
   border-radius: var(--r-xl);              /* 16px — icon-feature tile style  */
   padding: var(--sp-lg) var(--sp-xl);
@@ -369,12 +359,12 @@ section[data-testid="stSidebar"] .stButton > button:focus {
 
 /* ── Streamlit native elements: typography harmonisation ─────────────────── */
 h1, h2, h3, h4 {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
+  font-family: var(--font-sans) !important;
   font-weight: 500 !important;
   color: var(--ms-ink-deep) !important;
 }
 p, li, label, span {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
+  font-family: var(--font-sans) !important;
 }
 
 /* ── Markdown body text ──────────────────────────────────────────────────── */
@@ -385,7 +375,7 @@ p, li, label, span {
   line-height: 1.50 !important;
   letter-spacing: -0.16px !important;
   color: var(--ms-ink) !important;
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
+  font-family: var(--font-sans) !important;
 }
 [data-testid="stMarkdownContainer"] strong {
   color: var(--ms-ink-deep) !important;
@@ -418,8 +408,8 @@ section[data-testid="stMain"] label,
 [data-testid="stSlider"] label,
 .stTextInput label, .stNumberInput label,
 .stSelectbox label, .stDateInput label {
-  color: #0A1317 !important;   /* explicit hex — avoids CSS-var resolution edge cases */
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
+  color: var(--ms-ink-deep) !important;   /* explicit hex — avoids CSS-var resolution edge cases */
+  font-family: var(--font-sans) !important;
   font-size: 14px !important;
   font-weight: 500 !important;
   letter-spacing: -0.14px !important;
@@ -430,7 +420,7 @@ section[data-testid="stMain"] label,
 [data-testid="stCaptionContainer"] p,
 [data-testid="stCaptionContainer"] span {
   color: var(--ms-slate) !important;
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
+  font-family: var(--font-sans) !important;
   font-size: 12px !important;
 }
 [data-testid="stCaptionContainer"] code,
@@ -441,7 +431,7 @@ section[data-testid="stMain"] label,
   padding: 1px 5px !important;
   font-size: 12px !important;
   font-weight: 600 !important;
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
+  font-family: var(--font-sans) !important;
 }
 
 /* ── Sidebar text — explicit override after global p/span rule ───────────── */
@@ -449,13 +439,13 @@ section[data-testid="stSidebar"] p,
 section[data-testid="stSidebar"] span,
 section[data-testid="stSidebar"] label,
 section[data-testid="stSidebar"] li {
-  color: #c8dff0 !important;
+  color: var(--ms-sidebar-ink) !important;
   font-size: inherit !important;
 }
 
 /* Tab labels — Meta {typography.body-sm-bold} */
 [data-testid="stTabs"] button[role="tab"] {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
+  font-family: var(--font-sans) !important;
   font-size: 14px !important;
   font-weight: 700 !important;
   letter-spacing: -0.14px !important;
@@ -478,14 +468,14 @@ section[data-testid="stSidebar"] li {
 
 /* Form inputs — Meta text-input style */
 input[type="text"], input[type="number"], textarea, select {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
+  font-family: var(--font-sans) !important;
   font-size: 16px !important;
   border-radius: var(--r-lg) !important;  /* 8px */
   border: 1px solid var(--ms-hairline) !important;
   height: 44px !important;
 }
 input:focus, textarea:focus, select:focus {
-  border: 2px solid #1877F2 !important;  /* fb-blue focus ring */
+  border: 2px solid var(--ms-primary) !important;  /* fb-blue focus ring */
   outline: none !important;
 }
 
@@ -526,12 +516,12 @@ input:focus, textarea:focus, select:focus {
   margin-bottom: var(--sp-xl);
 }
 .ms-banner-warn {
-  background: #FFF3CD;
+  background: var(--ms-warn-bg);
   border-radius: var(--r-xl);
   padding: var(--sp-md) var(--sp-xl);
   font-size: 14px;
   font-weight: 700;
-  color: #7A4F00;
+  color: var(--ms-warn-fg);
   margin-bottom: var(--sp-xl);
 }
 </style>
@@ -558,7 +548,18 @@ def _maude_url(report_id: str) -> str:
 
 
 def _load_db() -> Database:
-    """Load the database, falling back to env-var path if Config cannot be fully loaded."""
+    """Load the database, falling back to env-var path if Config cannot be fully loaded.
+
+    Stored-first deploy (added during the Meta hackathon): when
+    ``MAUDESIGNAL_DB_PATH`` is unset and there is no local ``data/maudesignal.db``,
+    open the committed keyless demo database instead of creating an empty one.
+    """
+    if (
+        not os.environ.get("MAUDESIGNAL_DB_PATH")
+        and not (_PROJECT_ROOT / _DEFAULT_DB_RELPATH).exists()
+        and _DEMO_DB_PATH.exists()
+    ):
+        return Database(_DEMO_DB_PATH)
     try:
         cfg = Config.load()
         return Database(cfg.db_path)
@@ -617,12 +618,13 @@ def _product_code_lookup(db: Database) -> dict[str, str]:
 def _device_name_lookup(db: Database) -> dict[str, str]:
     """Return product_code → display name.
 
-    Prefers device_catalog.device_name; falls back to normalized_events.brand_name
-    so product codes never enriched still show a human-readable label.
+    Prefers the FDA classification name; then device_catalog.device_name; then
+    normalized_events.brand_name so product codes never enriched still show a
+    human-readable label.
     """
     brand_fallback = db.brand_name_lookup()
     catalog = {d.product_code: d.device_name for d in db.list_catalog_devices()}
-    return {**brand_fallback, **catalog}  # catalog wins on conflict
+    return {**brand_fallback, **catalog, **classification_names(db)}
 
 
 def _catalog_dataframe(db: Database) -> pd.DataFrame:
@@ -646,16 +648,13 @@ def _catalog_dataframe(db: Database) -> pd.DataFrame:
 
 
 def _page_header(icon: str, title: str, subtitle: str) -> None:
-    """Render the standard page header."""
+    """Render the standard page header (design system: serif headline, sans deck)."""
+    del icon  # the design system uses words, not emoji, in headings
     st.html(
-        f'<div class="ms-page-header">'
-        f'<h1 style="font-size:36px;font-weight:500;color:#0A1317;margin:0 0 6px 0;'
-        f'font-family:Montserrat,Helvetica,Arial,sans-serif;letter-spacing:0;">'
-        f"{icon} {title}</h1>"
-        f'<p style="font-size:16px;font-weight:400;line-height:1.44;color:#606770;'
-        f'margin:0;font-family:Montserrat,Helvetica,Arial,sans-serif;">'
-        f"{subtitle}</p>"
-        f"</div>"
+        '<div class="ms-page-header">'
+        f'<h1 class="t-headline" style="margin:0 0 6px 0">{html.escape(title)}</h1>'
+        f'<p class="t-deck" style="margin:0;color:var(--ink-2)">{html.escape(subtitle)}</p>'
+        "</div>"
     )
 
 
@@ -676,7 +675,7 @@ def _section(title: str) -> None:
 
 
 def _page_dashboard(db: Database) -> None:
-    _page_header("🏠", "Dashboard", "Executive summary of postmarket signal activity")
+    _page_header("", "Dashboard", "Executive summary of postmarket signal activity")
 
     df = _extractions_dataframe(db)
     df_ext = df[df["skill_name"] == EXTRACTOR_SKILL] if not df.empty else pd.DataFrame()
@@ -688,23 +687,25 @@ def _page_dashboard(db: Database) -> None:
     n_alerts = len(db.list_alert_rules(active_only=True))
     cost = db.total_llm_cost_usd()
 
-    # KPI row
+    # KPI row. Without extraction rows the AI / confidence / cost tiles would only show
+    # zeros (the keyless demo database has none), so they appear once data exists.
     _section("Key Performance Indicators")
-    c1, c2, c3, c4, c5 = st.columns(5)
-    _kpi_card(c1, f"{n_raw:,}", "MAUDE Records")
-    _kpi_card(c2, str(n_ai), "AI Signals Detected", "red" if n_ai > 0 else "")
-    _kpi_card(c3, f"{avg_conf:.3f}", "Avg Confidence", "green" if avg_conf >= 0.8 else "amber")
-    _kpi_card(c4, str(n_alerts), "Active Alert Rules")
-    _kpi_card(c5, f"${cost:.2f}", "LLM Cost to Date")
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
     if df_ext.empty:
+        c1, _ = st.columns([1, 4])
+        _kpi_card(c1, f"{n_raw:,}", "MAUDE Records")
         st.info(
             "No extraction results yet. Use **MAUDE Ingestion** to pull records, "
             "then **LLM Extraction** to analyse them."
         )
         return
+    c1, c2, c3, c4, c5 = st.columns(5)
+    _kpi_card(c1, f"{n_raw:,}", "MAUDE Records")
+    _kpi_card(c2, str(n_ai), "AI Signals Detected", "red" if n_ai > 0 else "")
+    _kpi_card(c3, f"{avg_conf:.3f}", "Avg Confidence", "green" if avg_conf >= 0.8 else "amber")
+    _kpi_card(c4, str(n_alerts), "Active Alert Rules")
+    _kpi_card(c5, f"${cost:.2f}", "Extraction LLM cost")
+
+    st.markdown("<br>", unsafe_allow_html=True)
 
     col_left, col_right = st.columns(2)
 
@@ -739,7 +740,7 @@ def _page_dashboard(db: Database) -> None:
                 )
                 .properties(height=240)
             )
-            st.altair_chart(chart, use_container_width=True)
+            st.altair_chart(chart, width="stretch")
 
     with col_right:
         _section("AI Failure Mode Breakdown")
@@ -765,14 +766,20 @@ def _page_dashboard(db: Database) -> None:
                 )
                 .properties(height=240)
             )
-            st.altair_chart(chart_fm, use_container_width=True)
+            st.altair_chart(chart_fm, width="stretch")
 
     _section("Recent Signals")
     pc_lookup = _product_code_lookup(db)
     dn_lookup = _device_name_lookup(db)
     recent = df_ext.copy()
     recent["product_code"] = recent["maude_report_id"].map(pc_lookup).fillna("?")
-    recent["device_name"] = recent["product_code"].map(dn_lookup).fillna("—")
+    # The device named on each report; the product code's FDA name only when blank.
+    recent["device_name"] = (
+        recent["maude_report_id"]
+        .map(report_brands(db))
+        .fillna(recent["product_code"].map(dn_lookup))
+        .fillna("—")
+    )
     display_recent = (
         recent[
             [
@@ -790,7 +797,7 @@ def _page_dashboard(db: Database) -> None:
     )
     st.dataframe(
         display_recent,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         column_config={
             "extraction_ts": st.column_config.DatetimeColumn("Extracted At"),
@@ -808,7 +815,7 @@ def _page_dashboard(db: Database) -> None:
 
 
 def _page_signal_explorer(db: Database) -> None:
-    _page_header("🔍", "Signal Explorer", "Browse, filter, and export AI extraction results")
+    _page_header("", "Signal Explorer", "Browse, filter, and export AI extraction results")
 
     df = _extractions_dataframe(db)
     if df.empty:
@@ -821,7 +828,12 @@ def _page_signal_explorer(db: Database) -> None:
     pc_lookup = _product_code_lookup(db)
     df["product_code"] = df["maude_report_id"].map(pc_lookup).fillna("?")
     dn_lookup = _device_name_lookup(db)
-    df["device_name"] = df["product_code"].map(dn_lookup).fillna("—")
+    df["device_name"] = (
+        df["maude_report_id"]
+        .map(report_brands(db))
+        .fillna(df["product_code"].map(dn_lookup))
+        .fillna("—")
+    )
 
     _section("Filters")
     f1, f2, f3, f4 = st.columns(4)
@@ -883,7 +895,7 @@ def _page_signal_explorer(db: Database) -> None:
     ]
     st.dataframe(
         filtered[display_cols].sort_values("extraction_ts", ascending=False),
-        use_container_width=True,
+        width="stretch",
         height=340,
         hide_index=True,
         column_config={
@@ -918,7 +930,7 @@ def _page_signal_explorer(db: Database) -> None:
                 col_a.markdown(f"**Manufacturer:** {event.manufacturer or '—'}")
                 col_a.markdown(f"**Brand / Device:** {event.brand_name or '—'}")
                 col_b.markdown(f"**Product Code:** {event.product_code}")
-                col_b.markdown(f"**Device Name:** {dn_lookup.get(event.product_code, '—')}")
+                col_b.markdown(f"**FDA device type:** {dn_lookup.get(event.product_code, '—')}")
                 col_b.markdown(f"**Event Type:** {event.event_type or '—'}")
                 col_b.markdown(f"**Event Date:** {event.event_date or '—'}")
                 col_c.markdown(f"**Official FDA Record:** [Open ↗]({_maude_url(str(selected_id))})")
@@ -954,7 +966,7 @@ def _page_signal_explorer(db: Database) -> None:
 
 
 def _page_ingestion(db: Database) -> None:
-    _page_header("📥", "MAUDE Ingestion", "Pull adverse event reports from openFDA")
+    _page_header("", "MAUDE Ingestion", "Pull adverse event reports from openFDA")
 
     # Current inventory
     n_raw = db.count_raw_reports()
@@ -1051,7 +1063,7 @@ def _page_ingestion(db: Database) -> None:
 
 
 def _page_extraction(db: Database) -> None:
-    _page_header("🤖", "LLM Extraction", "Run AI extraction on ingested MAUDE records")
+    _page_header("", "LLM Extraction", "Run AI extraction on ingested MAUDE records")
 
     # Check config
     cfg = _try_load_config()
@@ -1212,9 +1224,7 @@ def _run_extraction_batch(db: Database, cfg: Config, queue: list[Any]) -> None:
                 }
             )
 
-        results_placeholder.dataframe(
-            pd.DataFrame(result_rows), use_container_width=True, hide_index=True
-        )
+        results_placeholder.dataframe(pd.DataFrame(result_rows), width="stretch", hide_index=True)
 
     progress_bar.progress(1.0, text="Extraction complete.")
     if failures == 0:
@@ -1285,7 +1295,7 @@ def _psur_existing_reports(db: Database) -> None:
         )
     df = pd.DataFrame(rows)
     display_cols = [c for c in df.columns if c != "_out"]
-    st.dataframe(df[display_cols], use_container_width=True, hide_index=True)
+    st.dataframe(df[display_cols], width="stretch", hide_index=True)
 
     st.divider()
     _section("Report Preview")
@@ -1408,7 +1418,7 @@ def _psur_generate(db: Database) -> None:
 
 
 def _page_alerts(db: Database) -> None:
-    _page_header("🔔", "Alerts", "Monitor and test alert rules")
+    _page_header("", "Alerts", "Monitor and test alert rules")
 
     tab_rules, tab_test, tab_history = st.tabs(["📋 Alert Rules", "🧪 Test Alerts", "📜 History"])
 
@@ -1456,7 +1466,7 @@ def _alerts_rules(db: Database) -> None:
     ]
     st.dataframe(
         pd.DataFrame(rule_rows),
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )
 
@@ -1499,7 +1509,7 @@ def _alerts_test(db: Database) -> None:
                 f"rules evaluated. {result.alerts_delivered} delivered."
             )
         if result.details:
-            st.dataframe(pd.DataFrame(result.details), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(result.details), width="stretch", hide_index=True)
 
 
 def _alerts_history(db: Database) -> None:
@@ -1522,14 +1532,14 @@ def _alerts_history(db: Database) -> None:
     ]
     df_ev = pd.DataFrame(event_rows)
     st.caption(f"**{len(df_ev)}** alert event(s) on record")
-    st.dataframe(df_ev, use_container_width=True, hide_index=True)
+    st.dataframe(df_ev, width="stretch", hide_index=True)
 
 
 # ── Page 7: Settings ──────────────────────────────────────────────────────────
 
 
 def _page_settings(db: Database) -> None:
-    _page_header("⚙️", "Settings", "Configuration, LLM providers, and system health")
+    _page_header("", "Settings", "Configuration, LLM providers, and system health")
 
     tab_providers, tab_system, tab_catalog, tab_sources = st.tabs(
         ["🤖 LLM Providers", "🗄 System", "📦 Device Catalog", "🔗 External Sources"]
@@ -1601,7 +1611,7 @@ def _settings_providers(db: Database) -> None:
         _section("Cost & Limits")
         cost = db.total_llm_cost_usd()
         c1, c2 = st.columns(2)
-        _kpi_card(c1, f"${cost:.2f}", "LLM Cost to Date")
+        _kpi_card(c1, f"${cost:.2f}", "Extraction LLM cost")
         _kpi_card(c2, f"${cfg.cost_ceiling_usd:.2f}", "Cost Ceiling")
 
 
@@ -1714,7 +1724,7 @@ def _settings_catalog(db: Database) -> None:
                 "k_number": "510(k) Number",
             }
         ),
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         height=380,
     )
@@ -1754,7 +1764,7 @@ def _settings_sources(db: Database) -> None:
                 }
                 for s in pubmed
             ]
-            st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
 
     with tab_ct:
         trials = [s for s in all_sources if s.source_type == "clinicaltrials"]
@@ -1772,65 +1782,149 @@ def _settings_sources(db: Database) -> None:
                 }
                 for s in trials
             ]
-            st.dataframe(pd.DataFrame(rows_ct), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(rows_ct), width="stretch", hide_index=True)
 
 
 # ── App shell ─────────────────────────────────────────────────────────────────
 
 
+#: Pages in the top navigation (built during the hackathon); the rest sit in the sidebar.
+_TOP_PAGES: tuple[str, ...] = ("What changed", "Copilot", "Actions & Audit", "Dossier", "Vision")
+
+_WORDMARK = (
+    '<a class="ms-wordmark" href="?" aria-label="MaudeSignal home">'
+    '<svg viewBox="-16 -16 32 26" width="24" height="20" aria-hidden="true">'
+    '<g fill="none" stroke="currentColor" stroke-linecap="round">'
+    '<path d="M-14,0 A14,14 0 0,1 14,0" stroke-width="2.2"/>'
+    '<path d="M-9,0 A9,9 0 0,1 9,0" stroke-width="2.2" opacity=".6"/>'
+    '<line x1="0" y1="0" x2="0" y2="8" stroke-width="2"/></g>'
+    '<circle r="2.5" fill="currentColor"/></svg><span>Maude<em>Signal</em></span></a>'
+)
+
+
+def _nav_label(name: str) -> str:
+    icon = next(i for i, n, _ in _PAGES if n == name)
+    return f":material/{icon}: {name}"
+
+
+def _on_top_nav() -> None:
+    choice = st.session_state.get("top_nav")
+    if choice:
+        st.session_state["nav_page"] = choice.split(": ", 1)[1]
+
+
+def _on_theme() -> None:
+    from maudesignal.dashboard.theme import normalize_theme
+
+    st.session_state["theme"] = normalize_theme(st.session_state.get("theme_select"))
+    st.query_params["theme"] = st.session_state["theme"].lower().replace(" ", "-")
+
+
+def _top_bar(db: Database) -> None:
+    """Design-system Bar: wordmark, the five product pages, theme picker; then the dateline."""
+    from maudesignal.dashboard.theme import THEME_NAMES
+
+    page = st.session_state["nav_page"]
+    st.session_state["top_nav"] = _nav_label(page) if page in _TOP_PAGES else None
+    st.session_state["theme_select"] = st.session_state["theme"]
+    with st.container(key="ms_topbar"):
+        c1, c2, c3 = st.columns([2.2, 7.2, 1.8], vertical_alignment="center")
+        c1.html(_WORDMARK)
+        c2.segmented_control(
+            "Pages",
+            [_nav_label(n) for n in _TOP_PAGES],
+            key="top_nav",
+            on_change=_on_top_nav,
+            label_visibility="collapsed",
+        )
+        c3.selectbox(
+            "Theme",
+            THEME_NAMES,
+            key="theme_select",
+            on_change=_on_theme,
+            label_visibility="collapsed",
+        )
+    latest = db.max_date_received()
+    as_of = datetime.strptime(str(latest), "%Y%m%d").strftime("%b %d, %Y") if latest else "no data"
+    st.html(
+        '<div class="ms-dateline">'
+        f"<span>{datetime.now().strftime('%A, %B %d, %Y')}</span>"
+        f"<span>openFDA data as of {as_of}</span>"
+        f"<span>{db.count_raw_reports():,} MAUDE records on file</span></div>"
+    )
+
+
+def _classic_tools_enabled() -> bool:
+    """The "More tools" pages (pipeline, extraction, PSUR, alerts, settings).
+
+    Hidden in the public demo, where they are empty without provider keys; shown with
+    ``?tools=all`` (kept for the browser session) or ``MAUDESIGNAL_CLASSIC_TOOLS=1``.
+    """
+    if st.query_params.get("tools") == "all":
+        st.session_state["classic_tools"] = True
+    return bool(st.session_state.get("classic_tools")) or (
+        os.environ.get("MAUDESIGNAL_CLASSIC_TOOLS") == "1"
+    )
+
+
 def _render_app(db: Database) -> None:  # noqa: PLR0912
+    from maudesignal.dashboard.theme import normalize_theme, theme_css
+
     st.set_page_config(
         page_title="MaudeSignal",
         page_icon="📡",
         layout="wide",
         initial_sidebar_state="expanded",
     )
+    if "theme" not in st.session_state:
+        st.session_state["theme"] = normalize_theme(st.query_params.get("theme"))
     st.html(_CSS)
+    st.html(theme_css(st.session_state["theme"]))
 
-    if "nav_page" not in st.session_state:
-        st.session_state["nav_page"] = "Dashboard"
+    from maudesignal.dashboard.spend_ui import has_key
 
-    # ── Sidebar ───────────────────────────────────────────────────────────────
-    with st.sidebar:
-        if _LOGO_PATH.exists():
-            st.image(str(_LOGO_PATH), width=150)
-        else:
-            st.markdown(
-                "## 📡 MaudeSignal",
-            )
-        st.caption("AI-Powered Postmarket Surveillance")
-        st.divider()
+    classic = _classic_tools_enabled()
+    if "nav_page" not in st.session_state or (
+        not classic and st.session_state["nav_page"] not in _TOP_PAGES
+    ):
+        st.session_state["nav_page"] = "What changed"
 
-        for icon, page_name, _ in _PAGES:
-            is_active = st.session_state["nav_page"] == page_name
-            label = f"**{icon} {page_name}**" if is_active else f"{icon} {page_name}"
-            if st.button(label, key=f"nav_{page_name}", use_container_width=True):
-                st.session_state["nav_page"] = page_name
-                st.rerun()
+    _top_bar(db)
 
-        st.divider()
-
-        # Sidebar status footer
-        n_raw = db.count_raw_reports()
-        n_rules = len(db.list_alert_rules(active_only=True))
-        cost = db.total_llm_cost_usd()
-        extractions = db.list_extractions()
-        if extractions:
-            last_ts = max(r.extraction_ts for r in extractions)
-            delta = datetime.now() - last_ts
-            freshness = f"{delta.seconds // 3600}h ago" if delta.days == 0 else f"{delta.days}d ago"
-        else:
-            freshness = "never"
-
-        st.caption(f"📄 {n_raw:,} MAUDE records")
-        st.caption(f"🔔 {n_rules} active alert rules")
-        st.caption(f"💵 ${cost:.4f} LLM spend")
-        st.caption(f"🕐 Last extraction: {freshness}")
+    # ── Sidebar: the classic tools (when enabled) and, with a key, the live-call
+    # quota. The keyless public demo has neither, so it shows no sidebar at all.
+    quota_slot = None
+    if classic or has_key():
+        with st.sidebar:
+            if classic:
+                st.caption("AI-Powered Postmarket Surveillance · public FDA data")
+                st.html('<div class="ms-kicker">More tools</div>')
+                for icon, page_name, _ in _PAGES:
+                    if page_name in _TOP_PAGES:
+                        continue
+                    is_active = st.session_state["nav_page"] == page_name
+                    label = f"**{page_name}**" if is_active else page_name
+                    if st.button(
+                        label, key=f"nav_{page_name}", icon=f":material/{icon}:", width="stretch"
+                    ):
+                        st.session_state["nav_page"] = page_name
+                        st.rerun()
+            # Filled after the page runs, so it reflects calls made on this rerun.
+            quota_slot = st.empty()
 
     page: str = st.session_state["nav_page"]
 
     # ── Page routing ──────────────────────────────────────────────────────────
+    from maudesignal.dashboard.copilot_pages import page_actions, page_changes, page_copilot
+    from maudesignal.dashboard.dossier_pages import page_dossier
+    from maudesignal.dashboard.vision_pages import page_vision
+
     page_fn_map: dict[str, Callable[[], None]] = {
+        "What changed": lambda: page_changes(db),
+        "Copilot": lambda: page_copilot(db),
+        "Actions & Audit": lambda: page_actions(db),
+        "Dossier": lambda: page_dossier(db),
+        "Vision": lambda: page_vision(db),
         "Dashboard": lambda: _page_dashboard(db),
         "Signal Explorer": lambda: _page_signal_explorer(db),
         "MAUDE Ingestion": lambda: _page_ingestion(db),
@@ -1845,8 +1939,17 @@ def _render_app(db: Database) -> None:  # noqa: PLR0912
         st.error(f"Unknown page: {page!r}")
         return
 
+    if page in _TOP_PAGES:
+        _, title, subtitle = next(p for p in _PAGES if p[1] == page)
+        _page_header("", title, subtitle)
     with st.spinner(""):
         fn()
+
+    from maudesignal.dashboard.spend_ui import sidebar_quota
+
+    if quota_slot is not None:
+        with quota_slot.container():
+            sidebar_quota(db)
 
     st.markdown(
         '<div class="ms-footer">'

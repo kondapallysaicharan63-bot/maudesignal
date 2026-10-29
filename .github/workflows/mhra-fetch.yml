@@ -1,0 +1,38 @@
+# HACKATHON-BUILT — fetch MHRA (UK) device safety alerts into the demo database.
+# Keyless GOV.UK search API; no Meta call, no credit spent. Runs when the search
+# terms change (data/demo/mhra_queries.json). UK context only, never FDA evidence.
+name: Fetch MHRA alerts (UK context)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [hackathon-day2]
+    paths: ["data/demo/mhra_queries.json"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mhra-fetch
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - name: Fetch MHRA device alerts (GOV.UK search API)
+        run: python scripts/fetch_mhra_alerts.py --count 10
+      - name: Commit the demo database
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/demo/maudesignal_demo.db
+          git diff --cached --quiet || git commit -m "chore(demo): store MHRA (UK) device alerts"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

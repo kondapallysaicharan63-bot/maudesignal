@@ -3,260 +3,339 @@
 [![CI](https://github.com/kondapallysaicharan63-bot/maudesignal/actions/workflows/ci.yml/badge.svg)](https://github.com/kondapallysaicharan63-bot/maudesignal/actions/workflows/ci.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-189%20passing-brightgreen.svg)]()
-[![Coverage](https://img.shields.io/badge/coverage-58%25-yellow.svg)]()
 
-**Open-source AI postmarket surveillance toolkit for FDA-cleared AI/ML medical devices.**
+**Every morning, MaudeSignal shows where reports suddenly increased, where they are more serious than usual and where there is a new kind of problem, for the device types you choose — your competitors' devices and reports about your device you didn't file. It only shows facts it can match to the FDA record. People make every decision.**
 
-> ⚠️ **MaudeSignal surfaces signals for human regulatory review. It is NOT an FDA-cleared device, NOT clinical decision support, and NOT a substitute for human regulatory judgment.**
+> **What this is:** a B2B tool for postmarket-surveillance (PMS) and
+> regulatory-affairs teams at medical-device makers, working on public openFDA
+> MAUDE adverse-event data.
+> **What it is not:** medical advice, clinical decision support, or an
+> FDA-cleared device. It never decides whether an event is reportable or
+> whether a CAPA is needed, and it does not define "similar devices": it works
+> on the device types you choose.
+> **People decide:** whether a CAPA is required is decided by the company's own
+> CAPA-need form; MaudeSignal prepares evidence only, and a named person accepts
+> it. Nothing is filed with FDA automatically.
+
+Validation facts (what is deterministic, what a model writes, what is tested,
+what a manufacturer would still do): [docs/VALIDATION_EVIDENCE.md](docs/VALIDATION_EVIDENCE.md).
 
 ---
 
 ## The problem
 
-The FDA has cleared **1,000+ AI/ML-enabled medical devices** (295 in 2025 alone). They are monitored through MAUDE — a 1990s reporting system with **no fields for AI-specific failures**: drift, covariate shift, automation bias, subgroup performance loss. A deployed imaging AI whose sensitivity silently drops from 85% → 72% over 18 months generates **zero** adverse event reports.
+- Device makers already know their own complaints: they file them. What is
+  hard to see is what happens to **other companies' devices of the same type**
+  and the reports about **their own device filed by someone else** — a user
+  facility such as a hospital, a voluntary reporter, a distributor. Those sit
+  among tens of thousands of public MAUDE reports. openFDA's counts by report
+  source for the demo device types are in
+  [docs/hackathon/SOURCE_COUNTS.md](docs/hackathon/SOURCE_COUNTS.md).
+- Reading MAUDE by hand is slow; a general-purpose chatbot is faster but can
+  make up numbers, quotes and regulation citations, which a regulated
+  workflow cannot accept.
 
-**QMSR (effective February 2, 2026)** mandates real-world performance monitoring for every device manufacturer — yet the open-source tooling for the AI-specific case did not exist.
+## What it does (Monday morning)
 
----
+1. **What changed this week.** A deterministic monitor (no model) compares
+   the last 7 days of openFDA reports with the 4 weeks before, for the device
+   types (FDA product codes) you choose, and flags three things: **reports
+   suddenly increased**, **more serious than usual**, or a **new kind of
+   problem**. On the demo data: *"LLZ: reports suddenly increased — 33 this
+   week vs a weekly mean of 8.75 (3.77x)"*
+   ([digests/2026-08-31.md](digests/2026-08-31.md)), with the reason it is
+   ranked first.
+2. **Who filed the reports.** Counts per device type by openFDA report source
+   (manufacturer, user facility, voluntary, distributor) and a filterable list
+   of the reports **not filed by a manufacturer**. On the demo data all 33 LLZ
+   reports this week, and all 121 stored, were filed by manufacturers; the
+   non-manufacturer reports on file are 3 MYN, 3 QIH and 1 POK (all voluntary).
+3. **Ask the copilot,** typed or by voice. Muse Spark calls 13 tools over
+   stored MAUDE reports, FDA recalls, 510(k) records and PubMed abstracts and
+   answers in a strict JSON schema: sentences, each tagged with the claims it
+   makes.
+4. **The gate checks every claim.** A made-up quote or count is withheld with
+   the reason (*"claimed 500, records show 121"*); a reply that does not parse
+   is withheld too. The model gets one repair turn with the gate's values.
+5. **CAPA-need evidence pack.** The copilot can prepare the evidence (the
+   supporting reports and a problem statement); a named person accepts or
+   rejects it on the Actions page. The model cannot.
+6. **Evidence pack (PDF).** *Signal Evaluation & CAPA-need Evidence*, laid out
+   like a controlled quality record: document control, signal evaluation,
+   evidence table, the ISO 13485:2016 §8.5.2 sections left blank for the CAPA
+   owner, an MDR worksheet mapped to FDA Form 3500A (stamped *not for
+   submission*) and the audit trail. Every printed number is re-verified by the
+   gate. **Muse Wonder 1.0** reviews the whole PDF before a person accepts it.
+7. **Vision.** Muse Spark reads FDA 510(k) summary PDFs (many are scanned)
+   twice, independently; a field is *verified* only if both reads agree and
+   openFDA / the PDF text layer agree, otherwise it is flagged for a person.
+   A photo of a device label → **SAM 3.1** finds the label → Muse Spark reads
+   it → the K-number is checked against FDA.
+8. **Audit trail.** Every answer, spoken question, live-call cost and decision
+   is appended to a SHA-256 hash-chained log; the dashboard re-verifies it.
 
-## What MaudeSignal does
+## How it's different
 
-```
-openFDA MAUDE API
-       │
-       ▼
-┌──────────────────┐    ┌───────────────────┐    ┌──────────────────────┐
-│  1. Ingest       │───▶│  2. Extract        │───▶│  3. Triage severity  │
-│  openFDA fetcher │    │  maude-narrative-  │    │  severity-triage     │
-│  + FDA catalog   │    │  extractor Skill   │    │  Skill               │
-└──────────────────┘    └───────────────────┘    └──────────────────────┘
-                                                           │
-                        ┌───────────────────┐             ▼
-                        │  5. Root cause    │    ┌──────────────────────┐
-                        │  root-cause-      │◀───│  4. Classify         │
-                        │  analyzer Skill   │    │  ai-failure-mode-    │
-                        └───────────────────┘    │  classifier Skill    │
-                                │                └──────────────────────┘
-                                ▼
-┌──────────────────┐    ┌───────────────────┐    ┌──────────────────────┐
-│  8. PSUR Report  │◀───│  7. Trend detect  │◀───│  6. Alerting         │
-│  psur-report-    │    │  Mann-Kendall +   │    │  4 metrics, 3 chan-  │
-│  drafter Skill   │    │  linear regression│    │  nels (console/      │
-│  → PDF export    │    └───────────────────┘    │  Slack/email)        │
-└──────────────────┘                             └──────────────────────┘
-         │
-         ▼
-  External sources
-  PubMed + ClinicalTrials.gov
-```
+Other tools summarize MAUDE with AI and add a review step — for example
+[DeviceWatch](https://devicewatch.app/data) (AI summaries of MAUDE records;
+public pricing from $499/month),
+[Basil Systems](https://www.businesswire.com/news/home/20251006297490/en/Basil-Systems-Launches-Safety-Signaling-Solution-to-Proactively-Detect-and-Prevent-Medical-Device-Risks)
+(AI safety signaling across regulatory and adverse-event records) and
+[Complizen](https://www.complizen.ai/platform) (AI answers drawing on FDA
+guidance, 510(k) history and MAUDE). MaudeSignal differs in three ways:
 
-| Step | What it produces |
+- **It withholds what it cannot match.** Every number is recomputed, every
+  quote matched word for word, every report id, 510(k), recall, PMID and CFR
+  section checked against stored FDA records — or the sentence is not shown.
+  Adversarial set: 112 cases, 0 false passes, 0 false blocks.
+- **It reads scanned 510(k) documents with a two-read accuracy check.**
+- **It is open source and self-hostable** (MIT), on public FDA data only.
+
+## Real-run numbers (2026-10-28, third recording)
+
+From [`demo/transcripts/`](demo/transcripts/), [`demo/vision/`](demo/vision/),
+[`demo/dossier/`](demo/dossier/) and the hand-check
+[`docs/hackathon/HAND_CHECK.md`](docs/hackathon/HAND_CHECK.md):
+
+| | |
 |---|---|
-| **Ingest** | Raw MAUDE reports + FDA AI/ML Device Catalog in SQLite |
-| **Extract** | Structured fields: AI flag, device type, failure description, citations |
-| **Severity triage** | Death / serious injury / malfunction / other — with justification |
-| **Classify** | 11-category AI failure taxonomy (drift, automation bias, data quality…) |
-| **Root cause** | Hypothesis + confidence for each failure-mode cluster |
-| **Alert** | Threshold-based alerts on new reports, AI rate, severity rate, new failure modes |
-| **Trend detect** | Mann-Kendall + linear regression; `trend-interpreter` Skill translates stats to regulatory language |
-| **External sources** | PubMed citations + ClinicalTrials.gov trials fetched and stored |
-| **PSUR draft** | 8-section periodic safety update report — Markdown + PDF, signal assessment, recommended actions |
+| Recording run | GitHub Actions run 40764365995 (fifth recording, 2026-10-28): 28 copilot answers (22 typed, 6 spoken) |
+| Gate, first pass | 63/65 sentences passed (96.9%); after one repair turn: 64/65 (one true sentence wrongly withheld — a year read as a count; fixed in the gate since) |
+| Replies that never parsed | 0 of 28; 0 answers stopped by the token cap |
+| Hand-check | **27 of 28 answers fully correct (96.4%)**; typed 21 of 22, spoken 6 of 6. Of 65 sentences: 64 correct, 1 incomplete (the wrongly withheld one); none wrong. Checked against the demo database by Claude; an independent check by Charan is pending. Earlier recordings: 24/24, 21/24, 19/21, 6/21 |
+| Cost per answer | $0.0454 (28 answers, $1.2717) |
+| 510(k) reading | **5 of 5 summaries read**: the two reads agree on 100% of fields for K031779, 90% for K190442, K210666 and K261677, and 80% for K043333; the 6 conflicting fields are flagged for a person, never guessed |
+| Label camera (SAM 3.1 + Muse Spark) | **7 of 7 photos read**: 4 devices read correctly (CareSens N, HoMedics thermometer ×2, Welch Allyn 802 LTR), thermometers matched to FDA product code FLL; 1 left for a person to pick; 1 returned nothing (rotated label); 1 misread (Welch module: wrong text, every field marked only partly legible, no product code); no lot/serial stored |
+| Evidence pack (PDF) | Muse Spark summary: 5 sentences shown, 0 withheld, in plain words (no "spike"); Muse Wonder review: 0 findings |
+| Report sources vs openFDA | 0 mismatches |
 
-### Citation hard-gate
+Spoken questions: Charan's four text-to-speech clips were transcribed word for
+word by Voice Transcribe and answered correctly (what changed, why ranked first,
+and the "50 injury reports" trap, which the copilot rejects: 33 reports, 0
+injuries). One clip asks "What came in overnight? Is anything worsening?" — the
+answer is correct, but the wording is not used in the video. The one incomplete
+answer (06-trap) lost a true sentence because the gate read "August 31, 2026,
+all malfunction" as a count of 2026; the gate now treats a year after a month
+as a date (adversarial cases dt03–dt05).
 
-Every string field in every Skill output is verified against **primary sources only** (openFDA, curated CFR Parts list, FDA guidance index) before reaching any user-facing surface. Hallucinated K-numbers, CFR citations, or guidance titles are **blocked** — not flagged, not warned — blocked.
+## Tomorrow
 
----
+- **Buyer:** PMS / RA teams at small and mid-size device makers.
+- **Open source, self-hosted:** free.
+- **Hosted plan:** priced in the range practitioners we spoke to quoted,
+  about $200–300/month, against existing tools from $499/month.
+- **Pilot metric:** time to prepare the signal-evidence section for the device types you choose
+  in a PMS report, with and without MaudeSignal.
 
-## Status
+## How Meta AI is used
 
-**Alpha — all 5 pipeline phases complete.** Pilot v3 results (2026-05-02):
-
-| Metric | Result |
-|---|---|
-| Extractions | 43 across 8 product codes |
-| AI-related signal rate | 32.6% overall (100% for QIH radiology CAD) |
-| Average confidence | 0.890 |
-| LLM cost | **$0.00** (Gemini + Groq free tier) |
-| Test suite | **189 passing**, 58% coverage |
-
----
-
-## Tech stack
-
-| Layer | Choice |
-|---|---|
-| Language | Python 3.11+, `mypy --strict`, `ruff` + `black` |
-| LLM | Provider-agnostic — Groq (default, free), Anthropic, OpenAI, Gemini (free), or `pool` (multi-key rotation on 429) |
-| Validation | Pydantic 2 + JSON Schema |
-| Storage | SQLite via SQLAlchemy 2 |
-| Drift | Evidently + SciPy (KS, PSI) |
-| Statistics | Mann-Kendall trend test + linear regression (SciPy) |
-| External APIs | NCBI E-utilities (PubMed), ClinicalTrials.gov v2 REST |
-| Dashboard | Streamlit |
-| CLI | Typer (`maudesignal` entry point) |
-| Reports | Jinja2 → WeasyPrint (HTML → PDF) |
-| CI | GitHub Actions (Python 3.11 + 3.12, ruff, black, mypy, pytest) |
-
-### Skills (versioned LLM behavior contracts)
-
-LLM behavior lives entirely in `skills/<name>/SKILL.md` — never inline strings. Each Skill ships with a JSON Schema, good + bad example pairs, and a version changelog.
-
-| Skill | Version | Purpose |
+| Step | Meta model / API | Why |
 |---|---|---|
-| [`regulatory-citation-verifier`](skills/regulatory-citation-verifier/SKILL.md) | v1.0.0 | Hard gate — blocks hallucinated citations |
-| [`maude-narrative-extractor`](skills/maude-narrative-extractor/SKILL.md) | v1.0.0 | Structured field extraction from MAUDE narratives |
-| [`severity-triage`](skills/severity-triage/SKILL.md) | v1.0.0 | Death / serious injury / malfunction / other |
-| [`ai-failure-mode-classifier`](skills/ai-failure-mode-classifier/SKILL.md) | v1.0.0 | 11-category AI failure taxonomy |
-| [`root-cause-analyzer`](skills/root-cause-analyzer/SKILL.md) | v1.0.0 | Root cause hypothesis per failure-mode cluster |
-| [`drift-analysis-interpreter`](skills/drift-analysis-interpreter/SKILL.md) | v1.0.0 | KS/PSI statistics → regulatory language |
-| [`trend-interpreter`](skills/trend-interpreter/SKILL.md) | v1.0.0 | Trend stats → regulatory narrative + signal level |
-| [`psur-report-drafter`](skills/psur-report-drafter/SKILL.md) | v1.0.0 | 8-section PSUR draft with signal assessment |
+| Answering a question | **Muse Spark 1.3** (`muse-spark-1.3`) via the **Meta Model API** (OpenAI-compatible, `https://api.meta.ai/v1`) | Tool calling over 10 deterministic tools; **strict `json_schema` structured output** (sentences + typed claims, [`skills/safety-copilot`](skills/safety-copilot/SKILL.md)); a **repair turn** after a gate block, fed the gate's reasons and recomputed values |
+| Reading scanned FDA documents | **Muse Spark 1.3 image understanding** ([`skills/fda-document-reader`](skills/fda-document-reader/SKILL.md)) | 510(k) summary pages → structured fields with per-field legibility; two independent reads + openFDA + text layer decide VERIFIED / CONFLICT / UNVERIFIABLE |
+| Device-label camera | **SAM 3.1** (`sam-3.1`) + **Muse Spark 1.3 vision** | SAM locates the label in the photo, Spark reads the crop, the K-number / GTIN is checked against FDA |
+| Dossier narrative | **Muse Spark 1.3** ([`skills/dossier-narrative`](skills/dossier-narrative/SKILL.md)) | One-page summary drafted as claims and passed through the gate |
+| Independent reviewer | **Muse Wonder 1.0** (`muse-wonder-1.0`, PDF input, 1M context) | Reads the full dossier PDF + cited reports and lists unsupported or contradicted statements before a person accepts the evidence; never edits the record |
+| Cover illustration (optional, off by default) | **Muse Image 1.0** | Non-evidentiary cover art, captioned "AI-generated illustration — not evidence"; never inside evidence sections |
+| Spoken questions | **Meta Voice Transcribe** (`muse-voice-transcribe-1.0`) | Ask by voice; only the transcript text reaches Muse Spark, and it goes through the same copilot and gate |
+| Recording the public demo | All of the above in GitHub Actions ([`copilot-record.yml`](.github/workflows/copilot-record.yml)), key from repository secrets | The public, keyless app replays real runs instead of mocked ones |
 
----
+**Standard tier only.** Never the Contributor tier, which trains on your data.
+The key is read from `META_MODEL_API_KEY`, never committed or logged.
 
-## Quickstart
+## Architecture
 
-### Requirements
+```mermaid
+flowchart LR
+    subgraph data["Data (public openFDA, no PHI)"]
+        FDA["openFDA MAUDE API"] --> ING["Ingestion<br/>(pre-existing)"]
+        ING --> DB[("SQLite<br/>reports + 510(k) catalog")]
+    end
 
-- Python 3.11 or 3.12
-- At least one LLM API key (Groq and Gemini both have free tiers)
-- Optional: system GTK/Cairo libraries for PDF export via WeasyPrint
+    subgraph changes["What changed (no LLM)"]
+        DB --> MON["monitor/<br/>reports suddenly increased ·<br/>more serious than usual ·<br/>new kind of problem"]
+        MON --> DIG["Digest<br/>digests/YYYY-MM-DD.md"]
+    end
 
-### Install
+    subgraph copilot["Copilot (Meta Model API)"]
+        Q["Analyst question"] --> SPARK["Muse Spark 1.3<br/>tool calling"]
+        SPARK <--> TOOLS["13 deterministic tools<br/>signals, summary, search, report,<br/>report sources, recalls, 510(k),<br/>literature, MDR clock, compare,<br/>my device types, MHRA (UK) alerts,<br/>CAPA-need evidence pack"]
+        TOOLS --> DB
+        SPARK --> ANS["Structured answer<br/>sentences + claims"]
+        ANS --> GATE{"Claim-level gate<br/>recompute numbers ·<br/>verbatim quotes · ids · CFR"}
+        GATE -- "blocked: reasons +<br/>recomputed values" --> REPAIR["One repair turn"]
+        REPAIR --> SPARK
+        GATE -- "verified sentences only" --> UI["Streamlit dashboard"]
+    end
+
+    DIG --> UI
+    UI --> ACT["A named person accepts / rejects<br/>CAPA-need evidence pack"]
+    ACT --> AUDIT[("Hash-chained<br/>audit trail")]
+    GATE --> AUDIT
+```
+
+Source: [docs/architecture.mmd](docs/architecture.mmd) · rendered:
+[docs/architecture.svg](docs/architecture.svg)
+
+## The citation gate
+
+[`src/maudesignal/gate/`](src/maudesignal/gate/) is deterministic and makes no
+model calls. For every sentence the copilot wants to show:
+
+- **counts** are recomputed from stored records and must match exactly;
+  **shares** must be within 0.5 percentage points;
+- **quotes** must appear verbatim in the narrative of the report they are
+  attributed to (a real quote pinned to the wrong report is blocked);
+- **510(k) numbers** must exist in the catalog or stored openFDA 510(k)
+  records and match the stated product code / device name; **MAUDE report
+  ids**, **FDA recall numbers** and **PubMed PMIDs** must exist in stored data
+  (and match the stated product code / year); recall counts are recomputed;
+- **21 CFR sections** must be on a curated allowlist; QS-reg sections
+  superseded by QMSR on 2026-02-02 are blocked with the reason;
+- **report-source counts** (who filed the reports) are recomputed from the
+  stored openFDA `report_source_code`;
+- a sentence that mentions a number, K-number, report id or CFR section
+  **without** a matching structured claim is blocked as ungrounded.
+
+**Adversarial test set:** [112 cases](tests/fixtures/gate/adversarial.jsonl)
+(70 must block, 42 must pass): fabricated and drifted quotes, real quotes on
+the wrong report, stale / inflated counts, wrong shares, fake and mismatched
+K-numbers, hallucinated and superseded CFR sections, fake recall numbers and
+PMIDs, real ones on the wrong product or year, wrong report-source counts,
+untagged mentions (including "N hospital reports"), dates that look like counts,
+and counts written in words or scientific notation ("thirty-three reports", "1e3 reports").
+Result: **0 false passes, 0 false blocks**
+([`tests/unit/test_gate.py`](tests/unit/test_gate.py), 129 tests).
+
+Real verdicts on the demo database (137 MAUDE reports):
+
+| Sentence / claim | Verdict |
+|---|---|
+| Quote taken from report 25675105, attributed to 25675105 | ✅ pass |
+| The same quote attributed to report 25675201 | ⛔ `quote is real but belongs to 25675105, not 25675201` |
+| "the AI failed to flag the hemorrhage" attributed to 25675105 | ⛔ `quote not found verbatim in 25675105` |
+| "LLZ had 500 reports" | ⛔ `claimed 500, records show 121` |
+| "Open a CAPA under 21 CFR 820.100" | ⛔ `superseded by QMSR (ISO 13485 clauses 8.5.2/8.5.3) on 2026-02-02` |
+| "About 40% of LLZ reports were malfunctions" (no claim attached) | ⛔ `ungrounded: 40% has no share claim` |
+
+## Quickstart (about 2 minutes, no API key)
 
 ```bash
 git clone https://github.com/kondapallysaicharan63-bot/maudesignal.git
 cd maudesignal
-python3.12 -m pip install -e ".[dev]"
-cp .env.example .env          # add your API key(s)
+python3.12 -m venv .venv && source .venv/bin/activate
+pip install -e .
+
+# What-changed digest from the committed demo database (no network, no LLM)
+maudesignal monitor --no-fetch
+
+# Dashboard on the demo database: What changed, Copilot, Actions & Audit pages
+streamlit run streamlit_app.py
 ```
 
-### `.env` minimum
+The demo database ([`data/demo/maudesignal_demo.db`](data/demo/)) holds 137
+real MAUDE reports fetched without a key from openFDA (LLZ complete for
+Jul–Aug 2026; all QIH, MYN and POK reports). The exact queries are in
+[`SEED_MANIFEST.json`](data/demo/SEED_MANIFEST.json). With no
+`MAUDESIGNAL_DB_PATH` set and no local `data/maudesignal.db`, the dashboard
+opens this database automatically. Without a key, the Copilot page replays
+recorded Muse Spark runs (from [`demo/transcripts/`](demo/), once recorded)
+and lets you try to fool the gate live. Set `META_MODEL_API_KEY` to ask live
+questions.
 
-```env
-LLM_PROVIDER=groq
-GROQ_API_KEY=gsk_your_key_here
-```
+**Live demo:** <https://maudesignal-4vniqswm9ptaxqtf2iawox.streamlit.app/>
 
-For the multi-key pool (extends free-tier capacity):
+**Deploy (Streamlit Community Cloud):** entry point `streamlit_app.py`,
+dependencies from `requirements.txt`, no secrets required.
 
-```env
-LLM_PROVIDER=pool
-PROVIDER_FALLBACK_ORDER=gemini,gemini2,groq,groq2
-GEMINI_API_KEY=...
-GEMINI_API_KEY_2=...
-GROQ_API_KEY=...
-GROQ_API_KEY_2=...
-```
+## Built during the hackathon vs pre-existing
 
-### Run the full pipeline
+Built during the Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026):
+the copilot, the citation gate, the daily what-changed monitor and report-source
+filter, the five new dashboard pages (What changed, Copilot, Actions & Audit,
+Dossier, Vision), voice questions, the evidence-pack PDF, the CAPA-need
+evidence and audit tables, the live-call spend caps and the keyless demo deploy. The
+openFDA pipeline below predates the event. The file-by-file list is in
+[HACKATHON.md](HACKATHON.md).
+
+## Tests
+
+**701 unit tests pass, 77% line + branch coverage** (2026-10-28); all 21 test types
+are reported in [docs/hackathon/TESTING.md](docs/hackathon/TESTING.md)
+(`pytest tests/unit`; CI also runs ruff, black and `mypy --strict` on Python
+3.11 and 3.12).
 
 ```bash
-# 1. Ingest MAUDE reports and FDA AI/ML catalog
-python3.12 -m maudesignal.cli ingest --product-code QIH --limit 20
-python3.12 -m maudesignal.cli catalog fetch
-
-# 2. Extract + classify + triage
-python3.12 -m maudesignal.cli extract --product-code QIH --limit 10
-python3.12 -m maudesignal.cli classify --product-code QIH
-python3.12 -m maudesignal.cli triage --product-code QIH
-
-# 3. Root cause analysis + alerting
-python3.12 -m maudesignal.cli root-cause --product-code QIH
-python3.12 -m maudesignal.cli alert check --product-code QIH
-
-# 4. Trend detection + external sources
-python3.12 -m maudesignal.cli forecast trends --product-code QIH
-python3.12 -m maudesignal.cli sources fetch --query "AI radiology device failure" --product-code QIH
-
-# 5. Generate PSUR draft + PDF
-python3.12 -m maudesignal.cli psur generate QIH --device-name "AI Radiology CAD" --output reports/QIH_psur.pdf
-
-# Check pipeline status
-python3.12 -m maudesignal.cli status
+pip install -e ".[dev]"
+pytest tests/unit
+ruff check . && black --check . && mypy src/maudesignal
 ```
 
 ---
 
-## Dashboard
+## Pipeline (pre-existing)
+
+The base `maudesignal` pipeline: ingest MAUDE reports from openFDA, extract
+structured fields with an LLM, triage severity, classify into an 11-category
+AI failure taxonomy, cluster root causes, detect trends (Mann-Kendall + linear
+regression) and drift (KS / PSI), pull PubMed and ClinicalTrials.gov sources,
+and draft a PSUR-style report (Markdown + optional PDF). LLM behaviour lives in
+versioned Skills (`skills/<name>/SKILL.md` + JSON Schema + good/bad examples),
+never in inline strings. The extraction layer is provider-agnostic: Groq
+(default), Anthropic, OpenAI, Gemini, or a multi-key `pool` that rotates on
+rate limits.
+
+| Skill | Version | Purpose |
+|---|---|---|
+| [`safety-copilot`](skills/safety-copilot/SKILL.md) | v1.0.0 | **Hackathon.** Copilot behaviour contract: tools, structured claims, advisory-only rules |
+| [`regulatory-citation-verifier`](skills/regulatory-citation-verifier/SKILL.md) | v1.0.0 | Citation rules; enforced in code by `gate/` (hackathon) |
+| [`maude-narrative-extractor`](skills/maude-narrative-extractor/SKILL.md) | v1.0.0 | Structured fields from MAUDE narratives |
+| [`severity-triage`](skills/severity-triage/SKILL.md) | v1.0.0 | Death / serious injury / malfunction / other |
+| [`ai-failure-mode-classifier`](skills/ai-failure-mode-classifier/SKILL.md) | v1.0.0 | 11-category AI failure taxonomy |
+| [`root-cause-analyzer`](skills/root-cause-analyzer/SKILL.md) | v1.0.0 | Root-cause hypothesis per failure-mode cluster |
+| [`drift-analysis-interpreter`](skills/drift-analysis-interpreter/SKILL.md) | v1.0.0 | KS/PSI statistics → regulatory language |
+| [`trend-interpreter`](skills/trend-interpreter/SKILL.md) | v1.0.0 | Trend statistics → regulatory narrative |
+| [`psur-report-drafter`](skills/psur-report-drafter/SKILL.md) | v1.1.0 | PSUR draft with signal assessment |
+
+### Running the pipeline (needs an LLM key for the extraction steps)
 
 ```bash
-python3.12 -m streamlit run src/maudesignal/dashboard/app.py
+cp .env.example .env            # e.g. LLM_PROVIDER=groq and GROQ_API_KEY=...
+
+maudesignal ingest --product-code QIH --limit 20      # openFDA → SQLite
+maudesignal catalog update                            # FDA AI/ML device catalog
+maudesignal extract --product-code QIH --limit 10     # extract → triage → classify
+maudesignal analyze root-cause --product-code QIH
+maudesignal alert check --product-code QIH
+maudesignal forecast trends QIH
+maudesignal drift --product-code QIH
+maudesignal sources fetch pubmed --query "AI radiology device failure" --product-code QIH
+maudesignal psur generate QIH --device-name "AI Radiology CAD" --output reports/QIH_psur.pdf
+maudesignal status
 ```
 
-Seven views:
-- **Records** — filterable extraction table with FDA report detail panel
-- **Severity** — severity distribution and breakdown
-- **Failure Modes** — AI failure taxonomy across events
-- **Drift** — confidence-score trend over time (KS / PSI)
-- **Trends** — Mann-Kendall signal detection, regulatory narratives
-- **Sources** — PubMed citations + ClinicalTrials.gov trials
-- **PSUR Reports** — browse and view stored PSUR drafts
+`maudesignal --help` lists every command. PDF export needs the system
+libraries WeasyPrint uses (Pango/Cairo); without them the PDF step is skipped
+and Markdown is still produced.
 
----
-
-## CLI reference
-
-```
-maudesignal ingest          Fetch MAUDE reports from openFDA
-maudesignal catalog fetch   Fetch FDA AI/ML Device Catalog
-maudesignal extract         Run maude-narrative-extractor Skill
-maudesignal classify        Run ai-failure-mode-classifier Skill
-maudesignal triage          Run severity-triage Skill
-maudesignal root-cause      Run root-cause-analyzer Skill
-maudesignal alert add       Add an alert rule
-maudesignal alert check     Evaluate alert rules and notify
-maudesignal alert list      List configured alert rules
-maudesignal forecast trends Run Mann-Kendall trend detection
-maudesignal sources fetch   Fetch PubMed + ClinicalTrials sources
-maudesignal sources list    List stored external sources
-maudesignal psur generate   Generate PSUR draft (+ optional PDF)
-maudesignal psur list       List stored PSUR drafts
-maudesignal report          Generate legacy PSUR-style report (Markdown/PDF)
-maudesignal drift           Run drift detection (KS + PSI)
-maudesignal status          Show pipeline status summary
-```
-
----
-
-## Development
-
-```bash
-# Run tests
-python3.12 -m pytest tests/ -v
-
-# Type check
-python3.12 -m mypy src/maudesignal
-
-# Lint + format
-python3.12 -m ruff check . && python3.12 -m black --check .
-```
-
----
-
-## Documentation
+### Documentation
 
 | | |
 |---|---|
-| Index of everything | [docs/00_master_plan.md](docs/00_master_plan.md) |
+| Hackathon build manifest | [HACKATHON.md](HACKATHON.md) |
 | Vision & non-goals | [docs/01_vision_mission.md](docs/01_vision_mission.md) |
-| Requirements (FRs / NFRs) | [docs/03_requirements_spec.md](docs/03_requirements_spec.md) |
-| System design | [docs/05_architecture.md](docs/05_architecture.md) |
-| Roadmap | [docs/07_roadmap.md](docs/07_roadmap.md) |
+| Requirements | [docs/03_requirements_spec.md](docs/03_requirements_spec.md) |
+| System design (pre-hackathon) | [docs/05_architecture.md](docs/05_architecture.md) |
 | Pilot findings | [v1](docs/00_pilot_findings.md) · [v2](docs/00_pilot_findings_v2.md) · [v3](docs/00_pilot_findings_v3.md) |
 | Repo conventions for AI assistants | [CLAUDE.md](CLAUDE.md) |
-
----
+| Disclaimer | [DISCLAIMER.md](DISCLAIMER.md) |
 
 ## License
 
-[MIT](LICENSE) — free for commercial and personal use. See license for warranty disclaimer, especially the regulatory-use notice.
-
----
+[MIT](LICENSE). openFDA data is public domain; see [DISCLAIMER.md](DISCLAIMER.md)
+for the regulatory-use notice.
 
 ## Author
 
-**Sai Charan Kondapally** — M.S. Biomedical Engineering, San Jose State University  
-[GitHub](https://github.com/kondapallysaicharan63-bot) · open to regulatory affairs / post-market AI quality roles
+**Saicharan Kondapally**, M.S. Biomedical Engineering, San Jose State
+University · [GitHub](https://github.com/kondapallysaicharan63-bot)

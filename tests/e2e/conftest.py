@@ -17,6 +17,7 @@ from playwright.sync_api import Page
 
 BASE_URL = "http://localhost:8501"
 SIDEBAR_SELECTOR = "section[data-testid='stSidebar']"
+TOPBAR_SELECTOR = ".st-key-ms_topbar"
 LOAD_TIMEOUT = 20_000
 NAV_SETTLE = 4_500
 
@@ -42,19 +43,23 @@ def _require_server() -> None:
 
 @pytest.fixture()
 def ms_page(page: Page, _require_server: None) -> Page:  # type: ignore[misc]
-    """Navigate to the dashboard root and wait for Streamlit to fully hydrate."""
+    """Open the app with every tool shown and wait for Streamlit to fully hydrate."""
     page.set_default_timeout(LOAD_TIMEOUT)
-    page.goto(BASE_URL, wait_until="networkidle", timeout=LOAD_TIMEOUT)
+    # ?tools=all shows the sidebar's "More tools", hidden in the public demo.
+    page.goto(f"{BASE_URL}/?tools=all", wait_until="networkidle", timeout=LOAD_TIMEOUT)
     page.wait_for_selector(SIDEBAR_SELECTOR, timeout=LOAD_TIMEOUT)
     page.wait_for_timeout(NAV_SETTLE)
     return page
 
 
 def navigate(page: Page, nav_text: str) -> None:
-    """Click a sidebar nav button and wait for the page to settle."""
-    sidebar = page.locator(SIDEBAR_SELECTOR)
-    btn = sidebar.get_by_role("button", name=nav_text, exact=False).first
-    btn.click()
+    """Click a top-bar page (or a sidebar "More tools" button) and wait for it to settle."""
+    top = page.locator(TOPBAR_SELECTOR).get_by_role("radio", name=nav_text, exact=False)
+    if top.count():
+        top.first.click()
+    else:
+        sidebar = page.locator(SIDEBAR_SELECTOR)
+        sidebar.get_by_role("button", name=nav_text, exact=False).first.click()
     page.wait_for_timeout(NAV_SETTLE)
     try:
         page.wait_for_load_state("networkidle", timeout=8_000)

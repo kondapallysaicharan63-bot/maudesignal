@@ -13,6 +13,33 @@ import structlog
 from structlog.types import Processor
 
 
+class _CurrentStderrLogger:
+    """structlog logger that resolves ``sys.stderr`` at write time.
+
+    ``PrintLoggerFactory(file=sys.stderr)`` captures the stream object once at
+    configure time. When that stream is later replaced or closed (pytest output
+    capture, Streamlit reruns, redirected CLI output), every subsequent log call
+    raises ``ValueError: I/O operation on closed file``. Looking the stream up
+    on each call avoids holding a stale reference.
+    """
+
+    def msg(self, message: str) -> None:
+        """Write one rendered log line to the current stderr."""
+        stream = sys.stderr
+        try:
+            stream.write(message + "\n")
+            stream.flush()
+        except ValueError:
+            # Stream closed underneath us; logging must never crash the caller.
+            pass
+
+    log = debug = info = warning = warn = error = critical = exception = fatal = msg
+
+
+def _current_stderr_logger_factory(*_args: object) -> _CurrentStderrLogger:
+    return _CurrentStderrLogger()
+
+
 def configure_logging(level: str = "INFO") -> None:
     """Configure structlog to produce JSON logs to stderr.
 
@@ -39,7 +66,7 @@ def configure_logging(level: str = "INFO") -> None:
         ],
         wrapper_class=structlog.make_filtering_bound_logger(level_int),
         context_class=dict,
-        logger_factory=structlog.PrintLoggerFactory(file=sys.stderr),
+        logger_factory=_current_stderr_logger_factory,
         cache_logger_on_first_use=True,
     )
 

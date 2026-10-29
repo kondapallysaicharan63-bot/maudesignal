@@ -5,12 +5,16 @@ from __future__ import annotations
 import pytest
 from playwright.sync_api import Page, expect
 
+from tests.e2e.conftest import navigate
+
 pytestmark = pytest.mark.e2e
 
 
 @pytest.fixture()
 def dash(ms_page: Page) -> Page:
-    """Dashboard is the default landing page — no navigation required."""
+    """The classic Dashboard sits under "More tools" in the sidebar (the hackathon build
+    lands on What changed)."""
+    navigate(ms_page, "Dashboard")
     return ms_page
 
 
@@ -41,32 +45,25 @@ class TestDashboardKPIs:
         # Actual rendered label is "MAUDE Records"
         assert "MAUDE Records" in dash.content()
 
-    def test_ai_signals_label(self, dash: Page) -> None:
-        # Actual rendered label is "AI Signals Detected"
-        assert "AI Signals Detected" in dash.content()
-
-    def test_avg_confidence_label(self, dash: Page) -> None:
-        # Actual rendered label is "Avg Confidence"
-        assert "Avg Confidence" in dash.content()
-
-    def test_active_alert_rules_label(self, dash: Page) -> None:
-        assert "Active Alert Rules" in dash.content()
-
-    def test_llm_cost_label(self, dash: Page) -> None:
-        # Actual rendered label is "LLM Cost to Date"
-        assert "LLM Cost to Date" in dash.content()
+    def test_data_tiles_only_with_extractions(self, dash: Page) -> None:
+        """AI signals / confidence / alert rules / extraction cost need extraction rows;
+        without them (the keyless demo database) they are not shown as zeros."""
+        content = dash.content()
+        has_data = "No extraction results" not in content
+        for label in (
+            "AI Signals Detected",
+            "Avg Confidence",
+            "Active Alert Rules",
+            "Extraction LLM cost",
+        ):
+            assert (label in content) == has_data, label
+        assert "LLM Cost to Date" not in content
 
     def test_maude_records_is_numeric(self, dash: Page) -> None:
         content = dash.content()
         assert any(
             str(n) in content for n in range(0, 10_000)
         ), "MAUDE Records KPI does not contain any numeric value"
-
-    def test_avg_confidence_is_decimal(self, dash: Page) -> None:
-        assert "0." in dash.content(), "Avg Confidence should be a decimal between 0 and 1"
-
-    def test_llm_cost_shows_dollar(self, dash: Page) -> None:
-        assert "$" in dash.content(), "LLM Cost KPI should display a dollar amount"
 
 
 class TestDashboardCharts:
@@ -104,17 +101,11 @@ class TestDashboardRecentSignals:
 
 
 class TestDashboardSidebarFooter:
-    def test_sidebar_footer_record_count(self, dash: Page) -> None:
+    def test_sidebar_has_no_status_clutter(self, dash: Page) -> None:
+        """The old extraction status lines and the keyless quota note were removed."""
         sidebar = dash.locator("section[data-testid='stSidebar']")
-        expect(sidebar.get_by_text("MAUDE records", exact=False)).to_be_visible()
-
-    def test_sidebar_footer_alert_rules(self, dash: Page) -> None:
-        sidebar = dash.locator("section[data-testid='stSidebar']")
-        expect(sidebar.get_by_text("active alert rules", exact=False)).to_be_visible()
-
-    def test_sidebar_footer_llm_spend(self, dash: Page) -> None:
-        sidebar = dash.locator("section[data-testid='stSidebar']")
-        expect(sidebar.get_by_text("LLM spend", exact=False)).to_be_visible()
+        for text in ("active alert rules", "LLM spend", "Last extraction", "Live Meta calls"):
+            expect(sidebar.get_by_text(text, exact=False)).to_have_count(0)
 
 
 class TestDashboardNavigation:

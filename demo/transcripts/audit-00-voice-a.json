@@ -1,0 +1,27 @@
+{
+  "run_label": "00-voice-a",
+  "chain_ok_at_export": true,
+  "first_bad_seq_at_export": null,
+  "entries": [
+    {
+      "seq": 1,
+      "ts": "2026-10-28T20:43:46.346646",
+      "actor": "voice:muse-voice-transcribe-1.0",
+      "action": "voice.transcribed",
+      "entity_id": "V-be121fed79dab7c0",
+      "payload_json": "{\"audio_seconds\": 14.16, \"audio_sha256\": \"be121fed79dab7c03339a0b79c017f28a72d300b18005d5c5d97378d606069fb\", \"estimated_cost_usd\": 0.0007, \"language\": \"English\", \"model\": \"muse-voice-transcribe-1.0\", \"question_entity_id\": \"Q-fa09ca1a1c3d3666\", \"transcript_text\": \"Good evening. My name is Alistair, and it is a pleasure to be at your service. Whether you need a story told, a lesson lesson explained, or a message delivered with a touch of elegance, I shall do so with clarity and care.\"}",
+      "prev_hash": "GENESIS",
+      "entry_hash": "7c3f5373f14db3e8fcab0bf7fca5fa39043152484e7b152cddfc22350bbe8bae"
+    },
+    {
+      "seq": 2,
+      "ts": "2026-10-28T20:43:55.817171",
+      "actor": "copilot:muse-spark",
+      "action": "copilot.answer",
+      "entity_id": "Q-fa09ca1a1c3d3666",
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 2}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 2}, \"input_tokens\": 7558, \"model\": \"muse-spark-1.3\", \"output_tokens\": 2010, \"question\": \"Good evening. My name is Alistair, and it is a pleasure to be at your service. Whether you need a story told, a lesson lesson explained, or a message delivered with a touch of elegance, I shall do so with clarity and care.\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.3.1\", \"structured_output\": true, \"tools\": []}",
+      "prev_hash": "7c3f5373f14db3e8fcab0bf7fca5fa39043152484e7b152cddfc22350bbe8bae",
+      "entry_hash": "a18f0a6fa6518f0e619545213bb10ba2525392e814dbed5bc070d9ab71f78066"
+    }
+  ]
+}
