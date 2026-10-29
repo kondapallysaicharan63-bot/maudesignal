@@ -75,8 +75,9 @@ published estimates disagree by almost three times.
 - MAUDE has no field for an AI-specific failure such as drift; MaudeSignal adds an
   AI-failure taxonomy (peer-reviewed and industry sources say the current system is
   insufficient for AI/ML devices).
-- For one AI product code (LLZ), 19,970 reports, 99.3% filed by a manufacturer
-  [`docs/hackathon/SOURCE_COUNTS.md`, our run].
+- For one AI product code (LLZ), 19,970 reports on openFDA, 99.3% filed by a manufacturer
+  [`docs/hackathon/SOURCE_COUNTS.md`, our run]. The demo's stored sample is smaller (121 LLZ
+  reports); figures in recorded answers name that scope.
 - Who uses it: regulatory and quality (postmarket / complaint-handling) leads at makers
   of FDA-cleared AI devices, many of them small teams. MDR, CAPA and complaint-handling
   procedures are long-standing top FDA inspection findings; QMSR (in force 2 Feb 2026)

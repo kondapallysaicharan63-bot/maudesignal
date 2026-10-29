@@ -54,7 +54,8 @@ what a manufacturer would still do): [docs/VALIDATION_EVIDENCE.md](docs/VALIDATI
 3. **Who filed the reports.** Counts per device type by openFDA report source
    (manufacturer, user facility, voluntary, distributor) and a filterable list
    of the reports **not filed by a manufacturer**. On the demo data all 33 LLZ
-   reports this week, and all 121 stored, were filed by manufacturers; the
+   reports this week, and all 121 LLZ reports in the stored demo sample, were filed by
+   manufacturers (openFDA as a whole: 19,970 LLZ reports, 99.3% manufacturer-filed); the
    non-manufacturer reports on file are 3 MYN, 3 QIH and 1 POK (all voluntary).
 4. **Ask the copilot,** typed or by voice. Muse Spark calls 13 tools over
    stored MAUDE reports, FDA recalls, 510(k) records and PubMed abstracts and

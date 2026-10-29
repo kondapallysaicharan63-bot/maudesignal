@@ -179,7 +179,7 @@ def beats(live_url: str, repo_url: str) -> list[Beat]:
             '<div class="card"><div class="kicker">The problem</div>'
             '<div class="fig">2,000,000+</div><h2>device reports reach FDA every year. '
             "FDA's list of AI-enabled devices has 1,614 entries.</h2><p>MAUDE has no field "
-            "for an AI failure. For one AI product code alone (LLZ) there are 19,970 reports, "
+            "for an AI failure. For one AI product code alone (LLZ) openFDA holds 19,970 reports, "
             '99.3% filed by the manufacturers themselves.</p><div class="rule"></div><p '
             'class="src">Sources: FDA / openFDA; FDA AI-Enabled Medical Device List, read 29 '
             "Oct 2026 (docs/hackathon/AI_SWEEP.md); openFDA report-source counts, 28 Oct 2026 "
