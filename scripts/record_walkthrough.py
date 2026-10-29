@@ -172,7 +172,7 @@ def beats(live_url: str, repo_url: str) -> list[Beat]:
             'data.</p><div class="rule"></div><p class="src">Triage aid · not medical advice · '
             "a named person makes every decision · nothing is filed with FDA</p></div>"
         )
-        d.pause(7)
+        d.pause(6)
 
     def stat(d: Driver) -> None:
         d.card(
@@ -194,7 +194,6 @@ def beats(live_url: str, repo_url: str) -> list[Beat]:
         d.click(p.get_by_text("Across FDA's AI device list", exact=False), 2)
         d.glide(p.locator("[data-testid='stExpander'] [data-testid='stDataFrame']").first, 3)
         d.glide(p.locator(".ms-sig-head"), 1.5)
-        d.glide(p.locator(".ms-stats"), 1.2)
         cards = p.locator(".st-key-ms_siglist label[data-testid='stRadioOption']")
         d.click(cards.filter(has_text="MYN"), 2)
         d.click(p.get_by_role("radio", name="Not filed by a manufacturer"), 3)
@@ -204,7 +203,7 @@ def beats(live_url: str, repo_url: str) -> list[Beat]:
         d.top_nav("Copilot")
         items = p.locator(".st-key-ms_qlist label[data-testid='stRadioOption']")
         d.click(items.filter(has_text=re.compile(r"last week\. Confirm")), 3.5)
-        d.glide(p.get_by_text("Heard:"), 1.5)
+        d.glide(p.get_by_text("Heard:"), 1)
         d.glide(p.get_by_text("That claim is not correct", exact=False), 3)
 
     def repair(d: Driver) -> None:
@@ -234,10 +233,10 @@ def beats(live_url: str, repo_url: str) -> list[Beat]:
         p = d.page
         d.top_nav("Signals")
         d.tab("Evidence pack")
-        d.pause(2)
-        d.glide(p.get_by_text("Independent reviewer", exact=False), 2)
+        d.pause(1)
+        d.glide(p.get_by_text("Independent reviewer", exact=False), 1)
         d.top_nav("Audit")
-        d.glide(p.get_by_text("Hash chain intact", exact=False), 3)
+        d.glide(p.get_by_text("Hash chain intact", exact=False), 2)
 
     def close(d: Driver) -> None:
         d.card(
@@ -248,7 +247,7 @@ def beats(live_url: str, repo_url: str) -> list[Beat]:
             f'<p class="src">Live demo: {html.escape(live_url)}<br>'
             f"Code: {html.escape(repo_url)}</p></div>"
         )
-        d.pause(9)
+        d.pause(7)
 
     return [
         Beat(

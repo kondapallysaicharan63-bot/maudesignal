@@ -108,7 +108,7 @@ MaudeSignal:
   evidence-pack PDF as an independent second reader.
 - Most Viral / Community Vote: need Charan's post and gallery link (draft below).
 
-## Video script v4 — about 3:00, recorded by `scripts/record_walkthrough.py`
+## Video script v4 — 2:53, recorded by `scripts/record_walkthrough.py`
 
 The video shows only what was built during the event: the app runs in demo mode
 (`?tools=demo`: Signals, Copilot, Vision, Audit). `walkthrough-script.md` from the
@@ -139,7 +139,7 @@ firsthand (the problem statement is "Build for Your World").
 > the latest week. Try any device type yourself:
 > Demo: https://maudesignal-4vniqswm9ptaxqtf2iawox.streamlit.app/
 > Code: https://github.com/kondapallysaicharan63-bot/maudesignal
-> [attach the 2:52 video]
+> [attach the 2:53 video]
 
 ## Not done / still needed from Charan
 
