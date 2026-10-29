@@ -1,0 +1,178 @@
+{
+  "schema_version": "1.0",
+  "label": "10-recalls",
+  "recorded_at_utc": "2026-10-28T20:38:43+00:00",
+  "model": "muse-spark-1.3",
+  "question": "Are there FDA recalls on file for LLZ devices? List the three most recent with their recall numbers.",
+  "answer": "There are 561 stored FDA recalls for LLZ devices. The three most recent are Z-0186-2027, Z-3171-2026 and Z-3170-2026.",
+  "tool_calls": [
+    {
+      "name": "recalls",
+      "arguments": {
+        "limit": 3,
+        "product_code": "LLZ"
+      },
+      "result_preview": "{\"product_code\": \"LLZ\", \"date_from\": null, \"date_to\": null, \"stored_recall_count\": 561, \"source\": \"openFDA device/recall.json (stored copy)\", \"recalls\": [{\"recall_number\": \"Z-0186-2027\", \"event_number\": \"99899\", \"recalling_firm\": \"INTELERAD MEDICAL SYSTEMS INCORPORATED\", \"recall_status\": \"Open, Clas"
+    }
+  ],
+  "first_pass": {
+    "passed": 2,
+    "blocked": 0,
+    "claims": {
+      "pass": 4,
+      "block": 0
+    },
+    "sentences": [
+      {
+        "text": "There are 561 stored FDA recalls for LLZ devices.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "recall_count",
+            "status": "pass",
+            "reason": "recomputed 561 stored recalls",
+            "evidence_ids": [
+              "Z-0012-2022",
+              "Z-0023-2016",
+              "Z-0030-2026",
+              "Z-0032-2012",
+              "Z-0033-2007",
+              "Z-0034-2014",
+              "Z-0035-2014",
+              "Z-0039-2025",
+              "Z-0048-2013",
+              "Z-0055-2025",
+              "Z-0068-2015",
+              "Z-0068-2026",
+              "Z-0069-2007",
+              "Z-0070-2007",
+              "Z-0071-2007",
+              "Z-0072-2007",
+              "Z-0072-2021",
+              "Z-0073-2017",
+              "Z-0092-06",
+              "Z-0093-04"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "The three most recent are Z-0186-2027, Z-3171-2026 and Z-3170-2026.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "recall",
+            "status": "pass",
+            "reason": "FDA recall: INTELERAD MEDICAL SYSTEMS INCORPORATED (Open, Classified)",
+            "evidence_ids": [
+              "Z-0186-2027"
+            ]
+          },
+          {
+            "kind": "recall",
+            "status": "pass",
+            "reason": "FDA recall: GE Healthcare (Open, Classified)",
+            "evidence_ids": [
+              "Z-3171-2026"
+            ]
+          },
+          {
+            "kind": "recall",
+            "status": "pass",
+            "reason": "FDA recall: GE Healthcare (Open, Classified)",
+            "evidence_ids": [
+              "Z-3170-2026"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "final": {
+    "passed": 2,
+    "blocked": 0,
+    "claims": {
+      "pass": 4,
+      "block": 0
+    },
+    "sentences": [
+      {
+        "text": "There are 561 stored FDA recalls for LLZ devices.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "recall_count",
+            "status": "pass",
+            "reason": "recomputed 561 stored recalls",
+            "evidence_ids": [
+              "Z-0012-2022",
+              "Z-0023-2016",
+              "Z-0030-2026",
+              "Z-0032-2012",
+              "Z-0033-2007",
+              "Z-0034-2014",
+              "Z-0035-2014",
+              "Z-0039-2025",
+              "Z-0048-2013",
+              "Z-0055-2025",
+              "Z-0068-2015",
+              "Z-0068-2026",
+              "Z-0069-2007",
+              "Z-0070-2007",
+              "Z-0071-2007",
+              "Z-0072-2007",
+              "Z-0072-2021",
+              "Z-0073-2017",
+              "Z-0092-06",
+              "Z-0093-04"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "The three most recent are Z-0186-2027, Z-3171-2026 and Z-3170-2026.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "recall",
+            "status": "pass",
+            "reason": "FDA recall: INTELERAD MEDICAL SYSTEMS INCORPORATED (Open, Classified)",
+            "evidence_ids": [
+              "Z-0186-2027"
+            ]
+          },
+          {
+            "kind": "recall",
+            "status": "pass",
+            "reason": "FDA recall: GE Healthcare (Open, Classified)",
+            "evidence_ids": [
+              "Z-3171-2026"
+            ]
+          },
+          {
+            "kind": "recall",
+            "status": "pass",
+            "reason": "FDA recall: GE Healthcare (Open, Classified)",
+            "evidence_ids": [
+              "Z-3170-2026"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "repaired": false,
+  "sentences_repaired": 0,
+  "capa_ids": [],
+  "parse_failed": false,
+  "length_stops": 0,
+  "usage": {
+    "input_tokens": 14547,
+    "output_tokens": 3869,
+    "cost_usd": 0.034627
+  }
+}

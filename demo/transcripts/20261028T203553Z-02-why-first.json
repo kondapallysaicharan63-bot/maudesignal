@@ -1,0 +1,272 @@
+{
+  "schema_version": "1.0",
+  "label": "02-why-first",
+  "recorded_at_utc": "2026-10-28T20:35:53+00:00",
+  "model": "muse-spark-1.3",
+  "question": "Why is the top signal ranked first? Show me the reports behind it.",
+  "answer": "LLZ is ranked first because reports suddenly increased this week with 33 reports from August 25 to August 31, 2026. Report 50426770 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that they have a case that needs to be corrected.\" Report 50426773 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that unable to finalize report on Echo Module and encounter an error 500.\" Report 50448213 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that an error 500 occurs for one study, preventing the doctor from processing the report.\"",
+  "tool_calls": [
+    {
+      "name": "overnight_signals",
+      "arguments": {},
+      "result_preview": "{\"as_of\": \"20260831\", \"headline\": \"New kind of problem: 0 \\u00b7 More serious than usual: 0 \\u00b7 Reports suddenly increased: 1\", \"current_window\": {\"date_from\": \"20260825\", \"date_to\": \"20260831\"}, \"baseline_window\": {\"date_from\": \"20260728\", \"date_to\": \"20260824\"}, \"rules\": {\"current_window_days\":"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50426770"
+      },
+      "result_preview": "{\"report_id\": \"50426770\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260825\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), i"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50426773"
+      },
+      "result_preview": "{\"report_id\": \"50426773\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260825\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), i"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50448213"
+      },
+      "result_preview": "{\"report_id\": \"50448213\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260826\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), i"
+    }
+  ],
+  "first_pass": {
+    "passed": 4,
+    "blocked": 0,
+    "claims": {
+      "pass": 7,
+      "block": 0
+    },
+    "sentences": [
+      {
+        "text": "LLZ is ranked first because reports suddenly increased this week with 33 reports from August 25 to August 31, 2026.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 33",
+            "evidence_ids": [
+              "50426770",
+              "50426773",
+              "50448213",
+              "50448215",
+              "50448216",
+              "50448217",
+              "50451032",
+              "50453041",
+              "50502511",
+              "50502514",
+              "50502888",
+              "50503657",
+              "50503658",
+              "50503662",
+              "50504539",
+              "50504540",
+              "50504541",
+              "50504545",
+              "50513025",
+              "50513122"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Report 50426770 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that they have a case that needs to be corrected.\"",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "quote",
+            "status": "pass",
+            "reason": "verbatim match",
+            "evidence_ids": [
+              "50426770"
+            ]
+          },
+          {
+            "kind": "record",
+            "status": "pass",
+            "reason": "record exists",
+            "evidence_ids": [
+              "50426770"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Report 50426773 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that unable to finalize report on Echo Module and encounter an error 500.\"",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "quote",
+            "status": "pass",
+            "reason": "verbatim match",
+            "evidence_ids": [
+              "50426773"
+            ]
+          },
+          {
+            "kind": "record",
+            "status": "pass",
+            "reason": "record exists",
+            "evidence_ids": [
+              "50426773"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Report 50448213 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that an error 500 occurs for one study, preventing the doctor from processing the report.\"",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "quote",
+            "status": "pass",
+            "reason": "verbatim match",
+            "evidence_ids": [
+              "50448213"
+            ]
+          },
+          {
+            "kind": "record",
+            "status": "pass",
+            "reason": "record exists",
+            "evidence_ids": [
+              "50448213"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "final": {
+    "passed": 4,
+    "blocked": 0,
+    "claims": {
+      "pass": 7,
+      "block": 0
+    },
+    "sentences": [
+      {
+        "text": "LLZ is ranked first because reports suddenly increased this week with 33 reports from August 25 to August 31, 2026.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 33",
+            "evidence_ids": [
+              "50426770",
+              "50426773",
+              "50448213",
+              "50448215",
+              "50448216",
+              "50448217",
+              "50451032",
+              "50453041",
+              "50502511",
+              "50502514",
+              "50502888",
+              "50503657",
+              "50503658",
+              "50503662",
+              "50504539",
+              "50504540",
+              "50504541",
+              "50504545",
+              "50513025",
+              "50513122"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Report 50426770 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that they have a case that needs to be corrected.\"",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "quote",
+            "status": "pass",
+            "reason": "verbatim match",
+            "evidence_ids": [
+              "50426770"
+            ]
+          },
+          {
+            "kind": "record",
+            "status": "pass",
+            "reason": "record exists",
+            "evidence_ids": [
+              "50426770"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Report 50426773 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that unable to finalize report on Echo Module and encounter an error 500.\"",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "quote",
+            "status": "pass",
+            "reason": "verbatim match",
+            "evidence_ids": [
+              "50426773"
+            ]
+          },
+          {
+            "kind": "record",
+            "status": "pass",
+            "reason": "record exists",
+            "evidence_ids": [
+              "50426773"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Report 50448213 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that an error 500 occurs for one study, preventing the doctor from processing the report.\"",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "quote",
+            "status": "pass",
+            "reason": "verbatim match",
+            "evidence_ids": [
+              "50448213"
+            ]
+          },
+          {
+            "kind": "record",
+            "status": "pass",
+            "reason": "record exists",
+            "evidence_ids": [
+              "50448213"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "repaired": false,
+  "sentences_repaired": 0,
+  "capa_ids": [],
+  "parse_failed": false,
+  "length_stops": 0,
+  "usage": {
+    "input_tokens": 21054,
+    "output_tokens": 7957,
+    "cost_usd": 0.060135
+  }
+}

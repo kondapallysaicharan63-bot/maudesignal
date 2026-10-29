@@ -1,0 +1,140 @@
+{
+  "schema_version": "1.0",
+  "label": "12-literature",
+  "recorded_at_utc": "2026-10-28T20:39:04+00:00",
+  "model": "muse-spark-1.3",
+  "question": "Is there published literature on file about AI radiology software failures? Cite PMIDs.",
+  "answer": "Yes, stored literature includes AI radiology studies, including PMID 35943350 on false-negative and false-positive outcomes of computer-aided detection for brain metastasis and PMID 32531273 on AI for breast cancer detection in mammography. Stored files also include PMID 31594798, a systematic review of AI to diagnose ischemic stroke and identify large vessel occlusions, and PMID 37541274, a clinical safety analysis of AI-supported screen reading in mammography screening.",
+  "tool_calls": [
+    {
+      "name": "literature",
+      "arguments": {
+        "limit": 10,
+        "query": "AI radiology software failures"
+      },
+      "result_preview": "{\"matched\": 6, \"query_terms\": 4, \"match_rule\": \"at least half of the terms\", \"source\": \"PubMed via NCBI E-utilities (stored copy)\", \"articles\": [{\"pmid\": \"31594798\", \"title\": \"Artificial intelligence to diagnose ischemic stroke and identify large vessel occlusions: a systematic review.\", \"year\": 202"
+    }
+  ],
+  "first_pass": {
+    "passed": 2,
+    "blocked": 0,
+    "claims": {
+      "pass": 4,
+      "block": 0
+    },
+    "sentences": [
+      {
+        "text": "Yes, stored literature includes AI radiology studies, including PMID 35943350 on false-negative and false-positive outcomes of computer-aided detection for brain metastasis and PMID 32531273 on AI for breast cancer detection in mammography.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "literature",
+            "status": "pass",
+            "reason": "PubMed: False-negative and false-positive outcomes of computer-aided detection on brain ",
+            "evidence_ids": [
+              "PMID 35943350"
+            ]
+          },
+          {
+            "kind": "literature",
+            "status": "pass",
+            "reason": "PubMed: Artificial intelligence for breast cancer detection in mammography and digital b",
+            "evidence_ids": [
+              "PMID 32531273"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Stored files also include PMID 31594798, a systematic review of AI to diagnose ischemic stroke and identify large vessel occlusions, and PMID 37541274, a clinical safety analysis of AI-supported screen reading in mammography screening.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "literature",
+            "status": "pass",
+            "reason": "PubMed: Artificial intelligence to diagnose ischemic stroke and identify large vessel oc",
+            "evidence_ids": [
+              "PMID 31594798"
+            ]
+          },
+          {
+            "kind": "literature",
+            "status": "pass",
+            "reason": "PubMed: Artificial intelligence-supported screen reading versus standard double reading ",
+            "evidence_ids": [
+              "PMID 37541274"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "final": {
+    "passed": 2,
+    "blocked": 0,
+    "claims": {
+      "pass": 4,
+      "block": 0
+    },
+    "sentences": [
+      {
+        "text": "Yes, stored literature includes AI radiology studies, including PMID 35943350 on false-negative and false-positive outcomes of computer-aided detection for brain metastasis and PMID 32531273 on AI for breast cancer detection in mammography.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "literature",
+            "status": "pass",
+            "reason": "PubMed: False-negative and false-positive outcomes of computer-aided detection on brain ",
+            "evidence_ids": [
+              "PMID 35943350"
+            ]
+          },
+          {
+            "kind": "literature",
+            "status": "pass",
+            "reason": "PubMed: Artificial intelligence for breast cancer detection in mammography and digital b",
+            "evidence_ids": [
+              "PMID 32531273"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Stored files also include PMID 31594798, a systematic review of AI to diagnose ischemic stroke and identify large vessel occlusions, and PMID 37541274, a clinical safety analysis of AI-supported screen reading in mammography screening.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "literature",
+            "status": "pass",
+            "reason": "PubMed: Artificial intelligence to diagnose ischemic stroke and identify large vessel oc",
+            "evidence_ids": [
+              "PMID 31594798"
+            ]
+          },
+          {
+            "kind": "literature",
+            "status": "pass",
+            "reason": "PubMed: Artificial intelligence-supported screen reading versus standard double reading ",
+            "evidence_ids": [
+              "PMID 37541274"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "repaired": false,
+  "sentences_repaired": 0,
+  "capa_ids": [],
+  "parse_failed": false,
+  "length_stops": 0,
+  "usage": {
+    "input_tokens": 15936,
+    "output_tokens": 3342,
+    "cost_usd": 0.034124
+  }
+}

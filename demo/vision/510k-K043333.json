@@ -1,7 +1,7 @@
 {
   "kind": "510k_summary_reading",
   "k_number": "K043333",
-  "created_at": "2026-10-29T22:37:04+00:00",
+  "created_at": "2026-10-28T20:47:50+00:00",
   "pdf_url": "https://www.accessdata.fda.gov/cdrh_docs/pdf4/K043333.pdf",
   "page_count": 6,
   "pages_read": 6,
@@ -12,7 +12,7 @@
     "CONFLICT": 2,
     "UNVERIFIABLE": 0
   },
-  "cost_usd": 0.086956,
+  "cost_usd": 0.08206,
   "openfda": {
     "k_number": "K043333",
     "applicant": "Vital Images, Inc.",
@@ -29,7 +29,7 @@
       "value": "K043333",
       "read_a": {
         "value": "K043333",
-        "page": 4,
+        "page": 1,
         "legibility": "clear"
       },
       "read_b": {
@@ -258,7 +258,7 @@
         "legibility": "clear"
       },
       "read_b": {
-        "value": "Vitrea2 is a medical diagnostic system that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. In addition, the Vitrea2 Version 3.7 has the following additional indications: CT Colonography The separately-licensed CT Colonography option is intended for closely examining the lumen of the colon using features such as auto-segmentation, axial imaging, multi-planar reformatting, fly-through, simultaneous display of prone and supine images, and transparent wall view. CT Cardiac The separately-licensed CT Cardiac option contains two components: Coronary Artery Analysis and Cardiac Functional Analysis. The Vital Images' CT Cardiac option provides a variety of tools and views for working with clinical CT images of the coronary arteries, heart, and surrounding tissue. Coronary Artery Analysis The Coronary Artery Analysis component of the Vitrea CT Cardiac option is intended for determining the presence and extent of coronary obstructive disease by providing a non-invasive approach to survey a patient's coronary arteries. The vessel probe technology integrated into the CT Cardiac option allows physicians' to click on an artery to simultaneously view the following: the highlighted vessel in 3D, two curved vessel views orthogonal to each other, and cross-sectional views. Cardiac Functional Analysis The Cardiac Functional Analysis (CFA) component of the Vitrea CT Cardiac option is intended to be used with CT studies of the heart to assist cardiologists and radiologists in assessing function when producing a cardiac evaluation. The CFA component of the CT Cardiac option includes semi-automatic heart and left ventricle segmentation, including identification of long axis and mitral valve boundaries across multiple phases; calculation of global metrics, including end diastolic volume, end systolic volume, stroke volume, ejection fraction, cardiac output, cardiac index, stroke index, and myocardial mass; and calculation of regional metrics; including wall motion, percentage of wall thickening, regional ejection fraction, and polar plots. Lung Analysis The separately-licensed Lung Analysis option is intended for the review and analysis of thoracic CT images for the purposes of characterizing nodules in the lung in a single study, or over the time course of several thoracic studies. Characterizations include diameter, volume and volume over time. The system automatically performs the measurements, allowing lung nodules and measurements to be displayed.",
+        "value": "Vitrea 2 is a medical diagnostic system that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. In addition, the Vitrea2 Version 3.7 has the following additional indications: CT Colonography The separately-licensed CT Colonography option is intended for closely examining the lumen of the colon using features such as auto-segmentation, axial imaging, multi-planar reformatting, fly-through, simultaneous display of prone and supine images, and transparent wall view. CT Cardiac The separately-licensed CT Cardiac option contains two components: Coronary Artery Analysis and Cardiac Functional Analysis. The Vital Images' CT Cardiac option provides a variety of tools and views for working with clinical CT images of the coronary arteries, heart, and surrounding tissue. Coronary Artery Analysis The Coronary Artery Analysis component of the Vitrea CT Cardiac option is intended for determining the presence and extent of coronary obstructive disease by providing a non-invasive approach to survey a patient's coronary arteries. The vessel probe technology integrated into the CT Cardiac option allows physicians' to click on an artery to simultaneously view the following: the highlighted vessel in 3D, two curved vessel views orthogonal to each other, and cross-sectional views. Cardiac Functional Analysis The Cardiac Functional Analysis (CFA) component of the Vitrea CT Cardiac option is intended to be used with CT studies of the heart to assist cardiologists and radiologists in assessing function when producing a cardiac evaluation. The CFA component of the CT Cardiac option includes semi-automatic heart and left ventricle segmentation, including identification of long axis and mitral valve boundaries across multiple phases; calculation of global metrics, including end diastolic volume, end systolic volume, stroke volume, ejection fraction, cardiac output, cardiac index, stroke index, and myocardial mass; and calculation of regional metrics; including wall motion, percentage of wall thickening, regional ejection fraction, and polar plots. Lung Analysis The separately-licensed Lung Analysis option is intended for the review and analysis of thoracic CT images for the purposes of characterizing nodules in the lung in a single study, or over the time course of several thoracic studies. Characterizations include diameter, volume and volume over time. The system automatically performs the measurements, allowing lung nodules and measurements to be displayed.",
         "page": 6,
         "legibility": "clear"
       },
@@ -283,17 +283,17 @@
         "legibility": "clear"
       },
       "read_b": {
-        "value": "Vitrea2 is a medical diagnostic system that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. In addition, the Vitrea2 Version 3.7 has the following additional indications: CT Colonography The separately-licensed CT Colonography option is intended for closely examining the lumen of the colon using features such as auto-segmentation, axial imaging, multi-planar reformatting, fly-through, simultaneous display of prone and supine images, and transparent wall view. CT Cardiac The separately-licensed CT Cardiac option contains two components: Coronary Artery Analysis and Cardiac Functional Analysis. The Vital Images' CT Cardiac option provides a variety of tools and views for working with clinical CT images of the coronary arteries, heart, and surrounding tissue. Coronary Artery Analysis The Coronary Artery Analysis component of the Vitrea CT Cardiac option is intended for determining the presence and extent of coronary obstructive disease by providing a non-invasive approach to survey a patient's coronary arteries. The vessel probe technology integrated into the CT Cardiac option allows physicians' to click on an artery to simultaneously view the following: the highlighted vessel in 3D, two curved vessel views orthogonal to each other, and cross-sectional views. Cardiac Functional Analysis The Cardiac Functional Analysis (CFA) component of the Vitrea CT Cardiac option is intended to be used with CT studies of the heart to assist cardiologists and radiologists in assessing function when producing a cardiac evaluation. The CFA component of the CT Cardiac option includes semi-automatic heart and left ventricle segmentation, including identification of long axis and mitral valve boundaries across multiple phases; calculation of global metrics, including end diastolic volume, end systolic volume, stroke volume, ejection fraction, cardiac output, cardiac index, stroke index, and myocardial mass; and calculation of regional metrics; including wall motion, percentage of wall thickening, regional ejection fraction, and polar plots. Lung Analysis The separately-licensed Lung Analysis option is intended for the review and analysis of thoracic CT images for the purposes of characterizing nodules in the lung in a single study, or over the time course of several thoracic studies. Characterizations include diameter, volume and volume over time. The system automatically performs the measurements, allowing lung nodules and measurements to be displayed.",
+        "value": "Vitrea 2 is a medical diagnostic system that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. In addition, the Vitrea2 Version 3.7 has the following additional indications: CT Colonography The separately-licensed CT Colonography option is intended for closely examining the lumen of the colon using features such as auto-segmentation, axial imaging, multi-planar reformatting, fly-through, simultaneous display of prone and supine images, and transparent wall view. CT Cardiac The separately-licensed CT Cardiac option contains two components: Coronary Artery Analysis and Cardiac Functional Analysis. The Vital Images' CT Cardiac option provides a variety of tools and views for working with clinical CT images of the coronary arteries, heart, and surrounding tissue. Coronary Artery Analysis The Coronary Artery Analysis component of the Vitrea CT Cardiac option is intended for determining the presence and extent of coronary obstructive disease by providing a non-invasive approach to survey a patient's coronary arteries. The vessel probe technology integrated into the CT Cardiac option allows physicians' to click on an artery to simultaneously view the following: the highlighted vessel in 3D, two curved vessel views orthogonal to each other, and cross-sectional views. Cardiac Functional Analysis The Cardiac Functional Analysis (CFA) component of the Vitrea CT Cardiac option is intended to be used with CT studies of the heart to assist cardiologists and radiologists in assessing function when producing a cardiac evaluation. The CFA component of the CT Cardiac option includes semi-automatic heart and left ventricle segmentation, including identification of long axis and mitral valve boundaries across multiple phases; calculation of global metrics, including end diastolic volume, end systolic volume, stroke volume, ejection fraction, cardiac output, cardiac index, stroke index, and myocardial mass; and calculation of regional metrics; including wall motion, percentage of wall thickening, regional ejection fraction, and polar plots. Lung Analysis The separately-licensed Lung Analysis option is intended for the review and analysis of thoracic CT images for the purposes of characterizing nodules in the lung in a single study, or over the time course of several thoracic studies. Characterizations include diameter, volume and volume over time. The system automatically performs the measurements, allowing lung nodules and measurements to be displayed.",
         "page": 2,
         "legibility": "clear"
       },
       "reads_agree": false,
-      "similarity": 0.194,
+      "similarity": 0.195,
       "checks": [
         {
           "source": "two_reads",
           "outcome": "fail",
-          "detail": "similarity 0.19"
+          "detail": "similarity 0.20"
         }
       ],
       "note": "reads disagree; low clarity \u2014 human check"
@@ -301,24 +301,24 @@
     {
       "name": "technology_summary",
       "status": "VERIFIED",
-      "value": "The Vitrea2 system is a medical diagnostic device that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. The Vitrea2 system provides multi-dimensional visualization of digital images to aid clinicians in their analysis of anatomy and pathology.",
+      "value": "The Vitrea2 system is a medical diagnostic device that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. The Vitrea2 system provides multi-dimensional visualization of digital images to aid clinicians in their analysis of anatomy and pathology. Retrieve image data over the network via DICOM and interactively manipulate an image in real-time to visualize anatomy and pathology.",
       "read_a": {
-        "value": "The Vitrea2 system is a medical diagnostic device that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. The Vitrea2 system provides multi-dimensional visualization of digital images to aid clinicians in their analysis of anatomy and pathology.",
+        "value": "The Vitrea2 system is a medical diagnostic device that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. The Vitrea2 system provides multi-dimensional visualization of digital images to aid clinicians in their analysis of anatomy and pathology. Retrieve image data over the network via DICOM and interactively manipulate an image in real-time to visualize anatomy and pathology.",
         "page": 1,
         "legibility": "clear"
       },
       "read_b": {
-        "value": "The Vitrea2 system is a medical diagnostic device that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. The Vitrea2 system provides multi-dimensional visualization of digital images to aid clinicians in their analysis of anatomy and pathology. Retrieve image data over the network via DICOM.",
+        "value": "The Vitrea2 system is a medical diagnostic device that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. The Vitrea2 system provides multi-dimensional visualization of digital images to aid clinicians in their analysis of anatomy and pathology. Vitrea2, Version 3.7 is an upgrade to Vitrea2, Version 3.5.",
         "page": 1,
         "legibility": "clear"
       },
       "reads_agree": true,
-      "similarity": 0.837,
+      "similarity": 0.685,
       "checks": [
         {
           "source": "two_reads",
           "outcome": "pass",
-          "detail": "similarity 0.84"
+          "detail": "similarity 0.69"
         }
       ],
       "note": "two independent reads agree (no other source covers it)"
@@ -330,7 +330,7 @@
       "fields": {
         "k_number": {
           "value": "K043333",
-          "page": 4,
+          "page": 1,
           "legibility": "clear"
         },
         "applicant": {
@@ -379,7 +379,7 @@
           "legibility": "clear"
         },
         "technology_summary": {
-          "value": "The Vitrea2 system is a medical diagnostic device that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. The Vitrea2 system provides multi-dimensional visualization of digital images to aid clinicians in their analysis of anatomy and pathology.",
+          "value": "The Vitrea2 system is a medical diagnostic device that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. The Vitrea2 system provides multi-dimensional visualization of digital images to aid clinicians in their analysis of anatomy and pathology. Retrieve image data over the network via DICOM and interactively manipulate an image in real-time to visualize anatomy and pathology.",
           "page": 1,
           "legibility": "clear"
         }
@@ -396,8 +396,8 @@
       "model": "muse-spark-1.3",
       "skill_version": "1.0.0",
       "input_tokens": 16899,
-      "output_tokens": 6386,
-      "cost_usd": 0.048264
+      "output_tokens": 5630,
+      "cost_usd": 0.045051
     },
     {
       "label": "B",
@@ -443,17 +443,17 @@
           "legibility": "clear"
         },
         "indications_for_use": {
-          "value": "Vitrea2 is a medical diagnostic system that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. In addition, the Vitrea2 Version 3.7 has the following additional indications: CT Colonography The separately-licensed CT Colonography option is intended for closely examining the lumen of the colon using features such as auto-segmentation, axial imaging, multi-planar reformatting, fly-through, simultaneous display of prone and supine images, and transparent wall view. CT Cardiac The separately-licensed CT Cardiac option contains two components: Coronary Artery Analysis and Cardiac Functional Analysis. The Vital Images' CT Cardiac option provides a variety of tools and views for working with clinical CT images of the coronary arteries, heart, and surrounding tissue. Coronary Artery Analysis The Coronary Artery Analysis component of the Vitrea CT Cardiac option is intended for determining the presence and extent of coronary obstructive disease by providing a non-invasive approach to survey a patient's coronary arteries. The vessel probe technology integrated into the CT Cardiac option allows physicians' to click on an artery to simultaneously view the following: the highlighted vessel in 3D, two curved vessel views orthogonal to each other, and cross-sectional views. Cardiac Functional Analysis The Cardiac Functional Analysis (CFA) component of the Vitrea CT Cardiac option is intended to be used with CT studies of the heart to assist cardiologists and radiologists in assessing function when producing a cardiac evaluation. The CFA component of the CT Cardiac option includes semi-automatic heart and left ventricle segmentation, including identification of long axis and mitral valve boundaries across multiple phases; calculation of global metrics, including end diastolic volume, end systolic volume, stroke volume, ejection fraction, cardiac output, cardiac index, stroke index, and myocardial mass; and calculation of regional metrics; including wall motion, percentage of wall thickening, regional ejection fraction, and polar plots. Lung Analysis The separately-licensed Lung Analysis option is intended for the review and analysis of thoracic CT images for the purposes of characterizing nodules in the lung in a single study, or over the time course of several thoracic studies. Characterizations include diameter, volume and volume over time. The system automatically performs the measurements, allowing lung nodules and measurements to be displayed.",
+          "value": "Vitrea 2 is a medical diagnostic system that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. In addition, the Vitrea2 Version 3.7 has the following additional indications: CT Colonography The separately-licensed CT Colonography option is intended for closely examining the lumen of the colon using features such as auto-segmentation, axial imaging, multi-planar reformatting, fly-through, simultaneous display of prone and supine images, and transparent wall view. CT Cardiac The separately-licensed CT Cardiac option contains two components: Coronary Artery Analysis and Cardiac Functional Analysis. The Vital Images' CT Cardiac option provides a variety of tools and views for working with clinical CT images of the coronary arteries, heart, and surrounding tissue. Coronary Artery Analysis The Coronary Artery Analysis component of the Vitrea CT Cardiac option is intended for determining the presence and extent of coronary obstructive disease by providing a non-invasive approach to survey a patient's coronary arteries. The vessel probe technology integrated into the CT Cardiac option allows physicians' to click on an artery to simultaneously view the following: the highlighted vessel in 3D, two curved vessel views orthogonal to each other, and cross-sectional views. Cardiac Functional Analysis The Cardiac Functional Analysis (CFA) component of the Vitrea CT Cardiac option is intended to be used with CT studies of the heart to assist cardiologists and radiologists in assessing function when producing a cardiac evaluation. The CFA component of the CT Cardiac option includes semi-automatic heart and left ventricle segmentation, including identification of long axis and mitral valve boundaries across multiple phases; calculation of global metrics, including end diastolic volume, end systolic volume, stroke volume, ejection fraction, cardiac output, cardiac index, stroke index, and myocardial mass; and calculation of regional metrics; including wall motion, percentage of wall thickening, regional ejection fraction, and polar plots. Lung Analysis The separately-licensed Lung Analysis option is intended for the review and analysis of thoracic CT images for the purposes of characterizing nodules in the lung in a single study, or over the time course of several thoracic studies. Characterizations include diameter, volume and volume over time. The system automatically performs the measurements, allowing lung nodules and measurements to be displayed.",
           "page": 6,
           "legibility": "clear"
         },
         "intended_use": {
-          "value": "Vitrea2 is a medical diagnostic system that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. In addition, the Vitrea2 Version 3.7 has the following additional indications: CT Colonography The separately-licensed CT Colonography option is intended for closely examining the lumen of the colon using features such as auto-segmentation, axial imaging, multi-planar reformatting, fly-through, simultaneous display of prone and supine images, and transparent wall view. CT Cardiac The separately-licensed CT Cardiac option contains two components: Coronary Artery Analysis and Cardiac Functional Analysis. The Vital Images' CT Cardiac option provides a variety of tools and views for working with clinical CT images of the coronary arteries, heart, and surrounding tissue. Coronary Artery Analysis The Coronary Artery Analysis component of the Vitrea CT Cardiac option is intended for determining the presence and extent of coronary obstructive disease by providing a non-invasive approach to survey a patient's coronary arteries. The vessel probe technology integrated into the CT Cardiac option allows physicians' to click on an artery to simultaneously view the following: the highlighted vessel in 3D, two curved vessel views orthogonal to each other, and cross-sectional views. Cardiac Functional Analysis The Cardiac Functional Analysis (CFA) component of the Vitrea CT Cardiac option is intended to be used with CT studies of the heart to assist cardiologists and radiologists in assessing function when producing a cardiac evaluation. The CFA component of the CT Cardiac option includes semi-automatic heart and left ventricle segmentation, including identification of long axis and mitral valve boundaries across multiple phases; calculation of global metrics, including end diastolic volume, end systolic volume, stroke volume, ejection fraction, cardiac output, cardiac index, stroke index, and myocardial mass; and calculation of regional metrics; including wall motion, percentage of wall thickening, regional ejection fraction, and polar plots. Lung Analysis The separately-licensed Lung Analysis option is intended for the review and analysis of thoracic CT images for the purposes of characterizing nodules in the lung in a single study, or over the time course of several thoracic studies. Characterizations include diameter, volume and volume over time. The system automatically performs the measurements, allowing lung nodules and measurements to be displayed.",
+          "value": "Vitrea 2 is a medical diagnostic system that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. In addition, the Vitrea2 Version 3.7 has the following additional indications: CT Colonography The separately-licensed CT Colonography option is intended for closely examining the lumen of the colon using features such as auto-segmentation, axial imaging, multi-planar reformatting, fly-through, simultaneous display of prone and supine images, and transparent wall view. CT Cardiac The separately-licensed CT Cardiac option contains two components: Coronary Artery Analysis and Cardiac Functional Analysis. The Vital Images' CT Cardiac option provides a variety of tools and views for working with clinical CT images of the coronary arteries, heart, and surrounding tissue. Coronary Artery Analysis The Coronary Artery Analysis component of the Vitrea CT Cardiac option is intended for determining the presence and extent of coronary obstructive disease by providing a non-invasive approach to survey a patient's coronary arteries. The vessel probe technology integrated into the CT Cardiac option allows physicians' to click on an artery to simultaneously view the following: the highlighted vessel in 3D, two curved vessel views orthogonal to each other, and cross-sectional views. Cardiac Functional Analysis The Cardiac Functional Analysis (CFA) component of the Vitrea CT Cardiac option is intended to be used with CT studies of the heart to assist cardiologists and radiologists in assessing function when producing a cardiac evaluation. The CFA component of the CT Cardiac option includes semi-automatic heart and left ventricle segmentation, including identification of long axis and mitral valve boundaries across multiple phases; calculation of global metrics, including end diastolic volume, end systolic volume, stroke volume, ejection fraction, cardiac output, cardiac index, stroke index, and myocardial mass; and calculation of regional metrics; including wall motion, percentage of wall thickening, regional ejection fraction, and polar plots. Lung Analysis The separately-licensed Lung Analysis option is intended for the review and analysis of thoracic CT images for the purposes of characterizing nodules in the lung in a single study, or over the time course of several thoracic studies. Characterizations include diameter, volume and volume over time. The system automatically performs the measurements, allowing lung nodules and measurements to be displayed.",
           "page": 2,
           "legibility": "clear"
         },
         "technology_summary": {
-          "value": "The Vitrea2 system is a medical diagnostic device that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. The Vitrea2 system provides multi-dimensional visualization of digital images to aid clinicians in their analysis of anatomy and pathology. Retrieve image data over the network via DICOM.",
+          "value": "The Vitrea2 system is a medical diagnostic device that allows the processing, review, analysis, communication and media interchange of multi-dimensional digital images acquired from a variety of imaging devices. The Vitrea2 system provides multi-dimensional visualization of digital images to aid clinicians in their analysis of anatomy and pathology. Vitrea2, Version 3.7 is an upgrade to Vitrea2, Version 3.5.",
           "page": 1,
           "legibility": "clear"
         }
@@ -470,8 +470,8 @@
       "model": "muse-spark-1.3",
       "skill_version": "1.0.0",
       "input_tokens": 9000,
-      "output_tokens": 6457,
-      "cost_usd": 0.038692
+      "output_tokens": 6061,
+      "cost_usd": 0.037009
     }
   ],
   "thumbnails": [

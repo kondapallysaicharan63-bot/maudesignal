@@ -1,18 +1,18 @@
 {
   "kind": "510k_summary_reading",
   "k_number": "K190442",
-  "created_at": "2026-10-29T22:39:40+00:00",
+  "created_at": "2026-10-28T20:50:10+00:00",
   "pdf_url": "https://www.accessdata.fda.gov/cdrh_docs/pdf19/K190442.pdf",
   "page_count": 17,
   "pages_read": 8,
   "has_text_layer": true,
-  "agreement_pct": 100.0,
+  "agreement_pct": 90.0,
   "counts": {
-    "VERIFIED": 9,
-    "CONFLICT": 1,
+    "VERIFIED": 8,
+    "CONFLICT": 2,
     "UNVERIFIABLE": 0
   },
-  "cost_usd": 0.104585,
+  "cost_usd": 0.089715,
   "openfda": {
     "k_number": "K190442",
     "applicant": "Koios Medical, Inc.",
@@ -29,7 +29,7 @@
       "value": "K190442",
       "read_a": {
         "value": "K190442",
-        "page": 1,
+        "page": 4,
         "legibility": "clear"
       },
       "read_b": {
@@ -56,14 +56,14 @@
     {
       "name": "applicant",
       "status": "VERIFIED",
-      "value": "Koios Medical Inc.",
+      "value": "Koios Medical, Inc.",
       "read_a": {
-        "value": "Koios Medical Inc.",
-        "page": 4,
+        "value": "Koios Medical, Inc.",
+        "page": 1,
         "legibility": "clear"
       },
       "read_b": {
-        "value": "Koios Medical, Inc.",
+        "value": "Koios Medical Inc.",
         "page": 4,
         "legibility": "clear"
       },
@@ -89,7 +89,7 @@
       "value": "Koios DS for Breast",
       "read_a": {
         "value": "Koios DS for Breast",
-        "page": 3,
+        "page": 1,
         "legibility": "clear"
       },
       "read_b": {
@@ -205,11 +205,8 @@
     },
     {
       "name": "predicate_devices",
-      "status": "VERIFIED",
-      "value": [
-        "DEN170022",
-        "K161959"
-      ],
+      "status": "CONFLICT",
+      "value": null,
       "read_a": {
         "value": [
           "DEN170022",
@@ -220,27 +217,22 @@
       },
       "read_b": {
         "value": [
-          "DEN170022",
+          "QuantX",
           "K161959"
         ],
         "page": 8,
         "legibility": "clear"
       },
-      "reads_agree": true,
-      "similarity": 1.0,
+      "reads_agree": false,
+      "similarity": 0.333,
       "checks": [
         {
           "source": "two_reads",
-          "outcome": "pass",
-          "detail": "similarity 1.00"
-        },
-        {
-          "source": "openfda_predicates",
-          "outcome": "pass",
-          "detail": "1 predicate K-number(s) exist in openFDA"
+          "outcome": "fail",
+          "detail": "similarity 0.33"
         }
       ],
-      "note": ""
+      "note": "reads disagree; low clarity \u2014 human check"
     },
     {
       "name": "indications_for_use",
@@ -305,9 +297,9 @@
     {
       "name": "technology_summary",
       "status": "VERIFIED",
-      "value": "Koios Decision Support (DS) for Breast is a software application designed to assist trained interpreting physicians in analyzing breast ultrasound images. The system provides image derived data via web triggering and remote analysis and the core engine characterizes image features using computer vision and machine learning techniques to generate a categorical output that aligns to BI-RADS categories.",
+      "value": "Koios Decision Support (DS) for Breast is a software application designed to assist trained interpreting physicians in analyzing breast ultrasound images. The system provides image derived data via web triggering and remote analysis and characterizes image features using the ROI data to generate a categorical output that aligns to BI-RADS categories. The engine uses computer vision and machine learning techniques embedded within a software capable of reading, interpreting, analyzing, and generating findings from ultrasound data.",
       "read_a": {
-        "value": "Koios Decision Support (DS) for Breast is a software application designed to assist trained interpreting physicians in analyzing breast ultrasound images. The system provides image derived data via web triggering and remote analysis and the core engine characterizes image features using computer vision and machine learning techniques to generate a categorical output that aligns to BI-RADS categories.",
+        "value": "Koios Decision Support (DS) for Breast is a software application designed to assist trained interpreting physicians in analyzing breast ultrasound images. The system provides image derived data via web triggering and remote analysis and characterizes image features using the ROI data to generate a categorical output that aligns to BI-RADS categories. The engine uses computer vision and machine learning techniques embedded within a software capable of reading, interpreting, analyzing, and generating findings from ultrasound data.",
         "page": 5,
         "legibility": "clear"
       },
@@ -317,12 +309,12 @@
         "legibility": "clear"
       },
       "reads_agree": true,
-      "similarity": 0.882,
+      "similarity": 0.75,
       "checks": [
         {
           "source": "two_reads",
           "outcome": "pass",
-          "detail": "similarity 0.88"
+          "detail": "similarity 0.75"
         }
       ],
       "note": "two independent reads agree (no other source covers it)"
@@ -334,17 +326,17 @@
       "fields": {
         "k_number": {
           "value": "K190442",
-          "page": 1,
+          "page": 4,
           "legibility": "clear"
         },
         "applicant": {
-          "value": "Koios Medical Inc.",
-          "page": 4,
+          "value": "Koios Medical, Inc.",
+          "page": 1,
           "legibility": "clear"
         },
         "device_name": {
           "value": "Koios DS for Breast",
-          "page": 3,
+          "page": 1,
           "legibility": "clear"
         },
         "product_code": {
@@ -381,7 +373,7 @@
           "legibility": "clear"
         },
         "technology_summary": {
-          "value": "Koios Decision Support (DS) for Breast is a software application designed to assist trained interpreting physicians in analyzing breast ultrasound images. The system provides image derived data via web triggering and remote analysis and the core engine characterizes image features using computer vision and machine learning techniques to generate a categorical output that aligns to BI-RADS categories.",
+          "value": "Koios Decision Support (DS) for Breast is a software application designed to assist trained interpreting physicians in analyzing breast ultrasound images. The system provides image derived data via web triggering and remote analysis and characterizes image features using the ROI data to generate a categorical output that aligns to BI-RADS categories. The engine uses computer vision and machine learning techniques embedded within a software capable of reading, interpreting, analyzing, and generating findings from ultrasound data.",
           "page": 5,
           "legibility": "clear"
         }
@@ -400,8 +392,8 @@
       "model": "muse-spark-1.3",
       "skill_version": "1.0.0",
       "input_tokens": 21974,
-      "output_tokens": 6623,
-      "cost_usd": 0.055615
+      "output_tokens": 4578,
+      "cost_usd": 0.046924
     },
     {
       "label": "B",
@@ -412,7 +404,7 @@
           "legibility": "clear"
         },
         "applicant": {
-          "value": "Koios Medical, Inc.",
+          "value": "Koios Medical Inc.",
           "page": 4,
           "legibility": "clear"
         },
@@ -438,7 +430,7 @@
         },
         "predicate_devices": {
           "value": [
-            "DEN170022",
+            "QuantX",
             "K161959"
           ],
           "page": 8,
@@ -474,8 +466,8 @@
       "model": "muse-spark-1.3",
       "skill_version": "1.0.0",
       "input_tokens": 11830,
-      "output_tokens": 8043,
-      "cost_usd": 0.04897
+      "output_tokens": 6589,
+      "cost_usd": 0.042791
     }
   ],
   "thumbnails": [
