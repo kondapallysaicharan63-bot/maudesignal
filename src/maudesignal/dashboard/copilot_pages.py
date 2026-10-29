@@ -59,10 +59,19 @@ _PILL = {"pass": ("ok", "Verified"), "block": ("err", "Withheld")}
 #: in the Skill and in recorded runs; only the label on screen changes.
 _TOOL_LABELS = {"overnight_signals": "weekly_signals", "draft_capa": "capa_need_evidence"}
 
-#: Recorded runs not listed on screen: an early voice test whose question uses wording the
-#: product no longer uses. Its audit chain is still re-verified (same rule as
-#: scripts/export_web_data.py DISPLAY_EXCLUDED_LABELS).
+#: Recorded runs never shown on screen or used as a fallback answer: an early voice test
+#: whose question uses wording the product no longer uses. Its audit chain is still
+#: re-verified on the Audit page.
 DISPLAY_EXCLUDED_LABELS = ("00-voice-main",)
+
+
+def displayable_transcripts(directory: Path = TRANSCRIPT_DIR) -> list[dict[str, Any]]:
+    """Recorded copilot runs that may be shown or offered as a fallback answer."""
+    return [
+        t
+        for t in load_transcripts(directory)
+        if str(t.get("label", "")) not in DISPLAY_EXCLUDED_LABELS
+    ]
 
 
 def tool_label(name: str) -> str:
@@ -244,11 +253,7 @@ def page_copilot(db: Database) -> None:
     with tab_replay:
         # Typed questions first (the demo's story order); spoken clips after them.
         transcripts = sorted(
-            (
-                t
-                for t in load_transcripts(TRANSCRIPT_DIR)
-                if str(t.get("label", "")) not in DISPLAY_EXCLUDED_LABELS
-            ),
+            displayable_transcripts(),
             key=lambda t: (str(t.get("label", "")).startswith("00-voice"), str(t.get("label", ""))),
         )
         if not transcripts:
@@ -354,7 +359,7 @@ def stream_verified(t: dict[str, Any]) -> Iterator[str]:
 def _fallback(question: str, message: str) -> None:
     """Cap reached: show the closest recorded answer; no Meta call is made."""
     cap_notice(message)
-    t = recorded_fallback(question, load_transcripts(TRANSCRIPT_DIR))
+    t = recorded_fallback(question, displayable_transcripts())
     if t is None:
         st.info("No recorded answers are available yet.")
         return
@@ -527,7 +532,7 @@ def _recorded_audit_trails() -> None:
             for e in entries
         ]
     broken = [r for r in runs if r["hash chain"] != "intact"]
-    total = sum(r["entries"] for r in runs)
+    total = sum(len(d.get("entries", [])) for d in exports)
     if broken:
         st.error(f"Hash chain broken in {len(broken)} recorded run(s).")
     else:
