@@ -20,6 +20,7 @@ from maudesignal.connector import tools
 from maudesignal.connector.ask import AskRuntime, ask
 from maudesignal.connector.data import ConnectorData
 from maudesignal.connector.errors import InvalidInputError, NotFoundError, SourceUnavailableError
+from maudesignal.connector.forbidden import forbidden_in
 from maudesignal.connector.models import ADVISORY, ToolAnswer
 from maudesignal.connector.security import KeyStore, RateLimiter, sha256_hex
 from maudesignal.connector.speech import plain, speak_date
@@ -98,9 +99,7 @@ def check_shape(a: ToolAnswer, tool: str) -> None:
     for f in a.facts:
         assert f.link.startswith("https://") and f.text.strip()
     assert a.provenance.kind and a.provenance.source
-    dumped = json.dumps(a.model_dump())
-    for banned in ("approved", "official", "validated", "overnight", "complaint data"):
-        assert banned not in dumped.lower()
+    assert forbidden_in(json.dumps(a.model_dump())) == []
 
 
 # --- what_changed_this_week -------------------------------------------------------------
@@ -229,8 +228,9 @@ def test_ask_without_model_key_returns_labelled_recording(
     )
     check_shape(a, "ask")
     assert a.provenance.kind == "recorded_answer"
-    assert "recorded answer" in a.speakable
-    assert "Closest recorded question" in (a.provenance.note or "")
+    assert "recorded answer to a different, similar question" in a.speakable
+    assert "What changed this week" in a.speakable  # the recorded question is spoken
+    assert "stored reports through August 31, 2026" in a.speakable
     assert a.facts and all("api.fda.gov" in f.link for f in a.facts)
 
 
@@ -240,12 +240,13 @@ def test_ask_never_speaks_a_withheld_sentence(data: ConnectorData, tmp_path: Pat
     assert bad, "fixture transcript must contain a withheld sentence"
     a = ask(data, trap["question"], key_id="k1", runtime=no_model_runtime(tmp_path))
     check_shape(a, "ask")
-    assert [w.text for w in a.withheld] == [s["text"] for s in bad]
+    withheld_texts = [w.text for w in a.withheld]
+    assert [t for t in withheld_texts if t in [s["text"] for s in bad]] == [s["text"] for s in bad]
     assert all(w.status == "withheld" and w.reason for w in a.withheld)
     for s in bad:
         assert plain(s["text"]) not in a.speakable and s["text"] not in a.speakable
         assert all(s["text"] != f.text for f in a.facts)
-    assert "withheld" in a.speakable
+    assert "left out" in a.speakable
 
 
 def test_ask_unrelated_question_gets_no_invented_answer(

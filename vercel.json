@@ -6,5 +6,8 @@
       "includeFiles": "{src,skills,demo/transcripts,digests,data/demo}/**"
     }
   },
-  "rewrites": [{ "source": "/v1/(.*)", "destination": "/api/index" }]
+  "rewrites": [
+    { "source": "/v1/(.*)", "destination": "/api/index" },
+    { "source": "/openapi.json", "destination": "/api/index" }
+  ]
 }

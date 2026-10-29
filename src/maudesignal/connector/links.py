@@ -6,6 +6,7 @@ HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 from __future__ import annotations
 
 import re
+from datetime import date
 from typing import Any
 from urllib.parse import urlencode
 
@@ -21,6 +22,7 @@ from maudesignal.gate import (
     ShareClaim,
     SourceCountClaim,
 )
+from maudesignal.gate.evidence import EvidenceStore
 from maudesignal.monitor.live_check import verify_url
 
 RECALL_ENDPOINT = "https://api.fda.gov/device/recall.json"
@@ -89,8 +91,12 @@ def claim_link(claim: object) -> tuple[str, str] | None:
         return report_link(who), "openFDA report"
     if isinstance(claim, RecordClaim):
         return report_link(claim.report_id), "openFDA report"
-    if isinstance(claim, CountClaim | ShareClaim | SourceCountClaim):
+    if isinstance(claim, CountClaim):
+        if claim.event_type:  # the count link carries no event-type filter, so it would not
+            return None  # show this number
         return counts_link(claim.product_code, claim.date_from, claim.date_to), "openFDA count"
+    if isinstance(claim, ShareClaim | SourceCountClaim):
+        return None  # a share or source-filtered count is not the number the link shows
     if isinstance(claim, RecallClaim):
         return recall_link(claim.recall_number.upper()), "openFDA recall"
     if isinstance(claim, RecallCountClaim):
@@ -120,3 +126,96 @@ def recorded_claim_link(claim: dict[str, Any]) -> tuple[str, str] | None:
         if is_report_id(ident):
             return report_link(ident), "first supporting report on openFDA"
     return None
+
+
+_MONTHS = {
+    m: i
+    for i, m in enumerate(
+        [
+            "january", "february", "march", "april", "may", "june", "july", "august",
+            "september", "october", "november", "december",
+        ],
+        start=1,
+    )
+}  # fmt: skip
+_DATE_IN_TEXT = re.compile(
+    r"\b(" + "|".join(_MONTHS) + r")\s+(\d{1,2})(?:,?\s+(\d{4}))?", re.IGNORECASE
+)
+_CODE_IN_TEXT = re.compile(r"\b[A-Z]{3}\b")
+_RECOMPUTED = re.compile(r"recomputed\s+(\d+)")
+_EVENT_WORDS = ("death", "injur", "malfunction", "serious", "source", "manufacturer", "user ")
+Window = tuple[str | None, str | None]
+
+
+def _ymd(d: date) -> str:
+    return d.strftime("%Y%m%d")
+
+
+def _dates_in(text: str) -> list[date]:
+    """Dates written like 'August 25 to August 31, 2026' (a missing year comes from the next)."""
+    found = [
+        (m.group(1).lower(), int(m.group(2)), m.group(3)) for m in _DATE_IN_TEXT.finditer(text)
+    ]
+    year: int | None = None
+    out: list[date] = []
+    for month, day, yr in reversed(found):
+        year = int(yr) if yr else year
+        if year is None:
+            continue
+        try:
+            out.append(date(year, _MONTHS[month], day))
+        except ValueError:
+            continue
+    return list(reversed(out))
+
+
+def recover_count_links(
+    sentence: str,
+    claims: list[dict[str, Any]],
+    store: EvidenceStore,
+    extra_windows: list[Window],
+) -> list[tuple[str, str]]:
+    """Links for the count claims of a *recorded* sentence (transcripts keep no code or dates).
+
+    The product code(s) and window come from the sentence text and the stored digest, and a
+    link is returned only when the stored reports for that code and window number exactly
+    what the gate recomputed. So the openFDA count query behind the link shows the same
+    number, or no link is given.
+
+    Args:
+        sentence: The sentence text.
+        claims: Its recorded claims (``kind``, ``status``, ``reason``).
+        store: Stored reports.
+        extra_windows: Other windows to try (the digest's current and baseline weeks).
+
+    Returns:
+        ``(link, label)`` per count claim that could be tied to an openFDA count query.
+    """
+    low = sentence.lower()
+    if any(w in low for w in _EVENT_WORDS):
+        return []
+    counts = [c for c in claims if c.get("kind") == "count" and c.get("status") == "pass"]
+    values = [_RECOMPUTED.search(str(c.get("reason") or "")) for c in counts]
+    if not counts or any(v is None for v in values):
+        return []
+    known = {r.product_code for r in store.records}
+    codes = list(dict.fromkeys(c for c in _CODE_IN_TEXT.findall(sentence) if c in known))
+    if len(codes) == len(counts):
+        per_claim = codes
+    elif len(codes) == 1:
+        per_claim = codes * len(counts)
+    else:
+        return []
+    dates = _dates_in(sentence)
+    windows: list[Window] = []
+    if len(dates) >= 2:
+        windows.append((_ymd(dates[0]), _ymd(dates[-1])))
+    windows += extra_windows + [(None, None)]
+    out: list[tuple[str, str]] = []
+    for code, match in zip(per_claim, values, strict=True):
+        n = int(match.group(1)) if match else -1
+        for start, end in windows:
+            if len(store.select(product_code=code, date_from=start, date_to=end)) == n:
+                out.append((counts_link(code, start, end), f"openFDA count for {code}"))
+                break
+    return out if len(out) == len(counts) else []

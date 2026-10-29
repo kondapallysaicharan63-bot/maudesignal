@@ -4,11 +4,16 @@ HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
 Rules this module enforces:
 
-* Only sentences the gate passed go into ``speakable``. A withheld sentence is listed in
-  ``withheld`` with the gate's reason and is never spoken as fact.
+* Only sentences the gate passed *and* that have an openFDA or record link go into
+  ``speakable``. A withheld sentence is listed in ``withheld`` with the reason and is never
+  spoken as fact; so is a passed sentence with no link (nothing to check it against).
+* The copilot is read-only here: ``draft_capa`` and any other tool that writes is never
+  offered to the model and never run (see ``readonly.py``).
 * The live path needs ``META_MODEL_API_KEY``. Without it, or once the key's daily cost
-  cap is reached, or if the model call fails, the closest *recorded* answer (a real,
-  gated run stored in ``demo/transcripts``) is returned and labelled recorded.
+  cap is reached, or if the model call fails, a *recorded* answer (a real, gated run stored
+  in ``demo/transcripts``) is returned, labelled recorded, with the recorded question in the
+  spoken lead. A recording is used only when it is about the same thing as the question.
+* No forbidden term (``forbidden.py``) reaches a response.
 * The model prompt lives in ``skills/safety-copilot`` (loaded by the copilot agent);
   nothing is prompted from here, and the copilot runs at temperature 0.
 """
@@ -16,6 +21,7 @@ Rules this module enforces:
 from __future__ import annotations
 
 import os
+import re
 import tempfile
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -27,7 +33,9 @@ from maudesignal.common.logging import get_logger
 from maudesignal.connector import links
 from maudesignal.connector.data import ConnectorData
 from maudesignal.connector.errors import InvalidInputError, SourceUnavailableError
+from maudesignal.connector.forbidden import is_clean
 from maudesignal.connector.models import Fact, Provenance, ToolAnswer, WithheldSentence
+from maudesignal.connector.readonly import make_read_only
 from maudesignal.connector.speech import compose, speak_date
 from maudesignal.connector.tools import Clock, _stamp, utc_now
 from maudesignal.copilot.agent import CopilotAgent, CopilotResult
@@ -55,11 +63,11 @@ _STOP = frozenset(
         "the", "and", "what", "for", "this", "that", "with", "how", "are", "was", "any", "did",
         "does", "show", "give", "tell", "about", "from", "have", "has", "can", "you", "why",
         "who", "when", "which", "there", "their", "them", "into", "last", "please", "your",
-        "our", "its", "not", "but", "all",
+        "our", "its", "not", "but", "all", "fda",
     ]
 )  # fmt: skip
 
-_RECORDED = "this is a recorded answer to a similar question."
+_RECORDED = "this is a recorded answer to a different, similar question"
 _LEADS = {
     "cap": f"Today's live-answer budget is used up, so {_RECORDED}",
     "no_model": f"Live answers are not switched on here, so {_RECORDED}",
@@ -70,12 +78,18 @@ _REASON_NOTES = {
     "no_model": "No live model key is configured on this server, so no live model call was made.",
     "model_error": "The live model call failed, so no live answer is shown.",
 }
+_UNLINKED_REASON = "passed the claim gate but has no openFDA or record link, so it is not spoken"
+_FORBIDDEN_REASON = "contains a term this service does not use, so it is not spoken"
+_MAX_QUOTED_Q = 140
+_CODE_WORD = re.compile(r"\b[A-Za-z]{3}\b")
+
+Item = tuple[str, list[tuple[str, str]], str | None]
 
 
 def default_agent_factory(
     data: ConnectorData, guard: SpendGuard
 ) -> CopilotAgent:  # pragma: no cover
-    """Real Muse Spark agent whose every chat call passes the spend guard."""
+    """Real Muse Spark agent whose every chat call passes the spend guard (read-only tools)."""
     from maudesignal.copilot.meta_provider import MetaProvider
 
     provider = MetaProvider(
@@ -84,7 +98,9 @@ def default_agent_factory(
         base_url=os.environ.get("META_MODEL_API_BASE_URL", "https://api.meta.ai/v1"),
     )
     model = os.environ.get("META_MODEL_API_MODEL", "muse-spark-1.3")
-    return CopilotAgent(guard.wrap(provider.client), data.tool_context(), model=model)
+    agent = CopilotAgent(guard.wrap(provider.client), data.tool_context(), model=model)
+    make_read_only(agent)
+    return agent
 
 
 def _env_float(name: str, default: float) -> float:
@@ -118,7 +134,11 @@ class AskRuntime:
     )
 
     def ledger_for(self, key_id: str) -> DailyLedger:
-        """The UTC-day spend ledger of one API key (kept apart per key)."""
+        """The UTC-day spend ledger of one API key (kept apart per key).
+
+        The ledger is a file on the server instance, so on serverless hosting it is per
+        instance and resets on a cold start; see docs/hackathon/MUSE_CONNECTOR.md.
+        """
         return DailyLedger(self.ledger_dir / f"{key_id}.json")
 
 
@@ -127,10 +147,49 @@ def _words(text: str) -> set[str]:
     return {w for w in cleaned.split() if len(w) >= 3 and w not in _STOP}
 
 
-def _relevant(question: str, recorded_question: str) -> bool:
+def _recorded_sentences(t: dict[str, Any]) -> list[dict[str, Any]]:
+    return [s for s in (t.get("final") or {}).get("sentences") or [] if isinstance(s, dict)]
+
+
+def _eligible(t: dict[str, Any]) -> bool:
+    """A recording that may answer a stranger's question.
+
+    Left out: voice-mode and greeting runs (they answer something else), unparsed runs,
+    and runs whose question or sentences contain a term this service never uses.
+    """
+    label = str(t.get("label") or "").lower()
+    if "voice" in label or t.get("parse_failed") or not t.get("question"):
+        return False
+    sentences = _recorded_sentences(t)
+    texts = [str(t["question"])] + [str(s.get("text") or "") for s in sentences]
+    return bool(sentences) and all(is_clean(x) for x in texts)
+
+
+def _matches(question: str, t: dict[str, Any], known: set[str]) -> bool:
+    """True when a recording is about what was asked.
+
+    Every meaningful word of the question (one may be missing in a long question) must be
+    in the recorded question or in the first sentence of its answer, and a product code in
+    the question must be one of those texts' codes. So "for QIH" never gets the LLZ answer
+    and "recalls" never gets a report count.
+    """
+    sentences = _recorded_sentences(t)
+    first = next((str(s.get("text") or "") for s in sentences if s.get("status") == "pass"), "")
+    haystack = f"{t.get('question') or ''} {first}"
     asked = _words(question)
-    shared = len(asked & _words(recorded_question))
-    return shared >= 2 or (shared >= 1 and shared / max(len(asked), 1) >= 0.34)
+    have = _words(haystack)
+    if len(asked & have) < 2 or len(asked - have) > len(asked) // 5:
+        return False
+    codes = {w.upper() for w in _CODE_WORD.findall(question) if w.upper() in known}
+    return codes <= {w.upper() for w in _CODE_WORD.findall(haystack)}
+
+
+def _quoted(question: str) -> str:
+    q = " ".join(question.split())
+    if len(q) > _MAX_QUOTED_Q:
+        q = q[:_MAX_QUOTED_Q].rsplit(" ", 1)[0] + " ..."
+    q = re.sub(r"[.?!]+(?=\s|$)", lambda m: "," if m.end() < len(q) else "", q)
+    return q.replace('"', "'")
 
 
 def _speakable(lead: str | None, passed: list[str], withheld: int) -> str:
@@ -140,29 +199,50 @@ def _speakable(lead: str | None, passed: list[str], withheld: int) -> str:
     parts += chosen or ["I could not verify an answer to that, so I am not stating one."]
     if withheld:
         parts.append(
-            "One sentence was withheld because it could not be verified."
+            "One sentence was left out because it could not be verified or tied to a source."
             if withheld == 1
-            else f"{withheld} sentences were withheld because they could not be verified."
+            else f"{withheld} sentences were left out because they could not be verified "
+            "or tied to a source."
         )
     return compose(parts)
 
 
-def _from_live(res: CopilotResult, data: ConnectorData, now: datetime) -> ToolAnswer:
+def _split(items: list[Item]) -> tuple[list[str], list[Fact], list[WithheldSentence]]:
+    """Sort sentences into spoken (gate-passed, linked, clean) and left out.
+
+    Each item is ``(text, links, withheld_reason)``. A spoken sentence is the text of at
+    least one fact, so everything spoken has an openFDA or record link.
+    """
     passed: list[str] = []
     facts: list[Fact] = []
     withheld: list[WithheldSentence] = []
+    for text, found, reason in items:
+        if reason is None and not is_clean(text):
+            reason = _FORBIDDEN_REASON
+        if reason is None and not found:
+            reason = _UNLINKED_REASON
+        if reason is not None:
+            withheld.append(WithheldSentence(text=text, reason=reason))
+            continue
+        passed.append(text)
+        for link, label in dict.fromkeys(found):
+            facts.append(Fact(text=text, link=link, link_label=label))
+    return passed, facts, withheld
+
+
+def _from_live(res: CopilotResult, data: ConnectorData, now: datetime) -> ToolAnswer:
+    items: list[Item] = []
     for s in res.report.sentences:
         if s.status != "pass":
-            withheld.append(
-                WithheldSentence(text=s.text, reason="; ".join(s.reasons) or "not verified")
-            )
+            items.append((s.text, [], "; ".join(s.reasons) or "not verified"))
             continue
-        passed.append(s.text)
-        for cv in s.claim_verdicts:
-            found = links.claim_link(cv.claim) if cv.status == "pass" else None
-            if found:
-                facts.append(Fact(text=s.text, link=found[0], link_label=found[1]))
-                break
+        found = [
+            lk
+            for cv in s.claim_verdicts
+            if cv.status == "pass" and (lk := links.claim_link(cv.claim)) is not None
+        ]
+        items.append((s.text, found, None))
+    passed, facts, withheld = _split(items)
     latest = str(data.manifest().get("max_date_received") or "")
     return ToolAnswer(
         tool="ask",
@@ -184,29 +264,44 @@ def _from_live(res: CopilotResult, data: ConnectorData, now: datetime) -> ToolAn
     )
 
 
-def _from_recorded(t: dict[str, Any], reason: str) -> ToolAnswer:
-    sentences = (t.get("final") or {}).get("sentences") or []
-    passed: list[str] = []
-    facts: list[Fact] = []
-    withheld: list[WithheldSentence] = []
-    for s in sentences:
+def _digest_windows(data: ConnectorData) -> list[links.Window]:
+    w = data.digest().get("window") or {}
+    out: list[links.Window] = []
+    for a, b in (("current_start", "current_end"), ("baseline_start", "baseline_end")):
+        if w.get(a) and w.get(b):
+            out.append((str(w[a]).replace("-", ""), str(w[b]).replace("-", "")))
+    return out
+
+
+def _from_recorded(t: dict[str, Any], reason: str, data: ConnectorData) -> ToolAnswer:
+    windows = _digest_windows(data)
+    items: list[Item] = []
+    for s in _recorded_sentences(t):
         text = str(s.get("text") or "")
         if s.get("status") != "pass":
             reasons = [str(r) for r in s.get("reasons") or []]
-            withheld.append(
-                WithheldSentence(text=text, reason="; ".join(reasons) or "not verified")
-            )
+            items.append((text, [], "; ".join(reasons) or "not verified"))
             continue
-        passed.append(text)
-        for claim in s.get("claims") or []:
-            found = links.recorded_claim_link(claim) if claim.get("status") == "pass" else None
-            if found:
-                facts.append(Fact(text=text, link=found[0], link_label=found[1]))
-                break
-    recorded_q = str(t.get("question") or "")
+        claims = [c for c in s.get("claims") or [] if isinstance(c, dict)]
+        found: list[tuple[str, str]] = []
+        for claim in claims:
+            lk = links.recorded_claim_link(claim) if claim.get("status") == "pass" else None
+            if lk and claim.get("kind") != "count":
+                found.append(lk)
+        found += links.recover_count_links(text, claims, data.store, windows)
+        items.append((text, found, None))
+    passed, facts, withheld = _split(items)
+    if not passed and all(w.reason in (_UNLINKED_REASON, _FORBIDDEN_REASON) for w in withheld):
+        return _no_recording(reason)  # nothing here can be shown with a link: do not offer it
+    through = speak_date(str(data.manifest().get("max_date_received") or ""))
+    lead = (
+        f'{_LEADS[reason]}: "{_quoted(str(t.get("question") or ""))}"'
+        + (f", using stored reports through {through}" if through else "")
+        + "."
+    )
     return ToolAnswer(
         tool="ask",
-        speakable=_speakable(_LEADS[reason], passed, len(withheld)),
+        speakable=_speakable(lead, passed, len(withheld)),
         facts=facts,
         provenance=Provenance(
             kind="recorded_answer",
@@ -215,7 +310,7 @@ def _from_recorded(t: dict[str, Any], reason: str) -> ToolAnswer:
                 "claim gate when it was recorded"
             ),
             data_dates=f"recorded {str(t.get('recorded_at_utc') or '')[:10]}".strip(),
-            note=f'{_REASON_NOTES[reason]} Closest recorded question: "{recorded_q}"',
+            note=_REASON_NOTES[reason],
         ),
         withheld=withheld,
     )
@@ -275,7 +370,11 @@ def ask(
         )
         try:
             guard.check("connector.ask")
-            res = runtime.agent_factory(data, guard).ask(q)
+            agent = runtime.agent_factory(data, guard)
+            make_read_only(agent)  # whatever the factory built: no tool that writes
+            res = agent.ask(q)
+            if res.capa_ids or agent.context.created_capas:
+                raise RuntimeError("a read-only ask wrote a record")  # never shown; falls back
             return _from_live(res, data, now())
         except SpendLimitError:
             reason = "cap"
@@ -289,8 +388,9 @@ def ask(
         raise SourceUnavailableError(
             "No live answer is available and no recorded answers are stored."
         )
-    related = [t for t in transcripts if _relevant(q, str(t.get("question") or ""))]
+    known = {r.product_code for r in data.store.records}
+    related = [t for t in transcripts if _eligible(t) and _matches(q, t, known)]
     best = closest_recorded(q, related) if related else None
     if best is None:
         return _no_recording(reason)
-    return _from_recorded(best, reason)
+    return _from_recorded(best, reason, data)

@@ -280,3 +280,50 @@ def test_vercel_entry_point_exports_app() -> None:
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     assert any(getattr(r, "path", "") == "/v1/health" for r in mod.app.routes)
+
+
+# --- a key in the URL ------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "name", ["api_key", "key", "token", "x-api-key", "API_KEY", "access_token"]
+)
+def test_key_in_query_string_is_rejected_with_400(
+    data: ConnectorData, tmp_path: Path, name: str
+) -> None:
+    c = make_client(data, tmp_path)
+    for url in (f"/v1/tools/recalls?product_code=LLZ&{name}={KEY}", f"/v1/health?{name}={KEY}"):
+        r = c.get(url, headers=H)
+        assert r.status_code == 400 and r.json()["error"]["code"] == "key_in_url"
+        assert KEY not in r.text and KEY not in json.dumps(dict(r.headers))
+
+
+def test_key_in_query_is_blanked_before_any_access_log_can_read_it() -> None:
+    import asyncio
+
+    from maudesignal.connector.asgi import RejectKeyInQuery, has_key_param
+
+    async def never(*_: Any) -> None:
+        raise AssertionError("the app must not run")
+
+    sent: list[dict[str, Any]] = []
+
+    async def send(message: dict[str, Any]) -> None:
+        sent.append(message)
+
+    async def receive() -> dict[str, Any]:
+        return {"type": "http.request"}
+
+    scope: dict[str, Any] = {
+        "type": "http",
+        "path": "/v1/tools/recalls",
+        "query_string": f"product_code=LLZ&api_key={KEY}".encode(),
+    }
+    asyncio.run(RejectKeyInQuery(never)(scope, receive, send))
+    assert scope["query_string"] == b"" and KEY not in repr(scope)
+    assert sent[0]["status"] == 400 and KEY.encode() not in sent[1]["body"]
+    assert not has_key_param(b"product_code=LLZ&report_id=1")
+
+
+def test_health_states_that_limits_are_per_instance(data: ConnectorData, tmp_path: Path) -> None:
+    assert make_client(data, tmp_path).get("/v1/health").json()["limits_scope"] == "per_instance"

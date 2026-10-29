@@ -21,6 +21,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from maudesignal.common.logging import get_logger
 from maudesignal.connector import tools
+from maudesignal.connector.asgi import RejectKeyInQuery
 from maudesignal.connector.ask import (
     MAX_QUESTION_CHARS,
     MIN_QUESTION_CHARS,
@@ -50,7 +51,9 @@ DESCRIPTION = (
     "Advisory triage aid for quality and regulatory review; not medical advice; nothing is "
     "filed with FDA. Every key is read-only. Sentences from ask are checked by a deterministic "
     "claim gate; withheld sentences are listed separately and are never part of the speakable "
-    "text."
+    "text. Limits: the per-key rate limit and the per-key daily cost cap are kept in each "
+    "server instance's memory and temporary storage, so they are per instance and reset on a "
+    "cold start; live ask answers stay switched off until a shared store backs them."
 )
 
 _ERRORS: dict[int | str, dict[str, Any]] = {
@@ -99,6 +102,7 @@ class Health(BaseModel):
     version: str
     read_only: bool
     tools: list[str]
+    limits_scope: str
 
 
 class ApiError(Exception):
@@ -135,6 +139,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         docs_url=None,
         redoc_url=None,
     )
+    app.add_middleware(RejectKeyInQuery)
     key_header = APIKeyHeader(
         name="X-API-Key",
         auto_error=False,
@@ -224,6 +229,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             version=API_VERSION,
             read_only=True,
             tools=list(tools.TOOL_NAMES),
+            limits_scope="per_instance",
         )
 
     @app.get(

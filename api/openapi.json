@@ -85,6 +85,10 @@
       "Health": {
         "description": "``GET /v1/health`` body.",
         "properties": {
+          "limits_scope": {
+            "title": "Limits Scope",
+            "type": "string"
+          },
           "read_only": {
             "title": "Read Only",
             "type": "boolean"
@@ -114,7 +118,8 @@
           "service",
           "version",
           "read_only",
-          "tools"
+          "tools",
+          "limits_scope"
         ],
         "title": "Health",
         "type": "object"
@@ -271,7 +276,7 @@
       "name": "MaudeSignal (open source)",
       "url": "https://github.com/kondapallysaicharan63-bot/maudesignal"
     },
-    "description": "Read-only MaudeSignal tools for a Meta Muse connector. Each answer has a short speakable summary, facts that each carry an openFDA or record link, a fixed advisory line and provenance (stored demo snapshot with dates, or live openFDA with the query time). Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA. Every key is read-only. Sentences from ask are checked by a deterministic claim gate; withheld sentences are listed separately and are never part of the speakable text.",
+    "description": "Read-only MaudeSignal tools for a Meta Muse connector. Each answer has a short speakable summary, facts that each carry an openFDA or record link, a fixed advisory line and provenance (stored demo snapshot with dates, or live openFDA with the query time). Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA. Every key is read-only. Sentences from ask are checked by a deterministic claim gate; withheld sentences are listed separately and are never part of the speakable text. Limits: the per-key rate limit and the per-key daily cost cap are kept in each server instance's memory and temporary storage, so they are per instance and reset on a cold start; live ask answers stay switched off until a shared store backs them.",
     "title": "MaudeSignal connector API",
     "version": "0.1.0"
   },
