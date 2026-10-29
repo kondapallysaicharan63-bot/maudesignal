@@ -7,7 +7,7 @@ Status: **approved by Charan on Oct 29** (design system kept; deploy steps go to
 > here. The coordinator updates this file after every milestone and re-reads it after any
 > context compaction before acting.
 
-## Live status (updated 2026-10-30 ~00:10 UTC)
+## Live status (updated 2026-10-30 ~00:30 UTC)
 
 | Track / item | Branch | State | Evidence | Next |
 |---|---|---|---|---|
@@ -22,6 +22,9 @@ Status: **approved by Charan on Oct 29** (design system kept; deploy steps go to
 | Voice (taken over from Muse's 2aa8382): fifth recording restored; 3 takes kept (take1=Q1, take6=Q2, take4=Q3) with Charan's consent in `demo/voice/README.md`; takes 2/3/5/7 and TTS `question.wav` removed | `coordinator-voice` (`232983b`) | 2aa8382 advisor review running | 1022 unit; all 10 audit exports verify | After the 2aa8382 verdict: merge fix-2 into this branch, resolve the conflict, advisor, merge to `hackathon-day2`; then re-export web data |
 | Vercel web project `maudesignal` (prj_x1NDkrSG6VoZ4Ax7OrQugC1DVHeu) | — | Connector has team access (Oct 29). `track-b-ui` preview READY at f621f7c; other branches fail by design (no `web/`) | build log read via connector | Browser check gets 403 from openFDA → web app will call the API's public check endpoint (C2); npm audit: 5 vulns (2 critical) → Track B |
 | Incident: `2aa8382` pushed by Meta Muse under Charan's name (unsigned, unreviewed) → bot recording `f53b64a` (run 40965201781) replaced all stored data | `hackathon-day2` | Advisor **BLOCK** on 2aa8382 (product-code correction rewrites real codes/words; any 3-letter word taken as a code). Data reverted to the fifth recording in `54a95fe` (byte-identical to `f53b64a^`); 2aa8382 code still on the branch pending V1 | advisor report | V1 fix running on `coordinator-voice` (`wf_3bf07d9b-6e1`); process: Muse should push to its own branch, never to `hackathon-day2`, and never bump `RECORD_REQUEST` |
+| Track A merge | PR [#10](https://github.com/kondapallysaicharan63-bot/maudesignal/pull/10) `track-a-core` → `hackathon-day2` (merges cleanly) | Draft, CI running | — | Merge on green; recordings only with Charan's OK |
+| B6 (low priority, after voice fix + C2): sweep card states the rules + "148 of 181 codes had fewer than 3 reports this week (132 had none)"; artifacts tab row wraps, no horizontal scroll | `track-b-ui` | Queued | MUD and MQB meet the detector rules (checked) | Charan to decide: minimum count for "more serious than usual"? |
+| Feature "Does this apply to us?" (§3c) | A6–A9, B7 | Planned, starts after voice fix + C2 | — | D0 contract first |
 | Daily monitor on `main` | `main` | Ran Oct 29 | commit `be05711` digest | Watch tomorrow's 11:17 UTC run (check-in 11:50 UTC) |
 
 ### Decisions (with date)
@@ -153,6 +156,27 @@ Not claimed: Meta approval or an official listing. Third-party guides describe a
 submission form at muse.ai/platform (HTTPS MCP endpoint, privacy policy, terms,
 support contact); no official Meta page was found, so the doc lists those fields as
 "to confirm against the live form".
+
+## 3c. Feature "Does this apply to us?" (Charan, Oct 30; starts after the voice fix and C2)
+
+From practitioner feedback, demonstrated with a **simulated** company. Track A builds the
+core and the Streamlit page, Track B the web workflow; advisor PASS for each milestone.
+
+Ground rules: every screen and PDF says "Simulated company — sample data. Problem
+evidence is real FDA data."; fictional device names only (no real company names, no real
+K-numbers on fictional devices); the simulated data lives in its own demo file, never in
+the real records; statuses are set only by a named (simulated) person, never by the tool;
+never the words "safe", "unsafe", "compliant".
+
+| Milestone | Work | Done when |
+|---|---|---|
+| D0 (coordinator) | Data contract for `company.json` (devices, codes, patterns, statuses, history) in `web/DATA_CONTRACT.md` | Contract committed before A/B start |
+| A6 Simulated company + patterns + statuses | "Demo MedTech Co. (simulated)": 12 fictional devices on real codes: 2 LLZ; 1 each QIH, MYN, POK; 4 on sweep-flagged codes (IYN, OTE, DSI, MUD all meet the detector rules, checked Oct 30); 3 on sweep "no change" codes. Device-type names from openFDA classification (recorded, with source). Real reports/recalls per code grouped into problem patterns (reusing the weekly-investigator groups; counts and quotes gate-checked; evidence links). Statuses: Not applicable (reason) / Already covered (sample reference, e.g. "test report TR-104 (sample)") / Testing in progress (owner, due date) / Needs review (owner) / Monitoring — nothing open; about half the devices with real patterns covering every status; forward-only; hash-chained audit | Tests: separation from real records, forward-only transitions, audit chain, banner on every surface, gate on counts/quotes, no forbidden words |
+| A7 Verification questions | Skill (structured output): Muse Spark suggests 2–3 plain verification questions per pattern; questions only; recorded in CI (key from secrets) | Skill folder complete; mocked tests; recording run on Charan's OK |
+| A8 (optional) Sample risk table | Labelled sample CSV; Spark suggests which rows MIGHT cover each pattern, quoting the table verbatim (gate-checked), "suggestion — your team confirms" | Quote check test; label on every surface |
+| A9 Streamlit + PDF | "Our devices" page (table with status chips → patterns, evidence, status history); the checklist as a section in the CAPA-need evidence PDF | e2e + PDF text check |
+| B7 Web "Our devices" | Sidebar workflow, device table with status chips, patterns + evidence + history, right-panel artifact; data from the exporter | Build, vitest, screenshots 1440/390 light/dark |
+| Video | Shot "this is how it looks when a company installs it" in `claude/video-script-v1.md` | Shot list committed |
 
 ## 4. Advisor loop (every milestone, both tracks)
 
