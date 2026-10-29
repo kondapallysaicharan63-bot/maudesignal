@@ -99,7 +99,7 @@ jobs:
             sleep 2
           done
       - name: Product pages (Signals, Copilot, Vision, Audit; themes, sizes, a11y)
-        run: pytest tests/e2e/test_08_hackathon_pages.py -p no:cacheprovider --no-cov -o addopts=""
+        run: pytest tests/e2e/test_08_hackathon_pages.py -p no:cacheprovider --no-cov -o addopts="" -rs
       - name: Classic pages (reported, not blocking — they need LLM extraction rows the keyless demo database does not hold)
         continue-on-error: true
         run: >

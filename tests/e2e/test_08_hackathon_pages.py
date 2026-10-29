@@ -214,8 +214,10 @@ class TestLiveCheck:
         panel = self._check(ms_page, "LLZ")
         outcome = panel.locator(".ms-sig-head, [data-testid='stAlert']").first
         expect(outcome).to_be_visible(timeout=60_000)
-        if "could not be reached" in outcome.inner_text():
-            pytest.skip("openFDA not reachable from this runner")
+        text = outcome.inner_text()
+        if "HTTP error contacting openFDA" in text:  # no network to openFDA (sandboxes)
+            pytest.skip(f"openFDA not reachable from this runner: {text}")
+        assert "could not be reached" not in text, text  # any other openFDA error is a bug
         expect(panel).to_contain_text("Live from openFDA · LLZ", ignore_case=True)
         expect(panel).to_contain_text("This week")
         panel.get_by_text("Where each number comes from").click()
