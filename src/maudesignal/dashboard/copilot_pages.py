@@ -486,10 +486,18 @@ def page_audit(db: Database) -> None:
     if drafts:
         st.subheader(f"CAPA-need evidence packs ({len(pending)} awaiting a decision)")
         render_approvals(db, drafts)
+    from maudesignal.dashboard.demo_db import keyless
+
     rows = db.list_audit()
     if not rows:
         _recorded_audit_trails()
         return
+    if keyless():
+        # The keyless demo runs on a copy of the demo database with the recorded packs
+        # restored, so its own trail holds only those restore entries; the recorded Meta
+        # runs' trails are shown too.
+        _recorded_audit_trails()
+        st.subheader("This demo database")
     ok, bad = db.verify_audit_chain()
     if ok:
         st.success(f"Hash chain intact across {len(rows)} entries.")
