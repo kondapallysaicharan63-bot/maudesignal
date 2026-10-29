@@ -44,5 +44,5 @@ in for live answers, so no hackathon credit is spent on them.
 | Audit trail | editing any stored entry breaks the chain at that entry; detected in the database and in exported trails |
 | Spend caps | $1 and 20 Meta calls per browser session, $10 per day; no call starts once a cap is reached |
 | MHRA labelling | MHRA alerts never enter a MAUDE number; every surface says "MHRA (UK)" |
-| Label camera (live photos) | 7 of 7 read (run 40789231086); 4 correct, 1 left for a person, 2 nothing read; no lot/serial stored; photos refused if they carry metadata (0 of 7 did) |
+| Label camera (live photos) | 7 of 7 read (run 40792998780); 4 correct, 1 left for a person, 1 nothing read, 1 misread (fields marked partly legible, no product code); no lot/serial stored; photos refused if they carry metadata (0 of 7 did) |
 | Themes | WCAG AA in Light, Dark, Black, Pink, High contrast; System follows the OS |

@@ -100,7 +100,8 @@ the real per-answer cost comes from the recorded runs (section 4).
 | 2026-10-28 | Read device-label photos, run 40788032390 | 7 photos; 1 read, 6 stopped at the 1024-token cap | $0.0077 logged for the one read; the 6 failed reads are **not logged** | Actions log |
 | 2026-10-28 | Read device-label photos, run 40788480154 | 7 of 7 read (8000-token cap) | $0.0831 (Spark + SAM, sum of `cost_usd.total`) | Actions log |
 | 2026-10-28 | Read device-label photos, run 40789231086 | 7 of 7 read (partly legible name → no product code) | $0.0924 (sum of `cost_usd.total`) | `demo/vision/label-*.json` |
-| | **logged so far, all runs** | | **$8.2753** of $150 (estimates from token counts × list prices; check the console balance) | |
+| 2026-10-29 | Read device-label photos, run 40792998780 | 7 of 7 re-read after the Welch module photo was re-masked | $0.0775 (sum of `cost_usd.total`) | `demo/vision/label-*.json` |
+| | **logged so far, all runs** | | **$8.3528** of $150 (estimates from token counts × list prices; check the console balance) | |
 
 ## 5. Allocation of the $150 (PROPOSED: Charan to confirm)
 

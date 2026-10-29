@@ -52,7 +52,7 @@ recorded run or a test in this repository (sources in brackets).
 - Tests: 701 unit tests, 77% coverage; Playwright on every page and theme; all 21
   test types reported, with the external ones marked PENDING
   [`docs/hackathon/TESTING.md`].
-- Spend so far: about $8.28 of the $150 credit (estimates) [`docs/hackathon/BUDGET.md`].
+- Spend so far: about $8.35 of the $150 credit (estimates) [`docs/hackathon/BUDGET.md`].
 
 ## Video script v3 (from Charan's v2, updated to the build) — 2:45 target, 3:00 cap
 
@@ -85,7 +85,6 @@ gate playground on the day.
 ## Not done / still needed from Charan
 
 - Deployed Streamlit link; external beta and expert sign-off (Harish / PSM QA).
-- Check `label-welch-module.jpg`: a short number is visible just below the black box.
 - Making `hackathon-day2` the default branch (or an OK to merge) so the daily
   monitor cron can run.
 - The final submit click.
