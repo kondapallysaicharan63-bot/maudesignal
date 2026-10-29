@@ -56,8 +56,6 @@ FRAMING_LINE = (
 _PILL = {"pass": ("ok", "Verified"), "block": ("err", "Withheld")}
 
 
-#: Display names for tool ids whose wording the product no longer uses. The id stays
-#: in the Skill and in recorded runs; only the label on screen changes.
 def short(text: str, limit: int) -> str:
     """Cut at a word boundary with an ellipsis (list labels)."""
     if len(text) <= limit:

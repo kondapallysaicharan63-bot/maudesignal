@@ -46,7 +46,13 @@ from maudesignal.dossier.model import (
     SignalSection,
     WeeklyBar,
 )
-from maudesignal.dossier.narrative import gate_narrative, load_recording, omitted_section
+from maudesignal.dossier.narrative import (
+    STALE_NARRATIVE_NOTE,
+    gate_narrative,
+    load_recording,
+    omitted_section,
+    pack_hash,
+)
 from maudesignal.gate import EvidenceStore, verify_sentence
 from maudesignal.gate.loader import store_from_database
 from maudesignal.monitor.deterioration import (
@@ -402,6 +408,9 @@ def build_dossier(
     Raises:
         DossierError: unknown CAPA id, no signal for the product code, or no data.
     """
+    # Time the builder's own queries ran (the protocol's "Run at"); generated_at is only the
+    # printed document time and may be supplied (tests, re-renders).
+    queried_at = datetime.now(UTC).replace(tzinfo=None, microsecond=0)
     capa_row = db.get_capa_draft(capa_id) if capa_id else None
     if capa_id and capa_row is None:
         raise DossierError(f"unknown CAPA-need evidence pack {capa_id}")
@@ -468,9 +477,19 @@ def build_dossier(
     if narrative is None:
         rec_path = recorded_dir / f"{doc_id}-narrative.json" if recorded_dir else None
         recording = load_recording(rec_path) if rec_path else None
-        narrative = (
-            gate_narrative(recording, store, source="recorded") if recording else omitted_section()
+        expected = pack_hash(
+            capa.capa_id if capa else None,
+            [r.report_id for r in rows],
+            capa.problem_statement if capa else None,
         )
+        if recording is None:
+            narrative = omitted_section()
+        elif recording.pack_hash != expected:
+            narrative = omitted_section(STALE_NARRATIVE_NOTE)
+        else:
+            narrative = gate_narrative(
+                recording, store, source="recorded", cited_report_ids=[r.report_id for r in rows]
+            )
 
     entity_ids = {doc_id} | ({capa.capa_id} if capa else set())
     audit = _audit_rows(db, entity_ids, capa.capa_id if capa else None)
@@ -502,7 +521,7 @@ def build_dossier(
             pc,
             signal,
             evidence_count,
-            generated.isoformat(timespec="seconds") + "Z",
+            queried_at.isoformat(timespec="seconds") + "Z",
             capa.capa_id if capa else None,
             transcripts,
             [r.report_id for r in rows],

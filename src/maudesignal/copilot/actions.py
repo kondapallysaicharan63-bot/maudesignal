@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Iterable, Mapping
+from datetime import UTC, datetime
 from typing import Any
 
 from maudesignal.common.exceptions import MaudeSignalError
@@ -43,11 +44,14 @@ def draft_capa(
     report_ids: list[str],
     actor: str,
     capa_id: str | None = None,
+    created_at: datetime | None = None,
+    restored_from: str | None = None,
 ) -> CapaDraftRecord:
     """Create a CAPA-need evidence pack (audit-first).
 
     ``capa_id`` is only for restoring a pack that a stored transcript recorded (see
-    ``restore_recorded_capas``); a new pack always gets a fresh random id.
+    ``restore_recorded_capas``); a new pack always gets a fresh random id. ``created_at`` and
+    ``restored_from`` (the transcript file) are likewise only for that replay.
     """
     if not report_ids:
         raise ActionError("a CAPA-need evidence pack must cite at least one report")
@@ -59,6 +63,8 @@ def draft_capa(
         problem_statement=problem_statement.strip()[:4000],
         report_ids=list(dict.fromkeys(report_ids)),
         created_by=actor,
+        created_at=created_at,
+        restored_from=restored_from,
     )
 
 
@@ -79,13 +85,27 @@ def decide_capa(
     )
 
 
+def _recorded_at(transcript: Mapping[str, Any]) -> datetime | None:
+    """The transcript's recorded UTC time as a naive UTC datetime (None if unparseable)."""
+    raw = transcript.get("recorded_at_utc")
+    if not raw:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return dt.astimezone(UTC).replace(tzinfo=None) if dt.tzinfo else dt
+
+
 def restore_recorded_capas(db: Database, transcripts: Iterable[Mapping[str, Any]]) -> list[str]:
     """Re-create, in ``db``, the packs that stored transcripts recorded their copilot drafting.
 
     The stored ``draft_capa`` call (title, problem statement, cited reports) is replayed under
     the id the transcript recorded in ``capa_ids``, so the pack and the searches that prepared
     it share a real id. Packs already present, or whose cited reports are not all in ``db``,
-    are skipped. Returns the ids restored.
+    are skipped. The restored pack keeps the time the transcript recorded (not the replay
+    time), and its audit entry names the transcript file in ``restored_from``. Returns the
+    ids restored.
     """
     restored: list[str] = []
     for t in transcripts:
@@ -106,6 +126,8 @@ def restore_recorded_capas(db: Database, transcripts: Iterable[Mapping[str, Any]
                 report_ids=report_ids,
                 actor=COPILOT_ACTOR,
                 capa_id=capa_id,
+                created_at=_recorded_at(t),
+                restored_from=str(t.get("_file") or t.get("label") or "transcript"),
             )
             restored.append(capa_id)
     return restored

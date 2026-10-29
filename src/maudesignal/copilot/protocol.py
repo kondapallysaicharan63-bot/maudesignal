@@ -207,6 +207,7 @@ def load_transcripts(directory: Path) -> list[dict[str, Any]]:
         except (OSError, ValueError):
             continue
         if isinstance(obj, dict) and isinstance(obj.get("tool_calls"), list):
+            obj.setdefault("_file", path.name)
             out.append(obj)
     return out
 

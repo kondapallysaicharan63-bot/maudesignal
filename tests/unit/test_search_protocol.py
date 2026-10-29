@@ -131,6 +131,17 @@ def test_committed_demo_db_links_copilot_rows_to_the_pack(tmp_path: Path) -> Non
     assert restore_recorded_capas(db, transcripts) == []  # idempotent
     row = db.get_capa_draft("CAPA-DRAFT-CB63076E")
     assert row is not None and row.status == "draft"
+    # contemporaneous: the pack keeps the time the copilot recorded, and the audit entry
+    # names the transcript it was restored from
+    assert row.created_at == datetime(2026, 10, 28, 20, 36, 53)
+    entry = next(
+        a
+        for a in db.list_audit()
+        if a.entity_id == "CAPA-DRAFT-CB63076E" and a.action == "capa.draft"
+    )
+    payload = json.loads(entry.payload_json)
+    assert payload["restored_from"].endswith(".json")
+    assert payload["recorded_at_utc"] == "2026-10-28T20:36:53Z"
 
     b = build_dossier(db, capa_id="CAPA-DRAFT-CB63076E", transcripts=TRANSCRIPTS)
     labels = [r.label for r in b.data.protocol]
@@ -168,7 +179,10 @@ def test_pack_without_transcripts_shows_builder_rows_only(tmp_path: Path) -> Non
         transcripts=tmp_path / "missing",
     )
     assert all(r.tool.startswith("dossier:") for r in b.data.protocol)
-    assert b.data.protocol[0].run_at == "2026-10-27T12:00:00Z"
+    # "Run at" is when the builder's queries ran, not the printed (supplied) document time
+    assert b.data.protocol[0].run_at != "2026-10-27T12:00:00Z"
+    assert b.data.protocol[0].run_at is not None and b.data.protocol[0].run_at.endswith("Z")
+    assert b.data.generated_at == datetime(2026, 10, 27, 12, 0, 0)
 
 
 def test_transcript_dict_carries_protocol() -> None:

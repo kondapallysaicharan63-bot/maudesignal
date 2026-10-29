@@ -266,8 +266,14 @@ def render_dossier(db: Database, *, capa_id: str | None, product_code: str | Non
         live = st.session_state.get("dossier_review")
         if isinstance(live, ReviewResult) and live.doc_id == d.doc_id:
             _show_review(live, source="Live run")
-        elif recorded is not None:
+        elif recorded is not None and recorded.reviewed(out.pdf):
             _show_review(recorded, source="Recorded run")
+        elif recorded is not None:
+            st.warning(
+                f"A recorded reviewer run ({recorded.created_at}) reviewed an earlier revision "
+                "of this document, not this PDF, so its result is not shown as the review of "
+                "this document. Run the reviewer live to review this revision."
+            )
         else:
             st.info(
                 "No reviewer run recorded for this document. With META_MODEL_API_KEY set, run "

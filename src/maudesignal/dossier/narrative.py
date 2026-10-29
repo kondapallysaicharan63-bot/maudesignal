@@ -12,7 +12,9 @@ HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
 from __future__ import annotations
 
+import hashlib
 import json
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -22,7 +24,7 @@ from maudesignal.copilot.agent import default_skills_root, parse_answer
 from maudesignal.copilot.meta_provider import SPARK_USD_PER_M_INPUT, SPARK_USD_PER_M_OUTPUT
 from maudesignal.dossier.model import DossierData, NarrativeSection, NarrativeSentence
 from maudesignal.extraction.skill_loader import LoadedSkill, SkillLoader
-from maudesignal.gate import EvidenceStore, GateReport, SentenceVerdict, verify_answer
+from maudesignal.gate import EvidenceStore, GateReport, QuoteClaim, SentenceVerdict, verify_answer
 from maudesignal.monitor.digest import CHANGE_LABELS
 
 SKILL_NAME = "dossier-narrative"
@@ -31,6 +33,11 @@ RECORDING_SCHEMA = "dossier-narrative/1"
 NO_NARRATIVE_NOTE = (
     "Narrative summary omitted: no META_MODEL_API_KEY was available and no recorded Muse Spark "
     "narrative exists for this document. All other sections are deterministic."
+)
+STALE_NARRATIVE_NOTE = (
+    "Narrative summary omitted: the recorded Muse Spark narrative was drafted for a different "
+    "evidence pack (different id, cited reports or problem statement), so it is not shown. "
+    "All other sections are deterministic."
 )
 
 
@@ -46,6 +53,9 @@ class NarrativeRecording:
     input_tokens: int = 0
     output_tokens: int = 0
     schema: str = RECORDING_SCHEMA
+    #: Binds the narrative to the pack it was drafted for (see ``pack_hash``). Empty on
+    #: recordings made before the binding existed; those are never reused.
+    pack_hash: str = ""
 
     @property
     def cost_usd(self) -> float:
@@ -55,6 +65,29 @@ class NarrativeRecording:
             + self.output_tokens * SPARK_USD_PER_M_OUTPUT / 1e6,
             6,
         )
+
+
+def pack_hash(capa_id: str | None, report_ids: Iterable[str], problem_statement: str | None) -> str:
+    """Fingerprint of the evidence pack a narrative is about.
+
+    Hash of the pack id, its cited report ids (order-independent) and its problem statement.
+    A recorded narrative is reused only when this matches the pack being rendered.
+    """
+    payload = json.dumps(
+        [capa_id or "", sorted(set(report_ids)), (problem_statement or "").strip()],
+        ensure_ascii=False,
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def data_pack_hash(data: DossierData) -> str:
+    """``pack_hash`` of the pack a built dossier documents."""
+    capa = data.capa
+    return pack_hash(
+        capa.capa_id if capa else None,
+        [r.report_id for r in data.evidence],
+        capa.problem_statement if capa else None,
+    )
 
 
 def save_recording(rec: NarrativeRecording, path: Path) -> None:
@@ -78,6 +111,7 @@ def load_recording(path: Path) -> NarrativeRecording | None:
         raw_output=str(data["raw_output"]),
         input_tokens=int(data.get("input_tokens", 0)),
         output_tokens=int(data.get("output_tokens", 0)),
+        pack_hash=str(data.get("pack_hash", "")),
     )
 
 
@@ -183,11 +217,16 @@ def draft_narrative(
         raw_output=str(resp.choices[0].message.content or ""),
         input_tokens=int(getattr(usage, "prompt_tokens", 0) or 0) if usage else 0,
         output_tokens=int(getattr(usage, "completion_tokens", 0) or 0) if usage else 0,
+        pack_hash=data_pack_hash(data),
     )
 
 
 def gate_narrative(
-    rec: NarrativeRecording, store: EvidenceStore, *, source: str
+    rec: NarrativeRecording,
+    store: EvidenceStore,
+    *,
+    source: str,
+    cited_report_ids: Iterable[str] | None = None,
 ) -> NarrativeSection:
     """Run the claim-level gate over a narrative recording.
 
@@ -195,6 +234,10 @@ def gate_narrative(
         rec: Live or recorded model output.
         store: Evidence store of stored records.
         source: ``"live"`` or ``"recorded"`` (printed in the dossier).
+        cited_report_ids: Dossier mode: the pack's cited reports. A quote claim must cite one
+            of them; a quote from any other stored report is withheld (the store alone would
+            accept it, but the dossier would then say "cited reports" about a report it
+            does not cite).
 
     Returns:
         The narrative section: passed sentences verbatim, withheld ones with reasons.
@@ -202,6 +245,8 @@ def gate_narrative(
     try:
         pairs = parse_answer(rec.raw_output)
         report = verify_answer(pairs, store)
+        if cited_report_ids is not None:
+            report = _restrict_quotes(report, frozenset(cited_report_ids))
     except (ValueError, json.JSONDecodeError):
         # A reply that never parsed (empty, cut off by max_tokens, prose) is withheld,
         # never shown as one claim-less "verified" sentence. The 2026-10-28 dossier
@@ -241,6 +286,30 @@ def gate_narrative(
         recorded_at=rec.created_at,
         cost_usd=rec.cost_usd,
     )
+
+
+def _restrict_quotes(report: GateReport, cited: frozenset[str]) -> GateReport:
+    """Block sentences whose quote claims cite a report outside the pack."""
+    out: list[SentenceVerdict] = []
+    for sv in report.sentences:
+        outside = sorted(
+            {
+                rid
+                for cv in sv.claim_verdicts
+                if isinstance(cv.claim, QuoteClaim)
+                and (rid := cv.claim.report_id)
+                and rid not in cited
+            }
+        )
+        if sv.status == "pass" and outside:
+            reason = (
+                f"quote: report {', '.join(str(i) for i in outside)} is not one of the "
+                "reports this evidence pack cites"
+            )
+            out.append(SentenceVerdict(sv.text, "block", sv.claim_verdicts, (reason,)))
+        else:
+            out.append(sv)
+    return GateReport(out)
 
 
 def omitted_section(note: str = NO_NARRATIVE_NOTE) -> NarrativeSection:

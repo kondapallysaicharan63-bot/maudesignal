@@ -1100,20 +1100,32 @@ class Database:
         problem_statement: str,
         report_ids: list[str],
         created_by: str,
+        created_at: datetime | None = None,
+        restored_from: str | None = None,
     ) -> CapaDraftRecord:
-        """Audit-first: write the audit entry, then the draft, in one transaction."""
+        """Audit-first: write the audit entry, then the draft, in one transaction.
+
+        ``created_at`` / ``restored_from`` are only for replaying a pack a stored transcript
+        recorded: the row keeps the time the copilot really drafted it, and the audit payload
+        names the transcript file (the audit entry's own ``ts`` stays the replay time).
+        """
+        payload: dict[str, Any] = {
+            "product_code": product_code,
+            "title": title,
+            "problem_statement": problem_statement,
+            "report_ids": report_ids,
+        }
+        if restored_from:
+            payload["restored_from"] = restored_from
+            if created_at is not None:
+                payload["recorded_at_utc"] = created_at.strftime("%Y-%m-%dT%H:%M:%SZ")
         with self._session() as session:
             self._append_audit(
                 session,
                 actor=created_by,
                 action="capa.draft",
                 entity_id=capa_id,
-                payload={
-                    "product_code": product_code,
-                    "title": title,
-                    "problem_statement": problem_statement,
-                    "report_ids": report_ids,
-                },
+                payload=payload,
             )
             row = CapaDraftRecord(
                 capa_id=capa_id,
@@ -1122,7 +1134,7 @@ class Database:
                 problem_statement=problem_statement,
                 report_ids_json=json.dumps(report_ids),
                 status="draft",
-                created_at=datetime.now(UTC).replace(tzinfo=None),
+                created_at=created_at or datetime.now(UTC).replace(tzinfo=None),
                 created_by=created_by,
                 decided_by=None,
                 decided_at=None,
