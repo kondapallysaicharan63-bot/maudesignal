@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { auditRunFor, capaDrafts, protocolFor, TABS, type TabId } from '../artifacts'
 import { Icon } from '../icons'
+import { FULLSCREEN } from '../layout'
+import { ExpandButton } from './PanelBar'
 import type { Thread, WorkspaceData } from '../types'
 import { AuditTab, CapaTab, ProtocolTab } from './artifacts/AuditCapaProtocol'
 import { BriefTab, DigestTab } from './artifacts/BriefTabs'
@@ -22,18 +24,17 @@ interface Props {
   vision: (VisionSel & { nonce: number }) | null
   onBriefDate: (d: string) => void
   onClose: () => void
+  expanded: boolean
+  onToggleExpand: () => void
 }
 
-export function ArtifactsPane({ open, data, tab, onTab, thread, produced, briefDate, onBriefDate, vision, onClose }: Props) {
+export function ArtifactsPane({ open, data, tab, onTab, thread, produced, briefDate, onBriefDate, vision, onClose, expanded, onToggleExpand }: Props) {
   const drafts = useMemo(() => capaDrafts(data.audit), [data.audit])
   const [pick, setPick] = useState<string | null>(null)
   const threadId = thread?.id ?? null
   useEffect(() => setPick(null), [threadId])
   const protocolId = pick ?? threadId
   const brief = data.briefs.find((b) => b.date === briefDate) ?? data.briefs[0] ?? null
-  useEffect(() => {
-    document.getElementById(`tab-${tab}`)?.scrollIntoView({ inline: 'nearest', block: 'nearest' })
-  }, [tab, open])
   // A new tab or a newly opened reading starts at the top of the panel.
   useEffect(() => {
     document.getElementById('artifact-panel')?.scrollTo({ top: 0 })
@@ -44,23 +45,31 @@ export function ArtifactsPane({ open, data, tab, onTab, thread, produced, briefD
     <aside
       id="artifacts"
       aria-label="Artifacts"
+      data-expanded={expanded}
       className={[
         'z-30 flex flex-col border-rule bg-surface',
-        // phone and tablet: bottom sheet
-        'max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:h-[82dvh] max-lg:rounded-t-md max-lg:border-t max-lg:transition-transform max-lg:duration-200',
-        open ? '' : 'max-lg:invisible max-lg:translate-y-full',
-        // desktop: docked on the right
-        'lg:static lg:w-[28rem] lg:shrink-0 lg:border-l xl:w-[34rem]',
-        open ? '' : 'lg:hidden',
+        expanded
+          ? FULLSCREEN
+          : [
+              // phone and tablet: bottom sheet
+              'max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:h-[82dvh] max-lg:rounded-t-md max-lg:border-t max-lg:transition-transform max-lg:duration-200',
+              open ? '' : 'max-lg:invisible max-lg:translate-y-full',
+              // desktop: docked on the right
+              'lg:static lg:w-[26rem] lg:shrink-0 lg:border-l xl:w-[27rem]',
+              open ? '' : 'lg:hidden',
+            ].join(' '),
       ].join(' ')}
     >
       <div className="flex shrink-0 items-center justify-between border-b border-rule px-4 py-2">
         <h2 className="m-0 text-[16px] font-semibold">Artifacts</h2>
-        <button className="ws-icon-btn" onClick={onClose} aria-label="Close artifacts">
-          <Icon name="close" />
-        </button>
+        <span className="flex items-center">
+          <ExpandButton panel="artifacts" expanded={expanded} onToggle={onToggleExpand} />
+          <button className="ws-icon-btn" onClick={onClose} aria-label="Close artifacts">
+            <Icon name="close" />
+          </button>
+        </span>
       </div>
-      <div role="tablist" aria-label="Artifacts" className="ws-tabstrip flex shrink-0 gap-0.5 overflow-x-auto border-b border-rule px-2">
+      <div role="tablist" aria-label="Artifacts" className="flex shrink-0 flex-wrap gap-x-0.5 border-b border-rule px-2">
         {TABS.map((t) => {
           const selected = t.id === tab
           return (

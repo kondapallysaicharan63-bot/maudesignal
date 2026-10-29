@@ -57,7 +57,7 @@ export function Sidebar(p: Props) {
           'z-40 flex w-[min(88vw,22rem)] shrink-0 flex-col border-r border-rule bg-surface transition-transform duration-200',
           'max-md:fixed max-md:inset-y-0 max-md:left-0',
           p.open ? '' : 'max-md:invisible max-md:-translate-x-full',
-          p.collapsed ? 'md:hidden' : 'md:static md:w-80',
+          p.collapsed ? 'md:hidden' : 'md:static md:w-72',
         ].join(' ')}
       >
         <div className="flex items-center justify-between px-3 pt-3 md:hidden">

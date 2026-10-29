@@ -1,4 +1,6 @@
+import type { AlertItem } from '../dashboard'
 import { Icon } from '../icons'
+import { AlertBell } from './AlertBell'
 import type { ThemeChoice } from '../storage'
 import type { Manifest } from '../types'
 
@@ -11,6 +13,8 @@ interface Props {
   onToggleArtifacts: () => void
   onTheme: () => void
   onPalette: () => void
+  alerts: AlertItem[]
+  onAlert: (a: AlertItem) => void
   /** Opens the thread holding the first withheld sentence (omitted when none is stored). */
   onWithheld?: () => void
 }
@@ -40,6 +44,7 @@ export function Header(p: Props) {
           <span className="hidden text-[15px] md:inline">Search</span>
           <kbd className="ms-code hidden rounded-xs border border-rule px-1 md:inline">Ctrl K</kbd>
         </button>
+        <AlertBell items={p.alerts} onOpen={p.onAlert} />
         <button
           className="ws-icon-btn"
           onClick={p.onTheme}

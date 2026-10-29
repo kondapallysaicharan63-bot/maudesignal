@@ -1,0 +1,238 @@
+// Pure helpers for the home dashboard, the mini-dashboards and the alert bell.
+// Every number is computed from the stored exports; thresholds mirror
+// src/maudesignal/monitor/deterioration.py (a test fails if they drift apart).
+import { capaDrafts, CLASS_LABEL, flaggedRows } from './artifacts'
+import type { Brief, Sweep, Thread, WorkflowId, WorkspaceData } from './types'
+
+/** Mirrors SPIKE_MIN_REPORTS, SPIKE_MULTIPLIER, BASELINE_WEEKS and SEVERITY_ESCALATION_PP in deterioration.py. */
+export const SWEEP_RULES = {
+  spikeMinReports: 3,
+  spikeMultiplier: 2,
+  baselineWeeks: 4,
+  severityPoints: 15,
+} as const
+
+/** The rules in plain words, built from the constants so the text cannot disagree with them. */
+export function sweepRuleText(r = SWEEP_RULES): { spike: string; serious: string; newKind: string } {
+  return {
+    newKind:
+      'A new kind of problem means reports in a code that had none before, or a kind of event never seen for that code before.',
+    spike: `Reports suddenly increased needs at least ${r.spikeMinReports} reports this week and at least ${r.spikeMultiplier}x the ${r.baselineWeeks}-week weekly mean.`,
+    serious: `More serious than usual needs the injury/death share to rise ${r.severityPoints} points or more.`,
+  }
+}
+
+export interface SweepStats {
+  total: number
+  /** Codes with fewer than `spikeMinReports` reports this week. */
+  fewer: number
+  /** Codes with no report this week. */
+  none: number
+}
+
+export function sweepStats(sweep: Sweep, minReports: number = SWEEP_RULES.spikeMinReports): SweepStats {
+  const rows = sweep.rows
+  return {
+    total: rows.length,
+    fewer: rows.filter((r) => r.current_count < minReports).length,
+    none: rows.filter((r) => r.current_count === 0).length,
+  }
+}
+
+export function sweepStatsText(s: SweepStats, minReports: number = SWEEP_RULES.spikeMinReports): string {
+  return `${s.fewer} of ${s.total} codes had fewer than ${minReports} reports this week (${s.none} had none).`
+}
+
+// ── Alerts ──────────────────────────────────────────────────────────────
+
+export type AlertKind = 'new_signal' | 'severity_escalation'
+
+export interface AlertItem {
+  id: string
+  kind: AlertKind
+  productCode: string
+  label: string
+  /** Where the item comes from: the AI device sweep (real data) or the newest demo-snapshot brief. */
+  source: 'sweep' | 'brief'
+  /** Sweep: the sweep date. Brief: the brief date. */
+  date: string
+  detail: string
+}
+
+const plural = (n: number, word: string): string => `${n} ${word}${n === 1 ? '' : 's'}`
+
+const RISKY: string[] = ['new_signal', 'severity_escalation']
+const isRisky = (c: string): c is AlertKind => RISKY.includes(c)
+
+/**
+ * Risky items: "new kind of problem" and "more serious than usual" from the AI device sweep and from
+ * the newest brief. "Needs review" items are not included because the export holds no such data yet.
+ */
+export function alertItems(sweep: Sweep, briefs: Brief[]): AlertItem[] {
+  const out: AlertItem[] = []
+  const sweepDay = sweep.meta.generated_utc.slice(0, 10)
+  for (const r of flaggedRows(sweep))
+    if (isRisky(r.classification))
+      out.push({
+        id: `sweep:${r.product_code}`,
+        kind: r.classification,
+        productCode: r.product_code,
+        label: CLASS_LABEL[r.classification],
+        source: 'sweep',
+        date: sweepDay,
+        detail: `${plural(r.current_count, 'report')} this week`,
+      })
+  const newest = briefs[0]
+  if (newest)
+    for (const s of newest.signals)
+      if (isRisky(s.classification))
+        out.push({
+          id: `brief:${newest.date}:${s.product_code}`,
+          kind: s.classification,
+          productCode: s.product_code,
+          label: CLASS_LABEL[s.classification],
+          source: 'brief',
+          date: newest.date,
+          detail: `${plural(s.current_count, 'report')} in the demo-snapshot week`,
+        })
+  return out
+}
+
+// ── Recorded-run metrics ─────────────────────────────────────────────────
+
+export interface RunMetric {
+  id: string
+  recordedAt: string
+  /** Sentences shown in the final answer (all passed the gate). */
+  answers: number
+  sentences: number
+  /** passed / (passed + blocked) on the first pass; null when not stored. */
+  firstPass: number | null
+  /** Final sentences that passed / all final sentences; null when there are none. */
+  finalPass: number | null
+  costUsd: number | null
+  durationS: number | null
+}
+
+export function runMetrics(threads: Thread[]): RunMetric[] {
+  return [...threads]
+    .sort((a, b) => a.recorded_at_utc.localeCompare(b.recorded_at_utc))
+    .map((t) => {
+      const passed = t.sentences.filter((s) => s.status === 'pass').length
+      const fp = t.first_pass
+      const fpTotal = fp ? fp.passed + fp.blocked : 0
+      return {
+        id: t.id,
+        recordedAt: t.recorded_at_utc,
+        answers: passed,
+        sentences: t.sentences.length,
+        firstPass: fp && fpTotal > 0 ? fp.passed / fpTotal : null,
+        finalPass: t.sentences.length > 0 ? passed / t.sentences.length : null,
+        costUsd: typeof t.usage?.cost_usd === 'number' ? t.usage.cost_usd : null,
+        durationS: typeof t.usage?.duration_s === 'number' ? t.usage.duration_s : null,
+      }
+    })
+}
+
+export const pct = (x: number): string => `${Math.round(x * 1000) / 10}%`
+export const usd = (x: number): string => `$${x.toFixed(x < 1 ? 3 : 2)}`
+
+// ── Mini-dashboards ───────────────────────────────────────────────────────
+
+export interface MiniStat {
+  label: string
+  value: string
+  note?: string
+}
+
+export function workflowThreads(data: WorkspaceData, id: string): Thread[] {
+  const group = data.threads.workflows.find((w) => w.id === id)
+  return group ? data.threads.threads.filter((t) => group.thread_ids.includes(t.id)) : []
+}
+
+/** A greeting has no tool step and no claim, so it is not an answer. */
+const isAnswer = (t: Thread) => t.tool_steps.length > 0 || t.sentences.some((s) => s.claims.length > 0)
+
+function threadStats(ts: Thread[]): MiniStat[] {
+  const answers = ts.filter(isAnswer)
+  const claims = answers.flatMap((t) => t.sentences.flatMap((s) => s.claims)).filter((c) => c.status === 'pass').length
+  const withheld = answers.flatMap((t) => t.sentences).filter((s) => s.status === 'block').length
+  const costs = runMetrics(answers)
+    .map((x) => x.costUsd)
+    .filter((x): x is number => x !== null)
+  return [
+    { label: 'Recorded answers', value: `${answers.length}` },
+    { label: 'Claims verified', value: `${claims}` },
+    { label: 'Sentences withheld', value: `${withheld}` },
+    {
+      label: 'Cost of these runs',
+      value: costs.length > 0 ? usd(costs.reduce((a, b) => a + b, 0)) : 'not recorded',
+      note: costs.length > 0 && costs.length < answers.length ? `${costs.length} of ${answers.length} runs recorded a cost` : undefined,
+    },
+  ]
+}
+
+export function miniStats(workflow: WorkflowId, data: WorkspaceData): MiniStat[] {
+  switch (workflow) {
+    case 'ai-sweep': {
+      const st = sweepStats(data.sweep)
+      return [
+        { label: 'Codes checked', value: `${data.sweep.meta.codes_checked} of ${data.sweep.meta.codes_on_list}` },
+        { label: 'Flagged', value: `${flaggedRows(data.sweep).length}` },
+        { label: `Fewer than ${SWEEP_RULES.spikeMinReports} reports`, value: `${st.fewer}`, note: `${st.none} had none` },
+        { label: 'Checked on', value: data.sweep.meta.generated_utc.slice(0, 10) },
+      ]
+    }
+    case 'check-device':
+      return [
+        { label: 'Codes on the AI list', value: `${data.sweep.meta.codes_on_list}` },
+        { label: 'Reports needed to flag a rise', value: `${SWEEP_RULES.spikeMinReports}` },
+        { label: 'Weeks in the baseline', value: `${SWEEP_RULES.baselineWeeks}` },
+        { label: 'Injury/death share rise', value: `${SWEEP_RULES.severityPoints} points` },
+      ]
+    case 'weekly-signals': {
+      const b = data.briefs[0]
+      return [
+        ...threadStats(workflowThreads(data, workflow)),
+        ...(b
+          ? [
+              {
+                label: 'Newest brief',
+                value: b.date,
+                note: `${b.counts.new} new kind, ${b.counts.more_serious_than_usual} more serious, ${b.counts.reports_suddenly_increased} rise`,
+              },
+            ]
+          : []),
+      ]
+    }
+    case 'ask-copilot':
+      return threadStats(workflowThreads(data, workflow))
+    case 'capa-need-evidence':
+      return [
+        ...threadStats(workflowThreads(data, workflow)),
+        { label: 'Drafts in the audit trail', value: `${capaDrafts(data.audit).length}` },
+      ]
+    case 'weekly-investigator':
+    case 'recall-sweep': {
+      const runs = data.investigations.investigations.filter((r) => r.kind === workflow)
+      return [
+        { label: 'Recorded runs', value: `${runs.length}` },
+        { label: 'Groups of reports', value: `${runs.reduce((n, r) => n + r.groups.length, 0)}` },
+        {
+          label: 'Sentences shown',
+          value: `${runs.reduce((n, r) => n + r.sentences.filter((s) => s.status === 'pass').length, 0)}`,
+        },
+      ]
+    }
+    case 'vision': {
+      const k = data.vision.k510
+      const count = (s: 'VERIFIED' | 'CONFLICT' | 'UNVERIFIABLE') => k.reduce((n, r) => n + (r.counts[s] ?? 0), 0)
+      return [
+        { label: '510(k) pages read', value: `${k.length}` },
+        { label: 'Label photos read', value: `${data.vision.labels.length}` },
+        { label: 'Fields verified', value: `${count('VERIFIED')}` },
+        { label: 'Conflicts / unverifiable', value: `${count('CONFLICT')} / ${count('UNVERIFIABLE')}` },
+      ]
+    }
+  }
+}

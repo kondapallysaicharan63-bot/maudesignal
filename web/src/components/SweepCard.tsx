@@ -1,10 +1,29 @@
 import { CLASS_LABEL, flaggedRows } from '../artifacts'
 import { isoDay } from '../data'
+import { sweepRuleText, sweepStats, sweepStatsText } from '../dashboard'
 import type { Sweep } from '../types'
 import { Pill } from './artifacts/common'
 
 /** "2026-10-29" from the sweep's generated_utc. */
 export const sweepDate = (s: Sweep): string => s.meta.generated_utc.slice(0, 10)
+
+/** The rules behind "flagged", and how many codes were too quiet to flag (computed from the rows). */
+export function SweepRules({ sweep }: { sweep: Sweep }) {
+  const r = sweepRuleText()
+  return (
+    <div className="mt-4 rounded-md border border-rule bg-sunk p-3" data-testid="sweep-rules">
+      <h3 className="ms-kicker m-0">How a code is flagged</h3>
+      <ul className="m-0 mt-2 list-disc space-y-1 pl-5 text-[16px] leading-snug text-ink-2">
+        <li>{r.newKind}</li>
+        <li>{r.spike}</li>
+        <li>{r.serious}</li>
+      </ul>
+      <p className="m-0 mt-2 text-[16px] text-ink" data-testid="sweep-stats">
+        {sweepStatsText(sweepStats(sweep))}
+      </p>
+    </div>
+  )
+}
 
 /**
  * The AI device sweep (sweep.json): how many product codes on FDA's AI-enabled device list were flagged,
@@ -56,6 +75,7 @@ export function SweepCard({ sweep, heading = true }: { sweep: Sweep; heading?: b
           </div>
         ))}
       </dl>
+      <SweepRules sweep={sweep} />
       <h3 className="ms-kicker mt-5">Flagged product codes · {flagged.length}</h3>
       {flagged.length === 0 ? (
         <p className="mt-2 text-ink-2">No product code was flagged in this sweep.</p>

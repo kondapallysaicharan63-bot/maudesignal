@@ -16,11 +16,13 @@ interface Props {
   onThread: (id: string) => void
   /** Identifies what is on screen; a message about one screen is not shown on another. */
   viewKey: string
+  /** Recorded-question chips are shown on Home only; inside a workflow the chat needs the room. */
+  chips?: boolean
 }
 
 type Notice = ({ kind: 'match'; question: string } | { kind: 'live' }) & { forKey: string }
 
-export function Composer({ threads, onThread, viewKey }: Props) {
+export function Composer({ threads, onThread, viewKey, chips = true }: Props) {
   const [text, setText] = useState('')
   const [saved, setNotice] = useState<Notice | null>(null)
   const notice = saved && saved.forKey === viewKey ? saved : null
@@ -43,7 +45,7 @@ export function Composer({ threads, onThread, viewKey }: Props) {
   return (
     <div className="shrink-0 border-t border-rule bg-paper px-3 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 md:px-6">
       <div className="mx-auto max-w-3xl">
-        {suggested.length > 0 && (
+        {chips && suggested.length > 0 && (
           <div className="mb-2">
             <p className="m-0 mb-1 text-[13px] text-ink-3">Recorded questions you can open</p>
             <ul className="m-0 flex list-none flex-wrap gap-2 p-0" aria-label="Suggested prompts">

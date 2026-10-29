@@ -13,6 +13,9 @@ const PATHS = {
   chat: 'M5 5h14v10H9l-4 4z',
   mic: 'M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM6 11a6 6 0 0 0 12 0M12 17v4',
   chevron: 'm9 6 6 6-6 6',
+  bell: 'M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0',
+  expand: 'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5',
+  collapse: 'M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5',
 } as const
 
 export type IconName = keyof typeof PATHS

@@ -1,9 +1,13 @@
-import { DEMO_WORKFLOWS, demoSnapshotLabel, visibleWorkflows, WORKFLOWS } from '../data'
+import { DEMO_WORKFLOWS, demoSnapshotLabel, WORKFLOWS } from '../data'
+import type { AlertItem } from '../dashboard'
+import { FULLSCREEN } from '../layout'
 import { Icon } from '../icons'
 import type { WorkflowDef, WorkflowId, WorkspaceData } from '../types'
 import { Composer } from './Composer'
+import { Dashboard } from './Dashboard'
 import { RunList, RunView } from './InvestigationViews'
 import { LiveCheckView } from './LiveCheckView'
+import { PanelBar } from './PanelBar'
 import { SweepCard } from './SweepCard'
 import { ThreadView } from './ThreadView'
 import { VisionWorkflow, type VisionSel } from './VisionWorkflow'
@@ -33,6 +37,10 @@ interface Props {
   onThread: (id: string) => void
   onRun: (id: string) => void
   onVision: (sel: VisionSel) => void
+  onBrief: (date: string) => void
+  onAlert: (a: AlertItem) => void
+  expanded: boolean
+  onToggleExpand: () => void
 }
 
 function StoredList({ def, data, onThread }: { def: WorkflowDef; data: WorkspaceData; onThread: (id: string) => void }) {
@@ -70,44 +78,11 @@ function StoredList({ def, data, onThread }: { def: WorkflowDef; data: Workspace
   )
 }
 
-function Welcome({ data, onWorkflow }: { data: WorkspaceData; onWorkflow: (id: WorkflowId) => void }) {
-  // The sweep card is the sweep itself, so its own tile is left out of the list below it.
-  const tiles = visibleWorkflows(data.investigations.investigations).filter((w) => w.id !== 'ai-sweep')
-  return (
-    <div>
-      <p className="ms-kicker">Postmarket surveillance · FDA-cleared AI/ML devices</p>
-      <div className="mt-3">
-        <SweepCard sweep={data.sweep} />
-      </div>
-      <h1 className="t-headline mt-8" style={{ fontSize: 'clamp(26px, 5vw, 36px)' }}>
-        What do you want to look into?
-      </h1>
-      <p className="mt-3 max-w-xl text-ink-2">
-        Answers here are written from stored public records (MAUDE reports, recalls, 510(k)s, PubMed, MHRA (UK) alerts). Each
-        sentence is checked before it is shown; a sentence with no factual claim is marked as such. Pick a workflow to start.
-      </p>
-      <ul className="m-0 mt-6 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2">
-        {tiles.map((w) => (
-          <li key={w.id}>
-            <button
-              onClick={() => onWorkflow(w.id)}
-              className="h-full w-full rounded-md border border-rule bg-surface p-4 text-left hover:border-rule-strong"
-            >
-              <span className="t-title block">{w.title}</span>
-              <span className="mt-1 block text-[15px] leading-snug text-ink-2">{w.blurb}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
-
 export function ChatPane(p: Props) {
   const { data } = p
   let body: JSX.Element
   if (p.view.kind === 'new') {
-    body = <Welcome data={data} onWorkflow={p.onWorkflow} />
+    body = <Dashboard data={data} onWorkflow={p.onWorkflow} onBrief={p.onBrief} onAlert={p.onAlert} />
   } else if (p.view.kind === 'workflow') {
     const id = p.view.id
     const def = WORKFLOWS.find((w) => w.id === id) ?? WORKFLOWS[0]
@@ -143,11 +118,16 @@ export function ChatPane(p: Props) {
     )
   }
   return (
-    <main className="flex min-w-0 flex-1 flex-col bg-paper" aria-label="Chat">
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-8 md:py-10">
-        <div className="mx-auto max-w-3xl pb-16">{body}</div>
+    <main
+      className={['flex min-w-0 flex-1 flex-col bg-paper', p.expanded ? FULLSCREEN : ''].join(' ')}
+      aria-label={p.view.kind === 'new' ? 'Home' : 'Chat'}
+      data-expanded={p.expanded}
+    >
+      <PanelBar title={p.view.kind === 'new' ? 'Home' : 'Chat'} panel="main" expanded={p.expanded} onToggle={p.onToggleExpand} />
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-8 md:py-8">
+        <div className={['mx-auto pb-16', p.view.kind === 'new' ? 'max-w-6xl' : 'max-w-3xl'].join(' ')}>{body}</div>
       </div>
-      <Composer threads={data.threads.threads} onThread={p.onThread} viewKey={viewKey(p.view)} />
+      <Composer threads={data.threads.threads} onThread={p.onThread} viewKey={viewKey(p.view)} chips={p.view.kind === 'new'} />
     </main>
   )
 }
