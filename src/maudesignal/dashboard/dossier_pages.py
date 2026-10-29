@@ -209,6 +209,27 @@ def render_dossier(db: Database, *, capa_id: str | None, product_code: str | Non
     else:
         st.caption(d.narrative.note)
 
+    with st.expander(f"Search methodology ({len(d.protocol)} searches)"):
+        st.caption(
+            "Every search behind this pack (Appendix B of the PDF), from stored values only. "
+            '"not recorded" means the stored log did not keep it.'
+        )
+        st.dataframe(
+            [
+                {
+                    "Search": r.tool,
+                    "Dataset": r.dataset,
+                    "Filters": r.filters_text,
+                    "From": r.date_from or "",
+                    "To": r.date_to or "",
+                    "Count": r.count_text,
+                    "Run at (UTC)": r.run_at or "not recorded",
+                }
+                for r in d.protocol
+            ],
+            hide_index=True,
+        )
+
     left, right = st.columns([3, 2], gap="large")
     with left:
         st.markdown("**Preview — page 1**")

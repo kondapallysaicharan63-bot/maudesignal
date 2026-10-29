@@ -11,6 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date, datetime
 
+from maudesignal.copilot.protocol import ProtocolRow
 from maudesignal.dossier.figures import Figure
 
 CONFIDENTIALITY_LINE = (
@@ -209,6 +210,7 @@ class DossierData:
     figures_checked: int = 0
     figures_failed: int = 0
     illustration: Illustration | None = None
+    protocol: tuple[ProtocolRow, ...] = ()
     software: str = "MaudeSignal 0.1.0 (maudesignal.dossier)"
     extra_notes: list[str] = field(default_factory=list)
 
