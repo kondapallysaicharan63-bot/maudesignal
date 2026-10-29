@@ -7,7 +7,7 @@ Status: **approved by Charan on Oct 29** (design system kept; deploy steps go to
 > here. The coordinator updates this file after every milestone and re-reads it after any
 > context compaction before acting.
 
-## Live status (updated 2026-10-29 ~23:40 UTC)
+## Live status (updated 2026-10-30 ~00:10 UTC)
 
 | Track / item | Branch | State | Evidence | Next |
 |---|---|---|---|---|
@@ -21,7 +21,7 @@ Status: **approved by Charan on Oct 29** (design system kept; deploy steps go to
 | Coordinator fix 2: `draft_capa` shown as `capa_need_evidence`; retired clip 00-voice-main hidden (chain still verified); cap fallback never offers it | `coordinator-fix-2` (`ed60e46`) | **PASS** (2nd round) | 1016 unit; 17 e2e; 0 drop-list words | Merge together with the voice branch (conflicts with 2aa8382 in copilot_pages.py) |
 | Voice (taken over from Muse's 2aa8382): fifth recording restored; 3 takes kept (take1=Q1, take6=Q2, take4=Q3) with Charan's consent in `demo/voice/README.md`; takes 2/3/5/7 and TTS `question.wav` removed | `coordinator-voice` (`232983b`) | 2aa8382 advisor review running | 1022 unit; all 10 audit exports verify | After the 2aa8382 verdict: merge fix-2 into this branch, resolve the conflict, advisor, merge to `hackathon-day2`; then re-export web data |
 | Vercel web project `maudesignal` (prj_x1NDkrSG6VoZ4Ax7OrQugC1DVHeu) | — | Connector has team access (Oct 29). `track-b-ui` preview READY at f621f7c; other branches fail by design (no `web/`) | build log read via connector | Browser check gets 403 from openFDA → web app will call the API's public check endpoint (C2); npm audit: 5 vulns (2 critical) → Track B |
-| Incident: commit `2aa8382` pushed to `hackathon-day2` by Meta Muse under Charan's name (unsigned, unreviewed): product-code check for voice, 7 voice takes, `RECORD_REQUEST` 6→7 | `hackathon-day2` | Advisor review running; triggered recording run 40965201781 (full re-record: replaces all transcripts, vision, dossier, HAND_CHECK; re-records the retired 00-voice-main) could not be cancelled from here (403) | GitHub Actions | Coordinator takes over voice: after the run commits, keep only the 7 take transcripts (+ audit exports), restore the fifth recording / vision / dossier / HAND_CHECK unless Charan chooses the sixth; reconcile with `coordinator-fix-2` |
+| Incident: `2aa8382` pushed by Meta Muse under Charan's name (unsigned, unreviewed) → bot recording `f53b64a` (run 40965201781) replaced all stored data | `hackathon-day2` | Advisor **BLOCK** on 2aa8382 (product-code correction rewrites real codes/words; any 3-letter word taken as a code). Data reverted to the fifth recording in `54a95fe` (byte-identical to `f53b64a^`); 2aa8382 code still on the branch pending V1 | advisor report | V1 fix running on `coordinator-voice` (`wf_3bf07d9b-6e1`); process: Muse should push to its own branch, never to `hackathon-day2`, and never bump `RECORD_REQUEST` |
 | Daily monitor on `main` | `main` | Ran Oct 29 | commit `be05711` digest | Watch tomorrow's 11:17 UTC run (check-in 11:50 UTC) |
 
 ### Decisions (with date)
