@@ -44,7 +44,29 @@ export interface Thread {
   model: string
   tool_steps: ToolStep[]
   sentences: Sentence[]
+  first_pass: { passed: number; blocked: number; sentences: Sentence[] } | null
   repaired: boolean
+}
+
+export interface EvidenceReport {
+  product_code: string
+  date_received: string
+  event_type: string
+  report_source: string
+  brand: string
+  excerpt: string
+  maude_url: string
+}
+
+export interface EvidenceOther {
+  kind: string
+  label: string
+  url: string
+}
+
+export interface Evidence {
+  reports: Record<string, EvidenceReport>
+  other: Record<string, EvidenceOther>
 }
 
 export interface WorkflowGroup {
@@ -93,6 +115,7 @@ export interface WorkspaceData {
   sources: Source[]
   schedules: Schedule[]
   investigations: Investigations
+  evidence: Evidence
 }
 
 export type WorkflowId =

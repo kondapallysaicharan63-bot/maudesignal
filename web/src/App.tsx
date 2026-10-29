@@ -37,7 +37,9 @@ export default function App() {
     else setDrawer((o) => !o)
   }
   const openWorkflow = (id: WorkflowId) => {
-    setView({ kind: 'workflow', id })
+    // A workflow with stored threads opens its first thread; the others show their "coming soon" page.
+    const first = data?.threads.workflows.find((w) => w.id === id)?.thread_ids[0]
+    setView(first ? { kind: 'thread', id: first } : { kind: 'workflow', id })
     setDrawer(false)
   }
   const openBrief = (date: string) => {
@@ -101,6 +103,7 @@ export default function App() {
           <ChatPane
             view={view}
             threads={data.threads}
+            evidence={data.evidence}
             investigationNotes={data.investigations.notes}
             recordedRuns={recordedRuns}
             onWorkflow={openWorkflow}

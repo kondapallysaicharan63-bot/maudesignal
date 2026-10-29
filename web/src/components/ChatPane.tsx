@@ -1,6 +1,8 @@
 import { WORKFLOWS } from '../data'
 import { Icon } from '../icons'
-import type { Sentence, Thread, Threads, WorkflowDef, WorkflowId } from '../types'
+import type { Evidence, Threads, WorkflowDef, WorkflowId } from '../types'
+import { Composer } from './Composer'
+import { ThreadView } from './ThreadView'
 
 export type View =
   | { kind: 'new' }
@@ -10,86 +12,11 @@ export type View =
 interface Props {
   view: View
   threads: Threads
+  evidence: Evidence
   investigationNotes: string[]
   recordedRuns: number
   onWorkflow: (id: WorkflowId) => void
   onThread: (id: string) => void
-}
-
-const DISCLAIMER =
-  'Signals for a person to review. Not medical advice; a named person makes every decision. Nothing is filed with FDA.'
-
-function Composer() {
-  return (
-    <div className="shrink-0 border-t border-rule bg-paper px-3 pb-4 pt-3 md:px-6">
-      <div className="mx-auto max-w-3xl">
-        <div className="flex items-center gap-2 rounded-md border border-rule-strong bg-surface px-3 py-2">
-          <button className="ws-icon-btn" disabled aria-label="Add (coming soon)" title="Coming soon">
-            <Icon name="plus" />
-          </button>
-          <input
-            disabled
-            aria-label="Message (coming soon)"
-            placeholder="Asking new questions: coming soon"
-            className="min-w-0 flex-1 bg-transparent text-[17px] text-ink placeholder:text-ink-3 focus:outline-none"
-          />
-        </div>
-        <p className="mt-2 text-center text-[13px] leading-snug text-ink-3">{DISCLAIMER}</p>
-      </div>
-    </div>
-  )
-}
-
-function SentenceLine({ s }: { s: Sentence }) {
-  const ok = s.status === 'pass'
-  const noClaims = ok && s.claims.length === 0
-  const pill = !ok
-    ? 'bg-critical-soft text-critical'
-    : noClaims
-      ? 'bg-sunk text-ink-2'
-      : 'bg-success-soft text-success'
-  return (
-    <li className="py-1.5">
-      <span className={`ws-pill mr-2 ${pill}`}>{!ok ? 'Withheld' : noClaims ? 'No factual claim' : 'Verified'}</span>
-      <span className={`ws-wrap ${ok ? '' : 'text-ink-3 line-through'}`}>{s.text}</span>
-      {!ok && s.reasons.length > 0 && (
-        <ul className="ws-wrap m-0 mt-1 list-disc pl-8 text-[15px] text-critical">
-          {s.reasons.map((r) => (
-            <li key={r}>{r}</li>
-          ))}
-        </ul>
-      )}
-    </li>
-  )
-}
-
-function ThreadView({ t }: { t: Thread }) {
-  return (
-    <div className="space-y-5">
-      <div className="ml-auto max-w-[85%] rounded-md bg-sunk px-4 py-3">
-        <p className="ws-wrap m-0">{t.question}</p>
-        {t.voice && <p className="m-0 mt-1 text-[13px] text-ink-3">Recorded voice question · {t.voice.audio_seconds} s</p>}
-      </div>
-      {t.tool_steps.length > 0 && (
-        <ul className="m-0 list-none space-y-1 p-0 text-[15px] text-ink-2" aria-label="Steps taken">
-          {t.tool_steps.map((s, i) => (
-            <li key={i} className="flex gap-2">
-              <span className="ms-code shrink-0">{s.name}</span>
-              <span className="ws-wrap">{s.summary}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-      <ul className="m-0 list-none p-0">
-        {t.sentences.map((s, i) => (
-          <SentenceLine key={i} s={s} />
-        ))}
-      </ul>
-      <p className="m-0 text-[13px] text-ink-3">
-        Stored run · {t.model} · {t.recorded_at_utc.slice(0, 10)}
-      </p>
-    </div>
-  )
 }
 
 function WorkflowView(p: Props & { def: WorkflowDef }) {
@@ -181,14 +108,20 @@ export function ChatPane(p: Props) {
   } else {
     const id = p.view.id
     const t = p.threads.threads.find((x) => x.id === id)
-    body = t ? <ThreadView t={t} /> : <p>That thread is not in the stored data.</p>
+    const group = p.threads.workflows.find((w) => w.id === t?.workflow)
+    const siblings = group ? p.threads.threads.filter((x) => group.thread_ids.includes(x.id)) : []
+    body = t ? (
+      <ThreadView key={t.id} t={t} ev={p.evidence} siblings={siblings} onThread={p.onThread} />
+    ) : (
+      <p>That thread is not in the stored data.</p>
+    )
   }
   return (
     <main className="flex min-w-0 flex-1 flex-col bg-paper" aria-label="Chat">
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-8 md:py-10">
         <div className="mx-auto max-w-3xl">{body}</div>
       </div>
-      <Composer />
+      <Composer threads={p.threads.threads} onThread={p.onThread} />
     </main>
   )
 }
