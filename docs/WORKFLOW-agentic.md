@@ -29,9 +29,9 @@ through the coordinator.
 | Track | Branch (from `hackathon-day2`) | Owns | Starts |
 |---|---|---|---|
 | A "core" | `track-a-core` | `src/`, `skills/`, `tests/`, `scripts/` (except `scripts/export_web_data.py`), `docs/`, `README.md`, `demo/RECORD_REQUEST` | after approval |
-| B "agentic UI" | `track-b-ui` | `web/` (new), `api/` (new), `scripts/export_web_data.py`, plus one exception: `tests/unit/test_export_web_data.py` | after approval |
-| C "channel intake" | `track-c-intake` | `src/maudesignal/intake/`, `bot/` (new) | **not now**; Charan starts it separately |
-| Coordinator (me) | `hackathon-day2` | `web/DATA_CONTRACT.md`, `.github/`, `HACKATHON.md`, `CLAUDE.md`, `claude/`, `vercel.json`, merges | now |
+| B "agentic UI" | `track-b-ui` | `web/` (new), `scripts/export_web_data.py`, plus one exception: `tests/unit/test_export_web_data.py` (`api/` moved to Track C on Oct 29) | after approval |
+| C "Muse connector" (replaces the Telegram intake plan, Oct 29) | `track-c-muse` | `api/` (new), `src/maudesignal/connector/` (new), `tests/unit/test_connector*.py`, `docs/hackathon/MUSE_CONNECTOR.md`, root `vercel.json` (API project only) | Oct 29, Charan's go |
+| Coordinator (me) | `hackathon-day2` | `web/DATA_CONTRACT.md`, `.github/`, `HACKATHON.md`, `CLAUDE.md`, `claude/`, merges | now |
 
 The data contract (`web/DATA_CONTRACT.md`) is written by the coordinator
 **before** either track starts, so A and B build against the same schema
@@ -66,12 +66,37 @@ Helpers A may spawn: `Explore` (find code), `validator` (repo FTI check),
 | B1 Shell + data | Vite + React + TypeScript + Tailwind in `web/`; 3-pane layout (sidebar, chat, artifacts); light/dark following the system; phone: drawer + bottom sheet; `scripts/export_web_data.py` writes `web/public/data/*.json` from the demo DB and `demo/` per the contract | `npm run build` passes; exporter test passes; screenshot of the empty shell at 1440 and 390 | Demo |
 | B2 Chat | Workflow threads replay stored transcripts with tool steps ("searched 137 reports"), streaming-style reveal; claim chips (green verified with evidence on hover/tap, red withheld with the gate's reason); composer with + menu (upload routes to vision/voice; GitHub and Drive labelled "coming soon", never faked); mic replays the recorded voice question; suggested prompts | Screenshots of each workflow thread | Demo, Meta tooling |
 | B3 Artifacts | Right panel tabs: daily brief, signal digest, dossier (PDF viewer + download), vision (image with SAM boxes, fields, two-read check), audit trail (hash chain "verified ✓"), CAPA draft (approve only in a human role). Header strip "Every sentence checked against FDA data · N claims verified · M withheld" with N and M computed from the transcripts | Screenshots; N/M match a script count | Impact, Demo |
-| B4 Live API (optional) | `api/` FastAPI: `/gate/verify` runs the real gate; `/ask` answers live only with `META_MODEL_API_KEY` set server-side, else says "demo mode"; `vercel.json`; exact deploy steps in README | `curl` output of both endpoints locally | Meta tooling, Technical |
+| B4 Preview feedback | Charan's six fixes on the Vercel preview (no "coming soon", real sweep first, demo-snapshot labels, overlap bug, chips, withheld link, browser "Check any device type"); the live API moved to Track C | Advisor PASS, then `track-b-ui` fast-forwarded | Demo, Impact |
 | B5 QA | Playwright screenshots of every workflow at 1440 and 390, dark and light → `web/qa/screenshots/`; `ui-critic` then fixes; Lighthouse accessibility ≥90 if feasible | ui-critic list empty of top-priority items; Lighthouse score pasted | Demo |
 
 Helpers B may spawn: `Explore`, `general-purpose`, `ui-critic` (only for B5).
 Design: follows `design-system/` tokens (see §8, decision 2). Streamlit stays as
 the fallback and the README links both.
+
+## 3b. Track C "Muse connector": MaudeSignal inside Meta's Muse
+
+Replaces the Telegram intake plan (Charan, Oct 29). One read-only tool layer, two
+transports: a REST API (OpenAPI) and an MCP server, hosted on Vercel from `api/`.
+Builder sonnet in its own worktree, advisor opus, same loop as A and B.
+
+Tools (read-only): `what_changed_this_week(product_code?)`,
+`check_device_type(product_code)` (live openFDA counts, the detector's rules, via
+`monitor/live_check.py`), `ask(question)` (Muse Spark copilot; every sentence through
+the claim gate; withheld sentences marked), `get_report(report_id)`,
+`recalls(product_code)`. Answers are short and speakable (Muse has a voice mode); every
+fact carries its openFDA or record link; advisory only, not medical advice, nothing is
+filed with FDA.
+
+| Milestone | Work | Done when | Rubric line |
+|---|---|---|---|
+| C1 Tool layer + REST | `src/maudesignal/connector/` (tools, speakable answer shape, links); `api/` FastAPI app; API-key header auth (keys from a Vercel env var, read-only scope), per-key rate limit, daily cost cap on `ask` that falls back to the closest stored answer; OpenAPI spec | Contract test per tool; gate enforced on `ask`; rate-limit and cost-cap tests; no key in any response or log | Technical, Meta tooling |
+| C2 MCP transport | The same tools over MCP (streamable HTTP, stateless), tool annotations read-only; MCP manifest; tests through an MCP client | `tools/list` and `tools/call` tests for every tool | Meta tooling |
+| C3 Hosting + submission pack | Vercel config for a second project rooted at the repo root (the web app stays its own project), optional shared store for audit/rate limits (Upstash Redis via Vercel Marketplace, env-gated; in-memory per instance otherwise, documented), `GET /v1/audit/recent` for the workspace; `docs/hackathon/MUSE_CONNECTOR.md` with the submission answers (tool docs, inputs, outputs, limits, read-only labels, privacy, terms, support contact), status "not submitted" until Charan submits | Local `uvicorn` + `curl` transcripts for every endpoint; MCP client transcript; doc complete with no "approved"/"official" | Impact, Demo |
+
+Not claimed: Meta approval or an official listing. Third-party guides describe a
+submission form at muse.ai/platform (HTTPS MCP endpoint, privacy policy, terms,
+support contact); no official Meta page was found, so the doc lists those fields as
+"to confirm against the live form".
 
 ## 4. Advisor loop (every milestone, both tracks)
 
