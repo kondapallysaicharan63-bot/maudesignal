@@ -57,6 +57,14 @@ records and papers, each tied to the stored FDA record.
 | Browser tests | Playwright tests of the product pages (Signals, Copilot, Vision, Audit) against the keyless demo app; expected values computed from the demo database | `tests/e2e/test_08_hackathon_pages.py` |
 | Report-source counts vs openFDA | stored counts compared with openFDA `count=report_source_code.exact` over the stored window, each run of the record workflow | `scripts/check_source_counts.py` → `docs/hackathon/SOURCE_COUNTS.md` |
 
+## Agentic workflows (status)
+
+| Workflow | State | Source |
+|---|---|---|
+| Weekly investigator | Built; tested with mocked model calls only. No real recording exists yet (`demo/investigations/` is absent); this page gives no real-run number for it until one is committed. | `src/maudesignal/copilot/investigator.py`, `tests/unit/test_weekly_investigator.py` |
+| Recall-triggered sweep | Built; tested with mocked model calls only. No real recording yet. | `src/maudesignal/copilot/recall_sweep.py`, `tests/unit/test_recall_sweep.py` |
+| Search protocol (methodology appendix) | Built; tested. Derived from the stored tool-call log, so it contains no model-written text. | `src/maudesignal/copilot/protocol.py`, `tests/unit/test_search_protocol.py` |
+
 ## Known limits
 
 - The copilot's answers are only as complete as the stored records; the demo

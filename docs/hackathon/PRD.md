@@ -3,7 +3,7 @@
 Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026. The pre-existing
 product PRD (`docs/PRD-*.md`) describes the original maudesignal product and
 is not hackathon work. This page lists what the hackathon build covers, with
-the evidence for each status. Fixed date: **submission Oct 30, 11:15 PM PT** (video recorded before it). Work is pulled forward whenever it is ready; it does not wait
+the evidence for each status. Fixed date: **submission Nov 4, about 5 PM PT** (video recorded before it). Work is pulled forward whenever it is ready; it does not wait
 for its planned day.
 
 Status words: **done** = built, tested, and it works without a key;

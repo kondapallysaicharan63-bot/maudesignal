@@ -97,6 +97,25 @@ guidance, 510(k) history and MAUDE). MaudeSignal differs in three ways:
 - **It reads scanned 510(k) documents with a two-read accuracy check.**
 - **It is open source and self-hostable** (MIT), on public FDA data only.
 
+[BEUDAMED](https://beudamed.com/psur-reports) is also worth knowing: it is free
+and uses no AI. You enter a product code and get charts plus an audit-ready
+methodology. MaudeSignal differs plainly: an agent runs the investigation
+(weekly, or when a recall appears), every fact it writes is matched to the FDA
+record or withheld, and the search protocol behind each answer (dataset, filters,
+dates, counts) is written down so a person can repeat it.
+
+### Three agentic workflows (status)
+
+| Workflow | Command | Status |
+|---|---|---|
+| Weekly investigator: for a device type the weekly check flagged, Muse Spark pulls the new reports, groups them by kind of problem, checks recalls, 510(k)s and non-manufacturer reports, and writes the digest entry through the gate | `maudesignal investigate` | Built and tested with mocked model calls (`tests/unit/test_weekly_investigator.py`). Real recordings pending: `demo/investigations/` does not exist yet. |
+| Recall-triggered sweep: Muse Spark reads a recall's reason and searches stored narratives for the same problem; quotes matched word for word, counts recomputed by the gate | `maudesignal recall-sweep` | Built and tested with mocked model calls (`tests/unit/test_recall_sweep.py`). Real recordings pending. |
+| Search protocol: every tool call's dataset, filters, dates and counts, listed as a search-methodology appendix in the evidence-pack PDF | part of the dossier build | Built and tested (`tests/unit/test_search_protocol.py`). |
+
+Recordings of the first two run in GitHub Actions
+(`.github/workflows/investigator-record.yml`) with the repository's model key;
+until a recording is committed, nothing here is shown as a real run.
+
 ## Real-run numbers (2026-10-28, fifth recording)
 
 From [`demo/transcripts/`](demo/transcripts/), [`demo/vision/`](demo/vision/),
