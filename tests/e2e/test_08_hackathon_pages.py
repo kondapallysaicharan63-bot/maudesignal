@@ -1,4 +1,4 @@
-"""E2E tests for the five hackathon pages: What changed, Copilot, Actions & Audit, Dossier, Vision.
+"""E2E tests for the hackathon pages: Signals (workspace), Copilot, Vision, Audit.
 
 HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
@@ -29,7 +29,7 @@ from maudesignal.copilot.transcript import load_transcripts
 from maudesignal.gate import CountClaim, RegulationClaim, verify_sentence
 from maudesignal.gate.loader import store_from_database
 from maudesignal.monitor.deterioration import detect_from_database
-from maudesignal.monitor.digest import RANKING_ORDER, digest_from_database
+from maudesignal.monitor.digest import digest_from_database
 from maudesignal.storage.database import Database
 from maudesignal.vision import DEMO_K_NUMBERS
 from maudesignal.vision.pipeline import DEMO_VISION_DIR
@@ -40,7 +40,7 @@ pytestmark = pytest.mark.e2e
 ROOT = Path(__file__).resolve().parents[2]
 DEMO_DB = ROOT / "data" / "demo" / "maudesignal_demo.db"
 TRANSCRIPT_DIR = ROOT / "demo" / "transcripts"
-FRAMING = "Not medical advice"
+FRAMING = "not medical advice"
 EXCEPTION = "[data-testid='stException']"
 
 keyless = pytest.mark.skipif(
@@ -75,9 +75,9 @@ class TestHackathonNav:
     def test_top_bar_lists_the_product_pages(self, ms_page: Page) -> None:
         bar = ms_page.locator(TOPBAR_SELECTOR)
         expect(bar).to_contain_text("MaudeSignal")
-        for name in ("What changed", "Copilot", "Actions & Audit", "Dossier", "Vision"):
+        for name in ("Signals", "Copilot", "Vision", "Audit"):
             expect(bar.get_by_role("radio", name=name, exact=False).first).to_be_visible()
-        expect(bar.get_by_role("radio", name="What changed", exact=False)).to_have_attribute(
+        expect(bar.get_by_role("radio", name="Signals", exact=False)).to_have_attribute(
             "aria-checked", "true"
         )
         sidebar = ms_page.locator(SIDEBAR_SELECTOR)
@@ -95,61 +95,87 @@ class TestHackathonNav:
         expect(page.get_by_text("More tools", exact=False)).to_have_count(0)
         ctx.close()
 
-    @pytest.mark.parametrize(
-        "nav", ["What changed", "Copilot", "Actions & Audit", "Dossier", "Vision"]
-    )
+    @pytest.mark.parametrize("nav", ["Signals", "Copilot", "Vision", "Audit"])
     def test_page_loads_with_framing_and_no_exception(self, ms_page: Page, nav: str) -> None:
         _open(ms_page, nav)
 
 
 # ---------------------------------------------------------------------------
-# What changed
+# Signals workspace
 # ---------------------------------------------------------------------------
 
 
-class TestWhatChanged:
-    def test_counts_match_the_detector(self, ms_page: Page, db: Database) -> None:
-        digest = digest_from_database(db, detect_from_database(db))
-        main = _open(ms_page, "What changed")
-        for label, value in (
-            ("Reports suddenly increased", digest.increased_count),
-            ("More serious than usual", digest.serious_count),
-            ("New kind of problem", digest.new_count),
-            ("No change", digest.stable_count),
-        ):
-            metric = main.locator("[data-testid='stMetric']").filter(has_text=label).first
-            expect(metric.locator("[data-testid='stMetricValue']")).to_have_text(str(value))
-        w = digest.result.window
-        expect(main).to_contain_text(f"As of {w.as_of.isoformat()}")
+def _rows(db: Database) -> list[Any]:
+    from maudesignal.monitor.compare import compare_signals
 
-    def test_top_signal_and_why_it_is_ranked_first(self, ms_page: Page, db: Database) -> None:
+    codes = sorted({e.product_code for e in db.list_normalized_events() if e.product_code})
+    return list(compare_signals(db, codes).rows)
+
+
+def _figure(r: Any) -> str:
+    if r.change == "reports suddenly increased" and r.ratio_to_baseline is not None:
+        return f"{r.ratio_to_baseline:.2f}×"
+    return str(r.this_week)
+
+
+def _pick(page: Page, code: str) -> None:
+    page.locator(".st-key-ms_siglist label[data-testid='stRadioOption']", has_text=code).click()
+    page.wait_for_timeout(3_000)
+
+
+class TestSignals:
+    def test_list_matches_the_detector(self, ms_page: Page, db: Database) -> None:
+        _open(ms_page, "Signals")
+        listing = ms_page.locator(".st-key-ms_siglist")
+        for r in _rows(db):
+            expect(listing).to_contain_text(f"{r.product_code} · {_figure(r)}")
+            expect(listing).to_contain_text(f"{r.this_week} this week")
+
+    def test_top_signal_is_selected_with_why_it_is_flagged(
+        self, ms_page: Page, db: Database
+    ) -> None:
         digest = digest_from_database(db, detect_from_database(db))
-        main = _open(ms_page, "What changed")
+        main = _open(ms_page, "Signals")
         if not digest.ranked:
-            expect(main).to_contain_text("No product code crossed a rule threshold.")
             return
         top = digest.ranked[0]
-        expect(main).to_contain_text(f"Top signal: {top.product_code}")
+        head = main.locator(".ms-sig-head")
+        expect(head).to_contain_text(top.product_code)
         device = digest.device_types.get(top.product_code)
         if device:
-            expect(main).to_contain_text(device)
-        expect(main).to_contain_text("Why it is ranked first.")
+            expect(head).to_contain_text(device)
+        expect(head).to_contain_text("Why it is flagged.")
         # Markdown renders ">=" as "≥"; compare on the text that survives rendering.
-        reason = digest.rank_reasons[top.product_code].replace(">=", "≥")
-        expect(main).to_contain_text(reason)
+        expect(head).to_contain_text(digest.rank_reasons[top.product_code].replace(">=", "≥"))
         for brand, n in digest.window_brands.get(top.product_code, []):
-            expect(main).to_contain_text(f"{brand} ({n} of {top.current_count} reports)")
-        expect(main).to_contain_text(RANKING_ORDER[0])
-        expect(main).to_contain_text("Deterministic — no model involved.")
+            expect(head).to_contain_text(f"{brand} ({n})")
 
-    def test_digest_body_rendered(self, ms_page: Page, db: Database) -> None:
+    def test_selecting_another_device_type_updates_the_detail(
+        self, ms_page: Page, db: Database
+    ) -> None:
+        rows = _rows(db)
+        main = _open(ms_page, "Signals")
+        other = rows[-1]
+        _pick(ms_page, other.product_code)
+        head = main.locator(".ms-sig-head")
+        expect(head).to_contain_text(other.product_code)
+        expect(head).to_contain_text(other.change[:1].upper() + other.change[1:])
+        expect(main.locator(".ms-stats")).to_contain_text(f"{other.stored_total}")
+
+    def test_reports_tab_counts_match_the_records(self, ms_page: Page, db: Database) -> None:
+        from maudesignal.monitor.sources import not_by_manufacturer, sourced_reports
+
         digest = digest_from_database(db, detect_from_database(db))
-        main = _open(ms_page, "What changed")
-        expect(main).to_contain_text(
-            f"MaudeSignal — what changed, data as of {digest.result.window.as_of.isoformat()}"
-        )
-        expect(main).to_contain_text(digest.headline)
-        expect(main).to_contain_text("nothing is reported to FDA automatically")
+        if not digest.ranked:
+            return
+        top = digest.ranked[0]
+        main = _open(ms_page, "Signals")
+        expect(main).to_contain_text(f"{top.current_count} report(s)")
+        mine = [r for r in sourced_reports(db) if r.product_code == top.product_code]
+        others = not_by_manufacturer(mine)
+        main.get_by_role("radio", name="Not filed by a manufacturer").click()
+        ms_page.wait_for_timeout(2_000)
+        expect(main).to_contain_text(f"{len(others)} report(s)")
 
 
 # ---------------------------------------------------------------------------
@@ -168,7 +194,7 @@ def _select(page: Page, label: str, option: str) -> None:
 class TestCopilot:
     def test_three_tabs(self, ms_page: Page) -> None:
         _open(ms_page, "Copilot")
-        for tab in ("Recorded Muse Spark runs", "Try to fool the gate", "Ask live"):
+        for tab in ("Recorded Muse Spark answers", "Try to fool the gate", "Ask live"):
             expect(ms_page.get_by_role("tab", name=tab)).to_be_visible()
 
     def test_recorded_runs_match_transcripts(self, ms_page: Page) -> None:
@@ -177,8 +203,10 @@ class TestCopilot:
         if not transcripts:
             expect(main).to_contain_text("No recorded runs yet.")
             return
+        listing = ms_page.locator(".st-key-ms_qlist")
+        expect(main).to_contain_text(f"{len(transcripts)} recorded questions")
         for t in transcripts:
-            expect(main).to_contain_text(t["question"][:60])
+            expect(listing).to_contain_text(t["question"][:40])
 
     def test_gate_withholds_a_wrong_count_and_verifies_the_true_one(
         self, ms_page: Page, db: Database
@@ -232,23 +260,15 @@ class TestCopilot:
 
 
 # ---------------------------------------------------------------------------
-# Actions & Audit
+# Audit
 # ---------------------------------------------------------------------------
 
 
-class TestActionsAudit:
-    def test_capa_header_counts_drafts_awaiting_review(self, ms_page: Page, db: Database) -> None:
-        waiting = sum(1 for d in db.list_capa_drafts() if d.status == "draft")
-        main = _open(ms_page, "Actions & Audit")
-        expect(main).to_contain_text(f"CAPA-need evidence pack ({waiting} awaiting review)")
-        expect(main).to_contain_text("This document is evidence only.")
-        expect(main.get_by_label("Your name (recorded as the approver)")).to_be_visible()
-
+class TestAudit:
     def test_audit_trail_shows_db_chain_or_recorded_trails(
         self, ms_page: Page, db: Database
     ) -> None:
-        main = _open(ms_page, "Actions & Audit")
-        expect(main).to_contain_text("Audit trail")
+        main = _open(ms_page, "Audit")
         rows = db.list_audit()
         if rows:
             expect(main).to_contain_text(f"Hash chain intact across {len(rows)} entries.")
@@ -257,39 +277,41 @@ class TestActionsAudit:
         if not exports:
             expect(main).to_contain_text("No audit entries yet.")
             return
-        for doc in exports:
-            ok, _ = doc["verified"]
-            n = len(doc.get("entries", []))
-            expect(main).to_contain_text(f"{n} entries")
-            expect(main).to_contain_text("hash chain intact." if ok else "hash chain broken")
+        n = sum(len(d.get("entries", [])) for d in exports)
+        if all(d["verified"][0] for d in exports):
+            expect(main).to_contain_text(
+                f"Hash chain intact in all {len(exports)} recorded runs ({n} entries)."
+            )
+        else:
+            expect(main).to_contain_text("Hash chain broken")
 
 
 # ---------------------------------------------------------------------------
-# Dossier
+# Evidence pack (Signals → Evidence pack tab)
 # ---------------------------------------------------------------------------
 
 
-class TestDossier:
-    def test_metrics_and_reverified_figures(self, ms_page: Page) -> None:
-        main = _open(ms_page, "Dossier")
-        expect(main).to_contain_text("Signal Evaluation & CAPA-need Evidence")
-        metric = main.locator("[data-testid='stMetric']").filter(has_text="Figures re-verified")
-        value = metric.locator("[data-testid='stMetricValue']").inner_text()
-        m = re.fullmatch(r"(\d+)/(\d+)", value.strip())
-        assert m, f"unexpected figures metric {value!r}"
-        assert m[1] == m[2] and int(m[2]) > 0, f"not every figure re-verified: {value}"
-        chain = main.locator("[data-testid='stMetric']").filter(has_text="Audit chain")
-        expect(chain.locator("[data-testid='stMetricValue']")).to_have_text("intact")
+def _open_pack(page: Page) -> Locator:
+    main = _open(page, "Signals")
+    page.get_by_role("tab", name="Evidence pack").click()
+    page.wait_for_timeout(8_000)
+    return main
+
+
+class TestEvidencePack:
+    def test_reverified_figures_and_chain(self, ms_page: Page) -> None:
+        main = _open_pack(ms_page)
+        stats = main.locator(".ms-stats--text")
+        expect(stats).to_contain_text("Figures re-verified")
+        text = stats.inner_text()
+        m = re.search(r"(\d+)/(\d+)", text)
+        assert m, f"no figures count in {text!r}"
+        assert m[1] == m[2] and int(m[2]) > 0, f"not every figure re-verified: {m[0]}"
+        expect(stats).to_contain_text("intact")
 
     def test_download_is_a_pdf(self, ms_page: Page, tmp_path: Path) -> None:
-        main = _open(ms_page, "Dossier")
-        doc_id = (
-            main.locator("[data-testid='stMetric']")
-            .filter(has_text="Document")
-            .first.locator("[data-testid='stMetricValue']")
-            .inner_text()
-            .strip()
-        )
+        main = _open_pack(ms_page)
+        doc_id = main.locator(".ms-stats--text .ms-num").first.inner_text().strip()
         with ms_page.expect_download() as dl:
             main.get_by_role("button", name="Download PDF").click()
         out = tmp_path / dl.value.suggested_filename
@@ -340,22 +362,6 @@ class TestVision:
         expect(panel).to_contain_text("Lot and serial numbers stay in this session")
         if not list((DEMO_VISION_DIR).glob("label-*.json")):
             expect(panel).to_contain_text("No recorded label runs yet")
-
-
-class TestWhoFiled:
-    def test_source_table_and_filter_match_the_records(self, ms_page: Page, db: Database) -> None:
-        from maudesignal.monitor.sources import not_by_manufacturer, sourced_reports
-
-        reports = sourced_reports(db)
-        others = not_by_manufacturer(reports)
-        manufacturer = [r for r in reports if r.source == "manufacturer"]
-        main = _open(ms_page, "What changed")
-        expect(main).to_contain_text("Who filed the reports")
-        expect(main).to_contain_text(f"Not filed by a manufacturer: {len(others)} stored report(s)")
-        _select(ms_page, "Show reports filed by", "Manufacturer")
-        expect(_main(ms_page)).to_contain_text(
-            f"Manufacturer: {len(manufacturer)} stored report(s)"
-        )
 
 
 # ---------------------------------------------------------------------------
@@ -438,9 +444,7 @@ _UNNAMED_CONTROLS_JS = """
 
 
 class TestAccessibility:
-    @pytest.mark.parametrize(
-        "nav", ["What changed", "Copilot", "Actions & Audit", "Dossier", "Vision"]
-    )
+    @pytest.mark.parametrize("nav", ["Signals", "Copilot", "Vision", "Audit"])
     def test_every_visible_control_has_a_name(self, ms_page: Page, nav: str) -> None:
         _open(ms_page, nav)
         unnamed = ms_page.evaluate(_UNNAMED_CONTROLS_JS)
@@ -459,11 +463,11 @@ class TestAccessibility:
             )
         assert any(n.startswith("radio:") for n in names), names
         # Arrow keys move between pages inside the radio group (react-aria).
-        ms_page.locator(".st-key-ms_topbar").get_by_role("radio", name="What changed").focus()
+        ms_page.locator(".st-key-ms_topbar").get_by_role("radio", name="Signals").focus()
         ms_page.keyboard.press("ArrowRight")
         ms_page.keyboard.press("Enter")
         ms_page.wait_for_timeout(3_000)
-        expect(_main(ms_page)).to_contain_text("Recorded Muse Spark runs")
+        expect(_main(ms_page)).to_contain_text("Recorded Muse Spark answers")
 
 
 class TestScreenSizes:

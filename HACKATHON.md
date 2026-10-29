@@ -21,7 +21,8 @@ Everything under `src/maudesignal/copilot/`, `src/maudesignal/gate/` and
 | `skills/safety-copilot/` | Versioned behavior contract (prompt, output schema, examples) for the copilot |
 | `gate/` (`gate.py`, `claims.py`, `evidence.py`, `cfr.py`, `loader.py`) | **Claim-level citation gate.** Recomputes counts/shares from stored records, verbatim-matches quotes to the cited report (a real quote pinned to the wrong report is blocked), checks 510(k) numbers against the catalog, allowlists 21 CFR sections (blocks QS-reg sections superseded by QMSR on 2026-02-02), and blocks numbers / ids / CFR cites that carry no structured claim. Deterministic, no model calls. The `regulatory-citation-verifier` Skill spec pre-existed with zero call sites; this is its enforcement. |
 | `tests/fixtures/gate/adversarial.jsonl` + `tests/unit/test_gate.py` | 54 adversarial cases (fabricated / drifted quotes, wrong-record quotes, stale and inflated numbers, fake and mismatched K-numbers, hallucinated and superseded CFR, untagged mentions): 0 false pass, 0 false block |
-| `dashboard/copilot_pages.py` | New dashboard pages: **What changed** digest, **Copilot** (recorded runs + live "try to fool the gate" playground + live mode when a key is present), **Actions & Audit** (accept/reject CAPA-need evidence pack, hash-chain verification) |
+| `dashboard/workspace.py` | **Signals** workspace (list and detail): the device types with what changed this week on the left; the selected one's why-flagged header, reports (who filed them), recorded copilot answers, CAPA-need evidence pack with Accept/Reject, and MHRA (UK) context on the right |
+| `dashboard/copilot_pages.py` | **Copilot** (recorded answers as a list, live "try to fool the gate" playground, live mode when a key is present), **Audit** (CAPA-need decisions, one hash-verified trail) |
 | `storage`: `CapaDraftRecord`, `ActionAuditRecord` + DB methods | CAPA-need evidence pack table and append-only, SHA-256 hash-chained audit trail with tamper detection |
 | `scripts/record_demo_transcripts.py`, `.github/workflows/copilot-record.yml`, `demo/` | Records the demo questions through the real Muse Spark copilot in GitHub Actions (key from repository secrets, never in code) |
 | `.github/workflows/meta-smoke.yml`, `test_meta_connection.py` | Meta Model API smoke test (`models.list` + streaming) run with repository secrets |
@@ -125,7 +126,7 @@ Plus this manifest, the demo video, and the submission write-up.
 |---|---|
 | `design-system/` (from Charan's design branch) | Bento layout, editorial Paper/Night/High-contrast tokens, Newsreader + Geist, component markup. Black and Pink themes added to `tokens.json` (same token names, AA contrast) |
 | `dashboard/theme.py`, `dashboard/streamlit_bridge.css` | Theme picker in the top bar (Light, Dark, Black, System, Pink, High contrast; `?theme=` link); Streamlit widgets coloured from the tokens |
-| `dashboard/app.py` | Top bar (wordmark, five product pages, theme picker, dateline); classic tools in the sidebar; serif page headers, no emoji |
+| `dashboard/app.py` | Top bar (wordmark, Signals · Copilot · Vision · Audit, theme picker), dateline with one framing line; classic tools only with `?tools=all` |
 | `dashboard/copilot_pages.py` | Hero tile for the top signal; "Compare the device types you choose"; "Remember these device types"; MHRA (UK) context section; live Ask streams progress and verified sentences |
 | `copilot/memory.py` | Memory replayed from the hash-chained audit trail (`MEMORY` entries): device types a named person chose, pinned notes |
 | `monitor/compare.py` | Deterministic side-by-side numbers for chosen device types |

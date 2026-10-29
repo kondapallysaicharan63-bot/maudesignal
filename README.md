@@ -229,7 +229,7 @@ pip install -e .
 # What-changed digest from the committed demo database (no network, no LLM)
 maudesignal monitor --no-fetch
 
-# Dashboard on the demo database: What changed, Copilot, Actions & Audit pages
+# Dashboard on the demo database: Signals, Copilot, Vision, Audit
 streamlit run streamlit_app.py
 ```
 
@@ -252,8 +252,7 @@ dependencies from `requirements.txt`, no secrets required.
 
 Built during the Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026):
 the copilot, the citation gate, the daily what-changed monitor and report-source
-filter, the five new dashboard pages (What changed, Copilot, Actions & Audit,
-Dossier, Vision), voice questions, the evidence-pack PDF, the CAPA-need
+filter, the product pages (the Signals workspace, Copilot, Vision, Audit), voice questions, the evidence-pack PDF, the CAPA-need
 evidence and audit tables, the live-call spend caps and the keyless demo deploy. The
 openFDA pipeline below predates the event. The file-by-file list is in
 [HACKATHON.md](HACKATHON.md).

@@ -148,3 +148,44 @@ section[data-testid="stSidebar"] .stButton > button [data-testid="stMarkdownCont
 .stDateInput div, .stNumberInput div, .stTimeInput div, .stTextArea div {
   background-color: var(--surface) !important; }
 .stNumberInput button { background-color: var(--surface-sunk) !important; color: var(--ink) !important; }
+
+/* ── Workspace layout (Signals, Copilot): list on the left, detail on the right ─── */
+.ms-frame-line { margin: calc(-1 * var(--space-4)) 0 var(--space-5); font: 400 12px/1.5 var(--font-sans);
+  color: var(--ink-3) !important; }
+.ms-small { font-size: 13px !important; line-height: 1.5; }
+.st-key-ms_siglist [role="radiogroup"], .st-key-ms_qlist [role="radiogroup"] { gap: var(--space-2); width: 100%; }
+/* each option (label + caption) is one selectable card */
+.st-key-ms_siglist [role="radiogroup"] > div, .st-key-ms_qlist [role="radiogroup"] > div {
+  position: relative; width: 100%; padding: var(--space-3) var(--space-4); background: var(--surface);
+  border: 1px solid var(--rule); border-radius: var(--radius-md); transition: border-color .12s; }
+.st-key-ms_siglist [role="radiogroup"] > div:hover, .st-key-ms_qlist [role="radiogroup"] > div:hover { border-color: var(--rule-strong); }
+.st-key-ms_siglist [role="radiogroup"] > div[data-selected="true"], .st-key-ms_qlist [role="radiogroup"] > div[data-selected="true"] {
+  border-color: var(--ink); box-shadow: inset 4px 0 0 var(--accent); }
+/* the label covers the whole card so a click anywhere selects it */
+.st-key-ms_siglist [role="radiogroup"] label[data-testid="stRadioOption"], .st-key-ms_qlist [role="radiogroup"] label[data-testid="stRadioOption"] {
+  position: static; width: 100%; margin: 0; padding: 0; cursor: pointer; }
+.st-key-ms_siglist [role="radiogroup"] label[data-testid="stRadioOption"]::after, .st-key-ms_qlist [role="radiogroup"] label[data-testid="stRadioOption"]::after {
+  content: ""; position: absolute; inset: 0; }
+/* the radio dot is redundant in a selectable list */
+.st-key-ms_siglist [role="radiogroup"] label[data-testid="stRadioOption"] > div > div:first-child,
+.st-key-ms_qlist [role="radiogroup"] label[data-testid="stRadioOption"] > div > div:first-child { display: none; }
+.st-key-ms_siglist [role="radiogroup"] [data-testid="stRadioCaption"], .st-key-ms_qlist [role="radiogroup"] [data-testid="stRadioCaption"] { padding-left: 0; margin: 2px 0 0; }
+.st-key-ms_siglist [role="radiogroup"] label p { font: 600 15px/1.3 var(--font-sans); }
+.st-key-ms_qlist [role="radiogroup"] label p { font: 400 14px/1.4 var(--font-sans); }
+.st-key-ms_qlist { max-height: 70vh; overflow-y: auto; padding-right: var(--space-2); }
+.ms-sig-head { padding: var(--space-5) var(--space-6); margin-bottom: var(--space-3); }
+.ms-sig-head__row { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-5);
+  flex-wrap: wrap; }
+.ms-sig-head .ms-hero__title { font-size: 34px; margin: 10px 0 8px; }
+.ms-sig-head .ms-hero__fig { font-size: 56px; }
+.ms-sig-head .ms-hero__deck { margin: 0 0 var(--space-2); max-width: 70ch; font-size: 15px; }
+.ms-sig-head:not(.ms-hero) .ms-hero__deck { color: var(--ink-2) !important; }
+.ms-sig-head:not(.ms-hero) .ms-hero__deck b { color: var(--ink) !important; }
+.ms-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1px;
+  background: var(--rule); border: 1px solid var(--rule); border-radius: var(--radius-md); overflow: hidden;
+  margin-bottom: var(--space-4); }
+.ms-stats > div { background: var(--surface); padding: var(--space-3) var(--space-4);
+  font: 500 11px/1.4 var(--font-sans); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+.ms-stats .ms-num { display: block; font: 500 26px/1.15 var(--font-serif); letter-spacing: -0.5px;
+  text-transform: none; color: var(--ink); margin-bottom: 2px; }
+.ms-stats--text .ms-num { font: 600 15px/1.4 var(--font-sans); letter-spacing: 0; word-break: break-all; }

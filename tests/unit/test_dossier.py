@@ -702,7 +702,8 @@ def test_dossier_page_renders_keyless(tmp_path: Path, monkeypatch: pytest.Monkey
     assert not at.exception
     labels = at.selectbox[0].options
     assert any(capa_id in o for o in labels) and any("Top flagged change" in o for o in labels)
-    assert any(m.value == out.doc_id for m in at.metric)
+    stats = " ".join(e.proto.body for e in at.get("html"))
+    assert out.doc_id in stats and "Figures re-verified" in stats
     assert len(at.dataframe) == 1  # recorded reviewer findings
     assert any("Recorded run" in c.value for c in at.caption)
 

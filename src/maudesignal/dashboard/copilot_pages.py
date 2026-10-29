@@ -1,4 +1,4 @@
-"""Dashboard pages for the hackathon features: What changed, Copilot, Actions & Audit.
+"""Dashboard pages for the hackathon features: Copilot and Audit (Signals: ``workspace``).
 
 HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
@@ -37,14 +37,6 @@ from maudesignal.gate import (
     verify_sentence,
 )
 from maudesignal.gate.loader import store_from_database
-from maudesignal.monitor.deterioration import detect_from_database
-from maudesignal.monitor.digest import (
-    CHANGE_LABELS,
-    RANKING_ORDER,
-    digest_from_database,
-    render_markdown,
-)
-from maudesignal.monitor.sources import not_by_manufacturer, source_counts, sourced_reports
 from maudesignal.sources.openfda_sources import k510_url
 from maudesignal.storage.database import Database
 
@@ -54,16 +46,20 @@ TRANSCRIPT_DIR = Path(
 )
 MAUDE_URL = "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id={}"
 
-FRAMING_BANNER = (
-    '<div class="ms-frame">'
-    "<b>B2B regulatory triage aid for QA/RA teams.</b> Not medical advice. "
-    "It only shows facts it can match to the FDA record: every number, quote, device id "
-    "and CFR section is checked against stored openFDA records first. "
-    "Every action is a draft that a named human approves. "
-    "Nothing is filed with FDA automatically.</div>"
+#: One line under the top bar on every page (the long banner used to repeat on each page).
+FRAMING_LINE = (
+    "Triage aid for QA/RA teams · not medical advice · only shows facts it can match to "
+    "the FDA record · a named person decides · nothing is filed with FDA"
 )
 
 _PILL = {"pass": ("ok", "Verified"), "block": ("err", "Withheld")}
+
+
+def short(text: str, limit: int) -> str:
+    """Cut at a word boundary with an ellipsis (list labels)."""
+    if len(text) <= limit:
+        return text
+    return text[: limit - 1].rsplit(" ", 1)[0].rstrip(",;:") + "…"
 
 
 def _pill(status: str) -> str:
@@ -100,167 +96,6 @@ def _evidence_link(eid: str) -> str:
     return eid  # recall numbers and other ids: shown, not linked
 
 
-# ---------------------------------------------------------------------------
-# What changed
-# ---------------------------------------------------------------------------
-
-
-def _hero_html(digest: Any) -> str:
-    """The page's one ink tile (design-system HeroSignal): the top-ranked change and why."""
-    top = digest.ranked[0]
-    device = digest.device_types.get(top.product_code)
-    label = CHANGE_LABELS[top.classification]
-    brands = digest.window_brands.get(top.product_code, [])
-    reason = digest.rank_reasons[top.product_code].replace(">=", "≥")
-    fig = (
-        f"{top.spike_ratio:.2f}×"
-        if top.classification == "spike" and top.spike_ratio is not None
-        else str(top.current_count)
-    )
-    named = (
-        "Devices named on this week's reports: "
-        + ", ".join(f"{html.escape(b)} ({n} of {top.current_count} reports)" for b, n in brands)
-        + "."
-        if brands
-        else ""
-    )
-    return (
-        '<article class="ms-tile ms-hero" style="margin-bottom:var(--space-2)">'
-        '<svg class="ms-hero__rings" viewBox="0 0 300 300" aria-hidden="true">'
-        '<circle cx="150" cy="150" r="40"/><circle cx="150" cy="150" r="70"/>'
-        '<circle cx="150" cy="150" r="100"/><circle cx="150" cy="150" r="130"/></svg>'
-        '<div class="ms-kicker"><span class="ms-i" aria-hidden="true">trending_up</span>'
-        f"Top signal: {top.product_code}"
-        + (f" · {html.escape(device)}" if device else "")
-        + "</div>"
-        f'<h2 class="ms-hero__title">{html.escape(label[:1].upper() + label[1:])}</h2>'
-        f'<p class="ms-hero__deck"><b>Why it is ranked first.</b> {html.escape(reason)}</p>'
-        '<div class="ms-hero__foot">'
-        f'<div class="ms-hero__fig ms-num">{fig}<small>'
-        f"{top.current_count} reports this week · weekly mean "
-        f"{top.baseline_weekly_mean:.2f} before</small></div></div>"
-        f'<p class="ms-hero__deck" style="margin:var(--space-4) 0 0;font-size:13px">{named} '
-        f"Ranking order: {html.escape('; then '.join(RANKING_ORDER))}. "
-        "Deterministic — no model involved. Flagged for a person to review; it does not "
-        "decide whether a report or a CAPA is required.</p>"
-        "</article>"
-    )
-
-
-def page_changes(db: Database) -> None:
-    """What changed this week: the deterministic digest (no model)."""
-    st.html(FRAMING_BANNER)
-    result = detect_from_database(db)
-    digest = digest_from_database(db, result)
-    if digest.ranked:
-        st.html(_hero_html(digest))
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Reports suddenly increased", digest.increased_count)
-    c2.metric("More serious than usual", digest.serious_count)
-    c3.metric("New kind of problem", digest.new_count)
-    c4.metric("No change", digest.stable_count)
-    w = result.window
-    st.caption(
-        f"As of {w.as_of.isoformat()} (latest openFDA date_received in this database). "
-        f"This week: {w.current_start} → {w.current_end}; baseline: "
-        f"{w.baseline_start} → {w.baseline_end}."
-    )
-    _compare_section(db)
-    _mhra_section(db)
-    st.markdown(render_markdown(digest))
-    _who_filed(db, digest)
-    digests = sorted((PROJECT_ROOT / "digests").glob("*.md"))
-    if digests:
-        with st.expander(f"Archived digests ({len(digests)})"):
-            for p in reversed(digests):
-                st.markdown(f"**{p.stem}**")
-                st.code(p.read_text(encoding="utf-8")[:4000], language="markdown")
-
-
-def _compare_section(db: Database) -> None:
-    """Signal compare for the device types the user chooses, and the remembered list."""
-    from maudesignal.copilot.memory import CopilotMemoryError, load_memory, set_device_types
-    from maudesignal.monitor.compare import compare_signals
-
-    codes = sorted({e.product_code for e in db.list_normalized_events() if e.product_code})
-    mem = load_memory(db)
-    st.subheader("Compare the device types you choose")
-    st.caption(
-        "You pick the product codes; MaudeSignal does not decide which devices are similar. "
-        "Same 7-day window and rules as above. Deterministic — no model involved."
-    )
-    default = [c for c in mem.device_types if c in codes] or codes
-    chosen = st.multiselect("Device types (FDA product codes)", codes, default=default, key="cmp")
-    if chosen:
-        cmp = compare_signals(db, chosen)
-        st.dataframe(
-            pd.DataFrame(
-                [
-                    {
-                        "device type": r.product_code,
-                        "change": r.change,
-                        "this week": r.this_week,
-                        "weekly mean before": r.baseline_weekly_mean,
-                        "ratio": r.ratio_to_baseline,
-                        "injury/death this week": r.injury_death_this_week,
-                        "not filed by a manufacturer": r.not_by_manufacturer_this_week,
-                        "stored, all dates": r.stored_total,
-                    }
-                    for r in cmp.rows
-                ]
-            ),
-            hide_index=True,
-            width="stretch",
-        )
-    with st.expander(
-        "Remember these device types"
-        + (f" (remembered: {', '.join(mem.device_types)})" if mem.device_types else "")
-    ):
-        st.caption(
-            "Saved as an entry in the tamper-evident audit trail with your name. The copilot "
-            "can read this list (tool `my_device_types`) but cannot change it."
-        )
-        who = st.text_input("Your name", key="mem_actor")
-        if st.button("Remember this list", key="mem_save"):
-            try:
-                set_device_types(db, chosen, actor=who)
-                st.success(f"Remembered: {', '.join(sorted(chosen)) or 'none'}.")
-            except CopilotMemoryError as exc:
-                st.error(str(exc))
-
-
-def _mhra_section(db: Database) -> None:
-    """MHRA (UK) device safety alerts: regulator context, clearly separate from FDA data."""
-    from maudesignal.sources.mhra import SOURCE_MHRA
-
-    rows = db.list_external_sources(source_type=SOURCE_MHRA, limit=200)
-    with st.expander(f"UK regulator context: MHRA device safety alerts ({len(rows)} stored)"):
-        st.caption(
-            "From the MHRA (UK) via the public GOV.UK search API, searched with terms a person "
-            "chose for each device type (`data/demo/mhra_queries.json`). Context only: not FDA "
-            "data, not counted in any number on this page."
-        )
-        if not rows:
-            st.caption("None stored yet (`scripts/fetch_mhra_alerts.py`).")
-            return
-        st.dataframe(
-            pd.DataFrame(
-                [
-                    {
-                        "searched for (FDA product code)": r.product_code or "",
-                        "issued": r.publication_date or "",
-                        "MHRA alert": r.title or "",
-                        "link": r.url or "",
-                    }
-                    for r in sorted(rows, key=lambda r: r.publication_date or "", reverse=True)
-                ]
-            ),
-            hide_index=True,
-            width="stretch",
-            column_config={"link": st.column_config.LinkColumn("link")},
-        )
-
-
 CAPA_NEED_NOTE = (
     "Whether a CAPA is required is decided by the company's own CAPA-need form. "
     "This document is evidence only."
@@ -273,69 +108,6 @@ SOURCE_FILTERS = {
     "Voluntary": "voluntary",
     "Distributor": "distributor",
 }
-
-
-def _who_filed(db: Database, digest: Any) -> None:
-    """F12: report sources per device type, and a filterable list of the reports."""
-    reports = sourced_reports(db)
-    if not reports:
-        return
-    w = digest.result.window
-    week = source_counts(reports, date_from=_ymd(w.current_start), date_to=_ymd(w.current_end))
-    stored = source_counts(reports)
-    st.subheader("Who filed the reports")
-    st.caption(
-        "openFDA report source. A manufacturer already knows the complaints it files itself; "
-        "reports filed by a user facility (such as a hospital), a voluntary reporter or a "
-        "distributor are the ones it may not have seen. Counted from the stored records."
-    )
-    st.dataframe(
-        pd.DataFrame(
-            [
-                {
-                    "device type (product code)": pc,
-                    "FDA device type": digest.device_types.get(pc, ""),
-                    "this week": ", ".join(f"{k} {v}" for k, v in week.get(pc, {}).items()) or "0",
-                    "all stored": ", ".join(f"{k} {v}" for k, v in counts.items()),
-                }
-                for pc, counts in stored.items()
-            ]
-        ),
-        hide_index=True,
-        width="stretch",
-    )
-    c1, c2 = st.columns(2)
-    choice = c1.selectbox("Show reports filed by", list(SOURCE_FILTERS), key="src_filter")
-    codes = c2.multiselect("Device types", sorted(stored), default=sorted(stored), key="src_codes")
-    wanted = SOURCE_FILTERS[choice]
-    rows = (
-        not_by_manufacturer(reports)
-        if wanted is None
-        else [r for r in reports if r.source == wanted]
-    )
-    rows = [r for r in rows if r.product_code in codes]
-    st.markdown(f"**{choice}: {len(rows)} stored report(s)** (all stored dates, newest first)")
-    if rows:
-        st.dataframe(
-            pd.DataFrame(
-                [
-                    {
-                        "report": MAUDE_URL.format(r.report_id.split("-")[0]),
-                        "report id": r.report_id,
-                        "date received": r.date_received or "",
-                        "source": r.source,
-                        "device type": r.product_code,
-                        "device named": r.brand_name or "",
-                    }
-                    for r in rows
-                ]
-            ),
-            column_config={
-                "report": st.column_config.LinkColumn("FDA record", display_text="open")
-            },
-            hide_index=True,
-            width="stretch",
-        )
 
 
 def _ymd(d: Any) -> str:
@@ -363,7 +135,8 @@ def _voice_html(voice: dict[str, Any]) -> str:
     )
 
 
-def _render_transcript(t: dict[str, Any]) -> None:
+def render_transcript(t: dict[str, Any]) -> None:
+    """One recorded or live answer: question, gated sentences, evidence, run facts."""
     if t.get("fallback_for"):
         st.caption(
             f"You asked: “{t['fallback_for']}”. Live quota reached, so this is the closest "
@@ -444,10 +217,9 @@ def _gate_playground(db: Database) -> None:
 
 
 def page_copilot(db: Database) -> None:
-    """Copilot: replay of real Muse Spark runs + live gate playground (+ live mode if keyed)."""
-    st.html(FRAMING_BANNER)
+    """Copilot: recorded Muse Spark answers (list and detail), the gate playground, live mode."""
     tab_replay, tab_gate, tab_live = st.tabs(
-        ["Recorded Muse Spark runs", "Try to fool the gate", "Ask live"]
+        ["Recorded Muse Spark answers", "Try to fool the gate", "Ask live"]
     )
     with tab_replay:
         # Typed questions first (the demo's story order); spoken clips after them.
@@ -460,9 +232,26 @@ def page_copilot(db: Database) -> None:
                 "No recorded runs yet. They are produced by "
                 "`scripts/record_demo_transcripts.py` with a Meta Model API key."
             )
-        for t in transcripts:
-            with st.container(border=True):
-                _render_transcript(t)
+        else:
+            by_label = {str(t["label"]): t for t in transcripts}
+            left, right = st.columns([1, 2.2], gap="large")
+            with left:
+                st.html(
+                    f'<div class="ms-kicker">{len(transcripts)} recorded questions</div>'
+                    '<p class="ms-muted ms-small">Real Muse Spark runs; every sentence was '
+                    "checked by the gate before it was shown.</p>"
+                )
+                with st.container(key="ms_qlist"):
+                    pick = st.radio(
+                        "Questions",
+                        list(by_label),
+                        format_func=lambda k: ("🎙 " if k.startswith("00-voice") else "")
+                        + short(str(by_label[k]["question"]), 90),
+                        key="cp_pick",
+                        label_visibility="collapsed",
+                    )
+            with right, st.container(border=True):
+                render_transcript(by_label[str(pick)])
     with tab_gate:
         _gate_playground(db)
     with tab_live:
@@ -502,7 +291,7 @@ def _live_copilot(db: Database) -> None:  # pragma: no cover - needs a live key
             _fallback(q, str(exc))
     for t in reversed(st.session_state["copilot_log"]):
         with st.container(border=True):
-            _render_transcript(t)
+            render_transcript(t)
 
 
 def progress_line(kind: str, data: dict[str, Any]) -> str:
@@ -610,16 +399,9 @@ def _voice_question(db: Database, agent: Any) -> None:  # pragma: no cover - nee
 # ---------------------------------------------------------------------------
 
 
-def page_actions(db: Database) -> None:
-    """CAPA-need evidence packs awaiting a named person's decision, and the audit trail."""
-    st.html(FRAMING_BANNER)
-    drafts = db.list_capa_drafts()
-    st.subheader(
-        f"CAPA-need evidence pack ({sum(1 for d in drafts if d.status == 'draft')} awaiting review)"
-    )
+def render_approvals(db: Database, drafts: list[Any]) -> None:
+    """CAPA-need evidence packs with the named-person Accept / Reject decision."""
     st.caption(CAPA_NEED_NOTE)
-    if not drafts:
-        st.caption("None yet. Ask the copilot to prepare the CAPA-need evidence pack for a signal.")
     reviewer = st.text_input("Your name (recorded as the approver)", key="capa_reviewer")
     for d in drafts:
         with st.container(border=True):
@@ -634,7 +416,7 @@ def page_actions(db: Database) -> None:
             if d.status == "draft":
                 c1, c2, _ = st.columns([1, 1, 4])
                 for col, decision, label in (
-                    (c1, "approved", "Approve"),
+                    (c1, "approved", "Accept"),
                     (c2, "rejected", "Reject"),
                 ):
                     if col.button(label, key=f"{decision}_{d.capa_id}"):
@@ -646,7 +428,14 @@ def page_actions(db: Database) -> None:
             else:
                 st.caption(f"{d.status} by {d.decided_by}: {d.decision_note or ''}")
 
-    st.subheader("Audit trail")
+
+def page_audit(db: Database) -> None:
+    """Every decision and model answer, in one tamper-evident trail."""
+    drafts = db.list_capa_drafts()
+    pending = [d for d in drafts if d.status == "draft"]
+    if drafts:
+        st.subheader(f"CAPA-need evidence packs ({len(pending)} awaiting a decision)")
+        render_approvals(db, drafts)
     rows = db.list_audit()
     if not rows:
         _recorded_audit_trails()
@@ -656,24 +445,23 @@ def page_actions(db: Database) -> None:
         st.success(f"Hash chain intact across {len(rows)} entries.")
     else:
         st.error(f"Hash chain broken at entry {bad} — the trail was edited.")
-    if rows:
-        st.dataframe(
-            pd.DataFrame(
-                [
-                    {
-                        "seq": r.seq,
-                        "time (UTC)": r.ts,
-                        "actor": r.actor,
-                        "action": r.action,
-                        "entity": r.entity_id,
-                        "hash": r.entry_hash[:12],
-                    }
-                    for r in rows
-                ]
-            ),
-            hide_index=True,
-            width="stretch",
-        )
+    st.dataframe(
+        pd.DataFrame(
+            [
+                {
+                    "seq": r.seq,
+                    "time (UTC)": r.ts,
+                    "actor": r.actor,
+                    "action": r.action,
+                    "entity": r.entity_id,
+                    "hash": r.entry_hash[:12],
+                }
+                for r in rows
+            ]
+        ),
+        hide_index=True,
+        width="stretch",
+    )
 
 
 def _recorded_audit_trails() -> None:
@@ -688,33 +476,38 @@ def _recorded_audit_trails() -> None:
         "CAPA-need evidence packs). "
         "Every hash is recomputed here from the stored fields."
     )
+    runs, rows = [], []
     for doc in exports:
         entries = doc.get("entries", [])
         ok, bad = doc["verified"]
-        label = f"Recorded run `{doc.get('run_label', doc['file'])}` · {len(entries)} entries"
-        if ok:
-            st.success(f"{label} · hash chain intact.")
-        else:
-            st.error(f"{label} · hash chain broken at entry {bad}.")
-        if entries:
-            st.dataframe(
-                pd.DataFrame(
-                    [
-                        {
-                            "seq": e["seq"],
-                            "time (UTC)": e["ts"],
-                            "actor": e["actor"],
-                            "action": e["action"],
-                            "entity": e["entity_id"],
-                            "detail": _audit_detail(e),
-                            "hash": e["entry_hash"][:12],
-                        }
-                        for e in entries
-                    ]
-                ),
-                hide_index=True,
-                width="stretch",
-            )
+        run = str(doc.get("run_label", doc["file"]))
+        runs.append(
+            {
+                "recorded run": run,
+                "entries": len(entries),
+                "hash chain": "intact" if ok else f"broken at entry {bad}",
+            }
+        )
+        rows += [
+            {
+                "run": run,
+                "seq": e["seq"],
+                "time (UTC)": e["ts"],
+                "actor": e["actor"],
+                "action": e["action"],
+                "detail": _audit_detail(e),
+                "hash": e["entry_hash"][:12],
+            }
+            for e in entries
+        ]
+    broken = [r for r in runs if r["hash chain"] != "intact"]
+    if broken:
+        st.error(f"Hash chain broken in {len(broken)} recorded run(s).")
+    else:
+        st.success(f"Hash chain intact in all {len(runs)} recorded runs ({len(rows)} entries).")
+    st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
+    with st.expander("Per run"):
+        st.dataframe(pd.DataFrame(runs), hide_index=True, width="stretch")
 
 
 def _audit_detail(entry: dict[str, Any]) -> str:
