@@ -178,11 +178,12 @@ def beats(live_url: str, repo_url: str) -> list[Beat]:
         d.card(
             '<div class="card"><div class="kicker">The problem</div>'
             '<div class="fig">2,000,000+</div><h2>device reports reach FDA every year. '
-            "More than 1,500 AI-enabled devices are on FDA's list.</h2><p>MAUDE has no field "
+            "FDA's list of AI-enabled devices has 1,614 entries.</h2><p>MAUDE has no field "
             "for an AI failure. For one AI product code alone (LLZ) there are 19,970 reports, "
             '99.3% filed by the manufacturers themselves.</p><div class="rule"></div><p '
-            'class="src">Sources: FDA / openFDA; FDA AI-Enabled Device List (public counts, '
-            "2026); openFDA report-source counts, 28 Oct 2026 (docs/hackathon/SOURCE_COUNTS.md)"
+            'class="src">Sources: FDA / openFDA; FDA AI-Enabled Medical Device List, read 29 '
+            "Oct 2026 (docs/hackathon/AI_SWEEP.md); openFDA report-source counts, 28 Oct 2026 "
+            "(docs/hackathon/SOURCE_COUNTS.md)"
             "</p></div>"
         )
         d.pause(11)
@@ -190,6 +191,8 @@ def beats(live_url: str, repo_url: str) -> list[Beat]:
     def signals(d: Driver) -> None:
         p = d.page
         d.open("/?theme=light&tools=demo", ".st-key-ms_siglist")
+        d.click(p.get_by_text("Across FDA's AI device list", exact=False), 2)
+        d.glide(p.locator("[data-testid='stExpander'] [data-testid='stDataFrame']").first, 3)
         d.glide(p.locator(".ms-sig-head"), 1.5)
         d.glide(p.locator(".ms-stats"), 1.2)
         cards = p.locator(".st-key-ms_siglist label[data-testid='stRadioOption']")
@@ -256,15 +259,15 @@ def beats(live_url: str, repo_url: str) -> list[Beat]:
         ),
         Beat(
             "Problem",
-            "FDA gets over two million device reports a year, and over fifteen hundred AI "
-            "devices are authorized. MAUDE has no field for an AI failure.",
+            "FDA gets over two million device reports a year, and its list of AI devices has "
+            "1,614 entries. MAUDE has no field for an AI failure.",
             stat,
         ),
         Beat(
             "Signals",
-            "Monday morning. For the device types I chose, it compares this week with the "
-            "last four. LLZ reports suddenly increased: 33 against a normal 9. And here are "
-            "the reports the manufacturer didn't file.",
+            "Monday morning. Across all 181 AI device types on FDA's list, 6 were flagged in "
+            "openFDA's latest week. For the types I chose, LLZ reports suddenly increased: 33 "
+            "against a normal 9. And here are the reports the manufacturer didn't file.",
             signals,
         ),
         Beat(

@@ -53,6 +53,13 @@ recorded run or a test in this repository (sources in brackets).
   test types reported, with the external ones marked PENDING
   [`docs/hackathon/TESTING.md`].
 - Spend so far: about $8.35 of the $150 credit (estimates) [`docs/hackathon/BUDGET.md`].
+- AI device sweep (GitHub Actions run 40836844281, 2026-10-29): FDA's AI-Enabled
+  Medical Device List has 1,614 devices across 181 product codes; all 181 checked on
+  openFDA for 2026-09-24 – 09-30 (the latest week) against the 4 weeks before; 6
+  flagged: 3 reports suddenly increased, 2 more serious than usual, 1 new kind of
+  problem; 0 errors [`docs/hackathon/AI_SWEEP.md`, `demo/sweep/ai-device-sweep.json`].
+- Any device type can be checked live on the Signals page (openFDA counts, the same
+  four rules; a 300-case test checks it agrees with the stored-records detector).
 
 ## Why it matters (impact)
 
@@ -61,8 +68,8 @@ published estimates disagree by almost three times.
 
 - FDA receives over two million medical device reports a year
   ([openFDA](https://open.fda.gov/apis/device/event), FDA).
-- FDA's AI-Enabled Medical Device List passed 1,500 entries in 2026 and grows by about
-  300 a year (third-party counts of FDA's list:
+- FDA's AI-Enabled Medical Device List has 1,614 devices across 181 product codes (read
+  by our sweep on 2026-10-29), and grows by about 300 a year (third-party counts:
   [ai2.work](https://ai2.work/blog/fda-ai-device-list-hits-1-524-as-radiology-dominates-but-evidence-lags),
   [IntuitionLabs](https://intuitionlabs.ai/articles/fda-ai-medical-device-tracker)).
 - MAUDE has no field for an AI-specific failure such as drift; MaudeSignal adds an
@@ -101,7 +108,7 @@ MaudeSignal:
   evidence-pack PDF as an independent second reader.
 - Most Viral / Community Vote: need Charan's post and gallery link (draft below).
 
-## Video script v4 — 2:52, recorded by `scripts/record_walkthrough.py`
+## Video script v4 — about 3:00, recorded by `scripts/record_walkthrough.py`
 
 The video shows only what was built during the event: the app runs in demo mode
 (`?tools=demo`: Signals, Copilot, Vision, Audit). `walkthrough-script.md` from the
@@ -110,8 +117,8 @@ recorder has the exact start times; read along with `walkthrough.mp4`.
 | Starts | Screen | Voiceover (Charan) |
 |---|---|---|
 | 0:00 | Title card | "I'm Charan. MaudeSignal helps medical-device safety teams watch FDA data. Not medical advice: a person makes every decision." |
-| 0:09 | Problem card (2M+ reports a year; 1,500+ AI devices; 19,970 LLZ reports) | "FDA gets over two million device reports a year, and over fifteen hundred AI devices are authorized. MAUDE has no field for an AI failure." |
-| 0:21 | Signals: LLZ increase, then MYN → "Not filed by a manufacturer" | "Monday morning. For the device types I chose, it compares this week with the last four. LLZ reports suddenly increased: 33 against a normal 9. And here are the reports the manufacturer didn't file." |
+| 0:09 | Problem card (2M+ reports a year; 1,614 AI devices on FDA's list; 19,970 LLZ reports) | "FDA gets over two million device reports a year, and its list of AI devices has 1,614 entries. MAUDE has no field for an AI failure." |
+| 0:21 | Signals: "Across FDA's AI device list" (6 of 181 flagged), LLZ increase, then MYN → "Not filed by a manufacturer" | "Monday morning. Across all 181 AI device types on FDA's list, 6 were flagged in openFDA's latest week. For the types I chose, LLZ reports suddenly increased: 33 against a normal 9. And here are the reports the manufacturer didn't file." |
 | 0:43 | Copilot: spoken question "my colleague says LLZ had 50 injury reports…" → "That claim is not correct" | "I can just ask. Meta's Voice Transcribe hears the question; Muse Spark calls tools over the stored FDA records. A colleague's claim of 50 injuries? The records say otherwise." |
 | 1:04 | Copilot: typed trap answer, "after a repair turn", first-pass expander with the withheld sentence | "Every sentence passes a gate that recomputes each number from the records. Here Spark itself said something the records didn't support. The gate withheld it and showed why; Spark got one repair turn, and anything still unmatched stays struck out." |
 | 1:27 | Try to fool the gate: CFR 820.100 → superseded by QMSR | "You can try to fool it yourself: cite 21 CFR 820.100, and it's blocked, because QMSR replaced it this February." |
@@ -128,6 +135,8 @@ firsthand (the problem statement is "Build for Your World").
 > medical-device teams on public FDA data. Muse Spark answers with tools, and a gate
 > recomputes every number from the FDA records. What it can't match, it refuses to
 > say, and shows you why. Voice Transcribe, SAM 3.1 and Muse Wonder too.
+> It checked all 181 AI device types on FDA's list against openFDA: 6 were flagged in
+> the latest week. Try any device type yourself:
 > Demo: https://maudesignal-4vniqswm9ptaxqtf2iawox.streamlit.app/
 > Code: https://github.com/kondapallysaicharan63-bot/maudesignal
 > [attach the 2:52 video]
