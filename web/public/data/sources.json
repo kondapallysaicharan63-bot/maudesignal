@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "sources": [
+    {
+      "id": "maude",
+      "label": "openFDA MAUDE",
+      "records": 137,
+      "last_refresh": "20260831",
+      "last_refresh_basis": "newest date_received"
+    },
+    {
+      "id": "recalls",
+      "label": "openFDA recalls",
+      "records": 566,
+      "last_refresh": "2026-10-27",
+      "last_refresh_basis": "newest fetched_at"
+    },
+    {
+      "id": "510k",
+      "label": "FDA 510(k)",
+      "records": 266,
+      "last_refresh": "2026-10-27",
+      "last_refresh_basis": "newest fetched_at"
+    },
+    {
+      "id": "pubmed",
+      "label": "PubMed",
+      "records": 20,
+      "last_refresh": "2026-10-27",
+      "last_refresh_basis": "newest fetched_at"
+    },
+    {
+      "id": "mhra",
+      "label": "MHRA (UK)",
+      "records": 17,
+      "last_refresh": "2026-10-28",
+      "last_refresh_basis": "newest fetched_at"
+    }
+  ],
+  "notes": [
+    "MHRA (UK) is regulator context only; it is never counted in a MAUDE number."
+  ]
+}

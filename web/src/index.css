@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base text is 17px (design-system body is 15px). Colours and fonts stay design-system tokens. */
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font: 400 17px/1.6 var(--font-sans);
+  background: var(--paper);
+  color: var(--ink);
+  overflow-x: hidden;
+}
+button {
+  font: inherit;
+  color: inherit;
+}
+
+@layer components {
+  .ws-icon-btn {
+    @apply inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-xs border border-transparent px-2 text-ink-2 hover:bg-sunk hover:text-ink;
+  }
+  .ws-side-item {
+    @apply flex w-full items-center justify-between gap-2 rounded-xs px-3 py-2 text-left text-[16px] leading-snug text-ink hover:bg-sunk;
+  }
+  .ws-side-item[aria-current='true'] {
+    @apply bg-sunk font-semibold;
+  }
+  .ws-heading {
+    @apply px-3 pb-1 pt-5 text-[12px] font-semibold uppercase tracking-[0.1em] text-ink-3;
+  }
+  .ws-pill {
+    @apply inline-flex shrink-0 items-center gap-1 rounded-xs px-2 py-[2px] text-[12px] font-semibold leading-snug;
+  }
+}
+
+.ws-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  flex: none;
+}
+
+/* Phone: nothing may force sideways scrolling. */
+.ws-wrap {
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}

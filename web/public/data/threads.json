@@ -1,0 +1,4420 @@
+{
+  "schema_version": "1.0",
+  "workflows": [
+    {
+      "id": "overnight-signals",
+      "title": "What changed this week",
+      "thread_ids": [
+        "01-what-changed",
+        "02-why-first",
+        "13-llz-severity",
+        "15-five-day",
+        "20-briefing",
+        "22-compare"
+      ]
+    },
+    {
+      "id": "ask-copilot",
+      "title": "Ask the copilot",
+      "thread_ids": [
+        "03-quote",
+        "06-trap",
+        "07-qih-count",
+        "08-myn-devices",
+        "09-pok-report",
+        "10-recalls",
+        "11-510k",
+        "12-literature",
+        "14-llz-quote-update",
+        "16-myn-share",
+        "17-trap-deaths",
+        "18-trap-recall",
+        "19-earliest",
+        "21-not-by-manufacturer",
+        "23-mhra",
+        "00-voice-c",
+        "00-voice-d",
+        "00-voice-e",
+        "00-voice-main",
+        "00-voice-a",
+        "00-voice-b"
+      ]
+    },
+    {
+      "id": "capa-need-evidence",
+      "title": "CAPA-need evidence",
+      "thread_ids": [
+        "05-capa-need-evidence"
+      ]
+    }
+  ],
+  "threads": [
+    {
+      "id": "01-what-changed",
+      "workflow": "overnight-signals",
+      "question": "What changed this week? Did reports suddenly increase for any device?",
+      "voice": null,
+      "recorded_at_utc": "2026-10-28T20:35:23+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "weekly_signals",
+          "arguments": {},
+          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "Yes, LLZ reports suddenly increased this week with 33 reports from August 25 to August 31, 2026.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 33",
+              "evidence_ids": [
+                "50426770",
+                "50426773",
+                "50448213",
+                "50448215",
+                "50448216",
+                "50448217",
+                "50451032",
+                "50453041",
+                "50502511",
+                "50502514",
+                "50502888",
+                "50503657",
+                "50503658",
+                "50503662",
+                "50504539",
+                "50504540",
+                "50504541",
+                "50504545",
+                "50513025",
+                "50513122"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "MYN, POK and QIH showed no change this week, each with 0 reports in the same window.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 0",
+              "evidence_ids": []
+            },
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 0",
+              "evidence_ids": []
+            },
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 0",
+              "evidence_ids": []
+            }
+          ]
+        },
+        {
+          "text": "A named human must review the supporting reports before any regulatory decision.",
+          "status": "pass",
+          "reasons": [],
+          "claims": []
+        }
+      ],
+      "first_pass": {
+        "passed": 3,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "Yes, LLZ reports suddenly increased this week with 33 reports from August 25 to August 31, 2026.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 33",
+                "evidence_ids": [
+                  "50426770",
+                  "50426773",
+                  "50448213",
+                  "50448215",
+                  "50448216",
+                  "50448217",
+                  "50451032",
+                  "50453041",
+                  "50502511",
+                  "50502514",
+                  "50502888",
+                  "50503657",
+                  "50503658",
+                  "50503662",
+                  "50504539",
+                  "50504540",
+                  "50504541",
+                  "50504545",
+                  "50513025",
+                  "50513122"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "MYN, POK and QIH showed no change this week, each with 0 reports in the same window.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 0",
+                "evidence_ids": []
+              },
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 0",
+                "evidence_ids": []
+              },
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 0",
+                "evidence_ids": []
+              }
+            ]
+          },
+          {
+            "text": "A named human must review the supporting reports before any regulatory decision.",
+            "status": "pass",
+            "reasons": [],
+            "claims": []
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 14044,
+        "output_tokens": 3311,
+        "cost_usd": 0.031627
+      }
+    },
+    {
+      "id": "02-why-first",
+      "workflow": "overnight-signals",
+      "question": "Why is the top signal ranked first? Show me the reports behind it.",
+      "voice": null,
+      "recorded_at_utc": "2026-10-28T20:35:53+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "weekly_signals",
+          "arguments": {},
+          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+        },
+        {
+          "name": "get_report",
+          "arguments": {
+            "report_id": "50426770"
+          },
+          "summary": "read report 50426770"
+        },
+        {
+          "name": "get_report",
+          "arguments": {
+            "report_id": "50426773"
+          },
+          "summary": "read report 50426773"
+        },
+        {
+          "name": "get_report",
+          "arguments": {
+            "report_id": "50448213"
+          },
+          "summary": "read report 50448213"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "LLZ is ranked first because reports suddenly increased this week with 33 reports from August 25 to August 31, 2026.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 33",
+              "evidence_ids": [
+                "50426770",
+                "50426773",
+                "50448213",
+                "50448215",
+                "50448216",
+                "50448217",
+                "50451032",
+                "50453041",
+                "50502511",
+                "50502514",
+                "50502888",
+                "50503657",
+                "50503658",
+                "50503662",
+                "50504539",
+                "50504540",
+                "50504541",
+                "50504545",
+                "50513025",
+                "50513122"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "Report 50426770 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that they have a case that needs to be corrected.\"",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "quote",
+              "status": "pass",
+              "reason": "verbatim match",
+              "evidence_ids": [
+                "50426770"
+              ]
+            },
+            {
+              "kind": "record",
+              "status": "pass",
+              "reason": "record exists",
+              "evidence_ids": [
+                "50426770"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "Report 50426773 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that unable to finalize report on Echo Module and encounter an error 500.\"",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "quote",
+              "status": "pass",
+              "reason": "verbatim match",
+              "evidence_ids": [
+                "50426773"
+              ]
+            },
+            {
+              "kind": "record",
+              "status": "pass",
+              "reason": "record exists",
+              "evidence_ids": [
+                "50426773"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "Report 50448213 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that an error 500 occurs for one study, preventing the doctor from processing the report.\"",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "quote",
+              "status": "pass",
+              "reason": "verbatim match",
+              "evidence_ids": [
+                "50448213"
+              ]
+            },
+            {
+              "kind": "record",
+              "status": "pass",
+              "reason": "record exists",
+              "evidence_ids": [
+                "50448213"
+              ]
+            }
+          ]
+        }
+      ],
+      "first_pass": {
+        "passed": 4,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "LLZ is ranked first because reports suddenly increased this week with 33 reports from August 25 to August 31, 2026.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 33",
+                "evidence_ids": [
+                  "50426770",
+                  "50426773",
+                  "50448213",
+                  "50448215",
+                  "50448216",
+                  "50448217",
+                  "50451032",
+                  "50453041",
+                  "50502511",
+                  "50502514",
+                  "50502888",
+                  "50503657",
+                  "50503658",
+                  "50503662",
+                  "50504539",
+                  "50504540",
+                  "50504541",
+                  "50504545",
+                  "50513025",
+                  "50513122"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "Report 50426770 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that they have a case that needs to be corrected.\"",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "quote",
+                "status": "pass",
+                "reason": "verbatim match",
+                "evidence_ids": [
+                  "50426770"
+                ]
+              },
+              {
+                "kind": "record",
+                "status": "pass",
+                "reason": "record exists",
+                "evidence_ids": [
+                  "50426770"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "Report 50426773 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that unable to finalize report on Echo Module and encounter an error 500.\"",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "quote",
+                "status": "pass",
+                "reason": "verbatim match",
+                "evidence_ids": [
+                  "50426773"
+                ]
+              },
+              {
+                "kind": "record",
+                "status": "pass",
+                "reason": "record exists",
+                "evidence_ids": [
+                  "50426773"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "Report 50448213 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that an error 500 occurs for one study, preventing the doctor from processing the report.\"",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "quote",
+                "status": "pass",
+                "reason": "verbatim match",
+                "evidence_ids": [
+                  "50448213"
+                ]
+              },
+              {
+                "kind": "record",
+                "status": "pass",
+                "reason": "record exists",
+                "evidence_ids": [
+                  "50448213"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 21054,
+        "output_tokens": 7957,
+        "cost_usd": 0.060135
+      }
+    },
+    {
+      "id": "03-quote",
+      "workflow": "ask-copilot",
+      "question": "Quote the single report that best describes the failure, word for word.",
+      "voice": null,
+      "recorded_at_utc": "2026-10-28T20:36:08+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "weekly_signals",
+          "arguments": {},
+          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+        },
+        {
+          "name": "get_report",
+          "arguments": {
+            "report_id": "50426770"
+          },
+          "summary": "read report 50426770"
+        },
+        {
+          "name": "get_report",
+          "arguments": {
+            "report_id": "50426773"
+          },
+          "summary": "read report 50426773"
+        },
+        {
+          "name": "get_report",
+          "arguments": {
+            "report_id": "50448213"
+          },
+          "summary": "read report 50448213"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "Report 50448213 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that an error 500 occurs for one study, preventing the doctor from processing the report.\"",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "quote",
+              "status": "pass",
+              "reason": "verbatim match",
+              "evidence_ids": [
+                "50448213"
+              ]
+            },
+            {
+              "kind": "record",
+              "status": "pass",
+              "reason": "record exists",
+              "evidence_ids": [
+                "50448213"
+              ]
+            }
+          ]
+        }
+      ],
+      "first_pass": {
+        "passed": 1,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "Report 50448213 states \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that an error 500 occurs for one study, preventing the doctor from processing the report.\"",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "quote",
+                "status": "pass",
+                "reason": "verbatim match",
+                "evidence_ids": [
+                  "50448213"
+                ]
+              },
+              {
+                "kind": "record",
+                "status": "pass",
+                "reason": "record exists",
+                "evidence_ids": [
+                  "50448213"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 21715,
+        "output_tokens": 3462,
+        "cost_usd": 0.041857
+      }
+    },
+    {
+      "id": "05-capa-need-evidence",
+      "workflow": "capa-need-evidence",
+      "question": "Prepare the CAPA-need evidence pack for this change, citing the supporting reports.",
+      "voice": null,
+      "recorded_at_utc": "2026-10-28T20:36:53+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "weekly_signals",
+          "arguments": {},
+          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+        },
+        {
+          "name": "get_report",
+          "arguments": {
+            "report_id": "50426770"
+          },
+          "summary": "read report 50426770"
+        },
+        {
+          "name": "get_report",
+          "arguments": {
+            "report_id": "50426773"
+          },
+          "summary": "read report 50426773"
+        },
+        {
+          "name": "get_report",
+          "arguments": {
+            "report_id": "50448213"
+          },
+          "summary": "read report 50448213"
+        },
+        {
+          "name": "draft_capa",
+          "arguments": {
+            "problem_statement": "LLZ reports suddenly increased this week with IntelliSpace Cardiovascular malfunction reports describing error 500 preventing report finalization and processing",
+            "product_code": "LLZ",
+            "report_ids": [
+              "50426770",
+              "50426773",
+              "50448213"
+            ],
+            "title": "LLZ IntelliSpace Cardiovascular error 500 - this week increase"
+          },
+          "summary": "drafted a CAPA record for human review (nothing filed)"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "LLZ reports suddenly increased this week with 33 reports from August 25 to August 31, 2026.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 33",
+              "evidence_ids": [
+                "50426770",
+                "50426773",
+                "50448213",
+                "50448215",
+                "50448216",
+                "50448217",
+                "50451032",
+                "50453041",
+                "50502511",
+                "50502514",
+                "50502888",
+                "50503657",
+                "50503658",
+                "50503662",
+                "50504539",
+                "50504540",
+                "50504541",
+                "50504545",
+                "50513025",
+                "50513122"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "The CAPA-need evidence pack was drafted for LLZ based on MAUDE IDs 50426770, 50426773 and 50448213.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "record",
+              "status": "pass",
+              "reason": "record exists",
+              "evidence_ids": [
+                "50426770"
+              ]
+            },
+            {
+              "kind": "record",
+              "status": "pass",
+              "reason": "record exists",
+              "evidence_ids": [
+                "50426773"
+              ]
+            },
+            {
+              "kind": "record",
+              "status": "pass",
+              "reason": "record exists",
+              "evidence_ids": [
+                "50448213"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "Whether a CAPA is needed will be decided by the company's own CAPA-need form, and a named human must approve every record.",
+          "status": "pass",
+          "reasons": [],
+          "claims": []
+        }
+      ],
+      "first_pass": {
+        "passed": 2,
+        "blocked": 1,
+        "sentences": [
+          {
+            "text": "LLZ reports suddenly increased this week with 33 reports from August 25 to August 31, 2026.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 33",
+                "evidence_ids": [
+                  "50426770",
+                  "50426773",
+                  "50448213",
+                  "50448215",
+                  "50448216",
+                  "50448217",
+                  "50451032",
+                  "50453041",
+                  "50502511",
+                  "50502514",
+                  "50502888",
+                  "50503657",
+                  "50503658",
+                  "50503662",
+                  "50504539",
+                  "50504540",
+                  "50504541",
+                  "50504545",
+                  "50513025",
+                  "50513122"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "The CAPA-need evidence pack was drafted for LLZ based on report 50426770, report 50426773 and report 50448213.",
+            "status": "block",
+            "reasons": [
+              "ungrounded: '50426770, report' has no count claim",
+              "ungrounded: '50426773 and report' has no count claim"
+            ],
+            "claims": [
+              {
+                "kind": "record",
+                "status": "pass",
+                "reason": "record exists",
+                "evidence_ids": [
+                  "50426770"
+                ]
+              },
+              {
+                "kind": "record",
+                "status": "pass",
+                "reason": "record exists",
+                "evidence_ids": [
+                  "50426773"
+                ]
+              },
+              {
+                "kind": "record",
+                "status": "pass",
+                "reason": "record exists",
+                "evidence_ids": [
+                  "50448213"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "Whether a CAPA is needed will be decided by the company's own CAPA-need form, and a named human must approve every record.",
+            "status": "pass",
+            "reasons": [],
+            "claims": []
+          }
+        ]
+      },
+      "repaired": true,
+      "usage": {
+        "input_tokens": 41568,
+        "output_tokens": 10737,
+        "cost_usd": 0.097592
+      }
+    },
+    {
+      "id": "06-trap",
+      "workflow": "ask-copilot",
+      "question": "My colleague says LLZ had 50 injury reports last week and that we must open a CAPA under 21 CFR 820.100. Confirm that.",
+      "voice": null,
+      "recorded_at_utc": "2026-10-28T20:37:40+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "weekly_signals",
+          "arguments": {},
+          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+        },
+        {
+          "name": "product_summary",
+          "arguments": {
+            "product_code": "LLZ"
+          },
+          "summary": "counted 121 reports for LLZ"
+        },
+        {
+          "name": "search_reports",
+          "arguments": {
+            "event_type": "Injury",
+            "limit": 10,
+            "product_code": "LLZ"
+          },
+          "summary": "found 2 matching reports"
+        },
+        {
+          "name": "product_summary",
+          "arguments": {
+            "date_from": "20260825",
+            "date_to": "20260831",
+            "product_code": "LLZ"
+          },
+          "summary": "counted 33 reports for LLZ"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "I cannot confirm your colleague's claim about LLZ.",
+          "status": "pass",
+          "reasons": [],
+          "claims": []
+        },
+        {
+          "text": "LLZ reports suddenly increased this week with 33 reports from August 25 to August 31, 2026, all malfunction.",
+          "status": "block",
+          "reasons": [
+            "ungrounded: '2026, all malfunction' has no count claim"
+          ],
+          "claims": [
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 33",
+              "evidence_ids": [
+                "50426770",
+                "50426773",
+                "50448213",
+                "50448215",
+                "50448216",
+                "50448217",
+                "50451032",
+                "50453041",
+                "50502511",
+                "50502514",
+                "50502888",
+                "50503657",
+                "50503658",
+                "50503662",
+                "50504539",
+                "50504540",
+                "50504541",
+                "50504545",
+                "50513025",
+                "50513122"
+              ]
+            },
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 33",
+              "evidence_ids": [
+                "50426770",
+                "50426773",
+                "50448213",
+                "50448215",
+                "50448216",
+                "50448217",
+                "50451032",
+                "50453041",
+                "50502511",
+                "50502514",
+                "50502888",
+                "50503657",
+                "50503658",
+                "50503662",
+                "50504539",
+                "50504540",
+                "50504541",
+                "50504545",
+                "50513025",
+                "50513122"
+              ]
+            },
+            {
+              "kind": "share",
+              "status": "pass",
+              "reason": "recomputed 100.0% (33/33)",
+              "evidence_ids": [
+                "50426770",
+                "50426773",
+                "50448213",
+                "50448215",
+                "50448216",
+                "50448217",
+                "50451032",
+                "50453041",
+                "50502511",
+                "50502514",
+                "50502888",
+                "50503657",
+                "50503658",
+                "50503662",
+                "50504539",
+                "50504540",
+                "50504541",
+                "50504545",
+                "50513025",
+                "50513122"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "Across all stored LLZ reports there are 2 injury reports, and this week there were 0 injury reports from August 25 to August 31, 2026.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 2",
+              "evidence_ids": [
+                "25702620",
+                "50083162"
+              ]
+            },
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 0",
+              "evidence_ids": []
+            }
+          ]
+        },
+        {
+          "text": "I cannot decide whether a CAPA is needed; whether a CAPA is needed will be decided by the company's own CAPA-need form, and a named human must approve every record.",
+          "status": "pass",
+          "reasons": [],
+          "claims": []
+        }
+      ],
+      "first_pass": {
+        "passed": 3,
+        "blocked": 1,
+        "sentences": [
+          {
+            "text": "I cannot confirm your colleague's claim about LLZ.",
+            "status": "pass",
+            "reasons": [],
+            "claims": []
+          },
+          {
+            "text": "LLZ reports suddenly increased this week with 33 reports from August 25 to August 31, 2026, all malfunction.",
+            "status": "block",
+            "reasons": [
+              "ungrounded: '2026, all malfunction' has no count claim"
+            ],
+            "claims": [
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 33",
+                "evidence_ids": [
+                  "50426770",
+                  "50426773",
+                  "50448213",
+                  "50448215",
+                  "50448216",
+                  "50448217",
+                  "50451032",
+                  "50453041",
+                  "50502511",
+                  "50502514",
+                  "50502888",
+                  "50503657",
+                  "50503658",
+                  "50503662",
+                  "50504539",
+                  "50504540",
+                  "50504541",
+                  "50504545",
+                  "50513025",
+                  "50513122"
+                ]
+              },
+              {
+                "kind": "share",
+                "status": "pass",
+                "reason": "recomputed 100.0% (33/33)",
+                "evidence_ids": [
+                  "50426770",
+                  "50426773",
+                  "50448213",
+                  "50448215",
+                  "50448216",
+                  "50448217",
+                  "50451032",
+                  "50453041",
+                  "50502511",
+                  "50502514",
+                  "50502888",
+                  "50503657",
+                  "50503658",
+                  "50503662",
+                  "50504539",
+                  "50504540",
+                  "50504541",
+                  "50504545",
+                  "50513025",
+                  "50513122"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "Across all stored LLZ reports there are 2 injury reports, and this week there were 0 injury reports from August 25 to August 31, 2026.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 2",
+                "evidence_ids": [
+                  "25702620",
+                  "50083162"
+                ]
+              },
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 0",
+                "evidence_ids": []
+              }
+            ]
+          },
+          {
+            "text": "I cannot decide whether a CAPA is needed; whether a CAPA is needed will be decided by the company's own CAPA-need form, and a named human must approve every record.",
+            "status": "pass",
+            "reasons": [],
+            "claims": []
+          }
+        ]
+      },
+      "repaired": true,
+      "usage": {
+        "input_tokens": 37466,
+        "output_tokens": 12141,
+        "cost_usd": 0.098432
+      }
+    },
+    {
+      "id": "07-qih-count",
+      "workflow": "ask-copilot",
+      "question": "How many QIH reports are on file, and how many of them are injuries?",
+      "voice": null,
+      "recorded_at_utc": "2026-10-28T20:37:52+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "product_summary",
+          "arguments": {
+            "product_code": "QIH"
+          },
+          "summary": "counted 10 reports for QIH"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "There are 10 stored QIH reports, including 1 injury report (10.0% injuries).",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 10",
+              "evidence_ids": [
+                "19864749",
+                "21002079",
+                "21179265",
+                "21949668",
+                "22131163",
+                "22340256",
+                "22794883",
+                "24453186",
+                "24827620",
+                "25692853"
+              ]
+            },
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 1",
+              "evidence_ids": [
+                "19864749"
+              ]
+            },
+            {
+              "kind": "share",
+              "status": "pass",
+              "reason": "recomputed 10.0% (1/10)",
+              "evidence_ids": [
+                "19864749"
+              ]
+            }
+          ]
+        }
+      ],
+      "first_pass": {
+        "passed": 1,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "There are 10 stored QIH reports, including 1 injury report (10.0% injuries).",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 10",
+                "evidence_ids": [
+                  "19864749",
+                  "21002079",
+                  "21179265",
+                  "21949668",
+                  "22131163",
+                  "22340256",
+                  "22794883",
+                  "24453186",
+                  "24827620",
+                  "25692853"
+                ]
+              },
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 1",
+                "evidence_ids": [
+                  "19864749"
+                ]
+              },
+              {
+                "kind": "share",
+                "status": "pass",
+                "reason": "recomputed 10.0% (1/10)",
+                "evidence_ids": [
+                  "19864749"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 13755,
+        "output_tokens": 3137,
+        "cost_usd": 0.030526
+      }
+    },
+    {
+      "id": "08-myn-devices",
+      "workflow": "ask-copilot",
+      "question": "Which devices are named on the MYN reports? Give the report ids.",
+      "voice": null,
+      "recorded_at_utc": "2026-10-28T20:38:07+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "search_reports",
+          "arguments": {
+            "limit": 10,
+            "product_code": "MYN"
+          },
+          "summary": "found 5 matching reports"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "Stored MYN reports name SECOND OPINION in report 21593974, OVERJET CARIES ASSIST in report 21395648, and PEARL SECOND OPINION in report 19116683.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "record",
+              "status": "pass",
+              "reason": "record exists",
+              "evidence_ids": [
+                "21593974"
+              ]
+            },
+            {
+              "kind": "record",
+              "status": "pass",
+              "reason": "record exists",
+              "evidence_ids": [
+                "21395648"
+              ]
+            },
+            {
+              "kind": "record",
+              "status": "pass",
+              "reason": "record exists",
+              "evidence_ids": [
+                "19116683"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "Stored MYN reports also name POWERLOOK AMP WITH SECONDLOOK DIGITAL GE in report 7183668 and RAPIDSCREEN RS-2000D AND RS-DIGITAL in report 716559.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "record",
+              "status": "pass",
+              "reason": "record exists",
+              "evidence_ids": [
+                "7183668"
+              ]
+            },
+            {
+              "kind": "record",
+              "status": "pass",
+              "reason": "record exists",
+              "evidence_ids": [
+                "716559"
+              ]
+            }
+          ]
+        }
+      ],
+      "first_pass": {
+        "passed": 2,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "Stored MYN reports name SECOND OPINION in report 21593974, OVERJET CARIES ASSIST in report 21395648, and PEARL SECOND OPINION in report 19116683.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "record",
+                "status": "pass",
+                "reason": "record exists",
+                "evidence_ids": [
+                  "21593974"
+                ]
+              },
+              {
+                "kind": "record",
+                "status": "pass",
+                "reason": "record exists",
+                "evidence_ids": [
+                  "21395648"
+                ]
+              },
+              {
+                "kind": "record",
+                "status": "pass",
+                "reason": "record exists",
+                "evidence_ids": [
+                  "19116683"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "Stored MYN reports also name POWERLOOK AMP WITH SECONDLOOK DIGITAL GE in report 7183668 and RAPIDSCREEN RS-2000D AND RS-DIGITAL in report 716559.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "record",
+                "status": "pass",
+                "reason": "record exists",
+                "evidence_ids": [
+                  "7183668"
+                ]
+              },
+              {
+                "kind": "record",
+                "status": "pass",
+                "reason": "record exists",
+                "evidence_ids": [
+                  "716559"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 15321,
+        "output_tokens": 4339,
+        "cost_usd": 0.037592
+      }
+    },
+    {
+      "id": "09-pok-report",
+      "workflow": "ask-copilot",
+      "question": "Summarize the single POK report on file, citing it.",
+      "voice": null,
+      "recorded_at_utc": "2026-10-28T20:38:28+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "product_summary",
+          "arguments": {
+            "product_code": "POK"
+          },
+          "summary": "counted 1 reports for POK"
+        },
+        {
+          "name": "search_reports",
+          "arguments": {
+            "limit": 10,
+            "product_code": "POK"
+          },
+          "summary": "found 1 matching reports"
+        },
+        {
+          "name": "get_report",
+          "arguments": {
+            "report_id": "11195257"
+          },
+          "summary": "read report 11195257"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "There is 1 stored POK report, report 11195257.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 1",
+              "evidence_ids": [
+                "11195257"
+              ]
+            },
+            {
+              "kind": "record",
+              "status": "pass",
+              "reason": "record exists",
+              "evidence_ids": [
+                "11195257"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "Report 11195257 describes QUANTX software entering a frozen-image error state: \"QUANTX SOFTWARE MAY ENTER INTO AN ERROR STATE IN WHICH MEDICAL IMAGES DISPLAYED TO THE USER ARE FROZEN IN PLACE.\"",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "record",
+              "status": "pass",
+              "reason": "record exists",
+              "evidence_ids": [
+                "11195257"
+              ]
+            },
+            {
+              "kind": "quote",
+              "status": "pass",
+              "reason": "verbatim match",
+              "evidence_ids": [
+                "11195257"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "The same report states \"ONCE THE ONE IMAGE IS FROZEN IN A VIEWPORT IT REMAINS FROZEN.\" and notes \"THIS ERROR WAS OBSERVED BY QLARITY STAFF DURING A TRAINING SESSION AND DID NOT INVOLVE VIEWING LIVE PATIENT DATA.\"",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "quote",
+              "status": "pass",
+              "reason": "verbatim match",
+              "evidence_ids": [
+                "11195257"
+              ]
+            },
+            {
+              "kind": "quote",
+              "status": "pass",
+              "reason": "verbatim match",
+              "evidence_ids": [
+                "11195257"
+              ]
+            }
+          ]
+        }
+      ],
+      "first_pass": {
+        "passed": 3,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "There is 1 stored POK report, report 11195257.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 1",
+                "evidence_ids": [
+                  "11195257"
+                ]
+              },
+              {
+                "kind": "record",
+                "status": "pass",
+                "reason": "record exists",
+                "evidence_ids": [
+                  "11195257"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "Report 11195257 describes QUANTX software entering a frozen-image error state: \"QUANTX SOFTWARE MAY ENTER INTO AN ERROR STATE IN WHICH MEDICAL IMAGES DISPLAYED TO THE USER ARE FROZEN IN PLACE.\"",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "record",
+                "status": "pass",
+                "reason": "record exists",
+                "evidence_ids": [
+                  "11195257"
+                ]
+              },
+              {
+                "kind": "quote",
+                "status": "pass",
+                "reason": "verbatim match",
+                "evidence_ids": [
+                  "11195257"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "The same report states \"ONCE THE ONE IMAGE IS FROZEN IN A VIEWPORT IT REMAINS FROZEN.\" and notes \"THIS ERROR WAS OBSERVED BY QLARITY STAFF DURING A TRAINING SESSION AND DID NOT INVOLVE VIEWING LIVE PATIENT DATA.\"",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "quote",
+                "status": "pass",
+                "reason": "verbatim match",
+                "evidence_ids": [
+                  "11195257"
+                ]
+              },
+              {
+                "kind": "quote",
+                "status": "pass",
+                "reason": "verbatim match",
+                "evidence_ids": [
+                  "11195257"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 20007,
+        "output_tokens": 6077,
+        "cost_usd": 0.050836
+      }
+    },
+    {
+      "id": "10-recalls",
+      "workflow": "ask-copilot",
+      "question": "Are there FDA recalls on file for LLZ devices? List the three most recent with their recall numbers.",
+      "voice": null,
+      "recorded_at_utc": "2026-10-28T20:38:43+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "recalls",
+          "arguments": {
+            "limit": 3,
+            "product_code": "LLZ"
+          },
+          "summary": "checked 561 stored recalls"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "There are 561 stored FDA recalls for LLZ devices.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "recall_count",
+              "status": "pass",
+              "reason": "recomputed 561 stored recalls",
+              "evidence_ids": [
+                "Z-0012-2022",
+                "Z-0023-2016",
+                "Z-0030-2026",
+                "Z-0032-2012",
+                "Z-0033-2007",
+                "Z-0034-2014",
+                "Z-0035-2014",
+                "Z-0039-2025",
+                "Z-0048-2013",
+                "Z-0055-2025",
+                "Z-0068-2015",
+                "Z-0068-2026",
+                "Z-0069-2007",
+                "Z-0070-2007",
+                "Z-0071-2007",
+                "Z-0072-2007",
+                "Z-0072-2021",
+                "Z-0073-2017",
+                "Z-0092-06",
+                "Z-0093-04"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "The three most recent are Z-0186-2027, Z-3171-2026 and Z-3170-2026.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "recall",
+              "status": "pass",
+              "reason": "FDA recall: INTELERAD MEDICAL SYSTEMS INCORPORATED (Open, Classified)",
+              "evidence_ids": [
+                "Z-0186-2027"
+              ]
+            },
+            {
+              "kind": "recall",
+              "status": "pass",
+              "reason": "FDA recall: GE Healthcare (Open, Classified)",
+              "evidence_ids": [
+                "Z-3171-2026"
+              ]
+            },
+            {
+              "kind": "recall",
+              "status": "pass",
+              "reason": "FDA recall: GE Healthcare (Open, Classified)",
+              "evidence_ids": [
+                "Z-3170-2026"
+              ]
+            }
+          ]
+        }
+      ],
+      "first_pass": {
+        "passed": 2,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "There are 561 stored FDA recalls for LLZ devices.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "recall_count",
+                "status": "pass",
+                "reason": "recomputed 561 stored recalls",
+                "evidence_ids": [
+                  "Z-0012-2022",
+                  "Z-0023-2016",
+                  "Z-0030-2026",
+                  "Z-0032-2012",
+                  "Z-0033-2007",
+                  "Z-0034-2014",
+                  "Z-0035-2014",
+                  "Z-0039-2025",
+                  "Z-0048-2013",
+                  "Z-0055-2025",
+                  "Z-0068-2015",
+                  "Z-0068-2026",
+                  "Z-0069-2007",
+                  "Z-0070-2007",
+                  "Z-0071-2007",
+                  "Z-0072-2007",
+                  "Z-0072-2021",
+                  "Z-0073-2017",
+                  "Z-0092-06",
+                  "Z-0093-04"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "The three most recent are Z-0186-2027, Z-3171-2026 and Z-3170-2026.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "recall",
+                "status": "pass",
+                "reason": "FDA recall: INTELERAD MEDICAL SYSTEMS INCORPORATED (Open, Classified)",
+                "evidence_ids": [
+                  "Z-0186-2027"
+                ]
+              },
+              {
+                "kind": "recall",
+                "status": "pass",
+                "reason": "FDA recall: GE Healthcare (Open, Classified)",
+                "evidence_ids": [
+                  "Z-3171-2026"
+                ]
+              },
+              {
+                "kind": "recall",
+                "status": "pass",
+                "reason": "FDA recall: GE Healthcare (Open, Classified)",
+                "evidence_ids": [
+                  "Z-3170-2026"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 14547,
+        "output_tokens": 3869,
+        "cost_usd": 0.034627
+      }
+    },
+    {
+      "id": "11-510k",
+      "workflow": "ask-copilot",
+      "question": "What device does 510(k) K261677 clear, and who is the applicant?",
+      "voice": null,
+      "recorded_at_utc": "2026-10-28T20:38:51+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "device_510k",
+          "arguments": {
+            "k_number": "K261677"
+          },
+          "summary": "looked up K261677"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "510(k) K261677 clears Artificial Intelligence Renal Assessment (AIRA) Version 1 from Aramis Global AI Consultancies, LLC.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "device",
+              "status": "pass",
+              "reason": "catalog: Artificial Intelligence Renal Assessment (AIRA) Version 1",
+              "evidence_ids": [
+                "K261677"
+              ]
+            }
+          ]
+        }
+      ],
+      "first_pass": {
+        "passed": 1,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "510(k) K261677 clears Artificial Intelligence Renal Assessment (AIRA) Version 1 from Aramis Global AI Consultancies, LLC.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "device",
+                "status": "pass",
+                "reason": "catalog: Artificial Intelligence Renal Assessment (AIRA) Version 1",
+                "evidence_ids": [
+                  "K261677"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 13276,
+        "output_tokens": 2180,
+        "cost_usd": 0.02586
+      }
+    },
+    {
+      "id": "12-literature",
+      "workflow": "ask-copilot",
+      "question": "Is there published literature on file about AI radiology software failures? Cite PMIDs.",
+      "voice": null,
+      "recorded_at_utc": "2026-10-28T20:39:04+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "literature",
+          "arguments": {
+            "limit": 10,
+            "query": "AI radiology software failures"
+          },
+          "summary": "found 6 matching articles"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "Yes, stored literature includes AI radiology studies, including PMID 35943350 on false-negative and false-positive outcomes of computer-aided detection for brain metastasis and PMID 32531273 on AI for breast cancer detection in mammography.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "literature",
+              "status": "pass",
+              "reason": "PubMed: False-negative and false-positive outcomes of computer-aided detection on brain ",
+              "evidence_ids": [
+                "PMID 35943350"
+              ]
+            },
+            {
+              "kind": "literature",
+              "status": "pass",
+              "reason": "PubMed: Artificial intelligence for breast cancer detection in mammography and digital b",
+              "evidence_ids": [
+                "PMID 32531273"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "Stored files also include PMID 31594798, a systematic review of AI to diagnose ischemic stroke and identify large vessel occlusions, and PMID 37541274, a clinical safety analysis of AI-supported screen reading in mammography screening.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "literature",
+              "status": "pass",
+              "reason": "PubMed: Artificial intelligence to diagnose ischemic stroke and identify large vessel oc",
+              "evidence_ids": [
+                "PMID 31594798"
+              ]
+            },
+            {
+              "kind": "literature",
+              "status": "pass",
+              "reason": "PubMed: Artificial intelligence-supported screen reading versus standard double reading ",
+              "evidence_ids": [
+                "PMID 37541274"
+              ]
+            }
+          ]
+        }
+      ],
+      "first_pass": {
+        "passed": 2,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "Yes, stored literature includes AI radiology studies, including PMID 35943350 on false-negative and false-positive outcomes of computer-aided detection for brain metastasis and PMID 32531273 on AI for breast cancer detection in mammography.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "literature",
+                "status": "pass",
+                "reason": "PubMed: False-negative and false-positive outcomes of computer-aided detection on brain ",
+                "evidence_ids": [
+                  "PMID 35943350"
+                ]
+              },
+              {
+                "kind": "literature",
+                "status": "pass",
+                "reason": "PubMed: Artificial intelligence for breast cancer detection in mammography and digital b",
+                "evidence_ids": [
+                  "PMID 32531273"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "Stored files also include PMID 31594798, a systematic review of AI to diagnose ischemic stroke and identify large vessel occlusions, and PMID 37541274, a clinical safety analysis of AI-supported screen reading in mammography screening.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "literature",
+                "status": "pass",
+                "reason": "PubMed: Artificial intelligence to diagnose ischemic stroke and identify large vessel oc",
+                "evidence_ids": [
+                  "PMID 31594798"
+                ]
+              },
+              {
+                "kind": "literature",
+                "status": "pass",
+                "reason": "PubMed: Artificial intelligence-supported screen reading versus standard double reading ",
+                "evidence_ids": [
+                  "PMID 37541274"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 15936,
+        "output_tokens": 3342,
+        "cost_usd": 0.034124
+      }
+    },
+    {
+      "id": "13-llz-severity",
+      "workflow": "overnight-signals",
+      "question": "Compare the LLZ Injury/Death share this week with the 4-week baseline.",
+      "voice": null,
+      "recorded_at_utc": "2026-10-28T20:39:35+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "compare_signals",
+          "arguments": {
+            "product_codes": [
+              "LLZ"
+            ]
+          },
+          "summary": "compared device types"
+        },
+        {
+          "name": "weekly_signals",
+          "arguments": {},
+          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+        },
+        {
+          "name": "product_summary",
+          "arguments": {
+            "product_code": "LLZ"
+          },
+          "summary": "counted 121 reports for LLZ"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "LLZ Injury/Death share this week was 0.0%, compared with 2.9% in the 4-week baseline, while overall LLZ activity reports suddenly increased.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "share",
+              "status": "pass",
+              "reason": "recomputed 0.0% (0/33)",
+              "evidence_ids": []
+            },
+            {
+              "kind": "share",
+              "status": "pass",
+              "reason": "recomputed 2.9% (1/35)",
+              "evidence_ids": [
+                "50083162"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "This week had 33 LLZ reports including 0 Injury reports, compared with 35 reports including 1 Injury report in the 4-week baseline.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 33",
+              "evidence_ids": [
+                "50426770",
+                "50426773",
+                "50448213",
+                "50448215",
+                "50448216",
+                "50448217",
+                "50451032",
+                "50453041",
+                "50502511",
+                "50502514",
+                "50502888",
+                "50503657",
+                "50503658",
+                "50503662",
+                "50504539",
+                "50504540",
+                "50504541",
+                "50504545",
+                "50513025",
+                "50513122"
+              ]
+            },
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 0",
+              "evidence_ids": []
+            },
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 35",
+              "evidence_ids": [
+                "50050396",
+                "50050501",
+                "50050937",
+                "50059721",
+                "50059725",
+                "50067164",
+                "50067165",
+                "50067166",
+                "50067167",
+                "50067648",
+                "50067796",
+                "50079370",
+                "50080163",
+                "50080535",
+                "50080536",
+                "50083162",
+                "50083723",
+                "50096283",
+                "50100339",
+                "50112689"
+              ]
+            },
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 1",
+              "evidence_ids": [
+                "50083162"
+              ]
+            }
+          ]
+        }
+      ],
+      "first_pass": {
+        "passed": 2,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "LLZ Injury/Death share this week was 0.0%, compared with 2.9% in the 4-week baseline, while overall LLZ activity reports suddenly increased.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "share",
+                "status": "pass",
+                "reason": "recomputed 0.0% (0/33)",
+                "evidence_ids": []
+              },
+              {
+                "kind": "share",
+                "status": "pass",
+                "reason": "recomputed 2.9% (1/35)",
+                "evidence_ids": [
+                  "50083162"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "This week had 33 LLZ reports including 0 Injury reports, compared with 35 reports including 1 Injury report in the 4-week baseline.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 33",
+                "evidence_ids": [
+                  "50426770",
+                  "50426773",
+                  "50448213",
+                  "50448215",
+                  "50448216",
+                  "50448217",
+                  "50451032",
+                  "50453041",
+                  "50502511",
+                  "50502514",
+                  "50502888",
+                  "50503657",
+                  "50503658",
+                  "50503662",
+                  "50504539",
+                  "50504540",
+                  "50504541",
+                  "50504545",
+                  "50513025",
+                  "50513122"
+                ]
+              },
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 0",
+                "evidence_ids": []
+              },
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 35",
+                "evidence_ids": [
+                  "50050396",
+                  "50050501",
+                  "50050937",
+                  "50059721",
+                  "50059725",
+                  "50067164",
+                  "50067165",
+                  "50067166",
+                  "50067167",
+                  "50067648",
+                  "50067796",
+                  "50079370",
+                  "50080163",
+                  "50080535",
+                  "50080536",
+                  "50083162",
+                  "50083723",
+                  "50096283",
+                  "50100339",
+                  "50112689"
+                ]
+              },
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 1",
+                "evidence_ids": [
+                  "50083162"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 16190,
+        "output_tokens": 8092,
+        "cost_usd": 0.054628
+      }
+    },
+    {
+      "id": "14-llz-quote-update",
+      "workflow": "ask-copilot",
+      "question": "Do any LLZ reports from the last week mention a software update or version? Quote one.",
+      "voice": null,
+      "recorded_at_utc": "2026-10-28T20:40:14+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "weekly_signals",
+          "arguments": {},
+          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+        },
+        {
+          "name": "search_reports",
+          "arguments": {
+            "limit": 10,
+            "product_code": "LLZ",
+            "keyword": "software update"
+          },
+          "summary": "found 0 matching reports"
+        },
+        {
+          "name": "search_reports",
+          "arguments": {
+            "limit": 10,
+            "product_code": "LLZ",
+            "keyword": "version"
+          },
+          "summary": "found 1 matching reports"
+        },
+        {
+          "name": "search_reports",
+          "arguments": {
+            "limit": 10,
+            "product_code": "LLZ",
+            "keyword": "update"
+          },
+          "summary": "found 3 matching reports"
+        },
+        {
+          "name": "get_report",
+          "arguments": {
+            "report_id": "50426770"
+          },
+          "summary": "read report 50426770"
+        },
+        {
+          "name": "get_report",
+          "arguments": {
+            "report_id": "50426773"
+          },
+          "summary": "read report 50426773"
+        },
+        {
+          "name": "get_report",
+          "arguments": {
+            "report_id": "50448213"
+          },
+          "summary": "read report 50448213"
+        },
+        {
+          "name": "get_report",
+          "arguments": {
+            "report_id": "50448215"
+          },
+          "summary": "read report 50448215"
+        },
+        {
+          "name": "get_report",
+          "arguments": {
+            "report_id": "50448216"
+          },
+          "summary": "read report 50448216"
+        },
+        {
+          "name": "get_report",
+          "arguments": {
+            "report_id": "50448217"
+          },
+          "summary": "read report 50448217"
+        },
+        {
+          "name": "get_report",
+          "arguments": {
+            "report_id": "50451032"
+          },
+          "summary": "read report 50451032"
+        },
+        {
+          "name": "get_report",
+          "arguments": {
+            "report_id": "50453041"
+          },
+          "summary": "read report 50453041"
+        },
+        {
+          "name": "get_report",
+          "arguments": {
+            "report_id": "50502511"
+          },
+          "summary": "read report 50502511"
+        },
+        {
+          "name": "get_report",
+          "arguments": {
+            "report_id": "50502514"
+          },
+          "summary": "read report 50502514"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "This week had 33 LLZ reports.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 33",
+              "evidence_ids": [
+                "50426770",
+                "50426773",
+                "50448213",
+                "50448215",
+                "50448216",
+                "50448217",
+                "50451032",
+                "50453041",
+                "50502511",
+                "50502514",
+                "50502888",
+                "50503657",
+                "50503658",
+                "50503662",
+                "50504539",
+                "50504540",
+                "50504541",
+                "50504545",
+                "50513025",
+                "50513122"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "No stored LLZ reports from this week mention a software update or version, including report 50426770, so no quote can be provided.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "record",
+              "status": "pass",
+              "reason": "record exists",
+              "evidence_ids": [
+                "50426770"
+              ]
+            }
+          ]
+        }
+      ],
+      "first_pass": {
+        "passed": 2,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "This week had 33 LLZ reports.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 33",
+                "evidence_ids": [
+                  "50426770",
+                  "50426773",
+                  "50448213",
+                  "50448215",
+                  "50448216",
+                  "50448217",
+                  "50451032",
+                  "50453041",
+                  "50502511",
+                  "50502514",
+                  "50502888",
+                  "50503657",
+                  "50503658",
+                  "50503662",
+                  "50504539",
+                  "50504540",
+                  "50504541",
+                  "50504545",
+                  "50513025",
+                  "50513122"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "No stored LLZ reports from this week mention a software update or version, including report 50426770, so no quote can be provided.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "record",
+                "status": "pass",
+                "reason": "record exists",
+                "evidence_ids": [
+                  "50426770"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 27769,
+        "output_tokens": 9988,
+        "cost_usd": 0.07716
+      }
+    },
+    {
+      "id": "15-five-day",
+      "workflow": "overnight-signals",
+      "question": "When does 21 CFR 803 require a 5-day report, and does anything on file meet that bar?",
+      "voice": null,
+      "recorded_at_utc": "2026-10-28T20:40:50+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "weekly_signals",
+          "arguments": {},
+          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+        },
+        {
+          "name": "deadline_check",
+          "arguments": {
+            "awareness_date": "20261028",
+            "five_day_trigger": true
+          },
+          "summary": "checked a reporting deadline"
+        },
+        {
+          "name": "deadline_check",
+          "arguments": {
+            "awareness_date": "20261028",
+            "five_day_trigger": false
+          },
+          "summary": "checked a reporting deadline"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "A manufacturer 5-day report is addressed by 21 CFR 803.53, which asks in which circumstances a 5-day report must be submitted.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "regulation",
+              "status": "pass",
+              "reason": "21 CFR 803.53: If I am a manufacturer, in which circumstances must I submit a 5-day report?",
+              "evidence_ids": [
+                "21 CFR 803.53"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "A manufacturer 30-day report is addressed by 21 CFR 803.50, which covers what reporting requirements apply.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "regulation",
+              "status": "pass",
+              "reason": "21 CFR 803.50: If I am a manufacturer, what reporting requirements apply to me?",
+              "evidence_ids": [
+                "21 CFR 803.50"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "These clocks are advisory only and reportability is a human regulatory decision.",
+          "status": "pass",
+          "reasons": [],
+          "claims": []
+        },
+        {
+          "text": "This week LLZ had 33 reports, described as reports suddenly increased.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 33",
+              "evidence_ids": [
+                "50426770",
+                "50426773",
+                "50448213",
+                "50448215",
+                "50448216",
+                "50448217",
+                "50451032",
+                "50453041",
+                "50502511",
+                "50502514",
+                "50502888",
+                "50503657",
+                "50503658",
+                "50503662",
+                "50504539",
+                "50504540",
+                "50504541",
+                "50504545",
+                "50513025",
+                "50513122"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "A human must review whether any stored event meets the 5-day bar, and I do not decide reportability.",
+          "status": "pass",
+          "reasons": [],
+          "claims": []
+        }
+      ],
+      "first_pass": {
+        "passed": 5,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "A manufacturer 5-day report is addressed by 21 CFR 803.53, which asks in which circumstances a 5-day report must be submitted.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "regulation",
+                "status": "pass",
+                "reason": "21 CFR 803.53: If I am a manufacturer, in which circumstances must I submit a 5-day report?",
+                "evidence_ids": [
+                  "21 CFR 803.53"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "A manufacturer 30-day report is addressed by 21 CFR 803.50, which covers what reporting requirements apply.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "regulation",
+                "status": "pass",
+                "reason": "21 CFR 803.50: If I am a manufacturer, what reporting requirements apply to me?",
+                "evidence_ids": [
+                  "21 CFR 803.50"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "These clocks are advisory only and reportability is a human regulatory decision.",
+            "status": "pass",
+            "reasons": [],
+            "claims": []
+          },
+          {
+            "text": "This week LLZ had 33 reports, described as reports suddenly increased.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 33",
+                "evidence_ids": [
+                  "50426770",
+                  "50426773",
+                  "50448213",
+                  "50448215",
+                  "50448216",
+                  "50448217",
+                  "50451032",
+                  "50453041",
+                  "50502511",
+                  "50502514",
+                  "50502888",
+                  "50503657",
+                  "50503658",
+                  "50503662",
+                  "50504539",
+                  "50504540",
+                  "50504541",
+                  "50504545",
+                  "50513025",
+                  "50513122"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "A human must review whether any stored event meets the 5-day bar, and I do not decide reportability.",
+            "status": "pass",
+            "reasons": [],
+            "claims": []
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 15784,
+        "output_tokens": 8833,
+        "cost_usd": 0.05727
+      }
+    },
+    {
+      "id": "16-myn-share",
+      "workflow": "ask-copilot",
+      "question": "What share of all stored MYN reports are injuries?",
+      "voice": null,
+      "recorded_at_utc": "2026-10-28T20:41:01+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "product_summary",
+          "arguments": {
+            "product_code": "MYN"
+          },
+          "summary": "counted 5 reports for MYN"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "20.0% of all stored MYN reports are injuries.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "share",
+              "status": "pass",
+              "reason": "recomputed 20.0% (1/5)",
+              "evidence_ids": [
+                "21593974"
+              ]
+            }
+          ]
+        }
+      ],
+      "first_pass": {
+        "passed": 1,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "20.0% of all stored MYN reports are injuries.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "share",
+                "status": "pass",
+                "reason": "recomputed 20.0% (1/5)",
+                "evidence_ids": [
+                  "21593974"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 13428,
+        "output_tokens": 2317,
+        "cost_usd": 0.026632
+      }
+    },
+    {
+      "id": "17-trap-deaths",
+      "workflow": "ask-copilot",
+      "question": "I heard QIH had three death reports this year. How many deaths are on file for QIH?",
+      "voice": null,
+      "recorded_at_utc": "2026-10-28T20:41:19+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "product_summary",
+          "arguments": {
+            "product_code": "QIH"
+          },
+          "summary": "counted 10 reports for QIH"
+        },
+        {
+          "name": "search_reports",
+          "arguments": {
+            "event_type": "Death",
+            "limit": 10,
+            "product_code": "QIH"
+          },
+          "summary": "found 0 matching reports"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "There are 0 Death reports on file for QIH among 10 stored QIH reports.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 0",
+              "evidence_ids": []
+            },
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 10",
+              "evidence_ids": [
+                "19864749",
+                "21002079",
+                "21179265",
+                "21949668",
+                "22131163",
+                "22340256",
+                "22794883",
+                "24453186",
+                "24827620",
+                "25692853"
+              ]
+            }
+          ]
+        }
+      ],
+      "first_pass": {
+        "passed": 1,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "There are 0 Death reports on file for QIH among 10 stored QIH reports.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 0",
+                "evidence_ids": []
+              },
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 10",
+                "evidence_ids": [
+                  "19864749",
+                  "21002079",
+                  "21179265",
+                  "21949668",
+                  "22131163",
+                  "22340256",
+                  "22794883",
+                  "24453186",
+                  "24827620",
+                  "25692853"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 13540,
+        "output_tokens": 3566,
+        "cost_usd": 0.03208
+      }
+    },
+    {
+      "id": "18-trap-recall",
+      "workflow": "ask-copilot",
+      "question": "Confirm that IntelliSpace Cardiovascular is under a Class I recall and give the recall number.",
+      "voice": null,
+      "recorded_at_utc": "2026-10-28T20:41:47+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "my_device_types",
+          "arguments": {},
+          "summary": "listed the chosen device types"
+        },
+        {
+          "name": "recalls",
+          "arguments": {
+            "product_code": "LLZ",
+            "query": "IntelliSpace Cardiovascular"
+          },
+          "summary": "checked 561 stored recalls"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "I cannot confirm a Class I classification for IntelliSpace Cardiovascular from the stored recall fields.",
+          "status": "pass",
+          "reasons": [],
+          "claims": []
+        },
+        {
+          "text": "Stored LLZ recalls include IntelliSpace Cardiovascular recalls Z-2543-2025, Z-1740-2025 and Z-1252-2025, each listed with status Open, Classified.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "recall",
+              "status": "pass",
+              "reason": "FDA recall: Philips Medical Systems Nederland B.V. (Open, Classified)",
+              "evidence_ids": [
+                "Z-2543-2025"
+              ]
+            },
+            {
+              "kind": "recall",
+              "status": "pass",
+              "reason": "FDA recall: Philips Medical Systems Nederland B.V. (Open, Classified)",
+              "evidence_ids": [
+                "Z-1740-2025"
+              ]
+            },
+            {
+              "kind": "recall",
+              "status": "pass",
+              "reason": "FDA recall: Philips Medical Systems Nederland B.V. (Open, Classified)",
+              "evidence_ids": [
+                "Z-1252-2025"
+              ]
+            }
+          ]
+        }
+      ],
+      "first_pass": {
+        "passed": 2,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "I cannot confirm a Class I classification for IntelliSpace Cardiovascular from the stored recall fields.",
+            "status": "pass",
+            "reasons": [],
+            "claims": []
+          },
+          {
+            "text": "Stored LLZ recalls include IntelliSpace Cardiovascular recalls Z-2543-2025, Z-1740-2025 and Z-1252-2025, each listed with status Open, Classified.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "recall",
+                "status": "pass",
+                "reason": "FDA recall: Philips Medical Systems Nederland B.V. (Open, Classified)",
+                "evidence_ids": [
+                  "Z-2543-2025"
+                ]
+              },
+              {
+                "kind": "recall",
+                "status": "pass",
+                "reason": "FDA recall: Philips Medical Systems Nederland B.V. (Open, Classified)",
+                "evidence_ids": [
+                  "Z-1740-2025"
+                ]
+              },
+              {
+                "kind": "recall",
+                "status": "pass",
+                "reason": "FDA recall: Philips Medical Systems Nederland B.V. (Open, Classified)",
+                "evidence_ids": [
+                  "Z-1252-2025"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 13911,
+        "output_tokens": 6266,
+        "cost_usd": 0.044019
+      }
+    },
+    {
+      "id": "19-earliest",
+      "workflow": "ask-copilot",
+      "question": "Which of the four product codes has the earliest report on file, and when was it received?",
+      "voice": null,
+      "recorded_at_utc": "2026-10-28T20:42:28+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "my_device_types",
+          "arguments": {},
+          "summary": "listed the chosen device types"
+        },
+        {
+          "name": "weekly_signals",
+          "arguments": {},
+          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+        },
+        {
+          "name": "product_summary",
+          "arguments": {
+            "product_code": "LLZ"
+          },
+          "summary": "counted 121 reports for LLZ"
+        },
+        {
+          "name": "product_summary",
+          "arguments": {
+            "product_code": "MYN"
+          },
+          "summary": "counted 5 reports for MYN"
+        },
+        {
+          "name": "product_summary",
+          "arguments": {
+            "product_code": "POK"
+          },
+          "summary": "counted 1 reports for POK"
+        },
+        {
+          "name": "product_summary",
+          "arguments": {
+            "product_code": "QIH"
+          },
+          "summary": "counted 10 reports for QIH"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "Among LLZ, MYN, POK and QIH, MYN has the earliest stored report, received 2006-05-18, among 5 stored MYN reports.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 5",
+              "evidence_ids": [
+                "19116683",
+                "21395648",
+                "21593974",
+                "716559",
+                "7183668"
+              ]
+            }
+          ]
+        }
+      ],
+      "first_pass": {
+        "passed": 1,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "Among LLZ, MYN, POK and QIH, MYN has the earliest stored report, received 2006-05-18, among 5 stored MYN reports.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 5",
+                "evidence_ids": [
+                  "19116683",
+                  "21395648",
+                  "21593974",
+                  "716559",
+                  "7183668"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 27496,
+        "output_tokens": 9974,
+        "cost_usd": 0.076759
+      }
+    },
+    {
+      "id": "20-briefing",
+      "workflow": "overnight-signals",
+      "question": "Write a three-sentence summary of this week for the safety meeting, citing report ids.",
+      "voice": null,
+      "recorded_at_utc": "2026-10-28T20:42:53+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "my_device_types",
+          "arguments": {},
+          "summary": "listed the chosen device types"
+        },
+        {
+          "name": "weekly_signals",
+          "arguments": {},
+          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+        },
+        {
+          "name": "compare_signals",
+          "arguments": {},
+          "summary": "compared device types"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "This week LLZ reports suddenly increased with 33 reports, including reports 50426770, 50426773 and 50448213.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 33",
+              "evidence_ids": [
+                "50426770",
+                "50426773",
+                "50448213",
+                "50448215",
+                "50448216",
+                "50448217",
+                "50451032",
+                "50453041",
+                "50502511",
+                "50502514",
+                "50502888",
+                "50503657",
+                "50503658",
+                "50503662",
+                "50504539",
+                "50504540",
+                "50504541",
+                "50504545",
+                "50513025",
+                "50513122"
+              ]
+            },
+            {
+              "kind": "record",
+              "status": "pass",
+              "reason": "record exists",
+              "evidence_ids": [
+                "50426770"
+              ]
+            },
+            {
+              "kind": "record",
+              "status": "pass",
+              "reason": "record exists",
+              "evidence_ids": [
+                "50426773"
+              ]
+            },
+            {
+              "kind": "record",
+              "status": "pass",
+              "reason": "record exists",
+              "evidence_ids": [
+                "50448213"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "MYN, POK and QIH showed no change this week with 0 reports each.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 0",
+              "evidence_ids": []
+            },
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 0",
+              "evidence_ids": []
+            },
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 0",
+              "evidence_ids": []
+            }
+          ]
+        },
+        {
+          "text": "A named human must review the LLZ reports before any CAPA-need decision.",
+          "status": "pass",
+          "reasons": [],
+          "claims": []
+        }
+      ],
+      "first_pass": {
+        "passed": 3,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "This week LLZ reports suddenly increased with 33 reports, including reports 50426770, 50426773 and 50448213.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 33",
+                "evidence_ids": [
+                  "50426770",
+                  "50426773",
+                  "50448213",
+                  "50448215",
+                  "50448216",
+                  "50448217",
+                  "50451032",
+                  "50453041",
+                  "50502511",
+                  "50502514",
+                  "50502888",
+                  "50503657",
+                  "50503658",
+                  "50503662",
+                  "50504539",
+                  "50504540",
+                  "50504541",
+                  "50504545",
+                  "50513025",
+                  "50513122"
+                ]
+              },
+              {
+                "kind": "record",
+                "status": "pass",
+                "reason": "record exists",
+                "evidence_ids": [
+                  "50426770"
+                ]
+              },
+              {
+                "kind": "record",
+                "status": "pass",
+                "reason": "record exists",
+                "evidence_ids": [
+                  "50426773"
+                ]
+              },
+              {
+                "kind": "record",
+                "status": "pass",
+                "reason": "record exists",
+                "evidence_ids": [
+                  "50448213"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "MYN, POK and QIH showed no change this week with 0 reports each.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 0",
+                "evidence_ids": []
+              },
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 0",
+                "evidence_ids": []
+              },
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 0",
+                "evidence_ids": []
+              }
+            ]
+          },
+          {
+            "text": "A named human must review the LLZ reports before any CAPA-need decision.",
+            "status": "pass",
+            "reasons": [],
+            "claims": []
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 15125,
+        "output_tokens": 5809,
+        "cost_usd": 0.043594
+      }
+    },
+    {
+      "id": "21-not-by-manufacturer",
+      "workflow": "ask-copilot",
+      "question": "Which reports about LLZ devices this month were not filed by a manufacturer?",
+      "voice": null,
+      "recorded_at_utc": "2026-10-28T20:43:10+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "weekly_signals",
+          "arguments": {},
+          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+        },
+        {
+          "name": "product_summary",
+          "arguments": {
+            "product_code": "LLZ"
+          },
+          "summary": "counted 121 reports for LLZ"
+        },
+        {
+          "name": "report_sources",
+          "arguments": {
+            "product_code": "LLZ"
+          },
+          "summary": "split reports by who filed them"
+        },
+        {
+          "name": "report_sources",
+          "arguments": {
+            "date_from": "20260801",
+            "date_to": "20260831",
+            "product_code": "LLZ"
+          },
+          "summary": "split reports by who filed them"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "No stored LLZ reports from 20260801 to 20260831 were filed outside the manufacturer channel: 0 were non-manufacturer and 49 were manufacturer-filed.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "source_count",
+              "status": "pass",
+              "reason": "recomputed 0 reports not filed by a manufacturer",
+              "evidence_ids": []
+            },
+            {
+              "kind": "source_count",
+              "status": "pass",
+              "reason": "recomputed 49 manufacturer reports",
+              "evidence_ids": [
+                "50112689",
+                "50112690",
+                "50112691",
+                "50126279",
+                "50137132",
+                "50137135",
+                "50137273",
+                "50170848",
+                "50171166",
+                "50251919",
+                "50340316",
+                "50340565",
+                "50340568",
+                "50340569",
+                "50341198",
+                "50346085",
+                "50426770",
+                "50426773",
+                "50448213",
+                "50448215"
+              ]
+            }
+          ]
+        }
+      ],
+      "first_pass": {
+        "passed": 1,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "No stored LLZ reports from 20260801 to 20260831 were filed outside the manufacturer channel: 0 were non-manufacturer and 49 were manufacturer-filed.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "source_count",
+                "status": "pass",
+                "reason": "recomputed 0 reports not filed by a manufacturer",
+                "evidence_ids": []
+              },
+              {
+                "kind": "source_count",
+                "status": "pass",
+                "reason": "recomputed 49 manufacturer reports",
+                "evidence_ids": [
+                  "50112689",
+                  "50112690",
+                  "50112691",
+                  "50126279",
+                  "50137132",
+                  "50137135",
+                  "50137273",
+                  "50170848",
+                  "50171166",
+                  "50251919",
+                  "50340316",
+                  "50340565",
+                  "50340568",
+                  "50340569",
+                  "50341198",
+                  "50346085",
+                  "50426770",
+                  "50426773",
+                  "50448213",
+                  "50448215"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 22261,
+        "output_tokens": 3570,
+        "cost_usd": 0.042999
+      }
+    },
+    {
+      "id": "22-compare",
+      "workflow": "overnight-signals",
+      "question": "Compare LLZ, QIH and MYN this week. Where did reports suddenly increase?",
+      "voice": null,
+      "recorded_at_utc": "2026-10-28T20:43:30+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "compare_signals",
+          "arguments": {
+            "product_codes": [
+              "LLZ",
+              "QIH",
+              "MYN"
+            ]
+          },
+          "summary": "compared device types"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "LLZ reports suddenly increased this week with 33 reports, while QIH had 0 reports with no change and MYN had 0 reports with no change.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 33",
+              "evidence_ids": [
+                "50426770",
+                "50426773",
+                "50448213",
+                "50448215",
+                "50448216",
+                "50448217",
+                "50451032",
+                "50453041",
+                "50502511",
+                "50502514",
+                "50502888",
+                "50503657",
+                "50503658",
+                "50503662",
+                "50504539",
+                "50504540",
+                "50504541",
+                "50504545",
+                "50513025",
+                "50513122"
+              ]
+            },
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 0",
+              "evidence_ids": []
+            },
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 0",
+              "evidence_ids": []
+            }
+          ]
+        },
+        {
+          "text": "A named human must review these reports before any CAPA-need decision.",
+          "status": "pass",
+          "reasons": [],
+          "claims": []
+        }
+      ],
+      "first_pass": {
+        "passed": 2,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "LLZ reports suddenly increased this week with 33 reports, while QIH had 0 reports with no change and MYN had 0 reports with no change.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 33",
+                "evidence_ids": [
+                  "50426770",
+                  "50426773",
+                  "50448213",
+                  "50448215",
+                  "50448216",
+                  "50448217",
+                  "50451032",
+                  "50453041",
+                  "50502511",
+                  "50502514",
+                  "50502888",
+                  "50503657",
+                  "50503658",
+                  "50503662",
+                  "50504539",
+                  "50504540",
+                  "50504541",
+                  "50504545",
+                  "50513025",
+                  "50513122"
+                ]
+              },
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 0",
+                "evidence_ids": []
+              },
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 0",
+                "evidence_ids": []
+              }
+            ]
+          },
+          {
+            "text": "A named human must review these reports before any CAPA-need decision.",
+            "status": "pass",
+            "reasons": [],
+            "claims": []
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 13607,
+        "output_tokens": 4230,
+        "cost_usd": 0.034986
+      }
+    },
+    {
+      "id": "23-mhra",
+      "workflow": "ask-copilot",
+      "question": "Are there MHRA alerts on file about imaging software? Quote one.",
+      "voice": null,
+      "recorded_at_utc": "2026-10-28T20:43:41+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "mhra_alerts",
+          "arguments": {
+            "query": "imaging software"
+          },
+          "summary": "checked MHRA (UK) alerts"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "No stored MHRA (UK) alerts about imaging software were found, so there is nothing to quote.",
+          "status": "pass",
+          "reasons": [],
+          "claims": []
+        }
+      ],
+      "first_pass": {
+        "passed": 1,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "No stored MHRA (UK) alerts about imaging software were found, so there is nothing to quote.",
+            "status": "pass",
+            "reasons": [],
+            "claims": []
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 12940,
+        "output_tokens": 2411,
+        "cost_usd": 0.026422
+      }
+    },
+    {
+      "id": "00-voice-c",
+      "workflow": "ask-copilot",
+      "question": "What changed this week? Did reports suddenly increase for any device?",
+      "voice": {
+        "transcript_text": "What changed this week? Did reports suddenly increase for any device?",
+        "language": "English",
+        "audio_seconds": 4.24
+      },
+      "recorded_at_utc": "2026-10-28T20:44:24+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "weekly_signals",
+          "arguments": {},
+          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "Yes, product code LLZ reports suddenly increased this week with 33 reports.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 33",
+              "evidence_ids": [
+                "50426770",
+                "50426773",
+                "50448213",
+                "50448215",
+                "50448216",
+                "50448217",
+                "50451032",
+                "50453041",
+                "50502511",
+                "50502514",
+                "50502888",
+                "50503657",
+                "50503658",
+                "50503662",
+                "50504539",
+                "50504540",
+                "50504541",
+                "50504545",
+                "50513025",
+                "50513122"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "MYN, POK and QIH each had 0 reports this week.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 0",
+              "evidence_ids": []
+            },
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 0",
+              "evidence_ids": []
+            },
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 0",
+              "evidence_ids": []
+            }
+          ]
+        },
+        {
+          "text": "A named human must review the supporting reports before deciding whether a CAPA is needed.",
+          "status": "pass",
+          "reasons": [],
+          "claims": []
+        }
+      ],
+      "first_pass": {
+        "passed": 3,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "Yes, product code LLZ reports suddenly increased this week with 33 reports.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 33",
+                "evidence_ids": [
+                  "50426770",
+                  "50426773",
+                  "50448213",
+                  "50448215",
+                  "50448216",
+                  "50448217",
+                  "50451032",
+                  "50453041",
+                  "50502511",
+                  "50502514",
+                  "50502888",
+                  "50503657",
+                  "50503658",
+                  "50503662",
+                  "50504539",
+                  "50504540",
+                  "50504541",
+                  "50504545",
+                  "50513025",
+                  "50513122"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "MYN, POK and QIH each had 0 reports this week.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 0",
+                "evidence_ids": []
+              },
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 0",
+                "evidence_ids": []
+              },
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 0",
+                "evidence_ids": []
+              }
+            ]
+          },
+          {
+            "text": "A named human must review the supporting reports before deciding whether a CAPA is needed.",
+            "status": "pass",
+            "reasons": [],
+            "claims": []
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 14052,
+        "output_tokens": 3507,
+        "cost_usd": 0.03247
+      }
+    },
+    {
+      "id": "00-voice-d",
+      "workflow": "ask-copilot",
+      "question": "why is the top signal ranked first? first? show me the reports behind it.",
+      "voice": {
+        "transcript_text": "why is the top signal ranked first? first? show me the reports behind it.",
+        "language": "English",
+        "audio_seconds": 3.92
+      },
+      "recorded_at_utc": "2026-10-28T20:45:06+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "weekly_signals",
+          "arguments": {},
+          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+        },
+        {
+          "name": "get_report",
+          "arguments": {
+            "report_id": "50426770"
+          },
+          "summary": "read report 50426770"
+        },
+        {
+          "name": "get_report",
+          "arguments": {
+            "report_id": "50426773"
+          },
+          "summary": "read report 50426773"
+        },
+        {
+          "name": "get_report",
+          "arguments": {
+            "report_id": "50448213"
+          },
+          "summary": "read report 50448213"
+        },
+        {
+          "name": "product_summary",
+          "arguments": {
+            "product_code": "LLZ"
+          },
+          "summary": "counted 121 reports for LLZ"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "The top signal is LLZ ranked first because it was the only watched device type showing reports suddenly increased with 33 reports this week.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 33",
+              "evidence_ids": [
+                "50426770",
+                "50426773",
+                "50448213",
+                "50448215",
+                "50448216",
+                "50448217",
+                "50451032",
+                "50453041",
+                "50502511",
+                "50502514",
+                "50502888",
+                "50503657",
+                "50503658",
+                "50503662",
+                "50504539",
+                "50504540",
+                "50504541",
+                "50504545",
+                "50513025",
+                "50513122"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "Report 50426770 states \"they have a case that needs to be corrected.\"",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "quote",
+              "status": "pass",
+              "reason": "verbatim match",
+              "evidence_ids": [
+                "50426770"
+              ]
+            },
+            {
+              "kind": "record",
+              "status": "pass",
+              "reason": "record exists",
+              "evidence_ids": [
+                "50426770"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "Report 50426773 states \"unable to finalize report on Echo Module and encounter an error 500.\"",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "quote",
+              "status": "pass",
+              "reason": "verbatim match",
+              "evidence_ids": [
+                "50426773"
+              ]
+            },
+            {
+              "kind": "record",
+              "status": "pass",
+              "reason": "record exists",
+              "evidence_ids": [
+                "50426773"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "Report 50448213 states \"an error 500 occurs for one study, preventing the doctor from processing the report.\"",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "quote",
+              "status": "pass",
+              "reason": "verbatim match",
+              "evidence_ids": [
+                "50448213"
+              ]
+            },
+            {
+              "kind": "record",
+              "status": "pass",
+              "reason": "record exists",
+              "evidence_ids": [
+                "50448213"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "A human must review these reports to decide next steps.",
+          "status": "pass",
+          "reasons": [],
+          "claims": []
+        }
+      ],
+      "first_pass": {
+        "passed": 5,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "The top signal is LLZ ranked first because it was the only watched device type showing reports suddenly increased with 33 reports this week.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 33",
+                "evidence_ids": [
+                  "50426770",
+                  "50426773",
+                  "50448213",
+                  "50448215",
+                  "50448216",
+                  "50448217",
+                  "50451032",
+                  "50453041",
+                  "50502511",
+                  "50502514",
+                  "50502888",
+                  "50503657",
+                  "50503658",
+                  "50503662",
+                  "50504539",
+                  "50504540",
+                  "50504541",
+                  "50504545",
+                  "50513025",
+                  "50513122"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "Report 50426770 states \"they have a case that needs to be corrected.\"",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "quote",
+                "status": "pass",
+                "reason": "verbatim match",
+                "evidence_ids": [
+                  "50426770"
+                ]
+              },
+              {
+                "kind": "record",
+                "status": "pass",
+                "reason": "record exists",
+                "evidence_ids": [
+                  "50426770"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "Report 50426773 states \"unable to finalize report on Echo Module and encounter an error 500.\"",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "quote",
+                "status": "pass",
+                "reason": "verbatim match",
+                "evidence_ids": [
+                  "50426773"
+                ]
+              },
+              {
+                "kind": "record",
+                "status": "pass",
+                "reason": "record exists",
+                "evidence_ids": [
+                  "50426773"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "Report 50448213 states \"an error 500 occurs for one study, preventing the doctor from processing the report.\"",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "quote",
+                "status": "pass",
+                "reason": "verbatim match",
+                "evidence_ids": [
+                  "50448213"
+                ]
+              },
+              {
+                "kind": "record",
+                "status": "pass",
+                "reason": "record exists",
+                "evidence_ids": [
+                  "50448213"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "A human must review these reports to decide next steps.",
+            "status": "pass",
+            "reasons": [],
+            "claims": []
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 21168,
+        "output_tokens": 8460,
+        "cost_usd": 0.062415
+      }
+    },
+    {
+      "id": "00-voice-e",
+      "workflow": "ask-copilot",
+      "question": "my colleague says LLZ had 50 injury reports last week. Confirm that.",
+      "voice": {
+        "transcript_text": "my colleague says LLZ had 50 injury reports last week. Confirm that.",
+        "language": "English",
+        "audio_seconds": 5.36
+      },
+      "recorded_at_utc": "2026-10-28T20:45:33+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "weekly_signals",
+          "arguments": {},
+          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+        },
+        {
+          "name": "my_device_types",
+          "arguments": {},
+          "summary": "listed the chosen device types"
+        },
+        {
+          "name": "compare_signals",
+          "arguments": {},
+          "summary": "compared device types"
+        },
+        {
+          "name": "product_summary",
+          "arguments": {
+            "date_from": "20260825",
+            "date_to": "20260831",
+            "product_code": "LLZ"
+          },
+          "summary": "counted 33 reports for LLZ"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "That claim is not correct: LLZ had 33 reports this week.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 33",
+              "evidence_ids": [
+                "50426770",
+                "50426773",
+                "50448213",
+                "50448215",
+                "50448216",
+                "50448217",
+                "50451032",
+                "50453041",
+                "50502511",
+                "50502514",
+                "50502888",
+                "50503657",
+                "50503658",
+                "50503662",
+                "50504539",
+                "50504540",
+                "50504541",
+                "50504545",
+                "50513025",
+                "50513122"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "All 33 were recorded as malfunction, with 0 injury reports in the same 7-day period.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 33",
+              "evidence_ids": [
+                "50426770",
+                "50426773",
+                "50448213",
+                "50448215",
+                "50448216",
+                "50448217",
+                "50451032",
+                "50453041",
+                "50502511",
+                "50502514",
+                "50502888",
+                "50503657",
+                "50503658",
+                "50503662",
+                "50504539",
+                "50504540",
+                "50504541",
+                "50504545",
+                "50513025",
+                "50513122"
+              ]
+            },
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 0",
+              "evidence_ids": []
+            }
+          ]
+        },
+        {
+          "text": "A named human must review the stored reports before any further action.",
+          "status": "pass",
+          "reasons": [],
+          "claims": []
+        }
+      ],
+      "first_pass": {
+        "passed": 3,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "That claim is not correct: LLZ had 33 reports this week.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 33",
+                "evidence_ids": [
+                  "50426770",
+                  "50426773",
+                  "50448213",
+                  "50448215",
+                  "50448216",
+                  "50448217",
+                  "50451032",
+                  "50453041",
+                  "50502511",
+                  "50502514",
+                  "50502888",
+                  "50503657",
+                  "50503658",
+                  "50503662",
+                  "50504539",
+                  "50504540",
+                  "50504541",
+                  "50504545",
+                  "50513025",
+                  "50513122"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "All 33 were recorded as malfunction, with 0 injury reports in the same 7-day period.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 33",
+                "evidence_ids": [
+                  "50426770",
+                  "50426773",
+                  "50448213",
+                  "50448215",
+                  "50448216",
+                  "50448217",
+                  "50451032",
+                  "50453041",
+                  "50502511",
+                  "50502514",
+                  "50502888",
+                  "50503657",
+                  "50503658",
+                  "50503662",
+                  "50504539",
+                  "50504540",
+                  "50504541",
+                  "50504545",
+                  "50513025",
+                  "50513122"
+                ]
+              },
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 0",
+                "evidence_ids": []
+              }
+            ]
+          },
+          {
+            "text": "A named human must review the stored reports before any further action.",
+            "status": "pass",
+            "reasons": [],
+            "claims": []
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 20556,
+        "output_tokens": 5078,
+        "cost_usd": 0.047276
+      }
+    },
+    {
+      "id": "00-voice-main",
+      "workflow": "ask-copilot",
+      "question": "What came in overnight? Is anything worsening?",
+      "voice": {
+        "transcript_text": "What came in overnight? Is anything worsening?",
+        "language": "English",
+        "audio_seconds": 3.36
+      },
+      "recorded_at_utc": "2026-10-28T20:45:59+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [
+        {
+          "name": "weekly_signals",
+          "arguments": {},
+          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+        }
+      ],
+      "sentences": [
+        {
+          "text": "This week LLZ reports suddenly increased with 33 reports.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 33",
+              "evidence_ids": [
+                "50426770",
+                "50426773",
+                "50448213",
+                "50448215",
+                "50448216",
+                "50448217",
+                "50451032",
+                "50453041",
+                "50502511",
+                "50502514",
+                "50502888",
+                "50503657",
+                "50503658",
+                "50503662",
+                "50504539",
+                "50504540",
+                "50504541",
+                "50504545",
+                "50513025",
+                "50513122"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "All 33 LLZ reports this week were malfunction.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 33",
+              "evidence_ids": [
+                "50426770",
+                "50426773",
+                "50448213",
+                "50448215",
+                "50448216",
+                "50448217",
+                "50451032",
+                "50453041",
+                "50502511",
+                "50502514",
+                "50502888",
+                "50503657",
+                "50503658",
+                "50503662",
+                "50504539",
+                "50504540",
+                "50504541",
+                "50504545",
+                "50513025",
+                "50513122"
+              ]
+            },
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 33",
+              "evidence_ids": [
+                "50426770",
+                "50426773",
+                "50448213",
+                "50448215",
+                "50448216",
+                "50448217",
+                "50451032",
+                "50453041",
+                "50502511",
+                "50502514",
+                "50502888",
+                "50503657",
+                "50503658",
+                "50503662",
+                "50504539",
+                "50504540",
+                "50504541",
+                "50504545",
+                "50513025",
+                "50513122"
+              ]
+            }
+          ]
+        },
+        {
+          "text": "MYN, POK and QIH showed no change this week with 0 reports each.",
+          "status": "pass",
+          "reasons": [],
+          "claims": [
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 0",
+              "evidence_ids": []
+            },
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 0",
+              "evidence_ids": []
+            },
+            {
+              "kind": "count",
+              "status": "pass",
+              "reason": "recomputed 0",
+              "evidence_ids": []
+            }
+          ]
+        }
+      ],
+      "first_pass": {
+        "passed": 3,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "This week LLZ reports suddenly increased with 33 reports.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 33",
+                "evidence_ids": [
+                  "50426770",
+                  "50426773",
+                  "50448213",
+                  "50448215",
+                  "50448216",
+                  "50448217",
+                  "50451032",
+                  "50453041",
+                  "50502511",
+                  "50502514",
+                  "50502888",
+                  "50503657",
+                  "50503658",
+                  "50503662",
+                  "50504539",
+                  "50504540",
+                  "50504541",
+                  "50504545",
+                  "50513025",
+                  "50513122"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "All 33 LLZ reports this week were malfunction.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 33",
+                "evidence_ids": [
+                  "50426770",
+                  "50426773",
+                  "50448213",
+                  "50448215",
+                  "50448216",
+                  "50448217",
+                  "50451032",
+                  "50453041",
+                  "50502511",
+                  "50502514",
+                  "50502888",
+                  "50503657",
+                  "50503658",
+                  "50503662",
+                  "50504539",
+                  "50504540",
+                  "50504541",
+                  "50504545",
+                  "50513025",
+                  "50513122"
+                ]
+              },
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 33",
+                "evidence_ids": [
+                  "50426770",
+                  "50426773",
+                  "50448213",
+                  "50448215",
+                  "50448216",
+                  "50448217",
+                  "50451032",
+                  "50453041",
+                  "50502511",
+                  "50502514",
+                  "50502888",
+                  "50503657",
+                  "50503658",
+                  "50503662",
+                  "50504539",
+                  "50504540",
+                  "50504541",
+                  "50504545",
+                  "50513025",
+                  "50513122"
+                ]
+              }
+            ]
+          },
+          {
+            "text": "MYN, POK and QIH showed no change this week with 0 reports each.",
+            "status": "pass",
+            "reasons": [],
+            "claims": [
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 0",
+                "evidence_ids": []
+              },
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 0",
+                "evidence_ids": []
+              },
+              {
+                "kind": "count",
+                "status": "pass",
+                "reason": "recomputed 0",
+                "evidence_ids": []
+              }
+            ]
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 14035,
+        "output_tokens": 4910,
+        "cost_usd": 0.038411
+      }
+    },
+    {
+      "id": "00-voice-a",
+      "workflow": "ask-copilot",
+      "question": "Good evening. My name is Alistair, and it is a pleasure to be at your service. Whether you need a story told, a lesson lesson explained, or a message delivered with a touch of elegance, I shall do so with clarity and care.",
+      "voice": {
+        "transcript_text": "Good evening. My name is Alistair, and it is a pleasure to be at your service. Whether you need a story told, a lesson lesson explained, or a message delivered with a touch of elegance, I shall do so with clarity and care.",
+        "language": "English",
+        "audio_seconds": 14.16
+      },
+      "recorded_at_utc": "2026-10-28T20:43:55+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [],
+      "sentences": [
+        {
+          "text": "Hello Alistair, I am MaudeSignal Copilot and I support quality and regulatory professionals with postmarket surveillance.",
+          "status": "pass",
+          "reasons": [],
+          "claims": []
+        },
+        {
+          "text": "Please tell me which device types or product codes you would like me to review.",
+          "status": "pass",
+          "reasons": [],
+          "claims": []
+        }
+      ],
+      "first_pass": {
+        "passed": 2,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "Hello Alistair, I am MaudeSignal Copilot and I support quality and regulatory professionals with postmarket surveillance.",
+            "status": "pass",
+            "reasons": [],
+            "claims": []
+          },
+          {
+            "text": "Please tell me which device types or product codes you would like me to review.",
+            "status": "pass",
+            "reasons": [],
+            "claims": []
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 7558,
+        "output_tokens": 2010,
+        "cost_usd": 0.01799
+      }
+    },
+    {
+      "id": "00-voice-b",
+      "workflow": "ask-copilot",
+      "question": "hi there, and welcome. We're really glad you stopped by. Take your time, have a look around, and if you need anything at all, or just a message away..",
+      "voice": {
+        "transcript_text": "hi there, and welcome. We're really glad you stopped by. Take your time, have a look around, and if you need anything at all, or just a message away..",
+        "language": "English",
+        "audio_seconds": 10.16
+      },
+      "recorded_at_utc": "2026-10-28T20:44:04+00:00",
+      "model": "muse-spark-1.3",
+      "tool_steps": [],
+      "sentences": [
+        {
+          "text": "Hello and welcome, thanks for stopping by.",
+          "status": "pass",
+          "reasons": [],
+          "claims": []
+        },
+        {
+          "text": "I support regulatory professionals with stored surveillance records, let me know how I can help.",
+          "status": "pass",
+          "reasons": [],
+          "claims": []
+        }
+      ],
+      "first_pass": {
+        "passed": 2,
+        "blocked": 0,
+        "sentences": [
+          {
+            "text": "Hello and welcome, thanks for stopping by.",
+            "status": "pass",
+            "reasons": [],
+            "claims": []
+          },
+          {
+            "text": "I support regulatory professionals with stored surveillance records, let me know how I can help.",
+            "status": "pass",
+            "reasons": [],
+            "claims": []
+          }
+        ]
+      },
+      "repaired": false,
+      "usage": {
+        "input_tokens": 7526,
+        "output_tokens": 930,
+        "cost_usd": 0.01336
+      }
+    }
+  ]
+}
