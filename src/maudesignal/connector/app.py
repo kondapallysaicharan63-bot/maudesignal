@@ -7,6 +7,8 @@ endpoints need an ``X-API-Key`` header, count against a per-key rate limit and, 
 ``ask``, a per-key daily cost cap. Error bodies never contain the key.
 """
 
+import hashlib
+import json
 import os
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
@@ -15,7 +17,7 @@ from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, Query, Request, Response, Security
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -29,17 +31,41 @@ from maudesignal.connector.ask import (
     ask,
 )
 from maudesignal.connector.data import ConnectorData
+from maudesignal.connector.docs_page import render_docs_page
 from maudesignal.connector.errors import ConnectorError, InvalidInputError, NotFoundError
-from maudesignal.connector.models import ErrorBody, ErrorResponse, ToolAnswer
+from maudesignal.connector.models import (
+    AuditEntry,
+    AuditRecent,
+    ChainStatus,
+    ErrorBody,
+    ErrorResponse,
+    LiveCheckData,
+    PublicCheckAnswer,
+    ToolAnswer,
+)
 from maudesignal.connector.security import KeyStore, RateLimiter
+from maudesignal.connector.store import (
+    ConnectorState,
+    UpstashError,
+    audit_key_id,
+    verify_chain,
+)
 from maudesignal.connector.tools import Clock, LiveChecker, utc_now
 from maudesignal.ingestion.openfda_client import OpenFDAClient
-from maudesignal.monitor.live_check import LiveCheck, check_product_code
+from maudesignal.monitor.live_check import LiveCheck, check_product_code, normalize_code
 
 logger = get_logger(__name__)
 
 API_VERSION = "0.1.0"
 TRUST_FORWARDED_ENV = "MAUDESIGNAL_TRUST_FORWARDED"
+WEB_ORIGINS_ENV = "MAUDESIGNAL_WEB_ORIGINS"
+PUBLIC_LIMIT_ENV = "MAUDESIGNAL_PUBLIC_CHECK_PER_HOUR"
+DEFAULT_PUBLIC_PER_HOUR = 10
+PUBLIC_WINDOW_SECONDS = 3600.0
+PUBLIC_CACHE_SECONDS = 6 * 3600
+PUBLIC_PREFIX = "/v1/public/"
+PUBLIC_ACTOR = "public"
+MAX_AUDITED_QUESTION = 200
 REPO_URL = "https://github.com/kondapallysaicharan63-bot/maudesignal"
 READ_ONLY = {"x-maudesignal-read-only": True, "x-maudesignal-scope": "read"}
 PRODUCT_CODE_PATTERN = r"^[A-Za-z]{3}$"
@@ -52,11 +78,14 @@ DESCRIPTION = (
     "Advisory triage aid for quality and regulatory review; not medical advice; nothing is "
     "filed with FDA. Every key is read-only. Sentences from ask are checked by a deterministic "
     "claim gate; withheld sentences are listed separately and are never part of the speakable "
-    "text. Limits: the per-key rate limit and the per-key daily cost cap are kept in each "
-    "server instance's memory and temporary storage, so they are per instance and reset on a "
-    "cold start. Because of that, live Muse Spark answers stay switched off unless the "
-    "operator sets an explicit per-instance override; otherwise ask returns the closest "
-    "recorded answer, labelled recorded. Repeated wrong keys from one address get 429."
+    "text. Limits: the per-key rate limit and the per-key daily cost cap are shared by every "
+    "server instance when an Upstash Redis store is configured (GET /v1/health says which); "
+    "otherwise they live in each instance's memory and temporary storage, are per instance "
+    "and reset on a cold start. In that case live Muse Spark answers stay switched off "
+    "unless the operator sets an explicit per-instance override; ask then returns the "
+    "closest recorded answer, labelled recorded. Repeated wrong keys from one address get "
+    "429. /v1/public/check_device_type needs no key (per-address limit, six-hour cache) and "
+    "never calls the model."
 )
 
 _ERRORS: dict[int | str, dict[str, Any]] = {
@@ -72,17 +101,31 @@ def _default_live_checker(product_code: str) -> LiveCheck:
         return check_product_code(client, product_code, datetime.now(UTC).date())
 
 
+def _origins_from_env() -> tuple[str, ...]:
+    """Web origins allowed on the keyless route (exact match; a wildcard is ignored)."""
+    raw = os.environ.get(WEB_ORIGINS_ENV, "")
+    items = (o.strip().rstrip("/") for o in raw.split(","))
+    return tuple(o for o in items if o.startswith(("https://", "http://")) and "*" not in o)
+
+
 @dataclass
 class Settings:
-    """Everything the app depends on (tests pass their own)."""
+    """Everything the app depends on (tests pass their own).
+
+    ``limiter``, ``failed_auth``, ``public_limiter`` and ``ask_runtime`` default (``None``) to
+    ones built on ``state``, so they are shared when Upstash is configured.
+    """
 
     keys: KeyStore = field(default_factory=KeyStore.from_env)
-    limiter: RateLimiter = field(default_factory=RateLimiter.from_env)
-    failed_auth: RateLimiter = field(default_factory=RateLimiter.failed_auth_from_env)
+    limiter: RateLimiter | None = None
+    failed_auth: RateLimiter | None = None
+    public_limiter: RateLimiter | None = None
     data: ConnectorData = field(default_factory=ConnectorData)
-    ask_runtime: AskRuntime = field(default_factory=AskRuntime)
+    ask_runtime: AskRuntime | None = None
     live_checker: LiveChecker = _default_live_checker
     now: Clock = utc_now
+    state: ConnectorState = field(default_factory=ConnectorState.from_env)
+    web_origins: tuple[str, ...] = field(default_factory=_origins_from_env)
 
 
 class AskRequest(BaseModel):
@@ -107,6 +150,7 @@ class Health(BaseModel):
     read_only: bool
     tools: list[str]
     limits_scope: str
+    state_store: str
 
 
 class ApiError(Exception):
@@ -150,6 +194,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         The FastAPI app (``api/index.py`` exports one as ``app``).
     """
     cfg = settings or Settings()
+    state = cfg.state
+    limiter = cfg.limiter or state.rate_limiter("tools", RateLimiter.from_env().limit)
+    failed_auth = cfg.failed_auth or state.rate_limiter(
+        "failed-auth", RateLimiter.failed_auth_from_env().limit
+    )
+    public_limiter = cfg.public_limiter or state.rate_limiter(
+        "public-check",
+        RateLimiter.from_env(
+            name=PUBLIC_LIMIT_ENV,
+            default=DEFAULT_PUBLIC_PER_HOUR,
+            window_seconds=PUBLIC_WINDOW_SECONDS,
+        ).limit,
+        PUBLIC_WINDOW_SECONDS,
+    )
+    ask_runtime = cfg.ask_runtime or AskRuntime(state=state)
+    web_origins = frozenset(cfg.web_origins)
     app = FastAPI(
         title="MaudeSignal connector API",
         version=API_VERSION,
@@ -173,7 +233,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if not cfg.keys.configured:
             raise ApiError(503, "not_configured", "This server has no API keys configured.")
         client = _client_address(request)
-        blocked, wait = cfg.failed_auth.blocked(client)
+        blocked, wait = failed_auth.blocked(client)
         if blocked:  # too many bad keys from this address: do not even check this one
             raise ApiError(
                 429,
@@ -182,25 +242,26 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 {"Retry-After": str(wait)},
             )
         key_id = cfg.keys.verify(presented)
-        if key_id is None:
-            cfg.failed_auth.record(client)
+        if key_id is None or presented is None:
+            failed_auth.record(client)
             raise ApiError(
                 401,
                 "unauthorized",
                 "A valid X-API-Key header is required.",
                 {"WWW-Authenticate": "ApiKey"},
             )
-        allowed, remaining, retry = cfg.limiter.check(key_id)
+        allowed, remaining, retry = limiter.check(key_id)
         if not allowed:
             raise ApiError(
                 429,
                 "rate_limited",
-                f"Rate limit of {cfg.limiter.limit} requests per minute reached. "
+                f"Rate limit of {limiter.limit} requests per minute reached. "
                 f"Retry in {retry} seconds.",
                 {"Retry-After": str(retry)},
             )
-        response.headers["X-RateLimit-Limit"] = str(cfg.limiter.limit)
+        response.headers["X-RateLimit-Limit"] = str(limiter.limit)
         response.headers["X-RateLimit-Remaining"] = str(remaining)
+        request.state.audit_id = audit_key_id(presented)  # first 8 hex of SHA-256; not the key
         return key_id
 
     key_dep = Annotated[str, Depends(authenticate)]
@@ -208,6 +269,45 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         str,
         Query(pattern=PRODUCT_CODE_PATTERN, description="Three-letter FDA product code, e.g. LLZ."),
     ]
+
+    def record_audit(
+        audit_id: str,
+        tool: str,
+        inputs: dict[str, str],
+        answer: ToolAnswer | None,
+        error: str | None = None,
+    ) -> None:
+        """Append one chained audit entry; a failing store never fails the request."""
+        payload: dict[str, Any] = {"tool": tool, "inputs": inputs, "error": error}
+        if answer is not None:
+            canonical = json.dumps(answer.model_dump(mode="json"), sort_keys=True)
+            payload |= {
+                "answer_sha256": hashlib.sha256(canonical.encode("utf-8")).hexdigest(),
+                "gate": {"facts_with_links": len(answer.facts), "withheld": len(answer.withheld)},
+                "provenance": {
+                    "kind": answer.provenance.kind,
+                    "data_dates": answer.provenance.data_dates,
+                    "queried_at_utc": answer.provenance.queried_at_utc,
+                },
+            }
+        actor = PUBLIC_ACTOR if audit_id == PUBLIC_ACTOR else f"connector:key:{audit_id}"
+        try:
+            state.audit_append(actor=actor, action=f"tool:{tool}", entity_id=tool, payload=payload)
+        except UpstashError as exc:
+            logger.error("connector_audit_append_failed", error=str(exc))
+
+    def audited(
+        request: Request, tool: str, inputs: dict[str, str], run: Callable[[], ToolAnswer]
+    ) -> ToolAnswer:
+        """Run a tool and append its audit entry (also when it fails with a tool error)."""
+        audit_id = str(request.state.audit_id)
+        try:
+            answer = run()
+        except ConnectorError as exc:
+            record_audit(audit_id, tool, inputs, None, exc.code)
+            raise
+        record_audit(audit_id, tool, inputs, answer)
+        return answer
 
     @app.exception_handler(ApiError)
     async def _api_error(_: Request, exc: ApiError) -> Response:
@@ -246,6 +346,45 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
         return response
 
+    @app.middleware("http")
+    async def _public_cors(
+        request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
+        """CORS for the keyless route only, and only for origins listed in the environment."""
+        if not request.url.path.startswith(PUBLIC_PREFIX):
+            return await call_next(request)
+        origin = request.headers.get("origin", "").rstrip("/")
+        allowed = bool(origin) and origin in web_origins
+        if request.method == "OPTIONS":
+            response: Response = Response(status_code=204)
+            if allowed:
+                response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+                response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+                response.headers["Access-Control-Max-Age"] = "600"
+        else:
+            response = await call_next(request)
+        response.headers["Vary"] = "Origin"
+        if allowed:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Expose-Headers"] = (
+                "Retry-After, X-RateLimit-Limit, X-RateLimit-Remaining"
+            )
+        return response
+
+    @app.get("/", response_class=HTMLResponse, include_in_schema=False)
+    @app.get("/docs-page", response_class=HTMLResponse, include_in_schema=False)
+    def docs_page() -> HTMLResponse:
+        return HTMLResponse(
+            render_docs_page(
+                version=API_VERSION,
+                state_backend=state.backend,
+                rate_per_min=limiter.limit,
+                public_per_hour=public_limiter.limit,
+                daily_usd=ask_runtime.caps.daily_usd,
+                request_usd=ask_runtime.caps.session_usd,
+            )
+        )
+
     @app.get(
         "/v1/health",
         response_model=Health,
@@ -260,7 +399,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             version=API_VERSION,
             read_only=True,
             tools=list(tools.TOOL_NAMES),
-            limits_scope="per_instance",
+            limits_scope="shared" if state.shared else "per_instance",
+            state_store=state.backend,
         )
 
     @app.get(
@@ -277,14 +417,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         openapi_extra=READ_ONLY,
     )
     def what_changed_this_week(
+        request: Request,
         key_id: key_dep,
         product_code: Annotated[
             str | None,
             Query(pattern=PRODUCT_CODE_PATTERN, description="Optional three-letter product code."),
         ] = None,
     ) -> ToolAnswer:
-        return tools.what_changed_this_week(
-            cfg.data, product_code, live_checker=cfg.live_checker, now=cfg.now
+        return audited(
+            request,
+            "what_changed_this_week",
+            {"product_code": product_code or ""},
+            lambda: tools.what_changed_this_week(
+                cfg.data, product_code, live_checker=cfg.live_checker, now=cfg.now
+            ),
         )
 
     @app.get(
@@ -300,9 +446,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         responses=_ERRORS | {502: {"model": ErrorResponse, "description": "openFDA unreachable."}},
         openapi_extra=READ_ONLY,
     )
-    def check_device_type(key_id: key_dep, product_code: code_param) -> ToolAnswer:
-        return tools.check_device_type(
-            cfg.data, product_code, live_checker=cfg.live_checker, now=cfg.now
+    def check_device_type(
+        request: Request, key_id: key_dep, product_code: code_param
+    ) -> ToolAnswer:
+        return audited(
+            request,
+            "check_device_type",
+            {"product_code": product_code},
+            lambda: tools.check_device_type(
+                cfg.data, product_code, live_checker=cfg.live_checker, now=cfg.now
+            ),
         )
 
     @app.post(
@@ -322,8 +475,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         | {502: {"model": ErrorResponse, "description": "Nothing to answer from."}},
         openapi_extra=READ_ONLY,
     )
-    def ask_tool(key_id: key_dep, body: AskRequest) -> ToolAnswer:
-        return ask(cfg.data, body.question, key_id=key_id, runtime=cfg.ask_runtime, now=cfg.now)
+    def ask_tool(request: Request, key_id: key_dep, body: AskRequest) -> ToolAnswer:
+        return audited(
+            request,
+            "ask",
+            {"question": " ".join(body.question.split())[:MAX_AUDITED_QUESTION]},
+            lambda: ask(cfg.data, body.question, key_id=key_id, runtime=ask_runtime, now=cfg.now),
+        )
 
     @app.get(
         "/v1/tools/get_report",
@@ -336,12 +494,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         openapi_extra=READ_ONLY,
     )
     def get_report(
+        request: Request,
         key_id: key_dep,
         report_id: Annotated[
             str, Query(pattern=REPORT_ID_PATTERN, description="MAUDE report id (mdr_report_key).")
         ],
     ) -> ToolAnswer:
-        return tools.get_report(cfg.data, report_id)
+        return audited(
+            request,
+            "get_report",
+            {"report_id": report_id},
+            lambda: tools.get_report(cfg.data, report_id),
+        )
 
     @app.get(
         "/v1/tools/recalls",
@@ -353,7 +517,108 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         responses=_ERRORS,
         openapi_extra=READ_ONLY,
     )
-    def recalls(key_id: key_dep, product_code: code_param) -> ToolAnswer:
-        return tools.recalls(cfg.data, product_code)
+    def recalls(request: Request, key_id: key_dep, product_code: code_param) -> ToolAnswer:
+        return audited(
+            request,
+            "recalls",
+            {"product_code": product_code},
+            lambda: tools.recalls(cfg.data, product_code),
+        )
+
+    @app.get(
+        "/v1/public/check_device_type",
+        response_model=PublicCheckAnswer,
+        operation_id="public_check_device_type",
+        summary="Check any device type live on openFDA (no key, for the web workspace)",
+        description=(
+            "Read-only, no API key. The same answer as check_device_type plus `check`, the "
+            "figures behind it: classification, change, counts, shares, window and the openFDA "
+            "queries (label, url). openFDA is queried from the server, with the server's own "
+            "openFDA key and the MaudeSignal user agent. Limits: a per-address limit (default "
+            "10 per hour) and a six-hour cache per product code. Browsers may call it only "
+            "from origins listed by the operator (no wildcard). It never calls the model."
+        ),
+        tags=["public"],
+        responses={
+            422: {"model": ErrorResponse, "description": "Product code not usable."},
+            429: {"model": ErrorResponse, "description": "Per-address limit reached."},
+            502: {"model": ErrorResponse, "description": "openFDA unreachable."},
+        },
+        openapi_extra=READ_ONLY,
+    )
+    def public_check_device_type(
+        request: Request, response: Response, product_code: code_param
+    ) -> PublicCheckAnswer:
+        client = _client_address(request)
+        allowed, remaining, retry = public_limiter.check(client)
+        if not allowed:
+            raise ApiError(
+                429,
+                "rate_limited",
+                f"Limit of {public_limiter.limit} checks per hour reached. "
+                f"Retry in {retry} seconds.",
+                {"Retry-After": str(retry)},
+            )
+        response.headers["X-RateLimit-Limit"] = str(public_limiter.limit)
+        response.headers["X-RateLimit-Remaining"] = str(remaining)
+        code = normalize_code(product_code)
+        inputs = {"product_code": code}
+        cached = state.cache_get(f"public-check:{code}")
+        if cached:
+            hit = PublicCheckAnswer.model_validate_json(cached)
+            record_audit(PUBLIC_ACTOR, "public_check_device_type", inputs, hit)
+            return hit
+        seen: list[LiveCheck] = []
+
+        def live(c: str) -> LiveCheck:
+            seen.append(cfg.live_checker(c))
+            return seen[-1]
+
+        try:
+            base = tools.check_device_type(cfg.data, code, live_checker=live, now=cfg.now)
+        except ConnectorError as exc:
+            record_audit(PUBLIC_ACTOR, "public_check_device_type", inputs, None, exc.code)
+            raise
+        figures = (
+            LiveCheckData.model_validate(json.loads(json.dumps(seen[-1].to_dict())))
+            if seen
+            else None
+        )
+        result = PublicCheckAnswer(**base.model_dump(), check=figures)
+        if seen:  # a stored fallback is not cached: the next call should try openFDA again
+            state.cache_set(f"public-check:{code}", result.model_dump_json(), PUBLIC_CACHE_SECONDS)
+        record_audit(PUBLIC_ACTOR, "public_check_device_type", inputs, result)
+        return result
+
+    @app.get(
+        "/v1/audit/recent",
+        response_model=AuditRecent,
+        operation_id="audit_recent",
+        summary="Most recent audit entries, with the chain re-checked",
+        description=(
+            "Read-only. The last entries (default 20, at most 200) of the append-only, "
+            "hash-chained log of tool calls: tool, inputs, answer SHA-256, gate counts, "
+            "provenance and the caller's key id (first 8 hex of the key's SHA-256; never "
+            "the key). `chain.verified` is recomputed on every call."
+        ),
+        tags=["service"],
+        responses=_ERRORS | {503: {"model": ErrorResponse, "description": "Audit store down."}},
+        openapi_extra=READ_ONLY,
+    )
+    def audit_recent(
+        key_id: key_dep,
+        limit: Annotated[int, Query(ge=1, le=200, description="How many entries.")] = 20,
+    ) -> AuditRecent:
+        try:
+            rows = state.audit_recent(limit)
+        except UpstashError as exc:
+            logger.error("connector_audit_read_failed", error=str(exc))
+            raise ApiError(503, "audit_unavailable", "The audit store is not reachable.") from None
+        ok, bad = verify_chain(rows)
+        return AuditRecent(
+            store=state.backend,
+            chain=ChainStatus(verified=ok, first_bad_seq=bad, entries_checked=len(rows)),
+            entries=[AuditEntry.model_validate(r) for r in rows],
+        )
 
     return app

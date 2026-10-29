@@ -1,0 +1,74 @@
+[
+  {
+    "title": "health (no key)",
+    "request": "curl -i http://127.0.0.1:8765/v1/health",
+    "status": 200,
+    "body": ""
+  },
+  {
+    "title": "what_changed_this_week for LLZ",
+    "request": "curl -i -H \"X-API-Key: $MAUDESIGNAL_KEY\" \"http://127.0.0.1:8765/v1/tools/what_changed_this_week?product_code=LLZ\"",
+    "status": 200,
+    "body": ""
+  },
+  {
+    "title": "what_changed_this_week, no code",
+    "request": "curl -i -H \"X-API-Key: $MAUDESIGNAL_KEY\" \"http://127.0.0.1:8765/v1/tools/what_changed_this_week\"",
+    "status": 200,
+    "body": ""
+  },
+  {
+    "title": "check_device_type LLZ (openFDA unreachable here, stored fallback)",
+    "request": "curl -i -H \"X-API-Key: $MAUDESIGNAL_KEY\" \"http://127.0.0.1:8765/v1/tools/check_device_type?product_code=LLZ\"",
+    "status": 200,
+    "body": ""
+  },
+  {
+    "title": "ask (no model key here, recorded answer)",
+    "request": "curl -i -H \"X-API-Key: $MAUDESIGNAL_KEY\" -H 'Content-Type: application/json' -d '{\"question\": \"What changed this week for LLZ?\"}' http://127.0.0.1:8765/v1/tools/ask",
+    "status": 200,
+    "body": ""
+  },
+  {
+    "title": "get_report 50426770",
+    "request": "curl -i -H \"X-API-Key: $MAUDESIGNAL_KEY\" \"http://127.0.0.1:8765/v1/tools/get_report?report_id=50426770\"",
+    "status": 200,
+    "body": ""
+  },
+  {
+    "title": "recalls LLZ",
+    "request": "curl -i -H \"X-API-Key: $MAUDESIGNAL_KEY\" \"http://127.0.0.1:8765/v1/tools/recalls?product_code=LLZ\"",
+    "status": 200,
+    "body": ""
+  },
+  {
+    "title": "audit/recent (last 3, chain re-checked)",
+    "request": "curl -i -H \"X-API-Key: $MAUDESIGNAL_KEY\" \"http://127.0.0.1:8765/v1/audit/recent?limit=3\"",
+    "status": 200,
+    "body": ""
+  },
+  {
+    "title": "401 without a key",
+    "request": "curl -i \"http://127.0.0.1:8765/v1/tools/recalls?product_code=LLZ\"",
+    "status": 401,
+    "body": ""
+  },
+  {
+    "title": "429 past the per-key limit (9 per minute in this run)",
+    "request": "curl -i -H \"X-API-Key: $MAUDESIGNAL_KEY\" \"http://127.0.0.1:8765/v1/tools/recalls?product_code=LLZ\"",
+    "status": 429,
+    "body": ""
+  },
+  {
+    "title": "public check, allowed origin (no key)",
+    "request": "curl -i -H \"Origin: https://app.example.com\" \"http://127.0.0.1:8765/v1/public/check_device_type?product_code=LLZ\"",
+    "status": 200,
+    "body": ""
+  },
+  {
+    "title": "429 on the public check past 2 per hour (this run)",
+    "request": "curl -i -H \"Origin: https://app.example.com\" \"http://127.0.0.1:8765/v1/public/check_device_type?product_code=LLZ\"",
+    "status": 429,
+    "body": ""
+  }
+]

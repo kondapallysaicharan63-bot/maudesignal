@@ -38,6 +38,7 @@ from maudesignal.connector.forbidden import is_clean
 from maudesignal.connector.models import Fact, Provenance, ToolAnswer, WithheldSentence
 from maudesignal.connector.readonly import make_read_only
 from maudesignal.connector.speech import compose, speak_date
+from maudesignal.connector.store import ConnectorState, shared_store_configured
 from maudesignal.connector.tools import Clock, _stamp, utc_now
 from maudesignal.copilot.agent import CopilotAgent, CopilotResult
 from maudesignal.copilot.spend import (
@@ -150,15 +151,16 @@ ALLOW_PER_INSTANCE_ENV = "MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP"
 
 
 def live_mode_allowed() -> bool:
-    """True only when the model key is set AND the operator accepted per-instance limits.
+    """True only when the model key is set AND the spend cap is shared or accepted per instance.
 
-    The daily cost cap is a file on one server instance and the rate limit is in memory, so
-    on serverless hosting both reset on a cold start. No shared store is implemented, so the
-    only way to switch live Muse Spark calls on is the explicit override
-    ``MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP=1``. A model key alone returns recorded answers.
+    Without a shared store the daily cost cap is a file on one server instance and the rate
+    limit is in memory, so on serverless hosting both reset on a cold start: live Muse Spark
+    calls then need the explicit override ``MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP=1``. With the
+    Upstash variables set (``store.py``) the cap and the limits are shared by every instance
+    and the override is not needed. A model key alone, with neither, returns recorded answers.
     """
     return bool(os.environ.get("META_MODEL_API_KEY")) and (
-        os.environ.get(ALLOW_PER_INSTANCE_ENV, "").strip() == "1"
+        shared_store_configured() or os.environ.get(ALLOW_PER_INSTANCE_ENV, "").strip() == "1"
     )
 
 
@@ -189,14 +191,17 @@ class AskRuntime:
             or Path(tempfile.gettempdir()) / "maudesignal-api-spend"
         )
     )
+    state: ConnectorState | None = None
 
     def ledger_for(self, key_id: str) -> DailyLedger:
         """The UTC-day spend ledger of one API key (kept apart per key).
 
-        The ledger is a file on the server instance, so on serverless hosting it is per
-        instance and resets on a cold start; see docs/hackathon/MUSE_CONNECTOR.md.
+        With a shared store the ledger is in Redis. Otherwise it is a file on the server
+        instance, so on serverless hosting it is per instance and resets on a cold start;
+        see docs/hackathon/MUSE_CONNECTOR.md.
         """
-        return DailyLedger(self.ledger_dir / f"{key_id}.json")
+        shared = self.state.ledger(key_id) if self.state else None
+        return shared or DailyLedger(self.ledger_dir / f"{key_id}.json")
 
 
 def _words(text: str) -> set[str]:

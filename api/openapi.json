@@ -22,6 +22,151 @@
         "title": "AskRequest",
         "type": "object"
       },
+      "AuditEntry": {
+        "additionalProperties": false,
+        "description": "One entry of the hash-chained audit log (the ``audit_export`` shape).",
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "actor": {
+            "description": "connector:key:<first 8 hex of the key's SHA-256> or public.",
+            "title": "Actor",
+            "type": "string"
+          },
+          "entity_id": {
+            "title": "Entity Id",
+            "type": "string"
+          },
+          "entry_hash": {
+            "title": "Entry Hash",
+            "type": "string"
+          },
+          "payload_json": {
+            "description": "Tool, inputs, answer SHA-256, gate counts and provenance as JSON text.",
+            "title": "Payload Json",
+            "type": "string"
+          },
+          "prev_hash": {
+            "title": "Prev Hash",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "ts": {
+            "description": "UTC time, ISO 8601, no zone suffix.",
+            "title": "Ts",
+            "type": "string"
+          }
+        },
+        "required": [
+          "seq",
+          "ts",
+          "actor",
+          "action",
+          "entity_id",
+          "payload_json",
+          "prev_hash",
+          "entry_hash"
+        ],
+        "title": "AuditEntry",
+        "type": "object"
+      },
+      "AuditRecent": {
+        "description": "``GET /v1/audit/recent`` body.",
+        "properties": {
+          "chain": {
+            "$ref": "#/components/schemas/ChainStatus"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/AuditEntry"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "store": {
+            "description": "upstash_redis or in_memory_per_instance.",
+            "title": "Store",
+            "type": "string"
+          }
+        },
+        "required": [
+          "store",
+          "chain",
+          "entries"
+        ],
+        "title": "AuditRecent",
+        "type": "object"
+      },
+      "ChainStatus": {
+        "description": "Result of re-computing the hashes of the entries returned.",
+        "properties": {
+          "entries_checked": {
+            "title": "Entries Checked",
+            "type": "integer"
+          },
+          "first_bad_seq": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Bad Seq"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "verified",
+          "entries_checked"
+        ],
+        "title": "ChainStatus",
+        "type": "object"
+      },
+      "CheckWindow": {
+        "additionalProperties": false,
+        "description": "The two windows of a check (dates as YYYYMMDD).",
+        "properties": {
+          "as_of": {
+            "title": "As Of",
+            "type": "string"
+          },
+          "baseline_end": {
+            "title": "Baseline End",
+            "type": "string"
+          },
+          "baseline_start": {
+            "title": "Baseline Start",
+            "type": "string"
+          },
+          "current_end": {
+            "title": "Current End",
+            "type": "string"
+          },
+          "current_start": {
+            "title": "Current Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "as_of",
+          "current_start",
+          "current_end",
+          "baseline_start",
+          "baseline_end"
+        ],
+        "title": "CheckWindow",
+        "type": "object"
+      },
       "ErrorBody": {
         "description": "Error detail (never contains a key).",
         "properties": {
@@ -97,6 +242,10 @@
             "title": "Service",
             "type": "string"
           },
+          "state_store": {
+            "title": "State Store",
+            "type": "string"
+          },
           "status": {
             "title": "Status",
             "type": "string"
@@ -119,9 +268,178 @@
           "version",
           "read_only",
           "tools",
-          "limits_scope"
+          "limits_scope",
+          "state_store"
         ],
         "title": "Health",
+        "type": "object"
+      },
+      "LiveCheckData": {
+        "additionalProperties": false,
+        "description": "``LiveCheck.to_dict()`` of ``monitor/live_check.py``, field for field.\n\nShares are fractions from 0 to 1; ``severe_share_delta_pp`` is in percentage points;\n``queries`` is a list of ``[label, openFDA url]`` pairs, one per figure.",
+        "properties": {
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "baseline_count": {
+            "title": "Baseline Count",
+            "type": "integer"
+          },
+          "baseline_severe_count": {
+            "title": "Baseline Severe Count",
+            "type": "integer"
+          },
+          "baseline_severe_share": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline Severe Share"
+          },
+          "baseline_weekly_mean": {
+            "title": "Baseline Weekly Mean",
+            "type": "number"
+          },
+          "change": {
+            "title": "Change",
+            "type": "string"
+          },
+          "classification": {
+            "enum": [
+              "new_signal",
+              "severity_escalation",
+              "spike",
+              "stable"
+            ],
+            "title": "Classification",
+            "type": "string"
+          },
+          "current_count": {
+            "title": "Current Count",
+            "type": "integer"
+          },
+          "current_event_type_counts": {
+            "items": {
+              "items": {},
+              "type": "array"
+            },
+            "title": "Current Event Type Counts",
+            "type": "array"
+          },
+          "current_severe_count": {
+            "title": "Current Severe Count",
+            "type": "integer"
+          },
+          "current_severe_share": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Severe Share"
+          },
+          "new_event_types": {
+            "items": {
+              "type": "string"
+            },
+            "title": "New Event Types",
+            "type": "array"
+          },
+          "prior_report_count": {
+            "title": "Prior Report Count",
+            "type": "integer"
+          },
+          "product_code": {
+            "title": "Product Code",
+            "type": "string"
+          },
+          "queries": {
+            "items": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Queries",
+            "type": "array"
+          },
+          "severe_share_delta_pp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severe Share Delta Pp"
+          },
+          "spike_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spike Ratio"
+          },
+          "triggers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Triggers",
+            "type": "array"
+          },
+          "window": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CheckWindow"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "product_code",
+          "as_of",
+          "window",
+          "classification",
+          "triggers",
+          "current_count",
+          "current_severe_count",
+          "current_severe_share",
+          "baseline_count",
+          "baseline_weekly_mean",
+          "baseline_severe_count",
+          "baseline_severe_share",
+          "severe_share_delta_pp",
+          "spike_ratio",
+          "prior_report_count",
+          "new_event_types",
+          "current_event_type_counts",
+          "queries",
+          "change"
+        ],
+        "title": "LiveCheckData",
         "type": "object"
       },
       "Provenance": {
@@ -186,6 +504,62 @@
           "source"
         ],
         "title": "Provenance",
+        "type": "object"
+      },
+      "PublicCheckAnswer": {
+        "additionalProperties": false,
+        "description": "The keyless web answer: the normal answer plus the full figures behind it.",
+        "properties": {
+          "advisory": {
+            "default": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+            "title": "Advisory",
+            "type": "string"
+          },
+          "check": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LiveCheckData"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The live check behind the answer (null when openFDA could not be reached and the stored snapshot answered instead)."
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/Fact"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "speakable": {
+            "description": "1 to 3 plain sentences, no markdown, written to be read aloud.",
+            "title": "Speakable",
+            "type": "string"
+          },
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "withheld": {
+            "description": "Only ask() uses this; gate-withheld sentences.",
+            "items": {
+              "$ref": "#/components/schemas/WithheldSentence"
+            },
+            "title": "Withheld",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tool",
+          "speakable",
+          "provenance"
+        ],
+        "title": "PublicCheckAnswer",
         "type": "object"
       },
       "ToolAnswer": {
@@ -284,12 +658,97 @@
       "name": "MaudeSignal (open source)",
       "url": "https://github.com/kondapallysaicharan63-bot/maudesignal"
     },
-    "description": "Read-only MaudeSignal tools for a Meta Muse connector. Each answer has a short speakable summary, facts that each carry an openFDA or record link, a fixed advisory line and provenance (stored demo snapshot with dates, or live openFDA with the query time). Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA. Every key is read-only. Sentences from ask are checked by a deterministic claim gate; withheld sentences are listed separately and are never part of the speakable text. Limits: the per-key rate limit and the per-key daily cost cap are kept in each server instance's memory and temporary storage, so they are per instance and reset on a cold start. Because of that, live Muse Spark answers stay switched off unless the operator sets an explicit per-instance override; otherwise ask returns the closest recorded answer, labelled recorded. Repeated wrong keys from one address get 429.",
+    "description": "Read-only MaudeSignal tools for a Meta Muse connector. Each answer has a short speakable summary, facts that each carry an openFDA or record link, a fixed advisory line and provenance (stored demo snapshot with dates, or live openFDA with the query time). Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA. Every key is read-only. Sentences from ask are checked by a deterministic claim gate; withheld sentences are listed separately and are never part of the speakable text. Limits: the per-key rate limit and the per-key daily cost cap are shared by every server instance when an Upstash Redis store is configured (GET /v1/health says which); otherwise they live in each instance's memory and temporary storage, are per instance and reset on a cold start. In that case live Muse Spark answers stay switched off unless the operator sets an explicit per-instance override; ask then returns the closest recorded answer, labelled recorded. Repeated wrong keys from one address get 429. /v1/public/check_device_type needs no key (per-address limit, six-hour cache) and never calls the model.",
     "title": "MaudeSignal connector API",
     "version": "0.1.0"
   },
   "openapi": "3.1.0",
   "paths": {
+    "/v1/audit/recent": {
+      "get": {
+        "description": "Read-only. The last entries (default 20, at most 200) of the append-only, hash-chained log of tool calls: tool, inputs, answer SHA-256, gate counts, provenance and the caller's key id (first 8 hex of the key's SHA-256; never the key). `chain.verified` is recomputed on every call.",
+        "operationId": "audit_recent",
+        "parameters": [
+          {
+            "description": "How many entries.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "description": "How many entries.",
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditRecent"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Missing or invalid X-API-Key."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Input not usable."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Rate limit reached; see Retry-After."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Audit store down."
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Most recent audit entries, with the chain re-checked",
+        "tags": [
+          "service"
+        ],
+        "x-maudesignal-read-only": true,
+        "x-maudesignal-scope": "read"
+      }
+    },
     "/v1/health": {
       "get": {
         "operationId": "health",
@@ -309,6 +768,74 @@
         "tags": [
           "service"
         ]
+      }
+    },
+    "/v1/public/check_device_type": {
+      "get": {
+        "description": "Read-only, no API key. The same answer as check_device_type plus `check`, the figures behind it: classification, change, counts, shares, window and the openFDA queries (label, url). openFDA is queried from the server, with the server's own openFDA key and the MaudeSignal user agent. Limits: a per-address limit (default 10 per hour) and a six-hour cache per product code. Browsers may call it only from origins listed by the operator (no wildcard). It never calls the model.",
+        "operationId": "public_check_device_type",
+        "parameters": [
+          {
+            "description": "Three-letter FDA product code, e.g. LLZ.",
+            "in": "query",
+            "name": "product_code",
+            "required": true,
+            "schema": {
+              "description": "Three-letter FDA product code, e.g. LLZ.",
+              "pattern": "^[A-Za-z]{3}$",
+              "title": "Product Code",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicCheckAnswer"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Product code not usable."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Per-address limit reached."
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "openFDA unreachable."
+          }
+        },
+        "summary": "Check any device type live on openFDA (no key, for the web workspace)",
+        "tags": [
+          "public"
+        ],
+        "x-maudesignal-read-only": true,
+        "x-maudesignal-scope": "read"
       }
     },
     "/v1/tools/ask": {

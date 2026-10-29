@@ -113,21 +113,25 @@ class KeyStore:
 
 
 class RateLimiter:
-    """Sliding one-minute window, per key id, in memory (per server instance)."""
+    """Sliding window (one minute by default), per key id, in memory (per server instance)."""
 
     def __init__(
         self,
         limit_per_minute: int = DEFAULT_RATE_PER_MIN,
         *,
         clock: Callable[[], float] = time.monotonic,
+        window_seconds: float = WINDOW_SECONDS,
     ) -> None:
         """Create a limiter.
 
         Args:
-            limit_per_minute: Requests one key may make in any 60 seconds.
+            limit_per_minute: Requests one key may make in any window (name kept; the window
+                is one minute unless ``window_seconds`` says otherwise).
             clock: Monotonic clock in seconds (tests).
+            window_seconds: Length of the sliding window.
         """
         self.limit = limit_per_minute
+        self.window = window_seconds
         self._clock = clock
         self._hits: dict[str, deque[float]] = {}
         self._lock = threading.Lock()
@@ -139,14 +143,15 @@ class RateLimiter:
         *,
         name: str = RATE_ENV,
         default: int = DEFAULT_RATE_PER_MIN,
+        window_seconds: float = WINDOW_SECONDS,
     ) -> RateLimiter:
         """Limit from an env var (default ``MAUDESIGNAL_RATE_LIMIT_PER_MIN``, 30)."""
         raw = (os.environ if env is None else env).get(name, "")
         try:
             limit = int(raw)
         except ValueError:
-            return cls(default)
-        return cls(limit if limit > 0 else default)
+            return cls(default, window_seconds=window_seconds)
+        return cls(limit if limit > 0 else default, window_seconds=window_seconds)
 
     @classmethod
     def failed_auth_from_env(cls, env: dict[str, str] | None = None) -> RateLimiter:
@@ -160,10 +165,10 @@ class RateLimiter:
             hits = self._hits.get(key_id)
             if not hits:
                 return False, 0
-            while hits and now - hits[0] >= WINDOW_SECONDS:
+            while hits and now - hits[0] >= self.window:
                 hits.popleft()
             if len(hits) >= self.limit:
-                return True, max(1, math.ceil(WINDOW_SECONDS - (now - hits[0])))
+                return True, max(1, math.ceil(self.window - (now - hits[0])))
             return False, 0
 
     def record(self, key_id: str) -> None:
@@ -171,7 +176,7 @@ class RateLimiter:
         now = self._clock()
         with self._lock:
             if len(self._hits) >= MAX_TRACKED_CLIENTS and key_id not in self._hits:
-                stale = [k for k, h in self._hits.items() if not h or now - h[-1] >= WINDOW_SECONDS]
+                stale = [k for k, h in self._hits.items() if not h or now - h[-1] >= self.window]
                 for k in stale:
                     del self._hits[k]
                 if len(self._hits) >= MAX_TRACKED_CLIENTS:
@@ -187,10 +192,10 @@ class RateLimiter:
         now = self._clock()
         with self._lock:
             hits = self._hits.setdefault(key_id, deque())
-            while hits and now - hits[0] >= WINDOW_SECONDS:
+            while hits and now - hits[0] >= self.window:
                 hits.popleft()
             if len(hits) >= self.limit:
-                retry = max(1, math.ceil(WINDOW_SECONDS - (now - hits[0])))
+                retry = max(1, math.ceil(self.window - (now - hits[0])))
                 return False, 0, retry
             hits.append(now)
             return True, self.limit - len(hits), 0
