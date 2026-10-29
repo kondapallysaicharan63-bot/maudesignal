@@ -7,6 +7,12 @@ name: AI device sweep (openFDA)
 
 on:
   workflow_dispatch:
+  push:
+    branches: [hackathon-day2]
+    paths:
+      - scripts/ai_device_sweep.py
+      - src/maudesignal/monitor/live_check.py
+      - .github/workflows/ai-sweep.yml
   schedule:
     - cron: "23 12 * * 1" # weekly, Monday 12:23 UTC (runs from the default branch)
 
