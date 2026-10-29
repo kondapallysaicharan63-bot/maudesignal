@@ -20,6 +20,7 @@ import streamlit as st
 
 from maudesignal.copilot.transcript import load_transcripts
 from maudesignal.dashboard.copilot_pages import (
+    DISPLAY_EXCLUDED_LABELS,
     MAUDE_URL,
     SOURCE_FILTERS,
     TRANSCRIPT_DIR,
@@ -250,7 +251,11 @@ def _mentions(t: dict[str, Any], code: str) -> bool:
 
 
 def _answers(code: str) -> None:
-    found = [t for t in load_transcripts(TRANSCRIPT_DIR) if _mentions(t, code)]
+    found = [
+        t
+        for t in load_transcripts(TRANSCRIPT_DIR)
+        if _mentions(t, code) and str(t.get("label", "")) not in DISPLAY_EXCLUDED_LABELS
+    ]
     if not found:
         st.caption(f"No recorded copilot answer mentions {code}. Ask about it on the Copilot page.")
         return

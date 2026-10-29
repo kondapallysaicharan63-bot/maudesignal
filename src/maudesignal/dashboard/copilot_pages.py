@@ -57,7 +57,12 @@ _PILL = {"pass": ("ok", "Verified"), "block": ("err", "Withheld")}
 
 #: Display names for tool ids whose wording the product no longer uses. The id stays
 #: in the Skill and in recorded runs; only the label on screen changes.
-_TOOL_LABELS = {"overnight_signals": "weekly_signals"}
+_TOOL_LABELS = {"overnight_signals": "weekly_signals", "draft_capa": "capa_need_evidence"}
+
+#: Recorded runs not listed on screen: an early voice test whose question uses wording the
+#: product no longer uses. Its audit chain is still re-verified (same rule as
+#: scripts/export_web_data.py DISPLAY_EXCLUDED_LABELS).
+DISPLAY_EXCLUDED_LABELS = ("00-voice-main",)
 
 
 def tool_label(name: str) -> str:
@@ -239,7 +244,11 @@ def page_copilot(db: Database) -> None:
     with tab_replay:
         # Typed questions first (the demo's story order); spoken clips after them.
         transcripts = sorted(
-            load_transcripts(TRANSCRIPT_DIR),
+            (
+                t
+                for t in load_transcripts(TRANSCRIPT_DIR)
+                if str(t.get("label", "")) not in DISPLAY_EXCLUDED_LABELS
+            ),
             key=lambda t: (str(t.get("label", "")).startswith("00-voice"), str(t.get("label", ""))),
         )
         if not transcripts:
@@ -503,6 +512,8 @@ def _recorded_audit_trails() -> None:
                 "hash chain": "intact" if ok else f"broken at entry {bad}",
             }
         )
+        if run in DISPLAY_EXCLUDED_LABELS:
+            continue  # chain verified above; its entries are not listed (see the caption)
         rows += [
             {
                 "run": run,
@@ -516,10 +527,17 @@ def _recorded_audit_trails() -> None:
             for e in entries
         ]
     broken = [r for r in runs if r["hash chain"] != "intact"]
+    total = sum(r["entries"] for r in runs)
     if broken:
         st.error(f"Hash chain broken in {len(broken)} recorded run(s).")
     else:
-        st.success(f"Hash chain intact in all {len(runs)} recorded runs ({len(rows)} entries).")
+        st.success(f"Hash chain intact in all {len(runs)} recorded runs ({total} entries).")
+    hidden = [r["recorded run"] for r in runs if r["recorded run"] in DISPLAY_EXCLUDED_LABELS]
+    if hidden:
+        st.caption(
+            f"Not listed below: {', '.join(hidden)}, an early voice test whose question uses "
+            "wording the product no longer uses. Its chain is included in the check above."
+        )
     st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
     with st.expander("Per run"):
         st.dataframe(pd.DataFrame(runs), hide_index=True, width="stretch")
