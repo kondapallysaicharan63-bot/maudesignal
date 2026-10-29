@@ -89,6 +89,18 @@ SCROLL_END = """
 """
 
 
+MOCK_BANNER = """
+() => {
+  const d = document.createElement('div');
+  d.id = 'qa-mock-banner';
+  d.textContent = 'QA MOCK: counts from sweep.json, not a live openFDA call. Not for outward use.';
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#b00020;color:#fff;'
+    + 'font:700 14px sans-serif;padding:6px 10px;text-align:center';
+  document.body.appendChild(d);
+}
+"""
+
+
 def mock_openfda(route: Route) -> None:
     """Answer openFDA requests from the counts stored in sweep.json for IYN (QA only)."""
     row = next(
@@ -362,7 +374,9 @@ def main() -> None:
                 links = page.locator("main details a")
                 r["check_result_links"] = links.count()
                 r["check_first_link"] = links.first.get_attribute("href")
+                page.evaluate(MOCK_BANNER)
                 page.screenshot(path=str(OUT / f"B4-check-result-stored-counts-{tag}.png"))
+                page.evaluate("document.getElementById('qa-mock-banner')?.remove()")
                 mock["on"] = False
 
                 # 7. Every other visible workflow.

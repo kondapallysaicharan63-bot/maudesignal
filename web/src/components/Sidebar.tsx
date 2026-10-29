@@ -1,4 +1,4 @@
-import { describeCron, isoDay, demoSnapshotLabel, visibleWorkflows } from '../data'
+import { DEMO_WORKFLOWS, describeCron, isoDay, demoSnapshotLabel, visibleWorkflows } from '../data'
 import { flaggedRows } from '../artifacts'
 import { Icon } from '../icons'
 import type { Brief, InvestigationRun, Schedule, Source, Sweep, Threads, Vision, WorkflowId } from '../types'
@@ -88,7 +88,10 @@ export function Sidebar(p: Props) {
                     aria-current={p.activeWorkflow === w.id ? 'true' : undefined}
                     onClick={() => p.onWorkflow(w.id)}
                   >
-                    <span className="min-w-0">{w.title}</span>
+                    <span className="min-w-0">
+                      {w.title}
+                      {DEMO_WORKFLOWS.includes(w.id) && <span className="text-[13px] text-ink-3"> · demo</span>}
+                    </span>
                     {n !== undefined && (
                       <span className="ms-num shrink-0 text-[14px] text-ink-3">
                         {w.id === 'ai-sweep' ? `${n} flagged` : n}

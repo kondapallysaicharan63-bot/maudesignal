@@ -456,7 +456,7 @@ export async function checkDevice(
     return {
       ok: false,
       kind: 'limit',
-      message: `This browser session has used its ${SESSION_CHECKS} live checks. Open a new tab later, or use the Streamlit app.`,
+      message: `This browser session has used its ${SESSION_CHECKS} live checks. Use the Streamlit app for more checks.`,
       used,
     }
   try {

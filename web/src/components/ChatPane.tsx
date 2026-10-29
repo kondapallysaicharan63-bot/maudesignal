@@ -45,8 +45,10 @@ function StoredList({ def, data, onThread }: { def: WorkflowDef; data: Workspace
       <p className="mt-2 text-ink-2">{def.blurb}</p>
       {demo && (
         <p className="ms-banner ms-banner--warn mt-4">
-          <strong>{demoSnapshotLabel(data.sources)}.</strong> These answers were recorded against the demo database, not this
-          week's openFDA data. For the newest real data, open the AI device sweep.
+          <span className="ws-wrap">
+            <strong>{demoSnapshotLabel(data.sources)}.</strong> These answers were recorded against the demo database, not
+            this week's openFDA data. For the newest real data, open the AI device sweep.
+          </span>
         </p>
       )}
       {items.length > 0 && (

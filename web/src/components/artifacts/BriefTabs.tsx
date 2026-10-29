@@ -29,11 +29,13 @@ export function BriefTab({
     <article>
       <p className="ms-kicker">Daily brief · demo snapshot</p>
       <p className="ms-banner ms-banner--warn mt-2 text-[15px]">
-        <strong>{snapshot}.</strong> This brief was made from the demo database for the week{' '}
-        <span className="ms-num">
-          {isoDay(b.window.current_start)} to {isoDay(b.window.current_end)}
+        <span className="ws-wrap">
+          <strong>{snapshot}.</strong> This brief was made from the demo database for the week{' '}
+          <span className="ms-num">
+            {isoDay(b.window.current_start)} to {isoDay(b.window.current_end)}
+          </span>
+          . It is not this week. The newest real data is the AI sweep tab.
         </span>
-        . It is not this week. The newest real data is the AI sweep tab.
       </p>
       {briefs.length > 1 && (
         <div className="mt-2">
