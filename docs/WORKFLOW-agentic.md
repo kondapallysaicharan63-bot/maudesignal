@@ -31,6 +31,7 @@ Status: **approved by Charan on Oct 29** (design system kept; deploy steps go to
 - Oct 29: Vercel connector may read previews/build logs; every Vercel write (deploy, env var, setting) needs Charan's OK in chat. API key: Claude creates `MAUDESIGNAL_API_KEYS` in the API project's env, never printed.
 - Oct 29: web "Check any device type" goes through our API's public, per-IP-limited endpoint (browser→openFDA is refused with 403); visible "CAPA draft" → "CAPA-need evidence" in both apps.
 - Oct 29: Charan turned off Vercel Authentication on the web project `maudesignal` (judges open it without login). The API project needs the same.
+- Oct 29 (correction): the "82 mypy errors" were a sandbox artifact: the bare `mypy` on PATH is an isolated uv tool without the project's packages (42 import-not-found plus knock-on untyped-decorator / unused-ignore). With the project environment, `python3 -m mypy src/maudesignal` (strict, per pyproject) reports **Success: no issues found** on `hackathon-day2` (104 files), `track-a-core` (107) and `track-c-muse` incl. `api/` (118); CI's mypy step is green too. Builders and advisors use `python3 -m mypy` from now on. Docs only claim that CI runs `mypy --strict`, which is accurate.
 - Oct 29: commits: author Saicharan Kondapally, committer Claude <noreply@anthropic.com> (Verified on GitHub).
 - Deadline: Nov 4, about 5 PM PT. Nothing into `main` without Charan's OK.
 
