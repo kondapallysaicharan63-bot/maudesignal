@@ -31,9 +31,10 @@ live openFDA with the query time, or a recorded answer, or a live model answer).
   service does not use." Tests scan the whole response (speakable, facts, withheld, provenance)
   for every banned term on every stored question and on a scripted live answer.
 * In live mode the text of a left-out sentence is never returned, whatever the reason (gate
-  block, banned term, no link). `withheld` holds a neutral placeholder, the gate's reason with
-  any quoted part removed, and the claim kinds. A test checks that no 20-character piece of
-  such a sentence is anywhere in the response or the raw REST body. (Recorded answers still
+  block, banned term, no link). `withheld` holds a neutral placeholder, a fixed reason text per
+  claim kind (never the gate's own reason string, which can carry text the model wrote into a
+  claim field such as a section or report id), and the claim kinds. Tests check that no 20-character piece of
+  such a sentence, and no free text put in a claim field, is anywhere in the response or the raw REST body. (Recorded answers still
   list the recorded text of gate-blocked sentences, labelled not verified.)
 
 ## Recorded answers (no model key, or cost cap reached)
@@ -64,6 +65,9 @@ and window number exactly what the gate recomputed.
    `MAUDESIGNAL_TRUST_FORWARDED=1`: use the first `X-Forwarded-For` entry as the client address
    for rate limiting. **Set it on Vercel** (its edge sets the header); leave it unset anywhere
    else, where the header is caller-controlled and the socket address is used instead.
+   Outside Vercel, also run uvicorn with `--no-proxy-headers` (or `--forwarded-allow-ips` set to
+   the real proxy only): by default uvicorn rewrites the client address from `X-Forwarded-For`
+   when the peer is `127.0.0.1`, which lets a caller behind a local reverse proxy rotate it.
    Other settings: `MAUDESIGNAL_KEY_PEPPER` (server-side secret for the key ids that appear in
    ledger file names and audit session ids; set it), `MAUDESIGNAL_FAILED_AUTH_PER_MIN` (wrong or
    missing keys per client address per minute before 429, default 10). Plain keys shorter than 32

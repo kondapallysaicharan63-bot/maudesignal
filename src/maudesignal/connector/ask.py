@@ -89,6 +89,22 @@ _FORBIDDEN_REASON = "contains a term this service does not use, so it is not spo
 _FORBIDDEN_TEXT = "Sentence left out: it contains a term this service does not use."
 _GATE_TEXT = "Sentence left out by the claim gate."
 _GENERIC_REASON = "could not be verified"
+#: Live answers: the only reason texts ever returned. Fixed per claim kind, never built from
+#: gate reason strings, which can carry text the model wrote into a claim field.
+_LIVE_REASONS = {
+    "quote": "quote: not found verbatim in the cited record",
+    "count": "count: number does not match stored records",
+    "share": "share: percentage does not match stored records",
+    "device": "device: not found in stored records",
+    "record": "record: not in the evidence store",
+    "regulation": "regulation: section not in the curated CFR list",
+    "recall": "recall: not found in stored recall data",
+    "recall_count": "recall_count: number does not match stored recall data",
+    "source_count": "source_count: number does not match the cited source",
+    "literature": "literature: reference could not be verified",
+    "ungrounded": "ungrounded: number or citation without a claim",
+}
+_KINDS = frozenset(_LIVE_REASONS)
 _RUN = 20  # a shared run of this many characters counts as quoting the sentence
 _MAX_QUOTED_Q = 140
 _CODE_WORD = re.compile(r"\b[A-Za-z]{3}\b")
@@ -107,8 +123,8 @@ def _safe_reason(reason: str, text: str) -> str:
     kept: list[str] = []
     for part in reason.split("; "):
         if _quotes(part, text) or not is_clean(part):
-            head = part.split(":", 1)[0].strip()
-            part = f"{head}: {_GENERIC_REASON}" if head and len(head) <= 24 else _GENERIC_REASON
+            head = part.split(":", 1)[0].strip() if ":" in part else ""
+            part = f"{head}: {_GENERIC_REASON}" if head in _KINDS else _GENERIC_REASON
         kept.append(part)
     return "; ".join(dict.fromkeys(kept)) or _GENERIC_REASON
 
@@ -248,6 +264,18 @@ def _speakable(lead: str | None, passed: list[str], withheld: int) -> str:
     return compose(parts)
 
 
+def _live_reason(s: Any) -> str:
+    """Fixed-template reason for a blocked live sentence (no model-controlled text)."""
+    parts = [
+        _LIVE_REASONS.get(str(cv.claim.kind), _GENERIC_REASON)
+        for cv in s.claim_verdicts
+        if cv.status != "pass"
+    ]
+    if s.ungrounded:
+        parts.append(_LIVE_REASONS["ungrounded"])
+    return "; ".join(dict.fromkeys(parts)) or _GENERIC_REASON
+
+
 def _split(
     items: list[Item], *, hide_withheld_text: bool
 ) -> tuple[list[str], list[Fact], list[WithheldSentence]]:
@@ -273,7 +301,9 @@ def _split(
                 shown = _FORBIDDEN_TEXT
             elif hide_withheld_text:
                 shown = _GATE_TEXT
-            if reason not in (_UNLINKED_REASON, _FORBIDDEN_REASON):
+            if hide_withheld_text:
+                pass  # live: reasons are fixed templates built by _live_reason
+            elif reason not in (_UNLINKED_REASON, _FORBIDDEN_REASON):
                 reason = _safe_reason(reason, text)
             if not is_clean(shown):  # defensive: the screen has the last word
                 shown = _FORBIDDEN_TEXT
@@ -294,7 +324,7 @@ def _from_live(res: CopilotResult, data: ConnectorData, now: datetime) -> ToolAn
     for s in res.report.sentences:
         if s.status != "pass":
             kinds: list[str] = [cv.claim.kind for cv in s.claim_verdicts if cv.status != "pass"]
-            items.append((s.text, [], "; ".join(s.reasons) or "not verified", kinds))
+            items.append((s.text, [], _live_reason(s), kinds))
             continue
         found = [
             lk

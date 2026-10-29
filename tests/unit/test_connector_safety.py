@@ -486,3 +486,102 @@ def test_live_off_reason_when_key_is_set_but_live_is_switched_off(
     b = ask(data, q, key_id="k", runtime=recorded_runtime(tmp_path))
     assert "not switched on here" in b.speakable
     assert "No live model key is configured" in b.provenance.note
+
+
+# --- model text in claim fields never reaches a live response --------------------------------
+
+ADVICE = "patients should stop using the infusion pump right away and call their doctor"
+INJECT_SCRIPT: list[dict[str, Any]] = [
+    {"text": GOOD_SENTENCE, "claims": [LLZ_33]},
+    {
+        "text": "Blocked one about a rule.",
+        "claims": [{"kind": "regulation", "section": f"999.1 {ADVICE}"}],
+    },
+    {
+        "text": "Blocked two about a report.",
+        "claims": [{"kind": "record", "report_id": f"1 {ADVICE}", "product_code": f"LLZ {ADVICE}"}],
+    },
+    {
+        "text": "Blocked three about a source.",
+        "claims": [
+            {"kind": "source_count", "product_code": "LLZ", "source": f"MAUDE {ADVICE}", "value": 5}
+        ],
+    },
+    {
+        "text": "Blocked four about a recall.",
+        "claims": [{"kind": "recall", "recall_number": f"Z-1 {ADVICE}", "product_code": "LLZ"}],
+    },
+    {
+        "text": "Blocked five about a device.",
+        "claims": [{"kind": "device", "k_number": f"K1 {ADVICE}", "product_code": "LLZ"}],
+    },
+    {
+        "text": "Blocked six about a quote.",
+        "claims": [{"kind": "quote", "quote": ADVICE, "report_id": f"2 {ADVICE}"}],
+    },
+]
+
+
+def _assert_no_advice(body: str) -> None:
+    low = " ".join(body.lower().split())
+    for w in _windows(ADVICE):
+        assert w not in low, f"model-written claim text is in the body: {w!r}"
+    assert "infusion pump" not in low and "stop using" not in low
+
+
+def test_live_body_never_holds_text_the_model_put_in_a_claim_field(tmp_path: Path) -> None:
+    from maudesignal.connector.ask import _GENERIC_REASON, _LIVE_REASONS
+
+    d = ConnectorData(work_dir=tmp_path / "w")
+    rt = live_rt(tmp_path, OneAnswerClient(INJECT_SCRIPT))
+    a = ask(d, "How many LLZ reports this week?", key_id="abc", runtime=rt)
+    assert a.provenance.kind == "live_model"
+    assert len(a.withheld) == 6, [w.reason for w in a.withheld]
+    allowed = set(_LIVE_REASONS.values()) | {_GENERIC_REASON}
+    for w in a.withheld:
+        assert set(w.reason.split("; ")) <= allowed, w.reason
+    _assert_no_advice(_whole(a))
+    _assert_no_advice(json.dumps(a.model_dump()))
+    _assert_whole_clean(a)
+
+
+def test_rest_raw_body_never_holds_text_the_model_put_in_a_claim_field(tmp_path: Path) -> None:
+    pytest.importorskip("fastapi")
+    from fastapi.testclient import TestClient
+
+    from maudesignal.connector.app import Settings, create_app
+    from maudesignal.connector.security import KeyStore, RateLimiter
+    from tests.unit.test_connector import KEY, fake_check
+
+    settings = Settings(
+        keys=KeyStore.from_env({"MAUDESIGNAL_API_KEYS": KEY}),
+        limiter=RateLimiter(100),
+        data=ConnectorData(work_dir=tmp_path / "w"),
+        ask_runtime=live_rt(tmp_path, OneAnswerClient(INJECT_SCRIPT)),
+        live_checker=fake_check,
+    )
+    c = TestClient(create_app(settings), raise_server_exceptions=False)
+    r = c.post(
+        "/v1/tools/ask",
+        json={"question": "How many LLZ reports this week?"},
+        headers={"X-API-Key": KEY},
+    )
+    assert r.status_code == 200 and r.json()["provenance"]["kind"] == "live_model"
+    _assert_no_advice(r.text)
+    _assert_no_advice(r.content.decode("utf-8"))
+    assert forbidden_in(r.text) == []
+
+
+def test_safe_reason_keeps_a_head_only_when_it_is_a_known_claim_kind() -> None:
+    from maudesignal.connector.ask import _safe_reason
+
+    sentence = "The pump overwrote the alarm threshold twice."
+    assert _safe_reason("pump overwrote the alarm", sentence) == "could not be verified"
+    assert (
+        _safe_reason("notakind: the pump overwrote the alarm threshold", sentence)
+        == "could not be verified"
+    )
+    assert (
+        _safe_reason("count: the pump overwrote the alarm threshold", sentence)
+        == "count: could not be verified"
+    )
