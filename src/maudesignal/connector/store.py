@@ -10,7 +10,7 @@ a cold start; ``GET /v1/health`` says which of the two is in use.
 Audit entries use the chain format of ``copilot/audit_export`` and ``Database``: each entry
 holds ``prev_hash`` and ``entry_hash = sha256(prev_hash + json(ts, actor, action, entity_id,
 payload))`` and the first entry follows ``GENESIS``. An entry never contains an API key: the
-caller is named by the first 8 hex characters of the key's SHA-256.
+caller is named by the server's peppered key id (an HMAC, the same id the limiter uses).
 
 Failure policy: a failing Redis never turns a request into a bigger problem than it is.
 Rate limits fall back to the instance's own memory; the cache is skipped; the spend ledger
@@ -203,20 +203,32 @@ class UpstashLedger(DailyLedger):
         """USD recorded today (UTC). Raises ``UpstashError`` if Redis is unreachable."""
         return float(self._client.command("GET", self._key("usd")) or 0.0)
 
+    def _add_usd(self, usd: float) -> float:
+        """INCRBYFLOAT with one retry (the spend has already happened)."""
+        try:
+            return float(self._client.command("INCRBYFLOAT", self._key("usd"), repr(float(usd))))
+        except UpstashError:
+            return float(self._client.command("INCRBYFLOAT", self._key("usd"), repr(float(usd))))
+
     def add(self, usd: float, calls: int) -> float:
         """Add spend for today and return today's new total."""
-        total = float(self._client.command("INCRBYFLOAT", self._key("usd"), repr(float(usd))))
+        try:
+            total = self._add_usd(usd)
+        except UpstashError as exc:
+            # The model call already happened: this spend is not counted. Say so loudly (no
+            # key, no token) so the operator can reconcile it by hand.
+            logger.critical(
+                "connector_spend_not_recorded",
+                usd=round(float(usd), 6),
+                calls=int(calls),
+                day=self._today().isoformat(),
+                error=str(exc),
+            )
+            raise
         self._client.command("INCRBY", self._key("calls"), int(calls))
         for field in ("usd", "calls"):
             self._client.command("EXPIRE", self._key(field), 3 * 86_400)
         return round(total, 6)
-
-
-def audit_key_id(key: str) -> str:
-    """Id of an API key in the audit log: first 8 hex characters of its SHA-256."""
-    import hashlib
-
-    return hashlib.sha256(key.encode("utf-8")).hexdigest()[:8]
 
 
 def build_entry(

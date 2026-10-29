@@ -22,7 +22,7 @@ from maudesignal.connector.data import PROJECT_ROOT, ConnectorData  # noqa: E402
 from maudesignal.connector.forbidden import forbidden_in  # noqa: E402
 from maudesignal.connector.models import ADVISORY  # noqa: E402
 from maudesignal.connector.security import KeyStore, RateLimiter  # noqa: E402
-from maudesignal.connector.store import ConnectorState, audit_key_id  # noqa: E402
+from maudesignal.connector.store import ConnectorState  # noqa: E402
 from maudesignal.monitor.live_check import LiveCheck  # noqa: E402
 from tests.unit.test_connector import KEY, NOW, fake_check  # noqa: E402
 from tests.unit.test_connector_safety import (  # noqa: E402
@@ -235,7 +235,11 @@ def test_every_tool_call_is_audited_and_the_chain_verifies(
         "recalls",
         "get_report",
     ]
-    assert {e["actor"] for e in entries} == {f"connector:key:{audit_key_id(KEY)}"}
+    peppered = KeyStore.from_env({"MAUDESIGNAL_API_KEYS": KEY}).key_id(KEY)
+    assert {e["actor"] for e in entries} == {f"connector:key:{peppered}"}
+    import hashlib as _h
+
+    assert _h.sha256(KEY.encode()).hexdigest()[:8] not in r.text  # no plain-SHA-256 prefix
     assert entries[0]["prev_hash"] == "GENESIS"
     first = json.loads(entries[0]["payload_json"])
     assert set(first) == {"tool", "inputs", "error", "answer_sha256", "gate", "provenance"}
@@ -647,3 +651,53 @@ def test_withheld_sentence_text_never_appears_anywhere_in_the_live_mode_response
     for sentence in BLOCKED:  # and not in any single field of the parsed answer
         for field in (body["speakable"], body["advisory"], json.dumps(body["facts"])):
             assert sentence not in field
+
+
+# --- review fixes: question privacy, bad cache entry --------------------------------------------
+
+
+def test_audit_log_never_holds_the_question_text(data: ConnectorData, tmp_path: Path) -> None:
+    import hashlib as _h
+
+    c = make(data, tmp_path, runtime=offline_runtime(tmp_path))
+    secret_question = "What about patient Jane Roe, born 1950-01-02, in LLZ reports?"
+    r = c.post("/v1/tools/ask", json={"question": secret_question}, headers=H)
+    assert r.status_code == 200
+    log = c.get("/v1/audit/recent", headers=H)
+    for fragment in ("Jane", "Roe", "1950", secret_question, secret_question.lower()):
+        assert fragment not in log.text
+    payload = json.loads(log.json()["entries"][0]["payload_json"])
+    norm = " ".join(secret_question.split()).lower()
+    assert payload["inputs"] == {
+        "question_sha256": _h.sha256(norm.encode()).hexdigest(),
+        "question_length": str(len(norm)),
+    }
+
+
+def test_audit_question_hash_ignores_case_and_spacing(data: ConnectorData, tmp_path: Path) -> None:
+    c = make(data, tmp_path, runtime=offline_runtime(tmp_path))
+    for q in ("What changed for LLZ?", "  what   CHANGED for llz? "):
+        assert c.post("/v1/tools/ask", json={"question": q}, headers=H).status_code == 200
+    entries = c.get("/v1/audit/recent", headers=H).json()["entries"]
+    inputs = [json.loads(e["payload_json"])["inputs"] for e in entries[:2]]
+    assert inputs[0] == inputs[1]
+
+
+def test_corrupt_cached_public_answer_is_a_cache_miss(data: ConnectorData, tmp_path: Path) -> None:
+    fake = FakeRedis()
+    state = make_state(fake)
+    calls: list[str] = []
+
+    def counting(code: str) -> LiveCheck:
+        calls.append(code)
+        return fake_check(code)
+
+    c = make(data, tmp_path, state=state, checker=counting)
+    assert public(c).status_code == 200 and calls == ["QAS"]
+    cache_keys = [k for k in fake.kv if ":cache:public-check:v1:QAS" in k]
+    assert len(cache_keys) == 1, "the cache key carries a schema version"
+    fake.kv[cache_keys[0]] = '{"tool": "check_device_type", "unexpected": true}'
+    r = public(c)
+    assert r.status_code == 200 and calls == ["QAS", "QAS"]  # refetched, no 500
+    fake.kv[cache_keys[0]] = "not json at all"
+    assert public(c).status_code == 200

@@ -2,73 +2,373 @@
   {
     "title": "health (no key)",
     "request": "curl -i http://127.0.0.1:8765/v1/health",
-    "status": 200,
-    "body": ""
+    "status": "200",
+    "body": {
+      "status": "ok",
+      "service": "maudesignal-connector",
+      "version": "0.1.0",
+      "read_only": true,
+      "tools": [
+        "what_changed_this_week",
+        "check_device_type",
+        "ask",
+        "get_report",
+        "recalls"
+      ],
+      "limits_scope": "per_instance",
+      "state_store": "in_memory_per_instance"
+    }
   },
   {
     "title": "what_changed_this_week for LLZ",
     "request": "curl -i -H \"X-API-Key: $MAUDESIGNAL_KEY\" \"http://127.0.0.1:8765/v1/tools/what_changed_this_week?product_code=LLZ\"",
-    "status": 200,
-    "body": ""
+    "status": "200",
+    "body": {
+      "tool": "what_changed_this_week",
+      "speakable": "In the stored demo snapshot for August 25, 2026 to August 31, 2026, LLZ shows reports suddenly increased: 33 reports against a weekly average of 8.75 in the four weeks before.",
+      "facts": [
+        {
+          "text": "LLZ (System, Image Processing, Radiological): reports suddenly increased. 33 reports received August 25, 2026 to August 31, 2026, against a weekly average of 8.75 in the four weeks before.",
+          "link": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260825+TO+20260831%5D&limit=1",
+          "link_label": "openFDA: reports in this week"
+        }
+      ],
+      "advisory": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+      "provenance": {
+        "kind": "stored_demo_snapshot",
+        "source": "Stored demo snapshot of openFDA device adverse-event reports",
+        "data_dates": "week August 25, 2026 to August 31, 2026; snapshot fetched 2026-10-27; latest stored report received August 31, 2026",
+        "queried_at_utc": null,
+        "note": "Not live data. The links open the live openFDA record or query for comparison."
+      },
+      "withheld": []
+    }
   },
   {
     "title": "what_changed_this_week, no code",
     "request": "curl -i -H \"X-API-Key: $MAUDESIGNAL_KEY\" \"http://127.0.0.1:8765/v1/tools/what_changed_this_week\"",
-    "status": 200,
-    "body": ""
+    "status": "200",
+    "body": {
+      "tool": "what_changed_this_week",
+      "speakable": "In the stored demo snapshot for August 25, 2026 to August 31, 2026, LLZ shows reports suddenly increased: 33 reports against a weekly average of 8.75 in the four weeks before. The other 3 device types show no change.",
+      "facts": [
+        {
+          "text": "LLZ (System, Image Processing, Radiological): reports suddenly increased. 33 reports received August 25, 2026 to August 31, 2026, against a weekly average of 8.75 in the four weeks before.",
+          "link": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260825+TO+20260831%5D&limit=1",
+          "link_label": "openFDA: reports in this week"
+        },
+        {
+          "text": "MYN (Analyzer, Medical Image): no change. 0 reports received August 25, 2026 to August 31, 2026, against a weekly average of 0 in the four weeks before.",
+          "link": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMYN+AND+date_received%3A%5B20260825+TO+20260831%5D&limit=1",
+          "link_label": "openFDA: reports in this week"
+        },
+        {
+          "text": "POK (Computer-Assisted Diagnostic Software For Lesions Suspicious For Cancer): no change. 0 reports received August 25, 2026 to August 31, 2026, against a weekly average of 0 in the four weeks before.",
+          "link": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APOK+AND+date_received%3A%5B20260825+TO+20260831%5D&limit=1",
+          "link_label": "openFDA: reports in this week"
+        },
+        {
+          "text": "QIH: no change. 0 reports received August 25, 2026 to August 31, 2026, against a weekly average of 0 in the four weeks before.",
+          "link": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQIH+AND+date_received%3A%5B20260825+TO+20260831%5D&limit=1",
+          "link_label": "openFDA: reports in this week"
+        }
+      ],
+      "advisory": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+      "provenance": {
+        "kind": "stored_demo_snapshot",
+        "source": "Stored demo snapshot of openFDA device adverse-event reports",
+        "data_dates": "week August 25, 2026 to August 31, 2026; snapshot fetched 2026-10-27; latest stored report received August 31, 2026",
+        "queried_at_utc": null,
+        "note": "Not live data. The links open the live openFDA record or query for comparison."
+      },
+      "withheld": []
+    }
   },
   {
     "title": "check_device_type LLZ (openFDA unreachable here, stored fallback)",
     "request": "curl -i -H \"X-API-Key: $MAUDESIGNAL_KEY\" \"http://127.0.0.1:8765/v1/tools/check_device_type?product_code=LLZ\"",
-    "status": 200,
-    "body": ""
+    "status": "200",
+    "body": {
+      "tool": "check_device_type",
+      "speakable": "Live openFDA could not be reached, so this is the stored demo snapshot. In the stored demo snapshot for August 25, 2026 to August 31, 2026, LLZ shows reports suddenly increased: 33 reports against a weekly average of 8.75 in the four weeks before.",
+      "facts": [
+        {
+          "text": "LLZ (System, Image Processing, Radiological): reports suddenly increased. 33 reports received August 25, 2026 to August 31, 2026, against a weekly average of 8.75 in the four weeks before.",
+          "link": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260825+TO+20260831%5D&limit=1",
+          "link_label": "openFDA: reports in this week"
+        }
+      ],
+      "advisory": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+      "provenance": {
+        "kind": "stored_demo_snapshot",
+        "source": "Stored demo snapshot of openFDA device adverse-event reports",
+        "data_dates": "week August 25, 2026 to August 31, 2026; snapshot fetched 2026-10-27; latest stored report received August 31, 2026",
+        "queried_at_utc": null,
+        "note": "Live openFDA could not be reached, so this is the stored demo snapshot instead."
+      },
+      "withheld": []
+    }
   },
   {
     "title": "ask (no model key here, recorded answer)",
     "request": "curl -i -H \"X-API-Key: $MAUDESIGNAL_KEY\" -H 'Content-Type: application/json' -d '{\"question\": \"What changed this week for LLZ?\"}' http://127.0.0.1:8765/v1/tools/ask",
-    "status": 200,
-    "body": ""
+    "status": "200",
+    "body": {
+      "tool": "ask",
+      "speakable": "Live answers are not switched on here, so this is a recorded answer to a different, similar question: \"What changed this week, Did reports suddenly increase for any device\", using stored reports through August 31, 2026. Yes, LLZ reports suddenly increased this week with 33 reports from August 25 to August 31, 2026. One sentence was left out because it could not be verified or tied to a source.",
+      "facts": [
+        {
+          "text": "Yes, LLZ reports suddenly increased this week with 33 reports from August 25 to August 31, 2026.",
+          "link": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260825+TO+20260831%5D&limit=1",
+          "link_label": "openFDA count for LLZ"
+        },
+        {
+          "text": "MYN, POK and QIH showed no change this week, each with 0 reports in the same window.",
+          "link": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMYN+AND+date_received%3A%5B20260825+TO+20260831%5D&limit=1",
+          "link_label": "openFDA count for MYN"
+        },
+        {
+          "text": "MYN, POK and QIH showed no change this week, each with 0 reports in the same window.",
+          "link": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APOK+AND+date_received%3A%5B20260825+TO+20260831%5D&limit=1",
+          "link_label": "openFDA count for POK"
+        },
+        {
+          "text": "MYN, POK and QIH showed no change this week, each with 0 reports in the same window.",
+          "link": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQIH+AND+date_received%3A%5B20260825+TO+20260831%5D&limit=1",
+          "link_label": "openFDA count for QIH"
+        }
+      ],
+      "advisory": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+      "provenance": {
+        "kind": "recorded_answer",
+        "source": "Recorded run of the Muse Spark copilot; every sentence was checked by the claim gate when it was recorded",
+        "data_dates": "recorded 2026-10-28",
+        "queried_at_utc": null,
+        "note": "No live model key is configured on this server, so no live model call was made."
+      },
+      "withheld": [
+        {
+          "text": "A named human must review the supporting reports before any regulatory decision.",
+          "reason": "passed the claim gate but has no openFDA or record link, so it is not spoken",
+          "claim_kinds": [],
+          "status": "withheld"
+        }
+      ]
+    }
   },
   {
     "title": "get_report 50426770",
     "request": "curl -i -H \"X-API-Key: $MAUDESIGNAL_KEY\" \"http://127.0.0.1:8765/v1/tools/get_report?report_id=50426770\"",
-    "status": 200,
-    "body": ""
+    "status": "200",
+    "body": {
+      "tool": "get_report",
+      "speakable": "Report 5 0 4 2 6 7 7 0 is a malfunction report for product code LLZ, received August 25, 2026. The start of its narrative is in the facts.",
+      "facts": [
+        {
+          "text": "Report 50426770: product code LLZ, event type malfunction, received August 25, 2026.",
+          "link": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50426770&limit=1",
+          "link_label": "openFDA report"
+        },
+        {
+          "text": "Report 50426770 lists brand IntelliSpace Cardiovascular, manufacturer Philips Medical Systems Nederland B.V..",
+          "link": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50426770&limit=1",
+          "link_label": "openFDA report"
+        },
+        {
+          "text": "Start of the narrative, word for word: \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that they have a case that needs to be corrected. The device was in clinical use at the time of the event, and no adverse event or patient harm was report...\"",
+          "link": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50426770&limit=1",
+          "link_label": "openFDA report"
+        }
+      ],
+      "advisory": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+      "provenance": {
+        "kind": "stored_demo_snapshot",
+        "source": "Stored demo snapshot of openFDA device adverse-event reports",
+        "data_dates": "report received August 25, 2026; snapshot fetched 2026-10-27; latest stored report received August 31, 2026",
+        "queried_at_utc": null,
+        "note": "Not live data. The links open the live openFDA record or query for comparison."
+      },
+      "withheld": []
+    }
   },
   {
     "title": "recalls LLZ",
     "request": "curl -i -H \"X-API-Key: $MAUDESIGNAL_KEY\" \"http://127.0.0.1:8765/v1/tools/recalls?product_code=LLZ\"",
-    "status": 200,
-    "body": ""
+    "status": "200",
+    "body": {
+      "tool": "recalls",
+      "speakable": "The stored demo snapshot holds 561 recall product records (433 recall events) for product code LLZ. The most recent started September 5, 2026 by INTELERAD MEDICAL SYSTEMS INCORPORATED.",
+      "facts": [
+        {
+          "text": "561 recall product records (433 recall events) for product code LLZ in the stored snapshot.",
+          "link": "https://api.fda.gov/device/recall.json?search=product_code%3ALLZ&limit=1",
+          "link_label": "openFDA: recalls for this code"
+        },
+        {
+          "text": "Recall Z-0186-2027, started September 5, 2026 by INTELERAD MEDICAL SYSTEMS INCORPORATED, status Open, Classified. Reason: Following a Chromium-based web-browser, report and displayed images may not match.",
+          "link": "https://api.fda.gov/device/recall.json?search=product_res_number%3A%22Z-0186-2027%22&limit=1",
+          "link_label": "openFDA recall"
+        },
+        {
+          "text": "Recall Z-3171-2026, started July 31, 2026 by GE Healthcare, status Open, Classified. Reason: Under certain conditions historical imaging data migrated from a legacy system may become incorrectly associated with a different patient.",
+          "link": "https://api.fda.gov/device/recall.json?search=product_res_number%3A%22Z-3171-2026%22&limit=1",
+          "link_label": "openFDA recall"
+        },
+        {
+          "text": "Recall Z-3170-2026, started July 31, 2026 by GE Healthcare, status Open, Classified. Reason: Under certain conditions historical imaging data migrated from a legacy system may become incorrectly associated with a different patient.",
+          "link": "https://api.fda.gov/device/recall.json?search=product_res_number%3A%22Z-3170-2026%22&limit=1",
+          "link_label": "openFDA recall"
+        },
+        {
+          "text": "Recall Z-3169-2026, started July 31, 2026 by GE Healthcare, status Open, Classified. Reason: Under certain conditions historical imaging data migrated from a legacy system may become incorrectly associated with a different patient.",
+          "link": "https://api.fda.gov/device/recall.json?search=product_res_number%3A%22Z-3169-2026%22&limit=1",
+          "link_label": "openFDA recall"
+        },
+        {
+          "text": "Recall Z-3168-2026, started July 31, 2026 by GE Healthcare, status Open, Classified. Reason: Under certain conditions historical imaging data migrated from a legacy system may become incorrectly associated with a different patient.",
+          "link": "https://api.fda.gov/device/recall.json?search=product_res_number%3A%22Z-3168-2026%22&limit=1",
+          "link_label": "openFDA recall"
+        }
+      ],
+      "advisory": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+      "provenance": {
+        "kind": "stored_demo_snapshot",
+        "source": "Stored demo snapshot of openFDA device recalls",
+        "data_dates": "snapshot fetched 2026-10-27",
+        "queried_at_utc": null,
+        "note": "Not live data. The links open the live openFDA record or query for comparison."
+      },
+      "withheld": []
+    }
   },
   {
     "title": "audit/recent (last 3, chain re-checked)",
     "request": "curl -i -H \"X-API-Key: $MAUDESIGNAL_KEY\" \"http://127.0.0.1:8765/v1/audit/recent?limit=3\"",
-    "status": 200,
-    "body": ""
+    "status": "200",
+    "body": {
+      "store": "in_memory_per_instance",
+      "chain": {
+        "verified": true,
+        "first_bad_seq": null,
+        "entries_checked": 3
+      },
+      "entries": [
+        {
+          "seq": 4,
+          "ts": "2026-10-29T23:11:10.584305",
+          "actor": "connector:key:467c81373bc6",
+          "action": "tool:ask",
+          "entity_id": "ask",
+          "payload_json": "{\"answer_sha256\": \"91228daade42a16671c4dd787b24fbafb35c88a69e6f6319a6f3cc8887eef326\", \"error\": null, \"gate\": {\"facts_with_links\": 4, \"withheld\": 1}, \"inputs\": {\"question_length\": \"31\", \"question_sha256\": \"c53ce3de663ab29e79eae627848b9ec856dbcdb56aae2701e34c6e908128648d\"}, \"provenance\": {\"data_dates\": \"recorded 2026-10-28\", \"kind\": \"recorded_answer\", \"queried_at_utc\": null}, \"tool\": \"ask\"}",
+          "prev_hash": "3ad052110650bed287f4bfb4e96ae631900747647dd889028c2e08f65ee82c49",
+          "entry_hash": "c82ffbd8e51c354d89ec5bc4395407a1c324e37e8494a33f6ff0e7e5cdec60c4"
+        },
+        {
+          "seq": 5,
+          "ts": "2026-10-29T23:11:10.597068",
+          "actor": "connector:key:467c81373bc6",
+          "action": "tool:get_report",
+          "entity_id": "get_report",
+          "payload_json": "{\"answer_sha256\": \"b91010d76ab3ee9c3bdbe92a1f2a74b357e86bad33b08edafdc91429b72b77c4\", \"error\": null, \"gate\": {\"facts_with_links\": 3, \"withheld\": 0}, \"inputs\": {\"report_id\": \"50426770\"}, \"provenance\": {\"data_dates\": \"report received August 25, 2026; snapshot fetched 2026-10-27; latest stored report received August 31, 2026\", \"kind\": \"stored_demo_snapshot\", \"queried_at_utc\": null}, \"tool\": \"get_report\"}",
+          "prev_hash": "c82ffbd8e51c354d89ec5bc4395407a1c324e37e8494a33f6ff0e7e5cdec60c4",
+          "entry_hash": "e2aad6990846a504fd150bd93cf35b08da69a7de625f5283b6e0765d43654e1a"
+        },
+        {
+          "seq": 6,
+          "ts": "2026-10-29T23:11:10.621589",
+          "actor": "connector:key:467c81373bc6",
+          "action": "tool:recalls",
+          "entity_id": "recalls",
+          "payload_json": "{\"answer_sha256\": \"f98c33dd4d72dd70c493c2902de8b2f0bb31e47a379b328053df852ebe44a2f3\", \"error\": null, \"gate\": {\"facts_with_links\": 6, \"withheld\": 0}, \"inputs\": {\"product_code\": \"LLZ\"}, \"provenance\": {\"data_dates\": \"snapshot fetched 2026-10-27\", \"kind\": \"stored_demo_snapshot\", \"queried_at_utc\": null}, \"tool\": \"recalls\"}",
+          "prev_hash": "e2aad6990846a504fd150bd93cf35b08da69a7de625f5283b6e0765d43654e1a",
+          "entry_hash": "833f9b3096586e346e803c7dd4fde6fd1e080785f68a8988bc3d9752c8edda5b"
+        }
+      ]
+    }
   },
   {
     "title": "401 without a key",
     "request": "curl -i \"http://127.0.0.1:8765/v1/tools/recalls?product_code=LLZ\"",
-    "status": 401,
-    "body": ""
+    "status": "401",
+    "body": {
+      "error": {
+        "code": "unauthorized",
+        "message": "A valid X-API-Key header is required."
+      }
+    }
   },
   {
     "title": "429 past the per-key limit (9 per minute in this run)",
     "request": "curl -i -H \"X-API-Key: $MAUDESIGNAL_KEY\" \"http://127.0.0.1:8765/v1/tools/recalls?product_code=LLZ\"",
-    "status": 429,
-    "body": ""
+    "status": "429",
+    "body": {
+      "error": {
+        "code": "rate_limited",
+        "message": "Rate limit of 9 requests per minute reached. Retry in 60 seconds."
+      }
+    }
   },
   {
     "title": "public check, allowed origin (no key)",
     "request": "curl -i -H \"Origin: https://app.example.com\" \"http://127.0.0.1:8765/v1/public/check_device_type?product_code=LLZ\"",
-    "status": 200,
-    "body": ""
+    "status": "200",
+    "body": {
+      "tool": "check_device_type",
+      "speakable": "Live openFDA could not be reached, so this is the stored demo snapshot. In the stored demo snapshot for August 25, 2026 to August 31, 2026, LLZ shows reports suddenly increased: 33 reports against a weekly average of 8.75 in the four weeks before.",
+      "facts": [
+        {
+          "text": "LLZ (System, Image Processing, Radiological): reports suddenly increased. 33 reports received August 25, 2026 to August 31, 2026, against a weekly average of 8.75 in the four weeks before.",
+          "link": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260825+TO+20260831%5D&limit=1",
+          "link_label": "openFDA: reports in this week"
+        }
+      ],
+      "advisory": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+      "provenance": {
+        "kind": "stored_demo_snapshot",
+        "source": "Stored demo snapshot of openFDA device adverse-event reports",
+        "data_dates": "week August 25, 2026 to August 31, 2026; snapshot fetched 2026-10-27; latest stored report received August 31, 2026",
+        "queried_at_utc": null,
+        "note": "Live openFDA could not be reached, so this is the stored demo snapshot instead."
+      },
+      "withheld": [],
+      "check": null
+    }
+  },
+  {
+    "title": "public check, origin not listed (no CORS header)",
+    "request": "curl -i -H \"Origin: https://evil.example.com\" \"http://127.0.0.1:8765/v1/public/check_device_type?product_code=LLZ\"",
+    "status": "200",
+    "body": {
+      "tool": "check_device_type",
+      "speakable": "Live openFDA could not be reached, so this is the stored demo snapshot. In the stored demo snapshot for August 25, 2026 to August 31, 2026, LLZ shows reports suddenly increased: 33 reports against a weekly average of 8.75 in the four weeks before.",
+      "facts": [
+        {
+          "text": "LLZ (System, Image Processing, Radiological): reports suddenly increased. 33 reports received August 25, 2026 to August 31, 2026, against a weekly average of 8.75 in the four weeks before.",
+          "link": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260825+TO+20260831%5D&limit=1",
+          "link_label": "openFDA: reports in this week"
+        }
+      ],
+      "advisory": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+      "provenance": {
+        "kind": "stored_demo_snapshot",
+        "source": "Stored demo snapshot of openFDA device adverse-event reports",
+        "data_dates": "week August 25, 2026 to August 31, 2026; snapshot fetched 2026-10-27; latest stored report received August 31, 2026",
+        "queried_at_utc": null,
+        "note": "Live openFDA could not be reached, so this is the stored demo snapshot instead."
+      },
+      "withheld": [],
+      "check": null
+    }
   },
   {
     "title": "429 on the public check past 2 per hour (this run)",
     "request": "curl -i -H \"Origin: https://app.example.com\" \"http://127.0.0.1:8765/v1/public/check_device_type?product_code=LLZ\"",
-    "status": 429,
-    "body": ""
+    "status": "429",
+    "body": {
+      "error": {
+        "code": "rate_limited",
+        "message": "Limit of 2 checks per hour reached. Retry in 3600 seconds."
+      }
+    }
   }
 ]

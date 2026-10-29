@@ -1,4 +1,4 @@
-"""Tests for scripts/new_connector_key.py (HACKATHON-BUILT): the key never reaches stdout,
+"""Tests for maudesignal.connector.keygen (HACKATHON-BUILT): the key never reaches stdout,
 stderr or the repository; Vercel is called with the key only in the request body. No network.
 """
 
@@ -15,7 +15,7 @@ from types import ModuleType
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPT = ROOT / "scripts" / "new_connector_key.py"
+SCRIPT = ROOT / "src" / "maudesignal" / "connector" / "keygen.py"
 NOW = datetime(2026, 10, 29, 12, 0, 0, tzinfo=UTC)
 
 
@@ -142,10 +142,10 @@ def test_vercel_failure_prints_status_only_and_no_key() -> None:
 def test_real_process_stdout_and_stderr_never_hold_the_key(tmp_path: Path) -> None:
     """Run the script as a subprocess (the way an operator does) and scan both streams."""
     proc = subprocess.run(  # noqa: S603
-        [sys.executable, str(SCRIPT), "--out-dir", str(tmp_path / "k")],
+        [sys.executable, "-m", "maudesignal.connector.keygen", "--out-dir", str(tmp_path / "k")],
         capture_output=True,
         text=True,
-        env={"PATH": "/usr/bin:/bin", "HOME": str(tmp_path)},
+        env={"PATH": "/usr/bin:/bin", "HOME": str(tmp_path), "PYTHONPATH": str(ROOT / "src")},
         check=False,
     )
     assert proc.returncode == 0, proc.stderr

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Create an API key for the MaudeSignal connector without ever printing it.
 
 HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
@@ -21,7 +20,7 @@ value); only the HTTP status is shown on failure.
 
 Usage::
 
-    python3.12 scripts/new_connector_key.py [--out-dir DIR]
+    python3.12 -m maudesignal.connector.keygen [--out-dir DIR]
 """
 
 from __future__ import annotations
@@ -40,7 +39,7 @@ from typing import Any, TextIO
 
 ENV_NAME = "MAUDESIGNAL_API_KEYS"
 VERCEL_API = "https://api.vercel.com"
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 REVEAL = (
     "set; copy it from Vercel > Project > Settings > Environment Variables > "
     "MAUDESIGNAL_API_KEYS (click to reveal)"

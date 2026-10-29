@@ -18,7 +18,6 @@ from maudesignal.connector.store import (
     UpstashClient,
     UpstashError,
     UpstashLedger,
-    audit_key_id,
     shared_store_configured,
     verify_chain,
 )
@@ -222,20 +221,67 @@ def test_audit_recent_limit_is_capped_and_oldest_first() -> None:
     assert len(state.audit_recent(10_000)) == 3
 
 
-def test_audit_append_raises_when_redis_is_down_and_audit_key_id_is_a_hash_prefix() -> None:
+def test_audit_append_raises_when_redis_is_down() -> None:
     fake = FakeRedis()
     state = make_state(fake)
     fake.fail = True
     with pytest.raises(UpstashError):
         _append(state, 1)
-    key = "k" * 40
-    import hashlib
-
-    assert audit_key_id(key) == hashlib.sha256(key.encode()).hexdigest()[:8]
-    assert key not in audit_key_id(key)
 
 
 def test_audit_timestamps_are_naive_utc_like_the_database() -> None:
     state = ConnectorState(now=lambda: datetime(2026, 10, 29, 12, 0, tzinfo=UTC))
     _append(state, 1)
     assert state.audit_recent(1)[0]["ts"] == "2026-10-29T12:00:00"
+
+
+class _FailIncrByFloat(FakeRedis):
+    """Fails INCRBYFLOAT the first ``n`` times, then behaves."""
+
+    def __init__(self, n: int) -> None:
+        super().__init__()
+        self.remaining = n
+
+    def handler(self, request: httpx.Request) -> httpx.Response:
+        if json.loads(request.content)[0].upper() == "INCRBYFLOAT" and self.remaining > 0:
+            self.remaining -= 1
+            return httpx.Response(500, json={"error": "boom " + TOKEN})
+        return super().handler(request)
+
+
+class _Recorder:
+    def __init__(self) -> None:
+        self.events: list[tuple[str, str, dict[str, Any]]] = []
+
+    def critical(self, event: str, **kw: Any) -> None:
+        self.events.append(("critical", event, kw))
+
+    def warning(self, event: str, **kw: Any) -> None:
+        self.events.append(("warning", event, kw))
+
+
+def test_ledger_add_retries_a_failed_incrbyfloat_once() -> None:
+    fake = _FailIncrByFloat(1)
+    ledger = UpstashLedger(make_state(fake)._client, "abc", today=lambda: date(2026, 10, 29))  # type: ignore[arg-type]
+    assert ledger.add(0.25, 1) == 0.25
+    assert ledger.spent_today() == 0.25
+
+
+def test_ledger_add_logs_critical_with_the_amount_when_redis_fails_after_the_spend(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from maudesignal.connector import store as store_mod
+
+    rec = _Recorder()
+    monkeypatch.setattr(store_mod, "logger", rec)
+    fake = _FailIncrByFloat(2)
+    ledger = UpstashLedger(make_state(fake)._client, "abc", today=lambda: date(2026, 10, 29))  # type: ignore[arg-type]
+    with pytest.raises(UpstashError):
+        ledger.add(0.125, 3)
+    criticals = [e for e in rec.events if e[0] == "critical"]
+    assert len(criticals) == 1
+    _, event, kw = criticals[0]
+    assert event == "connector_spend_not_recorded"
+    assert kw["usd"] == 0.125 and kw["calls"] == 3 and kw["day"] == "2026-10-29"
+    dumped = json.dumps(kw, default=str)
+    assert TOKEN not in dumped and "abc" not in dumped

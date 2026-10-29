@@ -19,7 +19,7 @@ from fastapi import Depends, FastAPI, Query, Request, Response, Security
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.security import APIKeyHeader
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from maudesignal.common.logging import get_logger
 from maudesignal.connector import tools
@@ -47,7 +47,6 @@ from maudesignal.connector.security import KeyStore, RateLimiter
 from maudesignal.connector.store import (
     ConnectorState,
     UpstashError,
-    audit_key_id,
     verify_chain,
 )
 from maudesignal.connector.tools import Clock, LiveChecker, utc_now
@@ -65,7 +64,22 @@ PUBLIC_WINDOW_SECONDS = 3600.0
 PUBLIC_CACHE_SECONDS = 6 * 3600
 PUBLIC_PREFIX = "/v1/public/"
 PUBLIC_ACTOR = "public"
-MAX_AUDITED_QUESTION = 200
+PUBLIC_CACHE_PREFIX = "public-check:v1"  # bump the version when PublicCheckAnswer changes
+
+
+def _question_audit_inputs(question: str) -> dict[str, str]:
+    """What the audit log keeps of a question: its SHA-256 and length, never its text.
+
+    Callers may type anything into a question, and every key holder can read the audit log, so
+    the text itself is not stored. The hash is of the whitespace-normalised, lower-cased text.
+    """
+    normalised = " ".join(question.split()).lower()
+    return {
+        "question_sha256": hashlib.sha256(normalised.encode("utf-8")).hexdigest(),
+        "question_length": str(len(normalised)),
+    }
+
+
 REPO_URL = "https://github.com/kondapallysaicharan63-bot/maudesignal"
 READ_ONLY = {"x-maudesignal-read-only": True, "x-maudesignal-scope": "read"}
 PRODUCT_CODE_PATTERN = r"^[A-Za-z]{3}$"
@@ -261,7 +275,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             )
         response.headers["X-RateLimit-Limit"] = str(limiter.limit)
         response.headers["X-RateLimit-Remaining"] = str(remaining)
-        request.state.audit_id = audit_key_id(presented)  # first 8 hex of SHA-256; not the key
+        request.state.audit_id = key_id  # peppered HMAC id (as the limiter and ledger); not the key
         return key_id
 
     key_dep = Annotated[str, Depends(authenticate)]
@@ -479,7 +493,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return audited(
             request,
             "ask",
-            {"question": " ".join(body.question.split())[:MAX_AUDITED_QUESTION]},
+            _question_audit_inputs(body.question),
             lambda: ask(cfg.data, body.question, key_id=key_id, runtime=ask_runtime, now=cfg.now),
         )
 
@@ -563,11 +577,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         response.headers["X-RateLimit-Remaining"] = str(remaining)
         code = normalize_code(product_code)
         inputs = {"product_code": code}
-        cached = state.cache_get(f"public-check:{code}")
+        cache_key = f"{PUBLIC_CACHE_PREFIX}:{code}"
+        cached = state.cache_get(cache_key)
         if cached:
-            hit = PublicCheckAnswer.model_validate_json(cached)
-            record_audit(PUBLIC_ACTOR, "public_check_device_type", inputs, hit)
-            return hit
+            try:
+                hit = PublicCheckAnswer.model_validate_json(cached)
+            except ValidationError:  # stale or corrupt entry: treat as a miss
+                logger.warning("connector_cache_entry_invalid", key=cache_key)
+            else:
+                record_audit(PUBLIC_ACTOR, "public_check_device_type", inputs, hit)
+                return hit
         seen: list[LiveCheck] = []
 
         def live(c: str) -> LiveCheck:
@@ -586,7 +605,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
         result = PublicCheckAnswer(**base.model_dump(), check=figures)
         if seen:  # a stored fallback is not cached: the next call should try openFDA again
-            state.cache_set(f"public-check:{code}", result.model_dump_json(), PUBLIC_CACHE_SECONDS)
+            state.cache_set(cache_key, result.model_dump_json(), PUBLIC_CACHE_SECONDS)
         record_audit(PUBLIC_ACTOR, "public_check_device_type", inputs, result)
         return result
 
@@ -598,8 +617,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         description=(
             "Read-only. The last entries (default 20, at most 200) of the append-only, "
             "hash-chained log of tool calls: tool, inputs, answer SHA-256, gate counts, "
-            "provenance and the caller's key id (first 8 hex of the key's SHA-256; never "
-            "the key). `chain.verified` is recomputed on every call."
+            "provenance and the caller's key id (a keyed hash held by the server; never "
+            "the key). An `ask` question is stored as its SHA-256 and length, not its text. "
+            "`chain.verified` is recomputed on every call."
         ),
         tags=["service"],
         responses=_ERRORS | {503: {"model": ErrorResponse, "description": "Audit store down."}},

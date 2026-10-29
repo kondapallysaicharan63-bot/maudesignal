@@ -162,7 +162,7 @@ class AuditEntry(BaseModel):
 
     seq: int
     ts: str = Field(description="UTC time, ISO 8601, no zone suffix.")
-    actor: str = Field(description="connector:key:<first 8 hex of the key's SHA-256> or public.")
+    actor: str = Field(description="connector:key:<server-side keyed hash of the key> or public.")
     action: str
     entity_id: str
     payload_json: str = Field(

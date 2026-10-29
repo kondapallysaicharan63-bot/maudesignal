@@ -71,12 +71,12 @@ domain). The first `curl` below shows whether it is.
 ```bash
 # Option a: the script writes it straight into Vercel (encrypted, Production).
 VERCEL_TOKEN=... VERCEL_PROJECT_ID=prj_... VERCEL_TEAM_ID=team_... \
-  python3.12 scripts/new_connector_key.py
+  python3.12 -m maudesignal.connector.keygen
 # prints only: set; copy it from Vercel > Project > Settings > Environment Variables >
 #              MAUDESIGNAL_API_KEYS (click to reveal)
 
 # Option b: no Vercel token; the key goes to a mode-600 file outside the repository.
-python3.12 scripts/new_connector_key.py
+python3.12 -m maudesignal.connector.keygen
 # prints only the file path and what to do with it
 ```
 
@@ -127,19 +127,25 @@ For the Muse connector form: base URL = `$BASE`, auth = API key in the header `X
   Tested with a mocked REST client only; **not run against a real Upstash database.** If Redis
   fails: rate limits fall back to the instance's memory, the cache is skipped, the audit append is
   logged and skipped (the request still answers; `/v1/audit/recent` answers 503), and the cost
-  ledger raises so `ask` falls back to a recorded answer instead of spending without a cap.
+  ledger raises so `ask` falls back to a recorded answer instead of spending without a cap. If the ledger write fails after a model call has already
+  been paid for, it is retried once, then a CRITICAL log line `connector_spend_not_recorded` carries the
+  uncounted USD amount and day (no key, no token) so the operator can reconcile it. A cached public
+  answer that no longer parses is treated as a miss; the cache key is versioned (`public-check:v1:`).
 * Audit log: every tool call (and a failed one) appends an entry in the chain format of
   `copilot/audit_export` (`prev_hash`, `entry_hash = sha256(prev_hash + json)`, first entry after
-  `GENESIS`): tool, inputs (a question is cut to 200 characters), SHA-256 of the answer, gate
+  `GENESIS`): tool, inputs (an `ask` question is stored as the SHA-256 and length of its
+  whitespace-normalised, lower-cased text, never as text: every key holder can read this log, and a
+  question may contain anything), SHA-256 of the answer, gate
   counts (`facts_with_links`, `withheld`), provenance kind and dates, and the caller as
-  `connector:key:<first 8 hex of the key's SHA-256>` or `public`. Never the key, never the text of
+  `connector:key:<id>` or `public`, where `<id>` is the server's peppered HMAC of the key (the id
+  the limiter and ledger use; nothing derived from the key without the pepper). Never the key, never the text of
   a withheld sentence. `GET /v1/audit/recent?limit=20` (key, at most 200) re-computes the chain on
   every call and reports `chain.verified`.
 
 ### 6. Real local transcripts
 
 Captured from `uvicorn api.index:app --no-access-log --no-proxy-headers` on 127.0.0.1 with a key
-made by `scripts/new_connector_key.py` (option b, read into the environment of the server and of
+made by `maudesignal.connector.keygen` (option b, read into the environment of the server and of
 `curl`; it appears below as `$MAUDESIGNAL_KEY`, never as a value), no `META_MODEL_API_KEY`, no
 `OPENFDA_API_KEY`, no Upstash. For this run: `MAUDESIGNAL_RATE_LIMIT_PER_MIN=9`,
 `MAUDESIGNAL_PUBLIC_CHECK_PER_HOUR=2`, `MAUDESIGNAL_WEB_ORIGINS=https://app.example.com`. This
@@ -151,7 +157,7 @@ plus two unlisted `recalls` calls made nine, so the next one was refused. Real o
 ### health (no key)
 $ curl -i http://127.0.0.1:8765/v1/health
 HTTP/1.1 200 OK
-date: Thu, 29 Oct 2026 22:56:40 GMT
+date: Thu, 29 Oct 2026 23:11:09 GMT
 server: uvicorn
 content-length: 237
 content-type: application/json
@@ -161,7 +167,7 @@ content-type: application/json
 ### what_changed_this_week for LLZ
 $ curl -i -H "X-API-Key: $MAUDESIGNAL_KEY" "http://127.0.0.1:8765/v1/tools/what_changed_this_week?product_code=LLZ"
 HTTP/1.1 200 OK
-date: Thu, 29 Oct 2026 22:56:40 GMT
+date: Thu, 29 Oct 2026 23:11:09 GMT
 server: uvicorn
 content-length: 1114
 content-type: application/json
@@ -173,7 +179,7 @@ x-ratelimit-remaining: 8
 ### what_changed_this_week, no code
 $ curl -i -H "X-API-Key: $MAUDESIGNAL_KEY" "http://127.0.0.1:8765/v1/tools/what_changed_this_week"
 HTTP/1.1 200 OK
-date: Thu, 29 Oct 2026 22:56:40 GMT
+date: Thu, 29 Oct 2026 23:11:09 GMT
 server: uvicorn
 content-length: 2251
 content-type: application/json
@@ -185,7 +191,7 @@ x-ratelimit-remaining: 7
 ### check_device_type LLZ (openFDA unreachable here, stored fallback)
 $ curl -i -H "X-API-Key: $MAUDESIGNAL_KEY" "http://127.0.0.1:8765/v1/tools/check_device_type?product_code=LLZ"
 HTTP/1.1 200 OK
-date: Thu, 29 Oct 2026 22:56:40 GMT
+date: Thu, 29 Oct 2026 23:11:09 GMT
 server: uvicorn
 content-length: 1182
 content-type: application/json
@@ -197,7 +203,7 @@ x-ratelimit-remaining: 6
 ### ask (no model key here, recorded answer)
 $ curl -i -H "X-API-Key: $MAUDESIGNAL_KEY" -H 'Content-Type: application/json' -d '{"question": "What changed this week for LLZ?"}' http://127.0.0.1:8765/v1/tools/ask
 HTTP/1.1 200 OK
-date: Thu, 29 Oct 2026 22:56:40 GMT
+date: Thu, 29 Oct 2026 23:11:09 GMT
 server: uvicorn
 content-length: 2225
 content-type: application/json
@@ -209,7 +215,7 @@ x-ratelimit-remaining: 5
 ### get_report 50426770
 $ curl -i -H "X-API-Key: $MAUDESIGNAL_KEY" "http://127.0.0.1:8765/v1/tools/get_report?report_id=50426770"
 HTTP/1.1 200 OK
-date: Thu, 29 Oct 2026 22:56:40 GMT
+date: Thu, 29 Oct 2026 23:11:09 GMT
 server: uvicorn
 content-length: 1532
 content-type: application/json
@@ -221,7 +227,7 @@ x-ratelimit-remaining: 4
 ### recalls LLZ
 $ curl -i -H "X-API-Key: $MAUDESIGNAL_KEY" "http://127.0.0.1:8765/v1/tools/recalls?product_code=LLZ"
 HTTP/1.1 200 OK
-date: Thu, 29 Oct 2026 22:56:40 GMT
+date: Thu, 29 Oct 2026 23:11:09 GMT
 server: uvicorn
 content-length: 2691
 content-type: application/json
@@ -233,19 +239,19 @@ x-ratelimit-remaining: 3
 ### audit/recent (last 3, chain re-checked)
 $ curl -i -H "X-API-Key: $MAUDESIGNAL_KEY" "http://127.0.0.1:8765/v1/audit/recent?limit=3"
 HTTP/1.1 200 OK
-date: Thu, 29 Oct 2026 22:56:40 GMT
+date: Thu, 29 Oct 2026 23:11:09 GMT
 server: uvicorn
-content-length: 2162
+content-length: 2243
 content-type: application/json
 x-ratelimit-limit: 9
 x-ratelimit-remaining: 2
 
-{"store":"in_memory_per_instance","chain":{"verified":true,"first_bad_seq":null,"entries_checked":3},"entries":[{"seq":4,"ts":"2026-10-29T22:56:40.662828","actor":"connector:key:52cb6a4a","action":"tool:ask","entity_id":"ask","payload_json":"{\"answer_sha256\": \"91228daade42a16671c4dd787b24fbafb35c88a69e6f6319a6f3cc8887eef326\", \"error\": null, \"gate\": {\"facts_with_links\": 4, \"withheld\": 1}, \"inputs\": {\"question\": \"What changed this week for LLZ?\"}, \"provenance\": {\"data_dates\": \"recorded 2026-10-28\", \"kind\": \"recorded_answer\", \"queried_at_utc\": null}, \"tool\": \"ask\"}","prev_hash":"37cdad590fd08bfbc439cb7b6f2ad326e5dee1789b6dc9e46f421a229980e5a7","entry_hash":"a5ee6adb02caa67c6e33e0b12299ee46a8d6eeb236421ce3341f9ea32e5feac8"},{"seq":5,"ts":"2026-10-29T22:56:40.677486","actor":"connector:key:52cb6a4a","action":"tool:get_report","entity_id":"get_report","payload_json":"{\"answer_sha256\": \"b91010d76ab3ee9c3bdbe92a1f2a74b357e86bad33b08edafdc91429b72b77c4\", \"error\": null, \"gate\": {\"facts_with_links\": 3, \"withheld\": 0}, \"inputs\": {\"report_id\": \"50426770\"}, \"provenance\": {\"data_dates\": \"report received August 25, 2026; snapshot fetched 2026-10-27; latest stored report received August 31, 2026\", \"kind\": \"stored_demo_snapshot\", \"queried_at_utc\": null}, \"tool\": \"get_report\"}","prev_hash":"a5ee6adb02caa67c6e33e0b12299ee46a8d6eeb236421ce3341f9ea32e5feac8","entry_hash":"32d332e69b6d9cccd2b5b24d8954fbc17e7cbe0f54186e4da27400f768f9dc63"},{"seq":6,"ts":"2026-10-29T22:56:40.689932","actor":"connector:key:52cb6a4a","action":"tool:recalls","entity_id":"recalls","payload_json":"{\"answer_sha256\": \"f98c33dd4d72dd70c493c2902de8b2f0bb31e47a379b328053df852ebe44a2f3\", \"error\": null, \"gate\": {\"facts_with_links\": 6, \"withheld\": 0}, \"inputs\": {\"product_code\": \"LLZ\"}, \"provenance\": {\"data_dates\": \"snapshot fetched 2026-10-27\", \"kind\": \"stored_demo_snapshot\", \"queried_at_utc\": null}, \"tool\": \"recalls\"}","prev_hash":"32d332e69b6d9cccd2b5b24d8954fbc17e7cbe0f54186e4da27400f768f9dc63","entry_hash":"d5f97e1a4673b7a8ee14dc092a530536519bc6686c9079156fb9d01c8433783e"}]}
+{"store":"in_memory_per_instance","chain":{"verified":true,"first_bad_seq":null,"entries_checked":3},"entries":[{"seq":4,"ts":"2026-10-29T23:11:10.584305","actor":"connector:key:467c81373bc6","action":"tool:ask","entity_id":"ask","payload_json":"{\"answer_sha256\": \"91228daade42a16671c4dd787b24fbafb35c88a69e6f6319a6f3cc8887eef326\", \"error\": null, \"gate\": {\"facts_with_links\": 4, \"withheld\": 1}, \"inputs\": {\"question_length\": \"31\", \"question_sha256\": \"c53ce3de663ab29e79eae627848b9ec856dbcdb56aae2701e34c6e908128648d\"}, \"provenance\": {\"data_dates\": \"recorded 2026-10-28\", \"kind\": \"recorded_answer\", \"queried_at_utc\": null}, \"tool\": \"ask\"}","prev_hash":"3ad052110650bed287f4bfb4e96ae631900747647dd889028c2e08f65ee82c49","entry_hash":"c82ffbd8e51c354d89ec5bc4395407a1c324e37e8494a33f6ff0e7e5cdec60c4"},{"seq":5,"ts":"2026-10-29T23:11:10.597068","actor":"connector:key:467c81373bc6","action":"tool:get_report","entity_id":"get_report","payload_json":"{\"answer_sha256\": \"b91010d76ab3ee9c3bdbe92a1f2a74b357e86bad33b08edafdc91429b72b77c4\", \"error\": null, \"gate\": {\"facts_with_links\": 3, \"withheld\": 0}, \"inputs\": {\"report_id\": \"50426770\"}, \"provenance\": {\"data_dates\": \"report received August 25, 2026; snapshot fetched 2026-10-27; latest stored report received August 31, 2026\", \"kind\": \"stored_demo_snapshot\", \"queried_at_utc\": null}, \"tool\": \"get_report\"}","prev_hash":"c82ffbd8e51c354d89ec5bc4395407a1c324e37e8494a33f6ff0e7e5cdec60c4","entry_hash":"e2aad6990846a504fd150bd93cf35b08da69a7de625f5283b6e0765d43654e1a"},{"seq":6,"ts":"2026-10-29T23:11:10.621589","actor":"connector:key:467c81373bc6","action":"tool:recalls","entity_id":"recalls","payload_json":"{\"answer_sha256\": \"f98c33dd4d72dd70c493c2902de8b2f0bb31e47a379b328053df852ebe44a2f3\", \"error\": null, \"gate\": {\"facts_with_links\": 6, \"withheld\": 0}, \"inputs\": {\"product_code\": \"LLZ\"}, \"provenance\": {\"data_dates\": \"snapshot fetched 2026-10-27\", \"kind\": \"stored_demo_snapshot\", \"queried_at_utc\": null}, \"tool\": \"recalls\"}","prev_hash":"e2aad6990846a504fd150bd93cf35b08da69a7de625f5283b6e0765d43654e1a","entry_hash":"833f9b3096586e346e803c7dd4fde6fd1e080785f68a8988bc3d9752c8edda5b"}]}
 
 ### 401 without a key
 $ curl -i "http://127.0.0.1:8765/v1/tools/recalls?product_code=LLZ"
 HTTP/1.1 401 Unauthorized
-date: Thu, 29 Oct 2026 22:56:40 GMT
+date: Thu, 29 Oct 2026 23:11:09 GMT
 server: uvicorn
 www-authenticate: ApiKey
 content-length: 83
@@ -256,7 +262,7 @@ content-type: application/json
 ### 429 past the per-key limit (9 per minute in this run)
 $ curl -i -H "X-API-Key: $MAUDESIGNAL_KEY" "http://127.0.0.1:8765/v1/tools/recalls?product_code=LLZ"
 HTTP/1.1 429 Too Many Requests
-date: Thu, 29 Oct 2026 22:56:40 GMT
+date: Thu, 29 Oct 2026 23:11:09 GMT
 server: uvicorn
 retry-after: 60
 content-length: 111
@@ -267,7 +273,7 @@ content-type: application/json
 ### public check, allowed origin (no key)
 $ curl -i -H "Origin: https://app.example.com" "http://127.0.0.1:8765/v1/public/check_device_type?product_code=LLZ"
 HTTP/1.1 200 OK
-date: Thu, 29 Oct 2026 22:56:40 GMT
+date: Thu, 29 Oct 2026 23:11:09 GMT
 server: uvicorn
 content-length: 1195
 content-type: application/json
@@ -282,7 +288,7 @@ access-control-expose-headers: Retry-After, X-RateLimit-Limit, X-RateLimit-Remai
 ### public check, origin not listed (no CORS header)
 $ curl -i -H "Origin: https://evil.example.com" "http://127.0.0.1:8765/v1/public/check_device_type?product_code=LLZ"
 HTTP/1.1 200 OK
-date: Thu, 29 Oct 2026 22:56:40 GMT
+date: Thu, 29 Oct 2026 23:11:10 GMT
 server: uvicorn
 content-length: 1195
 content-type: application/json
@@ -295,7 +301,7 @@ vary: Origin
 ### 429 on the public check past 2 per hour (this run)
 $ curl -i -H "Origin: https://app.example.com" "http://127.0.0.1:8765/v1/public/check_device_type?product_code=LLZ"
 HTTP/1.1 429 Too Many Requests
-date: Thu, 29 Oct 2026 22:56:40 GMT
+date: Thu, 29 Oct 2026 23:11:10 GMT
 server: uvicorn
 retry-after: 3600
 content-length: 104
@@ -308,7 +314,7 @@ access-control-expose-headers: Retry-After, X-RateLimit-Limit, X-RateLimit-Remai
 ```
 
 Other checks in the same run: `GET /` and `GET /docs-page` returned `200 text/html; charset=utf-8`
-(34406 bytes each, no key); `GET /openapi.json` returned `200 application/json` and equals
+(56608 bytes each, no key); `GET /openapi.json` returned `200 application/json` and equals
 `api/openapi.json` (compared as JSON).
 
 ### Not done from this environment (stated so nothing is assumed)
@@ -387,17 +393,17 @@ and window number exactly what the gate recomputed.
    **The copilot's own audit rows of a live `ask`** (written inside the model run) go to a
    temporary copy of the demo database on the instance and are lost on a cold start. What a caller
    or the laptop can read is the connector's audit entry of that call (`GET /v1/audit/recent`:
-   tool, question, answer hash, gate counts, provenance), which lives in Redis when Upstash is set
+   tool, question hash and length, answer hash, gate counts, provenance), which lives in Redis when Upstash is set
    and in instance memory otherwise. Do not script a "laptop shows the copilot's internal audit
    rows" beat.
 2. **A key in a URL is refused (400) and the query is blanked** before uvicorn's access log
    can print it. Vercel's own request log is outside this code, so send the key only in the
    `X-API-Key` header. Run uvicorn with `--no-access-log` (or a log config that drops the
    query string) anywhere else.
-3. **The audit key id is the first 8 hex characters of the key's SHA-256** (as specified for this
-   log). It cannot be used to recover a random 43-character key, but it would let someone test
-   guesses of a weak key; the script makes strong keys and keys under 32 characters are refused.
-   The rate-limit and ledger id still use the peppered id from `security.py`.
+3. **The audit key id is the peppered HMAC id** (`MAUDESIGNAL_KEY_PEPPER`; derived from the
+   configured key digests when unset), the same id the limiter and ledger use. It is not a prefix
+   of any stored credential form. Set the pepper so ids stay stable when the key list changes.
+   An `ask` question is audited as a SHA-256 and a length only.
 4. **Deploy check still open** (see part 1, step 1): which dependency manifest Vercel installs,
    and the bundle size. Confirm with Track B that this root `vercel.json` is only used by the API
    project (the web project is rooted at `web/` and does not read it).

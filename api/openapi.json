@@ -31,7 +31,7 @@
             "type": "string"
           },
           "actor": {
-            "description": "connector:key:<first 8 hex of the key's SHA-256> or public.",
+            "description": "connector:key:<server-side keyed hash of the key> or public.",
             "title": "Actor",
             "type": "string"
           },
@@ -666,7 +666,7 @@
   "paths": {
     "/v1/audit/recent": {
       "get": {
-        "description": "Read-only. The last entries (default 20, at most 200) of the append-only, hash-chained log of tool calls: tool, inputs, answer SHA-256, gate counts, provenance and the caller's key id (first 8 hex of the key's SHA-256; never the key). `chain.verified` is recomputed on every call.",
+        "description": "Read-only. The last entries (default 20, at most 200) of the append-only, hash-chained log of tool calls: tool, inputs, answer SHA-256, gate counts, provenance and the caller's key id (a keyed hash held by the server; never the key). An `ask` question is stored as its SHA-256 and length, not its text. `chain.verified` is recomputed on every call.",
         "operationId": "audit_recent",
         "parameters": [
           {
