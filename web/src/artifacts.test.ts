@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { approveLocally, capaDrafts, flaggedRows, producedTabs, protocolFor } from './artifacts'
+import { approveLocally, capaDrafts, flaggedRows, producedTabs, protocolFor, relatedTabs } from './artifacts'
 import type { Audit, Sweep, Thread } from './types'
 
 const thread = (names: string[]): Thread => ({
@@ -15,9 +15,9 @@ const thread = (names: string[]): Thread => ({
   repaired: false,
 })
 
-describe('producedTabs', () => {
+describe('relatedTabs', () => {
   it('opens CAPA first for a thread that drafted one', () => {
-    expect(producedTabs(thread(['weekly_signals', 'draft_capa']))).toEqual([
+    expect(relatedTabs(thread(['weekly_signals', 'draft_capa']))).toEqual([
       'capa',
       'dossier',
       'brief',
@@ -25,6 +25,17 @@ describe('producedTabs', () => {
       'protocol',
       'audit',
     ])
+  })
+  it('has only the audit tab when no tool ran', () => {
+    expect(relatedTabs(thread([]))).toEqual(['audit'])
+    expect(relatedTabs(null)).toEqual([])
+  })
+})
+
+describe('producedTabs', () => {
+  it('marks only what the thread itself created, never the dossier, brief or digest', () => {
+    expect(producedTabs(thread(['weekly_signals', 'draft_capa']))).toEqual(['capa', 'protocol', 'audit'])
+    expect(producedTabs(thread(['weekly_signals']))).toEqual(['protocol', 'audit'])
   })
   it('has only the audit tab when no tool ran', () => {
     expect(producedTabs(thread([]))).toEqual(['audit'])

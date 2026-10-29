@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 /** Renders every page of a stored PDF onto canvases (pdf.js, bundled: no network, works on phones). */
 export function PdfView({ url, title }: { url: string; title: string }) {
   const host = useRef<HTMLDivElement>(null)
-  const [state, setState] = useState<{ kind: 'loading' } | { kind: 'ok'; pages: number } | { kind: 'error'; msg: string }>({
+  const [state, setState] = useState<{ kind: 'loading' } | { kind: 'rendering'; pages: number } | { kind: 'ok'; pages: number } | { kind: 'error'; msg: string }>({
     kind: 'loading',
   })
 
@@ -39,6 +39,7 @@ export function PdfView({ url, title }: { url: string; title: string }) {
         await page.render({ canvasContext: ctx, viewport: vp }).promise
         if (cancelled) return
         el.appendChild(canvas)
+        if (n === 1) setState({ kind: 'rendering', pages: doc.numPages })
       }
       if (!cancelled) setState({ kind: 'ok', pages: doc.numPages })
     })().catch((e: unknown) => {

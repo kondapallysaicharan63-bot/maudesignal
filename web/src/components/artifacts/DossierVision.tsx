@@ -115,9 +115,9 @@ function SamImage({ l }: { l: LabelReading }) {
       <figcaption className="mt-2 text-[14px] text-ink-3">
         {l.sam.boxes.length === 0
           ? 'No label box was detected.'
-          : `${l.sam.boxes.length} box${l.sam.boxes.length === 1 ? '' : 'es'} detected by SAM (confidence ${l.sam.boxes
+          : `${l.sam.boxes.length} box${l.sam.boxes.length === 1 ? '' : 'es'} detected by SAM 3.1 (Meta); detector score on a 0 to 1 scale: ${l.sam.boxes
               .map((b) => b.c.toFixed(2))
-              .join(', ')}). Solid line: the box read; dashed: not used.`}
+              .join(', ')}. Label text read by ${l.model}. Solid line: the box read; dashed: not used.`}
       </figcaption>
     </figure>
   )
@@ -175,7 +175,7 @@ function LabelView({ l }: { l: LabelReading }) {
         ))}
       </ul>
       <p className="mt-3 text-[13px] leading-snug text-ink-3">
-        Lot and serial numbers are never read or stored. Overall legibility: {l.overall_legibility.replace('_', ' ')}.
+        Lot and serial numbers are read for the session only and are never stored or exported. Overall legibility: {l.overall_legibility.replace('_', ' ')}.
       </p>
     </div>
   )

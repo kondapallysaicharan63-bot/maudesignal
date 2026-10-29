@@ -13,7 +13,7 @@ interface Props {
   onTab: (t: TabId) => void
   /** The stored thread on screen, if any. */
   thread: Thread | null
-  /** Tabs that thread produced (they get a dot). */
+  /** Tabs whose artifact this thread itself created (they get a dot). */
   produced: TabId[]
   briefDate: string | null
   onBriefDate: (d: string) => void
@@ -52,7 +52,7 @@ export function ArtifactsPane({ open, data, tab, onTab, thread, produced, briefD
           <Icon name="close" />
         </button>
       </div>
-      <div role="tablist" aria-label="Artifacts" className="ws-tabfade flex shrink-0 gap-0.5 overflow-x-auto border-b border-rule px-2">
+      <div role="tablist" aria-label="Artifacts" className="ws-tabstrip flex shrink-0 gap-0.5 overflow-x-auto border-b border-rule px-2">
         {TABS.map((t) => {
           const selected = t.id === tab
           return (
@@ -72,7 +72,7 @@ export function ArtifactsPane({ open, data, tab, onTab, thread, produced, briefD
               {produced.includes(t.id) && (
                 <>
                   <span className="ws-dot ml-1.5 inline-block align-middle" aria-hidden="true" />
-                  <span className="sr-only"> (produced by this thread)</span>
+                  <span className="sr-only"> (created by this thread)</span>
                 </>
               )}
             </button>

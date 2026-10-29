@@ -172,6 +172,7 @@ export interface LabelReading {
   gtin_valid?: boolean | null
   overall_legibility: string
   match_basis: string
+  model: string
 }
 
 export type ReadStatus = 'VERIFIED' | 'CONFLICT' | 'UNVERIFIABLE'

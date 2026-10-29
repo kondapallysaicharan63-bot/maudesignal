@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { producedTabs, type TabId } from './artifacts'
+import { producedTabs, relatedTabs, type TabId } from './artifacts'
 import { ArtifactsPane } from './components/ArtifactsPane'
 import { ChatPane, type View } from './components/ChatPane'
 import { CommandPalette } from './components/CommandPalette'
@@ -55,11 +55,13 @@ export default function App() {
   const thread = (view.kind === 'thread' && data?.threads.threads.find((t) => t.id === view.id)) || null
   const produced = useMemo(() => producedTabs(thread), [thread])
 
-  // A thread opens the artifact it produced (on desktop; on a phone the sheet stays closed and the tab gets a dot).
+  const related = useMemo(() => relatedTabs(thread), [thread])
+
+  // A thread opens the artifact most related to it (on desktop; on a phone the sheet stays closed and the tab gets a dot).
   const threadKey = thread?.id ?? null
   useEffect(() => {
     if (!threadKey) return
-    const first = produced[0]
+    const first = related[0]
     if (first) {
       setTab(first)
       if (isDesktop()) setArtifacts(true)

@@ -57,9 +57,7 @@ button {
   }
 }
 
-/* Tab strip: fade the right edge so a clipped tab reads as scrollable. */
-.ws-tabfade {
-  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
-  mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+/* Tab strip: thin scrollbar so a clipped tab reads as scrollable. */
+.ws-tabstrip {
   scrollbar-width: thin;
 }

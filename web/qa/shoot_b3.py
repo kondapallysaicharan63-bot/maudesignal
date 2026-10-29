@@ -17,12 +17,12 @@ from shoot_b1 import WEB, local_only, serve
 OUT = WEB / "qa" / "screenshots"
 
 TABS = [
-    ("brief", "Daily brief"),
-    ("digest", "Signal digest"),
+    ("brief", "Brief"),
+    ("digest", "Digest"),
     ("dossier", "Dossier"),
     ("vision", "Vision"),
-    ("audit", "Audit trail"),
-    ("capa", "CAPA draft"),
+    ("audit", "Audit"),
+    ("capa", "CAPA"),
     ("protocol", "Protocol"),
 ]
 

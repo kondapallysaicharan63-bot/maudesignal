@@ -4,23 +4,33 @@ import type { Audit, AuditRun, Protocol, ProtocolStep, Sweep, SweepRow, Thread }
 export type TabId = 'brief' | 'digest' | 'dossier' | 'vision' | 'audit' | 'capa' | 'protocol'
 
 export const TABS: { id: TabId; label: string }[] = [
-  { id: 'brief', label: 'Daily brief' },
-  { id: 'digest', label: 'Signal digest' },
+  { id: 'brief', label: 'Brief' },
+  { id: 'digest', label: 'Digest' },
   { id: 'dossier', label: 'Dossier' },
   { id: 'vision', label: 'Vision' },
-  { id: 'audit', label: 'Audit trail' },
-  { id: 'capa', label: 'CAPA draft' },
+  { id: 'audit', label: 'Audit' },
+  { id: 'capa', label: 'CAPA' },
   { id: 'protocol', label: 'Protocol' },
 ]
 
-/** Which artifact tabs a stored thread produced, most specific first (the first one opens). */
-export function producedTabs(thread: Thread | null): TabId[] {
+/** Tabs a stored thread is related to, most specific first (the first one opens). Not all were made by the thread. */
+export function relatedTabs(thread: Thread | null): TabId[] {
   if (!thread) return []
   const names = new Set(thread.tool_steps.map((s) => s.name))
   const out: TabId[] = []
   if (names.has('draft_capa')) out.push('capa', 'dossier')
   if (names.has('weekly_signals')) out.push('brief', 'digest')
   if (names.has('device_510k')) out.push('vision')
+  if (thread.tool_steps.length > 0) out.push('protocol')
+  out.push('audit')
+  return out
+}
+
+/** Tabs whose artifact this thread itself created: its CAPA draft, its tool-step protocol, its audit entries. */
+export function producedTabs(thread: Thread | null): TabId[] {
+  if (!thread) return []
+  const out: TabId[] = []
+  if (thread.tool_steps.some((s) => s.name === 'draft_capa')) out.push('capa')
   if (thread.tool_steps.length > 0) out.push('protocol')
   out.push('audit')
   return out
