@@ -59,6 +59,7 @@ CARD_CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500&family=Geist:wght@400;600&display=swap');
 html,body{margin:0;height:100%;background:#f6f3ec;color:#16130f;font-family:Geist,system-ui,sans-serif}
 .card{height:100%;display:flex;flex-direction:column;justify-content:center;padding:0 120px;box-sizing:border-box}
+.card .kicker{margin-bottom:22px}
 .kicker{font:600 15px/1.4 Geist,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#5e574c}
 h1{font:500 96px/1 Newsreader,Georgia,serif;letter-spacing:-3px;margin:18px 0 22px}
 h1 em{color:#1d3fbf}
@@ -222,8 +223,8 @@ def beats(live_url: str, repo_url: str) -> list[Beat]:
         d.page.locator("[data-testid='stMain']").evaluate("e => e.scrollTo({top: 0})")
         d.pause(1)
         d.tab("Device label camera")
-        d.show(p.get_by_text("label-thermometer-1.jpg"), 3)
-        d.scroll_main(250, 5)
+        d.show(p.get_by_text("label-thermometer-1.jpg"), 4)
+        d.glide(p.get_by_text("Signals for product code FLL").first, 5)
 
     def evidence(d: Driver) -> None:
         p = d.page
@@ -415,7 +416,7 @@ def main() -> int:
     srt = out / "walkthrough.srt"
     write_srt(bs, srt)
     write_script(bs, out / "walkthrough-script.md", total)
-    style = "FontName=DejaVu Sans,FontSize=18,PrimaryColour=&H00FFFFFF,BackColour=&H99000000,BorderStyle=3,Outline=6,MarginV=26"
+    style = "FontName=DejaVu Sans,FontSize=11,PrimaryColour=&H00FFFFFF,BackColour=&H99000000,BorderStyle=3,Outline=4,MarginV=14"
     subprocess.run(
         [
             "ffmpeg",
