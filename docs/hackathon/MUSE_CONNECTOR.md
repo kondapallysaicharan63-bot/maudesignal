@@ -1,10 +1,10 @@
-# MaudeSignal connector for Meta Muse (read-only REST API; MCP server next)
+# MaudeSignal connector for Meta Muse (read-only REST API and MCP server)
 
-Status: **built and tested locally; not deployed from this environment; not submitted.** This is
-part 1 of the connector doc: the REST API, how to deploy it, how to make a key, and how to check
-it. The MCP transport, the submission form answers and any "submitted" line come in later parts,
-and only after the owner submits. Nothing on this page says anyone has reviewed or endorsed the
-connector.
+Status: **built and tested locally; not deployed from this environment; not submitted.** Part 1
+is the REST API, how to deploy it, how to make a key, and how to check it. Part 2 (at the end of
+this page) is the MCP transport at `/mcp`, the draft answers for the connector submission form,
+privacy and terms text, and a real local MCP client transcript. Nothing on this page says anyone
+has reviewed or endorsed the connector.
 
 ## Part 1. Deploy the REST API (a second Vercel project)
 
@@ -329,7 +329,7 @@ Other checks in the same run: `GET /` and `GET /docs-page` returned `200 text/ht
 
 ## What it is
 
-Five read-only tools (REST now, MCP in a later milestone, same code):
+Five read-only tools (REST and MCP, same code):
 `what_changed_this_week`, `check_device_type`, `ask`, `get_report`, `recalls`.
 Every answer has: a short speakable summary, facts that each carry an openFDA or record link,
 the fixed advisory line ("Advisory triage aid for quality and regulatory review; not medical
@@ -412,7 +412,202 @@ and window number exactly what the gate recomputed.
 4. **Deploy check still open** (see part 1, step 1): which dependency manifest Vercel installs,
    and the bundle size. Confirm with Track B that this root `vercel.json` is only used by the API
    project (the web project is rooted at `web/` and does not read it).
-5. **MCP is not built yet.** Only the REST transport exists; do not describe the connector as
-   an MCP server until `tools/list` and `tools/call` are implemented and tested.
+5. **MCP is a minimal stateless implementation** (see part 2): `initialize`, `ping`,
+   `tools/list`, `tools/call`. It was tested with a local client and with JSON-RPC over the ASGI
+   test client, not with Muse or any other third-party MCP client.
 6. Live openFDA calls (`check_device_type`, unstored codes, the keyless route) and the live Muse
    Spark call have not been run from this environment (no network); tests use fakes.
+
+---
+
+# Part 2. MCP server, submission answers, privacy, terms
+
+**Submission status: Not submitted.** The owner changes this line only after he submits the form
+himself. Nothing here says Meta, Muse or anyone else has reviewed, accepted or endorsed this
+connector, and no such review has happened.
+
+## 2.1 The MCP server (`POST /mcp`)
+
+Same five tools as the REST routes, same process, same code path. Each REST route and each
+`tools/call` goes through one `dispatch` function in `connector/app.py`, so the answer, the audit
+entry and the cost cap are shared.
+
+| Item | Value |
+|---|---|
+| Endpoint | `https://<your-api-project>.vercel.app/mcp` (HTTPS on Vercel; the host is whatever the API project gets) |
+| Transport | Streamable HTTP, **stateless**: one JSON-RPC message per `POST`, a JSON reply, no session id, no event stream. `GET`, `DELETE`, `PUT`, `PATCH` on `/mcp` return 405. |
+| Protocol version | `2025-06-18` (header `MCP-Protocol-Version` may be `2025-06-18` or `2025-03-26`; anything else is 400) |
+| Methods | `initialize`, `ping`, `tools/list`, `tools/call`; notifications and client replies get 202 with no body. Batches are refused (protocol 2025-06-18 removed them). |
+| Auth | `X-API-Key: <key>` **or** `Authorization: Bearer <key>` (the Bearer form also works on the REST routes). A key in the URL is refused (400). Wrong or missing key: 401; repeated wrong keys from one address: 429. |
+| Limits | The same per-key rate limit as REST (every HTTP request to `/mcp` counts once, also `tools/list`), the same per-key daily cost cap for `ask`, the same audit log (`GET /v1/audit/recent`). |
+| Browsers | A request that carries an `Origin` header is refused (403) unless the origin is listed in `MAUDESIGNAL_WEB_ORIGINS` (the MCP DNS-rebinding guard). Server-side clients send no `Origin`. |
+| Tool annotations | `readOnlyHint: true`, `destructiveHint: false`, `idempotentHint: true` on all five; `openWorldHint: true` on `what_changed_this_week`, `check_device_type` and `ask` (they can reach live openFDA or the live model), `false` on `get_report` and `recalls`. |
+| Result | `content`: one text item, the speakable summary. `structuredContent`: the full answer (`tool`, `speakable`, `facts` with links, `advisory`, `provenance`, `withheld`), identical to the REST body of the same call (a test compares them for all five). `outputSchema` is the answer model. |
+| Errors | Unknown tool or malformed call: JSON-RPC error `-32602`; unknown method `-32601`; bad JSON `-32700` (HTTP 400). A tool that cannot answer (invalid input, report not stored, openFDA unreachable) returns `isError: true` with a fixed, key-free message. |
+| Manifest | `api/mcp-manifest.json`, also served at `GET /mcp-manifest.json` without a key. Generated by `python3.12 -m maudesignal.connector.manifest` from the same tool registry (`connector/registry.py`) that builds `tools/list` and supplies the REST descriptions; a test fails if the file drifts or if REST and MCP descriptions differ. |
+
+Why not the `mcp` Python SDK: this server only needs request/response, and a serverless
+function cannot hold the sessions and streams the SDK's default server keeps. The hand-written
+version is about 130 lines (`connector/mcp_server.py`), has no extra dependency, and is covered by
+`tests/unit/test_connector_mcp.py` (16 tests). It was **not** checked against the SDK's client or
+against Muse.
+
+`vercel.json` routes `/mcp` and `/mcp-manifest.json` to the same function as the REST routes.
+
+### Withheld sentences over MCP
+
+`ask` in live mode never returns the text of a sentence the gate left out: `withheld` holds a
+placeholder, a fixed reason and the claim kinds. `tests/unit/test_connector_mcp.py::
+test_mcp_live_body_never_holds_a_withheld_sentence` runs a scripted live `ask` over `/mcp`, with
+sentences the gate blocks, and scans the whole raw response body (text content and
+`structuredContent`), the JSON-escaped form, and the spoken text for the blocked sentences and
+any 20-character piece of them. The REST twin of that test is in `test_connector_safety.py`.
+
+### Real local transcript (MCP client over HTTP)
+
+Captured with a short Python client using `httpx` against `uvicorn api.index:app --no-access-log
+--no-proxy-headers` on 127.0.0.1:8766, with a throw-away key made in the client process and passed
+to the server's environment (never printed, and the client asserts it is absent from every
+response), `MAUDESIGNAL_RATE_LIMIT_PER_MIN=10`, no `META_MODEL_API_KEY`, no `OPENFDA_API_KEY`,
+no Upstash. This environment cannot reach openFDA, so `check_device_type` for a code that is not
+stored returns the tool error shown, and `ask` returns the recorded answer. Long bodies are cut by
+the client at the byte count it prints; the rest is as received.
+
+```text
+### initialize
+HTTP 200
+{"jsonrpc":"2.0","id":0,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"maudesignal-connector","title":"MaudeSignal (read-only)","version":"0.1.0"},"instructions":"Read-only MaudeSignal tools over openFDA device data. Speak the text content; every fact in structuredContent has an openFDA or record link. Sentences listed under withheld were not verified: never state them as fact. Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA."}}
+
+### notifications/initialized
+HTTP 202 (no body)
+
+### tools/list (Authorization: Bearer)
+HTTP 200
+  what_changed_this_week: readOnlyHint=True destructiveHint=False openWorldHint=True inputs=['product_code']
+  check_device_type: readOnlyHint=True destructiveHint=False openWorldHint=True inputs=['product_code']
+  ask: readOnlyHint=True destructiveHint=False openWorldHint=True inputs=['question']
+  get_report: readOnlyHint=True destructiveHint=False openWorldHint=False inputs=['report_id']
+  recalls: readOnlyHint=True destructiveHint=False openWorldHint=False inputs=['product_code']
+
+### tools/call recalls LLZ
+HTTP 200
+{"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"The stored demo snapshot holds 561 recall product records (433 recall events) for product code LLZ. The most recent started September 5, 2026 by INTELERAD MEDICAL SYSTEMS INCORPORATED."}],"structuredContent":{"tool":"recalls","speakable":"The stored demo snapshot holds 561 recall product records (433 recall events) for product code LLZ. The most recent started September 5, 2026 by INTELERAD MEDICAL SYSTEMS INCORPORATED.","facts":[{"text":"561 recall product records (433 recall events) for product code LLZ in the stored snapshot.","link":"https://api.fda.gov/device/recall.json?search=product_code%3ALLZ&limit=1","link_label":"openFDA: recalls for this code"},{"text":"Recall Z-0186-2027, started September 5, 2026 by INTELERAD MEDICAL SYSTEMS INCORPORATED, status Open, Classified. Reason: Following a Chromium-based web-browser, report and displayed images may not match.","link":"https://api.fda.gov/device/recall.json?search=product_res_number%3A%22Z-0186-2027%22&limit=1","link_label":"openFDA recall"},{"text":"Recall Z-3... [2985 bytes total]
+
+### tools/call get_report 50426770
+HTTP 200
+{"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text","text":"Report 5 0 4 2 6 7 7 0 is a malfunction report for product code LLZ, received August 25, 2026. The start of its narrative is in the facts."}],"structuredContent":{"tool":"get_report","speakable":"Report 5 0 4 2 6 7 7 0 is a malfunction report for product code LLZ, received August 25, 2026. The start of its narrative is in the facts.","facts":[{"text":"Report 50426770: product code LLZ, event type malfunction, received August 25, 2026.","link":"https://api.fda.gov/device/event.json?search=mdr_report_key%3A50426770&limit=1","link_label":"openFDA report"},{"text":"Report 50426770 lists brand IntelliSpace Cardiovascular, manufacturer Philips Medical Systems Nederland B.V..","link":"https://api.fda.gov/device/event.json?search=mdr_report_key%3A50426770&limit=1","link_label":"openFDA report"},{"text":"Start of the narrative, word for word: \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that they have a case that needs to be corrected. The device was in clinical use at the time of th... [1780 bytes total]
+
+### tools/call what_changed_this_week LLZ
+HTTP 200
+{"jsonrpc":"2.0","id":4,"result":{"content":[{"type":"text","text":"In the stored demo snapshot for August 25, 2026 to August 31, 2026, LLZ shows reports suddenly increased: 33 reports against a weekly average of 8.75 in the four weeks before."}],"structuredContent":{"tool":"what_changed_this_week","speakable":"In the stored demo snapshot for August 25, 2026 to August 31, 2026, LLZ shows reports suddenly increased: 33 reports against a weekly average of 8.75 in the four weeks before.","facts":[{"text":"LLZ (System, Image Processing, Radiological): reports suddenly increased. 33 reports received August 25, 2026 to August 31, 2026, against a weekly average of 8.75 in the four weeks before.","link":"https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260825+TO+20260831%5D&limit=1","link_label":"openFDA: reports in this week"}],"advisory":"Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.","provenance":{"kind":"stored_demo_snapshot","source":"Stored demo snapshot of openFDA devic... [1399 bytes total]
+
+### tools/call ask (no model key: recorded answer)
+HTTP 200
+{"jsonrpc":"2.0","id":5,"result":{"content":[{"type":"text","text":"Live answers are not switched on here, so this is a recorded answer to a different, similar question: \"What changed this week, Did reports suddenly increase for any device\", using stored reports through August 31, 2026. Yes, LLZ reports suddenly increased this week with 33 reports from August 25 to August 31, 2026. One sentence was left out because it could not be verified or tied to a source."}],"structuredContent":{"tool":"ask","speakable":"Live answers are not switched on here, so this is a recorded answer to a different, similar question: \"What changed this week, Did reports suddenly increase for any device\", using stored reports through August 31, 2026. Yes, LLZ reports suddenly increased this week with 33 reports from August 25 to August 31, 2026. One sentence was left out because it could not be verified or tied to a source.","facts":[{"text":"Yes, LLZ reports suddenly increased this week with 33 reports from August 25 to August 31, 2026.","link":"https://api.fda.gov/device/event.json?search=device.device_... [2733 bytes total]
+
+### tools/call check_device_type QAS (openFDA unreachable here)
+HTTP 200
+{"jsonrpc":"2.0","id":9,"result":{"content":[{"type":"text","text":"openFDA could not be reached just now; try again shortly."}],"isError":true}}
+
+### 401 without a key
+HTTP 401
+{"error":{"code":"unauthorized","message":"A valid X-API-Key header is required."}}
+
+### 429 past the per-key limit (10 per minute in this run)
+ping number 11: HTTP 429
+{"error":{"code":"rate_limited","message":"Rate limit of 10 requests per minute reached. Retry in 60 seconds."}} | Retry-After: 60
+```
+
+Not done: no call from Muse or from any third-party MCP client, no deploy to Vercel, no live
+openFDA call, no live Muse Spark call.
+
+## 2.2 Draft answers for the Muse connector submission form
+
+Third-party guides describe a form at `muse.ai/platform` that asks for an HTTPS MCP endpoint or
+API URL, a privacy policy, terms and a support contact. **No Meta page confirming this was
+found**, so **every field below is marked "confirm against the live form"**: field names, limits,
+whether MCP or REST is asked for, and whether more fields exist. Do not paste anything here
+without reading the live form first.
+
+| Field (as described by third parties) | Draft answer | Confirm against the live form |
+|---|---|---|
+| Connector name | MaudeSignal | confirm against the live form |
+| Short description | Read-only triage aid for FDA device adverse-event reports (MAUDE), recalls and device-type checks. Spoken summaries, each fact with its openFDA link. Advisory only; not medical advice; nothing is filed with FDA. | confirm against the live form |
+| Long description | Five read-only tools over openFDA device data: what changed this week (stored demo snapshot, with its dates), a live openFDA check of any three-letter product code using the weekly detector's rules, a question tool answered by Muse Spark through deterministic tools where every sentence passes a claim gate and unverified sentences are marked and never spoken as fact, one stored report, and recalls for a product code. Every answer carries a fixed advisory line and its data source (stored snapshot with dates, or live openFDA with the query time). | confirm against the live form |
+| Endpoint type | MCP over streamable HTTP (stateless, protocol 2025-06-18). REST with an OpenAPI 3.1 file is also available at `/openapi.json`. | confirm against the live form |
+| Endpoint URL | `https://<your-api-project>.vercel.app/mcp` (fill in after deploy; none exists yet) | confirm against the live form |
+| Authentication | API key in `X-API-Key` or `Authorization: Bearer`. A read-only key is created by the owner (`maudesignal.connector.keygen`) and given to the reviewer through the form's secure field, never in a chat or a repository. No OAuth. | confirm against the live form |
+| Tool list | `what_changed_this_week`, `check_device_type`, `ask`, `get_report`, `recalls` (all read-only; see `api/mcp-manifest.json`) | confirm against the live form |
+| Data accessed | Public openFDA device adverse-event reports (de-identified), recalls and 510(k) records; a stored demo snapshot in the deployment; live openFDA counts on request. No customer data. | confirm against the live form |
+| Writes / side effects | None. No tool writes anywhere; nothing is filed with FDA. | confirm against the live form |
+| Privacy policy URL | Text in 2.3 below; **no public URL exists yet**. The owner hosts it (for example on the web project) and pastes the URL. | confirm against the live form |
+| Terms URL | Text in 2.4 below; **no public URL exists yet**. Same. | confirm against the live form |
+| Support contact | Owner to fill in (an email address he chooses to publish) and the repository issue tracker: `https://github.com/kondapallysaicharan63-bot/maudesignal/issues` | confirm against the live form |
+| Rate limits | Per-key requests per minute (default 30) and a per-key daily cost cap on `ask`. | confirm against the live form |
+| Test credentials / how to try it | Owner supplies a separate read-only reviewer key. Suggested calls: `tools/list`; `what_changed_this_week` with `product_code` LLZ; `recalls` with LLZ; `get_report` with `50426770`; `ask` with "What changed this week for LLZ?". | confirm against the live form |
+| Category / audience | Quality and regulatory professionals at medical-device companies (B2B). Not for patients; not clinical decision support. | confirm against the live form |
+| Anything else the form asks | Not known. Leave blank or ask the owner; do not invent. | confirm against the live form |
+
+## 2.3 Privacy statement (draft; the owner publishes it and fixes the contact)
+
+**What this service is.** A read-only API and MCP server that returns summaries of public openFDA
+device data. It is an advisory triage aid for quality and regulatory review. It is not medical
+advice and it files nothing with FDA.
+
+**No PHI and no personal data stored.** The data served is public openFDA data, already
+de-identified by FDA. The service has no accounts, no sign-up and asks for no name, email or
+patient information. It does not store the text of questions.
+
+**What a request puts in the audit log.** One entry per tool call, in an append-only, hash-chained
+log: the tool name; its inputs (a product code or report id; for `ask`, only a SHA-256 of the
+question and its length, never the text); a SHA-256 of the answer; counts of facts with links and
+withheld sentences; the data source and dates; the time; and a keyed hash that identifies the API
+key (never the key). The log is held in the operator's Redis store when one is configured, and
+otherwise in the memory of one server instance, where it is lost on a cold start.
+
+**What else is held.** For rate limiting, a counter per key id and, for wrong keys and the keyless
+web route, per client network address, in memory or in the operator's Redis store, for at most
+the length of the limit window. The hosting platform keeps its own request logs (method, path,
+status, address, time); send keys only in headers, never in a URL.
+
+**Who receives the question.** When live answers are switched on, the text of an `ask` question is
+sent to the Muse Spark model through the Meta Model API to produce the answer, under the
+operator's API key. With no model key, or when live answers are off, nothing is sent to a model
+and a recorded answer is returned. Live checks send only a three-letter product code to openFDA.
+
+**Do not send** patient or personal information in a question. Questions are for device and
+report-level topics.
+
+**Retention and deletion.** Audit entries and counters are not kept on a schedule beyond what is
+stated above; ask the operator at the contact address to remove entries tied to a key.
+
+**Contact.** Owner to fill in.
+
+## 2.4 Terms (draft; the owner publishes them)
+
+1. **Advisory only.** Everything returned is an advisory triage aid for quality and regulatory
+   review. It is not medical advice, not clinical decision support and not a regulatory
+   determination. A qualified person must review any signal before acting on it.
+2. **Nothing is filed with FDA.** The service does not submit, draft for submission, or file
+   anything with FDA or any other regulator. Actions a person takes on an answer are their own.
+3. **Sources and freshness.** Each answer states its source: a stored demo snapshot with its
+   dates, or live openFDA with the query time, or a recorded answer, or a live model answer.
+   Stored data can be out of date. Sentences marked as withheld could not be verified and must not
+   be stated as fact.
+4. **Read-only use.** Keys are read-only. Do not try to bypass rate limits, the cost cap or
+   authentication, do not share keys, and do not send personal or patient information.
+5. **No warranty.** The service is provided as is, without warranty of any kind, including
+   accuracy, completeness, availability or fitness for a purpose. To the extent the law allows,
+   the operator is not liable for decisions made from its output.
+6. **Changes and access.** The operator may change, limit or stop the service or revoke a key at
+   any time.
+7. **Scope.** U.S. FDA (openFDA) data only, plus labelled MHRA (UK) context where an answer says
+   so. No other regulator is covered.
+
+## 2.5 What the owner must still do (nothing below has been done)
+
+* Deploy the API project and note its URL; create a read-only reviewer key with the key script.
+* Host the privacy and terms text and choose a support email.
+* Read the live submission form, correct every field marked "confirm against the live form", and
+  submit it himself.
+* Only then change the status line at the top of part 2 from "Not submitted".

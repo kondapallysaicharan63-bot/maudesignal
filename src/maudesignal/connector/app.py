@@ -20,6 +20,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from starlette.concurrency import run_in_threadpool
 
 from maudesignal.common.logging import get_logger
 from maudesignal.connector import tools
@@ -33,6 +34,13 @@ from maudesignal.connector.ask import (
 from maudesignal.connector.data import ConnectorData
 from maudesignal.connector.docs_page import render_docs_page
 from maudesignal.connector.errors import ConnectorError, InvalidInputError, NotFoundError
+from maudesignal.connector.manifest import build_manifest
+from maudesignal.connector.mcp_server import (
+    PARSE_ERROR,
+    SUPPORTED_VERSIONS,
+    handle_message,
+    rpc_error,
+)
 from maudesignal.connector.models import (
     AuditEntry,
     AuditRecent,
@@ -42,6 +50,15 @@ from maudesignal.connector.models import (
     LiveCheckData,
     PublicCheckAnswer,
     ToolAnswer,
+)
+from maudesignal.connector.registry import (
+    ASK_DESCRIPTION,
+    CHECK_DESCRIPTION,
+    PRODUCT_CODE_PATTERN,
+    RECALLS_DESCRIPTION,
+    REPORT_DESCRIPTION,
+    REPORT_ID_PATTERN,
+    WHAT_CHANGED_DESCRIPTION,
 )
 from maudesignal.connector.security import KeyStore, RateLimiter
 from maudesignal.connector.store import (
@@ -82,8 +99,8 @@ def _question_audit_inputs(question: str) -> dict[str, str]:
 
 REPO_URL = "https://github.com/kondapallysaicharan63-bot/maudesignal"
 READ_ONLY = {"x-maudesignal-read-only": True, "x-maudesignal-scope": "read"}
-PRODUCT_CODE_PATTERN = r"^[A-Za-z]{3}$"
-REPORT_ID_PATTERN = r"^[A-Za-z0-9-]{1,24}$"
+MCP_PATH = "/mcp"
+MAX_MCP_BODY_BYTES = 64 * 1024
 
 DESCRIPTION = (
     "Read-only MaudeSignal tools for a Meta Muse connector. Each answer has a short speakable "
@@ -255,6 +272,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 f"Too many failed key checks. Retry in {wait} seconds.",
                 {"Retry-After": str(wait)},
             )
+        if presented is None:  # the same key may come as "Authorization: Bearer <key>"
+            scheme, _, token = request.headers.get("authorization", "").partition(" ")
+            if scheme.lower() == "bearer" and token.strip():
+                presented = token.strip()
         key_id = cfg.keys.verify(presented)
         if key_id is None or presented is None:
             failed_auth.record(client)
@@ -322,6 +343,52 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise
         record_audit(audit_id, tool, inputs, answer)
         return answer
+
+    def dispatch(request: Request, name: str, args: dict[str, str]) -> ToolAnswer:
+        """Run one tool with its audit entry; REST routes and ``/mcp`` both call this."""
+        key_id = str(request.state.audit_id)
+        if name == "what_changed_this_week":
+            code = args.get("product_code")
+            return audited(
+                request,
+                name,
+                {"product_code": code or ""},
+                lambda: tools.what_changed_this_week(
+                    cfg.data, code, live_checker=cfg.live_checker, now=cfg.now
+                ),
+            )
+        if name == "check_device_type":
+            return audited(
+                request,
+                name,
+                {"product_code": args["product_code"]},
+                lambda: tools.check_device_type(
+                    cfg.data, args["product_code"], live_checker=cfg.live_checker, now=cfg.now
+                ),
+            )
+        if name == "ask":
+            question = args["question"]
+            return audited(
+                request,
+                name,
+                _question_audit_inputs(question),
+                lambda: ask(cfg.data, question, key_id=key_id, runtime=ask_runtime, now=cfg.now),
+            )
+        if name == "get_report":
+            return audited(
+                request,
+                name,
+                {"report_id": args["report_id"]},
+                lambda: tools.get_report(cfg.data, args["report_id"]),
+            )
+        if name == "recalls":
+            return audited(
+                request,
+                name,
+                {"product_code": args["product_code"]},
+                lambda: tools.recalls(cfg.data, args["product_code"]),
+            )
+        raise InvalidInputError("Unknown tool.")
 
     @app.exception_handler(ApiError)
     async def _api_error(_: Request, exc: ApiError) -> Response:
@@ -422,10 +489,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         response_model=ToolAnswer,
         operation_id="what_changed_this_week",
         summary="What changed this week",
-        description=(
-            "Read-only. Latest stored week from the demo snapshot (labelled with its dates). "
-            "A product code outside the stored set is checked live on openFDA."
-        ),
+        description=WHAT_CHANGED_DESCRIPTION,
         tags=["tools"],
         responses=_ERRORS | {502: {"model": ErrorResponse, "description": "openFDA unreachable."}},
         openapi_extra=READ_ONLY,
@@ -438,13 +502,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             Query(pattern=PRODUCT_CODE_PATTERN, description="Optional three-letter product code."),
         ] = None,
     ) -> ToolAnswer:
-        return audited(
+        return dispatch(
             request,
             "what_changed_this_week",
-            {"product_code": product_code or ""},
-            lambda: tools.what_changed_this_week(
-                cfg.data, product_code, live_checker=cfg.live_checker, now=cfg.now
-            ),
+            {"product_code": product_code} if product_code else {},
         )
 
     @app.get(
@@ -452,10 +513,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         response_model=ToolAnswer,
         operation_id="check_device_type",
         summary="Check any device type live on openFDA",
-        description=(
-            "Read-only. Live openFDA report counts for any product code, using the same four "
-            "rules, windows and thresholds as the weekly detector."
-        ),
+        description=CHECK_DESCRIPTION,
         tags=["tools"],
         responses=_ERRORS | {502: {"model": ErrorResponse, "description": "openFDA unreachable."}},
         openapi_extra=READ_ONLY,
@@ -463,46 +521,28 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def check_device_type(
         request: Request, key_id: key_dep, product_code: code_param
     ) -> ToolAnswer:
-        return audited(
-            request,
-            "check_device_type",
-            {"product_code": product_code},
-            lambda: tools.check_device_type(
-                cfg.data, product_code, live_checker=cfg.live_checker, now=cfg.now
-            ),
-        )
+        return dispatch(request, "check_device_type", {"product_code": product_code})
 
     @app.post(
         "/v1/tools/ask",
         response_model=ToolAnswer,
         operation_id="ask",
         summary="Ask the Muse Spark copilot",
-        description=(
-            "Read-only (POST only because the question is in the body). Muse Spark answers "
-            "through deterministic tools over stored records; every sentence passes the claim "
-            "gate. Withheld sentences are listed in `withheld` and are never in `speakable`. "
-            "With no model key, or after the key's daily cost cap, the closest recorded answer "
-            "is returned and labelled recorded."
-        ),
+        description=ASK_DESCRIPTION,
         tags=["tools"],
         responses=_ERRORS
         | {502: {"model": ErrorResponse, "description": "Nothing to answer from."}},
         openapi_extra=READ_ONLY,
     )
     def ask_tool(request: Request, key_id: key_dep, body: AskRequest) -> ToolAnswer:
-        return audited(
-            request,
-            "ask",
-            _question_audit_inputs(body.question),
-            lambda: ask(cfg.data, body.question, key_id=key_id, runtime=ask_runtime, now=cfg.now),
-        )
+        return dispatch(request, "ask", {"question": body.question})
 
     @app.get(
         "/v1/tools/get_report",
         response_model=ToolAnswer,
         operation_id="get_report",
         summary="One stored MAUDE report",
-        description="Read-only. Key fields and the start of the narrative of one stored report.",
+        description=REPORT_DESCRIPTION,
         tags=["tools"],
         responses=_ERRORS | {404: {"model": ErrorResponse, "description": "Report not stored."}},
         openapi_extra=READ_ONLY,
@@ -514,30 +554,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             str, Query(pattern=REPORT_ID_PATTERN, description="MAUDE report id (mdr_report_key).")
         ],
     ) -> ToolAnswer:
-        return audited(
-            request,
-            "get_report",
-            {"report_id": report_id},
-            lambda: tools.get_report(cfg.data, report_id),
-        )
+        return dispatch(request, "get_report", {"report_id": report_id})
 
     @app.get(
         "/v1/tools/recalls",
         response_model=ToolAnswer,
         operation_id="recalls",
         summary="FDA recalls for a product code",
-        description="Read-only. Stored openFDA recalls for a product code, newest first.",
+        description=RECALLS_DESCRIPTION,
         tags=["tools"],
         responses=_ERRORS,
         openapi_extra=READ_ONLY,
     )
     def recalls(request: Request, key_id: key_dep, product_code: code_param) -> ToolAnswer:
-        return audited(
-            request,
-            "recalls",
-            {"product_code": product_code},
-            lambda: tools.recalls(cfg.data, product_code),
-        )
+        return dispatch(request, "recalls", {"product_code": product_code})
 
     @app.get(
         "/v1/public/check_device_type",
@@ -640,5 +670,46 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             chain=ChainStatus(verified=ok, first_bad_seq=bad, entries_checked=len(rows)),
             entries=[AuditEntry.model_validate(r) for r in rows],
         )
+
+    @app.get("/mcp-manifest.json", include_in_schema=False)
+    def mcp_manifest() -> JSONResponse:
+        """Public, static description of the MCP server (no key; nothing secret in it)."""
+        return JSONResponse(build_manifest())
+
+    @app.api_route(MCP_PATH, methods=["GET", "DELETE", "PUT", "PATCH"], include_in_schema=False)
+    def mcp_not_allowed() -> Response:
+        """Stateless server: no event stream (GET) and no session to end (DELETE)."""
+        return _error(
+            405, "method_not_allowed", "POST JSON-RPC messages to /mcp.", {"Allow": "POST"}
+        )
+
+    @app.post(MCP_PATH, include_in_schema=False)
+    async def mcp_endpoint(request: Request, key_id: key_dep) -> Response:
+        """MCP over HTTP (stateless JSON-RPC): same auth, limits, cost cap and audit as REST."""
+        origin = request.headers.get("origin", "").rstrip("/")
+        if origin and origin not in web_origins:  # DNS-rebinding guard from the MCP spec
+            return _error(403, "origin_not_allowed", "Origin not allowed.")
+        version = request.headers.get("mcp-protocol-version")
+        if version is not None and version not in SUPPORTED_VERSIONS:
+            return _error(400, "unsupported_protocol_version", "Unsupported MCP-Protocol-Version.")
+        raw = await request.body()
+        if len(raw) > MAX_MCP_BODY_BYTES:
+            return _error(413, "too_large", "Message too large.")
+        try:
+            message = json.loads(raw)
+        except ValueError:
+            return JSONResponse(rpc_error(None, PARSE_ERROR, "Parse error."), status_code=400)
+        if isinstance(message, list):  # batching was removed in protocol 2025-06-18
+            return JSONResponse(
+                rpc_error(None, -32600, "Batches are not supported."), status_code=400
+            )
+
+        def run(name: str, args: dict[str, str]) -> ToolAnswer:
+            return dispatch(request, name, args)
+
+        reply = await run_in_threadpool(handle_message, message, run)
+        if reply is None:
+            return Response(status_code=202)
+        return JSONResponse(reply)
 
     return app
