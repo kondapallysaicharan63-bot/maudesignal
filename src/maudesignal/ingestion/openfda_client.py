@@ -160,6 +160,93 @@ class OpenFDAClient:
         rows = response.json().get("results", [])
         return sorted((str(r["time"]), int(r["count"])) for r in rows)
 
+    # HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
+    @retry(
+        stop=stop_after_attempt(MAX_RETRIES),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_exception_type((OpenFDARateLimitError, OpenFDAUnavailableError)),
+        reraise=True,
+    )
+    def count_field(
+        self,
+        product_code: str,
+        field: str,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        limit: int = 1000,
+    ) -> list[tuple[str, int]]:
+        """Return openFDA ``count=<field>`` buckets for a product code (no records downloaded).
+
+        Args:
+            product_code: FDA 3-character product code.
+            field: Field to count, e.g. ``"event_type.exact"`` or ``"date_received"``.
+            start_date: Earliest ``date_received`` (YYYYMMDD). Optional.
+            end_date: Latest ``date_received`` (YYYYMMDD). Optional.
+            limit: Maximum buckets (openFDA allows up to 1000).
+
+        Returns:
+            ``(term, count)`` pairs sorted by term; empty when nothing matches.
+        """
+        params: dict[str, str | int] = {
+            "search": search_param(_build_query(product_code, start_date, end_date)),
+            "count": field,
+            "limit": min(limit, 1000),
+        }
+        payload = self._get(params)
+        rows = payload.get("results", []) if payload else []
+        return sorted((str(r.get("term", r.get("time"))), int(r["count"])) for r in rows)
+
+    # HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
+    @retry(
+        stop=stop_after_attempt(MAX_RETRIES),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_exception_type((OpenFDARateLimitError, OpenFDAUnavailableError)),
+        reraise=True,
+    )
+    def total(
+        self,
+        product_code: str,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> int:
+        """Return how many reports match (openFDA ``meta.results.total``; one record fetched).
+
+        Args:
+            product_code: FDA 3-character product code.
+            start_date: Earliest ``date_received`` (YYYYMMDD). Optional.
+            end_date: Latest ``date_received`` (YYYYMMDD). Optional.
+
+        Returns:
+            The match count; 0 when nothing matches.
+        """
+        params: dict[str, str | int] = {
+            "search": search_param(_build_query(product_code, start_date, end_date)),
+            "limit": 1,
+        }
+        payload = self._get(params)
+        if not payload:
+            return 0
+        return int(payload.get("meta", {}).get("results", {}).get("total", 0))
+
+    def _get(self, params: dict[str, str | int]) -> dict[str, Any] | None:
+        """One GET with the shared status handling; None means openFDA found nothing (404)."""
+        if self._api_key:
+            params["api_key"] = self._api_key
+        try:
+            response = self._client.get(OPENFDA_EVENT_ENDPOINT, params=params)
+        except httpx.HTTPError as exc:
+            raise OpenFDAAPIError(f"HTTP error contacting openFDA: {exc}") from exc
+        if response.status_code == 404:
+            return None
+        if response.status_code == 429:
+            raise OpenFDARateLimitError("openFDA returned 429")
+        if response.status_code in (500, 503):
+            raise OpenFDAUnavailableError(f"openFDA server error {response.status_code}")
+        if response.status_code != 200:
+            raise OpenFDAAPIError(f"Unexpected openFDA status {response.status_code}")
+        payload: dict[str, Any] = response.json()
+        return payload
+
     # ------------------------------------------------------------------
 
     @retry(
@@ -245,7 +332,7 @@ def _build_query(
     start_date: str | None,
     end_date: str | None,
 ) -> str:
-    """Build the openFDA ``search`` parameter for product + date range."""
+    """Build the openFDA ``search`` parameter for product + date range (URL ``+`` syntax)."""
     clauses = [f"device.device_report_product_code:{product_code}"]
     if start_date and end_date:
         clauses.append(f"date_received:[{start_date}+TO+{end_date}]")
@@ -254,3 +341,7 @@ def _build_query(
     elif end_date:
         clauses.append(f"date_received:[19900101+TO+{end_date}]")
     return "+AND+".join(clauses)
+
+
+#: Public name for the query builder (used by ``monitor.live_check`` to show verify links).
+build_query = _build_query

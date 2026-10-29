@@ -190,3 +190,10 @@ section[data-testid="stSidebar"] .stButton > button [data-testid="stMarkdownCont
   text-transform: none; color: var(--ink); margin-bottom: 2px; }
 .ms-stats--text { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
 .ms-stats--text .ms-num { font: 600 14px/1.4 var(--font-sans); letter-spacing: 0; overflow-wrap: anywhere; }
+
+/* Signals: "Check any device type" panel (live openFDA). */
+.st-key-ms_livecheck {
+  border: 1px solid var(--rule); border-radius: var(--radius-md); background: var(--surface);
+  padding: var(--space-4) var(--space-5); margin-bottom: var(--space-5); gap: var(--space-3);
+}
+.st-key-ms_livecheck p.ms-small { margin: 0; }

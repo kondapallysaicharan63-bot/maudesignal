@@ -196,6 +196,33 @@ class TestSignals:
 # ---------------------------------------------------------------------------
 
 
+class TestLiveCheck:
+    """Check any device type: input validation here; the openFDA call where the network allows."""
+
+    def _check(self, page: Page, code: str) -> Locator:
+        main = _open(page, "Signals")
+        panel = main.locator(".st-key-ms_livecheck")
+        panel.get_by_label("Any FDA product code").fill(code)
+        panel.get_by_role("button", name="Check on openFDA").click()
+        return panel
+
+    def test_a_bad_code_is_explained_and_nothing_is_called(self, ms_page: Page) -> None:
+        panel = self._check(ms_page, "L1")
+        expect(panel).to_contain_text("A product code is three letters")
+
+    def test_a_real_code_shows_a_result_with_its_openfda_queries(self, ms_page: Page) -> None:
+        panel = self._check(ms_page, "LLZ")
+        outcome = panel.locator(".ms-sig-head, [data-testid='stAlert']").first
+        expect(outcome).to_be_visible(timeout=60_000)
+        if "could not be reached" in outcome.inner_text():
+            pytest.skip("openFDA not reachable from this runner")
+        expect(panel).to_contain_text("Live from openFDA · LLZ", ignore_case=True)
+        expect(panel).to_contain_text("This week")
+        panel.get_by_text("Where each number comes from").click()
+        links = panel.locator("a[href^='https://api.fda.gov/device/event.json']")
+        expect(links).to_have_count(5)
+
+
 def _select(page: Page, label: str, option: str) -> None:
     box = page.locator("[data-testid='stSelectbox']").filter(has_text=label).first
     box.scroll_into_view_if_needed()

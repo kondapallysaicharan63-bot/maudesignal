@@ -27,6 +27,7 @@ from maudesignal.dashboard.copilot_pages import (
     render_transcript,
     short,
 )
+from maudesignal.dashboard.live_check_ui import render_live_check
 from maudesignal.monitor.compare import CompareRow, compare_signals
 from maudesignal.monitor.deterioration import detect_from_database
 from maudesignal.monitor.digest import digest_from_database
@@ -76,6 +77,7 @@ def page_signals(db: Database) -> None:
     if st.session_state.get("sig_code") not in by_code:
         st.session_state["sig_code"] = rows[0].product_code
 
+    render_live_check()
     left, right = st.columns([1, 2.7], gap="large")
     with left:
         w = result.window

@@ -34,6 +34,7 @@ Everything under `src/maudesignal/copilot/`, `src/maudesignal/gate/` and
 | `monitor/deterioration.py` | Deterministic per-product-code detector: last 7 days vs trailing 4-week baseline → `new_signal` / `spike` / `severity_escalation` / `stable`, returning every count, share and report id used |
 | `monitor/digest.py` | What-changed digest ("New kind of problem: N · More serious than usual: M · Reports suddenly increased: K") rendered to Markdown + JSON with a fixed advisory footer; no LLM |
 | `monitor/fetch.py` | Capped, whole-day incremental openFDA fetch (reuses the existing ingestion pipeline) |
+| `monitor/live_check.py`, `dashboard/live_check_ui.py` | **Check any device type**: any FDA product code, live from openFDA counts (about 5 requests, no report text, nothing stored, no model), the same four detector rules (a 300-case test checks both agree), and the openFDA query behind every figure. Cached 6 h per code; 10 checks per browser session |
 | `monitor/__init__.py` | Package exports |
 | `cli.py` → `maudesignal monitor` | New CLI command: optional capped fetch → detect → `digests/YYYY-MM-DD.{md,json}` |
 | `scripts/seed_demo_data.py` | Keyless seeding of the demo DB from live openFDA via the existing ingestion + catalog code |
@@ -47,7 +48,7 @@ Everything under `src/maudesignal/copilot/`, `src/maudesignal/gate/` and
 
 Small changes to pre-existing modules made during the event (to support the
 monitor, or bugs it exposed): `Database.list_event_facts` / `max_date_received`
-/ `list_product_codes`; `OpenFDAClient.count_by_date_received`;
+/ `list_product_codes`; `OpenFDAClient.count_by_date_received`, `count_field`, `total` (and the public `build_query` alias);
 `config.openfda_api_key_from_env`; fix — openFDA date-range queries were sent
 with `+` encoded as `%2B` (HTTP 500); fix — live openFDA `event_type` is a
 string, so ingestion had been storing single letters (`"m"`, `"i"`); fix —
