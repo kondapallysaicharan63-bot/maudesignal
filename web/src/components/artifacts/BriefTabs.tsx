@@ -73,7 +73,7 @@ export function BriefTab({
           </li>
         ))}
       </ul>
-      {b.footer && <p className="ws-wrap mt-4 text-[13px] leading-snug text-ink-3">{b.footer}</p>}
+      {b.footer && <p className="ws-wrap mt-4 text-[14px] leading-snug text-ink-3">{b.footer}</p>}
     </article>
   )
 }

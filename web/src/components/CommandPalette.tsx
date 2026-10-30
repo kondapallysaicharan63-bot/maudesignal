@@ -36,7 +36,7 @@ export function CommandPalette({ open, onClose, onWorkflow, workflows }: Props) 
   }
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-ink/40 px-3 pt-[12vh]"
+      className="ws-scrim z-50 flex items-start justify-center px-3 pt-[12vh]"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
       <div

@@ -178,9 +178,8 @@ describe('first screen and the placeholder wording', () => {
     expect(html).toContain(`Checked ${sweep.meta.generated_utc.slice(0, 10)}`)
     expect(html.indexOf('AI device sweep')).toBeLessThan(html.indexOf('Workflows'))
     expect(html).not.toMatch(SOON_RE)
-    // the composer: no menu, no placeholder wording, chips are 3 + a "more" chip
-    expect(raw).toContain('placeholder="Type a question to find the closest recorded answer"')
-    expect(html).toMatch(/2 more/)
+    // the composer: one input row ("Ask a question"), the recorded questions are a type-ahead list, no menu
+    expect(raw).toContain('placeholder="Ask a question"')
     expect(html).not.toMatch(/GitHub|Google Drive|Upload file|Connected sources/)
   })
 })

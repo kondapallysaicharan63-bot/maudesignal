@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import threadsJson from '../public/data/threads.json'
-import { closestThread, tokens } from './match'
+import { closestThread, suggestThreads, tokens } from './match'
 import type { Thread } from './types'
 
 const threads = threadsJson.threads as unknown as Thread[]
@@ -33,6 +33,16 @@ describe('closestThread over the recorded questions', () => {
   it('never opens a greeting clip', () => {
     for (const q of ['good evening Alistair', 'welcome we are glad you stopped by'])
       expect(best(q)).toBeNull()
+  })
+
+  it('suggests stored questions while typing, including a half-typed word', () => {
+    const ids = (q: string) => suggestThreads(q, threads).map((t) => t.id)
+    expect(ids('recal')).toContain('10-recalls')
+    expect(ids('what chan')[0]).toBe('01-what-changed')
+    expect(ids('')).toEqual([])
+    expect(ids('zzzzqq')).toEqual([])
+    // every suggestion is a stored answer, never a greeting
+    for (const t of suggestThreads('good evening welcome', threads)) expect(t.tool_steps.length + t.sentences.length).toBeGreaterThan(0)
   })
 
   it('tokenises without stop words and plural endings', () => {

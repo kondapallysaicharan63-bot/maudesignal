@@ -26,7 +26,7 @@ function RunView({ run, open }: { run: AuditRun; open: boolean }) {
               <span className="ms-num text-ink-3">#{e.seq}</span> {e.action}{' '}
               <span className="ms-code">{e.entity_id}</span>
             </p>
-            <p className="ws-wrap m-0 text-[13px] text-ink-3">
+            <p className="ws-wrap m-0 text-[14px] text-ink-3">
               {e.actor} · {e.ts}
             </p>
             <p className="ms-code m-0 break-all">
@@ -57,7 +57,7 @@ export function AuditTab({ audit, activeRun, generatedUtc }: { audit: Audit; act
         )}
       </div>
       {audit.notes.map((n) => (
-        <p key={n} className="ws-wrap mt-2 text-[13px] text-ink-3">
+        <p key={n} className="ws-wrap mt-2 text-[14px] text-ink-3">
           {n}
         </p>
       ))}

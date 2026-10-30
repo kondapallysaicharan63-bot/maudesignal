@@ -60,7 +60,7 @@ function Result({ r, cached, advisory }: { r: LiveCheckResult; cached: boolean; 
           ))}
         </ul>
       </details>
-      <p className="mt-2 text-[13px] leading-snug text-ink-3">
+      <p className="mt-2 text-[14px] leading-snug text-ink-3">
         openFDA lags real time by weeks, so "this week" is the latest week it has. A triage signal for a person to review, not
         a finding.
         {advisory ? ` ${advisory}` : ''}
@@ -154,7 +154,7 @@ export function LiveCheckView() {
           {busy ? 'Checking…' : 'Check device type'}
         </button>
       </form>
-      <p className="mt-2 text-[13px] text-ink-3">
+      <p className="mt-2 text-[14px] text-ink-3">
         {used} of {SESSION_CHECKS} checks used in this browser session; a code checked in the last 6 hours is shown from this
         browser without asking again.
       </p>

@@ -57,7 +57,7 @@ export function PdfView({ url, title }: { url: string; title: string }) {
         <p className="ms-banner ms-banner--err m-0">The PDF could not be shown here ({state.msg}). Use the links below.</p>
       )}
       <div ref={host} className="max-h-[56dvh] overflow-y-auto rounded-md border border-rule bg-sunk p-2" />
-      {state.kind === 'ok' && <p className="m-0 mt-1 text-[13px] text-ink-3">{state.pages} pages</p>}
+      {state.kind === 'ok' && <p className="m-0 mt-1 text-[14px] text-ink-3">{state.pages} pages</p>}
     </div>
   )
 }

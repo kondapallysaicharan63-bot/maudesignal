@@ -255,7 +255,7 @@ export function ThreadView({ t, ev, siblings, onThread, highlight = null, withhe
       {snapshot && (
         <p className="m-0">
           <span className="ws-pill bg-warning-soft text-warning">{snapshot}</span>
-          <span className="ml-2 text-[13px] text-ink-3">Recorded against the demo database, not this week's openFDA data.</span>
+          <span className="ml-2 text-[14px] text-ink-3">Recorded against the demo database, not this week's openFDA data.</span>
         </p>
       )}
       {siblings.length > 1 && (
@@ -283,7 +283,7 @@ export function ThreadView({ t, ev, siblings, onThread, highlight = null, withhe
             <p className="ws-wrap m-0">
               <span className="font-semibold">Heard:</span> &ldquo;{heardWords.slice(0, hn).join(' ')}&rdquo;
             </p>
-            <p className="m-0 mt-2 flex flex-wrap items-center gap-2 text-[13px] text-ink-3">
+            <p className="m-0 mt-2 flex flex-wrap items-center gap-2 text-[14px] text-ink-3">
               <button
                 className="ws-icon-btn !h-8 border-rule-strong"
                 aria-label="Replay the recorded transcript"
@@ -325,7 +325,7 @@ export function ThreadView({ t, ev, siblings, onThread, highlight = null, withhe
         ))}
       </ul>
       <FirstPass t={t} />
-      <p className="m-0 text-[13px] text-ink-3">
+      <p className="m-0 text-[14px] text-ink-3">
         Stored run · {t.model} · {t.recorded_at_utc.slice(0, 10)} · replayed from a recording, no live model call
         {snapshot ? ` · ${snapshot.toLowerCase()}` : ''}
       </p>

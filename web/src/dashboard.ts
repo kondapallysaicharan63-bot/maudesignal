@@ -150,6 +150,44 @@ export function workflowThreads(data: WorkspaceData, id: string): Thread[] {
   return group ? data.threads.threads.filter((t) => group.thread_ids.includes(t.id)) : []
 }
 
+export interface RecentItem {
+  id: string
+  kind: 'thread' | 'run'
+  label: string
+  /** Sentences shown (all passed the gate). */
+  shown: number
+  withheld: number
+  /** "$0.012" or "not recorded". */
+  cost: string
+}
+
+/** The workflow's recorded answers (newest first): stored threads, or stored investigation runs. */
+export function recentItems(workflow: WorkflowId, data: WorkspaceData): RecentItem[] {
+  if (workflow === 'weekly-investigator' || workflow === 'recall-sweep')
+    return data.investigations.investigations
+      .filter((r) => r.kind === workflow)
+      .sort((a, b) => b.recorded_at_utc.localeCompare(a.recorded_at_utc))
+      .map((r) => ({
+        id: r.id,
+        kind: 'run' as const,
+        label: `${r.product_code} · ${r.recorded_at_utc.slice(0, 10)}`,
+        shown: r.sentences.filter((s) => s.status === 'pass').length,
+        withheld: r.sentences.filter((s) => s.status === 'block').length,
+        cost: 'not recorded',
+      }))
+  return workflowThreads(data, workflow)
+    .filter(isAnswer)
+    .sort((a, b) => b.recorded_at_utc.localeCompare(a.recorded_at_utc))
+    .map((t) => ({
+      id: t.id,
+      kind: 'thread' as const,
+      label: t.question,
+      shown: t.sentences.filter((s) => s.status === 'pass').length,
+      withheld: t.sentences.filter((s) => s.status === 'block').length,
+      cost: typeof t.usage?.cost_usd === 'number' ? usd(t.usage.cost_usd) : 'not recorded',
+    }))
+}
+
 /** A greeting has no tool step and no claim, so it is not an answer. */
 const isAnswer = (t: Thread) => t.tool_steps.length > 0 || t.sentences.some((s) => s.claims.length > 0)
 

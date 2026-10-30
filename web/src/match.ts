@@ -48,3 +48,27 @@ export function closestThread(text: string, threads: Thread[]): Match | null {
   if (best.hits < 2 && q.length > 2) return null
   return { thread: best.thread, score: best.score }
 }
+
+const isAnswer = (t: Thread): boolean => t.tool_steps.length > 0 || t.sentences.some((s) => s.claims.length > 0)
+
+/**
+ * Type-ahead: recorded questions that share a word with what has been typed (the word being typed counts
+ * when a question word starts with it), best first. Nothing is generated; every suggestion is a stored question.
+ */
+export function suggestThreads(text: string, threads: Thread[], limit = 6): Thread[] {
+  const q = tokens(text)
+  const last = text.toLowerCase().match(/[a-z0-9]+$/)?.[0] ?? ''
+  if (q.length === 0 && !last) return []
+  const scored: { t: Thread; hits: number }[] = []
+  for (const t of threads) {
+    if (!isAnswer(t)) continue
+    const words = tokens(t.question)
+    const hit = (w: string) => words.includes(w) || (w === last && last.length >= 2 && words.some((x) => x.startsWith(last)))
+    const hits = new Set([...q, ...(last.length >= 2 ? [last] : [])].filter(hit)).size
+    if (hits > 0) scored.push({ t, hits })
+  }
+  return scored
+    .sort((a, b) => b.hits - a.hits)
+    .slice(0, limit)
+    .map((x) => x.t)
+}

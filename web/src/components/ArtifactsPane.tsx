@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { auditRunFor, capaDrafts, protocolFor, TABS, type TabId } from '../artifacts'
 import { Icon } from '../icons'
 import { FULLSCREEN } from '../layout'
-import { ExpandButton } from './PanelBar'
+import { Crumbs, ExpandButton } from './PanelBar'
 import type { Thread, WorkspaceData } from '../types'
 import { AuditTab, CapaTab, ProtocolTab } from './artifacts/AuditCapaProtocol'
 import { BriefTab, DigestTab } from './artifacts/BriefTabs'
@@ -39,6 +39,10 @@ export function ArtifactsPane({ open, data, tab, onTab, thread, produced, briefD
   useEffect(() => {
     document.getElementById('artifact-panel')?.scrollTo({ top: 0 })
   }, [tab, vision?.nonce])
+  // The selected tab scrolls into view in the single-row strip.
+  useEffect(() => {
+    document.getElementById(`tab-${tab}`)?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
+  }, [tab, open, expanded])
   const activeRun = auditRunFor(data.audit, thread)?.run_label ?? null
 
   return (
@@ -61,40 +65,48 @@ export function ArtifactsPane({ open, data, tab, onTab, thread, produced, briefD
       ].join(' ')}
     >
       <div className="flex shrink-0 items-center justify-between border-b border-rule px-4 py-2">
-        <h2 className="m-0 text-[16px] font-semibold">Artifacts</h2>
+        {expanded ? <Crumbs panel="artifacts" /> : <h2 className="m-0 text-[17px] font-semibold">Artifacts</h2>}
         <span className="flex items-center">
           <ExpandButton panel="artifacts" expanded={expanded} onToggle={onToggleExpand} />
-          <button className="ws-icon-btn" onClick={onClose} aria-label="Close artifacts">
+          <button className="ws-icon-btn min-h-11 min-w-11" onClick={onClose} aria-label="Close artifacts">
             <Icon name="close" />
           </button>
         </span>
       </div>
-      <div role="tablist" aria-label="Artifacts" className="flex shrink-0 flex-wrap gap-x-0.5 border-b border-rule px-2">
-        {TABS.map((t) => {
-          const selected = t.id === tab
-          return (
-            <button
-              key={t.id}
-              role="tab"
-              id={`tab-${t.id}`}
-              aria-selected={selected}
-              aria-controls="artifact-panel"
-              onClick={() => onTab(t.id)}
-              className={[
-                'relative min-h-11 shrink-0 whitespace-nowrap border-b-2 px-2.5 text-[15px]',
-                selected ? 'border-ink font-semibold text-ink' : 'border-transparent text-ink-2 hover:text-ink',
-              ].join(' ')}
-            >
-              {t.label}
-              {produced.includes(t.id) && (
-                <>
-                  <span className="ws-dot ml-1.5 inline-block align-middle" aria-hidden="true" />
-                  <span className="sr-only"> (created by this thread)</span>
-                </>
-              )}
-            </button>
-          )
-        })}
+      <div className="relative shrink-0 border-b border-rule">
+        <div role="tablist" aria-label="Artifacts" className="ws-tabstrip gap-x-1 px-2" data-testid="tabstrip">
+          {TABS.map((t) => {
+            const selected = t.id === tab
+            const made = produced.includes(t.id)
+            return (
+              <button
+                key={t.id}
+                role="tab"
+                id={`tab-${t.id}`}
+                aria-selected={selected}
+                aria-controls="artifact-panel"
+                onClick={() => onTab(t.id)}
+                className={[
+                  'relative flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 text-[17px]',
+                  selected ? 'border-ink font-semibold text-ink' : 'border-transparent text-ink-2 hover:text-ink',
+                ].join(' ')}
+              >
+                {t.label}
+                {made && (
+                  <>
+                    <span className="rounded-xs bg-accent-soft px-1.5 text-[14px] font-semibold leading-snug text-accent" aria-hidden="true">
+                      New
+                    </span>
+                    <span className="sr-only"> (created by this thread)</span>
+                  </>
+                )}
+              </button>
+            )
+          })}
+        </div>
+        {produced.length > 0 && (
+          <p className="m-0 px-4 pb-1 text-[14px] text-ink-2">New: made by the question on screen.</p>
+        )}
       </div>
       <div
         id="artifact-panel"

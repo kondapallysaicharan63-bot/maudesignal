@@ -117,17 +117,25 @@ export function ChatPane(p: Props) {
       <p>That thread is not in the stored data.</p>
     )
   }
+  // The recorded voice questions (threads.json `voice`) that are answers, not greetings.
+  const voiceThread = data.threads.threads.find((t) => t.voice && (t.tool_steps.length > 0 || t.sentences.some((x) => x.claims.length > 0)))
   return (
     <main
-      className={['flex min-w-0 flex-1 flex-col bg-paper', p.expanded ? FULLSCREEN : ''].join(' ')}
+      className={['flex min-h-0 min-w-0 flex-1 flex-col bg-paper', p.expanded ? FULLSCREEN : ''].join(' ')}
       aria-label={p.view.kind === 'new' ? 'Home' : 'Chat'}
       data-expanded={p.expanded}
     >
       <PanelBar title={p.view.kind === 'new' ? 'Home' : 'Chat'} panel="main" expanded={p.expanded} onToggle={p.onToggleExpand} />
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-8 md:py-8">
+      <div className="ws-fade-bottom min-h-0 flex-1 overflow-y-auto px-4 py-4 md:px-8 md:py-6">
         <div className={['mx-auto pb-16', p.view.kind === 'new' ? 'max-w-6xl' : 'max-w-3xl'].join(' ')}>{body}</div>
       </div>
-      <Composer threads={data.threads.threads} onThread={p.onThread} viewKey={viewKey(p.view)} chips={p.view.kind === 'new'} />
+      <Composer
+        threads={data.threads.threads}
+        onThread={p.onThread}
+        viewKey={viewKey(p.view)}
+        onCamera={data.vision.labels.length > 0 ? () => p.onWorkflow('vision') : undefined}
+        onMic={voiceThread ? () => p.onThread(voiceThread.id) : undefined}
+      />
     </main>
   )
 }

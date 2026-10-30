@@ -5,7 +5,7 @@ import type { WorkflowId, WorkspaceData } from '../types'
 import { AlertList } from './AlertBell'
 import { MetricsChart } from './MetricsChart'
 import { Pill } from './artifacts/common'
-import { SweepCard } from './SweepCard'
+import { SweepFlagged, SweepHead } from './SweepCard'
 
 /** The newest daily brief's flags, labelled as a demo snapshot with its dates. */
 function FlagsCard({ data, onBrief }: { data: WorkspaceData; onBrief: (date: string) => void }) {
@@ -18,7 +18,7 @@ function FlagsCard({ data, onBrief }: { data: WorkspaceData; onBrief: (date: str
         <p className="mt-2 text-ink-2">No daily brief is stored yet.</p>
       ) : (
         <>
-          <p className="ms-banner ms-banner--warn mt-2 text-[15px]">
+          <p className="ms-banner ms-banner--warn mt-2 text-[16px]">
             <span className="ws-wrap">
               <strong>{snapshot}.</strong> Brief <span className="ms-num">{b.date}</span>, week{' '}
               <span className="ms-num">
@@ -83,21 +83,25 @@ export function Dashboard({
   return (
     <div>
       <p className="ms-kicker m-0">Postmarket surveillance · FDA-cleared AI/ML devices</p>
-      <h1 className="t-headline m-0 mt-2" style={{ fontSize: 'clamp(26px, 5vw, 36px)' }}>
+      <h1 className="t-headline m-0 mt-1" style={{ fontSize: 'clamp(24px, 4vw, 32px)' }}>
         Dashboard
       </h1>
-      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-5">
-        <div className="xl:col-span-3">
-          <SweepCard sweep={data.sweep} />
+      {/* Phone: headline, alerts, flags, then the rest. Desktop: headline | alerts on top, flagged codes | this week's flags below. */}
+      <div className="mt-3 grid grid-cols-1 gap-4 xl:grid-cols-5">
+        <div className="xl:col-span-3 xl:row-start-1">
+          <SweepHead sweep={data.sweep} compact />
         </div>
-        <div className="flex flex-col gap-4 xl:col-span-2">
-          <article className="rounded-md border border-rule-strong bg-surface p-4" aria-label="Alerts">
-            <p className="ms-kicker m-0">Alerts · {alerts.length}</p>
-            <div className="mt-2">
-              <AlertList items={alerts} onOpen={onAlert} />
-            </div>
-          </article>
+        <article className="order-first rounded-md border border-rule-strong bg-surface p-4 xl:order-none xl:col-span-2 xl:row-start-1" aria-label="Alerts">
+          <p className="ms-kicker m-0">Alerts · {alerts.length}</p>
+          <div className="mt-1">
+            <AlertList items={alerts} onOpen={onAlert} />
+          </div>
+        </article>
+        <div className="xl:col-span-2 xl:col-start-4 xl:row-start-2">
           <FlagsCard data={data} onBrief={onBrief} />
+        </div>
+        <div className="xl:col-span-3 xl:col-start-1 xl:row-start-2">
+          <SweepFlagged sweep={data.sweep} />
         </div>
       </div>
       <section className="mt-4 rounded-md border border-rule-strong bg-surface p-4" aria-label="Recorded runs">
@@ -115,12 +119,12 @@ export function Dashboard({
               className="h-full w-full rounded-md border border-rule bg-surface p-4 text-left hover:border-rule-strong"
             >
               <span className="t-title block">{w.title}</span>
-              <span className="mt-1 block text-[15px] leading-snug text-ink-2">{w.blurb}</span>
+              <span className="mt-1 block text-[16px] leading-snug text-ink-2">{w.blurb}</span>
             </button>
           </li>
         ))}
       </ul>
-      <p className="mt-6 max-w-xl text-[15px] text-ink-2">
+      <p className="mt-6 max-w-xl text-[16px] text-ink-2">
         Answers here are written from stored public records (MAUDE reports, recalls, 510(k)s, PubMed, MHRA (UK) alerts). Each sentence is
         checked before it is shown; a sentence with no factual claim is marked as such.
       </p>

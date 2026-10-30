@@ -15,7 +15,7 @@ import sweep from '../public/data/sweep.json'
 import threads from '../public/data/threads.json'
 import vision from '../public/data/vision.json'
 import { TABS } from './artifacts'
-import { AlertBell } from './components/AlertBell'
+import { AlertBell, AlertList } from './components/AlertBell'
 import { ArtifactsPane } from './components/ArtifactsPane'
 import { ChatPane } from './components/ChatPane'
 import { MetricsChart } from './components/MetricsChart'
@@ -152,6 +152,16 @@ describe('alert bell', () => {
     expect(items.some((a) => a.productCode === 'LLZ' && a.source === 'brief')).toBe(false)
   })
 
+  it('the list rows are links with a chevron, 17px text and a 44px target; the label is "Alerts"', () => {
+    const items = alertItems(SW, BR)
+    const html = renderToStaticMarkup(<AlertList items={items} onOpen={() => {}} />)
+    expect(html).toContain('aria-label="Alerts"')
+    expect(html).toContain('min-h-11')
+    expect(html).toContain('text-[17px]')
+    expect(html).toContain('<svg')
+    expect(html).toContain('whitespace-nowrap')
+  })
+
   it('shows the count in a red badge and in the aria-label', () => {
     const items = alertItems(SW, BR)
     const raw = renderToStaticMarkup(<AlertBell items={items} onOpen={() => {}} />)
@@ -181,7 +191,7 @@ describe('expand and collapse', () => {
     expect(open).toContain('aria-label="Expand artifacts to full screen"')
     expect(open).toContain('aria-pressed="false"')
     const shut = renderToStaticMarkup(<ExpandButton panel="artifacts" expanded onToggle={() => {}} />)
-    expect(shut).toContain('aria-label="Collapse artifacts (Esc)"')
+    expect(shut).toContain('aria-label="Back: collapse artifacts (Esc)"')
     expect(shut).toContain('aria-pressed="true"')
   })
 
@@ -196,12 +206,23 @@ describe('expand and collapse', () => {
     expect(renderToStaticMarkup(chat('new', false))).not.toContain('fixed inset-0')
   })
 
-  it('the artifacts tab row wraps instead of scrolling sideways', () => {
+  it('the artifacts tabs are one 44px row with no visible scrollbar and 17px text', () => {
     const html = renderToStaticMarkup(artifacts(false))
     const strip = /<div role="tablist"[^>]*class="([^"]*)"/.exec(html) ?? /class="([^"]*)"[^>]*role="tablist"/.exec(html)
-    expect(strip?.[1]).toContain('flex-wrap')
-    expect(strip?.[1]).not.toContain('overflow-x')
+    expect(strip?.[1]).toContain('ws-tabstrip')
+    expect(strip?.[1]).not.toContain('flex-wrap')
+    expect(html).toContain('h-11 shrink-0')
+    expect(html).toContain('text-[17px]')
     expect(TABS.length).toBe(7)
+  })
+
+  it('an expanded panel offers a labelled Back button and a trail to Home', () => {
+    const html = text(renderToStaticMarkup(artifacts(true)))
+    expect(html).toContain('Back')
+    expect(html).toContain('Home')
+    expect(html).toContain('Artifacts')
+    const btn = renderToStaticMarkup(<ExpandButton panel="mini" expanded onToggle={() => {}} />)
+    expect(btn).toContain('min-h-11')
   })
 })
 
@@ -213,13 +234,17 @@ describe('home dashboard and mini-dashboards', () => {
     expect(html).toContain('Demo snapshot')
     expect(html).toContain(BR[0].date)
     expect(html).toContain(`Alerts · ${alertItems(SW, BR).length}`)
-    for (const t of ['Answers per run', 'Gate pass rate', 'Cost per run', 'Speed per run']) expect(html).toContain(t)
+    for (const t of ['Answers per run', 'Gate pass rate', 'Cost per run']) expect(html).toContain(t)
+    expect(html).toContain('Speed per run: Not recorded')
   })
 
   it('speed says "not recorded" because no stored run has a duration', () => {
     expect(runMetrics(TH).every((r) => r.durationS === null)).toBe(true)
     const html = text(renderToStaticMarkup(<MetricsChart threads={TH} />))
     expect(html).toContain('Not recorded: the stored runs do not include how long each took.')
+    // no empty Speed card: it is one line of text, not a chart card
+    expect(html).not.toContain('Speed per run, scale')
+    expect(renderToStaticMarkup(<MetricsChart threads={TH} />)).not.toContain('<figcaption class="text-[17px] font-semibold">Speed per run')
   })
 
   it('run metrics are the stored numbers', () => {

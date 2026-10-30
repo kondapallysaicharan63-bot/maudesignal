@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { producedTabs, relatedTabs, type TabId } from './artifacts'
 import { alertItems, type AlertItem } from './dashboard'
 import { ArtifactsPane } from './components/ArtifactsPane'
 import { ChatPane, type View, type WithheldNav } from './components/ChatPane'
 import { CommandPalette } from './components/CommandPalette'
 import { Header } from './components/Header'
-import { MiniPane } from './components/MiniDashboard'
+import { MiniPane, miniTitle } from './components/MiniDashboard'
+import { PanelNav } from './components/PanelBar'
 import { Sidebar } from './components/Sidebar'
 import type { VisionSel } from './components/VisionWorkflow'
 import { withheldSentences } from './claims'
@@ -14,7 +15,8 @@ import { useReadBriefs, useTheme } from './storage'
 import { collapseOnEscape, toggleExpanded, type PanelId } from './layout'
 import type { WorkflowId } from './types'
 
-const isDesktop = () => window.matchMedia('(min-width: 1024px)').matches
+// A thread opens the artifacts pane by itself only on a wide screen; on a narrower one the chat keeps the room.
+const isWide = () => window.matchMedia('(min-width: 1600px)').matches
 
 export default function App() {
   const { data, error } = useWorkspaceData()
@@ -57,6 +59,20 @@ export default function App() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
+  }, [expanded])
+
+  // The browser's Back button collapses an expanded panel (one history entry per expansion).
+  const wasExpanded = useRef(false)
+  useEffect(() => {
+    const onPop = () => setExpanded(null)
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
+  useEffect(() => {
+    if (expanded && !wasExpanded.current) window.history.pushState({ msExpanded: true }, '')
+    else if (!expanded && wasExpanded.current && (window.history.state as { msExpanded?: boolean } | null)?.msExpanded)
+      window.history.back()
+    wasExpanded.current = !!expanded
   }, [expanded])
 
   const withheldRefs = useMemo(() => (data ? withheldSentences(data.threads.threads) : []), [data])
@@ -106,6 +122,12 @@ export default function App() {
     if (a.source === 'brief') openBrief(a.date)
     else openWorkflow('ai-sweep')
   }
+  const goHome = () => {
+    setExpanded(null)
+    setWIdx(null)
+    setView({ kind: 'new' })
+    setDrawer(false)
+  }
   const toggle = (p: PanelId) => setExpanded((cur) => toggleExpanded(cur, p))
 
   const thread = (view.kind === 'thread' && data?.threads.threads.find((t) => t.id === view.id)) || null
@@ -120,7 +142,7 @@ export default function App() {
     const first = related[0]
     if (first) {
       setTab(first)
-      if (isDesktop()) setArtifacts(true)
+      if (isWide()) setArtifacts(true)
     }
   }, [threadKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -154,6 +176,7 @@ export default function App() {
       : null
 
   return (
+    <PanelNav.Provider value={{ onHome: goHome, workflow: activeWorkflow ? miniTitle(activeWorkflow) : null }}>
     <div className="flex h-full flex-col">
       <Header
         manifest={data?.manifest ?? null}
@@ -200,6 +223,8 @@ export default function App() {
                 data={data}
                 expanded={expanded === 'mini'}
                 onToggleExpand={() => toggle('mini')}
+                onThread={openThread}
+                onRun={openRun}
               />
             )}
             <ChatPane
@@ -242,5 +267,6 @@ export default function App() {
         workflows={visibleWorkflows(runs)}
       />
     </div>
+    </PanelNav.Provider>
   )
 }
