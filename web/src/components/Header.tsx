@@ -11,6 +11,7 @@ interface Props {
   onToggleArtifacts: () => void
   onTheme: () => void
   onPalette: () => void
+  onFeedback: () => void
   /** Opens the thread holding the first withheld sentence (omitted when none is stored). */
   onWithheld?: () => void
 }
@@ -39,6 +40,15 @@ export function Header(p: Props) {
           <Icon name="search" />
           <span className="hidden text-[15px] md:inline">Search</span>
           <kbd className="ms-code hidden rounded-xs border border-rule px-1 md:inline">Ctrl K</kbd>
+        </button>
+        <button
+          className="ws-icon-btn"
+          onClick={p.onFeedback}
+          aria-haspopup="dialog"
+          aria-label="Give feedback"
+        >
+          <Icon name="chat" />
+          <span className="text-[15px]">Feedback</span>
         </button>
         <button
           className="ws-icon-btn"

@@ -3,13 +3,22 @@ import { producedTabs, relatedTabs, type TabId } from './artifacts'
 import { ArtifactsPane } from './components/ArtifactsPane'
 import { ChatPane, type View, type WithheldNav } from './components/ChatPane'
 import { CommandPalette } from './components/CommandPalette'
+import { FeedbackDialog } from './components/FeedbackDialog'
 import { Header } from './components/Header'
 import { Sidebar } from './components/Sidebar'
 import type { VisionSel } from './components/VisionWorkflow'
 import { withheldSentences } from './claims'
 import { useWorkspaceData, visibleWorkflows } from './data'
+import { apiBaseOrNull, resolveRef, sendVisit, sessionStore } from './feedback'
 import { useReadBriefs, useTheme } from './storage'
 import type { WorkflowId } from './types'
+
+const API_BASE = apiBaseOrNull(import.meta.env.VITE_MAUDESIGNAL_API_BASE)
+
+/** A short name for the open view, e.g. "thread:06-trap"; sent with feedback and visit pings. */
+export function pageName(view: View): string {
+  return view.kind === 'new' ? 'new' : `${view.kind}:${view.id}`
+}
 
 const isDesktop = () => window.matchMedia('(min-width: 1024px)').matches
 
@@ -23,6 +32,22 @@ export default function App() {
   const [collapsed, setCollapsed] = useState(false) // desktop sidebar
   const [artifacts, setArtifacts] = useState(isDesktop)
   const [palette, setPalette] = useState(false)
+  const [feedback, setFeedback] = useState(false)
+  // ?r=CODE from the person's link, kept for the session (other URL parameters are left alone).
+  const [refCode] = useState(() => resolveRef(window.location.search, sessionStore()))
+  const page = pageName(view)
+  useEffect(() => {
+    sendVisit(
+      API_BASE,
+      refCode,
+      page,
+      sessionStore(),
+      {
+        beacon: typeof navigator.sendBeacon === 'function' ? (u, b) => navigator.sendBeacon(u, b) : undefined,
+        fetcher: (u, init) => fetch(u, init),
+      },
+    )
+  }, [page, refCode])
   // The newest real data (the AI device sweep) is what the artifacts pane opens on.
   const [tab, setTab] = useState<TabId>('digest')
   // Which withheld sentence the top strip opened (index into the list of all withheld sentences).
@@ -139,6 +164,7 @@ export default function App() {
         onToggleArtifacts={() => setArtifacts((o) => !o)}
         onTheme={next}
         onPalette={() => setPalette(true)}
+        onFeedback={() => setFeedback(true)}
         onWithheld={withheldRefs.length > 0 ? () => openWithheld(0) : undefined}
       />
       {data && (
@@ -188,6 +214,13 @@ export default function App() {
           />
         </div>
       )}
+      <FeedbackDialog
+        open={feedback}
+        onClose={() => setFeedback(false)}
+        apiBase={API_BASE}
+        refCode={refCode}
+        page={page}
+      />
       <CommandPalette
         open={palette}
         onClose={() => setPalette(false)}
