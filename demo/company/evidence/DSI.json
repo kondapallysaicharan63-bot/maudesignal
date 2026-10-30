@@ -1,7 +1,7 @@
 {
  "schema_version": "1.0",
  "product_code": "DSI",
- "fetched_utc": "2026-10-30T03:07:00Z",
+ "fetched_utc": "2026-10-30T04:54:37Z",
  "window": {
   "date_from": "20260904",
   "date_to": "20261030",
@@ -788,9 +788,9 @@
    {
     "recall_number": "Z-1707-2017",
     "event_number": "76656",
-    "recalling_firm": "Philips Electronics North  America Corporation",
-    "product_description": "Philips IntelliVue MX4O WLAN Patient Wearable Monitor\nProduct: 865352\nExchange part (service numbers):\n453564615311 TELE PWM,802.lla/b/g,ECG only, US only\n453564615331 TELE PWM,802.1 1 a/b/g,ECG&Sp02, US only\n\nProduct Usage:\nIndicated for use by health care professionals whenever there is a need for monitoring the physiological parameters of patients. Intended for monitoring and recording of, and to generate alarms for, multiple physiological parameters of adults and pediatrics in hospital environments and during transport inside hospitals. The MX4O is to be used primarily as a traditional telemetry medical device. It connects to the IntelliVue Information Center by way of a wireless network. When the MX4O is connected the IntelliVue Information Center the IntelliVue Information Center provides the primary patient monitoring and alarming function. The MX4O does not automatically provide local monitoring or alarming when connected to the Information Center.",
-    "reason_for_recall": "Philips lntelliVue MX4O WLAN Patient Wearable Monitor may not automatically switch to\nMonitor Mode with audible alarms when association with central monitoring system is unsuccessful [incomplete]",
+    "recalling_firm": "Philips Electronics North America Corporation",
+    "product_description": "Philips IntelliVue MX4O WLAN Patient Wearable Monitor\r\nProduct: 865352\r\nExchange part (service numbers):\r\n453564615311 TELE PWM,802.lla/b/g,ECG only, US only\r\n453564615331 TELE PWM,802.1 1 a/b/g,ECG&Sp02, US only\r\n\r\nProduct Usage:\r\nIndicated for use by health care professionals whenever there is a need for monitoring the physiological parameters of patients. Intended for monitoring and recording of, and to generate alarms for, multiple physiological parameters of adults and pediatrics in hospital environments and during transport inside hospitals. The MX4O is to be used primarily as a traditional telemetry medical device. It connects to the IntelliVue Information Center by way of a wireless network. When the MX4O is connected the IntelliVue Information Center the IntelliVue Information Center provides the primary patient monitoring and alarming function. The MX4O does not automatically provide local monitoring or alarming when connected to the Information Center.",
+    "reason_for_recall": "Philips lntelliVue MX4O WLAN Patient Wearable Monitor may not automatically switch to\r\nMonitor Mode with audible alarms when association with central monitoring system is unsuccessful [incomplete]",
     "recall_status": "Terminated",
     "date_initiated": "20170306",
     "cfres_id": "153762"
@@ -799,7 +799,7 @@
     "recall_number": "Z-2343-2016",
     "event_number": "74549",
     "recalling_firm": "Spacelabs Healthcare Inc",
-    "product_description": "91496 Ultraview SL Command Module, Options A, B, C, and I.\n\nOption A: ECG/Respiration, SpO2, Temperature x2 & adult/neonate NIBP.\n\nOption B: ECG/Respiration, Invasive Pressure x2, SpO2, Temperature x2 & adult/neonate NIBP.\n\nOption C: ECG/Respiration, Invasive Pressure x4, SpO2, Cardiac Output, Temperature x2 & adult/neonate NIBP.\n\nOption I: SpO2, Temperature x2, & adult/neonate NIBP.",
+    "product_description": "91496 Ultraview SL Command Module, Options A, B, C, and I.\r\n\r\nOption A: ECG/Respiration, SpO2, Temperature x2 & adult/neonate NIBP.\r\n\r\nOption B: ECG/Respiration, Invasive Pressure x2, SpO2, Temperature x2 & adult/neonate NIBP.\r\n\r\nOption C: ECG/Respiration, Invasive Pressure x4, SpO2, Cardiac Output, Temperature x2 & adult/neonate NIBP.\r\n\r\nOption I: SpO2, Temperature x2, & adult/neonate NIBP.",
     "reason_for_recall": "The firm has received multiple reports of the Non-Invasive Blood Pressure (NIBP) parameter becoming non-functional with an associated message (No Reading). In addition, there is one of the following three error messages: Inflate Error, HW Error, or No Data.",
     "recall_status": "Terminated",
     "date_initiated": "20160701",

@@ -1,7 +1,7 @@
 {
  "schema_version": "1.0",
  "product_code": "MWI",
- "fetched_utc": "2026-10-30T03:07:06Z",
+ "fetched_utc": "2026-10-30T04:54:42Z",
  "window": {
   "date_from": "20260904",
   "date_to": "20261030",
@@ -1297,8 +1297,8 @@
     "recall_number": "Z-2878-2026",
     "event_number": "99475",
     "recalling_firm": "GE Medical Systems Information Technologies Inc",
-    "product_description": "GE Healthcare Portrait Core Services SW V 1.2.0, REF 5700592",
-    "reason_for_recall": "Portrait Core Services Software version V1.2.0 Security Vulnerability",
+    "product_description": "GE Healthcare Portrait Core Services SW V 1.2.0, REF 5700592. patient monitoring system",
+    "reason_for_recall": "A software vulnerability may allow unauthorized persons to gain privileged access to the device, which could result in loss of patient monitoring, missed patient alarms, and/or access to Protected Health Information (PHI).",
     "recall_status": "Open, Classified",
     "date_initiated": "20260710",
     "cfres_id": "221631"
@@ -1637,7 +1637,7 @@
     "recall_number": "Z-0082-2018",
     "event_number": "78465",
     "recalling_firm": "Invivo Corporation",
-    "product_description": "Xper Flex Cardio PhysioMonitoring system \r\nThe Xper Flex Cardio physiomonitoring system is used to facilitate invasive investigation of heart and vascular disease when non-invasive indicators warrant such. Its users, responsible to interpret the data made available, will be professional health care providers, such as physicians, registered nurses, cardiovascular technicians, radiology technicians, and other clinical health care providers. The Xper Flex Cardio physiomonitoring system may be used to display and analyze surface ECG (electrocardiogram), respiration, invasive pressure, Sp02 (Pulse Oximetry), End Tidal C02 (carbon dioxide) and non-invasive pressure waveforms; surface body temperature and thermal cardiac output curves. The system is capable of processing/analyzing information such as multi-channel ECG signals and displaying a graphical ST segment map. The Xper Flex Cardio physiomonitoring system makes measurements that assist physicians and other clinicians to evaluate a patient's overall cardiopulmonary performance, conductive system and general vascular status.",
+    "product_description": "Xper Flex Cardio PhysioMonitoring system \nThe Xper Flex Cardio physiomonitoring system is used to facilitate invasive investigation of heart and vascular disease when non-invasive indicators warrant such. Its users, responsible to interpret the data made available, will be professional health care providers, such as physicians, registered nurses, cardiovascular technicians, radiology technicians, and other clinical health care providers. The Xper Flex Cardio physiomonitoring system may be used to display and analyze surface ECG (electrocardiogram), respiration, invasive pressure, Sp02 (Pulse Oximetry), End Tidal C02 (carbon dioxide) and non-invasive pressure waveforms; surface body temperature and thermal cardiac output curves. The system is capable of processing/analyzing information such as multi-channel ECG signals and displaying a graphical ST segment map. The Xper Flex Cardio physiomonitoring system makes measurements that assist physicians and other clinicians to evaluate a patient's overall cardiopulmonary performance, conductive system and general vascular status.",
     "reason_for_recall": "Intermittent communication between the host system and the Flex Cardio",
     "recall_status": "Terminated",
     "date_initiated": "20170811",

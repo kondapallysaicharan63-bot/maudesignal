@@ -1,0 +1,11 @@
+{
+ "schema_version": "1.0",
+ "product_code": "QIH",
+ "fetched_utc": "2026-10-30T04:54:33Z",
+ "classification": {
+  "device_name": "Automated Radiological Image Processing Software",
+  "device_class": "2",
+  "regulation_number": "892.2050",
+  "query_url": "https://api.fda.gov/device/classification.json?search=product_code:QIH&limit=1"
+ }
+}
