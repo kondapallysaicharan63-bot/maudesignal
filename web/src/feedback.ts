@@ -193,13 +193,33 @@ export const MESSAGES = {
   server: 'Could not send; please try again later',
 } as const
 
+/** The part of a fetch Response this module reads. */
+export interface FetchLike {
+  ok: boolean
+  status: number
+  json?: () => Promise<unknown>
+}
+
+/** The server's short 422 message when it sent one, else the fixed patient-data text. */
+async function serverMessage(res: FetchLike): Promise<string> {
+  try {
+    const body = (await res.json?.()) as { detail?: unknown; message?: unknown } | null
+    for (const v of [body?.detail, body?.message]) {
+      if (typeof v === 'string' && v.trim() !== '' && v.length <= 200) return v.trim()
+    }
+  } catch {
+    /* fall through */
+  }
+  return MESSAGES.patient_data
+}
+
 /** Sends the feedback. Only a 2xx answer is reported as sent. */
 export async function submitFeedback(
   apiBase: string | null,
   form: FeedbackForm,
   ref: string | null,
   page: string,
-  fetcher: (url: string, init: RequestInit) => Promise<{ ok: boolean; status: number }>,
+  fetcher: (url: string, init: RequestInit) => Promise<FetchLike>,
   now: () => Date = () => new Date(),
 ): Promise<SubmitResult> {
   const payload = buildPayload(form, ref, page, now)
@@ -213,7 +233,9 @@ export async function submitFeedback(
       credentials: 'omit',
     })
     if (res.ok) return { ok: true }
-    if (res.status === 422) return { ok: false, kind: 'patient_data', message: MESSAGES.patient_data }
+    if (res.status === 422) {
+      return { ok: false, kind: 'patient_data', message: await serverMessage(res) }
+    }
     if (res.status === 429) return { ok: false, kind: 'rate_limited', message: MESSAGES.rate_limited }
     return { ok: false, kind: 'server', message: MESSAGES.server }
   } catch {

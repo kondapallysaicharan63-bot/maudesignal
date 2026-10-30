@@ -129,6 +129,12 @@ counted from the demo database tables. MHRA is labelled "MHRA (UK)", context onl
 {"id": "ai-sweep", "label": "AI device sweep", "cron": "23 12 * * 1", "last_result": {"date": "<sweep generated_utc>", "flagged": 6, "checked": 181}}]`
 Read from the workflow files and the newest outputs; no GitHub API call.
 
+## Feedback and visit pings
+
+`/v1/visit` fires only when a valid ref code (`?r=CODE`, `^[A-Za-z0-9_-]{1,32}$`) is present, once per
+view per session. Visitors without a ref code are not pinged. The ref code is removed from the URL
+before it is sent to Web Analytics.
+
 ## Tests
 
 - Track B: `tests/unit/test_export_web_data.py` runs the exporter into a temp dir and

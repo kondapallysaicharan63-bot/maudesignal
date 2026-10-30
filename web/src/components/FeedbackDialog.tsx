@@ -39,6 +39,18 @@ export function FeedbackDialog({ open, onClose, apiBase, refCode, page }: Props)
     }
   }, [open])
 
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        onClose()
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
   if (!open) return null
   const set = <K extends keyof FeedbackForm>(k: K, v: FeedbackForm[K]) => setForm((f) => ({ ...f, [k]: v }))
   const sent = result?.ok === true
