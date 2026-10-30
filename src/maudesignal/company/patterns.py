@@ -6,9 +6,11 @@ No model is used. Two deterministic sources of groups:
    reused as recorded (label and report ids); the count is recomputed from the listed ids.
 2. Keyword rules (``RULES`` below, version ``RULES_VERSION``): a report joins a group when
    one of its MAUDE ``product_problems`` equals a rule problem term (case-insensitive) OR
-   its narrative text matches the rule's regular expression. A report can join several
-   groups. A group needs ``MIN_PATTERN_REPORTS`` reports to be a pattern. Groups are
-   listed largest first, ties by label.
+   its narrative holds a strong problem phrase of the rule (never a bare topic word such as
+   "update", "install", "hang" or "password"). Weaker hint words only pick a quote, and only
+   from a report that joined. These groups are NOT a reviewed classification; every surface
+   says so. A report can join several groups. A group needs ``MIN_PATTERN_REPORTS`` reports
+   to be a pattern. Groups are listed largest first, ties by label.
 
 Every pattern count is checked by the claim gate (``GroupCountClaim``: the listed ids are
 recounted and must be real reports of the code) and every quote by a ``QuoteClaim``
@@ -19,7 +21,7 @@ from __future__ import annotations
 
 import json
 import re
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -42,18 +44,37 @@ from maudesignal.gate import (
     verify_claim,
 )
 
-RULES_VERSION = "1.0"
+RULES_VERSION = "2.0"
+KIND_INVESTIGATOR = "investigator"
+KIND_KEYWORD = "keyword"
+
+#: Caption for any surface that lists keyword groups.
+KEYWORD_CAPTION = (
+    "Keyword groups are deterministic keyword matches on MAUDE problem terms and narrative "
+    "phrases. They are not a reviewed classification: a person must read the reports."
+)
 
 
 @dataclass(frozen=True)
 class Rule:
-    """One keyword rule: MAUDE problem terms and/or a narrative regular expression."""
+    """One keyword rule.
+
+    ``problems``: MAUDE ``product_problems`` terms; a report with one of them joins.
+    ``phrase_re``: a strong narrative phrase (a problem phrase, never a bare topic word such
+    as "update" or "password"); a report whose narrative matches it joins too.
+    ``hint_re``: weaker words, used ONLY to pick a quote from a report that joined on a
+    problem term. A report never joins on a hint, and a quote is never taken from a report
+    that did not join.
+    """
 
     rule_id: str
     label: str
     problems: tuple[str, ...]
-    text_re: str
+    phrase_re: str
+    hint_re: str = ""
 
+
+_FAIL = r"(?:unable to|not able to|fail\w* to|cannot|could not|can ?not|did not|does not|won't)"
 
 RULES: tuple[Rule, ...] = (
     Rule(
@@ -61,52 +82,63 @@ RULES: tuple[Rule, ...] = (
         "Images or data fail to load, transfer or send",
         (
             "failure to transmit record",
-            "no display/image",
             "intermittent communication failure",
             "loss of data",
         ),
-        r"\b(unable|not able|fail\w*|cannot|could not) (to )?(load|fetch|retrieve|transfer|"
-        r"transmit|send|import|export|save)\b",
+        rf"\b{_FAIL} (?:\w+ ){{0,2}}(?:load|fetch|retrieve|transfer|transmit|send|import|"
+        r"export|save)\b",
+        r"\b(?:transmi\w*|transfer\w*|communicat\w*|data loss|lost data)\b",
     ),
     Rule(
         "freeze-crash",
         "Software freezes, crashes or does not start",
         ("application program freezes or fails to launch",),
-        r"\b(freez\w*|froze|frozen|crash\w*|hang\w*|unresponsive|error state|fail\w* to "
-        r"(launch|start|open))\b",
+        r"\b(?:freez(?:es|ing)|froze|frozen|unresponsive|(?:system|software|application|"
+        r"program|unit|console|workstation|computer|monitor|screen) (?:has |had )?"
+        r"(?:crash(?:es|ed|ing)?|hung|hangs|hanging)|"
+        r"(?:fail\w*|unable|not able) to (?:launch|start up|boot|start the (?:software|"
+        r"application|system)))\b",
+        r"\b(?:freez\w*|froze|frozen|crash\w*|launch\w*|unresponsive)\b",
     ),
     Rule(
         "wrong-result",
         "Result or measurement is incorrect or imprecise",
         (
             "incorrect, inadequate or imprecise result or readings",
+            "incorrect measurement",
             "application program problem: parameter calculation error",
         ),
-        r"\b(incorrect\w*|inaccurate\w*|wrong|miscalculat\w*|mismeasur\w*|false (positive|"
-        r"negative)|missed|overestimat\w*|underestimat\w*)\b",
+        r"\b(?:(?:incorrect|inaccurate|erroneous|wrong)(?: [\w%]+){0,2} "
+        r"(?:results?|readings?|measurements?|values?|calculations?|rhythms?|detections?|"
+        r"diagnos[ie]s|output)|false (?:positive|negative)s?|miscalculat\w*|mismeasur\w*|"
+        r"(?:over|under)-?estimat\w*)\b",
+        r"\b(?:incorrect\w*|inaccura\w*|imprecis\w*|calculat\w*)\b",
     ),
     Rule(
         "display-quality",
-        "Image display problem or artifact",
+        "Display problem or image artifact",
         (
             "image display error/artifact",
             "poor quality image",
             "display or visual feedback problem",
             "no display/image",
         ),
-        r"\b(artifacts?|blurr\w*|distort\w*|not display\w*|display error|missing image|"
-        r"blank (screen|image))\b",
+        r"\b(?:image artifacts?|artifacts? (?:on|in|appear\w*|visible)|blurr(?:y|ed|ing)|"
+        r"distorted (?:image|display|screen)|(?:not|no longer|failed to) display(?:ed|ing)?|"
+        r"display error|missing image|blank (?:screen|image|display))\b",
+        r"\b(?:artifacts?|display\w*|image quality|blurr\w*|distort\w*)\b",
     ),
     Rule(
         "patient-data",
         "Patient data, record or label mix-up",
         (
             "patient data problem",
-            "data problem",
             "wrong label",
         ),
-        r"\b(wrong patient|mismatch\w*|mislabel\w*|wrong (label|study|patient)|patient data|"
-        r"mixed up|incorrect patient)\b",
+        r"\b(?:wrong patient|incorrect patient|different patient|another patient|mislabel\w*|"
+        r"patient (?:data|records?)\W+(?:\w+ ){0,2}(?:merged|mismatch\w*|mixed)|"
+        r"mismatched patient|mixed[- ]up|wrong (?:label|study))\b",
+        r"\b(?:patient (?:data|records?)|merge\w*|mismatch\w*|label\w*)\b",
     ),
     Rule(
         "install-update",
@@ -116,13 +148,23 @@ RULES: tuple[Rule, ...] = (
             "installation-related problem",
             "computer operating system problem",
         ),
-        r"\b(install\w*|upgrad\w*|updat\w*|compatib\w*)\b",
+        r"\b(?:(?:fail\w*|unable|unsuccessful\w*|errors?|problems?|issues?)"
+        r"(?: (?:to|with|during|while|in|on))? (?:the )?(?:software |firmware )?"
+        r"(?:install\w*|updat\w*|upgrad\w*)|"
+        r"(?:after|following|during) (?:the |a |an )?(?:recent )?(?:software |firmware |"
+        r"system )?(?:install(?:ation)?|update|upgrade)\b(?! of)|"
+        r"incompatib\w*|compatibility (?:issue|problem|error)s?)\b",
+        r"\b(?:install\w*|updat\w*|upgrad\w*|operating system|compatib\w*)\b",
     ),
     Rule(
         "access-security",
         "Log-in, access or security problem",
         ("computer system security problem",),
-        r"\b(cyber\w*|security|unauthori[sz]ed|password|log ?in|logon|access denied)\b",
+        r"\b(?:(?:unable|not able|fail\w*|cannot|could not|can ?not|unsuccessful\w*) "
+        r"(?:to )?log ?(?:in|on)|log ?(?:in|on) (?:failure|problem|issue|error)s?|"
+        r"unauthori[sz]ed (?:access|user)|cyber\w*|access denied|locked out|"
+        r"security (?:breach|vulnerabilit\w*|incident))\b",
+        r"\b(?:security|cyber\w*|log ?in|access)\b",
     ),
 )
 
@@ -157,6 +199,14 @@ class Pattern:
     quotes_withheld: int
     first_received: str | None = None
     last_received: str | None = None
+    kind: str = KIND_INVESTIGATOR
+
+    @property
+    def display_label(self) -> str:
+        """Label as shown: a keyword group says it is an unreviewed keyword match."""
+        if self.kind == KIND_KEYWORD:
+            return f"Keyword match (unreviewed): {self.label}"
+        return self.label
 
 
 @dataclass(frozen=True)
@@ -199,12 +249,32 @@ class CodePatterns:
 # ── grouping ─────────────────────────────────────────────────────────────────
 
 
+def joined_by_problem(rule: Rule, report: EvidenceReport) -> bool:
+    """True when one of the report's MAUDE problem terms is a problem term of the rule."""
+    return bool({p.strip().lower() for p in report.product_problems} & set(rule.problems))
+
+
+def joined_by_phrase(rule: Rule, report: EvidenceReport) -> bool:
+    """True when the narrative holds one of the rule's strong problem phrases."""
+    return bool(report.text) and re.search(rule.phrase_re, report.text, re.IGNORECASE) is not None
+
+
 def rule_matches(rule: Rule, report: EvidenceReport) -> bool:
-    """True when the report's problem terms or narrative match the rule."""
-    problems = {p.strip().lower() for p in report.product_problems}
-    if problems & set(rule.problems):
-        return True
-    return bool(re.search(rule.text_re, report.text, re.IGNORECASE)) if report.text else False
+    """True when the report joins the rule (problem term or strong phrase, never a bare word)."""
+    return joined_by_problem(rule, report) or joined_by_phrase(rule, report)
+
+
+def quote_regex(rule: Rule, report: EvidenceReport) -> re.Pattern[str] | None:
+    """The regex a quote of ``report`` must match, or None when the report did not join.
+
+    A report that joined on a strong phrase is quoted on that phrase. A report that joined
+    only on its MAUDE problem term may also be quoted on the rule's weaker hint words.
+    """
+    if joined_by_phrase(rule, report):
+        return re.compile(rule.phrase_re, re.IGNORECASE)
+    if joined_by_problem(rule, report) and rule.hint_re:
+        return re.compile(f"(?:{rule.phrase_re})|(?:{rule.hint_re})", re.IGNORECASE)
+    return None
 
 
 def group_by_rules(
@@ -273,9 +343,17 @@ def _label_regex(label: str) -> re.Pattern[str] | None:
     return re.compile("|".join(re.escape(w) for w in words), re.IGNORECASE)
 
 
+def _constant(rx: re.Pattern[str] | None) -> Callable[[EvidenceReport], re.Pattern[str] | None]:
+    return lambda _report: rx
+
+
+def _by_rule(rule: Rule) -> Callable[[EvidenceReport], re.Pattern[str] | None]:
+    return lambda report: quote_regex(rule, report)
+
+
 def _gated_quotes(
     members: list[EvidenceReport],
-    keyword_re: re.Pattern[str] | None,
+    quote_re: Callable[[EvidenceReport], re.Pattern[str] | None],
     store: EvidenceStore,
 ) -> tuple[tuple[Quote, ...], int, int]:
     """Up to ``MAX_QUOTES`` gate-passed quotes from distinct reports; passed, withheld counts."""
@@ -284,7 +362,7 @@ def _gated_quotes(
     for rep in members:
         if len(quotes) >= MAX_QUOTES:
             break
-        text = pick_quote(rep, keyword_re)
+        text = pick_quote(rep, quote_re(rep))
         if text is None:
             continue
         verdict = verify_claim(QuoteClaim(quote=text, report_id=rep.report_id), store)
@@ -300,16 +378,17 @@ def _pattern(
     label: str,
     basis: str,
     members: list[EvidenceReport],
-    keyword_re: re.Pattern[str] | None,
+    quote_re: Callable[[EvidenceReport], re.Pattern[str] | None],
     store: EvidenceStore,
     product_code: str,
+    kind: str,
 ) -> Pattern:
     ids = tuple(dict.fromkeys(r.report_id for r in members))
     verdict = verify_claim(
         GroupCountClaim(product_code=product_code, label=label, report_ids=ids, value=len(ids)),
         store,
     )
-    quotes, passed, withheld = _gated_quotes(members, keyword_re, store)
+    quotes, passed, withheld = _gated_quotes(members, quote_re, store)
     dates = sorted(r.date_received for r in members if r.date_received)
     return Pattern(
         pattern_id=pattern_id,
@@ -325,6 +404,7 @@ def _pattern(
         quotes_withheld=withheld,
         first_received=dates[0] if dates else None,
         last_received=dates[-1] if dates else None,
+        kind=kind,
     )
 
 
@@ -390,9 +470,10 @@ def build_code_patterns(ev: CodeEvidence, investigations: Path | None = None) ->
                     label[:1].upper() + label[1:],
                     f"weekly investigator group, recorded run {run_id}; count recomputed",
                     members,
-                    _label_regex(label),
+                    _constant(_label_regex(label)),
                     store,
                     code,
+                    KIND_INVESTIGATOR,
                 )
             )
     if not patterns:
@@ -403,9 +484,10 @@ def build_code_patterns(ev: CodeEvidence, investigations: Path | None = None) ->
                     rule.label,
                     f"keyword rules v{RULES_VERSION} ({rule.rule_id})",
                     members,
-                    re.compile(rule.text_re, re.IGNORECASE),
+                    _by_rule(rule),
                     store,
                     code,
+                    KIND_KEYWORD,
                 )
             )
     patterns.sort(key=lambda p: (-p.count, p.label))

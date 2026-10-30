@@ -198,7 +198,9 @@ codes LLZ, QIH, MYN, POK) and `demo/investigations/*weekly-llz.json` (reused gro
                                         "date_initiated": "20260905", "excerpt": "verbatim, gate-checked" | null,
                                         "url": "https://www.accessdata.fda.gov/..." | null}]} | null,
                 "gate_totals": {"pass": 11, "block": 0}},
-   "patterns": [{"id": "LLZ-inv-1", "label": "...", "basis": "weekly investigator group, recorded run ...; count recomputed | keyword rules v1.0 (rule-id)",
+   "patterns": [{"id": "LLZ-inv-1", "label": "...", "kind": "investigator|keyword",
+                 "display_label": "label, or \"Keyword match (unreviewed): label\" when kind is keyword",
+                 "basis": "weekly investigator group, recorded run ...; count recomputed | keyword rules v2.0 (rule-id)",
                  "count": 3, "report_ids": ["50503662"], "first_received": "20260825", "last_received": "20260828",
                  "quotes": [{"report_id": "50503662", "text": "verbatim sentence", "url": "https://www.accessdata.fda.gov/.../detail.cfm?mdrfoi__id=50503662"}],
                  "links": [{"label": "MAUDE report 50503662", "url": "..."}],
@@ -213,6 +215,13 @@ codes LLZ, QIH, MYN, POK) and `demo/investigations/*weekly-llz.json` (reused gro
 
 Rules:
 
+- `kind: "keyword"` groups are deterministic keyword matches (a MAUDE problem term or a strong
+  narrative phrase), **not a reviewed classification**. Show `display_label` and the caption
+  "Keyword groups are deterministic keyword matches ... a person must read the reports." Quotes
+  are taken only from reports that joined the group.
+- Show `recalls` as "`stored` stored of `matched_total` matched" when `matched_total > stored`.
+  `window` is the query window for fetched codes; the received-date range of the stored
+  reports is the min and max `date_received` over `patterns[].first_received/last_received`.
 - `recalls.matched_total` is the openFDA match total for fetched codes and `null` for codes read from the demo database (which holds only a stored subset; use `stored`).
 
 - The banner string is shown on every screen that renders this file. The words "safe",

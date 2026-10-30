@@ -12,6 +12,7 @@ from pathlib import Path
 
 from maudesignal.company.build import NOT_FETCHED, load_company, status_detail
 from maudesignal.company.constants import BANNER, COMPANY_NAME
+from maudesignal.company.patterns import KEYWORD_CAPTION
 from maudesignal.company.status import StatusError
 
 
@@ -22,6 +23,7 @@ class ChecklistPattern:
     label: str
     count: int
     basis: str
+    kind: str = "investigator"
 
 
 @dataclass(frozen=True)
@@ -94,7 +96,9 @@ def checklist_for(
                 status_detail=status_detail(s) if s else "",
                 set_by=s.actor if s else "",
                 status_date=s.date_label if s else "",
-                patterns=tuple(ChecklistPattern(p.label, p.count, p.basis) for p in d.patterns),
+                patterns=tuple(
+                    ChecklistPattern(p.display_label, p.count, p.basis, p.kind) for p in d.patterns
+                ),
                 evidence_note=d.evidence_note
                 or ("no pattern found by the stored rules" if not d.patterns else None),
             )
@@ -108,7 +112,9 @@ def checklist_for(
         note=(
             "Statuses are set by the named simulated people shown, never by this tool. "
             f"A device with “{NOT_FETCHED}” has no stored real reports yet, so no "
-            "pattern is shown for it. Pattern counts come from the demo database and the "
+            "pattern is shown for it. "
+            + KEYWORD_CAPTION
+            + " Pattern counts come from the demo database and the "
             "fetched openFDA evidence files, not from this pack's database."
         ),
     )

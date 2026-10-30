@@ -149,7 +149,11 @@ def load_company(
             patterns[code] = build_code_patterns(evidence[code], investigations)
         ev = evidence[code]
         dt = d.get("device_type") or {}
-        name = dt.get("name") or ev.classification_name
+        # a classification name fetched from openFDA wins over a name stored earlier
+        from_cls = bool(ev.classification_name) and (ev.classification_source or "").startswith(
+            "openFDA device classification"
+        )
+        name = ev.classification_name if from_cls else (dt.get("name") or ev.classification_name)
         devices.append(
             DeviceView(
                 device_id=d["device_id"],
@@ -158,8 +162,16 @@ def load_company(
                 product_code=code,
                 owner=d["owner"],
                 device_type_name=name,
-                device_type_source=dt.get("source") or ev.classification_source,
-                device_type_query_url=dt.get("query_url") or ev.classification_query_url,
+                device_type_source=(
+                    ev.classification_source
+                    if from_cls
+                    else dt.get("source") or ev.classification_source
+                ),
+                device_type_query_url=(
+                    ev.classification_query_url
+                    if from_cls
+                    else dt.get("query_url") or ev.classification_query_url
+                ),
                 sweep=d.get("sweep"),
                 status=latest.get(d["device_id"]),
                 history=history.get(d["device_id"], []),
@@ -201,6 +213,8 @@ def _pattern_json(p: Pattern) -> dict[str, Any]:
     return {
         "id": p.pattern_id,
         "label": p.label,
+        "kind": p.kind,
+        "display_label": p.display_label,
         "basis": p.basis,
         "count": p.count,
         "report_ids": list(p.report_ids),

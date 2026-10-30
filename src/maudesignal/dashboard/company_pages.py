@@ -25,7 +25,8 @@ from maudesignal.company.constants import (
     S_TESTING,
     company_dir,
 )
-from maudesignal.company.patterns import Pattern
+from maudesignal.company.evidence import ORIGIN_FETCHED, CodeEvidence
+from maudesignal.company.patterns import KEYWORD_CAPTION, KIND_KEYWORD, Pattern, RecallSummary
 from maudesignal.monitor.digest import CHANGE_LABELS
 
 _CHIP = {
@@ -77,7 +78,11 @@ _TABLE_CSS = (
     "border-bottom:1px solid var(--rule-strong)}"
     ".ms-company-table td{padding:8px 10px;vertical-align:top;"
     "border-bottom:1px solid var(--rule)}"
-    ".ms-company-table td:first-child{white-space:nowrap}</style>"
+    ".ms-company-table td:first-child{white-space:nowrap}"
+    "@media (max-width:600px){"
+    ".ms-company-table .ms-col-by,.ms-company-table .ms-col-id{display:none}"
+    ".ms-company-table{font-size:13px}"
+    ".ms-company-table th,.ms-company-table td{padding:6px 4px}}</style>"
 )
 
 
@@ -96,26 +101,28 @@ def render_table(view: CompanyView) -> None:
         patterns = len(d.patterns) if d.evidence.available else "evidence not fetched yet"
         rows.append(
             "<tr>"
-            f"<td>{html.escape(d.device_id)}</td>"
+            f"<td class='ms-col-id'>{html.escape(d.device_id)}</td>"
             f"<td><b>{html.escape(d.name)}</b><br>"
             f"<span class='ms-fn'>model {html.escape(d.model)}</span></td>"
             f"<td><b>{html.escape(d.product_code)}</b><br>"
             f"<span class='ms-fn'>{type_name}</span></td>"
             f"<td>{chip(s.to_status) if s else 'no status yet'}</td>"
-            f"<td>{who}<br><span class='ms-fn'>{when}</span></td>"
+            f"<td class='ms-col-by'>{who}<br><span class='ms-fn'>{when}</span></td>"
             f"<td>{patterns}</td>"
             "</tr>"
         )
     st.html(
         f'{_TABLE_CSS}<div style="overflow-x:auto"><table class="ms-company-table">'
-        "<thead><tr><th>ID</th><th>Device (fictional)</th><th>Product code and type</th>"
-        "<th>Status</th><th>Set by, date</th><th>Real patterns</th></tr></thead>"
+        "<thead><tr><th class='ms-col-id'>ID</th><th>Device (fictional)</th>"
+        "<th>Product code and type</th>"
+        "<th>Status</th><th class='ms-col-by'>Set by, date</th><th>Patterns</th></tr></thead>"
         f"<tbody>{''.join(rows)}</tbody></table></div>"
     )
 
 
 def _render_pattern(p: Pattern) -> None:
-    st.markdown(f"**{p.label}** · {p.count} real reports")
+    noun = "reports" if p.count != 1 else "report"
+    st.markdown(f"**{p.display_label}** · {p.count} real {noun}")
     st.caption(
         f"{p.basis}. Count check: {p.gate_reason}. Quotes shown {p.quotes_passed}, "
         f"withheld {p.quotes_withheld}."
@@ -128,6 +135,31 @@ def _render_pattern(p: Pattern) -> None:
     st.markdown("Reports: " + " · ".join(shown) + (f" · and {more} more" if more > 0 else ""))
 
 
+def _received_range(ev: CodeEvidence) -> str:
+    """Min and max ``date_received`` of the stored reports (never the query window)."""
+    dates = sorted(r.date_received for r in ev.reports if r.date_received)
+    if not dates:
+        return "dates not stored"
+    return f"received {_ymd(dates[0])} to {_ymd(dates[-1])}"
+
+
+def _reports_line(d: DeviceView) -> str:
+    ev, cp = d.evidence, d.code_patterns
+    line = f"{cp.report_count} stored MAUDE reports, {_received_range(ev)}"
+    if ev.origin == ORIGIN_FETCHED and ev.window_from:
+        line += f" (query window {_ymd(ev.window_from)} to {_ymd(ev.window_to or '')})"
+    return f"{line}. Count check: {cp.report_count_reason}."
+
+
+def _recalls_count(rc: RecallSummary) -> str:
+    """``100 stored of 300 matched (latest 100)`` when openFDA matched more than is stored."""
+    if rc.matched_total is not None and rc.matched_total > rc.stored:
+        base = f"{rc.stored} stored of {rc.matched_total} matched (latest {rc.stored})"
+    else:
+        base = str(rc.stored)
+    return f"{base} (count check: {rc.gate_reason})"
+
+
 def _render_evidence(d: DeviceView) -> None:
     ev, cp = d.evidence, d.code_patterns
     st.markdown("##### Real problem evidence for this product code")
@@ -137,22 +169,18 @@ def _render_evidence(d: DeviceView) -> None:
             "No count, pattern or quote is shown for this code until the FDA data is fetched."
         )
         return
-    window = f"{ev.window_from} to {ev.window_to}" if ev.window_from else "dates not stored"
-    st.markdown(
-        f"{cp.report_count} stored MAUDE reports, received {window} "
-        f"(count check: {cp.report_count_reason})."
-    )
+    st.markdown(_reports_line(d))
     for label, url in ev.queries:
         st.markdown(f"- [{label}]({url})")
     if not d.patterns:
         st.info("No group of 2 or more reports matches the stored rules for this code.")
+    elif any(p.kind == KIND_KEYWORD for p in d.patterns):
+        st.caption(KEYWORD_CAPTION)
     for p in d.patterns:
         _render_pattern(p)
     rc = cp.recalls
     if rc is not None:
-        st.markdown(
-            f"**Recalls on file for this code:** {rc.stored} (count check: {rc.gate_reason})"
-        )
+        st.markdown(f"**Recalls on file for this code:** {_recalls_count(rc)}")
         for r in rc.latest:
             link = f" · [FDA recall page]({r.url})" if r.url else ""
             ex = f": {r.excerpt}" if r.excerpt else ""

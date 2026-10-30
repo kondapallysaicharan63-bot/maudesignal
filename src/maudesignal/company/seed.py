@@ -58,27 +58,85 @@ def _sim(name: str) -> str:
     return f"{name} {_SIM}"
 
 
-#: (device id, status, who, (y, m, d), details, note), in time order.
-HISTORY: tuple[tuple[str, str, str, tuple[int, int, int], dict[str, str], str], ...] = (
-    ("DMC-01", S_NEEDS_REVIEW, "Mara Ellison", (2026, 10, 12), {"owner": _sim("Mara Ellison")}, ""),
-    ("DMC-02", S_NEEDS_REVIEW, "Devon Park", (2026, 10, 12), {"owner": _sim("Devon Park")}, ""),
-    ("DMC-04", S_MONITORING, "Tomas Reyes", (2026, 10, 14), {}, "nothing open (sample note)"),
-    ("DMC-05", S_MONITORING, "Lena Osei", (2026, 10, 14), {}, "nothing open (sample note)"),
-    ("DMC-10", S_MONITORING, "Ravi Menon", (2026, 10, 14), {}, "nothing open (sample note)"),
-    ("DMC-11", S_MONITORING, "Elin Strand", (2026, 10, 14), {}, "nothing open (sample note)"),
+#: (device id, status, who, (y, m, d, hour UTC), details, note), in time order.
+#: Every entry that cites a real pattern is dated after that evidence exists: the fetched
+#: files are from 2026-10-30 03:07Z and the weekly-investigator run is 20261030T010942Z.
+#: Entries before that cite no evidence (a device is registered, or put under review).
+HISTORY: tuple[tuple[str, str, str, tuple[int, int, int, int], dict[str, str], str], ...] = (
+    (
+        "DMC-01",
+        S_NEEDS_REVIEW,
+        "Mara Ellison",
+        (2026, 10, 12, 15),
+        {"owner": _sim("Mara Ellison")},
+        "",
+    ),
+    (
+        "DMC-02",
+        S_NEEDS_REVIEW,
+        "Devon Park",
+        (2026, 10, 12, 15),
+        {"owner": _sim("Devon Park")},
+        "",
+    ),
+    ("DMC-04", S_MONITORING, "Tomas Reyes", (2026, 10, 14, 15), {}, "nothing open (sample note)"),
+    ("DMC-05", S_MONITORING, "Lena Osei", (2026, 10, 14, 15), {}, "nothing open (sample note)"),
+    ("DMC-11", S_MONITORING, "Elin Strand", (2026, 10, 14, 15), {}, "nothing open (sample note)"),
+    (
+        "DMC-03",
+        S_NEEDS_REVIEW,
+        "Iris Tanaka",
+        (2026, 10, 20, 15),
+        {"owner": _sim("Iris Tanaka")},
+        "",
+    ),
+    (
+        "DMC-06",
+        S_NEEDS_REVIEW,
+        "Noor Haddad",
+        (2026, 10, 30, 9),
+        {"owner": _sim("Noor Haddad")},
+        "",
+    ),
+    (
+        "DMC-07",
+        S_NEEDS_REVIEW,
+        "Callum Brodie",
+        (2026, 10, 30, 9),
+        {"owner": _sim("Callum Brodie")},
+        "",
+    ),
+    ("DMC-08", S_NEEDS_REVIEW, "Yuki Sato", (2026, 10, 30, 9), {"owner": _sim("Yuki Sato")}, ""),
+    ("DMC-09", S_NEEDS_REVIEW, "Ana Moreau", (2026, 10, 30, 9), {"owner": _sim("Ana Moreau")}, ""),
+    (
+        "DMC-10",
+        S_NEEDS_REVIEW,
+        "Ravi Menon",
+        (2026, 10, 30, 9),
+        {"owner": _sim("Ravi Menon")},
+        "",
+    ),
     (
         "DMC-12",
         S_NEEDS_REVIEW,
         "Joss Whitaker",
-        (2026, 10, 15),
+        (2026, 10, 30, 9),
         {"owner": _sim("Joss Whitaker")},
+        "",
+    ),
+    (
+        "DMC-01",
+        S_TESTING,
+        "Mara Ellison",
+        (2026, 10, 30, 10),
+        {"owner": _sim("Mara Ellison"), "due_date": "2026-11-20"},
         "",
     ),
     (
         "DMC-02",
         S_COVERED,
         "Devon Park",
-        (2026, 10, 16),
+        (2026, 10, 30, 11),
         {
             "reference": "test report TR-104 (sample) covers the pattern "
             "'Unable to log in or connect, including server errors'"
@@ -86,36 +144,16 @@ HISTORY: tuple[tuple[str, str, str, tuple[int, int, int], dict[str, str], str], 
         "",
     ),
     (
-        "DMC-01",
-        S_TESTING,
-        "Mara Ellison",
-        (2026, 10, 19),
-        {"owner": _sim("Mara Ellison"), "due_date": "2026-11-20"},
-        "",
-    ),
-    ("DMC-03", S_NEEDS_REVIEW, "Iris Tanaka", (2026, 10, 20), {"owner": _sim("Iris Tanaka")}, ""),
-    (
-        "DMC-12",
+        "DMC-10",
         S_NOT_APPLICABLE,
-        "Joss Whitaker",
-        (2026, 10, 22),
+        "Ravi Menon",
+        (2026, 10, 30, 12),
         {
-            "reason": "our device has no user log-in function, so the pattern "
-            "'Log-in, access or security problem' does not apply (sample reason)"
+            "reason": "our device has no display of its own, so the pattern "
+            "'Display problem or image artifact' does not apply (sample reason)"
         },
         "",
     ),
-    ("DMC-06", S_NEEDS_REVIEW, "Noor Haddad", (2026, 10, 29), {"owner": _sim("Noor Haddad")}, ""),
-    (
-        "DMC-07",
-        S_NEEDS_REVIEW,
-        "Callum Brodie",
-        (2026, 10, 29),
-        {"owner": _sim("Callum Brodie")},
-        "",
-    ),
-    ("DMC-08", S_NEEDS_REVIEW, "Yuki Sato", (2026, 10, 29), {"owner": _sim("Yuki Sato")}, ""),
-    ("DMC-09", S_NEEDS_REVIEW, "Ana Moreau", (2026, 10, 29), {"owner": _sim("Ana Moreau")}, ""),
 )
 
 NOTES = (
@@ -189,14 +227,14 @@ def build_company_doc(db: Path, sweep: Path) -> dict[str, Any]:
 def build_audit_entries(device_ids: list[str]) -> list[dict[str, Any]]:
     """The scripted, chained status history."""
     entries: list[dict[str, Any]] = []
-    for device_id, status, who, (y, m, d), details, note in HISTORY:
+    for device_id, status, who, (y, m, d, hour), details, note in HISTORY:
         append_status(
             entries,
             device_ids=device_ids,
             device_id=device_id,
             to_status=status,
             actor=_sim(who),
-            ts=utc(y, m, d),
+            ts=utc(y, m, d, hour),
             details=details,
             note=note,
         )

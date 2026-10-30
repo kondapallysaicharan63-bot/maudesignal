@@ -194,3 +194,27 @@ def test_main_writes_a_file_per_code_and_reports_failures(
     monkeypatch.setattr(mod, "fetch_code", boom)
     assert mod.main(["--codes", "DSI", "--out", str(tmp_path)]) == 1
     assert not (tmp_path / "DSI.json").exists()
+
+
+def test_classification_only_file_names_the_device_type_of_a_demo_db_code(tmp_path: Path) -> None:
+    from maudesignal.company.evidence import load_demo_db_evidence
+
+    mod = _script()
+    doc = mod.fetch_classification(
+        "QIH", http_get=fake_http, now=datetime(2026, 10, 30, 8, 0, tzinfo=UTC)
+    )
+    assert doc["classification"]["device_name"] == "Test Type Name"
+    assert doc["classification"]["query_url"].endswith("search=product_code:QIH&limit=1")
+    # without the file the name is the (honestly labelled) report-derived one
+    before = load_demo_db_evidence("QIH", evidence_folder=tmp_path)
+    assert "MAUDE report" in (before.classification_source or "")
+    (tmp_path / "classification-QIH.json").write_text(json.dumps(doc), encoding="utf-8")
+    after = load_demo_db_evidence("QIH", evidence_folder=tmp_path)
+    assert after.classification_name == "Test Type Name"
+    assert (after.classification_source or "").startswith("openFDA device classification")
+    assert after.classification_query_url == doc["classification"]["query_url"]
+
+
+def test_classification_only_codes_lists_codes_without_a_stored_classification() -> None:
+    mod = _script()
+    assert mod.classification_only_codes(company_dir()) == ["QIH"]

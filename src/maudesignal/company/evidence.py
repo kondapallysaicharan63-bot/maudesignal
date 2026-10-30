@@ -176,8 +176,30 @@ def _manifest_queries(product_code: str, root: Path) -> tuple[tuple[str, str], .
     return ()
 
 
+def classification_file_path(product_code: str, folder: Path | None = None) -> Path:
+    """Where the fetch script stores the classification row of a demo-database code."""
+    return (folder or company_dir() / "evidence") / f"classification-{product_code}.json"
+
+
+def load_classification_file(
+    product_code: str, folder: Path | None = None
+) -> tuple[str, str] | None:
+    """``(device_name, query_url)`` from a fetched classification file, or None."""
+    path = classification_file_path(product_code, folder)
+    if not path.is_file():
+        return None
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    cls = doc.get("classification") or {}
+    if cls.get("device_name") and cls.get("query_url"):
+        return str(cls["device_name"]), str(cls["query_url"])
+    return None
+
+
 def load_demo_db_evidence(
-    product_code: str, db_path: Path | None = None, root: Path | None = None
+    product_code: str,
+    db_path: Path | None = None,
+    root: Path | None = None,
+    evidence_folder: Path | None = None,
 ) -> CodeEvidence:
     """Read one code's stored reports and recalls from the demo database, read-only."""
     from maudesignal.company.constants import PROJECT_ROOT
@@ -245,8 +267,13 @@ def load_demo_db_evidence(
         ).fetchone()
     finally:
         con.close()
+    fetched_cls = load_classification_file(product_code, evidence_folder)
+    cls_url = classification_url(product_code)
     if cat and cat[0]:
         cname, csource = str(cat[0]), "openFDA device classification (stored in the demo database)"
+    elif fetched_cls is not None:
+        cname, csource = fetched_cls[0], "openFDA device classification"
+        cls_url = fetched_cls[1]
     elif name_from_report:
         cname = str(name_from_report)
         csource = "device.openfda.device_name of a stored MAUDE report"
@@ -266,7 +293,7 @@ def load_demo_db_evidence(
         window_to=dates[-1] if dates else None,
         queries=queries,
         classification_name=cname,
-        classification_query_url=classification_url(product_code),
+        classification_query_url=cls_url,
         classification_source=csource,
     )
 
@@ -349,5 +376,5 @@ def load_evidence(
     """Evidence for a code: the demo database if it holds the code, else the fetched file."""
     codes = demo_db_codes(db_path) if db_codes is None else db_codes
     if product_code in codes:
-        return load_demo_db_evidence(product_code, db_path)
+        return load_demo_db_evidence(product_code, db_path, evidence_folder=evidence_folder)
     return load_fetched_evidence(product_code, evidence_folder)

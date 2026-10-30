@@ -41,8 +41,14 @@ from maudesignal.company.constants import (
     company_dir,
     contains_forbidden,
 )
-from maudesignal.company.evidence import demo_db_codes, load_demo_db_evidence
-from maudesignal.company.patterns import RULES, group_by_rules, pick_quote
+from maudesignal.company.evidence import EvidenceReport, demo_db_codes, load_demo_db_evidence
+from maudesignal.company.patterns import (
+    KEYWORD_CAPTION,
+    RULES,
+    group_by_rules,
+    pick_quote,
+    rule_matches,
+)
 from maudesignal.company.status import (
     load_audit,
     parse_entries,
@@ -406,16 +412,19 @@ def test_replay_catches_a_rule_break_even_when_hashes_are_recomputed(
 
 
 def test_tampering_with_any_field_breaks_the_chain(entries: list[dict[str, Any]]) -> None:
+    idx = next(i for i, e in enumerate(entries) if "Monitoring" in e["payload_json"])
     for field in ("actor", "ts", "action", "entity_id", "payload_json"):
         bad = copy.deepcopy(entries)
         if field == "ts":
-            bad[4]["ts"] = "2026-09-01T00:00:00+00:00"
+            bad[idx]["ts"] = "2026-09-01T00:00:00+00:00"
         elif field == "payload_json":
-            bad[4]["payload_json"] = bad[4]["payload_json"].replace("Monitoring", "Needs review")
+            bad[idx]["payload_json"] = bad[idx]["payload_json"].replace(
+                "Monitoring", "Needs review"
+            )
         else:
-            bad[4][field] = str(bad[4][field]) + "x"
+            bad[idx][field] = str(bad[idx][field]) + "x"
         ok, first_bad = verify_chain(bad)
-        assert not ok and first_bad == bad[4]["seq"], field
+        assert not ok and first_bad == bad[idx]["seq"], field
 
 
 def test_removing_or_reordering_entries_breaks_the_chain(entries: list[dict[str, Any]]) -> None:
@@ -587,3 +596,141 @@ def test_seed_is_reproducible(tmp_path: Path) -> None:
     company_seed.main(tmp_path)
     for name in ("company.json", "audit.json"):
         assert (tmp_path / name).read_text() == (company_dir() / name).read_text(), name
+
+
+# ── fix round: keyword rules, dates, display ─────────────────────────────────
+
+
+def _fetched(code: str) -> Any:
+    from maudesignal.company.evidence import load_fetched_evidence
+
+    return load_fetched_evidence(code)
+
+
+def _members(code: str, rule_id: str) -> set[str]:
+    ev = _fetched(code)
+    rule = next(r for r in RULES if r.rule_id == rule_id)
+    return {r.report_id for r in ev.reports if rule_matches(rule, r)}
+
+
+def test_bare_topic_words_do_not_join_a_group() -> None:
+    """Pins the false positives found in review (hang, updated, installed, password)."""
+    # IYN: "a plastic piece that hangs down" is not a software freeze
+    assert "50892813" not in _members("IYN", "freeze-crash")
+    # LNH: the "updated Field correction" boilerplate is not an update problem
+    ev = _fetched("LNH")
+    boiler = {r.report_id for r in ev.reports if "updated Field correction" in r.text}
+    assert boiler, "fixture changed: no 'updated Field correction' report found"
+    assert not boiler & _members("LNH", "install-update")
+    # MWI: a service password for a settings menu is not a log-in or security failure
+    pw = {r.report_id for r in _fetched("MWI").reports if "password" in r.text.lower()}
+    assert pw and not pw & _members("MWI", "access-security")
+
+
+def test_rule_phrases_need_a_problem_not_a_topic_word() -> None:
+    def rep(text: str, problems: tuple[str, ...] = ()) -> EvidenceReport:
+        return EvidenceReport("1", "XXX", None, None, None, None, None, problems, text)
+
+    by_id = {r.rule_id: r for r in RULES}
+    no = {
+        "freeze-crash": "A plastic piece hangs down from the handle.",
+        "install-update": "The updated Field correction was made available. It was installed.",
+        "access-security": "The RSE provided the password for the calibration menu.",
+    }
+    for rid, text in no.items():
+        assert not rule_matches(by_id[rid], rep(text)), rid
+    yes = {
+        "freeze-crash": "The system froze during the study.",
+        "install-update": "The site was unable to install the software.",
+        "access-security": "The user was unable to log in to the workstation.",
+    }
+    for rid, text in yes.items():
+        assert rule_matches(by_id[rid], rep(text)), rid
+    # a MAUDE problem term alone joins; a hint word alone never does
+    assert rule_matches(by_id["install-update"], rep("x", ("Installation-Related Problem",)))
+    assert not rule_matches(by_id["install-update"], rep("The device was installed."))
+
+
+def test_a_quote_comes_only_from_a_report_that_joined(view: Any) -> None:
+    for d in view.devices:
+        for p in d.patterns:
+            if p.kind != "keyword":
+                continue
+            rule = next(r for r in RULES if p.pattern_id.endswith(r.rule_id))
+            by_id = {r.report_id: r for r in d.evidence.reports}
+            for q in p.quotes:
+                assert rule_matches(rule, by_id[q.report_id]), (p.pattern_id, q.report_id)
+
+
+def test_keyword_groups_say_they_are_unreviewed(view: Any) -> None:
+    kw = [p for d in view.devices for p in d.patterns if p.kind == "keyword"]
+    assert kw
+    assert all(p.display_label.startswith("Keyword match (unreviewed): ") for p in kw)
+    inv = [p for d in view.devices for p in d.patterns if p.kind != "keyword"]
+    assert inv and all(not p.display_label.startswith("Keyword") for p in inv)
+    assert "not a reviewed classification" in KEYWORD_CAPTION
+
+
+def _evidence_time(view: Any, device: Any) -> datetime:
+    ev = device.evidence
+    if ev.fetched_utc:
+        return datetime.fromisoformat(ev.fetched_utc.replace("Z", "+00:00"))
+    run = max(p.name for p in (PROJECT_ROOT / "demo" / "investigations").glob("*weekly-*.json"))
+    return datetime.strptime(run.split("-")[0], "%Y%m%dT%H%M%SZ").replace(tzinfo=UTC)
+
+
+def test_every_status_citing_a_pattern_is_dated_after_that_evidence(view: Any) -> None:
+    cited = 0
+    for d in view.devices:
+        for e in d.history:
+            text = " ".join(str(v) for v in e.details.values())
+            labels = re.findall(r"'([^']+)'", text)
+            if not labels:
+                continue
+            cited += 1
+            assert {p.label for p in d.patterns} >= set(labels)
+            if any(p.kind == "keyword" or p.pattern_id.count("-inv-") for p in d.patterns):
+                assert e.ts >= _evidence_time(view, d), (d.device_id, e.date_label)
+    assert cited >= 2
+    # a device put under review because of newly fetched evidence is dated after the fetch
+    for d in view.devices:
+        if d.evidence.fetched_utc and d.has_patterns:
+            for e in d.history:
+                assert e.ts >= _evidence_time(view, d), (d.device_id, e.date_label)
+
+
+def test_recalls_line_shows_matched_total_and_received_range() -> None:
+    from maudesignal.company.patterns import RecallSummary
+    from maudesignal.dashboard.company_pages import _recalls_count, _received_range
+
+    more = RecallSummary(100, 300, "pass", "ok", ())
+    assert _recalls_count(more).startswith("100 stored of 300 matched (latest 100)")
+    assert _recalls_count(RecallSummary(5, None, "pass", "ok", ())).startswith("5 (")
+    assert _recalls_count(RecallSummary(5, 5, "pass", "ok", ())).startswith("5 (")
+    ev = _fetched("IYN")
+    dates = sorted(r.date_received for r in ev.reports if r.date_received)
+    rng = _received_range(ev)
+    assert dates[0][:4] in rng and f"{dates[-1][:4]}-{dates[-1][4:6]}-{dates[-1][6:]}" in rng
+
+
+def test_report_fields_match_the_pipeline_helpers() -> None:
+    from maudesignal.company.report_fields import event_fields, report_id
+    from maudesignal.ingestion.pipeline import _extract_report_id, _normalize
+
+    samples = [
+        {"mdr_report_key": "1", "event_type": "Malfunction", "device": [{"brand_name": "B"}]},
+        {"report_number": "2", "event_type": ["Injury"], "report_source_code": "Manufacturer"},
+        {
+            "mdr_report_key": "3",
+            "mdr_text": [
+                {"text_type_code": "Description of Event or Problem", "text": "a"},
+                {"text_type_code": "Additional Manufacturer Narrative", "text": "b"},
+            ],
+        },
+        {},
+    ]
+    for raw in samples:
+        assert report_id(raw) == _extract_report_id(raw)
+        norm = _normalize(raw, "XXX")
+        got = event_fields(raw)
+        assert got == {k: norm[k] for k in got}

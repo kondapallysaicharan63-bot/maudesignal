@@ -49,112 +49,112 @@
     {
       "seq": 5,
       "ts": "2026-10-14T15:00:00+00:00",
-      "actor": "Ravi Menon (simulated)",
-      "action": "company.status.register",
-      "entity_id": "DMC-10",
-      "payload_json": "{\"details\": {}, \"device_id\": \"DMC-10\", \"from_status\": null, \"note\": \"nothing open (sample note)\", \"to_status\": \"Monitoring — nothing open\"}",
-      "prev_hash": "a9bf2740451e6185f6aa30a47b66a1e1b9980d02911e33cc59a1c034a4f659bb",
-      "entry_hash": "dbad6a4dacf02db93a22c8e903a14109fb601df879ac5b977b5d85fa1d7c3db2"
-    },
-    {
-      "seq": 6,
-      "ts": "2026-10-14T15:00:00+00:00",
       "actor": "Elin Strand (simulated)",
       "action": "company.status.register",
       "entity_id": "DMC-11",
       "payload_json": "{\"details\": {}, \"device_id\": \"DMC-11\", \"from_status\": null, \"note\": \"nothing open (sample note)\", \"to_status\": \"Monitoring — nothing open\"}",
-      "prev_hash": "dbad6a4dacf02db93a22c8e903a14109fb601df879ac5b977b5d85fa1d7c3db2",
-      "entry_hash": "d6f9701c789a3820a454aff7a6740e9096bfd2fbdaa8b7221c7394bbe0e031dc"
+      "prev_hash": "a9bf2740451e6185f6aa30a47b66a1e1b9980d02911e33cc59a1c034a4f659bb",
+      "entry_hash": "fd3bd0c1a863b49fd401a0c71cfa4cdfa5112170e718ddadc220ba436b9bd965"
     },
     {
-      "seq": 7,
-      "ts": "2026-10-15T15:00:00+00:00",
-      "actor": "Joss Whitaker (simulated)",
-      "action": "company.status.register",
-      "entity_id": "DMC-12",
-      "payload_json": "{\"details\": {\"owner\": \"Joss Whitaker (simulated)\"}, \"device_id\": \"DMC-12\", \"from_status\": null, \"note\": \"\", \"to_status\": \"Needs review\"}",
-      "prev_hash": "d6f9701c789a3820a454aff7a6740e9096bfd2fbdaa8b7221c7394bbe0e031dc",
-      "entry_hash": "99f3da49aaaedaf71ea0a98e89f095ee5690f3e93ebb6d3a08b453fe98a51917"
-    },
-    {
-      "seq": 8,
-      "ts": "2026-10-16T15:00:00+00:00",
-      "actor": "Devon Park (simulated)",
-      "action": "company.status.change",
-      "entity_id": "DMC-02",
-      "payload_json": "{\"details\": {\"reference\": \"test report TR-104 (sample) covers the pattern 'Unable to log in or connect, including server errors'\"}, \"device_id\": \"DMC-02\", \"from_status\": \"Needs review\", \"note\": \"\", \"to_status\": \"Already covered\"}",
-      "prev_hash": "99f3da49aaaedaf71ea0a98e89f095ee5690f3e93ebb6d3a08b453fe98a51917",
-      "entry_hash": "8ebffd2364e07a4145dd6e5538312e85d819772f56db973b9ac60e911de1d779"
-    },
-    {
-      "seq": 9,
-      "ts": "2026-10-19T15:00:00+00:00",
-      "actor": "Mara Ellison (simulated)",
-      "action": "company.status.change",
-      "entity_id": "DMC-01",
-      "payload_json": "{\"details\": {\"due_date\": \"2026-11-20\", \"owner\": \"Mara Ellison (simulated)\"}, \"device_id\": \"DMC-01\", \"from_status\": \"Needs review\", \"note\": \"\", \"to_status\": \"Testing in progress\"}",
-      "prev_hash": "8ebffd2364e07a4145dd6e5538312e85d819772f56db973b9ac60e911de1d779",
-      "entry_hash": "e38c259c2390cfc9d787e3848ba30f54714f34c6fee29576b9b2b9da48743f37"
-    },
-    {
-      "seq": 10,
+      "seq": 6,
       "ts": "2026-10-20T15:00:00+00:00",
       "actor": "Iris Tanaka (simulated)",
       "action": "company.status.register",
       "entity_id": "DMC-03",
       "payload_json": "{\"details\": {\"owner\": \"Iris Tanaka (simulated)\"}, \"device_id\": \"DMC-03\", \"from_status\": null, \"note\": \"\", \"to_status\": \"Needs review\"}",
-      "prev_hash": "e38c259c2390cfc9d787e3848ba30f54714f34c6fee29576b9b2b9da48743f37",
-      "entry_hash": "6546f8b0a9c8191518fe48d2b0f56489adca9bcf616fd0999c1fe634ee148170"
+      "prev_hash": "fd3bd0c1a863b49fd401a0c71cfa4cdfa5112170e718ddadc220ba436b9bd965",
+      "entry_hash": "b78a16897149297368e058dfd9651318e44f59c06d1f6876be02a4f72bb9fc7f"
     },
     {
-      "seq": 11,
-      "ts": "2026-10-22T15:00:00+00:00",
-      "actor": "Joss Whitaker (simulated)",
-      "action": "company.status.change",
-      "entity_id": "DMC-12",
-      "payload_json": "{\"details\": {\"reason\": \"our device has no user log-in function, so the pattern 'Log-in, access or security problem' does not apply (sample reason)\"}, \"device_id\": \"DMC-12\", \"from_status\": \"Needs review\", \"note\": \"\", \"to_status\": \"Not applicable to our device\"}",
-      "prev_hash": "6546f8b0a9c8191518fe48d2b0f56489adca9bcf616fd0999c1fe634ee148170",
-      "entry_hash": "713e2bbba65ebc56d4d872d0f81f50567ea2f07731288086a9b1663aeeace9aa"
-    },
-    {
-      "seq": 12,
-      "ts": "2026-10-29T15:00:00+00:00",
+      "seq": 7,
+      "ts": "2026-10-30T09:00:00+00:00",
       "actor": "Noor Haddad (simulated)",
       "action": "company.status.register",
       "entity_id": "DMC-06",
       "payload_json": "{\"details\": {\"owner\": \"Noor Haddad (simulated)\"}, \"device_id\": \"DMC-06\", \"from_status\": null, \"note\": \"\", \"to_status\": \"Needs review\"}",
-      "prev_hash": "713e2bbba65ebc56d4d872d0f81f50567ea2f07731288086a9b1663aeeace9aa",
-      "entry_hash": "ec5e1f819501726f1ed97c9f5d42af92eb9ae057479c49d6949f16a95a984870"
+      "prev_hash": "b78a16897149297368e058dfd9651318e44f59c06d1f6876be02a4f72bb9fc7f",
+      "entry_hash": "dc075007fe921cf0de5ab12c238273628ab4ce76782c80657509bd056dc65b74"
     },
     {
-      "seq": 13,
-      "ts": "2026-10-29T15:00:00+00:00",
+      "seq": 8,
+      "ts": "2026-10-30T09:00:00+00:00",
       "actor": "Callum Brodie (simulated)",
       "action": "company.status.register",
       "entity_id": "DMC-07",
       "payload_json": "{\"details\": {\"owner\": \"Callum Brodie (simulated)\"}, \"device_id\": \"DMC-07\", \"from_status\": null, \"note\": \"\", \"to_status\": \"Needs review\"}",
-      "prev_hash": "ec5e1f819501726f1ed97c9f5d42af92eb9ae057479c49d6949f16a95a984870",
-      "entry_hash": "e6519f87d6d9dbc30139850a85ec00f84a8628dc1d394773cf48987b9325a4b7"
+      "prev_hash": "dc075007fe921cf0de5ab12c238273628ab4ce76782c80657509bd056dc65b74",
+      "entry_hash": "76b963eabe0a5536cae78517dc02f293d6d093a756d0bde86804745797a2f179"
     },
     {
-      "seq": 14,
-      "ts": "2026-10-29T15:00:00+00:00",
+      "seq": 9,
+      "ts": "2026-10-30T09:00:00+00:00",
       "actor": "Yuki Sato (simulated)",
       "action": "company.status.register",
       "entity_id": "DMC-08",
       "payload_json": "{\"details\": {\"owner\": \"Yuki Sato (simulated)\"}, \"device_id\": \"DMC-08\", \"from_status\": null, \"note\": \"\", \"to_status\": \"Needs review\"}",
-      "prev_hash": "e6519f87d6d9dbc30139850a85ec00f84a8628dc1d394773cf48987b9325a4b7",
-      "entry_hash": "949958492d5952a4180d1837333dc3bd355cd52c6dd00305e0420871b9de61a9"
+      "prev_hash": "76b963eabe0a5536cae78517dc02f293d6d093a756d0bde86804745797a2f179",
+      "entry_hash": "53a111e285e959377ba0fb9b1dc4cec0dd4f67fe170cfa15ca9195a1ff5bfa28"
     },
     {
-      "seq": 15,
-      "ts": "2026-10-29T15:00:00+00:00",
+      "seq": 10,
+      "ts": "2026-10-30T09:00:00+00:00",
       "actor": "Ana Moreau (simulated)",
       "action": "company.status.register",
       "entity_id": "DMC-09",
       "payload_json": "{\"details\": {\"owner\": \"Ana Moreau (simulated)\"}, \"device_id\": \"DMC-09\", \"from_status\": null, \"note\": \"\", \"to_status\": \"Needs review\"}",
-      "prev_hash": "949958492d5952a4180d1837333dc3bd355cd52c6dd00305e0420871b9de61a9",
-      "entry_hash": "c28df421b2a5faa501c495c52c8ad3de8220f304802f2f88701ef8909bcb3e26"
+      "prev_hash": "53a111e285e959377ba0fb9b1dc4cec0dd4f67fe170cfa15ca9195a1ff5bfa28",
+      "entry_hash": "f2dda2eec766cf4d98a31c5ede7877876f49959380b9773bed5b5683dbc28ddd"
+    },
+    {
+      "seq": 11,
+      "ts": "2026-10-30T09:00:00+00:00",
+      "actor": "Ravi Menon (simulated)",
+      "action": "company.status.register",
+      "entity_id": "DMC-10",
+      "payload_json": "{\"details\": {\"owner\": \"Ravi Menon (simulated)\"}, \"device_id\": \"DMC-10\", \"from_status\": null, \"note\": \"\", \"to_status\": \"Needs review\"}",
+      "prev_hash": "f2dda2eec766cf4d98a31c5ede7877876f49959380b9773bed5b5683dbc28ddd",
+      "entry_hash": "133ac12ce51b1764509e73176c2ae6d22a2d55e1b52f0ffd1ce3dbee062dfb94"
+    },
+    {
+      "seq": 12,
+      "ts": "2026-10-30T09:00:00+00:00",
+      "actor": "Joss Whitaker (simulated)",
+      "action": "company.status.register",
+      "entity_id": "DMC-12",
+      "payload_json": "{\"details\": {\"owner\": \"Joss Whitaker (simulated)\"}, \"device_id\": \"DMC-12\", \"from_status\": null, \"note\": \"\", \"to_status\": \"Needs review\"}",
+      "prev_hash": "133ac12ce51b1764509e73176c2ae6d22a2d55e1b52f0ffd1ce3dbee062dfb94",
+      "entry_hash": "469418170dfcd53dde9f172df77628c55c68ac91d18974e665ca0802ce7d8b1d"
+    },
+    {
+      "seq": 13,
+      "ts": "2026-10-30T10:00:00+00:00",
+      "actor": "Mara Ellison (simulated)",
+      "action": "company.status.change",
+      "entity_id": "DMC-01",
+      "payload_json": "{\"details\": {\"due_date\": \"2026-11-20\", \"owner\": \"Mara Ellison (simulated)\"}, \"device_id\": \"DMC-01\", \"from_status\": \"Needs review\", \"note\": \"\", \"to_status\": \"Testing in progress\"}",
+      "prev_hash": "469418170dfcd53dde9f172df77628c55c68ac91d18974e665ca0802ce7d8b1d",
+      "entry_hash": "5cebd1445dd81e8c952f27d661fb371d651999dbf9d52cabea3df6e2e209577f"
+    },
+    {
+      "seq": 14,
+      "ts": "2026-10-30T11:00:00+00:00",
+      "actor": "Devon Park (simulated)",
+      "action": "company.status.change",
+      "entity_id": "DMC-02",
+      "payload_json": "{\"details\": {\"reference\": \"test report TR-104 (sample) covers the pattern 'Unable to log in or connect, including server errors'\"}, \"device_id\": \"DMC-02\", \"from_status\": \"Needs review\", \"note\": \"\", \"to_status\": \"Already covered\"}",
+      "prev_hash": "5cebd1445dd81e8c952f27d661fb371d651999dbf9d52cabea3df6e2e209577f",
+      "entry_hash": "3bc0dfae95cf5970a2bf8e3c4207950e112e1fafd26eec77864c7441ae06e518"
+    },
+    {
+      "seq": 15,
+      "ts": "2026-10-30T12:00:00+00:00",
+      "actor": "Ravi Menon (simulated)",
+      "action": "company.status.change",
+      "entity_id": "DMC-10",
+      "payload_json": "{\"details\": {\"reason\": \"our device has no display of its own, so the pattern 'Display problem or image artifact' does not apply (sample reason)\"}, \"device_id\": \"DMC-10\", \"from_status\": \"Needs review\", \"note\": \"\", \"to_status\": \"Not applicable to our device\"}",
+      "prev_hash": "3bc0dfae95cf5970a2bf8e3c4207950e112e1fafd26eec77864c7441ae06e518",
+      "entry_hash": "63c6cf949ef3bf7157d9642728a504a03770b1331959422c44094c1184731360"
     }
   ]
 }

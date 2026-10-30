@@ -9,6 +9,8 @@ this stores, in ``demo/company/evidence/<code>.json``:
 * MAUDE reports received in the last 8 weeks (at most 100), from ``device/event.json``,
   fetched with ``OpenFDAClient`` (User-Agent set, ``OPENFDA_API_KEY`` from the environment);
 * the latest 100 recalls from ``device/recall.json``;
+* for a code the demo database holds but without an openFDA classification name (QIH today),
+  ``classification-<code>.json`` with that classification row and its query URL;
 * every query URL (never with the API key).
 
 No model and no key other than openFDA's. Problem patterns are NOT computed here: the
@@ -23,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sqlite3
 import sys
 import time
 from collections.abc import Callable, Iterable
@@ -43,6 +46,7 @@ from maudesignal.company.constants import (  # noqa: E402
     demo_db_path,
 )
 from maudesignal.company.evidence import demo_db_codes  # noqa: E402
+from maudesignal.company.report_fields import event_fields, report_id  # noqa: E402
 from maudesignal.config import openfda_api_key_from_env  # noqa: E402
 from maudesignal.ingestion.openfda_client import (  # noqa: E402
     OPENFDA_EVENT_ENDPOINT,
@@ -51,7 +55,6 @@ from maudesignal.ingestion.openfda_client import (  # noqa: E402
     build_query,
     search_param,
 )
-from maudesignal.ingestion.pipeline import _extract_report_id, _normalize  # noqa: E402
 
 WEEKS = 8
 REPORT_LIMIT = 100
@@ -89,10 +92,10 @@ def window(today: date, weeks: int = WEEKS) -> tuple[str, str]:
 
 def report_record(raw: dict[str, Any], product_code: str) -> dict[str, Any] | None:
     """The fields the page uses from one openFDA event record (no patient fields)."""
-    rid = _extract_report_id(raw)
+    rid = report_id(raw)
     if rid is None:
         return None
-    norm = _normalize(raw, product_code)
+    norm = event_fields(raw)
     text = " ".join(t for t in (norm["narrative"], norm["mfr_narrative"]) if t)
     return {
         "report_id": rid,
@@ -197,6 +200,49 @@ def fetch_code(
     }
 
 
+def fetch_classification(
+    code: str, *, http_get: HttpGet, now: datetime | None = None
+) -> dict[str, Any]:
+    """The openFDA classification row of one code (for a code whose reports are in the demo DB)."""
+    rows = http_get(CLASSIFICATION_ENDPOINT, {"search": f"product_code:{code}", "limit": 1})
+    row = ((rows or {}).get("results") or [{}])[0]
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "product_code": code,
+        "fetched_utc": (now or datetime.now(UTC)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "classification": {
+            "device_name": row.get("device_name"),
+            "device_class": row.get("device_class"),
+            "regulation_number": row.get("regulation_number"),
+            "query_url": f"{CLASSIFICATION_ENDPOINT}?search=product_code:{code}&limit=1",
+        },
+    }
+
+
+def classification_only_codes(folder: Path) -> list[str]:
+    """Company codes the demo DB holds but without an openFDA classification name."""
+    doc = json.loads((folder / "company.json").read_text(encoding="utf-8"))
+    codes = {d["product_code"] for d in doc["devices"]} & demo_db_codes(demo_db_path())
+    return sorted(c for c in codes if not db_has_classification(c))
+
+
+def db_has_classification(code: str) -> bool:
+    """True when the demo DB stores the openFDA classification row of ``code``."""
+    path = demo_db_path()
+    if not path.is_file():
+        return False
+    con = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
+    try:
+        row = con.execute(
+            "SELECT 1 FROM device_catalog WHERE product_code = ? "
+            "AND source_keyword = 'openfda_classification'",
+            (code,),
+        ).fetchone()
+    finally:
+        con.close()
+    return row is not None
+
+
 def make_http_get(api_key: str | None, retries: int = 3) -> HttpGet:
     """GET against openFDA with the project User-Agent, the key from the environment, retries."""
     http = httpx.Client(timeout=30.0, headers={"User-Agent": USER_AGENT})
@@ -250,8 +296,20 @@ def main(argv: list[str] | None = None) -> int:
     codes = args.codes or codes_to_fetch(folder)
     api_key = openfda_api_key_from_env()
     failures = 0
+    cls_codes = [] if args.codes else classification_only_codes(folder)
     with OpenFDAClient(api_key=api_key, page_size=REPORT_LIMIT) as client:
         http_get = make_http_get(api_key)
+        for code in cls_codes:
+            try:
+                cdoc = fetch_classification(code, http_get=http_get)
+            except OpenFDAAPIError as exc:
+                failures += 1
+                print(f"{code}: classification FAILED {exc}", file=sys.stderr)
+                continue
+            (out / f"classification-{code}.json").write_text(
+                json.dumps(cdoc, indent=1, ensure_ascii=False) + "\n", encoding="utf-8"
+            )
+            print(f"{code}: type {cdoc['classification']['device_name']} (classification only)")
         for code in codes:
             try:
                 doc = fetch_code(
