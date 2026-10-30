@@ -93,7 +93,7 @@ export function buildMatchTrace(rec: LabelMatchRecord): Trace {
     const kind: TraceStep['kind'] =
       s.model === 'SAM 3.1' ? 'sam' : s.model === 'Muse Spark' ? 'read' : s.model === 'openFDA' ? 'tool' : isDone ? 'done' : 'gate'
     const count = typeof s.count === 'number' ? s.count : null
-    const result = count === null ? 'count not recorded' : plural(count, 'record')
+    const result = count === null ? 'count not recorded' : `${int(count)} ${count === 1 ? 'record' : 'records'}`
     return {
       id: `m${i}`,
       kind,
@@ -155,8 +155,19 @@ export function factSections(view: DeviceTypeView): { sections: FactSection[]; w
 /** The dates the stored weekly change was made for: "week ending 2026-09-30", or a plain statement that none was stored. */
 export function weekChangeDates(view: DeviceTypeView): string {
   const asOf = view.summary.this_week_change?.as_of
-  return asOf ? `Week ending ${asOf}.` : 'The date of this weekly check was not recorded.'
+  if (!asOf) return 'The date of this weekly check was not recorded.'
+  const from = weekFrom(view)
+  return from ? `Week of ${from} to ${asOf}.` : `Week ending ${asOf}.`
 }
+
+/** The stored start date of the report window ("2026-09-24"), or null when none was stored. */
+export function weekFrom(view: DeviceTypeView): string | null {
+  const f = view.facts.find((x) => x.status === 'pass' && x.topic === 'reports_window')?.data?.from
+  return typeof f === 'string' ? f : null
+}
+
+/** The stored rules behind the weekly change line, so "no change" can be read next to the counts. */
+export const weekChangeRules = (view: DeviceTypeView): string[] => view.summary.this_week_change?.rules ?? []
 
 /** One line for the label list: how many possible matches wait for a person. */
 export function matchSummary(l: LabelReading): string {
@@ -215,8 +226,16 @@ export function keyStats(view: DeviceTypeView): KeyStat[] {
   const win = data('reports_window')
   const week = num(win?.count)
   const base = num(win?.baseline_weekly_mean)
-  if (week !== null)
-    out.push({ label: 'This week', value: f2(week), note: base !== null ? `vs ${f2(base)} weekly average` : 'weekly average not recorded' })
+  if (week !== null) {
+    const from = typeof win?.from === 'string' ? win.from : null
+    const to = typeof win?.to === 'string' ? win.to : null
+    const dates = from && to ? `7 days, ${from} to ${to}` : to ? `7 days ending ${to}` : 'dates not recorded'
+    out.push({
+      label: 'This week',
+      value: f2(week),
+      note: `${dates}; ${base !== null ? `vs ${f2(base)} weekly average` : 'weekly average not recorded'}`,
+    })
+  }
   const recalls = num(data('recalls_total')?.total)
   if (recalls !== null) out.push({ label: 'Recalls', value: f2(recalls), note: 'all time' })
   return out
@@ -235,15 +254,15 @@ export function groupSearches(trace: Trace): Trace {
     if (run.length === 1) steps.push(run[0])
     else {
       const counts = run.map((s) => {
-        const m = /^(\d+) record/.exec(s.result ?? '')
-        return m ? Number(m[1]) : null
+        const m = /^([\d,]+) record/.exec(s.result ?? '')
+        return m ? Number(m[1].replace(/,/g, '')) : null
       })
       const known = counts.filter((c): c is number => c !== null)
       let range = 'counts not recorded'
       if (known.length === counts.length) {
         const lo = Math.min(...known)
         const hi = Math.max(...known)
-        range = lo === hi ? `${plural(lo, 'record')} each` : `${lo} to ${hi} records each`
+        range = lo === hi ? `${int(lo)} ${lo === 1 ? 'record' : 'records'} each` : `${int(lo)} to ${int(hi)} records each`
       }
       steps.push({
         id: `g${steps.length}`,

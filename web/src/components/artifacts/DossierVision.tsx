@@ -4,7 +4,7 @@ import type { Dossier, K510Field, K510Reading, LabelReading, ReadStatus, Vision 
 import { buildLabelTrace, buildReviewTrace } from '../../trace'
 import { TraceView } from '../TraceView'
 import { labelName, type VisionSel } from '../VisionWorkflow'
-import { fieldRows, legibilityBanner } from '../../labelMatch'
+import { fieldRows, fmtUtc, legibilityBanner } from '../../labelMatch'
 import { LabelMatches } from './LabelMatches'
 import { PdfView } from './PdfView'
 import { Empty, Pill, Segmented, type Tone } from './common'
@@ -103,7 +103,7 @@ function SamImage({ l }: { l: LabelReading }) {
     <figure className="m-0">
       <div
         className="relative mx-auto overflow-hidden rounded-md border border-rule"
-        style={{ width: `min(100%, calc(28dvh * ${w} / ${h}))`, aspectRatio: `${w} / ${h}` }}
+        style={{ width: `min(100%, calc(40dvh * ${w} / ${h}))`, aspectRatio: `${w} / ${h}` }}
       >
         <img src={dataUrl(l.image)} alt="Device label photo with the detected label boxes drawn on it" className="block h-full w-full" />
         <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="absolute inset-0 h-full w-full" aria-hidden="true">
@@ -147,10 +147,23 @@ function LabelView({ l }: { l: LabelReading }) {
   return (
     <div>
       <SamImage l={l} />
+      {fromMatchRun && (
+        <p className="m-0 mt-3 text-[17px] text-ink-2" data-testid="two-readings-note">
+          This photo has two stored readings. The steps and checks below are from the first reading (time not recorded). The fields and
+          matches are from the matching run ({fmtUtc(l.matches?.generated_utc) ?? 'time not recorded'}).
+        </p>
+      )}
       <div className="mt-4">
-        <TraceView trace={buildLabelTrace(l)} shown={99} label="Label reading steps" replayed={false} />
+        <TraceView
+          trace={buildLabelTrace(l)}
+          shown={99}
+          label={fromMatchRun ? 'First reading: steps' : 'Label reading steps'}
+          replayed={false}
+        />
       </div>
-      <h3 className="ms-kicker mt-6 !text-[16px]">Fields read from the label</h3>
+      <h3 className="ms-kicker mt-6 !text-[16px]">
+        {fromMatchRun ? `Fields read in the matching run, ${fmtUtc(l.matches?.generated_utc) ?? 'time not recorded'}` : 'Fields read from the label'}
+      </h3>
       {banner && (
         <p
           role="note"
@@ -160,7 +173,6 @@ function LabelView({ l }: { l: LabelReading }) {
           {banner}
         </p>
       )}
-      {fromMatchRun && <p className="m-0 mt-1 text-[17px] text-ink-2">As read in the matching run below.</p>}
       <dl className="m-0 mt-1" data-testid="label-fields">
         {rows.map((r) => (
           <div key={r.key} className="grid grid-cols-[8.5rem_1fr] items-baseline gap-x-3 border-t border-rule py-2">
@@ -187,7 +199,7 @@ function LabelView({ l }: { l: LabelReading }) {
         ))}
       </dl>
       <LabelMatches key={l.image} rec={l.matches} />
-      <h3 className="ms-kicker mt-6 !text-[16px]">Checks</h3>
+      <h3 className="ms-kicker mt-6 !text-[16px]">{fromMatchRun ? 'Checks from the first reading' : 'Checks'}</h3>
       <ul className="m-0 mt-1 list-none p-0">
         <li className="border-t border-rule py-2">
           <Pill tone={l.k_status === 'verified' ? 'ok' : l.k_status === 'not_printed' ? 'neutral' : 'warn'}>K-number</Pill>{' '}

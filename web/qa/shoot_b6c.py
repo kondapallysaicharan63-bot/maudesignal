@@ -41,14 +41,7 @@ def scroll_to(page: Page, test_id: str) -> None:
 def main() -> None:
     """Take the B6c screenshots and print the checks."""
     vision = json.loads((PUBLIC / "vision.json").read_text())
-    names = [
-        (
-            lab["fields"].get("device_name", {}).get("value")
-            or lab["fields"].get("model_number", {}).get("value")
-            or lab["image"]
-        )
-        for lab in vision["labels"]
-    ]
+    names = [lab["image"] for lab in vision["labels"]]
     with_matches = next(
         i for i, lab in enumerate(vision["labels"]) if lab["matches"] and lab["matches"]["matches"]
     )

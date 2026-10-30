@@ -10,6 +10,7 @@ import {
   rankLine,
   rankMatches,
   weekChangeDates,
+  weekChangeRules,
 } from '../../labelMatch'
 import { traceSummary } from '../../trace'
 import type { LabelMatch, LabelMatchRecord } from '../../types'
@@ -60,7 +61,23 @@ function Facts({ rec, code }: { rec: LabelMatchRecord; code: string }) {
               </li>
             ))}
           </ul>
-          {s.title === "This week's change" && <p className="m-0 text-[17px] text-ink-2">{weekChangeDates(view)}</p>}
+          {s.title === "This week's change" && (
+            <>
+              <p className="m-0 text-[17px] text-ink-2">{weekChangeDates(view)}</p>
+              {weekChangeRules(view).length > 0 && (
+                <div data-testid="week-rules" className="mt-1 text-[17px] text-ink-2">
+                  <p className="m-0">A change is flagged only when one of these stored rules is met:</p>
+                  <ul className="m-0 list-disc pl-5">
+                    {weekChangeRules(view).map((r) => (
+                      <li key={r} className="ws-wrap">
+                        {r}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
+          )}
         </section>
       ))}
       {withheld > 0 && (

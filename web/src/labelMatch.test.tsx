@@ -3,8 +3,9 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, describe, expect, it } from 'vitest'
 import vision from '../public/data/vision.json'
+import { labelName } from './components/VisionWorkflow'
 import { LabelMatches } from './components/artifacts/LabelMatches'
-import { buildMatchTrace, fieldRows, fmtNumbers, fmtUtc, groupSearches, keyStats, legibilityBanner, matchSummary, rankMatches } from './labelMatch'
+import { buildMatchTrace, fieldRows, fmtNumbers, fmtUtc, groupSearches, keyStats, legibilityBanner, matchSummary, rankMatches, weekChangeDates, weekChangeRules } from './labelMatch'
 import { NOT_RECORDED } from './trace'
 import type { LabelMatchRecord, LabelReading } from './types'
 
@@ -270,5 +271,39 @@ describe('one status per field on an illegible label', () => {
       expect(r.querySelector('.ms-code')).toBeNull()
     }
     expect(host.textContent).not.toContain('hidden: not legible')
+  })
+})
+
+describe('fix round', () => {
+  it('labelName never carries a field value from an illegible reading', () => {
+    const l = named('welch-module')
+    expect(l.matches?.label.overall_legibility).toBe('illegible')
+    const name = labelName(l)
+    expect(name).toContain('(not legible)')
+    const values = [...Object.values(l.fields), ...Object.values(l.matches?.label.fields ?? {})].map((f) => f.value).filter(Boolean) as string[]
+    for (const v of values) expect(name).not.toContain(v)
+  })
+
+  it('labelName reads the matching run when there is one, and a clear value otherwise', () => {
+    const l = named('nomad-pro2')
+    const v = fieldRows(l).rows.find((r) => r.key === 'device_name')?.value
+    expect(labelName(l)).toBe(v || fieldRows(l).rows.find((r) => r.key === 'model_number')?.value || 'nomad-pro2')
+  })
+
+  it('dates the this-week tile and the weekly change, and shows the stored rules', () => {
+    const rec = withMatches().matches as LabelMatchRecord
+    const view = Object.values(rec.device_type_views)[0]
+    expect(keyStats(view).find((k) => k.label === 'This week')?.note).toMatch(/\d{4}-\d\d-\d\d to \d{4}-\d\d-\d\d/)
+    expect(weekChangeDates(view)).toMatch(/Week of \d{4}-\d\d-\d\d to \d{4}-\d\d-\d\d/)
+    expect(weekChangeRules(view).length).toBeGreaterThan(0)
+    const el = mount(rec)
+    click([...el.querySelectorAll('button')].filter((b) => b.textContent === 'Confirm this match')[0])
+    expect(el.querySelector('[data-testid=week-rules]')?.textContent).toContain(weekChangeRules(view)[0])
+  })
+
+  it('formats search counts with separators', () => {
+    const mk = (n: number) => ({ id: 'x', kind: 'tool', title: 'openFDA: a', detail: '', args: null, result: `${n.toLocaleString('en-US')} records`, lines: [], model: null, time: { text: '', recorded: false }, tokens: { text: '', recorded: false }, cost: { text: '', recorded: false } })
+    const t = groupSearches({ steps: [mk(0), mk(432413)], beforeGate: 2, usage: { time: { text: '', recorded: false }, tokens: { text: '', recorded: false }, cost: { text: '', recorded: false } } } as never)
+    expect(t.steps[0].result).toBe('0 to 432,413 records each')
   })
 })

@@ -1,11 +1,20 @@
 import { Icon } from '../icons'
-import { matchSummary } from '../labelMatch'
+import { fieldRows, matchSummary } from '../labelMatch'
 import type { LabelReading, Vision } from '../types'
 
 export type VisionSel = { mode: 'labels' | 'k510'; index: number }
 
-export const labelName = (l: LabelReading): string =>
-  l.fields.device_name?.value || l.fields.model_number?.value || l.image.replace(/^vision\/label-|\.jpg$/g, '')
+/**
+ * A short name for a label photo. It reads the same fields the screen shows (the matching run when one was recorded), so a
+ * name never carries a value that the screen hides: an illegible reading, or an illegible field, gives the file name instead.
+ */
+export function labelName(l: LabelReading): string {
+  const stem = l.image.replace(/^vision\/label-|\.jpg$/g, '')
+  const { rows, overall } = fieldRows(l)
+  if (overall === 'illegible') return `${stem} (not legible)`
+  const pick = (k: string) => rows.find((r) => r.key === k)?.value
+  return pick('device_name') || pick('model_number') || stem
+}
 
 const K_STATUS: Record<string, string> = {
   not_printed: 'no K-number printed',
