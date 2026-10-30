@@ -109,3 +109,23 @@ button {
 .ms-btn--sm {
   font-size: 15px;
 }
+
+/* Type scale for this workspace (the design-system tokens stay as they are): body 17px, captions and labels 16px / 15px. */
+:root {
+  --text-body: 17px;
+  --text-sm: 16px;
+  --text-label: 15px;
+}
+.ms-kicker {
+  font-size: var(--text-label);
+}
+
+/* A hairline in the pill's own colour, so a soft green or amber pill is not just text on a similar tint. */
+.ws-pill--ring {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 55%, transparent);
+}
+
+/* The banners read at 16px (the design-system size is 14px). */
+.ms-banner {
+  font-size: var(--text-sm);
+}

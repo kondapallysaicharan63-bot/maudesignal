@@ -17,6 +17,7 @@ interface Props {
   onFeedback: () => void
   alerts: AlertItem[]
   onAlert: (a: AlertItem) => void
+  onViewAll?: (group: 'signals' | 'devices') => void
   /** Opens the thread holding the first withheld sentence (omitted when none is stored). */
   onWithheld?: () => void
 }
@@ -48,7 +49,7 @@ export function Header(p: Props) {
           <span className="hidden text-[15px] md:inline">Search</span>
           <kbd className="ms-code hidden rounded-xs border border-rule px-1 md:inline">Ctrl K</kbd>
         </button>
-        <AlertBell items={p.alerts} onOpen={p.onAlert} />
+        <AlertBell items={p.alerts} onOpen={p.onAlert} onViewAll={p.onViewAll} />
         <button
           className="ws-icon-btn"
           onClick={p.onFeedback}

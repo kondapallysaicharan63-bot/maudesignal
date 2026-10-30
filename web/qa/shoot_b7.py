@@ -69,14 +69,39 @@ def main() -> None:
                 go_workflow(page, phone, TITLE)
                 r["banner"] = page.get_by_test_id("company-banner").first.inner_text()
                 r["banners_on_list_view"] = page.get_by_test_id("company-banner").count()
-                if phone:
-                    page.get_by_test_id("mini-toggle").click()
-                    page.wait_for_timeout(250)
+                # default state: on a phone the stats drawer is folded to one line ("6 need review")
                 r["mini_text"] = page.locator("aside[aria-label$='dashboard']").inner_text()
+                r["first_rows"] = page.locator("main tbody tr").evaluate_all(
+                    "rows => rows.map(r => [r.innerText.split('\\n')[0], r.getBoundingClientRect().bottom, innerHeight])"
+                )[:3]
                 shot(page, r, tag, "table")
                 r["overflowing_in_main"] = inner_x_overflow(page)
                 if phone:
                     page.get_by_test_id("mini-toggle").click()
+                    page.wait_for_timeout(250)
+                    r["mini_open_text"] = page.locator(
+                        "aside[aria-label$='dashboard']"
+                    ).inner_text()
+                    shot(page, r, tag, "table-drawer-open")
+                    page.get_by_test_id("mini-toggle").click()
+                # scrolled: the composer folds to its input row
+                page.locator("main .overflow-y-auto").first.evaluate(
+                    "e => { e.scrollTop = e.scrollHeight }"
+                )
+                page.wait_for_timeout(250)
+                r["composer_height_scrolled"] = page.get_by_test_id("composer").evaluate(
+                    "e => e.getBoundingClientRect().height"
+                )
+                shot(page, r, tag, "table-scrolled")
+                page.locator("main .overflow-y-auto").first.evaluate("e => { e.scrollTop = 0 }")
+                # filter chip
+                page.get_by_test_id("filter-chips").get_by_role(
+                    "button", name="Needs review"
+                ).click()
+                page.wait_for_timeout(250)
+                r["filtered_rows"] = page.locator("main tbody tr").count()
+                shot(page, r, tag, "table-filtered")
+                page.get_by_test_id("filter-chips").get_by_role("button", name="All").click()
 
                 # expanded mini-dashboard
                 (

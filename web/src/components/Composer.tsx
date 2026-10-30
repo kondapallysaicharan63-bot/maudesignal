@@ -6,8 +6,8 @@ import { exactKnownCode, highlightParts, moveActive, suggest, type CodeInfo, typ
 import type { Thread } from '../types'
 
 const DISCLAIMER =
-  'Signals for a person to review. Not medical advice; a named person makes every decision. Nothing is filed with FDA.'
-const DISCLAIMER_SHORT = 'Signals for review. Not medical advice. Nothing is filed with FDA.'
+  'Signals for a person to review. Not medical advice. Nothing is filed with FDA.'
+const DISCLAIMER_SHORT = 'Signals for review, not medical advice.'
 
 // Recorded threads offered as starting points (ids from threads.json). Missing ids are skipped.
 const SUGGESTED = ['01-what-changed', '05-capa-need-evidence', '06-trap', '10-recalls', '23-mhra']
@@ -27,6 +27,8 @@ interface Props {
   onMic: () => void
   /** Which capture screen is open, so its button can say so ("Camera on"). */
   captureMode?: 'label' | 'voice' | null
+  /** Phone, page scrolled down: only the input row stays (the disclaimer line folds away). */
+  compact?: boolean
 }
 
 /** The typed characters shown in bold and underlined inside a suggestion. */
@@ -52,7 +54,7 @@ type Notice = ({ kind: 'match'; question: string } | { kind: 'live' }) & { forKe
  * One input row with a type-ahead list of recorded questions (also shown on focus, as the starting points),
  * plus camera and mic buttons that open recorded runs until the live API is on.
  */
-export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, onMic, captureMode = null }: Props) {
+export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, onMic, captureMode = null, compact = false }: Props) {
   const [text, setText] = useState('')
   const [saved, setNotice] = useState<Notice | null>(null)
   const notice = saved && saved.forKey === viewKey ? saved : null
@@ -281,10 +283,10 @@ export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, 
             Open
           </button>
         </form>
-        <p className="relative z-10 m-0 mt-1 text-center text-[17px] leading-snug text-ink-2">
+        <p className={['relative z-10 m-0 mt-1 text-center text-[17px] leading-snug text-ink-2', compact ? 'max-sm:hidden' : ''].join(' ')} data-testid="disclaimer">
           <span className="hidden sm:inline">{DISCLAIMER}</span>
           <span className="sm:hidden">{DISCLAIMER_SHORT}</span>
-          <span className="hidden md:inline"> Camera and mic show a recorded run until the live API answers.</span>
+          {captureMode && <span className="hidden md:inline"> Camera and mic show a recorded run until the live API answers.</span>}
         </p>
       </div>
     </div>

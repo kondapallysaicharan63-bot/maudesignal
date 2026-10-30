@@ -5,8 +5,8 @@ import company from '../public/data/company.json'
 import sweep from '../public/data/sweep.json'
 import { AlertList } from './components/AlertBell'
 import { MiniStats } from './components/MiniDashboard'
-import { CompanyDeviceView, CompanyList, OurDevices, StatusBars } from './components/OurDevices'
-import { alertItems, devicesPerStatus, miniStats } from './dashboard'
+import { chipName, CompanyDeviceView, CompanyList, OurDevices, shortPatternLabel, StatusBars, StatusFilterList } from './components/OurDevices'
+import { alertItems, devicesPerStatus, groupAlerts, miniStats, sortedDevices, statusesByPriority } from './dashboard'
 import { WORKFLOWS } from './data'
 import type { Company, CompanyDevice, WorkspaceData } from './types'
 
@@ -68,7 +68,11 @@ describe('Our devices (simulated)', () => {
     const base = alertItems(sweep as never, briefs.briefs as never)
     const all = alertItems(sweep as never, briefs.briefs as never, C)
     const mine = all.filter((a) => a.source === 'company')
-    expect(mine.map((a) => a.deviceId)).toEqual(needs.map((d) => d.id))
+    expect(mine.map((a) => a.deviceId).sort()).toEqual(needs.map((d) => d.id).sort())
+    expect(mine.every((a) => a.deviceName)).toBe(true)
+    const g = groupAlerts(all)
+    expect(g.devices.length).toBe(needs.length)
+    expect(g.signals.length).toBe(base.length)
     expect(all.length - base.length).toBe(needs.length)
     const html = text(renderToStaticMarkup(<AlertList items={mine} onOpen={noop} />))
     expect(html).toContain('Needs review')
@@ -88,7 +92,9 @@ describe('Our devices (simulated)', () => {
     expect(html).toContain('data-testid="report-count"')
     expect(t).toContain(String(withEvidence.evidence.report_count!.value))
     for (const p of withEvidence.patterns) {
-      expect(t).toContain(p.display_label)
+      expect(t).toContain(shortPatternLabel(p))
+      expect(shortPatternLabel(p)).not.toMatch(/^Keyword match/)
+      expect(t).toContain('Unreviewed')
       for (const q of p.quotes) {
         expect(t).toContain(`“${q.text}”`)
         expect(html).toContain(q.url)
@@ -125,5 +131,53 @@ describe('Our devices (simulated)', () => {
   it('no screen prints a banned word', () => {
     const pages = [renderToStaticMarkup(<CompanyList company={C} onDevice={noop} />), ...C.devices.map(view)]
     for (const html of pages) expect(text(html)).not.toMatch(BANNED)
+  })
+
+  it('the table is sorted by status priority (Needs review first), then by newest status date', () => {
+    const rows = sortedDevices(C)
+    const order = ['Needs review', 'Testing in progress', 'Monitoring — nothing open', 'Already covered', 'Not applicable to our device']
+    const idx = rows.map((d) => order.indexOf(d.status!.label))
+    expect(idx).toEqual([...idx].sort((a, b) => a - b))
+    const need = C.devices.filter((d) => d.status?.label === 'Needs review').length
+    expect(rows.slice(0, need).every((d) => d.status?.label === 'Needs review')).toBe(true)
+    const dates = rows.slice(0, need).map((d) => d.status!.date)
+    expect(dates).toEqual([...dates].sort().reverse())
+    expect(sortedDevices(C, 'Needs review')).toHaveLength(need)
+    expect(statusesByPriority(C)[0].label).toBe('Needs review')
+    const html = renderToStaticMarkup(<CompanyList company={C} onDevice={noop} />)
+    expect(html.indexOf(rows[0].name)).toBeLessThan(html.indexOf(rows[rows.length - 1].name))
+    expect(html).toContain('data-needs-review')
+  })
+
+  it('filter chips show a count per status and the filter narrows the table', () => {
+    const html = renderToStaticMarkup(<CompanyList company={C} onDevice={noop} filter="Needs review" />)
+    const chips = html.slice(html.indexOf('data-testid="filter-chips"'), html.indexOf('<table'))
+    for (const x of devicesPerStatus(C)) expect(text(chips)).toContain(`${chipName(x.label)} ${x.count}`)
+    expect((html.match(/data-testid="status-chip"/g) ?? []).length).toBe(sortedDevices(C, 'Needs review').length)
+  })
+
+  it('the left column is a compact status filter list and shows the banner nowhere (the page shows it once)', () => {
+    const t = text(renderToStaticMarkup(<StatusFilterList company={C} filter={null} onFilter={noop} />))
+    expect(t).toContain('All devices')
+    for (const x of devicesPerStatus(C)) expect(t).toContain(x.label)
+    expect(t).not.toContain('Simulated company')
+  })
+
+  it('a device page has jump links, sorts patterns by report count, and the missing-evidence state has an action', () => {
+    const t = view(withEvidence)
+    expect(t).toContain('data-testid="jump-nav"')
+    const counts = [...t.matchAll(/data-testid="pattern"/g)].length
+    expect(counts).toBe(withEvidence.patterns.length)
+    const html = text(view(withEvidence))
+    const nums = withEvidence.patterns.map((p) => p.count).sort((a, b) => b - a)
+    let at = 0
+    for (const n of nums) {
+      const i = html.indexOf(`${n} reports`, at)
+      expect(i).toBeGreaterThanOrEqual(at)
+      at = i
+    }
+    const m = view(withoutEvidence)
+    expect(m).toContain('Fetch evidence')
+    expect(text(m)).toContain('Reason:')
   })
 })

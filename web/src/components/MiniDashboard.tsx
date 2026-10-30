@@ -5,8 +5,9 @@ import { Icon } from '../icons'
 import { FULLSCREEN } from '../layout'
 import type { WorkflowId, WorkspaceData } from '../types'
 import { MetricsChart } from './MetricsChart'
+import { NEEDS_REVIEW } from '../dashboard'
 import { Crumbs, ExpandButton } from './PanelBar'
-import { CompanyBanner, StatusBars } from './OurDevices'
+import { StatusBars, StatusFilterList } from './OurDevices'
 import { SweepFlagged, SweepRules } from './SweepCard'
 
 export function miniTitle(workflow: WorkflowId): string {
@@ -118,6 +119,8 @@ export function MiniPane({
   onRun = () => undefined,
   focusCode = null,
   activeId = null,
+  deviceFilter = null,
+  onDeviceFilter = () => undefined,
 }: {
   workflow: WorkflowId
   data: WorkspaceData
@@ -129,11 +132,20 @@ export function MiniPane({
   focusCode?: string | null
   /** Id of the thread or run open in the chat. */
   activeId?: string | null
+  /** Our devices: the status the table is filtered to, and how to change it. */
+  deviceFilter?: string | null
+  onDeviceFilter?: (label: string | null) => void
 }) {
   // Below the xl breakpoint the numbers start folded away so the chat keeps the screen.
   const [shown, setShown] = useState(false)
   const threads = workflowThreads(data, workflow)
   const items = recentItems(workflow, data)
+  const devices = workflow === 'our-devices'
+  const needReview = devices ? data.company.devices.filter((d) => d.status?.label === NEEDS_REVIEW).length : 0
+  const pick = (label: string | null) => {
+    setShown(false)
+    onDeviceFilter(label)
+  }
   const open = (i: RecentItem) => {
     if (expanded) onToggleExpand()
     if (i.kind === 'run') onRun(i.id)
@@ -149,11 +161,13 @@ export function MiniPane({
       ].join(' ')}
     >
       <div className="flex shrink-0 items-center justify-between gap-2 px-3 py-1">
-        {expanded ? (
+        {expanded && devices ? (
+          <h2 className="m-0 min-w-0 truncate text-[19px] font-semibold">{miniTitle(workflow)}</h2>
+        ) : expanded ? (
           <Crumbs panel="mini" />
         ) : (
           <>
-            <h2 className="m-0 min-w-0 truncate text-[17px] font-semibold max-lg:hidden" title={miniTitle(workflow)}>
+            <h2 className="ws-wrap m-0 min-w-0 text-[17px] font-semibold leading-snug max-lg:hidden">
               {miniTitle(workflow)}
             </h2>
             {/* Phone and tablet: one bar that names the workflow and opens its numbers and recorded answers. */}
@@ -167,7 +181,13 @@ export function MiniPane({
             >
               <span className="min-w-0">
                 <span className="block truncate text-[17px] font-semibold">{miniTitle(workflow)}</span>
-                <span className="block text-[17px] text-ink-2">{shown ? 'Hide stats and recorded answers' : 'Stats and recorded answers'}</span>
+                <span className="block text-[17px] text-ink-2" data-testid="mini-summary">
+                  {devices
+                    ? `${needReview} ${needReview === 1 ? 'needs' : 'need'} review · ${data.company.devices.length} devices`
+                    : shown
+                      ? 'Hide stats and recorded answers'
+                      : 'Stats and recorded answers'}
+                </span>
               </span>
               <span className="shrink-0 text-ink-2">
                 <Icon name={shown ? 'up' : 'down'} size={20} />
@@ -176,17 +196,32 @@ export function MiniPane({
           </>
         )}
         <span className="flex shrink-0 items-center">
-          <ExpandButton panel="mini" expanded={expanded} onToggle={onToggleExpand} iconOnly />
+          {expanded && devices ? (
+            <button
+              type="button"
+              className="ws-icon-btn min-h-11 min-w-11 border-rule-strong bg-surface"
+              onClick={onToggleExpand}
+              aria-label="Close the dashboard (Esc)"
+              title="Close (Esc)"
+              data-testid="expand-mini"
+            >
+              <Icon name="close" size={20} />
+            </button>
+          ) : (
+            <ExpandButton panel="mini" expanded={expanded} onToggle={onToggleExpand} iconOnly />
+          )}
         </span>
       </div>
       <div id="mini-body" className={['px-3 pb-4', shown || expanded ? '' : 'max-lg:hidden'].join(' ')}>
-        {workflow === 'our-devices' && (
-          <div className="mb-3">
-            <CompanyBanner company={data.company} />
-          </div>
+        {devices ? (
+          expanded ? (
+            <StatusBars company={data.company} onFilter={onDeviceFilter} />
+          ) : (
+            <StatusFilterList company={data.company} filter={deviceFilter} onFilter={pick} />
+          )
+        ) : (
+          <MiniStats workflow={workflow} data={data} expanded={expanded} />
         )}
-        <MiniStats workflow={workflow} data={data} expanded={expanded} />
-        {expanded && workflow === 'our-devices' && <StatusBars company={data.company} />}
         {!expanded && <Recent items={items} expanded={false} onOpen={open} activeId={activeId} />}
         {expanded && workflow === 'ai-sweep' && (
           <>

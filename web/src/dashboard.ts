@@ -2,7 +2,7 @@
 // Every number is computed from the stored exports; thresholds mirror
 // src/maudesignal/monitor/deterioration.py (a test fails if they drift apart).
 import { capaDrafts, CLASS_LABEL, flaggedRows } from './artifacts'
-import type { Brief, Company, Sweep, Thread, WorkflowId, WorkspaceData } from './types'
+import type { Brief, Company, CompanyDevice, Sweep, Thread, WorkflowId, WorkspaceData } from './types'
 
 /** Mirrors SPIKE_MIN_REPORTS, SPIKE_MULTIPLIER, BASELINE_WEEKS and SEVERITY_ESCALATION_PP in deterioration.py. */
 export const SWEEP_RULES = {
@@ -57,6 +57,8 @@ export interface AlertItem {
   source: 'sweep' | 'brief' | 'company'
   /** Company alerts: the device the alert opens. */
   deviceId?: string
+  /** Company alerts: the simulated device's name. Sweep and brief alerts: the device type's name when a stored brief gives one. */
+  deviceName?: string
   /** Sweep: the sweep date. Brief: the brief date. */
   date: string
   detail: string
@@ -72,10 +74,12 @@ const isRisky = (c: string): c is AlertKind => RISKY.includes(c)
 
 /**
  * Risky items: "new kind of problem" and "more serious than usual" from the AI device sweep and from
- * the newest brief. "Needs review" items are not included because the export holds no such data yet.
+ * the newest brief, then the "Needs review" devices of the simulated company.
  */
 export function alertItems(sweep: Sweep, briefs: Brief[], company?: Company | null): AlertItem[] {
   const out: AlertItem[] = []
+  const typeNames = new Map<string, string>()
+  for (const b of briefs) for (const [c, n] of Object.entries(b.device_types ?? {})) if (!typeNames.has(c)) typeNames.set(c, n)
   const sweepDay = sweep.meta.generated_utc.slice(0, 10)
   for (const r of flaggedRows(sweep))
     if (isRisky(r.classification))
@@ -85,6 +89,7 @@ export function alertItems(sweep: Sweep, briefs: Brief[], company?: Company | nu
         productCode: r.product_code,
         label: CLASS_LABEL[r.classification],
         source: 'sweep',
+        deviceName: typeNames.get(r.product_code),
         date: sweepDay,
         detail: `${plural(r.current_count, 'report')} this week`,
       })
@@ -98,6 +103,7 @@ export function alertItems(sweep: Sweep, briefs: Brief[], company?: Company | nu
           productCode: s.product_code,
           label: CLASS_LABEL[s.classification],
           source: 'brief',
+          deviceName: typeNames.get(s.product_code),
           date: newest.date,
           detail: `${plural(s.current_count, 'report')} in the demo-snapshot week`,
         })
@@ -110,10 +116,25 @@ export function alertItems(sweep: Sweep, briefs: Brief[], company?: Company | nu
         label: NEEDS_REVIEW,
         source: 'company',
         deviceId: d.id,
+        deviceName: d.name,
         date: d.status.date,
-        detail: `${d.name} (simulated device)`,
+        detail: `${d.model} · ${d.owner}`,
       })
-  return out
+  return sortAlerts(out)
+}
+
+const KIND_RANK: Record<string, number> = { severity_escalation: 0, new_signal: 1, needs_review: 2 }
+
+/** Most important first (more serious, then new kind of problem, then needs review), newest date first within a kind. */
+export function sortAlerts(items: AlertItem[]): AlertItem[] {
+  return [...items].sort(
+    (a, b) => (KIND_RANK[a.kind] ?? 9) - (KIND_RANK[b.kind] ?? 9) || b.date.localeCompare(a.date) || a.productCode.localeCompare(b.productCode),
+  )
+}
+
+/** The bell's two groups: real signals, and the simulated company's devices. */
+export function groupAlerts(items: AlertItem[]): { signals: AlertItem[]; devices: AlertItem[] } {
+  return { signals: items.filter((a) => a.source !== 'company'), devices: items.filter((a) => a.source === 'company') }
 }
 
 /** The status every device starts in; set by a named simulated person, never by the tool. */
@@ -125,6 +146,36 @@ export function devicesPerStatus(company: Company): { label: string; count: numb
     label: s.label,
     count: company.devices.filter((d) => d.status?.label === s.label).length,
   }))
+}
+
+/** Urgency of a status for the device table: Needs review first, then Testing, Monitoring, Covered, N/A. */
+export const STATUS_PRIORITY: string[] = [
+  NEEDS_REVIEW,
+  'Testing in progress',
+  'Monitoring — nothing open',
+  'Already covered',
+  'Not applicable to our device',
+]
+const prio = (label: string | undefined): number => {
+  const i = STATUS_PRIORITY.indexOf(label ?? '')
+  return i < 0 ? STATUS_PRIORITY.length : i
+}
+
+/** Devices by status priority, then by when the status was set (newest first), then by name. */
+export function sortedDevices(company: Company, filter: string | null = null): CompanyDevice[] {
+  return company.devices
+    .filter((d) => filter === null || d.status?.label === filter)
+    .sort(
+      (a, b) =>
+        prio(a.status?.label) - prio(b.status?.label) ||
+        (b.status?.date ?? '').localeCompare(a.status?.date ?? '') ||
+        a.name.localeCompare(b.name),
+    )
+}
+
+/** Statuses in table-priority order with their device counts (the filter chips and the mini list). */
+export function statusesByPriority(company: Company): { label: string; count: number }[] {
+  return [...devicesPerStatus(company)].sort((a, b) => prio(a.label) - prio(b.label))
 }
 
 // ── Recorded-run metrics ─────────────────────────────────────────────────
