@@ -3,6 +3,7 @@ import { producedTabs, relatedTabs, type TabId } from './artifacts'
 import { alertItems, sweepRowId, type AlertItem } from './dashboard'
 import { ArtifactsPane } from './components/ArtifactsPane'
 import { ChatPane, type View, type WithheldNav } from './components/ChatPane'
+import type { CaptureMode } from './capture'
 import { CommandPalette } from './components/CommandPalette'
 import { FeedbackDialog } from './components/FeedbackDialog'
 import { Header } from './components/Header'
@@ -145,6 +146,16 @@ export default function App() {
     if (id === 'ai-sweep') setTab('digest')
     setDrawer(false)
   }
+  const openCode = (code: string) => {
+    setWIdx(null)
+    setView({ kind: 'workflow', id: 'check-device', code })
+    setDrawer(false)
+  }
+  const openCapture = (mode: CaptureMode) => {
+    setWIdx(null)
+    setView({ kind: 'capture', mode })
+    setDrawer(false)
+  }
   const openRun = (id: string) => {
     setWIdx(null)
     setView({ kind: 'run', id })
@@ -284,6 +295,7 @@ export default function App() {
                 onThread={openThread}
                 onRun={openRun}
                 focusCode={sweepFocus?.code ?? null}
+                activeId={view.kind === 'thread' || view.kind === 'run' ? view.id : null}
               />
             )}
             <ChatPane
@@ -294,6 +306,8 @@ export default function App() {
               onThread={openThread}
               onRun={openRun}
               onVision={openVision}
+              onCode={openCode}
+              onCapture={openCapture}
               onBrief={openBrief}
               onAlert={openAlert}
               expanded={expanded === 'main'}

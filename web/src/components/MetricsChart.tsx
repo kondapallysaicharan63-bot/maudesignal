@@ -12,7 +12,7 @@ const FINAL = 'var(--success)'
 /** Axis labels from top to bottom (three ticks: top, middle, bottom). */
 function Axis({ ticks }: { ticks: [string, string, string] }) {
   return (
-    <div className="ms-num flex w-14 shrink-0 flex-col justify-between text-right text-[14px] leading-none text-ink-2" aria-hidden="true">
+    <div className="ms-num flex w-14 shrink-0 flex-col justify-between text-right text-[15px] leading-none text-ink-2" aria-hidden="true">
       {ticks.map((t, i) => (
         <span key={i}>{t}</span>
       ))}
@@ -99,7 +99,7 @@ function ChartCard({ title, summary, children, wide = false }: { title: string; 
 /** Oldest and newest run ids under a chart, so the horizontal direction is labelled. */
 function XLabels({ first, last }: { first: string; last: string }) {
   return (
-    <div className="ms-num mt-1 flex justify-between gap-2 pl-16 text-[14px] text-ink-2" aria-hidden="true">
+    <div className="ms-num mt-1 flex justify-between gap-2 pl-16 text-[15px] text-ink-2" aria-hidden="true">
       <span className="truncate">{first}</span>
       <span className="truncate text-right">{last}</span>
     </div>

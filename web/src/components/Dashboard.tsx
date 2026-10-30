@@ -12,7 +12,7 @@ function FlagsCard({ data, onBrief }: { data: WorkspaceData; onBrief: (date: str
   const b = data.briefs[0]
   const snapshot = demoSnapshotLabel(data.sources)
   return (
-    <article className="rounded-md border border-rule-strong bg-surface p-4" aria-label="This week's flags">
+    <article className="rounded-md border border-rule bg-surface p-4" aria-label="This week's flags">
       <p className="ms-kicker m-0">This week's flags · demo snapshot</p>
       {!b ? (
         <p className="mt-2 text-ink-2">No daily brief is stored yet.</p>
@@ -36,7 +36,7 @@ function FlagsCard({ data, onBrief }: { data: WorkspaceData; onBrief: (date: str
               ] as const
             ).map(([k, v]) => (
               <div key={k} className="rounded-md border border-rule bg-paper p-2">
-                <dt className="text-[14px] leading-snug text-ink-2">{k}</dt>
+                <dt className="text-[15px] leading-snug text-ink-2">{k}</dt>
                 <dd className="t-index ms-num m-0 mt-1">{v}</dd>
               </div>
             ))}
@@ -91,8 +91,10 @@ export function Dashboard({
         <div className="xl:col-span-3 xl:row-start-1">
           <SweepHead sweep={data.sweep} compact />
         </div>
-        <article className="order-first rounded-md border border-rule-strong bg-surface p-4 xl:order-none xl:col-span-2 xl:row-start-1" aria-label="Alerts">
-          <p className="ms-kicker m-0">Alerts · {alerts.length}</p>
+        <article className="order-first rounded-md border-2 border-ink bg-surface p-4 xl:order-none xl:col-span-2 xl:row-start-1" aria-label="Alerts">
+          <h2 className="t-title-lg m-0 flex items-baseline gap-2" style={{ fontSize: 24 }}>
+            Alerts · <span className="ms-num rounded-xs bg-critical px-2 text-[18px] font-bold text-[var(--on-critical)]">{alerts.length}</span>
+          </h2>
           <div className="mt-1">
             <AlertList items={alerts} onOpen={onAlert} />
           </div>
@@ -104,7 +106,7 @@ export function Dashboard({
           <SweepFlagged sweep={data.sweep} />
         </div>
       </div>
-      <section className="mt-4 rounded-md border border-rule-strong bg-surface p-4" aria-label="Recorded runs">
+      <section className="mt-4 rounded-md border border-rule bg-surface p-4" aria-label="Recorded runs">
         <p className="ms-kicker m-0">Recorded copilot runs</p>
         <div className="mt-3">
           <MetricsChart threads={data.threads.threads} />

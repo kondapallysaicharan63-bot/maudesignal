@@ -48,7 +48,7 @@ export function RunList({
               <span className="min-w-0">
                 <span className="ms-code mr-2">{r.product_code}</span>
                 <span className="ws-wrap">{triggerText(r)}</span>
-                <span className="block text-[14px] text-ink-3">
+                <span className="block text-[15px] text-ink-2">
                   Recorded {r.recorded_at_utc.slice(0, 10)} · {r.model}
                 </span>
               </span>
@@ -101,7 +101,7 @@ export function RunView({
                   <span className="ws-wrap font-semibold">{g.label}</span>
                   <span className="ms-num text-ink-2">{g.count} reports</span>
                 </div>
-                <p className="ws-wrap m-0 text-[14px] text-ink-3">
+                <p className="ws-wrap m-0 text-[15px] text-ink-2">
                   {g.report_ids.slice(0, 8).map((id, i) => {
                     const row = ev.reports[id]
                     return (

@@ -11,7 +11,7 @@ function RunView({ run, open }: { run: AuditRun; open: boolean }) {
           {run.run_label}
         </span>
         <span className="flex items-center gap-2">
-          <span className="text-[14px] text-ink-3">{run.entries.length} entries</span>
+          <span className="text-[15px] text-ink-2">{run.entries.length} entries</span>
           {run.chain_ok ? (
             <Pill tone="ok">Hash chain verified ✓</Pill>
           ) : (
@@ -23,10 +23,10 @@ function RunView({ run, open }: { run: AuditRun; open: boolean }) {
         {run.entries.map((e) => (
           <li key={e.seq} className="border-l-2 border-rule py-1 pl-3">
             <p className="ws-wrap m-0 text-[15px]">
-              <span className="ms-num text-ink-3">#{e.seq}</span> {e.action}{' '}
+              <span className="ms-num text-ink-2">#{e.seq}</span> {e.action}{' '}
               <span className="ms-code">{e.entity_id}</span>
             </p>
-            <p className="ws-wrap m-0 text-[14px] text-ink-3">
+            <p className="ws-wrap m-0 text-[15px] text-ink-2">
               {e.actor} · {e.ts}
             </p>
             <p className="ms-code m-0 break-all">
@@ -57,7 +57,7 @@ export function AuditTab({ audit, activeRun, generatedUtc }: { audit: Audit; act
         )}
       </div>
       {audit.notes.map((n) => (
-        <p key={n} className="ws-wrap mt-2 text-[14px] text-ink-3">
+        <p key={n} className="ws-wrap mt-2 text-[15px] text-ink-2">
           {n}
         </p>
       ))}
@@ -93,8 +93,8 @@ function CapaCard({
       </div>
       <h3 className="ws-wrap m-0 mt-2 text-[17px] font-semibold">{d.title}</h3>
       <p className="ws-wrap mt-1 text-ink-2">{d.problem}</p>
-      <p className="m-0 text-[14px] text-ink-3">Drafted text, not checked claim by claim.</p>
-      <p className="m-0 text-[14px] text-ink-3">
+      <p className="m-0 text-[15px] text-ink-2">Drafted text, not checked claim by claim.</p>
+      <p className="m-0 text-[15px] text-ink-2">
         Product code <span className="ms-code">{d.productCode}</span> · drafted {d.ts} by {d.actor}
       </p>
       <h4 className="ms-kicker mt-3">Evidence · {d.reportIds.length} reports</h4>
@@ -136,7 +136,7 @@ function CapaCard({
             if (next) onState(next)
           }}
         >
-          <label className="block text-[14px] text-ink-3" htmlFor={`rev-${d.id}`}>
+          <label className="block text-[15px] text-ink-2" htmlFor={`rev-${d.id}`}>
             Your name (a named person approves)
           </label>
           <input
@@ -187,7 +187,7 @@ export function CapaTab({
         />
       </div>
       {role === 'viewer' && (
-        <p className="mt-2 text-[14px] text-ink-3">Approving is only offered to a human reviewer.</p>
+        <p className="mt-2 text-[15px] text-ink-2">Approving is only offered to a human reviewer.</p>
       )}
       <div className="mt-3 grid gap-3">
         {drafts.length === 0 ? (
@@ -230,7 +230,7 @@ export function ProtocolTab({
       </p>
       {threadIds.length > 0 && (
         <>
-          <label className="mt-3 block text-[14px] text-ink-3" htmlFor="protocol-pick">
+          <label className="mt-3 block text-[15px] text-ink-2" htmlFor="protocol-pick">
             Stored answer
           </label>
           <select
@@ -267,22 +267,22 @@ export function ProtocolTab({
           {steps.map((s, i) => (
             <li key={i} className="border-t border-rule py-2">
               <p className="m-0">
-                <span className="ms-num text-ink-3">{i + 1}.</span> <span className="ms-code" style={{ fontSize: 14 }}>{s.tool}</span>
+                <span className="ms-num text-ink-2">{i + 1}.</span> <span className="ms-code" style={{ fontSize: 14 }}>{s.tool}</span>
               </p>
               <dl className="m-0 mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-[15px]">
-                <dt className="text-ink-3">Dataset</dt>
+                <dt className="text-ink-2">Dataset</dt>
                 <dd className="ws-wrap m-0">{s.dataset}</dd>
-                <dt className="text-ink-3">Filters</dt>
+                <dt className="text-ink-2">Filters</dt>
                 <dd className="ws-wrap m-0">
                   {Object.keys(s.filters).length === 0 ? 'none' : JSON.stringify(s.filters)}
                 </dd>
-                <dt className="text-ink-3">Dates</dt>
+                <dt className="text-ink-2">Dates</dt>
                 <dd className="ms-num m-0">
                   {s.date_from && s.date_to ? `${s.date_from} to ${s.date_to}` : 'no date range'}
                 </dd>
-                <dt className="text-ink-3">Count</dt>
+                <dt className="text-ink-2">Count</dt>
                 <dd className="ms-num m-0">{s.count === null ? 'not recorded' : s.count}</dd>
-                <dt className="text-ink-3">Run at</dt>
+                <dt className="text-ink-2">Run at</dt>
                 <dd className="ms-num ws-wrap m-0">{s.run_at ?? 'not recorded'}</dd>
               </dl>
             </li>

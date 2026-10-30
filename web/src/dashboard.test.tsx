@@ -74,6 +74,8 @@ const chat = (view: 'new' | 'thread', expanded = false): ReactElement => (
     onThread={() => {}}
     onRun={() => {}}
     onVision={() => {}}
+        onCode={() => {}}
+        onCapture={() => {}}
     onBrief={() => {}}
     onAlert={() => {}}
     expanded={expanded}

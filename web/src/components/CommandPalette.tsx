@@ -70,7 +70,7 @@ export function CommandPalette({ open, onClose, onWorkflow, workflows }: Props) 
             }}
             placeholder="Go to a workflow"
             aria-label="Search workflows"
-            className="h-12 min-w-0 flex-1 bg-transparent text-[17px] text-ink placeholder:text-ink-3 focus:outline-none"
+            className="h-12 min-w-0 flex-1 bg-transparent text-[17px] text-ink placeholder:text-ink-2 focus:outline-none"
           />
         </div>
         <ul role="listbox" aria-label="Workflows" className="m-0 max-h-[50vh] list-none overflow-y-auto p-1">
@@ -85,7 +85,7 @@ export function CommandPalette({ open, onClose, onWorkflow, workflows }: Props) 
               </button>
             </li>
           ))}
-          {items.length === 0 && <li className="px-3 py-3 text-ink-3">No workflow matches.</li>}
+          {items.length === 0 && <li className="px-3 py-3 text-ink-2">No workflow matches.</li>}
         </ul>
       </div>
     </div>

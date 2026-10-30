@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { chipState, fmtDate, resolveClaim, type ChipState } from '../claims'
 import { Icon } from '../icons'
+import { buildThreadTrace } from '../trace'
 import type { Evidence, Sentence, Thread } from '../types'
+import { TraceView } from './TraceView'
 
 const MAX_ROWS = 6
 // Threads already streamed in this session show at once when re-opened.
@@ -65,10 +67,10 @@ function EvidencePanel({ s, ev }: { s: Sentence; ev: Evidence }) {
               <span className="text-ink-2">: {c.reason}</span>
             </p>
             {r.reports.length + r.others.length === 0 && (
-              <p className="m-0 mt-1 text-ink-3">No report ids listed; the count was recomputed over the stored data.</p>
+              <p className="m-0 mt-1 text-ink-2">No report ids listed; the count was recomputed over the stored data.</p>
             )}
             {c.evidence_ids.length > shown.length + r.others.length && r.reports.length > 0 && (
-              <p className="m-0 mt-1 text-ink-3">
+              <p className="m-0 mt-1 text-ink-2">
                 Showing {shown.length} of {c.evidence_ids.length} listed ids, most serious and newest first.
               </p>
             )}
@@ -79,9 +81,9 @@ function EvidencePanel({ s, ev }: { s: Sentence; ev: Evidence }) {
                     Report {id} · {row.product_code} · {row.event_type} · {fmtDate(row.date_received)} ·{' '}
                     {row.report_source}
                   </p>
-                  <p className="ws-wrap m-0 text-ink-3">&ldquo;{row.excerpt.slice(0, 200)}
+                  <p className="ws-wrap m-0 text-ink-2">&ldquo;{row.excerpt.slice(0, 200)}
                     {row.excerpt.length > 200 ? '…' : ''}&rdquo;</p>
-                  <a href={row.maude_url} target="_blank" rel="noreferrer" className="text-[14px] underline">
+                  <a href={row.maude_url} target="_blank" rel="noreferrer" className="text-[15px] underline">
                     Open in MAUDE
                   </a>
                 </li>
@@ -91,7 +93,7 @@ function EvidencePanel({ s, ev }: { s: Sentence; ev: Evidence }) {
                   <p className="ws-wrap m-0 text-ink-2">
                     {row.kind} {id}: {row.label.slice(0, 140)}
                   </p>
-                  <a href={row.url} target="_blank" rel="noreferrer" className="text-[14px] underline">
+                  <a href={row.url} target="_blank" rel="noreferrer" className="text-[15px] underline">
                     Open source
                   </a>
                 </li>
@@ -145,7 +147,7 @@ export function SentenceLine({
       data-focus={focus ? 'true' : undefined}
       className={focus ? 'my-1 rounded-md bg-critical-soft px-3 py-2 outline outline-2 outline-critical' : 'py-1.5'}
     >
-      <span className={`ws-wrap ${state === 'withheld' ? 'text-ink-3 line-through' : ''}`}>
+      <span className={`ws-wrap ${state === 'withheld' ? 'text-ink-2 line-through' : ''}`}>
         {words.slice(0, n).join(' ')}
       </span>
       {done && (
@@ -188,7 +190,7 @@ function FirstPass({ t }: { t: Thread }) {
           return (
             <li key={i} className="py-1">
               <span className={`ws-pill mr-2 ${CHIP[st].cls}`}>{CHIP[st].label}</span>
-              <span className={`ws-wrap ${st === 'withheld' ? 'text-ink-3 line-through' : ''}`}>{s.text}</span>
+              <span className={`ws-wrap ${st === 'withheld' ? 'text-ink-2 line-through' : ''}`}>{s.text}</span>
               {st === 'withheld' &&
                 s.reasons.map((r) => (
                   <span key={r} className="ws-wrap block text-critical">
@@ -223,14 +225,18 @@ export function ThreadView({ t, ev, siblings, onThread, highlight = null, withhe
   useEffect(() => {
     if (highlight !== null) setStage((s) => Math.max(s, 1000))
   }, [highlight])
+  const trace = useMemo(() => buildThreadTrace(t), [t])
+  const lead = trace.beforeGate // steps replayed before the sentences (heard, planning, tool calls)
   useEffect(() => {
-    if (stage >= t.tool_steps.length + t.sentences.length) played.add(t.id)
-  }, [stage, t])
+    if (stage >= lead + t.sentences.length) played.add(t.id)
+  }, [stage, t, lead])
   useEffect(() => {
-    if (stage >= t.tool_steps.length || reduced()) return
-    const id = window.setTimeout(() => setStage((s) => s + 1), 350)
+    if (stage >= lead || reduced()) return
+    const id = window.setTimeout(() => setStage((s) => s + 1), 450)
     return () => window.clearTimeout(id)
-  }, [stage, t.tool_steps.length])
+  }, [stage, lead])
+  // The gate check and the closing step appear once every sentence has been shown.
+  const shownSteps = stage >= lead + t.sentences.length ? trace.steps.length : Math.min(stage, lead)
 
   const heard = t.voice ? t.voice.transcript_text : null
   const heardWords = (heard ?? '').split(' ')
@@ -255,27 +261,8 @@ export function ThreadView({ t, ev, siblings, onThread, highlight = null, withhe
       {snapshot && (
         <p className="m-0">
           <span className="ws-pill bg-warning-soft text-warning">{snapshot}</span>
-          <span className="ml-2 text-[14px] text-ink-3">Recorded against the demo database, not this week's openFDA data.</span>
+          <span className="ml-2 text-[15px] text-ink-2">Recorded against the demo database, not this week's openFDA data.</span>
         </p>
-      )}
-      {siblings.length > 1 && (
-        <details className="text-[15px]">
-          <summary className="cursor-pointer text-ink-2">
-            Other questions in this workflow ({siblings.length - 1})
-          </summary>
-          <ul className="m-0 mt-2 list-none p-0">
-            {siblings
-              .filter((x) => x.id !== t.id)
-              .map((x) => (
-                <li key={x.id}>
-                  <button className="ws-side-item items-start border-b border-rule" onClick={() => onThread(x.id)}>
-                    <span className="ws-wrap">{x.question}</span>
-                    <Icon name="chevron" size={18} />
-                  </button>
-                </li>
-              ))}
-          </ul>
-        </details>
       )}
       <div className="ml-auto max-w-[85%] rounded-md bg-sunk px-4 py-3">
         {t.voice ? (
@@ -283,7 +270,7 @@ export function ThreadView({ t, ev, siblings, onThread, highlight = null, withhe
             <p className="ws-wrap m-0">
               <span className="font-semibold">Heard:</span> &ldquo;{heardWords.slice(0, hn).join(' ')}&rdquo;
             </p>
-            <p className="m-0 mt-2 flex flex-wrap items-center gap-2 text-[14px] text-ink-3">
+            <p className="m-0 mt-2 flex flex-wrap items-center gap-2 text-[15px] text-ink-2">
               <button
                 className="ws-icon-btn !h-8 border-rule-strong"
                 aria-label="Replay the recorded transcript"
@@ -301,18 +288,8 @@ export function ThreadView({ t, ev, siblings, onThread, highlight = null, withhe
           <p className="ws-wrap m-0">{t.question}</p>
         )}
       </div>
-      {t.tool_steps.length > 0 && (
-        <ul className="m-0 list-none space-y-1 p-0 text-[15px] text-ink-2" aria-label="Steps taken">
-          {t.tool_steps.slice(0, stage).map((s, i) => (
-            <li key={i} className="flex gap-2">
-              <span className="ms-code shrink-0">{s.name}</span>
-              <span className="ws-wrap">{s.summary}</span>
-            </li>
-          ))}
-        </ul>
-      )}
       <ul className="m-0 list-none p-0">
-        {t.sentences.slice(0, Math.max(0, stage - t.tool_steps.length + 1)).map((s, i) => (
+        {t.sentences.slice(0, Math.max(0, stage - lead + 1)).map((s, i) => (
           <SentenceLine
             key={`${t.id}-${i}`}
             s={s}
@@ -320,12 +297,32 @@ export function ThreadView({ t, ev, siblings, onThread, highlight = null, withhe
             instant={instant}
             focus={highlight === i}
             id={`sentence-${i}`}
-            onDone={() => setStage((c) => Math.max(c, t.tool_steps.length + i + 1))}
+            onDone={() => setStage((c) => Math.max(c, lead + i + 1))}
           />
         ))}
       </ul>
+      <TraceView trace={trace} shown={shownSteps} />
       <FirstPass t={t} />
-      <p className="m-0 text-[14px] text-ink-3">
+      {siblings.length > 1 && (
+        <details className="text-[17px]">
+          <summary className="min-h-11 cursor-pointer py-2 text-ink-2">
+            Other questions in this workflow ({siblings.length - 1})
+          </summary>
+          <ul className="m-0 mt-2 list-none p-0">
+            {siblings
+              .filter((x) => x.id !== t.id)
+              .map((x) => (
+                <li key={x.id}>
+                  <button className="ws-side-item items-start border-b border-rule" onClick={() => onThread(x.id)}>
+                    <span className="ws-wrap">{x.question}</span>
+                    <Icon name="chevron" size={18} />
+                  </button>
+                </li>
+              ))}
+          </ul>
+        </details>
+      )}
+      <p className="m-0 text-[15px] text-ink-2">
         Stored run · {t.model} · {t.recorded_at_utc.slice(0, 10)} · replayed from a recording, no live model call
         {snapshot ? ` · ${snapshot.toLowerCase()}` : ''}
       </p>

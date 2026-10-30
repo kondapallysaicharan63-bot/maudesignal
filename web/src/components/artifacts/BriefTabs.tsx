@@ -49,14 +49,14 @@ export function BriefTab({
       )}
       <h2 className="t-title-lg ms-num m-0 mt-3">{b.date}</h2>
       <p className="ws-wrap mt-2 text-ink-2">{b.headline}</p>
-      <p className="m-0 text-[14px] text-ink-3">
+      <p className="m-0 text-[15px] text-ink-2">
         Week {b.window.current_start} to {b.window.current_end}, compared with {b.window.baseline_start} to{' '}
         {b.window.baseline_end}.
       </p>
       <dl className="m-0 mt-4 grid grid-cols-2 gap-2">
         {COUNT_LABELS.map(([k, label]) => (
           <div key={k} className="rounded-md border border-rule bg-surface p-3">
-            <dt className="text-[14px] leading-snug text-ink-2">{label}</dt>
+            <dt className="text-[15px] leading-snug text-ink-2">{label}</dt>
             <dd className="t-index ms-num m-0 mt-1">{b.counts[k]}</dd>
           </div>
         ))}
@@ -73,7 +73,7 @@ export function BriefTab({
           </li>
         ))}
       </ul>
-      {b.footer && <p className="ws-wrap mt-4 text-[14px] leading-snug text-ink-3">{b.footer}</p>}
+      {b.footer && <p className="ws-wrap mt-4 text-[15px] leading-snug text-ink-2">{b.footer}</p>}
     </article>
   )
 }
@@ -84,7 +84,7 @@ export function DigestTab({ sweep, brief, snapshot }: { sweep: Sweep; brief: Bri
     <div>
       <SweepCard sweep={sweep} />
       {brief && (
-        <p className="ws-wrap mt-3 text-[14px] text-ink-3">
+        <p className="ws-wrap mt-3 text-[15px] text-ink-2">
           The daily brief {brief.date} is a different, older week ({snapshot.toLowerCase()}); see the Brief tab.
         </p>
       )}

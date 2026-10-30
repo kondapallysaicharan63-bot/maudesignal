@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import type { Dossier, K510Field, K510Reading, LabelReading, ReadStatus, Vision } from '../../types'
+import { buildLabelTrace, buildReviewTrace } from '../../trace'
+import { TraceView } from '../TraceView'
 import { labelName, type VisionSel } from '../VisionWorkflow'
 import { PdfView } from './PdfView'
 import { Empty, Pill, Segmented, type Tone } from './common'
@@ -30,7 +32,7 @@ export function DossierTab({ dossier }: { dossier: Dossier }) {
         />
       </div>
       {which === 'approved' && (
-        <p className="mt-2 text-[14px] text-ink-3">
+        <p className="mt-2 text-[15px] text-ink-2">
           The approval in this copy is by a demo reviewer. It is a demonstration, not a Part 11 signature.
         </p>
       )}
@@ -48,7 +50,7 @@ export function DossierTab({ dossier }: { dossier: Dossier }) {
       <dl className="m-0 mt-4 text-[15px] text-ink-2">
         {dossier.narrative && (
           <div>
-            <dt className="inline text-ink-3">Summary written by </dt>
+            <dt className="inline text-ink-2">Summary written by </dt>
             <dd className="m-0 inline">
               {dossier.narrative.model} (skill {dossier.narrative.skill_version}), {dossier.narrative.created_at}
             </dd>
@@ -56,14 +58,19 @@ export function DossierTab({ dossier }: { dossier: Dossier }) {
         )}
         {r && (
           <div className="mt-1">
-            <dt className="inline text-ink-3">Independent review by </dt>
+            <dt className="inline text-ink-2">Independent review by </dt>
             <dd className="m-0 inline">
               {r.model}: {r.parse_error ? `could not be read (${r.parse_error})` : `${r.findings.length} findings`}
             </dd>
           </div>
         )}
       </dl>
-      <p className="mt-3 text-[14px] leading-snug text-ink-3">
+      {r && !r.parse_error && (
+        <div className="mt-4">
+          <TraceView trace={buildReviewTrace(r)} shown={99} label="Review steps" replayed={false} />
+        </div>
+      )}
+      <p className="mt-3 text-[15px] leading-snug text-ink-2">
         Advisory only. A named person reviews and decides; nothing is filed with FDA.
       </p>
     </article>
@@ -113,7 +120,7 @@ function SamImage({ l }: { l: LabelReading }) {
           })}
         </svg>
       </div>
-      <figcaption className="mt-2 text-[14px] text-ink-3">
+      <figcaption className="mt-2 text-[15px] text-ink-2">
         {l.sam.boxes.length === 0
           ? 'No label box was detected.'
           : `${l.sam.boxes.length} box${l.sam.boxes.length === 1 ? '' : 'es'} detected by SAM 3.1 (Meta); detector score on a 0 to 1 scale: ${l.sam.boxes
@@ -141,13 +148,16 @@ function LabelView({ l }: { l: LabelReading }) {
   return (
     <div>
       <SamImage l={l} />
+      <div className="mt-4">
+        <TraceView trace={buildLabelTrace(l)} shown={99} label="Label reading steps" replayed={false} />
+      </div>
       <h3 className="ms-kicker mt-4">Fields read from the label</h3>
       <dl className="m-0 mt-1">
         {Object.entries(l.fields).map(([k, f]) => (
           <div key={k} className="flex flex-wrap items-baseline justify-between gap-x-3 border-t border-rule py-2">
             <dt className="text-[15px] text-ink-2">{FIELD_LABEL[k] ?? k}</dt>
             <dd className="ws-wrap m-0 text-right">
-              {f.value ? f.value : <span className="text-ink-3">not present</span>}{' '}
+              {f.value ? f.value : <span className="text-ink-2">not present</span>}{' '}
               <span className="ms-code">{f.legibility.replace('_', ' ')}</span>
             </dd>
           </div>
@@ -175,7 +185,7 @@ function LabelView({ l }: { l: LabelReading }) {
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-[14px] leading-snug text-ink-3">
+      <p className="mt-3 text-[15px] leading-snug text-ink-2">
         Lot and serial numbers are read for the session only and are never stored or exported. Overall legibility: {l.overall_legibility.replace('_', ' ')}.
       </p>
     </div>
@@ -198,22 +208,22 @@ function ReadLine({ f }: { f: K510Field }) {
         <span className="text-[15px] text-ink-2">{f.name.replace(/_/g, ' ')}</span>
         <Pill tone={READ_TONE[f.status]}>{READ_LABEL[f.status]}</Pill>
       </div>
-      <p className="ws-wrap m-0">{fmt(f.value) || <span className="text-ink-3">no value</span>}</p>
+      <p className="ws-wrap m-0">{fmt(f.value) || <span className="text-ink-2">no value</span>}</p>
       {f.status !== 'VERIFIED' && (
-        <p className="ws-wrap m-0 mt-1 text-[14px] text-ink-2">
+        <p className="ws-wrap m-0 mt-1 text-[15px] text-ink-2">
           Read A: {fmt(f.read_a?.value) || 'none'} · Read B: {fmt(f.read_b?.value) || 'none'}
           {f.note ? ` · ${f.note}` : ''}
         </p>
       )}
       {f.status === 'VERIFIED' && (
-        <p className="ws-wrap m-0 mt-1 text-[14px] text-ink-2">
+        <p className="ws-wrap m-0 mt-1 text-[15px] text-ink-2">
           {basis}
           {f.note ? ` · ${f.note}` : ''}
         </p>
       )}
       <details>
-        <summary className="min-h-10 cursor-pointer py-2 text-[14px] text-ink-3">How it was checked</summary>
-        <ul className="m-0 list-none p-0 text-[14px] text-ink-2">
+        <summary className="min-h-10 cursor-pointer py-2 text-[15px] text-ink-2">How it was checked</summary>
+        <ul className="m-0 list-none p-0 text-[15px] text-ink-2">
           {f.checks.map((c, i) => (
             <li key={i} className="ws-wrap py-0.5">
               {c.source.replace(/_/g, ' ')}: {c.outcome}, {c.detail}
@@ -236,12 +246,12 @@ function K510View({ k }: { k: K510Reading }) {
       <dl className="m-0 mt-3 grid grid-cols-3 gap-2">
         {(['VERIFIED', 'CONFLICT', 'UNVERIFIABLE'] as const).map((s) => (
           <div key={s} className="rounded-md border border-rule bg-surface p-3">
-            <dt className="text-[14px] leading-snug text-ink-2">{READ_LABEL[s]}</dt>
+            <dt className="text-[15px] leading-snug text-ink-2">{READ_LABEL[s]}</dt>
             <dd className="t-index ms-num m-0 mt-1">{k.counts[s]}</dd>
           </div>
         ))}
       </dl>
-      <p className="mt-2 text-[14px] text-ink-3">
+      <p className="mt-2 text-[15px] text-ink-2">
         Both reads agree on <span className="ms-num">{k.agreement_pct}%</span> of fields · {k.pages_read} of{' '}
         {k.page_count} pages read ·{' '}
         <a className="text-accent underline" href={k.pdf_url} target="_blank" rel="noreferrer">
@@ -282,7 +292,7 @@ export function VisionTab({ vision, initial }: { vision: Vision; initial?: Visio
       {mode === 'labels' ? (
         label ? (
           <div className="mt-3">
-            <label className="block text-[14px] text-ink-3" htmlFor="label-pick">
+            <label className="block text-[15px] text-ink-2" htmlFor="label-pick">
               Stored label photo
             </label>
             <select

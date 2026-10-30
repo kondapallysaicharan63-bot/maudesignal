@@ -89,6 +89,8 @@ export interface Brief {
   window: { current_start: string; current_end: string; baseline_start: string; baseline_end: string }
   signals: { product_code: string; classification: string; label: string; current_count: number; baseline_count: number }[]
   footer: string | null
+  /** Product code to device name, as stored in the digest. */
+  device_types?: Record<string, string>
 }
 
 export interface Source {
@@ -197,6 +199,10 @@ export interface LabelReading {
   overall_legibility: string
   match_basis: string
   model: string
+  /** Run-level usage as stored with the reading (the live API answer may omit it). */
+  input_tokens?: number
+  output_tokens?: number
+  cost_usd?: { spark?: number; sam?: number; total?: number }
 }
 
 export type ReadStatus = 'VERIFIED' | 'CONFLICT' | 'UNVERIFIABLE'

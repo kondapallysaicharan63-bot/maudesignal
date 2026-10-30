@@ -59,16 +59,19 @@ export function suggestThreads(text: string, threads: Thread[], limit = 6): Thre
   const q = tokens(text)
   const last = text.toLowerCase().match(/[a-z0-9]+$/)?.[0] ?? ''
   if (q.length === 0 && !last) return []
-  const scored: { t: Thread; hits: number }[] = []
+  const scored: { t: Thread; rank: number }[] = []
+  const typed = text.trim().toLowerCase()
   for (const t of threads) {
     if (!isAnswer(t)) continue
     const words = tokens(t.question)
     const hit = (w: string) => words.includes(w) || (w === last && last.length >= 2 && words.some((x) => x.startsWith(last)))
     const hits = new Set([...q, ...(last.length >= 2 ? [last] : [])].filter(hit)).size
-    if (hits > 0) scored.push({ t, hits })
+    // Match strength: more matched words first, then a question that starts with what was typed, then the
+    // question where the matched words make up more of the question (a tighter match). Ties keep stored order.
+    if (hits > 0) scored.push({ t, rank: hits * 100 + (t.question.toLowerCase().startsWith(typed) ? 50 : 0) + (hits / Math.max(1, words.length)) * 10 })
   }
   return scored
-    .sort((a, b) => b.hits - a.hits)
+    .sort((a, b) => b.rank - a.rank)
     .slice(0, limit)
     .map((x) => x.t)
 }
