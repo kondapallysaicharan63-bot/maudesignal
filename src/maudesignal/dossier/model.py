@@ -11,6 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date, datetime
 
+from maudesignal.company.checklist import CompanyChecklist
 from maudesignal.copilot.protocol import ProtocolRow
 from maudesignal.dossier.figures import Figure
 
@@ -217,6 +218,8 @@ class DossierData:
     figures_failed: int = 0
     illustration: Illustration | None = None
     protocol: tuple[ProtocolRow, ...] = ()
+    #: Simulated-company checklist for the pack's product code (None when none applies).
+    company_checklist: CompanyChecklist | None = None
     software: str = "MaudeSignal 0.1.0 (maudesignal.dossier)"
     extra_notes: list[str] = field(default_factory=list)
 

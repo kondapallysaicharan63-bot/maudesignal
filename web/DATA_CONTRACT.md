@@ -159,3 +159,78 @@ The browser never calls openFDA (openFDA answered the preview's browser calls wi
   check. Client limit: 10 checks per browser session, 6-hour local cache per code.
 - Withheld sentences: the API never returns a withheld sentence's text; the web app must
   not display one either (tested in `web/src/liveCheck.test.tsx`).
+
+## `company.json` (added Oct 30, A6; "Does this apply to us?")
+
+Written by `maudesignal.company.export_company(load_company())` (Track A); the web exporter
+copies it to `web/public/data/company.json` as stored. **Simulated company, real FDA
+evidence**: every name, owner, model, status and date is sample data; every report, recall,
+count and quote is stored openFDA data. Inputs: `demo/company/company.json` (devices),
+`demo/company/audit.json` (hash-chained status history), `demo/company/evidence/<code>.json`
+(fetched evidence, from `scripts/fetch_company_evidence.py`), the demo database (read-only,
+codes LLZ, QIH, MYN, POK) and `demo/investigations/*weekly-llz.json` (reused groups).
+
+```json
+{"schema_version": "1.0", "generated_utc": "...",
+ "banner": "Simulated company — sample data. Problem evidence is real FDA data.",
+ "company": "Demo MedTech Co. (simulated)",
+ "statuses": [{"label": "Needs review", "rank": 1}, {"label": "Testing in progress", "rank": 2},
+              {"label": "Already covered", "rank": 3}, {"label": "Not applicable to our device", "rank": 3},
+              {"label": "Monitoring — nothing open", "rank": 4}],
+ "devices": [{
+   "id": "DMC-01", "name": "Halcyon ViewStation", "model": "HV-200", "product_code": "LLZ",
+   "owner": "Mara Ellison (simulated)",
+   "device_type": {"name": "System, Image Processing, Radiological" | null, "source": "..." | null,
+                   "query_url": "https://api.fda.gov/device/classification.json?search=product_code:LLZ"},
+   "sweep": {"file": "demo/sweep/ai-device-sweep.json", "product_code": "LLZ", "as_of": "20260930",
+             "classification": "stable|spike|severity_escalation|new_signal", "triggers": [],
+             "current_count": 12, "baseline_count": 288, "prior_report_count": 19958, "query_url": "..."} | null,
+   "status": {"label": "Testing in progress", "set_by": "Mara Ellison (simulated)", "date": "2026-10-19",
+              "detail": "owner ...; due 2026-11-20", "details": {"owner": "...", "due_date": "2026-11-20"}} | null,
+   "history": [{"seq": 1, "date": "2026-10-12", "ts": "...", "actor": "...", "action": "register|change",
+                "from_status": null, "to_status": "Needs review", "details": {}, "note": "", "entry_hash": "..."}],
+   "evidence": {"origin": "demo_db|fetched|missing", "available": true, "note": null, "fetched_utc": null,
+                "report_count": {"value": 121, "gate": "pass", "reason": "recomputed 121"} | null,
+                "window": {"date_from": "20260701", "date_to": "20260831"} | null,
+                "queries": [{"label": "...", "url": "https://api.fda.gov/..."}],
+                "recalls": {"stored": 561, "matched_total": 561, "gate": "pass", "reason": "...",
+                            "latest": [{"recall_number": "Z-0186-2027", "recalling_firm": "...", "status": "...",
+                                        "date_initiated": "20260905", "excerpt": "verbatim, gate-checked" | null,
+                                        "url": "https://www.accessdata.fda.gov/..." | null}]} | null,
+                "gate_totals": {"pass": 11, "block": 0}},
+   "patterns": [{"id": "LLZ-inv-1", "label": "...", "basis": "weekly investigator group, recorded run ...; count recomputed | keyword rules v1.0 (rule-id)",
+                 "count": 3, "report_ids": ["50503662"], "first_received": "20260825", "last_received": "20260828",
+                 "quotes": [{"report_id": "50503662", "text": "verbatim sentence", "url": "https://www.accessdata.fda.gov/.../detail.cfm?mdrfoi__id=50503662"}],
+                 "links": [{"label": "MAUDE report 50503662", "url": "..."}],
+                 "gate": {"count": "pass", "reason": "recomputed 3 from 3 listed report ids",
+                          "quotes_passed": 2, "quotes_withheld": 0}}]
+ }],
+ "audit": {"file": "demo/company/audit.json", "chain_ok": true, "first_bad_seq": null,
+           "entries": [{"seq": 1, "ts": "...", "actor": "...", "action": "company.status.register",
+                        "entity_id": "DMC-01", "payload_json": "...", "prev_hash": "GENESIS", "entry_hash": "..."}]},
+ "notes": ["DQK: evidence not fetched yet; no count, pattern or quote is shown for it."]}
+```
+
+Rules:
+
+- The banner string is shown on every screen that renders this file. The words "safe",
+  "unsafe" and "compliant" are never shown (the exporter withholds a quote that contains one).
+- `audit.chain_ok` is **re-verified at export** by recomputing every SHA-256 hash
+  (`copilot.audit_export.verify_entries`), not copied from the file's `chain_ok_at_export`.
+  The web app may re-verify with the same rule: `entry_hash = sha256(prev_hash + json.dumps({"ts",
+  "actor", "action", "entity_id", "payload": payload_json}, sort_keys=True))`, first `prev_hash`
+  `"GENESIS"`, `ts` as `datetime.isoformat()`.
+- A status is set by a named simulated person (`actor` ends with "(simulated)"), never by the tool,
+  and only moves forward in rank (Needs review 1 → Testing in progress 2 → Already covered /
+  Not applicable 3 → Monitoring 4; equal or lower rank is rejected). The history is the audit
+  entries of that device, in order.
+- Missing evidence: a code with no stored evidence has `evidence.available: false`,
+  `evidence.note: "evidence not fetched yet"`, `patterns: []`, `report_count: null`,
+  `recalls: null`, and a line in `notes[]`. `device_type.name` is `null` until the fetched
+  classification exists. Nothing is estimated or invented.
+- Every count about real reports/recalls (`report_count`, pattern `count`, `recalls.stored`)
+  carries its gate verdict and is recomputed from the stored records at export; a pattern whose
+  count the gate does not pass is left out, a quote it does not pass is dropped (`quotes_withheld`).
+  Pattern groups come from the recorded weekly-investigator run when one exists (LLZ), otherwise from
+  documented keyword rules (`maudesignal.company.patterns.RULES`, no model).
+- No lot or serial number, no patient field and no API key is exported.

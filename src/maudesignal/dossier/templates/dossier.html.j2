@@ -149,6 +149,7 @@ a { color: #1a5fb4; }
     <li><a href="#sec-capa">4. CAPA record (ISO 13485:2016 §8.5.2 / §8.5.3) </a></li>
     <li><a href="#sec-mdr">5. MDR assessment worksheet (Form 3500A map) </a></li>
     <li><a href="#sec-narrative">6. Narrative summary </a></li>
+    {% if d.company_checklist %}<li><a href="#sec-company">7. Simulated company checklist </a></li>{% endif %}
     <li><a href="#sec-audit">Appendix A. Audit trail </a></li>
     <li><a href="#sec-protocol">Appendix B. Search methodology </a></li>
   </ul>
@@ -294,6 +295,31 @@ a { color: #1a5fb4; }
   <div class="note">{{ d.narrative.note }}</div>
   {% endif %}
 </section>
+
+{# ======================= 7. SIMULATED COMPANY CHECKLIST ======================= #}
+{% if d.company_checklist %}
+{% set cc = d.company_checklist %}
+<section class="newpage" id="sec-company">
+  <h2>7. Simulated company checklist</h2>
+  <div class="gap" id="company-banner"><b>{{ cc.banner }}</b></div>
+  <p class="small">{{ cc.company }}: devices on product code <b>{{ cc.product_code }}</b>, the status each named simulated person set, and the real problem patterns stored for the code. Status history is chained in demo/company/audit.json (chain {{ "intact" if cc.chain_ok else "BROKEN" }} when this record was generated). No number elsewhere in this record comes from this section.</p>
+  <table class="ev">
+    <thead><tr><th>Device (fictional)</th><th>Owner</th><th>Status</th><th>Set by, date</th><th>Real problem patterns (count of reports)</th></tr></thead>
+    <tbody>
+    {% for x in cc.devices %}
+    <tr>
+      <td>{{ x.name }}<br><span class="small">{{ x.device_id }} · model {{ x.model }}</span></td>
+      <td>{{ x.owner }}</td>
+      <td><b>{{ x.status }}</b>{% if x.status_detail %}<br><span class="small">{{ x.status_detail }}</span>{% endif %}</td>
+      <td>{{ x.set_by }}<br><span class="small">{{ x.status_date }}</span></td>
+      <td>{% if x.patterns %}{% for p in x.patterns %}{{ p.label }} ({{ p.count }}){% if not loop.last %}<br>{% endif %}{% endfor %}{% else %}<span class="small">{{ x.evidence_note }}</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <div class="note">{{ cc.note }}</div>
+</section>
+{% endif %}
 
 {# ======================= APPENDIX: AUDIT TRAIL ======================= #}
 <section class="newpage" id="sec-audit">

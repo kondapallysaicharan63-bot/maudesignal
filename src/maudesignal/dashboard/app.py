@@ -55,6 +55,11 @@ _PAGES: list[tuple[str, str, str]] = [
         "Audit",
         "Every decision and model answer, in one tamper-evident trail",
     ),
+    (
+        "inventory_2",
+        "Our devices",
+        "Does a problem in FDA data apply to us? A simulated company's devices and statuses",
+    ),
     ("dashboard", "Dashboard", "Executive summary of postmarket signal activity"),
     ("search", "Signal Explorer", "Browse, filter, and export AI extraction results"),
     ("download", "MAUDE Ingestion", "Pull adverse event reports from openFDA"),
@@ -1802,7 +1807,7 @@ def _settings_sources(db: Database) -> None:
 
 
 #: Pages in the top navigation (built during the hackathon); the rest sit in the sidebar.
-_TOP_PAGES: tuple[str, ...] = ("Signals", "Copilot", "Vision", "Audit")
+_TOP_PAGES: tuple[str, ...] = ("Signals", "Copilot", "Vision", "Audit", "Our devices")
 
 _WORDMARK = (
     '<a class="ms-wordmark" href="?" aria-label="MaudeSignal home">'
@@ -1941,6 +1946,7 @@ def _render_app(db: Database) -> None:  # noqa: PLR0912
     page: str = st.session_state["nav_page"]
 
     # ── Page routing ──────────────────────────────────────────────────────────
+    from maudesignal.dashboard.company_pages import page_company
     from maudesignal.dashboard.copilot_pages import page_audit, page_copilot
     from maudesignal.dashboard.vision_pages import page_vision
     from maudesignal.dashboard.workspace import page_signals
@@ -1950,6 +1956,7 @@ def _render_app(db: Database) -> None:  # noqa: PLR0912
         "Copilot": lambda: page_copilot(db),
         "Audit": lambda: page_audit(db),
         "Vision": lambda: page_vision(db),
+        "Our devices": page_company,
         "Dashboard": lambda: _page_dashboard(db),
         "Signal Explorer": lambda: _page_signal_explorer(db),
         "MAUDE Ingestion": lambda: _page_ingestion(db),

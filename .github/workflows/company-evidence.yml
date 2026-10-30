@@ -1,0 +1,59 @@
+# HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
+# Fetches real openFDA evidence (last 8 weeks of MAUDE reports, latest recalls, device-type
+# name) for the simulated company's product codes that the demo database does not hold
+# (scripts/fetch_company_evidence.py). openFDA only: no Meta key, no model.
+# Runs when demo/company/FETCH_REQUEST is pushed on track-a-company (the coordinator bumps
+# the number inside it) or by hand, then commits demo/company/evidence/ back to the branch.
+# OPENFDA_API_KEY is optional (about 3 requests per code).
+name: Company evidence (openFDA)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [track-a-company]
+    paths:
+      - demo/company/FETCH_REQUEST
+
+permissions:
+  contents: write
+
+concurrency:
+  group: company-evidence-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - name: Install package
+        run: pip install -e .
+      - name: Fetch evidence for the company's product codes
+        env:
+          OPENFDA_API_KEY: ${{ secrets.OPENFDA_API_KEY }}
+        run: python scripts/fetch_company_evidence.py
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: company-evidence-${{ github.run_id }}
+          path: demo/company/evidence/
+          retention-days: 30
+      - name: Commit evidence back to the branch
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add demo/company/evidence/
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "chore(company): openFDA evidence for the simulated company $(date -u +%Y-%m-%d)"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

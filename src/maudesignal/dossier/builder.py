@@ -20,6 +20,7 @@ from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from maudesignal.company.checklist import checklist_for
 from maudesignal.copilot.protocol import (
     ProtocolRow,
     load_transcripts,
@@ -545,6 +546,7 @@ def build_dossier(
             [r.report_id for r in rows],
         ),
     )
+    data.company_checklist = checklist_for(pc)
     report = verify_figures(all_figures(data), store)
     data.figures_checked = report.total
     data.figures_failed = len(report.failed)
