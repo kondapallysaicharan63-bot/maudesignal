@@ -196,6 +196,33 @@ def test_company_files_hold_no_real_records_and_real_records_hold_no_company(
     con.close()
 
 
+#: Well-known real device brands a fictional name must never use (the demo DB alone cannot
+#: catch these, e.g. it holds no radiotherapy systems).
+REAL_DEVICE_BRANDS = frozenset(
+    "halcyon truebeam ethos versa cyberknife gammaknife medtronic stryker mako "
+    "aidoc rapidai arterys enlitic zebra lunit paige heartflow caption butterfly "
+    "clarius cleerly".split()
+)
+
+
+def test_statuses_point_at_patterns_the_page_shows() -> None:
+    from maudesignal.company.build import load_company
+
+    view = load_company()
+    for d in view.devices:
+        if d.status is None:
+            continue
+        text = " ".join(str(v) for v in d.status.details.values())
+        quoted = re.findall(r"'([^']+)'", text)
+        if d.status.to_status in ("Already covered", "Not applicable to our device"):
+            assert quoted, f"{d.device_id} gives no pattern label"
+        labels = {p.label for p in d.patterns}
+        for q in quoted:
+            assert q in labels, f"{d.device_id}: '{q}' is not a pattern shown on the page"
+        if not d.evidence.available:
+            assert d.status.to_status in ("Needs review", "Monitoring — nothing open")
+
+
 def test_fictional_names_do_not_match_real_names_and_have_no_k_numbers(doc: dict[str, Any]) -> None:
     con = sqlite3.connect(f"{DEMO_DB.as_uri()}?mode=ro", uri=True)
     real: list[str] = []
@@ -215,6 +242,9 @@ def test_fictional_names_do_not_match_real_names_and_have_no_k_numbers(doc: dict
         first = re.findall(r"[a-z0-9]+", d["name"].lower())[0]
         assert first not in real_tokens, f"{d['name']} shares a word with a real name"
         assert d["name"].lower() not in real_text
+    for d in doc["devices"]:
+        words = set(re.findall(r"[a-z0-9]+", d["name"].lower()))
+        assert not words & REAL_DEVICE_BRANDS, f"{d['name']} uses a real device brand"
     blob = json.dumps(doc) + (company_dir() / "audit.json").read_text()
     assert not re.search(r"\bK\d{6}\b", blob)
     assert not re.search(r"\b(DEN|P)\d{6}\b", blob)
@@ -432,6 +462,8 @@ def test_pattern_counts_and_quotes_are_recomputed_from_stored_reports(view: Any)
     for d in view.devices:
         if not d.evidence.available:
             continue
+        if d.evidence.origin != "demo_db":  # fetched files: recompute from the file's own reports
+            texts = {**texts, **{r.report_id: (d.product_code, r.text) for r in d.evidence.reports}}
         stored = [i for i, (code, _) in texts.items() if code == d.product_code]
         assert d.code_patterns.report_count == len(stored)
         for p in d.patterns:
@@ -449,7 +481,7 @@ def test_pattern_counts_and_quotes_are_recomputed_from_stored_reports(view: Any)
 def test_recall_counts_match_the_stored_recalls(view: Any) -> None:
     con = sqlite3.connect(f"{DEMO_DB.as_uri()}?mode=ro", uri=True)
     for d in view.devices:
-        if d.evidence.available:
+        if d.evidence.available and d.evidence.origin == "demo_db":
             n = con.execute(
                 "SELECT count(*) FROM external_sources WHERE source_type='fda_recall' "
                 "AND product_code=?",
@@ -494,8 +526,8 @@ def test_keyword_rules_are_deterministic_and_need_two_reports() -> None:
     assert group_by_rules(ev.reports[:1]) == []
 
 
-def test_missing_evidence_shows_no_numbers(view: Any) -> None:
-    out = export_company(view)
+def test_missing_evidence_shows_no_numbers(tmp_path: Path) -> None:
+    out = export_company(load_company(evidence_folder=tmp_path))  # no evidence files
     for d in out["devices"]:
         if d["product_code"] in FLAGGED | STABLE:
             ev = d["evidence"]

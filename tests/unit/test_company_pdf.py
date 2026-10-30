@@ -52,7 +52,7 @@ def test_section_text_has_banner_devices_statuses_and_patterns(db: Database) -> 
         assert d.status.to_status in sec and d.status.actor in sec and d.status.date_label in sec
         for p in d.patterns:
             assert f"{p.label} ({p.count})" in sec
-    assert "Halcyon ViewStation" in sec and "Halcyon ReportDesk" in sec
+    assert "Vellmar ViewStation" in sec and "Vellmar ReportDesk" in sec
     assert "test report TR-104 (sample)" in sec
     assert "chain intact" in sec
     assert not FORBIDDEN.search(sec)
@@ -78,7 +78,7 @@ def test_checklist_exists_only_for_codes_with_a_company_device(db: Database) -> 
     out = produce(db, product_code="QIH", pdf=False)
     assert out.build.data.company_checklist is not None  # the company has a QIH device
     html = produce(db, product_code="MYN", pdf=False).html
-    assert "Not applicable to our device" in _text(_section(html))
+    assert "Monitoring — nothing open" in _text(_section(html))
 
 
 def test_pdf_text_carries_the_banner(db: Database, tmp_path: Path) -> None:
@@ -92,10 +92,19 @@ def test_pdf_text_carries_the_banner(db: Database, tmp_path: Path) -> None:
     pdf = tmp_path / "pack.pdf"
     pdf.write_bytes(out.pdf)
     text = subprocess.run(  # fixed argv, no shell
-        [pdftotext, "-layout", str(pdf), "-"], check=True, capture_output=True, text=True
+        [pdftotext, str(pdf), "-"], check=True, capture_output=True, text=True
     ).stdout
     flat = re.sub(r"\s+", " ", text)
     assert BANNER in flat
     assert "7. Simulated company checklist" in flat
-    assert "Halcyon ViewStation" in flat and "Halcyon ReportDesk" in flat
+    assert "Vellmar ViewStation" in flat and "Vellmar ReportDesk" in flat
     assert "Already covered" in flat and "Testing in progress" in flat
+
+
+def test_checklist_survives_broken_company_files(tmp_path: Path) -> None:
+    from maudesignal.company.checklist import checklist_for
+
+    (tmp_path / "company.json").write_text("{not json", encoding="utf-8")
+    cl = checklist_for("LLZ", folder=tmp_path)
+    assert cl is not None and cl.devices == ()
+    assert "failed validation" in cl.note and cl.banner

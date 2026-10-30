@@ -32,9 +32,9 @@
       "actor": "Tomas Reyes (simulated)",
       "action": "company.status.register",
       "entity_id": "DMC-04",
-      "payload_json": "{\"details\": {\"reason\": \"our device has no software installer component (sample reason)\"}, \"device_id\": \"DMC-04\", \"from_status\": null, \"note\": \"\", \"to_status\": \"Not applicable to our device\"}",
+      "payload_json": "{\"details\": {}, \"device_id\": \"DMC-04\", \"from_status\": null, \"note\": \"nothing open (sample note)\", \"to_status\": \"Monitoring — nothing open\"}",
       "prev_hash": "bad76f2fe85170d781db7be459da79ebacb24bdeda452409d55262adae673303",
-      "entry_hash": "cfd2a2675b48d14a83ad42e74ec67a7b0f7fa342f96c7a66551ce21a15962758"
+      "entry_hash": "2c3c1676a590a2db6d78d9d31a8c227e7e1a316aa92997f923c3a59aa0426429"
     },
     {
       "seq": 4,
@@ -43,8 +43,8 @@
       "action": "company.status.register",
       "entity_id": "DMC-05",
       "payload_json": "{\"details\": {}, \"device_id\": \"DMC-05\", \"from_status\": null, \"note\": \"nothing open (sample note)\", \"to_status\": \"Monitoring — nothing open\"}",
-      "prev_hash": "cfd2a2675b48d14a83ad42e74ec67a7b0f7fa342f96c7a66551ce21a15962758",
-      "entry_hash": "f02e1cd8615e0932107a3cf35c51bace6ae93c11b6dd6b4000c6e56c39e1f4d3"
+      "prev_hash": "2c3c1676a590a2db6d78d9d31a8c227e7e1a316aa92997f923c3a59aa0426429",
+      "entry_hash": "a9bf2740451e6185f6aa30a47b66a1e1b9980d02911e33cc59a1c034a4f659bb"
     },
     {
       "seq": 5,
@@ -53,8 +53,8 @@
       "action": "company.status.register",
       "entity_id": "DMC-10",
       "payload_json": "{\"details\": {}, \"device_id\": \"DMC-10\", \"from_status\": null, \"note\": \"nothing open (sample note)\", \"to_status\": \"Monitoring — nothing open\"}",
-      "prev_hash": "f02e1cd8615e0932107a3cf35c51bace6ae93c11b6dd6b4000c6e56c39e1f4d3",
-      "entry_hash": "f48a44a01b1439d49987270b1b3285335db39dc878f330fd4c1b799833b17e13"
+      "prev_hash": "a9bf2740451e6185f6aa30a47b66a1e1b9980d02911e33cc59a1c034a4f659bb",
+      "entry_hash": "dbad6a4dacf02db93a22c8e903a14109fb601df879ac5b977b5d85fa1d7c3db2"
     },
     {
       "seq": 6,
@@ -63,8 +63,8 @@
       "action": "company.status.register",
       "entity_id": "DMC-11",
       "payload_json": "{\"details\": {}, \"device_id\": \"DMC-11\", \"from_status\": null, \"note\": \"nothing open (sample note)\", \"to_status\": \"Monitoring — nothing open\"}",
-      "prev_hash": "f48a44a01b1439d49987270b1b3285335db39dc878f330fd4c1b799833b17e13",
-      "entry_hash": "5fa3aecbf277649de4b21644e0f56550ebf2c4b2c1d043130d684d46cf477f75"
+      "prev_hash": "dbad6a4dacf02db93a22c8e903a14109fb601df879ac5b977b5d85fa1d7c3db2",
+      "entry_hash": "d6f9701c789a3820a454aff7a6740e9096bfd2fbdaa8b7221c7394bbe0e031dc"
     },
     {
       "seq": 7,
@@ -73,8 +73,8 @@
       "action": "company.status.register",
       "entity_id": "DMC-12",
       "payload_json": "{\"details\": {\"owner\": \"Joss Whitaker (simulated)\"}, \"device_id\": \"DMC-12\", \"from_status\": null, \"note\": \"\", \"to_status\": \"Needs review\"}",
-      "prev_hash": "5fa3aecbf277649de4b21644e0f56550ebf2c4b2c1d043130d684d46cf477f75",
-      "entry_hash": "5073d03dc366275f4b7a287a49573a082811479d376a29ce63a572eb1725028c"
+      "prev_hash": "d6f9701c789a3820a454aff7a6740e9096bfd2fbdaa8b7221c7394bbe0e031dc",
+      "entry_hash": "99f3da49aaaedaf71ea0a98e89f095ee5690f3e93ebb6d3a08b453fe98a51917"
     },
     {
       "seq": 8,
@@ -82,9 +82,9 @@
       "actor": "Devon Park (simulated)",
       "action": "company.status.change",
       "entity_id": "DMC-02",
-      "payload_json": "{\"details\": {\"reference\": \"test report TR-104 (sample)\"}, \"device_id\": \"DMC-02\", \"from_status\": \"Needs review\", \"note\": \"\", \"to_status\": \"Already covered\"}",
-      "prev_hash": "5073d03dc366275f4b7a287a49573a082811479d376a29ce63a572eb1725028c",
-      "entry_hash": "7d65fe3f7da870f61fc8b3c3d66f156601cf12be4567d063f0d61385d590daf1"
+      "payload_json": "{\"details\": {\"reference\": \"test report TR-104 (sample) covers the pattern 'Unable to log in or connect, including server errors'\"}, \"device_id\": \"DMC-02\", \"from_status\": \"Needs review\", \"note\": \"\", \"to_status\": \"Already covered\"}",
+      "prev_hash": "99f3da49aaaedaf71ea0a98e89f095ee5690f3e93ebb6d3a08b453fe98a51917",
+      "entry_hash": "8ebffd2364e07a4145dd6e5538312e85d819772f56db973b9ac60e911de1d779"
     },
     {
       "seq": 9,
@@ -93,8 +93,8 @@
       "action": "company.status.change",
       "entity_id": "DMC-01",
       "payload_json": "{\"details\": {\"due_date\": \"2026-11-20\", \"owner\": \"Mara Ellison (simulated)\"}, \"device_id\": \"DMC-01\", \"from_status\": \"Needs review\", \"note\": \"\", \"to_status\": \"Testing in progress\"}",
-      "prev_hash": "7d65fe3f7da870f61fc8b3c3d66f156601cf12be4567d063f0d61385d590daf1",
-      "entry_hash": "7788dc6a13b57ae6270a46ce278d3603dde7661e450a3a88edba156a63bf47a9"
+      "prev_hash": "8ebffd2364e07a4145dd6e5538312e85d819772f56db973b9ac60e911de1d779",
+      "entry_hash": "e38c259c2390cfc9d787e3848ba30f54714f34c6fee29576b9b2b9da48743f37"
     },
     {
       "seq": 10,
@@ -103,8 +103,8 @@
       "action": "company.status.register",
       "entity_id": "DMC-03",
       "payload_json": "{\"details\": {\"owner\": \"Iris Tanaka (simulated)\"}, \"device_id\": \"DMC-03\", \"from_status\": null, \"note\": \"\", \"to_status\": \"Needs review\"}",
-      "prev_hash": "7788dc6a13b57ae6270a46ce278d3603dde7661e450a3a88edba156a63bf47a9",
-      "entry_hash": "8a76a813053f4e1433dd878b854526a8874dca9896c3f32cd42972476ac9da04"
+      "prev_hash": "e38c259c2390cfc9d787e3848ba30f54714f34c6fee29576b9b2b9da48743f37",
+      "entry_hash": "6546f8b0a9c8191518fe48d2b0f56489adca9bcf616fd0999c1fe634ee148170"
     },
     {
       "seq": 11,
@@ -112,9 +112,9 @@
       "actor": "Joss Whitaker (simulated)",
       "action": "company.status.change",
       "entity_id": "DMC-12",
-      "payload_json": "{\"details\": {\"reason\": \"the affected function is not in our product (sample reason)\"}, \"device_id\": \"DMC-12\", \"from_status\": \"Needs review\", \"note\": \"\", \"to_status\": \"Not applicable to our device\"}",
-      "prev_hash": "8a76a813053f4e1433dd878b854526a8874dca9896c3f32cd42972476ac9da04",
-      "entry_hash": "4253172c242a1029ed66cb4c0d9881fa05ea4a8cbc1d0dc3012f4539d6b8fd48"
+      "payload_json": "{\"details\": {\"reason\": \"our device has no user log-in function, so the pattern 'Log-in, access or security problem' does not apply (sample reason)\"}, \"device_id\": \"DMC-12\", \"from_status\": \"Needs review\", \"note\": \"\", \"to_status\": \"Not applicable to our device\"}",
+      "prev_hash": "6546f8b0a9c8191518fe48d2b0f56489adca9bcf616fd0999c1fe634ee148170",
+      "entry_hash": "713e2bbba65ebc56d4d872d0f81f50567ea2f07731288086a9b1663aeeace9aa"
     },
     {
       "seq": 12,
@@ -123,8 +123,8 @@
       "action": "company.status.register",
       "entity_id": "DMC-06",
       "payload_json": "{\"details\": {\"owner\": \"Noor Haddad (simulated)\"}, \"device_id\": \"DMC-06\", \"from_status\": null, \"note\": \"\", \"to_status\": \"Needs review\"}",
-      "prev_hash": "4253172c242a1029ed66cb4c0d9881fa05ea4a8cbc1d0dc3012f4539d6b8fd48",
-      "entry_hash": "df56f775f782e37763da01f6157659c5d7cbc8380a238a6cf9252eb3ce7a7ede"
+      "prev_hash": "713e2bbba65ebc56d4d872d0f81f50567ea2f07731288086a9b1663aeeace9aa",
+      "entry_hash": "ec5e1f819501726f1ed97c9f5d42af92eb9ae057479c49d6949f16a95a984870"
     },
     {
       "seq": 13,
@@ -133,8 +133,8 @@
       "action": "company.status.register",
       "entity_id": "DMC-07",
       "payload_json": "{\"details\": {\"owner\": \"Callum Brodie (simulated)\"}, \"device_id\": \"DMC-07\", \"from_status\": null, \"note\": \"\", \"to_status\": \"Needs review\"}",
-      "prev_hash": "df56f775f782e37763da01f6157659c5d7cbc8380a238a6cf9252eb3ce7a7ede",
-      "entry_hash": "3c3da4b058722849e34ffbeee95c6f0f7ebd091960f1486b26dbd67763561509"
+      "prev_hash": "ec5e1f819501726f1ed97c9f5d42af92eb9ae057479c49d6949f16a95a984870",
+      "entry_hash": "e6519f87d6d9dbc30139850a85ec00f84a8628dc1d394773cf48987b9325a4b7"
     },
     {
       "seq": 14,
@@ -143,8 +143,8 @@
       "action": "company.status.register",
       "entity_id": "DMC-08",
       "payload_json": "{\"details\": {\"owner\": \"Yuki Sato (simulated)\"}, \"device_id\": \"DMC-08\", \"from_status\": null, \"note\": \"\", \"to_status\": \"Needs review\"}",
-      "prev_hash": "3c3da4b058722849e34ffbeee95c6f0f7ebd091960f1486b26dbd67763561509",
-      "entry_hash": "1753e58f4ff315e608abf084269136399c6207b59364c8af7629655db2f8f741"
+      "prev_hash": "e6519f87d6d9dbc30139850a85ec00f84a8628dc1d394773cf48987b9325a4b7",
+      "entry_hash": "949958492d5952a4180d1837333dc3bd355cd52c6dd00305e0420871b9de61a9"
     },
     {
       "seq": 15,
@@ -153,28 +153,8 @@
       "action": "company.status.register",
       "entity_id": "DMC-09",
       "payload_json": "{\"details\": {\"owner\": \"Ana Moreau (simulated)\"}, \"device_id\": \"DMC-09\", \"from_status\": null, \"note\": \"\", \"to_status\": \"Needs review\"}",
-      "prev_hash": "1753e58f4ff315e608abf084269136399c6207b59364c8af7629655db2f8f741",
-      "entry_hash": "3e9dc782f89760eaf2c5fd4cd550d4f64628395218ba938a1524dce7f0187cd5"
-    },
-    {
-      "seq": 16,
-      "ts": "2026-10-30T15:00:00+00:00",
-      "actor": "Ana Moreau (simulated)",
-      "action": "company.status.change",
-      "entity_id": "DMC-09",
-      "payload_json": "{\"details\": {\"reference\": \"design review DR-22 (sample)\"}, \"device_id\": \"DMC-09\", \"from_status\": \"Needs review\", \"note\": \"\", \"to_status\": \"Already covered\"}",
-      "prev_hash": "3e9dc782f89760eaf2c5fd4cd550d4f64628395218ba938a1524dce7f0187cd5",
-      "entry_hash": "3eb04d8ba0c33f44c73fe66ef0f0b2f1cd827e5d5e6da31279542170b955659a"
-    },
-    {
-      "seq": 17,
-      "ts": "2026-10-30T15:00:00+00:00",
-      "actor": "Callum Brodie (simulated)",
-      "action": "company.status.change",
-      "entity_id": "DMC-07",
-      "payload_json": "{\"details\": {\"due_date\": \"2026-11-13\", \"owner\": \"Callum Brodie (simulated)\"}, \"device_id\": \"DMC-07\", \"from_status\": \"Needs review\", \"note\": \"\", \"to_status\": \"Testing in progress\"}",
-      "prev_hash": "3eb04d8ba0c33f44c73fe66ef0f0b2f1cd827e5d5e6da31279542170b955659a",
-      "entry_hash": "2386c9740107f23eebb0344f675a8f08cf649e782abc78d907b788364c16f345"
+      "prev_hash": "949958492d5952a4180d1837333dc3bd355cd52c6dd00305e0420871b9de61a9",
+      "entry_hash": "c28df421b2a5faa501c495c52c8ad3de8220f304802f2f88701ef8909bcb3e26"
     }
   ]
 }

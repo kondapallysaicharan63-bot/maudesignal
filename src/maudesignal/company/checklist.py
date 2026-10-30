@@ -12,6 +12,7 @@ from pathlib import Path
 
 from maudesignal.company.build import NOT_FETCHED, load_company, status_detail
 from maudesignal.company.constants import BANNER, COMPANY_NAME
+from maudesignal.company.status import StatusError
 
 
 @dataclass(frozen=True)
@@ -51,12 +52,32 @@ class CompanyChecklist:
     note: str
 
 
-def checklist_for(product_code: str, folder: Path | None = None) -> CompanyChecklist | None:
-    """The checklist for one product code, or None when the company has no device on it."""
+def _failed(product_code: str, why: str) -> CompanyChecklist:
+    return CompanyChecklist(
+        banner=BANNER,
+        company=COMPANY_NAME,
+        product_code=product_code,
+        devices=(),
+        chain_ok=False,
+        note=f"company files failed validation ({why}); no checklist is shown.",
+    )
+
+
+def checklist_for(
+    product_code: str, folder: Path | None = None, db_path: Path | None = None
+) -> CompanyChecklist | None:
+    """The checklist for one product code, or None when the company has no device on it.
+
+    Never raises: broken company files give a checklist that says they failed validation.
+    ``db_path`` is the database the pattern counts are read from (default: the demo database,
+    which the note says).
+    """
     try:
-        view = load_company(folder)
+        view = load_company(folder, db_path=db_path)
     except FileNotFoundError:
         return None
+    except (StatusError, ValueError, KeyError, OSError) as exc:
+        return _failed(product_code, type(exc).__name__)
     on_code = view.on_code(product_code)
     if not on_code:
         return None
@@ -87,6 +108,7 @@ def checklist_for(product_code: str, folder: Path | None = None) -> CompanyCheck
         note=(
             "Statuses are set by the named simulated people shown, never by this tool. "
             f"A device with “{NOT_FETCHED}” has no stored real reports yet, so no "
-            "pattern is shown for it."
+            "pattern is shown for it. Pattern counts come from the demo database and the "
+            "fetched openFDA evidence files, not from this pack's database."
         ),
     )

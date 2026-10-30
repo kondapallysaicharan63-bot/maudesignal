@@ -37,8 +37,8 @@ from maudesignal.company.status import append_status, save_audit, utc
 
 #: (device id, fictional name, model, product code, fictional owner)
 DEVICES: tuple[tuple[str, str, str, str, str], ...] = (
-    ("DMC-01", "Halcyon ViewStation", "HV-200", "LLZ", "Mara Ellison"),
-    ("DMC-02", "Halcyon ReportDesk", "RD-110", "LLZ", "Devon Park"),
+    ("DMC-01", "Vellmar ViewStation", "HV-200", "LLZ", "Mara Ellison"),
+    ("DMC-02", "Vellmar ReportDesk", "RD-110", "LLZ", "Devon Park"),
     ("DMC-03", "Lumenar Renal Assist", "LRA-3", "QIH", "Iris Tanaka"),
     ("DMC-04", "Tessera Slide Reader", "TSR-5", "MYN", "Tomas Reyes"),
     ("DMC-05", "Oriel Lesion Check", "OLC-2", "POK", "Lena Osei"),
@@ -62,14 +62,7 @@ def _sim(name: str) -> str:
 HISTORY: tuple[tuple[str, str, str, tuple[int, int, int], dict[str, str], str], ...] = (
     ("DMC-01", S_NEEDS_REVIEW, "Mara Ellison", (2026, 10, 12), {"owner": _sim("Mara Ellison")}, ""),
     ("DMC-02", S_NEEDS_REVIEW, "Devon Park", (2026, 10, 12), {"owner": _sim("Devon Park")}, ""),
-    (
-        "DMC-04",
-        S_NOT_APPLICABLE,
-        "Tomas Reyes",
-        (2026, 10, 14),
-        {"reason": "our device has no software installer component (sample reason)"},
-        "",
-    ),
+    ("DMC-04", S_MONITORING, "Tomas Reyes", (2026, 10, 14), {}, "nothing open (sample note)"),
     ("DMC-05", S_MONITORING, "Lena Osei", (2026, 10, 14), {}, "nothing open (sample note)"),
     ("DMC-10", S_MONITORING, "Ravi Menon", (2026, 10, 14), {}, "nothing open (sample note)"),
     ("DMC-11", S_MONITORING, "Elin Strand", (2026, 10, 14), {}, "nothing open (sample note)"),
@@ -86,7 +79,10 @@ HISTORY: tuple[tuple[str, str, str, tuple[int, int, int], dict[str, str], str], 
         S_COVERED,
         "Devon Park",
         (2026, 10, 16),
-        {"reference": "test report TR-104 (sample)"},
+        {
+            "reference": "test report TR-104 (sample) covers the pattern "
+            "'Unable to log in or connect, including server errors'"
+        },
         "",
     ),
     (
@@ -103,7 +99,10 @@ HISTORY: tuple[tuple[str, str, str, tuple[int, int, int], dict[str, str], str], 
         S_NOT_APPLICABLE,
         "Joss Whitaker",
         (2026, 10, 22),
-        {"reason": "the affected function is not in our product (sample reason)"},
+        {
+            "reason": "our device has no user log-in function, so the pattern "
+            "'Log-in, access or security problem' does not apply (sample reason)"
+        },
         "",
     ),
     ("DMC-06", S_NEEDS_REVIEW, "Noor Haddad", (2026, 10, 29), {"owner": _sim("Noor Haddad")}, ""),
@@ -117,22 +116,6 @@ HISTORY: tuple[tuple[str, str, str, tuple[int, int, int], dict[str, str], str], 
     ),
     ("DMC-08", S_NEEDS_REVIEW, "Yuki Sato", (2026, 10, 29), {"owner": _sim("Yuki Sato")}, ""),
     ("DMC-09", S_NEEDS_REVIEW, "Ana Moreau", (2026, 10, 29), {"owner": _sim("Ana Moreau")}, ""),
-    (
-        "DMC-09",
-        S_COVERED,
-        "Ana Moreau",
-        (2026, 10, 30),
-        {"reference": "design review DR-22 (sample)"},
-        "",
-    ),
-    (
-        "DMC-07",
-        S_TESTING,
-        "Callum Brodie",
-        (2026, 10, 30),
-        {"owner": _sim("Callum Brodie"), "due_date": "2026-11-13"},
-        "",
-    ),
 )
 
 NOTES = (

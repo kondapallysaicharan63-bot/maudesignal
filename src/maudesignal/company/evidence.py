@@ -261,7 +261,7 @@ def load_demo_db_evidence(
         origin=ORIGIN_DEMO_DB,
         reports=tuple(reports),
         recalls=tuple(sorted(recalls, key=lambda c: c.date_initiated or "", reverse=True)),
-        recalls_matched_total=len(recalls),
+        recalls_matched_total=None,  # demo DB holds a stored subset; no openFDA match total
         window_from=dates[0] if dates else None,
         window_to=dates[-1] if dates else None,
         queries=queries,

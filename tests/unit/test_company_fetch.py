@@ -105,6 +105,9 @@ def test_fetch_code_document_shape_and_query_urls() -> None:
     assert "date_received:[20260904+TO+20261030]" in rep["query_url"]
     assert "api_key" not in json.dumps(doc)
     assert any("250 reports matched" in n for n in doc["notes"])
+    # the client sends no sort, so the note must not claim "newest"
+    notes = " ".join(doc["notes"])
+    assert "first 4 returned by openFDA" in notes and "newest" not in notes
     assert doc["recalls"]["stored"] == 1 and doc["recalls"]["matched_total"] == 2
     assert doc["recalls"]["records"][0]["date_initiated"] == "20261001"
     first = rep["records"][0]

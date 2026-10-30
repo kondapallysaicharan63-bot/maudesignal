@@ -178,7 +178,7 @@ codes LLZ, QIH, MYN, POK) and `demo/investigations/*weekly-llz.json` (reused gro
               {"label": "Already covered", "rank": 3}, {"label": "Not applicable to our device", "rank": 3},
               {"label": "Monitoring — nothing open", "rank": 4}],
  "devices": [{
-   "id": "DMC-01", "name": "Halcyon ViewStation", "model": "HV-200", "product_code": "LLZ",
+   "id": "DMC-01", "name": "Vellmar ViewStation", "model": "HV-200", "product_code": "LLZ",
    "owner": "Mara Ellison (simulated)",
    "device_type": {"name": "System, Image Processing, Radiological" | null, "source": "..." | null,
                    "query_url": "https://api.fda.gov/device/classification.json?search=product_code:LLZ"},
@@ -193,7 +193,7 @@ codes LLZ, QIH, MYN, POK) and `demo/investigations/*weekly-llz.json` (reused gro
                 "report_count": {"value": 121, "gate": "pass", "reason": "recomputed 121"} | null,
                 "window": {"date_from": "20260701", "date_to": "20260831"} | null,
                 "queries": [{"label": "...", "url": "https://api.fda.gov/..."}],
-                "recalls": {"stored": 561, "matched_total": 561, "gate": "pass", "reason": "...",
+                "recalls": {"stored": 561, "matched_total": null, "gate": "pass", "reason": "...",
                             "latest": [{"recall_number": "Z-0186-2027", "recalling_firm": "...", "status": "...",
                                         "date_initiated": "20260905", "excerpt": "verbatim, gate-checked" | null,
                                         "url": "https://www.accessdata.fda.gov/..." | null}]} | null,
@@ -212,6 +212,8 @@ codes LLZ, QIH, MYN, POK) and `demo/investigations/*weekly-llz.json` (reused gro
 ```
 
 Rules:
+
+- `recalls.matched_total` is the openFDA match total for fetched codes and `null` for codes read from the demo database (which holds only a stored subset; use `stored`).
 
 - The banner string is shown on every screen that renders this file. The words "safe",
   "unsafe" and "compliant" are never shown (the exporter withholds a quote that contains one).

@@ -108,12 +108,13 @@ def test_investigator_groups_are_reused_for_llz(ms_page: Page) -> None:
     expect(main).to_contain_text("Testing in progress", ignore_case=True)
 
 
-def test_device_without_stored_evidence_says_so_and_shows_no_numbers(ms_page: Page) -> None:
+def test_fetched_evidence_device_shows_its_real_patterns(ms_page: Page) -> None:
     main = _open(ms_page)
+    dev = load_company().device("DMC-06")
+    assert dev is not None and dev.evidence.available and dev.patterns
     _pick(ms_page, "DMC-06")
-    expect(main).to_contain_text("evidence not fetched yet", ignore_case=True)
-    expect(main).to_contain_text("No count, pattern or quote is shown")
-    expect(main).not_to_contain_text("real reports")
+    expect(main).to_contain_text(dev.patterns[0].label)
+    expect(main).not_to_contain_text("evidence not fetched yet", ignore_case=True)
     assert main.locator(EXCEPTION).count() == 0
 
 

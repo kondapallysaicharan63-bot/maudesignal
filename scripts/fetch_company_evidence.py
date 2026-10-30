@@ -157,7 +157,10 @@ def fetch_code(
             records.append(rec)
     records.sort(key=lambda r: (r["date_received"] or "", r["report_id"]), reverse=True)
     if matched > len(records):
-        notes.append(f"{matched} reports matched the window; the {len(records)} newest are stored")
+        notes.append(
+            f"{matched} reports matched the window; the first {len(records)} returned by "
+            "openFDA are stored (not sorted by date)"
+        )
 
     recall_params: dict[str, str | int] = {
         "search": f"product_code:{code}",

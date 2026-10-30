@@ -38,6 +38,11 @@ _CHIP = {
 _MAX_LINKS = 12
 
 
+def _ymd(value: str) -> str:
+    """``20260930`` -> ``2026-09-30`` (anything else is returned unchanged)."""
+    return f"{value[:4]}-{value[4:6]}-{value[6:]}" if len(value) == 8 and value.isdigit() else value
+
+
 def chip(status: str) -> str:
     """HTML status chip (design-system colours, the status words always shown)."""
     return f'<span class="ms-pill {_CHIP.get(status, "info")}">{html.escape(status)}</span>'
@@ -184,6 +189,7 @@ def render_device(view: CompanyView, d: DeviceView) -> None:
     st.markdown(f"### {d.name} · model {d.model}")
     st.markdown(
         f"Product code **{d.product_code}** — {d.device_type_name or 'device type not fetched yet'}"
+        + (f" (name source: {d.device_type_source})" if d.device_type_source else "")
         + (
             f" ([openFDA classification]({d.device_type_query_url}))"
             if d.device_type_query_url
@@ -201,8 +207,9 @@ def render_device(view: CompanyView, d: DeviceView) -> None:
         change = CHANGE_LABELS.get(sw["classification"], sw["classification"])
         st.markdown(
             f"AI-device sweep row ({sw['file']}, as of {sw['as_of']}): **{change}**, "
-            f"{sw['current_count']} reports this week vs {sw['baseline_count']} "
-            f"in the 4 weeks before, {sw['prior_report_count']:,} earlier reports"
+            f"{sw['current_count']} reports in the week ending {_ymd(sw['as_of'])} vs "
+            f"{sw['baseline_count']} in the 4 weeks before, "
+            f"{sw['prior_report_count']:,} earlier reports"
             + (f" ([query]({sw['query_url']}))" if sw.get("query_url") else "")
         )
     _render_evidence(d)

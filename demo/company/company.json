@@ -10,7 +10,7 @@
   "devices": [
     {
       "device_id": "DMC-01",
-      "name": "Halcyon ViewStation",
+      "name": "Vellmar ViewStation",
       "model": "HV-200",
       "product_code": "LLZ",
       "owner": "Mara Ellison (simulated)",
@@ -33,7 +33,7 @@
     },
     {
       "device_id": "DMC-02",
-      "name": "Halcyon ReportDesk",
+      "name": "Vellmar ReportDesk",
       "model": "RD-110",
       "product_code": "LLZ",
       "owner": "Devon Park (simulated)",
