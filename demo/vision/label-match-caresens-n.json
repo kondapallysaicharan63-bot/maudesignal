@@ -2,7 +2,7 @@
   "kind": "device_label_match",
   "schema_version": "1.0",
   "image_file": "label-caresens-n.jpg",
-  "generated_utc": "2026-10-30T01:32:39Z",
+  "generated_utc": "2026-10-30T02:52:54Z",
   "label": {
     "fields": {
       "device_name": {
@@ -31,7 +31,9 @@
       }
     },
     "session_fields_omitted": true,
-    "overall_legibility": "partly_legible"
+    "overall_legibility": "partly_legible",
+    "legibility_banner": "Partly legible label: check every field against the photo",
+    "values_withheld": false
   },
   "search_basis": "model_name_manufacturer",
   "search_inputs": {
@@ -99,10 +101,17 @@
       "ok": true
     },
     {
-      "id": "maude-NBW",
-      "label": "MAUDE counts for NBW",
-      "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANBW+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received",
-      "count": 432413,
+      "id": "maude-before-NBW",
+      "label": "MAUDE reports for NBW before the 7 days ending 2026-09-30",
+      "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANBW+AND+date_received%3A%5B19900101+TO+20260923%5D&limit=1",
+      "count": 432217,
+      "ok": true
+    },
+    {
+      "id": "maude-week-NBW",
+      "label": "MAUDE reports for NBW in the 7 days ending 2026-09-30",
+      "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANBW+AND+date_received%3A%5B20260924+TO+20260930%5D&limit=1",
+      "count": 196,
       "ok": true
     },
     {
@@ -120,10 +129,17 @@
       "ok": true
     },
     {
-      "id": "maude-CGA",
-      "label": "MAUDE counts for CGA",
-      "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ACGA+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received",
-      "count": 7674,
+      "id": "maude-before-CGA",
+      "label": "MAUDE reports for CGA before the 7 days ending 2026-09-30",
+      "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ACGA+AND+date_received%3A%5B19900101+TO+20260923%5D&limit=1",
+      "count": 7661,
+      "ok": true
+    },
+    {
+      "id": "maude-week-CGA",
+      "label": "MAUDE reports for CGA in the 7 days ending 2026-09-30",
+      "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ACGA+AND+date_received%3A%5B20260924+TO+20260930%5D&limit=1",
+      "count": 13,
       "ok": true
     }
   ],
@@ -296,7 +312,7 @@
           "topic": "this_week_change",
           "status": "pass",
           "check": "recomputed",
-          "text": "This week's change for NBW: no change.",
+          "text": "In the 7 days ending 2026-09-30: this week's change for NBW: no change.",
           "data": {
             "change": "no change",
             "classification": "stable",
@@ -460,7 +476,7 @@
           "topic": "this_week_change",
           "status": "pass",
           "check": "recomputed",
-          "text": "This week's change for CGA: no change.",
+          "text": "In the 7 days ending 2026-09-30: this week's change for CGA: no change.",
           "data": {
             "change": "no change",
             "classification": "stable",
@@ -529,8 +545,8 @@
       "model": "SAM 3.1",
       "started_utc": "2026-10-30T01:32:25Z",
       "elapsed_ms": 832.2,
-      "timing": "measured",
-      "note": "prompts tried: label; crop used",
+      "timing": "recorded 2026-10-30",
+      "note": "prompts tried: label; crop used; timing and cost recorded 2026-10-30, not re-run in this process",
       "cost_usd": 0.0025
     },
     {
@@ -538,16 +554,17 @@
       "model": "Muse Spark",
       "started_utc": "2026-10-30T01:32:26Z",
       "elapsed_ms": 7837.5,
-      "timing": "measured",
+      "timing": "recorded 2026-10-30",
       "input_tokens": 1678,
       "output_tokens": 1101,
-      "cost_usd": 0.006777
+      "cost_usd": 0.006777,
+      "note": "timing and cost recorded 2026-10-30, not re-run in this process"
     },
     {
       "step": "openFDA search: 510(k): maker + model number",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:32:34Z",
-      "elapsed_ms": 478.4,
+      "started_utc": "2026-10-30T02:52:49Z",
+      "elapsed_ms": 340.6,
       "timing": "measured",
       "count": 0,
       "url": "https://api.fda.gov/device/510k.json?search=applicant:\"i+sens\"+AND+device_name:\"GM505NA\"&limit=25"
@@ -555,8 +572,8 @@
     {
       "step": "openFDA search: 510(k): maker + device name word",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:32:34Z",
-      "elapsed_ms": 161.5,
+      "started_utc": "2026-10-30T02:52:50Z",
+      "elapsed_ms": 135.8,
       "timing": "measured",
       "count": 8,
       "url": "https://api.fda.gov/device/510k.json?search=applicant:\"i+sens\"+AND+device_name:\"meter\"&limit=25"
@@ -564,8 +581,8 @@
     {
       "step": "openFDA search: 510(k): device name",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:32:34Z",
-      "elapsed_ms": 154.2,
+      "started_utc": "2026-10-30T02:52:50Z",
+      "elapsed_ms": 138.0,
       "timing": "measured",
       "count": 0,
       "url": "https://api.fda.gov/device/510k.json?search=device_name:\"CareSens+N+Blood+Glucose+Meter\"&limit=25"
@@ -573,8 +590,8 @@
     {
       "step": "openFDA search: Registration & listing: maker + model number",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:32:34Z",
-      "elapsed_ms": 150.5,
+      "started_utc": "2026-10-30T02:52:50Z",
+      "elapsed_ms": 148.0,
       "timing": "measured",
       "count": 0,
       "url": "https://api.fda.gov/device/registrationlisting.json?search=registration.owner_operator.firm_name:\"i+sens\"+AND+proprietary_name:\"GM505NA\"&limit=25"
@@ -582,8 +599,8 @@
     {
       "step": "openFDA search: Registration & listing: maker + device name word",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:32:34Z",
-      "elapsed_ms": 152.1,
+      "started_utc": "2026-10-30T02:52:50Z",
+      "elapsed_ms": 142.9,
       "timing": "measured",
       "count": 0,
       "url": "https://api.fda.gov/device/registrationlisting.json?search=registration.owner_operator.firm_name:\"i+sens\"+AND+products.openfda.device_name:\"meter\"&limit=25"
@@ -591,8 +608,8 @@
     {
       "step": "openFDA search: Classification: device type of the matched product codes",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:32:35Z",
-      "elapsed_ms": 151.7,
+      "started_utc": "2026-10-30T02:52:50Z",
+      "elapsed_ms": 141.3,
       "timing": "measured",
       "count": 2,
       "url": "https://api.fda.gov/device/classification.json?search=product_code:NBW+OR+product_code:CGA&limit=6"
@@ -600,8 +617,8 @@
     {
       "step": "openFDA search: 510(k) records for NBW",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:32:35Z",
-      "elapsed_ms": 157.2,
+      "started_utc": "2026-10-30T02:52:50Z",
+      "elapsed_ms": 127.5,
       "timing": "measured",
       "count": 512,
       "url": "https://api.fda.gov/device/510k.json?search=product_code:NBW&limit=3&sort=decision_date:desc"
@@ -609,8 +626,8 @@
     {
       "step": "openFDA search: Recalls for NBW",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:32:35Z",
-      "elapsed_ms": 493.6,
+      "started_utc": "2026-10-30T02:52:50Z",
+      "elapsed_ms": 375.3,
       "timing": "measured",
       "count": 137,
       "url": "https://api.fda.gov/device/recall.json?search=product_code:NBW&limit=100&sort=event_date_initiated:desc"
@@ -618,11 +635,11 @@
     {
       "step": "openFDA search: MAUDE counts and this week's change for NBW",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:32:35Z",
-      "elapsed_ms": 1345.5,
+      "started_utc": "2026-10-30T02:52:51Z",
+      "elapsed_ms": 1555.0,
       "timing": "measured",
-      "count": 432413,
-      "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANBW+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received",
+      "count": null,
+      "url": null,
       "urls": [
         "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANBW+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received",
         "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANBW+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact",
@@ -630,7 +647,7 @@
         "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANBW+AND+date_received%3A%5B19900101+TO+20260923%5D&limit=1",
         "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANBW+AND+date_received%3A%5B19900101+TO+20260923%5D&count=event_type.exact"
       ],
-      "note": "covers 5 openFDA queries; elapsed_ms is the combined time of the whole check",
+      "note": "covers 5 openFDA queries; elapsed_ms is the combined time of the whole check; each count is shown with its own query below",
       "queries": [
         {
           "query": "Reports per day (latest date, both windows)",
@@ -640,12 +657,14 @@
         {
           "query": "This week, by event type",
           "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANBW+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact",
-          "count": 196
+          "count": null,
+          "groups_sum": 196
         },
         {
           "query": "4 weeks before, by event type",
           "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANBW+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact",
-          "count": 567
+          "count": null,
+          "groups_sum": 567
         },
         {
           "query": "Everything before this week",
@@ -655,15 +674,16 @@
         {
           "query": "Everything before this week, by event type",
           "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANBW+AND+date_received%3A%5B19900101+TO+20260923%5D&count=event_type.exact",
-          "count": 432217
+          "count": null,
+          "groups_sum": 432217
         }
       ]
     },
     {
       "step": "openFDA search: 510(k) records for CGA",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:32:37Z",
-      "elapsed_ms": 156.0,
+      "started_utc": "2026-10-30T02:52:52Z",
+      "elapsed_ms": 133.4,
       "timing": "measured",
       "count": 401,
       "url": "https://api.fda.gov/device/510k.json?search=product_code:CGA&limit=3&sort=decision_date:desc"
@@ -671,8 +691,8 @@
     {
       "step": "openFDA search: Recalls for CGA",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:32:37Z",
-      "elapsed_ms": 342.5,
+      "started_utc": "2026-10-30T02:52:53Z",
+      "elapsed_ms": 201.9,
       "timing": "measured",
       "count": 89,
       "url": "https://api.fda.gov/device/recall.json?search=product_code:CGA&limit=100&sort=event_date_initiated:desc"
@@ -680,11 +700,11 @@
     {
       "step": "openFDA search: MAUDE counts and this week's change for CGA",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:32:37Z",
-      "elapsed_ms": 1298.3,
+      "started_utc": "2026-10-30T02:52:53Z",
+      "elapsed_ms": 914.7,
       "timing": "measured",
-      "count": 7674,
-      "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ACGA+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received",
+      "count": null,
+      "url": null,
       "urls": [
         "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ACGA+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received",
         "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ACGA+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact",
@@ -692,7 +712,7 @@
         "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ACGA+AND+date_received%3A%5B19900101+TO+20260923%5D&limit=1",
         "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ACGA+AND+date_received%3A%5B19900101+TO+20260923%5D&count=event_type.exact"
       ],
-      "note": "covers 5 openFDA queries; elapsed_ms is the combined time of the whole check",
+      "note": "covers 5 openFDA queries; elapsed_ms is the combined time of the whole check; each count is shown with its own query below",
       "queries": [
         {
           "query": "Reports per day (latest date, both windows)",
@@ -702,12 +722,14 @@
         {
           "query": "This week, by event type",
           "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ACGA+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact",
-          "count": 13
+          "count": null,
+          "groups_sum": 13
         },
         {
           "query": "4 weeks before, by event type",
           "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ACGA+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact",
-          "count": 49
+          "count": null,
+          "groups_sum": 49
         },
         {
           "query": "Everything before this week",
@@ -717,14 +739,15 @@
         {
           "query": "Everything before this week, by event type",
           "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ACGA+AND+date_received%3A%5B19900101+TO+20260923%5D&count=event_type.exact",
-          "count": 7661
+          "count": null,
+          "groups_sum": 7661
         }
       ]
     },
     {
       "step": "Gate check",
       "model": "gate",
-      "started_utc": "2026-10-30T01:32:39Z",
+      "started_utc": "2026-10-30T02:52:54Z",
       "elapsed_ms": 0.6,
       "timing": "measured",
       "count": 16,
@@ -733,9 +756,10 @@
     {
       "step": "Done",
       "model": "gate",
-      "started_utc": "2026-10-30T01:32:39Z",
-      "elapsed_ms": 13711.8,
-      "timing": "sum of the measured steps above"
+      "started_utc": "2026-10-30T02:52:54Z",
+      "elapsed_ms": 4355.0,
+      "timing": "measured",
+      "note": "elapsed_ms is the sum of the measured steps above; recorded SAM / Spark timings are not included"
     }
   ],
   "scoring_rules": [
@@ -756,7 +780,8 @@
       "spark": 0.006777,
       "sam": 0.0025,
       "total": 0.009277
-    }
+    },
+    "recorded": "recorded 2026-10-30"
   },
   "disclaimer": "Possible matches for a person to confirm. This is a search of public openFDA records, not an identification of the device, and not medical advice."
 }

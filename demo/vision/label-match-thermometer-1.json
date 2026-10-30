@@ -2,7 +2,7 @@
   "kind": "device_label_match",
   "schema_version": "1.0",
   "image_file": "label-thermometer-1.jpg",
-  "generated_utc": "2026-10-30T01:33:32Z",
+  "generated_utc": "2026-10-30T02:52:58Z",
   "label": {
     "fields": {
       "device_name": {
@@ -31,7 +31,9 @@
       }
     },
     "session_fields_omitted": true,
-    "overall_legibility": "partly_legible"
+    "overall_legibility": "partly_legible",
+    "legibility_banner": "Partly legible label: check every field against the photo",
+    "values_withheld": false
   },
   "search_basis": "model_name_manufacturer",
   "search_inputs": {
@@ -99,10 +101,17 @@
       "ok": true
     },
     {
-      "id": "maude-FLL",
-      "label": "MAUDE counts for FLL",
-      "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received",
-      "count": 1636,
+      "id": "maude-before-FLL",
+      "label": "MAUDE reports for FLL before the 7 days ending 2026-09-30",
+      "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B19900101+TO+20260923%5D&limit=1",
+      "count": 1530,
+      "ok": true
+    },
+    {
+      "id": "maude-week-FLL",
+      "label": "MAUDE reports for FLL in the 7 days ending 2026-09-30",
+      "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B20260924+TO+20260930%5D&limit=1",
+      "count": 106,
       "ok": true
     }
   ],
@@ -277,7 +286,7 @@
           "topic": "this_week_change",
           "status": "pass",
           "check": "recomputed",
-          "text": "This week's change for FLL: reports suddenly increased.",
+          "text": "In the 7 days ending 2026-09-30: this week's change for FLL: reports suddenly increased.",
           "data": {
             "change": "reports suddenly increased",
             "classification": "spike",
@@ -350,8 +359,8 @@
       "model": "SAM 3.1",
       "started_utc": "2026-10-30T01:33:07Z",
       "elapsed_ms": 372.9,
-      "timing": "measured",
-      "note": "prompts tried: label; crop used",
+      "timing": "recorded 2026-10-30",
+      "note": "prompts tried: label; crop used; timing and cost recorded 2026-10-30, not re-run in this process",
       "cost_usd": 0.0025
     },
     {
@@ -359,16 +368,17 @@
       "model": "Muse Spark",
       "started_utc": "2026-10-30T01:33:08Z",
       "elapsed_ms": 21608.5,
-      "timing": "measured",
+      "timing": "recorded 2026-10-30",
       "input_tokens": 1637,
       "output_tokens": 2839,
-      "cost_usd": 0.014112
+      "cost_usd": 0.014112,
+      "note": "timing and cost recorded 2026-10-30, not re-run in this process"
     },
     {
       "step": "openFDA search: 510(k): maker + model number",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:33:29Z",
-      "elapsed_ms": 381.5,
+      "started_utc": "2026-10-30T02:52:56Z",
+      "elapsed_ms": 137.0,
       "timing": "measured",
       "count": 0,
       "url": "https://api.fda.gov/device/510k.json?search=applicant:\"homedics\"+AND+device_name:\"TIE-240\"&limit=25"
@@ -376,8 +386,8 @@
     {
       "step": "openFDA search: 510(k): maker + device name word",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:33:30Z",
-      "elapsed_ms": 156.1,
+      "started_utc": "2026-10-30T02:52:56Z",
+      "elapsed_ms": 133.4,
       "timing": "measured",
       "count": 0,
       "url": "https://api.fda.gov/device/510k.json?search=applicant:\"homedics\"+AND+device_name:\"thermometer\"&limit=25"
@@ -385,8 +395,8 @@
     {
       "step": "openFDA search: 510(k): device name",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:33:30Z",
-      "elapsed_ms": 162.6,
+      "started_utc": "2026-10-30T02:52:56Z",
+      "elapsed_ms": 138.3,
       "timing": "measured",
       "count": 3,
       "url": "https://api.fda.gov/device/510k.json?search=device_name:\"Non-contact+Infrared+Body+Thermometer\"&limit=25"
@@ -394,8 +404,8 @@
     {
       "step": "openFDA search: Registration & listing: maker + model number",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:33:30Z",
-      "elapsed_ms": 157.7,
+      "started_utc": "2026-10-30T02:52:56Z",
+      "elapsed_ms": 136.4,
       "timing": "measured",
       "count": 0,
       "url": "https://api.fda.gov/device/registrationlisting.json?search=registration.owner_operator.firm_name:\"homedics\"+AND+proprietary_name:\"TIE-240\"&limit=25"
@@ -403,8 +413,8 @@
     {
       "step": "openFDA search: Registration & listing: maker + device name word",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:33:30Z",
-      "elapsed_ms": 156.4,
+      "started_utc": "2026-10-30T02:52:57Z",
+      "elapsed_ms": 144.9,
       "timing": "measured",
       "count": 1,
       "url": "https://api.fda.gov/device/registrationlisting.json?search=registration.owner_operator.firm_name:\"homedics\"+AND+products.openfda.device_name:\"thermometer\"&limit=25"
@@ -412,8 +422,8 @@
     {
       "step": "openFDA search: Classification: device type of the matched product codes",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:33:30Z",
-      "elapsed_ms": 148.5,
+      "started_utc": "2026-10-30T02:52:57Z",
+      "elapsed_ms": 146.1,
       "timing": "measured",
       "count": 1,
       "url": "https://api.fda.gov/device/classification.json?search=product_code:FLL&limit=3"
@@ -421,8 +431,8 @@
     {
       "step": "openFDA search: 510(k) records for FLL",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:33:31Z",
-      "elapsed_ms": 169.1,
+      "started_utc": "2026-10-30T02:52:57Z",
+      "elapsed_ms": 137.0,
       "timing": "measured",
       "count": 798,
       "url": "https://api.fda.gov/device/510k.json?search=product_code:FLL&limit=3&sort=decision_date:desc"
@@ -430,8 +440,8 @@
     {
       "step": "openFDA search: Recalls for FLL",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:33:31Z",
-      "elapsed_ms": 328.9,
+      "started_utc": "2026-10-30T02:52:57Z",
+      "elapsed_ms": 179.7,
       "timing": "measured",
       "count": 19,
       "url": "https://api.fda.gov/device/recall.json?search=product_code:FLL&limit=100&sort=event_date_initiated:desc"
@@ -439,11 +449,11 @@
     {
       "step": "openFDA search: MAUDE counts and this week's change for FLL",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:33:31Z",
-      "elapsed_ms": 1138.3,
+      "started_utc": "2026-10-30T02:52:57Z",
+      "elapsed_ms": 1039.0,
       "timing": "measured",
-      "count": 1636,
-      "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received",
+      "count": null,
+      "url": null,
       "urls": [
         "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received",
         "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact",
@@ -451,7 +461,7 @@
         "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B19900101+TO+20260923%5D&limit=1",
         "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B19900101+TO+20260923%5D&count=event_type.exact"
       ],
-      "note": "covers 5 openFDA queries; elapsed_ms is the combined time of the whole check",
+      "note": "covers 5 openFDA queries; elapsed_ms is the combined time of the whole check; each count is shown with its own query below",
       "queries": [
         {
           "query": "Reports per day (latest date, both windows)",
@@ -461,12 +471,14 @@
         {
           "query": "This week, by event type",
           "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact",
-          "count": 106
+          "count": null,
+          "groups_sum": 106
         },
         {
           "query": "4 weeks before, by event type",
           "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact",
-          "count": 211
+          "count": null,
+          "groups_sum": 211
         },
         {
           "query": "Everything before this week",
@@ -476,14 +488,15 @@
         {
           "query": "Everything before this week, by event type",
           "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B19900101+TO+20260923%5D&count=event_type.exact",
-          "count": 1530
+          "count": null,
+          "groups_sum": 1530
         }
       ]
     },
     {
       "step": "Gate check",
       "model": "gate",
-      "started_utc": "2026-10-30T01:33:32Z",
+      "started_utc": "2026-10-30T02:52:58Z",
       "elapsed_ms": 0.2,
       "timing": "measured",
       "count": 8,
@@ -492,9 +505,10 @@
     {
       "step": "Done",
       "model": "gate",
-      "started_utc": "2026-10-30T01:33:32Z",
-      "elapsed_ms": 24780.7,
-      "timing": "sum of the measured steps above"
+      "started_utc": "2026-10-30T02:52:58Z",
+      "elapsed_ms": 2192.0,
+      "timing": "measured",
+      "note": "elapsed_ms is the sum of the measured steps above; recorded SAM / Spark timings are not included"
     }
   ],
   "scoring_rules": [
@@ -515,7 +529,8 @@
       "spark": 0.014112,
       "sam": 0.0025,
       "total": 0.016612
-    }
+    },
+    "recorded": "recorded 2026-10-30"
   },
   "disclaimer": "Possible matches for a person to confirm. This is a search of public openFDA records, not an identification of the device, and not medical advice."
 }

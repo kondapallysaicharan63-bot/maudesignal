@@ -2,7 +2,7 @@
   "kind": "device_label_match",
   "schema_version": "1.0",
   "image_file": "label-spot-vital-signs.jpg",
-  "generated_utc": "2026-10-30T01:33:07Z",
+  "generated_utc": "2026-10-30T02:52:56Z",
   "label": {
     "fields": {
       "device_name": {
@@ -31,7 +31,9 @@
       }
     },
     "session_fields_omitted": true,
-    "overall_legibility": "partly_legible"
+    "overall_legibility": "partly_legible",
+    "legibility_banner": "Partly legible label: check every field against the photo",
+    "values_withheld": false
   },
   "search_basis": "none",
   "search_inputs": {
@@ -54,8 +56,8 @@
       "model": "SAM 3.1",
       "started_utc": "2026-10-30T01:32:58Z",
       "elapsed_ms": 585.4,
-      "timing": "measured",
-      "note": "prompts tried: label; crop used",
+      "timing": "recorded 2026-10-30",
+      "note": "prompts tried: label; crop used; timing and cost recorded 2026-10-30, not re-run in this process",
       "cost_usd": 0.0025
     },
     {
@@ -63,15 +65,16 @@
       "model": "Muse Spark",
       "started_utc": "2026-10-30T01:32:58Z",
       "elapsed_ms": 8611.4,
-      "timing": "measured",
+      "timing": "recorded 2026-10-30",
       "input_tokens": 1257,
       "output_tokens": 1194,
-      "cost_usd": 0.006646
+      "cost_usd": 0.006646,
+      "note": "timing and cost recorded 2026-10-30, not re-run in this process"
     },
     {
       "step": "Gate check",
       "model": "gate",
-      "started_utc": "2026-10-30T01:33:07Z",
+      "started_utc": "2026-10-30T02:52:56Z",
       "elapsed_ms": 0.0,
       "timing": "measured",
       "count": 0,
@@ -80,9 +83,10 @@
     {
       "step": "Done",
       "model": "gate",
-      "started_utc": "2026-10-30T01:33:07Z",
-      "elapsed_ms": 9196.8,
-      "timing": "sum of the measured steps above"
+      "started_utc": "2026-10-30T02:52:56Z",
+      "elapsed_ms": 0.0,
+      "timing": "measured",
+      "note": "elapsed_ms is the sum of the measured steps above; recorded SAM / Spark timings are not included"
     }
   ],
   "scoring_rules": [
@@ -103,7 +107,8 @@
       "spark": 0.006646,
       "sam": 0.0025,
       "total": 0.009146
-    }
+    },
+    "recorded": "recorded 2026-10-30"
   },
   "disclaimer": "Possible matches for a person to confirm. This is a search of public openFDA records, not an identification of the device, and not medical advice."
 }

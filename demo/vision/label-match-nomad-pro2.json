@@ -2,7 +2,7 @@
   "kind": "device_label_match",
   "schema_version": "1.0",
   "image_file": "label-nomad-pro2.jpg",
-  "generated_utc": "2026-10-30T01:32:58Z",
+  "generated_utc": "2026-10-30T02:52:56Z",
   "label": {
     "fields": {
       "device_name": {
@@ -31,7 +31,9 @@
       }
     },
     "session_fields_omitted": true,
-    "overall_legibility": "partly_legible"
+    "overall_legibility": "partly_legible",
+    "legibility_banner": "Partly legible label: check every field against the photo",
+    "values_withheld": false
   },
   "search_basis": "model_name_manufacturer",
   "search_inputs": {
@@ -99,10 +101,17 @@
       "ok": true
     },
     {
-      "id": "maude-EHD",
-      "label": "MAUDE counts for EHD",
+      "id": "maude-all-EHD",
+      "label": "MAUDE reports for EHD, all dates",
       "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AEHD&limit=1",
       "count": 521,
+      "ok": true
+    },
+    {
+      "id": "maude-2y-EHD",
+      "label": "MAUDE reports for EHD, last two years",
+      "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AEHD+AND+date_received%3A%5B20241030+TO+20261030%5D&limit=1",
+      "count": 0,
       "ok": true
     },
     {
@@ -120,10 +129,17 @@
       "ok": true
     },
     {
-      "id": "maude-ITY",
-      "label": "MAUDE counts for ITY",
+      "id": "maude-all-ITY",
+      "label": "MAUDE reports for ITY, all dates",
       "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AITY&limit=1",
       "count": 55,
+      "ok": true
+    },
+    {
+      "id": "maude-2y-ITY",
+      "label": "MAUDE reports for ITY, last two years",
+      "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AITY+AND+date_received%3A%5B20241030+TO+20261030%5D&limit=1",
+      "count": 0,
       "ok": true
     }
   ],
@@ -276,7 +292,7 @@
           "topic": "this_week_change",
           "status": "pass",
           "check": "recomputed",
-          "text": "This week's change for EHD: no change.",
+          "text": "No MAUDE reports for EHD in the last two years; this week's change: no change.",
           "data": {
             "change": "no change",
             "classification": "stable",
@@ -288,7 +304,7 @@
               "reports suddenly increased: at least 3 reports and 2 times the 4-week weekly average"
             ]
           },
-          "query_url": null
+          "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AEHD+AND+date_received%3A%5B20241030+TO+20261030%5D&limit=1"
         }
       ],
       "summary": {
@@ -412,7 +428,7 @@
           "topic": "this_week_change",
           "status": "pass",
           "check": "recomputed",
-          "text": "This week's change for ITY: no change.",
+          "text": "No MAUDE reports for ITY in the last two years; this week's change: no change.",
           "data": {
             "change": "no change",
             "classification": "stable",
@@ -424,7 +440,7 @@
               "reports suddenly increased: at least 3 reports and 2 times the 4-week weekly average"
             ]
           },
-          "query_url": null
+          "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AITY+AND+date_received%3A%5B20241030+TO+20261030%5D&limit=1"
         }
       ],
       "summary": {
@@ -473,8 +489,8 @@
       "model": "SAM 3.1",
       "started_utc": "2026-10-30T01:32:39Z",
       "elapsed_ms": 1278.9,
-      "timing": "measured",
-      "note": "prompts tried: label; crop used",
+      "timing": "recorded 2026-10-30",
+      "note": "prompts tried: label; crop used; timing and cost recorded 2026-10-30, not re-run in this process",
       "cost_usd": 0.0025
     },
     {
@@ -482,16 +498,17 @@
       "model": "Muse Spark",
       "started_utc": "2026-10-30T01:32:40Z",
       "elapsed_ms": 14923.0,
-      "timing": "measured",
+      "timing": "recorded 2026-10-30",
       "input_tokens": 1314,
       "output_tokens": 1912,
-      "cost_usd": 0.009768
+      "cost_usd": 0.009768,
+      "note": "timing and cost recorded 2026-10-30, not re-run in this process"
     },
     {
       "step": "openFDA search: 510(k): maker + model number",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:32:55Z",
-      "elapsed_ms": 403.6,
+      "started_utc": "2026-10-30T02:52:54Z",
+      "elapsed_ms": 128.7,
       "timing": "measured",
       "count": 1,
       "url": "https://api.fda.gov/device/510k.json?search=applicant:\"aribex\"+AND+device_name:\"NOMAD+Pro+2\"&limit=25"
@@ -499,8 +516,8 @@
     {
       "step": "openFDA search: 510(k): maker + device name word",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:32:55Z",
-      "elapsed_ms": 148.7,
+      "started_utc": "2026-10-30T02:52:54Z",
+      "elapsed_ms": 131.1,
       "timing": "measured",
       "count": 0,
       "url": "https://api.fda.gov/device/510k.json?search=applicant:\"aribex\"+AND+device_name:\"assembly\"&limit=25"
@@ -508,8 +525,8 @@
     {
       "step": "openFDA search: 510(k): device name",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:32:55Z",
-      "elapsed_ms": 159.5,
+      "started_utc": "2026-10-30T02:52:54Z",
+      "elapsed_ms": 128.6,
       "timing": "measured",
       "count": 2,
       "url": "https://api.fda.gov/device/510k.json?search=device_name:\"Tube+Assembly\"&limit=25"
@@ -517,8 +534,8 @@
     {
       "step": "openFDA search: Registration & listing: maker + model number",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:32:56Z",
-      "elapsed_ms": 152.1,
+      "started_utc": "2026-10-30T02:52:54Z",
+      "elapsed_ms": 130.9,
       "timing": "measured",
       "count": 0,
       "url": "https://api.fda.gov/device/registrationlisting.json?search=registration.owner_operator.firm_name:\"aribex\"+AND+proprietary_name:\"NOMAD+Pro+2\"&limit=25"
@@ -526,8 +543,8 @@
     {
       "step": "openFDA search: Registration & listing: maker + device name word",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:32:56Z",
-      "elapsed_ms": 147.3,
+      "started_utc": "2026-10-30T02:52:54Z",
+      "elapsed_ms": 127.8,
       "timing": "measured",
       "count": 0,
       "url": "https://api.fda.gov/device/registrationlisting.json?search=registration.owner_operator.firm_name:\"aribex\"+AND+products.openfda.device_name:\"assembly\"&limit=25"
@@ -535,8 +552,8 @@
     {
       "step": "openFDA search: Classification: device type of the matched product codes",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:32:56Z",
-      "elapsed_ms": 147.3,
+      "started_utc": "2026-10-30T02:52:54Z",
+      "elapsed_ms": 128.3,
       "timing": "measured",
       "count": 2,
       "url": "https://api.fda.gov/device/classification.json?search=product_code:EHD+OR+product_code:ITY&limit=6"
@@ -544,8 +561,8 @@
     {
       "step": "openFDA search: 510(k) records for EHD",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:32:56Z",
-      "elapsed_ms": 168.5,
+      "started_utc": "2026-10-30T02:52:54Z",
+      "elapsed_ms": 131.2,
       "timing": "measured",
       "count": 191,
       "url": "https://api.fda.gov/device/510k.json?search=product_code:EHD&limit=3&sort=decision_date:desc"
@@ -553,8 +570,8 @@
     {
       "step": "openFDA search: Recalls for EHD",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:32:56Z",
-      "elapsed_ms": 236.0,
+      "started_utc": "2026-10-30T02:52:55Z",
+      "elapsed_ms": 144.0,
       "timing": "measured",
       "count": 18,
       "url": "https://api.fda.gov/device/recall.json?search=product_code:EHD&limit=100&sort=event_date_initiated:desc"
@@ -562,28 +579,34 @@
     {
       "step": "openFDA search: MAUDE counts and this week's change for EHD",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:32:56Z",
-      "elapsed_ms": 554.3,
+      "started_utc": "2026-10-30T02:52:55Z",
+      "elapsed_ms": 448.5,
       "timing": "measured",
-      "count": 521,
-      "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AEHD&limit=1",
+      "count": null,
+      "url": null,
       "urls": [
-        "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AEHD&limit=1"
+        "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AEHD&limit=1",
+        "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AEHD+AND+date_received%3A%5B20241030+TO+20261030%5D&limit=1"
       ],
-      "note": "covers 1 openFDA queries; elapsed_ms is the combined time of the whole check",
+      "note": "covers 2 openFDA queries; elapsed_ms is the combined time of the whole check; each count is shown with its own query below",
       "queries": [
         {
           "query": "Reports, all dates",
           "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AEHD&limit=1",
-          "count": null
+          "count": 521
+        },
+        {
+          "query": "Reports, last two years",
+          "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AEHD+AND+date_received%3A%5B20241030+TO+20261030%5D&limit=1",
+          "count": 0
         }
       ]
     },
     {
       "step": "openFDA search: 510(k) records for ITY",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:32:57Z",
-      "elapsed_ms": 162.4,
+      "started_utc": "2026-10-30T02:52:55Z",
+      "elapsed_ms": 154.5,
       "timing": "measured",
       "count": 40,
       "url": "https://api.fda.gov/device/510k.json?search=product_code:ITY&limit=3&sort=decision_date:desc"
@@ -591,8 +614,8 @@
     {
       "step": "openFDA search: Recalls for ITY",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:32:57Z",
-      "elapsed_ms": 153.9,
+      "started_utc": "2026-10-30T02:52:55Z",
+      "elapsed_ms": 209.9,
       "timing": "measured",
       "count": 4,
       "url": "https://api.fda.gov/device/recall.json?search=product_code:ITY&limit=100&sort=event_date_initiated:desc"
@@ -600,27 +623,33 @@
     {
       "step": "openFDA search: MAUDE counts and this week's change for ITY",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:32:57Z",
-      "elapsed_ms": 557.7,
+      "started_utc": "2026-10-30T02:52:56Z",
+      "elapsed_ms": 443.0,
       "timing": "measured",
-      "count": 55,
-      "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AITY&limit=1",
+      "count": null,
+      "url": null,
       "urls": [
-        "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AITY&limit=1"
+        "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AITY&limit=1",
+        "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AITY+AND+date_received%3A%5B20241030+TO+20261030%5D&limit=1"
       ],
-      "note": "covers 1 openFDA queries; elapsed_ms is the combined time of the whole check",
+      "note": "covers 2 openFDA queries; elapsed_ms is the combined time of the whole check; each count is shown with its own query below",
       "queries": [
         {
           "query": "Reports, all dates",
           "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AITY&limit=1",
-          "count": null
+          "count": 55
+        },
+        {
+          "query": "Reports, last two years",
+          "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AITY+AND+date_received%3A%5B20241030+TO+20261030%5D&limit=1",
+          "count": 0
         }
       ]
     },
     {
       "step": "Gate check",
       "model": "gate",
-      "started_utc": "2026-10-30T01:32:58Z",
+      "started_utc": "2026-10-30T02:52:56Z",
       "elapsed_ms": 0.4,
       "timing": "measured",
       "count": 14,
@@ -629,9 +658,10 @@
     {
       "step": "Done",
       "model": "gate",
-      "started_utc": "2026-10-30T01:32:58Z",
-      "elapsed_ms": 19193.6,
-      "timing": "sum of the measured steps above"
+      "started_utc": "2026-10-30T02:52:56Z",
+      "elapsed_ms": 2306.9,
+      "timing": "measured",
+      "note": "elapsed_ms is the sum of the measured steps above; recorded SAM / Spark timings are not included"
     }
   ],
   "scoring_rules": [
@@ -652,7 +682,8 @@
       "spark": 0.009768,
       "sam": 0.0025,
       "total": 0.012268
-    }
+    },
+    "recorded": "recorded 2026-10-30"
   },
   "disclaimer": "Possible matches for a person to confirm. This is a search of public openFDA records, not an identification of the device, and not medical advice."
 }

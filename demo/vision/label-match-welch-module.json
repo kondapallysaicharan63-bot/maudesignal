@@ -2,11 +2,11 @@
   "kind": "device_label_match",
   "schema_version": "1.0",
   "image_file": "label-welch-module.jpg",
-  "generated_utc": "2026-10-30T01:34:26Z",
+  "generated_utc": "2026-10-30T02:53:01Z",
   "label": {
     "fields": {
       "device_name": {
-        "value": "AORTIC VALVULAR AND CARDIAC IMPLANT",
+        "value": "",
         "legibility": "partly_legible"
       },
       "manufacturer": {
@@ -31,35 +31,22 @@
       }
     },
     "session_fields_omitted": true,
-    "overall_legibility": "illegible"
+    "overall_legibility": "illegible",
+    "legibility_banner": "Illegible label: fields not shown",
+    "values_withheld": true
   },
-  "search_basis": "model_name_manufacturer",
+  "search_basis": "none",
   "search_inputs": {
     "k_number": null,
     "gtin": null,
     "model_number": null,
-    "device_name": "AORTIC VALVULAR AND CARDIAC IMPLANT",
+    "device_name": null,
     "manufacturer": null
   },
-  "queries": [
-    {
-      "id": "510k-name",
-      "label": "510(k): device name",
-      "url": "https://api.fda.gov/device/510k.json?search=device_name:\"AORTIC+VALVULAR+AND+CARDIAC+IMPLANT\"&limit=25",
-      "count": 0,
-      "ok": true
-    },
-    {
-      "id": "class-name",
-      "label": "Classification: device name",
-      "url": "https://api.fda.gov/device/classification.json?search=device_name:\"AORTIC+VALVULAR+AND+CARDIAC+IMPLANT\"&limit=10",
-      "count": 0,
-      "ok": true
-    }
-  ],
+  "queries": [],
   "matches": [],
   "manufacturer_match_found": false,
-  "note": "No openFDA record matched what was read from this label.",
+  "note": "Label not legible enough to read; nothing was searched.",
   "status": "no_match_found",
   "confirmed": null,
   "device_type_views": {},
@@ -69,8 +56,8 @@
       "model": "SAM 3.1",
       "started_utc": "2026-10-30T01:34:02Z",
       "elapsed_ms": 732.9,
-      "timing": "measured",
-      "note": "prompts tried: label; crop used",
+      "timing": "recorded 2026-10-30",
+      "note": "prompts tried: label; crop used; timing and cost recorded 2026-10-30, not re-run in this process",
       "cost_usd": 0.0025
     },
     {
@@ -78,33 +65,16 @@
       "model": "Muse Spark",
       "started_utc": "2026-10-30T01:34:03Z",
       "elapsed_ms": 22405.2,
-      "timing": "measured",
+      "timing": "recorded 2026-10-30",
       "input_tokens": 1258,
       "output_tokens": 2825,
-      "cost_usd": 0.013579
-    },
-    {
-      "step": "openFDA search: 510(k): device name",
-      "model": "openFDA",
-      "started_utc": "2026-10-30T01:34:26Z",
-      "elapsed_ms": 380.7,
-      "timing": "measured",
-      "count": 0,
-      "url": "https://api.fda.gov/device/510k.json?search=device_name:\"AORTIC+VALVULAR+AND+CARDIAC+IMPLANT\"&limit=25"
-    },
-    {
-      "step": "openFDA search: Classification: device name",
-      "model": "openFDA",
-      "started_utc": "2026-10-30T01:34:26Z",
-      "elapsed_ms": 148.7,
-      "timing": "measured",
-      "count": 0,
-      "url": "https://api.fda.gov/device/classification.json?search=device_name:\"AORTIC+VALVULAR+AND+CARDIAC+IMPLANT\"&limit=10"
+      "cost_usd": 0.013579,
+      "note": "timing and cost recorded 2026-10-30, not re-run in this process"
     },
     {
       "step": "Gate check",
       "model": "gate",
-      "started_utc": "2026-10-30T01:34:26Z",
+      "started_utc": "2026-10-30T02:53:01Z",
       "elapsed_ms": 0.0,
       "timing": "measured",
       "count": 0,
@@ -113,9 +83,10 @@
     {
       "step": "Done",
       "model": "gate",
-      "started_utc": "2026-10-30T01:34:26Z",
-      "elapsed_ms": 23667.5,
-      "timing": "sum of the measured steps above"
+      "started_utc": "2026-10-30T02:53:01Z",
+      "elapsed_ms": 0.0,
+      "timing": "measured",
+      "note": "elapsed_ms is the sum of the measured steps above; recorded SAM / Spark timings are not included"
     }
   ],
   "scoring_rules": [
@@ -136,7 +107,8 @@
       "spark": 0.013579,
       "sam": 0.0025,
       "total": 0.016079
-    }
+    },
+    "recorded": "recorded 2026-10-30"
   },
   "disclaimer": "Possible matches for a person to confirm. This is a search of public openFDA records, not an identification of the device, and not medical advice."
 }

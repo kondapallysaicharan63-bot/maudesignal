@@ -2,7 +2,7 @@
   "kind": "device_label_match",
   "schema_version": "1.0",
   "image_file": "label-welch-802-ltr.jpg",
-  "generated_utc": "2026-10-30T01:34:02Z",
+  "generated_utc": "2026-10-30T02:53:01Z",
   "label": {
     "fields": {
       "device_name": {
@@ -31,7 +31,9 @@
       }
     },
     "session_fields_omitted": true,
-    "overall_legibility": "partly_legible"
+    "overall_legibility": "partly_legible",
+    "legibility_banner": "Partly legible label: check every field against the photo",
+    "values_withheld": false
   },
   "search_basis": "model_name_manufacturer",
   "search_inputs": {
@@ -83,8 +85,8 @@
       "model": "SAM 3.1",
       "started_utc": "2026-10-30T01:33:48Z",
       "elapsed_ms": 952.3,
-      "timing": "measured",
-      "note": "prompts tried: label; crop used",
+      "timing": "recorded 2026-10-30",
+      "note": "prompts tried: label; crop used; timing and cost recorded 2026-10-30, not re-run in this process",
       "cost_usd": 0.0025
     },
     {
@@ -92,16 +94,17 @@
       "model": "Muse Spark",
       "started_utc": "2026-10-30T01:33:49Z",
       "elapsed_ms": 12053.9,
-      "timing": "measured",
+      "timing": "recorded 2026-10-30",
       "input_tokens": 1507,
       "output_tokens": 1694,
-      "cost_usd": 0.009083
+      "cost_usd": 0.009083,
+      "note": "timing and cost recorded 2026-10-30, not re-run in this process"
     },
     {
       "step": "openFDA search: 510(k): maker + model number",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:34:02Z",
-      "elapsed_ms": 387.5,
+      "started_utc": "2026-10-30T02:53:00Z",
+      "elapsed_ms": 128.7,
       "timing": "measured",
       "count": 0,
       "url": "https://api.fda.gov/device/510k.json?search=applicant:\"welch+allyn+protocol\"+AND+device_name:\"802+LTR\"&limit=25"
@@ -109,8 +112,8 @@
     {
       "step": "openFDA search: 510(k): model number",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:34:02Z",
-      "elapsed_ms": 148.6,
+      "started_utc": "2026-10-30T02:53:00Z",
+      "elapsed_ms": 132.9,
       "timing": "measured",
       "count": 0,
       "url": "https://api.fda.gov/device/510k.json?search=device_name:\"802+LTR\"&limit=25"
@@ -118,8 +121,8 @@
     {
       "step": "openFDA search: Registration & listing: maker + model number",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:34:02Z",
-      "elapsed_ms": 153.9,
+      "started_utc": "2026-10-30T02:53:01Z",
+      "elapsed_ms": 136.3,
       "timing": "measured",
       "count": 0,
       "url": "https://api.fda.gov/device/registrationlisting.json?search=registration.owner_operator.firm_name:\"welch+allyn+protocol\"+AND+proprietary_name:\"802+LTR\"&limit=25"
@@ -127,8 +130,8 @@
     {
       "step": "openFDA search: Registration & listing: model number",
       "model": "openFDA",
-      "started_utc": "2026-10-30T01:34:02Z",
-      "elapsed_ms": 150.8,
+      "started_utc": "2026-10-30T02:53:01Z",
+      "elapsed_ms": 140.6,
       "timing": "measured",
       "count": 0,
       "url": "https://api.fda.gov/device/registrationlisting.json?search=proprietary_name:\"802+LTR\"&limit=25"
@@ -136,7 +139,7 @@
     {
       "step": "Gate check",
       "model": "gate",
-      "started_utc": "2026-10-30T01:34:02Z",
+      "started_utc": "2026-10-30T02:53:01Z",
       "elapsed_ms": 0.0,
       "timing": "measured",
       "count": 0,
@@ -145,9 +148,10 @@
     {
       "step": "Done",
       "model": "gate",
-      "started_utc": "2026-10-30T01:34:02Z",
-      "elapsed_ms": 13847.0,
-      "timing": "sum of the measured steps above"
+      "started_utc": "2026-10-30T02:53:01Z",
+      "elapsed_ms": 538.5,
+      "timing": "measured",
+      "note": "elapsed_ms is the sum of the measured steps above; recorded SAM / Spark timings are not included"
     }
   ],
   "scoring_rules": [
@@ -168,7 +172,8 @@
       "spark": 0.009083,
       "sam": 0.0025,
       "total": 0.011583
-    }
+    },
+    "recorded": "recorded 2026-10-30"
   },
   "disclaimer": "Possible matches for a person to confirm. This is a search of public openFDA records, not an identification of the device, and not medical advice."
 }
