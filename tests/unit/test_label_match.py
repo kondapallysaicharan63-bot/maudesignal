@@ -638,3 +638,19 @@ def test_live_check_trace_lists_each_query_with_url_and_count() -> None:
     assert [q["query"] for q in step["queries"]][:2] == ["per day", "this week"]
     assert all(q["url"].startswith("https://api.fda.gov/") for q in step["queries"])
     assert [q["count"] for q in step["queries"]] == [None, 5, 8, 120, 120]
+
+
+def test_label_reading_to_dict_drops_lot_and_serial_from_udi() -> None:
+    from maudesignal.vision.label import LabelField, LabelResult
+
+    udi = "(01)00812345678901(17)270101(10)LOT77(21)SER99"
+    r = LabelResult(
+        image_width=10,
+        image_height=10,
+        fields={"udi": LabelField(udi, "clear")},
+        overall_legibility="clear",
+    )
+    stored = json.dumps(r.to_dict())
+    assert "LOT77" not in stored and "SER99" not in stored
+    assert "(01)00812345678901(17)270101" in stored
+    assert "LOT77" in json.dumps(r.to_dict(include_session_fields=True))
