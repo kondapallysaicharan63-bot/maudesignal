@@ -433,11 +433,21 @@ record. The tool is an advisory triage aid, not medical advice; do not type pati
 
 | Route | Auth | What it does |
 |---|---|---|
-| `POST /v1/feedback` | none; browser origin must be in `MAUDESIGNAL_WEB_ORIGINS` | rating 1-5 ("Does this match real PMS/RA work?"), comment, blocker, one_thing, optional name and role, consent (`quote_name_role`, `quote_anonymous`, `no_quote`), optional `ref`, page, client_ts. 201 on success. 5 per hour per address (`MAUDESIGNAL_FEEDBACK_PER_HOUR`), 16 KB body cap (413). Free text that looks like an email, phone, SSN, "MRN" + digits or a date of birth gets 422 and is not stored (a guard, not a guarantee). |
+| `POST /v1/feedback` | none; browser origin must be in `MAUDESIGNAL_WEB_ORIGINS` | rating 1-5 ("Does this match real PMS/RA work?"), comment, blocker, one_thing, optional role, consent (`quote_name_role`, `quote_anonymous`, `no_quote`), optional `ref` (see code rule below), page, client_ts. An optional `name` from an old client is accepted and dropped before storage. 201 on success. 5 per hour per address (`MAUDESIGNAL_FEEDBACK_PER_HOUR`), 16 KB body cap (413). Free text that looks like an email, phone, SSN, "MRN" + digits or a date of birth gets 422 and is not stored (a guard, not a guarantee). |
 | `POST /v1/visit` | same | `{ref?, page, client_ts}`, 204. 60 per hour per address. |
-| `GET /admin` | page holds no data | asks for the admin key (password field, kept in `sessionStorage` only), loads the summary, offers two CSV downloads. |
-| `GET /v1/admin/summary` | `X-Admin-Key` | visits and feedback per ref code and per page, average rating per ref. |
-| `GET /v1/admin/export?kind=feedback\|visits&format=csv\|json` | `X-Admin-Key` | every record. CSV cells starting with `=`, `+`, `-` or `@` are prefixed with `'`. |
+| `GET /admin` | page holds no data | asks for the admin key (password field, kept in `sessionStorage` only), loads the summary, shows a "By code" section (one block per code: code, label, visits, pages opened, first and last seen, and a feedback table with time, page, rating, comment, blocker, one thing, role and quote consent in plain words), a "Hide TEST codes" checkbox, a "Delete TEST entries" button (asks to confirm), and two CSV downloads. States "No names, emails or IP addresses are stored." |
+| `GET /v1/admin/summary` | `X-Admin-Key` | visits and feedback per ref code and per page, average rating per ref, and `codes`: one entry per code, newest activity first, with `code`, `label`, `visits`, `pages_opened`, `first_seen_utc`, `last_seen_utc` and its `feedback` rows (no names). |
+| `GET /v1/admin/export?kind=feedback\|visits&format=csv\|json` | `X-Admin-Key` | every record (no name column). CSV cells starting with `=`, `+`, `-` or `@` are prefixed with `'`. |
+| `POST /v1/admin/delete-test` | `X-Admin-Key` | deletes every stored visit and feedback entry whose code starts with `TEST` (any case) and returns `{"deleted": {"visits": n, "feedback": n}}`. Nothing else is deleted. Answers 501 if the record store has no delete. |
+
+**Code rule.** Personal links look like `https://<web>/?r=CODE`. A code is 1 to 64 characters from
+`A-Z a-z 0-9 . _ ~ -` (`^[A-Za-z0-9._~-]{1,64}$`). A code that does not match is not lost: the visit or
+feedback is stored with the code `invalid-code` (the bad value itself is never stored). Codes
+starting with `TEST` are labelled "test" in `/admin`; `email-batch-1` is labelled "email batch 1".
+
+**No names.** No names, emails or IP addresses are stored. Charan keeps the names-to-codes list
+privately; the connector keeps no people list. Free text is still checked for patient details,
+including the optional `role`.
 
 Records sent without a `ref` are labelled `email-batch-1` (Charan's first email batch had no codes); override with `MAUDESIGNAL_DEFAULT_REF` (an invalid value falls back to `email-batch-1`).
 

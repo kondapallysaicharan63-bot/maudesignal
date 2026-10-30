@@ -5,9 +5,13 @@ Routes (all hidden from the public OpenAPI document):
 * ``POST /v1/feedback`` and ``POST /v1/visit``: keyless, browser origin must be listed in
   ``MAUDESIGNAL_WEB_ORIGINS``, rate limited per address. No IP address and no user agent is ever
   stored; the limiter sees only a salted hash of the address for the length of its window.
-* ``GET /v1/admin/export``, ``GET /v1/admin/summary`` and ``GET /admin``: need the
-  ``X-Admin-Key`` header (constant-time check against ``MAUDESIGNAL_ADMIN_KEY``). If that
-  variable is unset the admin routes answer 503, never open.
+* ``GET /v1/admin/export``, ``GET /v1/admin/summary``, ``POST /v1/admin/delete-test`` and
+  ``GET /admin``: need the ``X-Admin-Key`` header (constant-time check against
+  ``MAUDESIGNAL_ADMIN_KEY``). If that variable is unset the admin routes answer 503, never open.
+
+No names or email addresses are stored: an optional ``name`` sent by an old client is dropped
+before storage. Referral codes are the only link to a person, and the owner keeps that list
+privately.
 
 Feedback is never served by any public route. This is not a PHI system: free text that looks
 like patient details is refused, which is a guard and not a guarantee.
@@ -32,7 +36,7 @@ from typing import Annotated, Any, Literal
 
 from fastapi import FastAPI, Query, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 from starlette.concurrency import run_in_threadpool
 from starlette.requests import ClientDisconnect
 
@@ -53,9 +57,12 @@ MAX_BODY_BYTES = 16 * 1024
 FEEDBACK_PATH = "/v1/feedback"
 VISIT_PATH = "/v1/visit"
 CORS_PATHS = (FEEDBACK_PATH, VISIT_PATH)
-REF_PATTERN = r"^[A-Za-z0-9_-]{1,32}$"
+REF_PATTERN = r"^[A-Za-z0-9._~-]{1,64}$"
+INVALID_REF = "invalid-code"
+TEST_PREFIX = "test"
 DEFAULT_REF_ENV = "MAUDESIGNAL_DEFAULT_REF"
 DEFAULT_REF = "email-batch-1"
+DELETE_TEST_PATH = "/v1/admin/delete-test"
 FETCH_WORKERS = 8
 KINDS = ("feedback", "visits")
 
@@ -66,7 +73,6 @@ FEEDBACK_COLUMNS = [
     "comment",
     "blocker",
     "one_thing",
-    "name",
     "role",
     "consent",
     "ref",
@@ -94,6 +100,21 @@ def looks_like_phi(text: str) -> bool:
     return any(p.search(text) for p in _PHI_PATTERNS)
 
 
+def clean_ref(value: Any) -> Any:
+    """Missing or blank stays absent; text that fails ``REF_PATTERN`` becomes ``invalid-code``.
+
+    The bad value itself is never kept, so a mangled link is still counted without storing it.
+    """
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        return INVALID_REF
+    text = value.strip()
+    if not text:
+        return None
+    return text if re.fullmatch(REF_PATTERN, text) else INVALID_REF
+
+
 class FeedbackIn(BaseModel):
     """Body of ``POST /v1/feedback``."""
 
@@ -103,12 +124,19 @@ class FeedbackIn(BaseModel):
     comment: str = Field(default="", max_length=2000)
     blocker: str = Field(default="", max_length=2000, description="What would stop your team?")
     one_thing: str = Field(default="", max_length=2000, description="One thing to make it useful")
-    name: str | None = Field(default=None, max_length=100)
+    name: str | None = Field(
+        default=None, max_length=100, description="Accepted for old clients; never stored"
+    )
     role: str | None = Field(default=None, max_length=100)
     consent: Literal["quote_name_role", "quote_anonymous", "no_quote"]
     ref: str | None = Field(default=None, pattern=REF_PATTERN)
     page: str = Field(default="", max_length=64, pattern=r"^[A-Za-z0-9_:.-]*$")
     client_ts: str = Field(default="", max_length=40, pattern=r"^[0-9TZ:.+-]*$")
+
+    @field_validator("ref", mode="before")
+    @classmethod
+    def _ref(cls, value: Any) -> Any:
+        return clean_ref(value)
 
 
 class VisitIn(BaseModel):
@@ -121,6 +149,11 @@ class VisitIn(BaseModel):
         min_length=1, max_length=64, pattern=r"^[A-Za-z0-9_:.-]+$", description="Workflow id"
     )
     client_ts: str = Field(default="", max_length=40, pattern=r"^[0-9TZ:.+-]*$")
+
+    @field_validator("ref", mode="before")
+    @classmethod
+    def _ref(cls, value: Any) -> Any:
+        return clean_ref(value)
 
 
 def _err(status: int, code: str, message: str, headers: dict[str, str] | None = None) -> Response:
@@ -175,7 +208,66 @@ def summarize(feedback: list[dict[str, Any]], visits: list[dict[str, Any]]) -> d
         "totals": {"visits": len(visits), "feedback": len(feedback)},
         "by_ref": refs,
         "by_page": pages,
+        "codes": by_code(feedback, visits),
     }
+
+
+def code_label(code: str) -> str:
+    """Plain-words label for special codes; empty for ordinary personal codes."""
+    if code == DEFAULT_REF:
+        return "email batch 1"
+    if code == INVALID_REF:
+        return "invalid code"
+    if code.casefold().startswith(TEST_PREFIX):
+        return "test"
+    return ""
+
+
+def by_code(feedback: list[dict[str, Any]], visits: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """One entry per ref code, newest activity first. Holds no names, emails or addresses."""
+    groups: dict[str, dict[str, Any]] = {}
+
+    def group(code: str) -> dict[str, Any]:
+        return groups.setdefault(code, {"visits": 0, "pages": set(), "times": [], "feedback": []})
+
+    for v in visits:
+        g = group(str(v.get("ref") or "(none)"))
+        g["visits"] += 1
+        if v.get("page"):
+            g["pages"].add(str(v["page"]))
+        g["times"].append(str(v.get("received_utc", "")))
+    for f in feedback:
+        g = group(str(f.get("ref") or "(none)"))
+        g["times"].append(str(f.get("received_utc", "")))
+        g["feedback"].append(
+            {
+                "received_utc": f.get("received_utc", ""),
+                "page": f.get("page", ""),
+                "rating": f.get("rating"),
+                "comment": f.get("comment", ""),
+                "blocker": f.get("blocker", ""),
+                "one_thing": f.get("one_thing", ""),
+                "role": f.get("role") or "",
+                "consent": f.get("consent", ""),
+            }
+        )
+    out: list[dict[str, Any]] = []
+    for code, g in groups.items():
+        times = sorted(t for t in g["times"] if t)
+        g["feedback"].sort(key=lambda x: str(x["received_utc"]))
+        out.append(
+            {
+                "code": code,
+                "label": code_label(code),
+                "visits": g["visits"],
+                "pages_opened": sorted(g["pages"]),
+                "first_seen_utc": times[0] if times else "",
+                "last_seen_utc": times[-1] if times else "",
+                "feedback": g["feedback"],
+            }
+        )
+    out.sort(key=lambda c: (str(c["last_seen_utc"]), str(c["code"])), reverse=True)
+    return out
 
 
 ADMIN_PAGE = """<!doctype html>
@@ -191,10 +283,12 @@ input,button{font:inherit;padding:.4rem .6rem;margin:.2rem .2rem .2rem 0}
 table{border-collapse:collapse;width:100%;margin:.5rem 0 1rem}
 th,td{border-bottom:1px solid GrayText;padding:.3rem .5rem;text-align:left}
 .scroll{overflow-x:auto}
+.code{border:1px solid GrayText;border-radius:.4rem;padding:.5rem .8rem;margin:.8rem 0}
+.code h3{margin:.2rem 0}
 </style></head><body>
 <h1>MaudeSignal admin</h1>
-<p>Private. Visits and feedback by referral code. No data is in this page until you unlock it;
-the key stays in this tab (session storage) only.</p>
+<p>Private. Visits and feedback by referral code. No names, emails or IP addresses are stored.
+No data is in this page until you unlock it; the key stays in this tab (session storage) only.</p>
 <form id="f"><label>Admin key <input id="k" type="password" autocomplete="off"></label>
 <button type="submit">Load summary</button>
 <button type="button" id="clear">Forget key</button></form>
@@ -202,7 +296,10 @@ the key stays in this tab (session storage) only.</p>
 <div id="out" hidden>
 <p><button type="button" data-kind="feedback">Download feedback CSV</button>
 <button type="button" data-kind="visits">Download visits CSV</button></p>
+<p><label><input type="checkbox" id="hide"> Hide TEST codes</label>
+<button type="button" id="deltest">Delete TEST entries</button></p>
 <h2>Totals</h2><p id="tot"></p>
+<h2>By code</h2><div id="codes"></div>
 <h2>By referral code</h2><div class="scroll"><table id="refs"></table></div>
 <h2>By page</h2><div class="scroll"><table id="pages"></table></div>
 </div>
@@ -217,18 +314,59 @@ function table(el,cols,rows){
   for(const r of rows){const tr=el.insertRow();
     for(const c of cols){tr.insertCell().textContent=r[c]===null?"-":String(r[c]);}}
 }
+let DATA=null;
+const CONSENT={quote_name_role:"Quote by name and role (confirm name with them)",
+  quote_anonymous:"Quote anonymously",no_quote:"Do not quote"};
+function isTest(c){return c.code.toLowerCase().startsWith("test");}
+function render(){
+  const box=$("codes");box.replaceChildren();
+  if(!DATA)return;
+  const hide=$("hide").checked;
+  for(const c of DATA.codes){
+    if(hide&&isTest(c))continue;
+    const d=document.createElement("div");d.className="code";
+    const h=document.createElement("h3");
+    h.textContent="Code: "+c.code+(c.label?" ("+c.label+")":"");
+    const p=document.createElement("p");
+    p.textContent="Visits: "+c.visits+" | Pages opened: "+(c.pages_opened.join(", ")||"-")+
+      " | First seen: "+(c.first_seen_utc||"-")+" | Last seen: "+(c.last_seen_utc||"-");
+    d.appendChild(h);d.appendChild(p);
+    if(c.feedback.length){
+      const w=document.createElement("div");w.className="scroll";
+      const t=document.createElement("table");
+      const rows=c.feedback.map(f=>({time:f.received_utc,page:f.page,rating:f.rating,
+        comment:f.comment,blocker:f.blocker,"one thing":f.one_thing,role:f.role,
+        "quote consent":CONSENT[f.consent]||f.consent}));
+      table(t,["time","page","rating","comment","blocker","one thing","role","quote consent"],rows);
+      w.appendChild(t);d.appendChild(w);
+    }else{const n=document.createElement("p");n.textContent="No feedback yet.";d.appendChild(n);}
+    box.appendChild(d);
+  }
+}
 async function load(){
   $("msg").textContent="Loading...";
   const r=await fetch("/v1/admin/summary",{headers:hdr(),cache:"no-store"});
   if(!r.ok){$("out").hidden=true;
     const m={401:"Wrong key.",503:"Admin export is not configured."};
     $("msg").textContent=m[r.status]||"Error "+r.status;return;}
-  const d=await r.json();
+  const d=await r.json();DATA=d;
   $("msg").textContent="";$("out").hidden=false;
   $("tot").textContent=d.totals.visits+" visits, "+d.totals.feedback+" feedback";
   table($("refs"),["ref","visits","feedback","avg_rating"],d.by_ref);
   table($("pages"),["page","visits","feedback"],d.by_page);
+  render();
 }
+$("hide").addEventListener("change",render);
+$("deltest").addEventListener("click",async()=>{
+  if(!confirm("Delete every visit and feedback entry whose code starts with TEST? "+
+    "This cannot be undone."))return;
+  const r=await fetch("/v1/admin/delete-test",{method:"POST",headers:hdr(),cache:"no-store"});
+  if(!r.ok){$("msg").textContent="Delete failed: "+r.status;return;}
+  const d=await r.json();
+  await load();
+  $("msg").textContent="Deleted "+d.deleted.visits+" visits and "+d.deleted.feedback+
+    " feedback entries.";
+});
 $("f").addEventListener("submit",e=>{e.preventDefault();
   sessionStorage.setItem(K,$("k").value);$("k").value="";load();});
 $("clear").addEventListener("click",()=>{sessionStorage.removeItem(K);$("out").hidden=true;
@@ -382,7 +520,8 @@ def mount_feedback(
             return _err(422, "possible_patient_details", PHI_MESSAGE)
         received = now()
         day, rid = day_and_id(received)
-        record: dict[str, Any] = body.model_dump() | {
+        # ``name`` is guarded above for old clients but never stored.
+        record: dict[str, Any] = body.model_dump(exclude={"name"}) | {
             "id": rid,
             "received_utc": received.isoformat(timespec="seconds"),
             "ref": body.ref or default_ref,
@@ -454,7 +593,10 @@ def mount_feedback(
             except (StoreError, ValueError):
                 logger.warning("admin_record_unreadable", kind=kind)
                 return None
-            return data if isinstance(data, dict) else None
+            if not isinstance(data, dict):
+                return None
+            data.pop("name", None)  # records from old clients never show a name
+            return data
 
         with ThreadPoolExecutor(max_workers=FETCH_WORKERS) as pool:
             rows = [r for r in pool.map(fetch, refs) if r is not None]
@@ -503,3 +645,28 @@ def mount_feedback(
         except StoreError:
             return _err(503, "store_unavailable", "The record store is not reachable.", no_store)
         return JSONResponse(result, headers=no_store)
+
+    @app.post(DELETE_TEST_PATH, include_in_schema=False)
+    def admin_delete_test(request: Request) -> Response:
+        """Delete visits and feedback whose code starts with TEST (any case); nothing else."""
+        if (refusal := admin_gate(request)) is not None:
+            return refusal
+        remove = getattr(store, "delete", None)
+        if remove is None:
+            return _err(501, "not_supported", "This record store cannot delete.", no_store)
+        counts = {"visits": 0, "feedback": 0}
+        try:
+            for kind in KINDS:
+                for blob in store.list_prefix(f"{kind}/"):
+                    try:
+                        data = json.loads(store.get(blob))
+                    except ValueError:
+                        continue
+                    code = data.get("ref") if isinstance(data, dict) else None
+                    if isinstance(code, str) and code.casefold().startswith(TEST_PREFIX):
+                        remove(blob)
+                        counts[kind] += 1
+        except StoreError:
+            return _err(503, "store_unavailable", "The record store is not reachable.", no_store)
+        logger.info("admin_delete_test", **counts)
+        return JSONResponse({"deleted": counts}, headers=no_store)

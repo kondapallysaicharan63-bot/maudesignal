@@ -25,7 +25,11 @@ from maudesignal.connector.blob_store import (  # noqa: E402
     store_from_env,
 )
 from maudesignal.connector.data import ConnectorData  # noqa: E402
-from maudesignal.connector.feedback import FEEDBACK_COLUMNS, VISIT_COLUMNS  # noqa: E402
+from maudesignal.connector.feedback import (  # noqa: E402
+    FEEDBACK_COLUMNS,
+    REF_PATTERN,
+    VISIT_COLUMNS,
+)
 from maudesignal.connector.notify import (
     NoopNotifier,
     ResendNotifier,
@@ -138,8 +142,6 @@ def test_feedback_stored_with_id_and_time_and_no_network_identity(
         {"rating": True},
         {"consent": "public"},
         {"consent": None},
-        {"ref": "bad code!"},
-        {"ref": "x" * 33},
         {"comment": "x" * 2001},
         {"name": "n" * 101},
         {"page": "p" * 65},
@@ -263,7 +265,6 @@ def test_visit_204_stores_no_identity_and_validates(
     [rec] = all_stored(store, "visits")
     assert set(rec) == {"id", "received_utc", "ref", "page", "client_ts"}
     assert "UA-SECRET-STRING" not in json.dumps(rec)
-    assert c.post("/v1/visit", json={"ref": "no good", "page": "x"}, headers=H).status_code == 422
     assert c.post("/v1/visit", json={"ref": "ok"}, headers=H).status_code == 422
     assert c.post("/v1/visit", json={"page": "p" * 65}, headers=H).status_code == 422
     [ref] = store.list_prefix("visits/")
@@ -644,3 +645,210 @@ def test_explicit_ref_is_unchanged(data: ConnectorData, monkeypatch: pytest.Monk
     c.post("/v1/visit", json={"ref": "abc", "page": "signals"}, headers=H)
     assert all_stored(store, "feedback")[0]["ref"] == "dr-smith_1"
     assert all_stored(store, "visits")[0]["ref"] == "abc"
+
+
+# --- widened ref codes, invalid-code, no names, by-code admin, delete-test ----------------
+
+
+class DeletingStore(MemoryStore):
+    """MemoryStore plus the delete a real store needs for the TEST cleanup."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.deleted: list[str] = []
+
+    def delete(self, ref: BlobRef) -> None:
+        self.deleted.append(ref.pathname)
+        with self._lock:
+            del self._items[ref.pathname]
+
+
+def test_ref_pattern_is_url_safe_unreserved_up_to_64() -> None:
+    import re
+
+    assert REF_PATTERN == r"^[A-Za-z0-9._~-]{1,64}$"
+    for good in ("a", "Dr.Smith_1~x-2", "x" * 64):
+        assert re.fullmatch(REF_PATTERN, good)
+    for bad in ("", "x" * 65, "a b", "a/b", "a%20b", "a@b", "a?b"):
+        assert not re.fullmatch(REF_PATTERN, bad)
+
+
+@pytest.mark.parametrize("code", ["Dr.Smith_1~x-2", "x" * 64, "TEST1"])
+def test_widened_codes_are_kept(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch, code: str
+) -> None:
+    c, store, _ = make(data, monkeypatch)
+    assert c.post("/v1/feedback", json=GOOD | {"ref": code}, headers=H).status_code == 201
+    assert c.post("/v1/visit", json={"ref": code, "page": "signals"}, headers=H).status_code == 204
+    assert all_stored(store, "feedback")[0]["ref"] == code
+    assert all_stored(store, "visits")[0]["ref"] == code
+
+
+@pytest.mark.parametrize("bad", ["bad code!", "x" * 65, "a/b", "a@b.com", "<script>", 12, ["x"]])
+def test_invalid_ref_is_kept_as_invalid_code_never_raw(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch, bad: Any
+) -> None:
+    c, store, _ = make(data, monkeypatch)
+    assert c.post("/v1/feedback", json=GOOD | {"ref": bad}, headers=H).status_code == 201
+    assert c.post("/v1/visit", json={"ref": bad, "page": "signals"}, headers=H).status_code == 204
+    [fb] = all_stored(store, "feedback")
+    [vi] = all_stored(store, "visits")
+    assert fb["ref"] == "invalid-code" and vi["ref"] == "invalid-code"
+    raw = json.dumps([fb, vi]) + c.get("/v1/admin/export?kind=visits", headers=A).text
+    assert str(bad) not in raw if isinstance(bad, str) else True
+
+
+def test_name_is_accepted_but_never_stored_exported_or_emailed(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    c, store, nt = make(data, monkeypatch)
+    payload = GOOD | {"name": "Zed Quillfeather"}
+    assert c.post("/v1/feedback", json=payload, headers=H).status_code == 201
+    [rec] = all_stored(store, "feedback")
+    assert "name" not in rec and "Quillfeather" not in json.dumps(rec)
+    assert rec["role"] == "RA lead"
+    assert "name" not in FEEDBACK_COLUMNS
+    assert "Quillfeather" not in json.dumps(nt.sent) and "name" not in nt.sent[0]
+    csv_text = c.get("/v1/admin/export?kind=feedback&format=csv", headers=A).text
+    assert "Quillfeather" not in csv_text
+    assert "Quillfeather" not in c.get("/v1/admin/export?kind=feedback&format=json", headers=A).text
+    summary = c.get("/v1/admin/summary", headers=A)
+    assert "Quillfeather" not in summary.text
+    from maudesignal.connector.notify import _body
+
+    assert "Quillfeather" not in _body(nt.sent[0])
+
+
+def test_old_stored_records_with_name_do_not_leak_through_admin(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    c, store, _ = make(data, monkeypatch)
+    old = GOOD | {"id": "old1", "received_utc": "2026-10-01T00:00:00+00:00", "name": "Old Name"}
+    store.put_json("feedback/2026-10-01/old1.json", old)
+    for url in (
+        "/v1/admin/export?kind=feedback&format=json",
+        "/v1/admin/export?kind=feedback&format=csv",
+        "/v1/admin/summary",
+    ):
+        assert "Old Name" not in c.get(url, headers=A).text
+
+
+def test_phi_guard_also_covers_role(data: ConnectorData, monkeypatch: pytest.MonkeyPatch) -> None:
+    c, store, _ = make(data, monkeypatch)
+    r = c.post("/v1/feedback", json=GOOD | {"role": "jo@example.com"}, headers=H)
+    assert r.status_code == 422 and all_stored(store, "feedback") == []
+
+
+def test_summary_codes_grouped_sorted_and_labelled(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    c, store, _ = make(data, monkeypatch)
+
+    def put(kind: str, n: int, rec: dict[str, Any]) -> None:
+        stamp = f"2026-10-30T12:{n:02d}:00+00:00"
+        store.put_json(f"{kind}/2026-10-30/r{n}.json", rec | {"id": f"r{n}", "received_utc": stamp})
+
+    put("visits", 0, {"ref": "Alice1", "page": "signals"})
+    put("visits", 1, {"ref": "Alice1", "page": "trends"})
+    put("visits", 2, {"ref": "Alice1", "page": "signals"})
+    put("visits", 3, {"ref": "email-batch-1", "page": "signals"})
+    put("visits", 4, {"ref": "test9", "page": "recalls"})
+    put("visits", 5, {"ref": "invalid-code", "page": "signals"})
+    put("feedback", 6, GOOD | {"ref": "Alice1", "consent": "no_quote"} | {"name": None})
+    body = c.get("/v1/admin/summary", headers=A).json()
+    assert body["totals"] == {"visits": 6, "feedback": 1}
+    assert {"by_ref", "by_page"} <= set(body)
+    codes = body["codes"]
+    assert [x["code"] for x in codes] == ["Alice1", "invalid-code", "test9", "email-batch-1"]
+    assert codes[0]["last_seen_utc"] == "2026-10-30T12:06:00+00:00"
+    alice = codes[0]
+    assert alice["label"] == "" and alice["visits"] == 3
+    assert alice["pages_opened"] == ["signals", "trends"]
+    assert alice["first_seen_utc"] < alice["last_seen_utc"]
+    [fb] = alice["feedback"]
+    assert set(fb) == {
+        "received_utc",
+        "page",
+        "rating",
+        "comment",
+        "blocker",
+        "one_thing",
+        "role",
+        "consent",
+    }
+    assert fb["consent"] == "no_quote" and fb["role"] == "RA lead" and fb["rating"] == 4
+    labels = {x["code"]: x["label"] for x in codes}
+    assert labels == {
+        "Alice1": "",
+        "invalid-code": "invalid code",
+        "test9": "test",
+        "email-batch-1": "email batch 1",
+    }
+
+
+def test_label_test_prefix_is_case_insensitive() -> None:
+    from maudesignal.connector.feedback import code_label
+
+    assert code_label("TEST1") == "test" and code_label("Test-x") == "test"
+    assert code_label("email-batch-1") == "email batch 1"
+    assert code_label("invalid-code") == "invalid code"
+    assert code_label("alice") == ""
+
+
+def test_admin_page_by_code_section_and_safe_text(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    c, _, _ = make(data, monkeypatch)
+    page = c.get("/admin").text
+    assert "No names, emails or IP addresses are stored." in page
+    assert "By code" in page and 'id="hide"' in page and "Hide TEST codes" in page
+    assert "Delete TEST entries" in page and "confirm(" in page
+    for words in (
+        "Quote by name and role (confirm name with them)",
+        "Quote anonymously",
+        "Do not quote",
+    ):
+        assert words in page
+    assert "innerHTML" not in page and "insertAdjacentHTML" not in page
+
+
+def test_delete_test_removes_only_test_entries(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store = DeletingStore()
+    c, _, _ = make(data, monkeypatch, store=store)
+    for code in ("TEST1", "test-two", "Alice1", "attest", "invalid-code"):
+        c.post("/v1/visit", json={"ref": code, "page": "signals"}, headers=H)
+        c.post("/v1/feedback", json=GOOD | {"ref": code}, headers=H)
+    c.post("/v1/visit", json={"page": "signals"}, headers=H)
+    r = c.post("/v1/admin/delete-test", headers=A)
+    assert r.status_code == 200 and r.headers["cache-control"] == "no-store"
+    assert r.json() == {"deleted": {"visits": 2, "feedback": 2}}
+    assert len(store.deleted) == 4
+    left = {x["ref"] for x in all_stored(store, "visits") + all_stored(store, "feedback")}
+    assert left == {"Alice1", "attest", "invalid-code", "email-batch-1"}
+    again = c.post("/v1/admin/delete-test", headers=A)
+    assert again.json() == {"deleted": {"visits": 0, "feedback": 0}}
+
+
+def test_delete_test_needs_admin_key(data: ConnectorData, monkeypatch: pytest.MonkeyPatch) -> None:
+    store = DeletingStore()
+    c, _, _ = make(data, monkeypatch, store=store)
+    c.post("/v1/visit", json={"ref": "TEST1", "page": "signals"}, headers=H)
+    assert c.post("/v1/admin/delete-test").status_code == 401
+    assert c.post("/v1/admin/delete-test", headers={"X-Admin-Key": "wrong"}).status_code == 401
+    assert store.deleted == [] and len(all_stored(store, "visits")) == 1
+    c2, _, _ = make(data, monkeypatch, store=store, admin=None)
+    assert c2.post("/v1/admin/delete-test", headers=A).status_code == 503
+    assert store.deleted == []
+    assert c.get("/v1/admin/delete-test", headers=A).status_code == 405
+
+
+def test_delete_test_without_store_support_is_501_and_hidden(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    c, store, _ = make(data, monkeypatch)
+    c.post("/v1/visit", json={"ref": "TEST1", "page": "signals"}, headers=H)
+    assert c.post("/v1/admin/delete-test", headers=A).status_code == 501
+    assert len(all_stored(store, "visits")) == 1
+    assert "delete-test" not in json.dumps(c.get("/openapi.json").json())
