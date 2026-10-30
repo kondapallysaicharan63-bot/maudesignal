@@ -478,8 +478,8 @@ entry and the cost cap are shared.
 Why not the `mcp` Python SDK: this server only needs request/response, and a serverless
 function cannot hold the sessions and streams the SDK's default server keeps. The hand-written
 version is about 130 lines (`connector/mcp_server.py`), has no extra dependency, and is covered by
-`tests/unit/test_connector_mcp.py` (16 tests). It was also checked with the official `mcp` Python SDK
-client (version 2.3.0, `streamable_http_client` and `ClientSession`) against the server running
+`tests/unit/test_connector_mcp.py` (19 tests). It was also checked with the `mcp` Python SDK client
+(modelcontextprotocol, version 2.3.0, `streamable_http_client` and `ClientSession`) against the server running
 under uvicorn on local HTTP: `initialize` negotiated protocol 2025-06-18, `tools/list` returned the
 five tools all with `readOnlyHint` true, and `tools/call` succeeded for `recalls`, `get_report`,
 `what_changed_this_week` and `ask` (recorded answer); `check_device_type` for QAS returned
@@ -603,7 +603,7 @@ otherwise in the memory of one server instance, where it is lost on a cold start
 **What else is held.** When live answers are on, the Muse Spark copilot writes its own audit
 entry into the server instance's temporary working copy of the demo database. After each live
 `ask` the connector replaces the question text in that entry with its SHA-256 and recomputes the
-entry's hash chain, so the text is not left in that database (a test searches every table and the
+entry's hash chain (the chain in that temporary copy is rewritten, so it shows no tampering of those rows; live asks run one at a time per instance so the rewrite cannot race an append), so the text is not left in that database (a test searches every table and the
 raw file for the question after a live ask). That database copy is lost on a cold start. For
 rate limiting, a counter per key id and, for wrong keys and the keyless
 web route, per client network address, in memory or in the operator's Redis store, for at most

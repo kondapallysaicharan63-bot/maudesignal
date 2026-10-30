@@ -296,3 +296,10 @@ def test_oversized_declared_length_is_rejected_before_reading(
         "/mcp", content=b"x" * (64 * 1024 + 1), headers={**H, "content-type": "application/json"}
     )
     assert r.status_code == 413
+
+
+def test_part_two_of_the_doc_has_no_forbidden_words() -> None:
+    doc = Path(__file__).resolve().parents[2] / "docs" / "hackathon" / "MUSE_CONNECTOR.md"
+    text = doc.read_text(encoding="utf-8")
+    part_two = text[text.index("# Part 2.") :]
+    assert forbidden_in(part_two) == []

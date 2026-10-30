@@ -59,6 +59,8 @@ class ConnectorData:
         self._manifest = manifest_path or root / "data" / "demo" / "SEED_MANIFEST.json"
         self._work_dir = work_dir
         self._lock = threading.Lock()
+        #: Serialises live asks (agent write plus audit redaction) on this instance.
+        self.live_ask_lock = threading.Lock()
         self._db: Database | None = None
         self._db_file: Path | None = None
         self._store: EvidenceStore | None = None

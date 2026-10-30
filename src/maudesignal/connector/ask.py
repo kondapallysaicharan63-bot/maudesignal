@@ -474,12 +474,15 @@ def ask(
                 if not ledger.reserve(runtime.caps.session_usd, runtime.caps.daily_usd):
                     raise SpendLimitError("daily_usd", "Today's live-call budget is used up.")
                 hold = runtime.caps.session_usd
-            agent = runtime.agent_factory(data, guard)
-            make_read_only(agent)  # whatever the factory built: no tool that writes
-            try:
-                res = agent.ask(q)
-            finally:
-                data.redact_audit_questions()  # question text is not kept, only its hash
+            # One live ask at a time per instance: the copilot appends to the audit chain on
+            # its own connection, and the redaction below recomputes that chain.
+            with data.live_ask_lock:
+                agent = runtime.agent_factory(data, guard)
+                make_read_only(agent)  # whatever the factory built: no tool that writes
+                try:
+                    res = agent.ask(q)
+                finally:
+                    data.redact_audit_questions()  # question text is not kept, only its hash
             if res.capa_ids or agent.context.created_capas:
                 raise RuntimeError("a read-only ask wrote a record")  # never shown; falls back
             return _from_live(res, data, now())
