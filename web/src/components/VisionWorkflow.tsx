@@ -25,7 +25,7 @@ const K_STATUS: Record<string, string> = {
 }
 
 /** The stored label and 510(k) readings (vision.json) as a workflow page; each opens in the Vision artifact. */
-export function VisionWorkflow({ vision, onOpen }: { vision: Vision; onOpen: (sel: VisionSel) => void }) {
+export function VisionWorkflow({ vision, onOpen, onCamera }: { vision: Vision; onOpen: (sel: VisionSel) => void; onCamera?: () => void }) {
   return (
     <div>
       <h1 className="t-title-lg m-0">Label &amp; 510(k) vision</h1>
@@ -34,6 +34,13 @@ export function VisionWorkflow({ vision, onOpen }: { vision: Vision; onOpen: (se
         is checked against openFDA where a source covers it (and, for 510(k) pages, the PDF's own text). Open one to see each field and how it was
         checked. These are replayed from recordings; nothing is read live here.
       </p>
+      {onCamera && (
+        <p className="m-0 mt-4">
+          <button type="button" className="ms-btn ws-btn-primary" style={{ height: 48 }} onClick={onCamera} data-testid="vision-camera">
+            <Icon name="camera" size={18} /> Read a device label with the camera
+          </button>
+        </p>
+      )}
       <h2 className="ms-kicker mt-6">510(k) summary readings · {vision.k510.length}</h2>
       <ul className="m-0 mt-2 list-none p-0">
         {vision.k510.map((k, i) => (

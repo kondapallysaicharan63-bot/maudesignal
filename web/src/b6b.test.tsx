@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeAll, describe, expect, it, vi } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import audit from '../public/data/audit.json'
 import briefs from '../public/data/briefs.json'
 import dossier from '../public/data/dossier.json'
@@ -15,15 +15,7 @@ import vision from '../public/data/vision.json'
 import { CaptureView } from './components/CaptureView'
 import { Composer } from './components/Composer'
 import { TraceView } from './components/TraceView'
-import {
-  checkFile,
-  FAILURE_TEXT,
-  parseLabel,
-  parseVoice,
-  PHOTO_WARNING,
-  sendCapture,
-  VOICE_WARNING,
-} from './capture'
+import { PHOTO_WARNING, UNCONFIGURED_TEXT, VOICE_WARNING } from './capture'
 import { buildLabelTrace, buildReviewTrace, buildThreadTrace, NOT_RECORDED, argsSummary, modelBadge, traceSummary } from './trace'
 import { exactKnownCode, highlightParts, knownCodes, moveActive, suggest } from './typeahead'
 import { suggestThreads } from './match'
@@ -265,37 +257,23 @@ describe('composer type-ahead', () => {
 })
 
 describe('camera and mic', () => {
-  const png = () => new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' })
-  const wav = () => new Blob([new Uint8Array([1, 2, 3])], { type: 'audio/wav' })
-  const never = vi.fn(async () => new Response('{}'))
-
-  it('shows the patient-data warning before any upload', () => {
-    expect(PHOTO_WARNING).toBe("Don't photograph patients or patient data. Photos are not stored unless you choose to.")
-    const html = text(
-      renderToStaticMarkup(<CaptureView mode="label" data={data} onThread={() => {}} onLabel={() => {}} apiBase={null} />),
-    )
-    expect(html).toContain(PHOTO_WARNING)
-    expect(html.indexOf(PHOTO_WARNING)).toBeLessThan(html.indexOf('Take a photo'))
-    const raw = renderToStaticMarkup(<CaptureView mode="label" data={data} onThread={() => {}} onLabel={() => {}} apiBase={null} />)
-    expect(raw).toContain('accept="image/*"')
-    expect(raw).toContain('capture="environment"')
-    const voice = text(
-      renderToStaticMarkup(<CaptureView mode="voice" data={data} onThread={() => {}} onLabel={() => {}} apiBase={null} />),
-    )
+  it('shows the patient-data note before any upload or recording', () => {
+    expect(PHOTO_WARNING).toBe('Photo is read once and not stored. Do not photograph patient details.')
+    expect(VOICE_WARNING).toBe('Audio is sent once for transcription and not stored. Do not say patient details.')
+    const label = text(renderToStaticMarkup(<CaptureView mode="label" data={data} onThread={() => {}} onLabel={() => {}} apiBase={null} />))
+    expect(label).toContain(PHOTO_WARNING)
+    const voice = text(renderToStaticMarkup(<CaptureView mode="voice" data={data} onThread={() => {}} onLabel={() => {}} apiBase={null} />))
     expect(voice).toContain(VOICE_WARNING)
   })
 
   it('falls back to the recorded example, labelled "Recorded run", when no API is set', () => {
-    const label = text(
-      renderToStaticMarkup(<CaptureView mode="label" data={data} onThread={() => {}} onLabel={() => {}} apiBase={null} />),
-    )
+    const label = text(renderToStaticMarkup(<CaptureView mode="label" data={data} onThread={() => {}} onLabel={() => {}} apiBase={null} />))
     expect(label).toContain('Recorded run')
-    expect(label).toContain(FAILURE_TEXT.unconfigured)
+    expect(label).toContain(UNCONFIGURED_TEXT)
     expect(label).not.toContain('Live result')
+    expect(label).not.toContain('Use camera')
     expect(label).toContain('SAM 3.1')
-    const voice = text(
-      renderToStaticMarkup(<CaptureView mode="voice" data={data} onThread={() => {}} onLabel={() => {}} apiBase={null} />),
-    )
+    const voice = text(renderToStaticMarkup(<CaptureView mode="voice" data={data} onThread={() => {}} onLabel={() => {}} apiBase={null} />))
     expect(voice).toContain('Recorded run')
     expect(voice).toContain('Voice Transcribe')
     expect(voice).toContain('Heard:')
@@ -305,73 +283,12 @@ describe('camera and mic', () => {
     }
   })
 
-  it('sends nothing when the API base is not set', async () => {
-    const out = await sendCapture('label', { blob: png(), name: 'a.png' }, { apiBase: null, fetcher: never })
-    expect(out).toMatchObject({ ok: false, reason: 'unconfigured' })
-    expect(never).not.toHaveBeenCalled()
-  })
-
-  it('rejects a wrong, empty or oversized file before sending', async () => {
-    expect(checkFile('label', { size: 10, type: 'audio/wav' })).toBe('wrong-type')
-    expect(checkFile('voice', { size: 10, type: 'image/png' })).toBe('wrong-type')
-    expect(checkFile('label', { size: 0, type: 'image/png' })).toBe('empty')
-    expect(checkFile('label', { size: 13 * 1024 * 1024, type: 'image/png' })).toBe('too-large')
-    expect(checkFile('voice', { size: 100, type: 'audio/webm' })).toBeNull()
-    const out = await sendCapture('voice', { blob: png(), name: 'x.png' }, { apiBase: 'https://api.example', fetcher: never })
-    expect(out).toMatchObject({ ok: false, reason: 'wrong-type' })
-    expect(never).not.toHaveBeenCalled()
-  })
-
-  it('falls back with the reason on 404, 429, errors and unreadable answers', async () => {
-    const run = (res: () => Promise<Response>, mode: 'label' | 'voice' = 'label') =>
-      sendCapture(mode, { blob: mode === 'label' ? png() : wav(), name: 'f' }, { apiBase: 'https://api.example', fetcher: res })
-    expect(await run(async () => new Response('', { status: 404 }))).toMatchObject({ ok: false, reason: 'not-found' })
-    expect(await run(async () => new Response('', { status: 429 }))).toMatchObject({ ok: false, reason: 'rate' })
-    expect(await run(async () => new Response('', { status: 500 }))).toMatchObject({ ok: false, reason: 'server' })
-    expect(
-      await run(async () => {
-        throw new TypeError('network down')
-      }),
-    ).toMatchObject({ ok: false, reason: 'network' })
-    expect(await run(async () => new Response('not json'))).toMatchObject({ ok: false, reason: 'bad-response' })
-    expect(await run(async () => new Response(JSON.stringify({ hello: 1 })))).toMatchObject({ ok: false, reason: 'bad-response' })
-    expect(await run(async () => new Response(JSON.stringify({ hello: 1 })), 'voice')).toMatchObject({ ok: false, reason: 'bad-response' })
-  })
-
-  it('posts the photo to /v1/label and the recording to /v1/voice', async () => {
-    const urls: string[] = []
-    const f = async (u: string, init?: RequestInit) => {
-      urls.push(`${init?.method} ${u}`)
-      return new Response('{}', { status: 404 })
-    }
-    await sendCapture('label', { blob: png(), name: 'a.png' }, { apiBase: 'https://api.example', fetcher: f })
-    await sendCapture('voice', { blob: wav(), name: 'a.wav' }, { apiBase: 'https://api.example', fetcher: f })
-    expect(urls).toEqual(['POST https://api.example/v1/label', 'POST https://api.example/v1/voice'])
-  })
-
-  it('accepts a real answer only if it has the stored shape, and streams steps as they arrive', async () => {
-    const label = vision.labels[0]
-    expect(parseLabel(label)).not.toBeNull()
-    expect(parseLabel({ reading: label })).not.toBeNull()
-    expect(parseLabel({ fields: {} })).toBeNull()
-    expect(parseVoice({ transcript_text: 'what changed', language: 'English' })).toMatchObject({ transcript: 'what changed', thread: null })
-    expect(parseVoice({ transcript_text: '  ' })).toBeNull()
-    const lines = [
-      JSON.stringify({ type: 'step', name: 'sam', summary: 'found 1 box' }),
-      JSON.stringify({ type: 'step', name: 'read', summary: 'read 3 fields' }),
-      JSON.stringify({ type: 'result', result: label }),
-    ].join('\n')
-    const seen: string[] = []
-    const out = await sendCapture(
-      'label',
-      { blob: png(), name: 'a.png' },
-      {
-        apiBase: 'https://api.example',
-        fetcher: async () => new Response(lines, { headers: { 'content-type': 'application/x-ndjson' } }),
-        onStep: (s) => seen.push(s.name),
-      },
-    )
-    expect(out).toMatchObject({ ok: true, mode: 'label' })
-    expect(seen).toEqual(['sam', 'read'])
+  it('with an API address the label screen offers the camera and an upload', () => {
+    const raw = renderToStaticMarkup(<CaptureView mode="label" data={data} onThread={() => {}} onLabel={() => {}} apiBase="https://api.example" />)
+    const label = text(raw)
+    expect(label).toContain('Use camera')
+    expect(label).toContain('Upload photo')
+    expect(label.indexOf(PHOTO_WARNING)).toBeLessThan(label.indexOf('Use camera'))
+    for (const re of FORBIDDEN) expect(label).not.toMatch(re)
   })
 })

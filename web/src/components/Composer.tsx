@@ -4,6 +4,8 @@ import { Icon } from '../icons'
 import { closestThread } from '../match'
 import { exactKnownCode, highlightParts, moveActive, suggest, type CodeInfo, type Suggestion } from '../typeahead'
 import type { Thread } from '../types'
+import type { Recorder } from '../live/useRecorder'
+import { RecordingBar } from './RecordingBar'
 
 const DISCLAIMER =
   'Signals for a person to review. Not medical advice; a named person makes every decision. Nothing is filed with FDA.'
@@ -29,6 +31,15 @@ interface Props {
   captureMode?: 'label' | 'voice' | null
   /** Phone, page scrolled down (the disclaimer line stays: it is the one place that says not medical advice). */
   compact?: boolean
+  /** When the build has a live API: typed text is sent as a live question and the mic records. Absent: stored runs only. */
+  live?: ComposerLive | null
+}
+
+export interface ComposerLive {
+  /** Sends a typed question; returns a message when it was refused before sending (too short or too long). */
+  onAsk: (q: string) => string | null
+  busy: boolean
+  recorder: Recorder
 }
 
 /** The typed characters shown in bold and underlined inside a suggestion. */
@@ -54,8 +65,10 @@ type Notice = ({ kind: 'match'; question: string } | { kind: 'live' }) & { forKe
  * One input row with a type-ahead list of recorded questions (also shown on focus, as the starting points),
  * plus camera and mic buttons that open recorded runs until the live API is on.
  */
-export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, onMic, captureMode = null }: Props) {
+export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, onMic, captureMode = null, live = null }: Props) {
   const [text, setText] = useState('')
+  const [askError, setAskError] = useState<string | null>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const [saved, setNotice] = useState<Notice | null>(null)
   const notice = saved && saved.forKey === viewKey ? saved : null
   const [focus, setFocus] = useState(false)
@@ -95,6 +108,19 @@ export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, 
       setText('')
       setFocus(false)
       return onCode(known)
+    }
+    if (live) {
+      // A live question: the conversation shows it as a bubble, and focus stays in the box for the next one.
+      if (live.busy) {
+        setAskError('Wait for the current answer to finish, then send the next question.')
+        return
+      }
+      const refused = live.onAsk(text)
+      setAskError(refused)
+      setFocus(false)
+      if (!refused) setText('')
+      inputRef.current?.focus()
+      return
     }
     const m = closestThread(text, threads)
     if (/^[A-Za-z]{3}$/.test(text.trim()) && !m) {
@@ -149,6 +175,12 @@ export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, 
           <p className="relative z-10 m-0 mb-1 flex items-center gap-2 text-[15px] font-semibold text-ink" data-testid="capture-on">
             <span className="ws-pill bg-accent text-[var(--on-accent)]">{captureMode === 'label' ? 'Camera on' : 'Mic on'}</span>
             <span className="font-normal text-ink-2">{captureMode === 'label' ? 'Reading a device label' : 'Asking by voice'}</span>
+          </p>
+        )}
+        {live && <RecordingBar rec={live.recorder} />}
+        {askError && (
+          <p role="alert" className="ms-banner ms-banner--warn relative z-10 mb-2 text-[16px]" data-testid="ask-error">
+            <span className="ws-wrap">{askError}</span>
           </p>
         )}
         <form
@@ -224,13 +256,19 @@ export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, 
             </div>
           )}
           <Icon name="search" size={18} />
-          <input
+          <textarea
+            ref={inputRef}
+            rows={1}
             value={text}
             onChange={(e) => {
               setText(e.target.value)
               setNotice(null)
+              setAskError(null)
               setActive(-1)
               setFocus(true)
+              // grow with the text, up to about four lines
+              e.target.style.height = 'auto'
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 112)}px`
             }}
             onFocus={() => setFocus(true)}
             onBlur={() => setFocus(false)}
@@ -245,6 +283,10 @@ export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, 
               } else if (e.key === 'Escape' && open) {
                 e.stopPropagation()
                 setFocus(false)
+              } else if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+                // Enter sends; Shift+Enter adds a line.
+                e.preventDefault()
+                submit()
               }
             }}
             role="combobox"
@@ -255,38 +297,49 @@ export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, 
             aria-label="Ask a question"
             placeholder="Ask a question"
             autoComplete="off"
-            className="h-11 min-w-0 flex-1 bg-transparent text-[17px] text-ink placeholder:text-ink-2 focus:outline-none"
+            className="max-h-28 min-h-11 min-w-0 flex-1 resize-none self-center bg-transparent py-[10px] text-[17px] leading-6 text-ink placeholder:text-ink-2 focus:outline-none"
           />
           <button
             type="button"
-            className={['ws-icon-btn min-h-11 min-w-11 shrink-0', captureMode === 'label' ? '!bg-accent !text-[var(--on-accent)]' : ''].join(' ')}
+            className={['ws-icon-btn min-h-11 min-w-11 shrink-0 self-center', captureMode === 'label' ? '!bg-accent !text-[var(--on-accent)]' : ''].join(' ')}
             aria-pressed={captureMode === 'label'}
             onClick={onCamera}
-            aria-label="Camera: photograph a device label (opens a recorded run until the live API answers)"
-            title="Camera: photograph a device label (opens a recorded run until the live API answers)"
+            aria-label={live ? 'Camera: read a device label with the camera or an uploaded photo' : 'Camera: photograph a device label (opens a recorded run until the live API answers)'}
+            title={live ? 'Camera: read a device label' : 'Camera: photograph a device label (opens a recorded run until the live API answers)'}
             data-testid="composer-camera"
           >
             <Icon name="camera" />
           </button>
           <button
             type="button"
-            className={['ws-icon-btn min-h-11 min-w-11 shrink-0', captureMode === 'voice' ? '!bg-accent !text-[var(--on-accent)]' : ''].join(' ')}
-            aria-pressed={captureMode === 'voice'}
-            onClick={onMic}
-            aria-label="Mic: ask by voice (opens a recorded run until the live API answers)"
-            title="Mic: ask by voice (opens a recorded run until the live API answers)"
+            className={['ws-icon-btn min-h-11 min-w-11 shrink-0 self-center', captureMode === 'voice' || live?.recorder.state === 'recording' ? '!bg-accent !text-[var(--on-accent)]' : ''].join(' ')}
+            aria-pressed={live ? live.recorder.state === 'recording' : captureMode === 'voice'}
+            onClick={live ? live.recorder.toggle : onMic}
+            disabled={live?.recorder.state === 'processing'}
+            aria-label={
+              live
+                ? live.recorder.state === 'recording'
+                  ? 'Mic: stop recording and send your question'
+                  : 'Mic: click to start recording a spoken question, click again to stop'
+                : 'Mic: ask by voice (opens a recorded run until the live API answers)'
+            }
+            title={live ? 'Talk to it: click to start, click again to stop' : 'Mic: ask by voice (opens a recorded run until the live API answers)'}
             data-testid="composer-mic"
           >
             <Icon name="mic" />
           </button>
-          <button type="submit" className="ms-btn ms-btn--secondary shrink-0" style={{ height: 40 }}>
-            Open
+          <button type="submit" className={live ? 'ms-btn ws-btn-primary shrink-0 self-center' : 'ms-btn ms-btn--secondary shrink-0 self-center'} style={{ height: 40 }} disabled={live?.busy}>
+            {live ? 'Send' : 'Open'}
           </button>
         </form>
         <p className="relative z-10 m-0 mt-1 text-center text-[17px] leading-snug text-ink-2" data-testid="disclaimer">
           <span className="hidden sm:inline">{DISCLAIMER}</span>
           <span className="sm:hidden">{DISCLAIMER_SHORT}</span>
-          <span className="hidden md:inline"> Camera and mic show a recorded run until the live API answers.</span>
+          {live ? (
+            <span className="hidden md:inline"> Enter sends, Shift+Enter adds a line. If the live service is unavailable, recorded runs are shown and labelled.</span>
+          ) : (
+            <span className="hidden md:inline"> Camera and mic show a recorded run until the live API answers.</span>
+          )}
         </p>
       </div>
     </div>

@@ -4,3 +4,5 @@ dist
 .vite
 !public/data/dossier/*.pdf
 qa/tmp
+dist-live
+dist-stored

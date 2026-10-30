@@ -8,6 +8,9 @@ import { Icon } from '../icons'
 import type { WorkflowDef, WorkflowId, WorkspaceData } from '../types'
 import { CaptureView } from './CaptureView'
 import { Composer } from './Composer'
+import { LiveChatView } from './LiveChat'
+import { NO_LIVE, type LiveChat } from '../live/useLiveChat'
+import { useRecorder } from '../live/useRecorder'
 import { Dashboard } from './Dashboard'
 import { RunList, RunView } from './InvestigationViews'
 import { LiveCheckView } from './LiveCheckView'
@@ -23,10 +26,11 @@ export type View =
   | { kind: 'thread'; id: string }
   | { kind: 'run'; id: string }
   | { kind: 'capture'; mode: CaptureMode }
+  | { kind: 'live' }
 
 /** Stable identity of the screen shown (used to scope the composer's messages). */
 export const viewKey = (v: View): string =>
-  v.kind === 'new' ? 'new' : v.kind === 'capture' ? `capture:${v.mode}` : `${v.kind}:${v.id}${v.kind === 'workflow' && v.code ? `:${v.code}` : ''}`
+  v.kind === 'new' ? 'new' : v.kind === 'live' ? 'live' : v.kind === 'capture' ? `capture:${v.mode}` : `${v.kind}:${v.id}${v.kind === 'workflow' && v.code ? `:${v.code}` : ''}`
 
 export interface WithheldNav {
   /** Sentence to highlight in the open thread. */
@@ -55,6 +59,10 @@ interface Props {
   onAlert: (a: AlertItem) => void
   expanded: boolean
   onToggleExpand: () => void
+  /** The live conversation (typed and spoken questions); `enabled` is false when the build has no API address. */
+  live?: LiveChat
+  /** Shows the live conversation. */
+  onLive?: () => void
 }
 
 function StoredList({ def, data, onThread }: { def: WorkflowDef; data: WorkspaceData; onThread: (id: string) => void }) {
@@ -94,8 +102,32 @@ function StoredList({ def, data, onThread }: { def: WorkflowDef; data: Workspace
 
 export function ChatPane(p: Props) {
   const { data } = p
+  const live = p.live ?? NO_LIVE
+  const onLive = p.onLive ?? (() => undefined)
+  // The microphone: one click starts, the next stops; the clip becomes a 16 kHz WAV and is sent as a spoken question.
+  const recorder = useRecorder({
+    onResult: (r) => {
+      live.setMicNotice(null)
+      void live.askVoice(r.wav)
+      onLive()
+    },
+    onError: (message) => {
+      // No permission, no microphone or nothing recorded: say so and show the recorded voice run.
+      live.setMicNotice(message)
+      p.onCapture('voice')
+    },
+  })
   let body: JSX.Element
-  if (p.view.kind === 'new') {
+  if (p.view.kind === 'live') {
+    body = (
+      <LiveChatView
+        chat={live}
+        threads={data.threads.threads}
+        onStarter={(q) => void live.ask(q)}
+        onRecordedVoice={() => p.onCapture('voice')}
+      />
+    )
+  } else if (p.view.kind === 'new') {
     body = <Dashboard data={data} onWorkflow={p.onWorkflow} onBrief={p.onBrief} onAlert={p.onAlert} />
   } else if (p.view.kind === 'workflow') {
     const id = p.view.id
@@ -111,7 +143,7 @@ export function ChatPane(p: Props) {
           onFilter={p.onDeviceFilter}
         />
       )
-    else if (id === 'vision') body = <VisionWorkflow vision={data.vision} onOpen={p.onVision} />
+    else if (id === 'vision') body = <VisionWorkflow vision={data.vision} onOpen={p.onVision} onCamera={() => p.onCapture('label')} />
     else if (id === 'weekly-investigator' || id === 'recall-sweep')
       body = <RunList kind={id} runs={data.investigations.investigations} notes={data.investigations.notes} onRun={p.onRun} />
     else body = <StoredList def={def} data={data} onThread={p.onThread} />
@@ -123,6 +155,7 @@ export function ChatPane(p: Props) {
         data={data}
         onThread={p.onThread}
         onLabel={(index) => p.onVision({ mode: 'labels', index })}
+        voice={live.enabled ? { recorder, notice: live.micNotice, onWav: (w) => { live.setMicNotice(null); void live.askVoice(w); onLive() } } : null}
       />
     )
   } else if (p.view.kind === 'run') {
@@ -183,6 +216,19 @@ export function ChatPane(p: Props) {
         onMic={() => p.onCapture('voice')}
         captureMode={p.view.kind === 'capture' ? p.view.mode : null}
         compact={scrolled === key}
+        live={
+          live.enabled
+            ? {
+                busy: live.busy,
+                recorder,
+                onAsk: (q) => {
+                  const refused = live.ask(q)
+                  if (!refused) onLive()
+                  return refused
+                },
+              }
+            : null
+        }
       />
     </main>
   )

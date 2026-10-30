@@ -15,6 +15,7 @@ import { withheldSentences } from './claims'
 import { useWorkspaceData, visibleWorkflows } from './data'
 import { apiBaseOrNull, resolveRef, sendVisit, sessionStore } from './feedback'
 import { useReadBriefs, useTheme } from './storage'
+import { useLiveChat } from './live/useLiveChat'
 import { collapseOnEscape, toggleExpanded, type PanelId } from './layout'
 import type { WorkflowId } from './types'
 
@@ -24,6 +25,7 @@ const API_BASE = apiBaseOrNull(import.meta.env.VITE_MAUDESIGNAL_API_BASE)
 export function pageName(view: View): string {
   if (view.kind === 'new') return 'new'
   if (view.kind === 'capture') return `capture:${view.mode}`
+  if (view.kind === 'live') return 'live'
   return `${view.kind}:${view.id}`
 }
 
@@ -59,6 +61,13 @@ export default function App() {
   // ?r=CODE from the person's link, kept for the session (other URL parameters are left alone).
   const [refCode] = useState(() => resolveRef(window.location.search, sessionStore()))
   const page = pageName(view)
+  // The live conversation lives here so it survives opening other screens. Without an API address it is switched off.
+  const live = useLiveChat({
+    apiBase: API_BASE,
+    ref: refCode,
+    threads: data?.threads.threads ?? [],
+    evidence: data?.evidence ?? { reports: {}, other: {} },
+  })
   useEffect(() => {
     sendVisit(
       API_BASE,
@@ -336,6 +345,12 @@ export default function App() {
               deviceFilter={deviceFilter}
               onDeviceFilter={filterDevices}
               onCapture={openCapture}
+              live={live}
+              onLive={() => {
+                setWIdx(null)
+                setView({ kind: 'live' })
+                setDrawer(false)
+              }}
               onBrief={openBrief}
               onAlert={openAlert}
               expanded={expanded === 'main'}
