@@ -39,6 +39,7 @@ from maudesignal.connector.data import ConnectorData
 from maudesignal.connector.docs_page import render_docs_page
 from maudesignal.connector.errors import ConnectorError, InvalidInputError, NotFoundError
 from maudesignal.connector.feedback import mount_feedback
+from maudesignal.connector.live import LiveBackends, LiveConfig, mount_live
 from maudesignal.connector.manifest import build_manifest
 from maudesignal.connector.mcp_server import (
     PARSE_ERROR,
@@ -191,6 +192,8 @@ class Settings:
     web_origins: tuple[str, ...] = field(default_factory=_origins_from_env)
     feedback_store: RecordStore = field(default_factory=store_from_env)
     notifier: Notifier = field(default_factory=notifier_from_env)
+    live: LiveBackends | None = None
+    live_config: LiveConfig | None = None
 
 
 class AskRequest(BaseModel):
@@ -762,5 +765,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         client_address=_client_address,
         failed_auth=failed_auth,
         make_limiter=state.rate_limiter,
+    )
+    mount_live(
+        app,
+        data=cfg.data,
+        state=state,
+        web_origins=web_origins,
+        client_address=_client_address,
+        make_limiter=state.rate_limiter,
+        backends=cfg.live,
+        config=cfg.live_config,
+        now=cfg.now,
     )
     return app

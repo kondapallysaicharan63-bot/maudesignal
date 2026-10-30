@@ -3,7 +3,7 @@
   "functions": {
     "api/index.py": {
       "maxDuration": 60,
-      "includeFiles": "{src,skills,demo/transcripts,digests,data/demo,design-system,api}/**",
+      "includeFiles": "{src,skills,demo/transcripts,demo/vision,digests,data/demo,design-system,api}/**",
       "excludeFiles": "{web,docs,tests,screenshots,.git,.claude,node_modules}/**"
     }
   },

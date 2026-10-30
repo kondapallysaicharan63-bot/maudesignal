@@ -24,6 +24,7 @@ from __future__ import annotations
 import os
 import re
 import tempfile
+import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -75,6 +76,10 @@ _LEADS = {
     "no_model": f"Live answers are not switched on here, so {_RECORDED}",
     "live_off": f"Live answers are switched off on this server, so {_RECORDED}",
     "model_error": f"The live model is not available just now, so {_RECORDED}",
+    "no_transcript": (
+        "Your recording could not be turned into text, so this is a recorded answer to a "
+        "different spoken question"
+    ),
 }
 _REASON_NOTES = {
     "cap": "The daily cost cap for this key was reached, so no live model call was made.",
@@ -84,6 +89,7 @@ _REASON_NOTES = {
         "so no live model call was made."
     ),
     "model_error": "The live model call failed, so no live answer is shown.",
+    "no_transcript": "The recording could not be transcribed, so no live model call was made.",
 }
 _UNLINKED_REASON = "passed the claim gate but has no openFDA or record link, so it is not spoken"
 _FORBIDDEN_REASON = "contains a term this service does not use, so it is not spoken"
@@ -213,14 +219,15 @@ def _recorded_sentences(t: dict[str, Any]) -> list[dict[str, Any]]:
     return [s for s in (t.get("final") or {}).get("sentences") or [] if isinstance(s, dict)]
 
 
-def _eligible(t: dict[str, Any]) -> bool:
+def _eligible(t: dict[str, Any], *, voice: bool = False) -> bool:
     """A recording that may answer a stranger's question.
 
-    Left out: voice-mode and greeting runs (they answer something else), unparsed runs,
-    and runs whose question or sentences contain a term this service never uses.
+    Left out: voice-mode and greeting runs (they answer something else; kept only when
+    ``voice`` is set, for a spoken question), unparsed runs, and runs whose question or
+    sentences contain a term this service never uses.
     """
     label = str(t.get("label") or "").lower()
-    if "voice" in label or t.get("parse_failed") or not t.get("question"):
+    if ("voice" in label) != voice or t.get("parse_failed") or not t.get("question"):
         return False
     sentences = _recorded_sentences(t)
     texts = [str(t["question"])] + [str(s.get("text") or "") for s in sentences]
@@ -430,6 +437,112 @@ def _no_recording(reason: str) -> ToolAnswer:
     )
 
 
+@dataclass
+class AskOutcome:
+    """An ``ask`` answer plus what the live API reports about how it was made."""
+
+    answer: ToolAnswer
+    live: bool
+    #: Why a recording was used (``cap``, ``no_model``, ``live_off``, ``model_error``,
+    #: ``no_transcript``), or None for a live answer.
+    reason: str | None = None
+    cost_usd: float = 0.0
+    model: str | None = None
+    model_ms: float | None = None  # time inside model calls (measured)
+    total_ms: float = 0.0  # whole ask, models + read-only tools + claim gate (measured)
+    tool_names: list[str] = field(default_factory=list)
+    recorded_question: str | None = None
+    recorded_at: str | None = None
+    #: When a recording was used after a live attempt failed: time spent on the attempt.
+    attempt_ms: float = 0.0
+
+
+class _TimedCompletions:
+    def __init__(self, inner: Any, owner: _TimedClient) -> None:
+        self._inner, self._owner = inner, owner
+
+    def create(self, **kwargs: Any) -> Any:
+        t0 = time.perf_counter()
+        try:
+            return self._inner.create(**kwargs)
+        finally:
+            self._owner.ms += (time.perf_counter() - t0) * 1000.0
+
+
+class _TimedClient:
+    """Adds up the time spent inside ``chat.completions.create`` (the model calls)."""
+
+    def __init__(self, inner: Any) -> None:
+        self.ms = 0.0
+        completions = _TimedCompletions(inner.chat.completions, self)
+        self.chat = type("Chat", (), {"completions": completions})()
+
+
+def seed_history(agent: CopilotAgent, history: list[tuple[str, str]]) -> None:
+    """Give the agent earlier question/answer pairs as conversation context.
+
+    The agent keeps its context as chat messages (``_history``); there is no public setter.
+    The pairs come from the browser, so they are context only: the new answer is still
+    produced from tool results and checked sentence by sentence by the claim gate.
+    """
+    msgs: list[dict[str, Any]] = []
+    for q, a in history:
+        msgs += [{"role": "user", "content": q}, {"role": "assistant", "content": a}]
+    agent._history = msgs[-8:]
+
+
+def _recorded_pool(
+    data: ConnectorData, q: str, *, voice: bool
+) -> tuple[dict[str, Any] | None, int]:
+    transcripts = data.transcripts()
+    known = {r.product_code for r in data.store.records}
+    related = [t for t in transcripts if _eligible(t, voice=voice) and _matches(q, t, known)]
+    best = closest_recorded(q, related) if related else None
+    return best, len(transcripts)
+
+
+def _outcome_recorded(
+    best: dict[str, Any] | None,
+    reason: str,
+    data: ConnectorData,
+    started: float,
+    attempt_ms: float = 0.0,
+) -> AskOutcome:
+    answer = _no_recording(reason) if best is None else _from_recorded(best, reason, data)
+    shown = best if answer.provenance.source.startswith("Recorded run") and best else None
+    return AskOutcome(
+        answer=answer,
+        live=False,
+        reason=reason,
+        total_ms=round((time.perf_counter() - started) * 1000.0, 1),
+        recorded_question=str(shown.get("question") or "") if shown else None,
+        recorded_at=str(shown.get("recorded_at_utc") or "") if shown else None,
+        attempt_ms=attempt_ms,
+    )
+
+
+def recorded_voice_answer(data: ConnectorData, reason: str = "no_transcript") -> AskOutcome:
+    """A recorded spoken-question run, for when the visitor's recording cannot be transcribed.
+
+    The recorded question is named in the answer's lead; the visitor's own words are not
+    known here, so nothing is claimed about them.
+
+    Raises:
+        SourceUnavailableError: No usable recorded voice run is stored.
+    """
+    started = time.perf_counter()
+    usable = [t for t in data.transcripts() if _eligible(t, voice=True)]
+    if not usable:
+        raise SourceUnavailableError("No recorded spoken-question answer is stored.")
+
+    def strength(t: dict[str, Any]) -> tuple[int, str]:
+        passed = sum(1 for s in _recorded_sentences(t) if s.get("status") == "pass")
+        return passed, str(t.get("label") or "")
+
+    best = max(usable, key=strength)
+    return _outcome_recorded(best, reason, data, started)
+
+
 def ask(
     data: ConnectorData,
     question: str,
@@ -451,12 +564,42 @@ def ask(
         InvalidInputError: The question is empty or too long.
         SourceUnavailableError: No live answer and nothing recorded exists at all.
     """
+    return ask_detailed(data, question, key_id=key_id, runtime=runtime, now=now).answer
+
+
+def ask_detailed(
+    data: ConnectorData,
+    question: str,
+    *,
+    key_id: str,
+    runtime: AskRuntime,
+    now: Clock = utc_now,
+    history: list[tuple[str, str]] | None = None,
+    spoken: bool = False,
+) -> AskOutcome:
+    """:func:`ask`, plus cost, timings and whether the answer was live or recorded.
+
+    Args:
+        data: Stored data.
+        question: The caller's question (3 to 500 characters).
+        key_id: Non-secret id of the ledger the cost is counted against.
+        runtime: Live-model settings.
+        now: Clock (tests).
+        history: Earlier ``(question, answer)`` pairs from the same visitor (context only).
+        spoken: The question is a voice transcript; spoken-question recordings may answer it.
+
+    Raises:
+        InvalidInputError: The question is empty or too long.
+        SourceUnavailableError: No live answer and nothing recorded exists at all.
+    """
+    started = time.perf_counter()
     q = " ".join(question.split())
     if not (MIN_QUESTION_CHARS <= len(q) <= MAX_QUESTION_CHARS):
         raise InvalidInputError(
             f"Ask a question of {MIN_QUESTION_CHARS} to {MAX_QUESTION_CHARS} characters."
         )
     reason = "live_off" if os.environ.get("META_MODEL_API_KEY") else "no_model"
+    attempt_ms = 0.0
     if runtime.live_enabled():
         guard = SpendGuard(
             session_id=f"api-{key_id}",
@@ -479,31 +622,40 @@ def ask(
             with data.live_ask_lock:
                 agent = runtime.agent_factory(data, guard)
                 make_read_only(agent)  # whatever the factory built: no tool that writes
+                timed = _TimedClient(agent._client)
+                agent._client = timed
+                if history:
+                    seed_history(agent, history)
                 try:
                     res = agent.ask(q)
                 finally:
                     data.redact_audit_questions()  # question text is not kept, only its hash
             if res.capa_ids or agent.context.created_capas:
                 raise RuntimeError("a read-only ask wrote a record")  # never shown; falls back
-            return _from_live(res, data, now())
+            return AskOutcome(
+                answer=_from_live(res, data, now()),
+                live=True,
+                cost_usd=res.cost_usd,
+                model=res.model,
+                model_ms=round(timed.ms, 1),
+                total_ms=round((time.perf_counter() - started) * 1000.0, 1),
+                tool_names=[t.name for t in res.tool_calls],
+            )
         except SpendLimitError:
             reason = "cap"
+            attempt_ms = round((time.perf_counter() - started) * 1000.0, 1)
         except (
             Exception
         ) as exc:  # noqa: BLE001 - any model/network failure falls back to a recording
             logger.warning("connector_ask_live_failed", error_type=type(exc).__name__)
             reason = "model_error"
+            attempt_ms = round((time.perf_counter() - started) * 1000.0, 1)
         finally:
             if hold and isinstance(ledger, UpstashLedger):
                 ledger.release(hold)
-    transcripts = data.transcripts()
-    if not transcripts:
+    if not data.transcripts():
         raise SourceUnavailableError(
             "No live answer is available and no recorded answers are stored."
         )
-    known = {r.product_code for r in data.store.records}
-    related = [t for t in transcripts if _eligible(t) and _matches(q, t, known)]
-    best = closest_recorded(q, related) if related else None
-    if best is None:
-        return _no_recording(reason)
-    return _from_recorded(best, reason, data)
+    best, _ = _recorded_pool(data, q, voice=spoken)
+    return _outcome_recorded(best, reason, data, started, attempt_ms)

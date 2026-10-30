@@ -467,6 +467,85 @@ request. The Blob REST headers (`x-vercel-blob-access: private`, `x-add-random-s
 `x-api-version`) follow the documented API from memory and were not exercised against the live
 service from this environment; check the first real write.
 
+## Live Muse for the public website (`/v1/live/*`)
+
+Added so the website can talk to Muse without a connector key: a typed chat with earlier turns,
+a spoken question, and a device-label photo. It is the same copilot, claim gate and label reader
+as everywhere else; this layer adds limits, cost caps, upload checks and recorded fallbacks. Not
+medical advice. Nothing is filed with FDA. Not in the public OpenAPI document.
+
+| Route | Body | Muse models | What comes back |
+|---|---|---|---|
+| `POST /v1/live/ask` | JSON `{question (3-500 chars), history? (max 4 of {question, answer}), product_code? (3 letters), ref?}`. Each history answer is cut to 600 characters on the server. | Muse Spark 1.3 (read-only tools) | the answer sentences with their links, left-out reasons, spoken text |
+| `POST /v1/live/voice` | multipart: `audio` (WAV, PCM16, mono, 16000 Hz, at most 60 s and 4 MB) and an optional `meta` JSON part `{history?, product_code?}` | Muse Voice Transcribe 1.0, then Muse Spark 1.3 | `heard` (the transcript, shown before the answer) plus the same answer block |
+| `POST /v1/live/label` | multipart: `image` (JPEG or PNG, at most 8 MB) | SAM 3.1, then Muse Spark 1.3, then openFDA searches | `reading` and up to 3 possible matches; `confirmed` is always `null` (a person confirms) |
+
+Every response has `mode` (`live` or `recorded`), `recorded_note` (when recorded: why, and which
+recorded run), `not_medical_advice: true`, `trace` (one entry per step: `step`, `model`
+(`muse-spark-1.3`, `muse-voice-transcribe-1.0`, `sam-3.1` or `null`), measured `ms`, `status`
+`ok` / `skipped` / `failed`, `note`), `cost_usd` (a number, or `null` when nothing was spent) and
+`limits` (`remaining_today`, `resets_utc`). `ask` and `voice` add `answer`
+(`speakable: [{text, links: [{label, url}]}]`, `withheld: [{reason}]`, `spoken_text`); `voice` adds
+`heard`; `label` adds `reading` (`legibility`, `fields` for device name, manufacturer, model,
+K-number, UDI and GTIN, `values_withheld`) and `matches` (`status`
+`needs_person_to_confirm` or `no_match_found`, `candidates` with `k_number`, `device_name`,
+`applicant`, `product_code`, `why_matched`, `why_not_matched`, `links`).
+
+Errors are `{code, message}` (also repeated under `error` for older clients): 422 `patient_data`
+or `invalid_input`, 429 `rate_limited` with `retry_after_s` and a `Retry-After` header, 413
+`too_large`, 403 `origin_not_allowed`, 503 `unavailable` (no recorded answer exists either).
+
+**Rules**
+
+- *Limits per address per UTC day:* ask 30, voice 10, label 5 (`MAUDESIGNAL_LIVE_ASK_PER_DAY`,
+  `MAUDESIGNAL_LIVE_VOICE_PER_DAY`, `MAUDESIGNAL_LIVE_LABEL_PER_DAY`), plus a per-minute burst limit
+  (`MAUDESIGNAL_LIVE_PER_MIN`, default 10). The address is only ever a peppered HMAC
+  (`MAUDESIGNAL_KEY_PEPPER`), held in memory or in Upstash; it is never in a record and never
+  logged. A request that fails validation does not use the daily count.
+- *Cost:* one global cap for every live call, `MAUDESIGNAL_LIVE_DAILY_USD` (default 3.00). With
+  Upstash it is one shared ledger. Without it each instance keeps its own memory ledger and the
+  cap that instance enforces is the value divided by `MAUDESIGNAL_LIVE_INSTANCE_DIVISOR`
+  (default 2), so two cold instances together stay near the value. Per-request caps: ask 0.25,
+  voice 0.30, label 0.30 (`MAUDESIGNAL_LIVE_ASK_USD`, `_VOICE_USD`, `_LABEL_USD`). No call starts
+  once a cap is reached.
+- *Fallback:* with no `META_MODEL_API_KEY`, a cap reached, or any model error, the answer is a
+  recorded run and says so (`mode: "recorded"`, with the recorded question or sample photo
+  named). A recorded answer is never shown as live. Voice: if the clip cannot be transcribed, a
+  recorded spoken-question run is returned and `heard` is absent. Label: the closest stored
+  `demo/vision/label-match-*.json` (first one with candidates), marked as not your photo.
+- *Claim gate:* every sentence goes through the gate exactly as in `ask`; a left-out sentence's
+  text is never returned live, only a fixed reason. Tools are read-only (`readonly.py`);
+  temperature 0; the prompts live in `skills/`.
+- *Patient data:* a question, a history entry or a voice transcript that looks like patient
+  details (email, phone, SSN, MRN, date of birth) is refused with 422 `patient_data` and not
+  answered. A guard, not a guarantee.
+- *Uploads:* size, type, duration and pixel count are checked before any model call. Multipart is
+  parsed in memory (the standard form parsers spool large parts to temporary files, which uploads
+  here must not be). The photo is decoded and re-encoded as a plain JPEG from its pixels, so EXIF,
+  GPS, ICC and comment blocks are dropped; orientation is applied first. Audio and image bytes are
+  never written to disk or Blob and never logged. Lot and serial numbers are never returned (the
+  UDI keeps only the 01, 11 and 17 identifiers).
+- *Time:* the label request is built to end in under 55 s: SAM calls time out at 10 s and start
+  no new prompt after 12 s; each Spark call gets the time left of a 50 s budget; openFDA calls
+  time out at 6 s and start no new query after 45 s. On a timeout the stored run answers, with a
+  note. `vercel.json` keeps `maxDuration` 60.
+- *CORS:* only the exact origins in `MAUDESIGNAL_WEB_ORIGINS`, `POST` and `OPTIONS`, header
+  `Content-Type`, no credentials; another origin gets 403.
+
+**Deploy:** `vercel.json` `includeFiles` now covers `src`, `skills`, `demo/transcripts`,
+`demo/vision` (the stored label runs), `digests`, `data/demo`, `design-system` and `api`. `api/requirements.txt`
+gains `pillow`. Set `META_MODEL_API_KEY` for live answers; `OPENFDA_API_KEY` is optional. These
+steps are the owner's; nothing was deployed from this branch.
+
+**Live smoke test:** `.github/workflows/live-smoke.yml` runs `scripts/live_smoke.py` (two chat
+turns, the second with history; one spoken question from `demo/voice/question.wav`, else
+`question-c.wav`, resampled to 16 kHz mono if needed; one photo,
+`demo/vision/labels/label-caresens-n.jpg`) in process through the real app, with a hard cap of
+$0.60 in total, and commits `demo/live-smoke/result.json` to `track-c-live`. It runs only when
+`demo/LIVE_SMOKE_REQUEST` is pushed to `track-c-live` with a value other than empty or `0`
+(it holds `0`, so the first push spends nothing), or by hand. No live run has been made from this
+branch, so no live result or cost figure is claimed here.
+
 ## 2.1 The MCP server (`POST /mcp`)
 
 Same five tools as the REST routes, same process, same code path. Each REST route and each

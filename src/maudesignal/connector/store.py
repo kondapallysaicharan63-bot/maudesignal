@@ -50,6 +50,7 @@ MAX_AUDIT_READ = 200
 LOCK_TTL_MS = 5_000
 LOCK_TRIES = 25
 LOCK_WAIT_SECONDS = 0.04
+MAX_TRACKED_IDS = 50_000
 
 Backend = Literal["upstash_redis", "in_memory_per_instance"]
 
@@ -186,6 +187,90 @@ class SharedRateLimiter(RateLimiter):
         if n > self.limit:
             return False, 0, retry
         return True, self.limit - n, 0
+
+
+class DailyCounter:
+    """Per-address count per UTC day, in this instance's memory (resets on a cold start).
+
+    The address is only ever a salted hash made by the caller; the counter never sees it raw.
+    """
+
+    def __init__(self, limit: int, *, today: Callable[[], date] | None = None) -> None:
+        """Create a counter allowing ``limit`` hits per id per UTC day."""
+        self.limit = limit
+        self._today = today or (lambda: datetime.now(UTC).date())
+        self._lock = threading.Lock()
+        self._day: date | None = None
+        self._hits: dict[str, int] = {}
+
+    def _memory_hit(self, who: str) -> tuple[bool, int]:
+        with self._lock:
+            day = self._today()
+            if day != self._day:  # a new UTC day: yesterday's counts are dropped
+                self._day, self._hits = day, {}
+            if who not in self._hits and len(self._hits) >= MAX_TRACKED_IDS:
+                self._hits.clear()  # a flood of distinct ids: start over, stay bounded
+            n = self._hits.get(who, 0)
+            if n >= self.limit:
+                return False, 0
+            self._hits[who] = n + 1
+            return True, self.limit - n - 1
+
+    def hit(self, who: str) -> tuple[bool, int]:
+        """Count one use for ``who``; returns ``(allowed, remaining_today)``."""
+        return self._memory_hit(who)
+
+
+class SharedDailyCounter(DailyCounter):
+    """Daily counter kept in Redis (every instance sees it); memory when Redis fails."""
+
+    def __init__(
+        self,
+        client: UpstashClient,
+        name: str,
+        limit: int,
+        *,
+        today: Callable[[], date] | None = None,
+    ) -> None:
+        """Create the counter ``name``."""
+        super().__init__(limit, today=today)
+        self._client, self._name = client, name
+
+    def hit(self, who: str) -> tuple[bool, int]:
+        """Count one use for ``who``; returns ``(allowed, remaining_today)``."""
+        key = f"{NAMESPACE}:daily:{self._name}:{self._today().isoformat()}:{who}"
+        try:
+            n = int(self._client.command("INCR", key))
+            if n == 1:
+                self._client.command("EXPIRE", key, 2 * 86_400)
+        except UpstashError as exc:
+            logger.warning("connector_redis_fallback", op="daily_hit", error=str(exc))
+            return self._memory_hit(who)
+        if n > self.limit:
+            return False, 0
+        return True, self.limit - n
+
+
+class MemoryLedger(DailyLedger):
+    """Daily spend kept in this instance's memory (nothing is written to disk)."""
+
+    def __init__(self, *, today: Callable[[], date] | None = None) -> None:
+        """Create an empty ledger."""
+        super().__init__(Path(os.devnull), today=today)
+        self._mem_lock = threading.Lock()
+        self._mem: dict[str, float] = {}
+
+    def spent_today(self) -> float:
+        """USD recorded today (UTC)."""
+        with self._mem_lock:
+            return self._mem.get(self._today().isoformat(), 0.0)
+
+    def add(self, usd: float, calls: int) -> float:
+        """Add spend for today and return today's new total."""
+        with self._mem_lock:
+            day = self._today().isoformat()
+            self._mem = {day: round(self._mem.get(day, 0.0) + usd, 6)}
+            return self._mem[day]
 
 
 class UpstashLedger(DailyLedger):
@@ -358,6 +443,14 @@ class ConnectorState:
         if self._client:
             return SharedRateLimiter(self._client, name, limit, window_seconds, wall=self._wall)
         return RateLimiter(limit, window_seconds=window_seconds)
+
+    def daily_counter(
+        self, name: str, limit: int, *, today: Callable[[], date] | None = None
+    ) -> DailyCounter:
+        """A per-id, per-UTC-day counter named ``name`` (Redis when shared, memory otherwise)."""
+        if self._client:
+            return SharedDailyCounter(self._client, name, limit, today=today)
+        return DailyCounter(limit, today=today)
 
     def ledger(self, key_id: str) -> DailyLedger | None:
         """Shared daily ledger for ``key_id``; ``None`` when not shared (a file ledger is used)."""
