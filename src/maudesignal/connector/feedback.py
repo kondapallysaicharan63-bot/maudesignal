@@ -54,6 +54,8 @@ FEEDBACK_PATH = "/v1/feedback"
 VISIT_PATH = "/v1/visit"
 CORS_PATHS = (FEEDBACK_PATH, VISIT_PATH)
 REF_PATTERN = r"^[A-Za-z0-9_-]{1,32}$"
+DEFAULT_REF_ENV = "MAUDESIGNAL_DEFAULT_REF"
+DEFAULT_REF = "email-batch-1"
 FETCH_WORKERS = 8
 KINDS = ("feedback", "visits")
 
@@ -285,6 +287,8 @@ def mount_feedback(
         "visit", limit_from(VISIT_LIMIT_ENV, DEFAULT_VISIT_PER_HOUR), WINDOW_SECONDS
     )
     admin_key = e.get(ADMIN_KEY_ENV, "")
+    configured_ref = (e.get(DEFAULT_REF_ENV) or DEFAULT_REF).strip()
+    default_ref = configured_ref if re.fullmatch(REF_PATTERN, configured_ref) else DEFAULT_REF
     salt = (e.get("MAUDESIGNAL_KEY_PEPPER") or secrets.token_hex(16)).encode("utf-8")
 
     def limiter_id(request: Request) -> str:
@@ -349,6 +353,12 @@ def mount_feedback(
         except ValueError:
             return None, _err(422, "invalid_input", "Body must be a JSON object.")
 
+    def without_empty_ref(payload: Any) -> Any:
+        """Treat a missing, null or empty ``ref`` as absent so the default label applies."""
+        if isinstance(payload, dict) and payload.get("ref") in (None, ""):
+            return {k: v for k, v in payload.items() if k != "ref"}
+        return payload
+
     def bad_fields(exc: ValidationError) -> Response:
         where = ", ".join(sorted({str(x["loc"][-1]) for x in exc.errors() if x.get("loc")}))
         return _err(422, "invalid_input", f"Invalid input: {where or 'request'}.")
@@ -364,7 +374,7 @@ def mount_feedback(
         if failure is not None:
             return failure
         try:
-            body = FeedbackIn.model_validate(payload)
+            body = FeedbackIn.model_validate(without_empty_ref(payload))
         except ValidationError as exc:
             return bad_fields(exc)
         free_text = (body.comment, body.blocker, body.one_thing, body.name or "", body.role or "")
@@ -375,6 +385,7 @@ def mount_feedback(
         record: dict[str, Any] = body.model_dump() | {
             "id": rid,
             "received_utc": received.isoformat(timespec="seconds"),
+            "ref": body.ref or default_ref,
         }
         try:
             await run_in_threadpool(store.put_json, f"feedback/{day}/{rid}.json", record)
@@ -392,7 +403,7 @@ def mount_feedback(
         if failure is not None:
             return failure
         try:
-            body = VisitIn.model_validate(payload)
+            body = VisitIn.model_validate(without_empty_ref(payload))
         except ValidationError as exc:
             return bad_fields(exc)
         received = now()
@@ -400,6 +411,7 @@ def mount_feedback(
         record: dict[str, Any] = body.model_dump() | {
             "id": rid,
             "received_utc": received.isoformat(timespec="seconds"),
+            "ref": body.ref or default_ref,
         }
         try:
             await run_in_threadpool(store.put_json, f"visits/{day}/{rid}.json", record)

@@ -439,6 +439,8 @@ record. The tool is an advisory triage aid, not medical advice; do not type pati
 | `GET /v1/admin/summary` | `X-Admin-Key` | visits and feedback per ref code and per page, average rating per ref. |
 | `GET /v1/admin/export?kind=feedback\|visits&format=csv\|json` | `X-Admin-Key` | every record. CSV cells starting with `=`, `+`, `-` or `@` are prefixed with `'`. |
 
+Records sent without a `ref` are labelled `email-batch-1` (Charan's first email batch had no codes); override with `MAUDESIGNAL_DEFAULT_REF` (an invalid value falls back to `email-batch-1`).
+
 Never stored: IP address, user agent. The limiter holds only a salted HMAC of the address for the
 length of its window (in memory, or Upstash when configured). Records are JSON objects in a
 private Vercel Blob store at `feedback/<YYYY-MM-DD>/<id>.json` and `visits/<YYYY-MM-DD>/<id>.json`.

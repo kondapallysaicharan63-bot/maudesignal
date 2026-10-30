@@ -356,7 +356,7 @@ def test_admin_summary_counts_and_average(
         "feedback": 2,
         "avg_rating": 3.0,
     }
-    assert refs["(none)"]["avg_rating"] == 5.0
+    assert refs["email-batch-1"]["avg_rating"] == 5.0
     pages = {x["page"]: x for x in body["by_page"]}
     assert pages["signals"]["visits"] == 2 and pages["signals"]["feedback"] == 3
 
@@ -596,3 +596,51 @@ def test_page_and_client_ts_are_format_checked(
     c, store, _ = make(data, monkeypatch)
     assert c.post("/v1/feedback", json=GOOD | {field: value}, headers=H).status_code == 422
     assert all_stored(store, "feedback") == []
+
+
+# --- default ref for codeless records -----------------------------------------------------
+
+
+def test_missing_or_empty_ref_stored_as_email_batch_1(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("MAUDESIGNAL_DEFAULT_REF", raising=False)
+    c, store, _ = make(data, monkeypatch)
+    no_ref = {k: v for k, v in GOOD.items() if k != "ref"}
+    assert c.post("/v1/feedback", json=no_ref, headers=H).status_code == 201
+    assert c.post("/v1/feedback", json=GOOD | {"ref": ""}, headers=H).status_code == 201
+    assert c.post("/v1/visit", json={"page": "signals"}, headers=H).status_code == 204
+    assert c.post("/v1/visit", json={"page": "signals", "ref": ""}, headers=H).status_code == 204
+    assert {r["ref"] for r in all_stored(store, "feedback")} == {"email-batch-1"}
+    assert {r["ref"] for r in all_stored(store, "visits")} == {"email-batch-1"}
+    summary = c.get("/v1/admin/summary", headers=A).json()
+    assert [x["ref"] for x in summary["by_ref"]] == ["email-batch-1"]
+    csv_text = c.get("/v1/admin/export?kind=visits&format=csv", headers=A).text
+    assert "email-batch-1" in csv_text
+
+
+def test_default_ref_env_override(data: ConnectorData, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("MAUDESIGNAL_DEFAULT_REF", "email-batch-2")
+    c, store, _ = make(data, monkeypatch)
+    c.post("/v1/feedback", json={k: v for k, v in GOOD.items() if k != "ref"}, headers=H)
+    c.post("/v1/visit", json={"page": "signals"}, headers=H)
+    assert all_stored(store, "feedback")[0]["ref"] == "email-batch-2"
+    assert all_stored(store, "visits")[0]["ref"] == "email-batch-2"
+
+
+def test_invalid_default_ref_env_falls_back(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("MAUDESIGNAL_DEFAULT_REF", "not valid!")
+    c, store, _ = make(data, monkeypatch)
+    c.post("/v1/visit", json={"page": "signals"}, headers=H)
+    assert all_stored(store, "visits")[0]["ref"] == "email-batch-1"
+
+
+def test_explicit_ref_is_unchanged(data: ConnectorData, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("MAUDESIGNAL_DEFAULT_REF", "email-batch-2")
+    c, store, _ = make(data, monkeypatch)
+    c.post("/v1/feedback", json=GOOD, headers=H)
+    c.post("/v1/visit", json={"ref": "abc", "page": "signals"}, headers=H)
+    assert all_stored(store, "feedback")[0]["ref"] == "dr-smith_1"
+    assert all_stored(store, "visits")[0]["ref"] == "abc"
