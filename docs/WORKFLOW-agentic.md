@@ -77,6 +77,7 @@ Status: **approved by Charan on Oct 29** (design system kept; deploy steps go to
 ### Score log
 | Date | Impact | Meta tooling | Demo | Technical | What moved it | Still missing |
 |---|---|---|---|---|---|---|
+| Oct 30 03:00 UTC (coordinator estimate, not measured) | 8 | 9 | 8.5 | 9.5 | Muse connector REST+MCP live (keys pending one redeploy); label photo → possible openFDA matches with reasons + person confirms (A10/A10b, 7 labels re-recorded); real investigator run (7/7 gate); feedback + ref codes live on the emailed link; B6a/B6b workspace (agent trace, alert bell, type-ahead); PRs #10–#12 merged | Main merge (prep running); evidence-pack re-record; "Does this apply to us?" + B6c (building); API redeploy at 21:05 UTC; video shot list; practitioner quotes |
 | Oct 29 (coordinator estimate, not measured) | 7.5 | 8.5 | 8 (after voiceover) | 9.5 | AI device sweep (6 of 181), live check, 2:53 video, search protocol | Practitioner quotes; real investigator/recall recordings; deployed workspace |
 
 ## 0. Where things stand (checked Oct 29, 13:00 UTC)
