@@ -21,6 +21,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from starlette.concurrency import run_in_threadpool
+from starlette.requests import ClientDisconnect
 
 from maudesignal.common.logging import get_logger
 from maudesignal.connector import tools
@@ -692,7 +693,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         version = request.headers.get("mcp-protocol-version")
         if version is not None and version not in SUPPORTED_VERSIONS:
             return _error(400, "unsupported_protocol_version", "Unsupported MCP-Protocol-Version.")
-        raw = await request.body()
+        declared = request.headers.get("content-length", "")
+        if declared.isdigit() and int(declared) > MAX_MCP_BODY_BYTES:
+            return _error(413, "too_large", "Message too large.")
+        try:
+            raw = await request.body()
+        except ClientDisconnect:  # the client closed while sending: nothing to answer
+            return Response(status_code=400)
         if len(raw) > MAX_MCP_BODY_BYTES:
             return _error(413, "too_large", "Message too large.")
         try:

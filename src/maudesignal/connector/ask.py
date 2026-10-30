@@ -476,7 +476,10 @@ def ask(
                 hold = runtime.caps.session_usd
             agent = runtime.agent_factory(data, guard)
             make_read_only(agent)  # whatever the factory built: no tool that writes
-            res = agent.ask(q)
+            try:
+                res = agent.ask(q)
+            finally:
+                data.redact_audit_questions()  # question text is not kept, only its hash
             if res.capa_ids or agent.context.created_capas:
                 raise RuntimeError("a read-only ask wrote a record")  # never shown; falls back
             return _from_live(res, data, now())

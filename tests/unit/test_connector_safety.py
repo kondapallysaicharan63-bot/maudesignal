@@ -585,3 +585,32 @@ def test_safe_reason_keeps_a_head_only_when_it_is_a_known_claim_kind() -> None:
         _safe_reason("count: the pump overwrote the alarm threshold", sentence)
         == "count: could not be verified"
     )
+
+
+# --- question text is not kept (privacy statement in MUSE_CONNECTOR.md) --------------------
+
+PROBE = "PRIVACYPROBE how many LLZ reports this week?"
+
+
+def test_live_ask_leaves_no_question_text_in_any_table_of_the_database(tmp_path: Path) -> None:
+    d = ConnectorData(work_dir=tmp_path / "w")
+    rt = live_rt(tmp_path, OneAnswerClient(BLOCKED_SCRIPT))
+    a = ask(d, PROBE, key_id="abc", runtime=rt)
+    assert a.provenance.kind == "live_model"
+    db_file = tmp_path / "w" / "demo.db"
+    con = sqlite3.connect(db_file)
+    try:
+        tables = [r[0] for r in con.execute("select name from sqlite_master where type='table'")]
+        assert "action_audit" in tables
+        for table in tables:
+            for row in con.execute(f'select * from "{table}"'):  # noqa: S608
+                assert "PRIVACYPROBE" not in json.dumps(row, default=str), table
+        rows = con.execute(
+            "select payload_json from action_audit where action='copilot.answer'"
+        ).fetchall()
+    finally:
+        con.close()
+    assert rows, "the copilot's own audit entry is still written"
+    assert json.loads(rows[-1][0])["question"].startswith("sha256:")
+    assert b"PRIVACYPROBE" not in db_file.read_bytes()
+    assert d.db.verify_audit_chain()[0] is True  # chain was recomputed, still verifies

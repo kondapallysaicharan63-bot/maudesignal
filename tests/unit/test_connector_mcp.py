@@ -243,3 +243,56 @@ def test_mcp_live_body_never_holds_a_withheld_sentence(data: ConnectorData, tmp_
         assert json.dumps(sentence)[1:-1] not in r.text
     assert forbidden_in(r.text) == []
     assert "left out" in result["content"][0]["text"]  # the speakable says some were left out
+
+
+def test_client_disconnect_while_reading_the_body_is_a_quiet_400(
+    data: ConnectorData, tmp_path: Path
+) -> None:
+    import asyncio
+
+    from starlette.requests import ClientDisconnect
+
+    app = create_app(
+        Settings(
+            keys=KeyStore.from_env({"MAUDESIGNAL_API_KEYS": KEY}),
+            limiter=RateLimiter(100),
+            data=data,
+            ask_runtime=AskRuntime(live_enabled=lambda: False, ledger_dir=tmp_path / "led"),
+            live_checker=fake_check,
+        )
+    )
+    sent: list[dict[str, Any]] = []
+
+    async def receive() -> dict[str, Any]:
+        return {"type": "http.disconnect"}
+
+    async def send(msg: dict[str, Any]) -> None:
+        sent.append(msg)
+
+    scope = {
+        "type": "http",
+        "asgi": {"version": "3.0"},
+        "http_version": "1.1",
+        "method": "POST",
+        "path": "/mcp",
+        "raw_path": b"/mcp",
+        "query_string": b"",
+        "scheme": "http",
+        "server": ("test", 80),
+        "client": ("127.0.0.1", 1),
+        "headers": [(b"x-api-key", KEY.encode()), (b"content-type", b"application/json")],
+    }
+    asyncio.run(app(scope, receive, send))  # must not raise ClientDisconnect
+    assert ClientDisconnect  # imported to show the exact exception this guards
+    start = next(m for m in sent if m["type"] == "http.response.start")
+    assert start["status"] == 400
+
+
+def test_oversized_declared_length_is_rejected_before_reading(
+    data: ConnectorData, tmp_path: Path
+) -> None:
+    c = make_client(data, tmp_path)
+    r = c.post(
+        "/mcp", content=b"x" * (64 * 1024 + 1), headers={**H, "content-type": "application/json"}
+    )
+    assert r.status_code == 413

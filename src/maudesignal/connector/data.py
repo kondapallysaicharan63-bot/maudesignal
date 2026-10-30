@@ -9,10 +9,13 @@ opening a SQLite file can write to it; the committed file is never touched.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
+import sqlite3
 import tempfile
 import threading
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -57,6 +60,7 @@ class ConnectorData:
         self._work_dir = work_dir
         self._lock = threading.Lock()
         self._db: Database | None = None
+        self._db_file: Path | None = None
         self._store: EvidenceStore | None = None
         self._digest: dict[str, Any] | None = None
         self._transcripts: list[dict[str, Any]] | None = None
@@ -71,7 +75,64 @@ class ConnectorData:
                 target = work / "demo.db"
                 shutil.copyfile(self._db_src, target)
                 self._db = Database(target)
+                self._db_file = target
             return self._db
+
+    def redact_audit_questions(self) -> int:
+        """Replace the question text in the copilot's own audit entries with its hash.
+
+        The copilot writes up to 500 characters of the question into its audit entry in this
+        instance's temporary database copy. The connector's privacy statement says question
+        text is not stored, so this runs after every live ask: each ``question`` field becomes
+        ``sha256:<hex>`` and the hash chain is recomputed so it still verifies. Returns the
+        number of entries changed.
+        """
+        _ = self.db
+        with self._lock:
+            if self._db_file is None:  # pragma: no cover - set by the db property above
+                return 0
+            con = sqlite3.connect(self._db_file)
+            try:
+                con.execute("PRAGMA secure_delete=ON")  # do not leave the text in free pages
+                rows = con.execute(
+                    "SELECT seq, ts, actor, action, entity_id, payload_json, prev_hash, "
+                    "entry_hash FROM action_audit ORDER BY seq"
+                ).fetchall()
+                changed = 0
+                prev = "GENESIS"
+                for seq, ts, actor, action, entity_id, payload_json, old_prev, old_hash in rows:
+                    new_payload = payload_json
+                    try:
+                        payload = json.loads(payload_json)
+                    except ValueError:
+                        payload = None
+                    question = payload.get("question") if isinstance(payload, dict) else None
+                    if (
+                        isinstance(payload, dict)
+                        and isinstance(question, str)
+                        and not question.startswith("sha256:")
+                    ):
+                        digest = hashlib.sha256(question.encode("utf-8")).hexdigest()
+                        payload["question"] = f"sha256:{digest}"
+                        new_payload = json.dumps(payload, sort_keys=True)
+                        changed += 1
+                    if new_payload == payload_json and prev == old_prev and changed == 0:
+                        prev = old_hash
+                        continue
+                    stamp = datetime.fromisoformat(str(ts))
+                    entry = Database.audit_entry_hash(
+                        prev, stamp, actor, action, entity_id, new_payload
+                    )
+                    con.execute(
+                        "UPDATE action_audit SET payload_json=?, prev_hash=?, entry_hash=? "
+                        "WHERE seq=?",
+                        (new_payload, prev, entry, seq),
+                    )
+                    prev = entry
+                con.commit()
+                return changed
+            finally:
+                con.close()
 
     @property
     def store(self) -> EvidenceStore:
