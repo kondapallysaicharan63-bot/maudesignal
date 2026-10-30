@@ -86,8 +86,16 @@ export function TraceView({
               {s.lines.length > 0 && (
                 <ul className="m-0 mt-1 list-disc pl-5 text-ink-2">
                   {s.lines.map((l, i) => (
-                    <li key={i} className="ws-wrap">
+                    <li key={i} className="ws-wrap whitespace-pre-wrap">
                       {l}
+                      {s.lineUrls?.[i] && (
+                        <>
+                          {' '}
+                          <a href={s.lineUrls[i] as string} target="_blank" rel="noreferrer" className="font-semibold text-accent underline">
+                            query link
+                          </a>
+                        </>
+                      )}
                     </li>
                   ))}
                 </ul>

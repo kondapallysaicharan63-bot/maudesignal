@@ -65,7 +65,9 @@ const int = (n: number): string => n.toLocaleString('en-US')
 function timeOf(s: MatchTraceStep): Metric {
   if (typeof s.elapsed_ms !== 'number' || !Number.isFinite(s.elapsed_ms)) return none
   if (s.timing && /not recorded/i.test(s.timing)) return none
-  return { text: fmtMs(s.elapsed_ms), recorded: true }
+  // A time carried over from an earlier run keeps its stored label ("832 ms, recorded 2026-10-30").
+  const carried = s.timing && s.timing !== 'measured' ? `, ${s.timing}` : ''
+  return { text: `${fmtMs(s.elapsed_ms)}${carried}`, recorded: true }
 }
 
 const costOf = (s: MatchTraceStep): Metric =>
@@ -86,6 +88,13 @@ function stepDetail(kind: TraceStep['kind'], result: string, s: MatchTraceStep):
   return 'Checked against the stored openFDA records.'
 }
 
+/** One query of a multi-query step: its stored count, or its sum of groups (labelled), or "count not recorded". */
+function queryLine(q: NonNullable<MatchTraceStep['queries']>[number]): string {
+  if (typeof q.count === 'number') return `${q.query}: ${int(q.count)} ${q.count === 1 ? 'record' : 'records'}`
+  if (typeof q.groups_sum === 'number') return `${q.query}: ${int(q.groups_sum)} (sum of the groups returned)`
+  return `${q.query}: count not recorded`
+}
+
 /** The stored steps: SAM 3.1 -> Muse Spark read -> each openFDA search -> gate -> done, with stored timings and costs only. */
 export function buildMatchTrace(rec: LabelMatchRecord): Trace {
   const steps: TraceStep[] = rec.trace.map((s, i) => {
@@ -93,7 +102,14 @@ export function buildMatchTrace(rec: LabelMatchRecord): Trace {
     const kind: TraceStep['kind'] =
       s.model === 'SAM 3.1' ? 'sam' : s.model === 'Muse Spark' ? 'read' : s.model === 'openFDA' ? 'tool' : isDone ? 'done' : 'gate'
     const count = typeof s.count === 'number' ? s.count : null
-    const result = count === null ? 'count not recorded' : `${int(count)} ${count === 1 ? 'record' : 'records'}`
+    const qs = s.queries ?? []
+    // A step that ran several queries has no single count; each query is listed with its own stored count.
+    const multi = qs.length > 1
+    const result = multi
+      ? `${plural(qs.length, 'query', 'queries')}, each with its own count below`
+      : count === null
+        ? 'count not recorded'
+        : `${int(count)} ${count === 1 ? 'record' : 'records'}`
     return {
       id: `m${i}`,
       kind,
@@ -101,7 +117,8 @@ export function buildMatchTrace(rec: LabelMatchRecord): Trace {
       detail: s.note ?? stepDetail(kind, result, s),
       args: null,
       result,
-      lines: [],
+      lines: multi ? qs.map(queryLine) : [],
+      lineUrls: multi ? qs.map((q) => q.url ?? null) : undefined,
       model: s.model === 'openFDA' || s.model === 'gate' ? null : modelBadge(s.model),
       time: timeOf(s),
       tokens: tokensOf(s),
@@ -253,17 +270,20 @@ export function groupSearches(trace: Trace): Trace {
     if (run.length === 0) return
     if (run.length === 1) steps.push(run[0])
     else {
-      const counts = run.map((s) => {
+      const singles = run.filter((s) => s.lines.length === 0)
+      const multis = run.length - singles.length
+      const sc = singles.map((s) => {
         const m = /^([\d,]+) record/.exec(s.result ?? '')
         return m ? Number(m[1].replace(/,/g, '')) : null
       })
-      const known = counts.filter((c): c is number => c !== null)
+      const known = sc.filter((c): c is number => c !== null)
       let range = 'counts not recorded'
-      if (known.length === counts.length) {
+      if (singles.length > 0 && known.length === singles.length) {
         const lo = Math.min(...known)
         const hi = Math.max(...known)
         range = lo === hi ? `${int(lo)} ${lo === 1 ? 'record' : 'records'} each` : `${int(lo)} to ${int(hi)} records each`
-      }
+      } else if (singles.length === 0) range = 'counts listed per query'
+      if (multis > 0 && singles.length > 0 && known.length === singles.length) range += `; ${plural(multis, 'search')} with several queries listed per query`
       steps.push({
         id: `g${steps.length}`,
         kind: 'tool',
@@ -271,7 +291,12 @@ export function groupSearches(trace: Trace): Trace {
         detail: '',
         args: null,
         result: range,
-        lines: run.map((s) => `${s.title.replace(/^openFDA: /, '')}: ${s.result}${s.time.recorded ? ` (${s.time.text})` : ''}`),
+        lines: run.flatMap((s) => {
+          const t = s.title.replace(/^openFDA: /, '')
+          const time = s.time.recorded ? ` (${s.time.text})` : ''
+          return s.lines.length === 0 ? [`${t}: ${s.result}${time}`] : [`${t}${time}:`, ...s.lines.map((l) => `  ${l}`)]
+        }),
+        lineUrls: run.flatMap((s) => (s.lines.length === 0 ? [null] : [null, ...s.lines.map((_, i) => s.lineUrls?.[i] ?? null)])),
         model: null,
         time: none,
         tokens: none,

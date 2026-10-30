@@ -229,7 +229,10 @@ export interface MatchTraceStep {
   input_tokens?: number | null
   output_tokens?: number | null
   count?: number | null
-  url?: string
+  url?: string | null
+  urls?: string[]
+  /** Steps that ran several openFDA queries keep one entry per query; count is null where only a sum of groups was stored. */
+  queries?: { query: string; url?: string | null; count?: number | null; groups_sum?: number | null }[]
 }
 
 /** The stored label -> possible matches record (``demo/vision/label-match-*.json``). */

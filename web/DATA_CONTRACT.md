@@ -24,7 +24,7 @@ first, no key). Change this file only through the coordinator.
 | Copilot transcripts | `demo/transcripts/<ts>-<label>.json` |
 | Audit exports | `demo/transcripts/audit-<run_label>.json` |
 | Evidence pack | `demo/dossier/<doc_id>-{draft,approved}.pdf`, `-narrative.json`, `-review.json` |
-| Vision runs | `demo/vision/510k-*.json`, `demo/vision/label-*.json`, images `demo/vision/labels/*.jpg` |
+| Vision runs | `demo/vision/510k-*.json`, `demo/vision/label-*.json`, `demo/vision/label-match-*.json`, images `demo/vision/labels/*.jpg` |
 | AI device sweep | `demo/sweep/ai-device-sweep.json` |
 | Report-source counts | `docs/hackathon/SOURCE_COUNTS.md` |
 
@@ -100,7 +100,11 @@ PDFs are copied to `web/public/data/dossier/`.
 ### `vision.json`
 `{"k510": [<510k-*.json as stored>], "labels": [<label-*.json as stored, image copied
 to vision/<file>.jpg, "image": "vision/<file>.jpg">]}`. SAM boxes come from each
-label's `sam` field.
+label's `sam` field. Each label also carries `"matches": <label-match-<stem>.json as stored,
+"confirmed" forced to null> | null` (null when no matching run was stored). Steps that ran several
+queries store `count: null` and a `queries[]` list (`count` or `groups_sum` per query).
+Current `vision.json` was built from the label-match files of `origin/hackathon-day2` commit
+3205dd7 (the 02:52Z rerun); those files are not on `track-b-next2` itself.
 
 ### `sweep.json`
 `demo/sweep/ai-device-sweep.json` as stored (meta, rows, errors).

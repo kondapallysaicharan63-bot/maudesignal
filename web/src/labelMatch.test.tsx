@@ -307,3 +307,77 @@ describe('fix round', () => {
     expect(t.steps[0].result).toBe('0 to 432,413 records each')
   })
 })
+
+describe('current recording (02:52Z rerun) reaches the screen', () => {
+  it('the illegible welch-module record carries no hidden reading and no search', () => {
+    const json = JSON.stringify(named('welch-module'))
+    expect(json).not.toContain('AORTIC')
+    const rec = named('welch-module').matches as LabelMatchRecord
+    expect((rec as unknown as { search_basis: string }).search_basis).toBe('none')
+    expect(rec.note).toBe('Label not legible enough to read; nothing was searched.')
+    expect(rec.trace.some((s) => s.model === 'openFDA')).toBe(false)
+  })
+
+  it('a step that ran several queries lists each query with its own count and link, never one total', () => {
+    const rec = withMatches().matches as LabelMatchRecord
+    const multi = rec.trace.find((s) => (s.queries?.length ?? 0) > 1)
+    expect(multi).toBeTruthy()
+    expect(multi?.count).toBeNull()
+    const step = buildMatchTrace(rec).steps[rec.trace.indexOf(multi as NonNullable<typeof multi>)]
+    expect(step.result).toMatch(/queries, each with its own count/)
+    expect(step.result).not.toMatch(/^[\d,]+ records?/)
+    expect(step.lines.length).toBe(multi?.queries?.length)
+    expect(step.lines.some((l) => /\(sum of the groups returned\)/.test(l))).toBe(true)
+    expect(step.lineUrls?.every((u) => u?.startsWith('https://api.fda.gov/'))).toBe(true)
+  })
+
+  it('folded searches keep every per-query line and link, and invent no combined count', () => {
+    const rec = withMatches().matches as LabelMatchRecord
+    const grouped = groupSearches(buildMatchTrace(rec))
+    const g = grouped.steps.find((s) => s.grouped)
+    expect(g).toBeTruthy()
+    expect(g?.lines.some((l) => /sum of the groups returned/.test(l))).toBe(true)
+    expect(g?.lineUrls?.length).toBe(g?.lines.length)
+    expect(g?.lines.join('\n')).not.toMatch(/432,413/)
+  })
+
+  it('a hand-made step with count null and queries[] using groups_sum', () => {
+    const rec = withMatches().matches as LabelMatchRecord
+    const t = buildMatchTrace({
+      ...rec,
+      trace: [
+        {
+          step: 'openFDA search: MAUDE counts for ZZZ',
+          model: 'openFDA',
+          elapsed_ms: 100,
+          timing: 'measured',
+          count: null,
+          url: null,
+          queries: [
+            { query: 'This week, by event type', url: 'https://api.fda.gov/a', count: null, groups_sum: 196 },
+            { query: 'Everything before this week', url: 'https://api.fda.gov/b', count: 432217 },
+          ],
+        },
+      ],
+    })
+    expect(t.steps[0].lines).toEqual([
+      'This week, by event type: 196 (sum of the groups returned)',
+      'Everything before this week: 432,217 records',
+    ])
+    expect(t.steps[0].lineUrls).toEqual(['https://api.fda.gov/a', 'https://api.fda.gov/b'])
+  })
+})
+
+describe('carried-over timings keep their label', () => {
+  it('shows the stored timing label when the time was not measured in this run', () => {
+    const t = buildMatchTrace({
+      ...(withMatches().matches as LabelMatchRecord),
+      trace: [
+        { step: 'SAM 3.1 crop', model: 'SAM 3.1', elapsed_ms: 832.2, timing: 'recorded 2026-10-30', note: 'x' },
+        { step: 'openFDA search: a', model: 'openFDA', elapsed_ms: 340.6, timing: 'measured', count: 3 },
+      ],
+    })
+    expect(t.steps[0].time.text).toBe('832 ms, recorded 2026-10-30')
+    expect(t.steps[1].time.text).toBe('341 ms')
+  })
+})
