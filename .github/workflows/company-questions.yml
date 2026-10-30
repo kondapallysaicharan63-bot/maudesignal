@@ -25,20 +25,32 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Skip unless a recording was requested (QUESTIONS_REQUEST "0" never spends)
+        id: gate
+        run: |
+          req=$(tr -d '[:space:]' < demo/company/QUESTIONS_REQUEST)
+          if [ "${{ github.event_name }}" = "push" ] && { [ -z "$req" ] || [ "$req" = "0" ]; }; then
+            echo "run=false" >> "$GITHUB_OUTPUT"; echo "QUESTIONS_REQUEST is 0: nothing recorded."
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-python@v5
+        if: steps.gate.outputs.run == 'true'
         with:
           python-version: "3.12"
           cache: "pip"
       - name: Install package
+        if: steps.gate.outputs.run == 'true'
         run: pip install -e .
       - name: Record questions (key from secrets, never echoed)
+        if: steps.gate.outputs.run == 'true'
         env:
           META_MODEL_API_KEY: ${{ secrets.META_MODEL_API_KEY }}
           META_MODEL_API_BASE_URL: https://api.meta.ai/v1
           META_MODEL_API_MODEL: muse-spark-1.3
         run: python scripts/record_company_questions.py
       - name: Commit questions back to the branch
-        if: success()
+        if: steps.gate.outputs.run == 'true' && success()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
