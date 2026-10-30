@@ -1,4 +1,5 @@
 import { Icon } from '../icons'
+import { matchSummary } from '../labelMatch'
 import type { LabelReading, Vision } from '../types'
 
 export type VisionSel = { mode: 'labels' | 'k510'; index: number }
@@ -51,7 +52,7 @@ export function VisionWorkflow({ vision, onOpen }: { vision: Vision; onOpen: (se
               <span className="min-w-0">
                 <span className="ws-wrap block">{labelName(l)}</span>
                 <span className="block text-[15px] text-ink-2">
-                  {K_STATUS[l.k_status] ?? l.k_status} · {l.sam.boxes.length} label {l.sam.boxes.length === 1 ? 'box' : 'boxes'} found
+                  {K_STATUS[l.k_status] ?? l.k_status} · {l.sam.boxes.length} label {l.sam.boxes.length === 1 ? 'box' : 'boxes'} found · {matchSummary(l)}
                 </span>
               </span>
               <Icon name="chevron" size={18} />

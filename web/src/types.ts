@@ -186,8 +186,69 @@ export interface LabelCheck {
   detail: string
 }
 
+/** One possible match, as stored. Nothing here is a confirmation: a person confirms in the app. */
+export interface LabelMatch {
+  source: string
+  record_id: string
+  owner: string
+  device_name: string
+  product_code: string
+  device_type_name: string
+  decision_date?: string | null
+  query_url: string
+  score: number
+  why_matched: string[]
+  why_not_matched: string[]
+  k_number?: string | null
+}
+
+export interface MatchFact {
+  id: string
+  topic: string
+  status: string
+  text: string
+  query_url: string
+}
+
+export interface DeviceTypeView {
+  product_code: string
+  device_type_name: string
+  facts: MatchFact[]
+  summary: { this_week_change?: { change?: string; as_of?: string | null; rules?: string[] } | null } & Record<string, unknown>
+}
+
+export interface MatchTraceStep {
+  step: string
+  model: string
+  elapsed_ms?: number | null
+  timing?: string
+  note?: string
+  cost_usd?: number | null
+  input_tokens?: number | null
+  output_tokens?: number | null
+  count?: number | null
+  url?: string
+}
+
+/** The stored label -> possible matches record (``demo/vision/label-match-*.json``). */
+export interface LabelMatchRecord {
+  generated_utc?: string
+  label: { fields: Record<string, LabelField>; overall_legibility: string }
+  status: string
+  note: string
+  matches: LabelMatch[]
+  device_type_views: Record<string, DeviceTypeView>
+  trace: MatchTraceStep[]
+  scoring_rules?: string[]
+  reading?: { model?: string; input_tokens?: number | null; output_tokens?: number | null; cost_usd?: { total?: number | null } }
+  disclaimer?: string
+  confirmed: null
+}
+
 export interface LabelReading {
   image: string
+  /** The stored possible matches; null when no matching run was recorded for this photo. */
+  matches?: LabelMatchRecord | null
   image_size: [number, number]
   sam: { prompt_used: string | null; boxes: SamBox[]; chosen_box: SamBox | null; note: string }
   fields: Record<string, LabelField>

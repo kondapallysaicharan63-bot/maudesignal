@@ -3,6 +3,8 @@ import type { Dossier, K510Field, K510Reading, LabelReading, ReadStatus, Vision 
 import { buildLabelTrace, buildReviewTrace } from '../../trace'
 import { TraceView } from '../TraceView'
 import { labelName, type VisionSel } from '../VisionWorkflow'
+import { fieldRows, legibilityBanner } from '../../labelMatch'
+import { LabelMatches } from './LabelMatches'
 import { PdfView } from './PdfView'
 import { Empty, Pill, Segmented, type Tone } from './common'
 
@@ -131,20 +133,13 @@ function SamImage({ l }: { l: LabelReading }) {
   )
 }
 
-const FIELD_LABEL: Record<string, string> = {
-  device_name: 'Device name',
-  manufacturer: 'Manufacturer',
-  model_number: 'Model number',
-  k_number: 'K-number',
-  udi: 'UDI',
-  gtin: 'GTIN',
-}
-
 function LabelView({ l }: { l: LabelReading }) {
   const gtinText =
     l.gtin === null
       ? 'No GTIN is printed on this label.'
       : `GTIN ${l.gtin}: check digit ${l.gtin_valid ? 'valid' : 'does not match'}.`
+  const { rows, overall, fromMatchRun } = fieldRows(l)
+  const banner = legibilityBanner(overall)
   return (
     <div>
       <SamImage l={l} />
@@ -152,17 +147,28 @@ function LabelView({ l }: { l: LabelReading }) {
         <TraceView trace={buildLabelTrace(l)} shown={99} label="Label reading steps" replayed={false} />
       </div>
       <h3 className="ms-kicker mt-4">Fields read from the label</h3>
-      <dl className="m-0 mt-1">
-        {Object.entries(l.fields).map(([k, f]) => (
-          <div key={k} className="flex flex-wrap items-baseline justify-between gap-x-3 border-t border-rule py-2">
-            <dt className="text-[15px] text-ink-2">{FIELD_LABEL[k] ?? k}</dt>
+      {banner && (
+        <p
+          role="note"
+          data-testid="legibility-banner"
+          className="ws-wrap m-0 mt-1 rounded-md border border-rule-strong bg-warning-soft p-3 text-warning"
+        >
+          {banner}
+        </p>
+      )}
+      {fromMatchRun && <p className="m-0 mt-1 text-[15px] text-ink-2">As read in the matching run below.</p>}
+      <dl className="m-0 mt-1" data-testid="label-fields">
+        {rows.map((r) => (
+          <div key={r.key} className="flex flex-wrap items-baseline justify-between gap-x-3 border-t border-rule py-2">
+            <dt className="text-[15px] text-ink-2">{r.label}</dt>
             <dd className="ws-wrap m-0 text-right">
-              {f.value ? f.value : <span className="text-ink-2">not present</span>}{' '}
-              <span className="ms-code">{f.legibility.replace('_', ' ')}</span>
+              {r.value ? r.value : <span className="text-ink-2">{r.hidden ? 'hidden: not legible' : 'not present'}</span>}{' '}
+              <span className="ms-code">{r.legibility.replace('_', ' ')}</span>
             </dd>
           </div>
         ))}
       </dl>
+      <LabelMatches key={l.image} rec={l.matches} />
       <h3 className="ms-kicker mt-4">Checks</h3>
       <ul className="m-0 mt-1 list-none p-0">
         <li className="border-t border-rule py-2">
@@ -186,7 +192,7 @@ function LabelView({ l }: { l: LabelReading }) {
         ))}
       </ul>
       <p className="mt-3 text-[15px] leading-snug text-ink-2">
-        Lot and serial numbers are read for the session only and are never stored or exported. Overall legibility: {l.overall_legibility.replace('_', ' ')}.
+        Lot and serial numbers are read for the session only and are never stored or exported. Overall legibility: {overall.replace('_', ' ')}.
       </p>
     </div>
   )

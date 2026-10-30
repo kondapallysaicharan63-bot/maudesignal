@@ -33,6 +33,7 @@ export function TraceView({
   label = 'Steps taken',
   replayed = true,
   defaultOpen = false,
+  absentLabels = false,
 }: {
   trace: Trace
   shown: number
@@ -40,6 +41,8 @@ export function TraceView({
   /** True while a stored run is being replayed step by step; false when the whole stored run is shown at once. */
   replayed?: boolean
   defaultOpen?: boolean
+  /** Print "Time: not recorded" (and "Cost: not recorded" on model steps) where the recording stored none. */
+  absentLabels?: boolean
 }) {
   const steps = trace.steps.slice(0, shown)
   const complete = shown >= trace.steps.length
@@ -55,6 +58,10 @@ export function TraceView({
       <ol className="m-0 mt-2 list-none p-0" aria-label={label}>
         {steps.map((s) => {
           const parts = stepMetricParts(s)
+          if (absentLabels) {
+            if (!s.time.recorded) parts.push(`time: ${NOT_RECORDED}`)
+            if (!s.cost.recorded && s.model) parts.push(`cost: ${NOT_RECORDED}`)
+          }
           return (
             <li key={s.id} data-step={s.kind} className="relative border-l-2 border-rule-strong pb-3 pl-4 last:pb-1">
               <span aria-hidden className={`absolute -left-[7px] top-[9px] h-3 w-3 rounded-full ${DOT[s.kind]}`} />

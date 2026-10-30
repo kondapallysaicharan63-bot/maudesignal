@@ -488,6 +488,8 @@ def build_vision(root: Path, out: Path) -> tuple[dict[str, Any], list[str]]:
     k510 = [read_json(p) for p in sorted(vdir.glob("510k-*.json"))]
     labels = []
     for p in sorted(vdir.glob("label-*.json")):
+        if p.name.startswith("label-match-"):
+            continue  # possible-match records are attached to their label below
         d = read_json(p)
         image = None
         img_name = d.get("image_file")
@@ -500,7 +502,17 @@ def build_vision(root: Path, out: Path) -> tuple[dict[str, Any], list[str]]:
             assets.append(image)
         else:
             notes.append(f"{p.name}: image {img_name} not found")
-        labels.append({**d, "image": image})
+        mp = vdir / f"label-match-{p.stem.removeprefix('label-')}.json"
+        matches: dict[str, Any] | None = None
+        if mp.exists():
+            matches = read_json(mp)
+            if matches.get("confirmed") is not None:
+                # A person confirms in the app, never in a stored file.
+                notes.append(f"{mp.name}: stored 'confirmed' value dropped (always null here)")
+                matches["confirmed"] = None
+        else:
+            notes.append(f"{mp.name} not found; {p.name} has no possible matches")
+        labels.append({**d, "image": image, "matches": matches})
     if not k510:
         notes.append("no demo/vision/510k-*.json found")
     if not labels:

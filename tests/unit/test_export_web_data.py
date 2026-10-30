@@ -259,3 +259,23 @@ def test_capa_tool_step_uses_the_display_label(out: Path) -> None:
     assert "draft_capa" not in raw
     assert "capa_need_evidence" in raw
     assert exporter.tool_label("draft_capa") == "capa_need_evidence"
+
+
+def test_label_matches_attach_to_their_label_and_are_never_confirmed(tmp_path: Path) -> None:
+    """label-match-*.json becomes ``matches`` on its label; ``confirmed`` is always null."""
+    vdir = tmp_path / "demo" / "vision"
+    (vdir / "labels").mkdir(parents=True)
+    (vdir / "labels" / "label-a.jpg").write_bytes(b"jpg")
+    for name in ("a", "b"):
+        reading = {"image_file": f"label-{name}.jpg", "fields": {}, "session_fields_omitted": True}
+        (vdir / f"label-{name}.json").write_text(json.dumps(reading), encoding="utf-8")
+    record = {"kind": "device_label_match", "matches": [{"record_id": "KX"}], "confirmed": "KX"}
+    (vdir / "label-match-a.json").write_text(json.dumps(record), encoding="utf-8")
+    doc, _ = exporter.build_vision(tmp_path, tmp_path / "out")
+    assert len(doc["labels"]) == 2
+    by_file = {x["image_file"]: x for x in doc["labels"]}
+    assert by_file["label-a.jpg"]["matches"]["matches"] == [{"record_id": "KX"}]
+    assert by_file["label-a.jpg"]["matches"]["confirmed"] is None
+    assert by_file["label-b.jpg"]["matches"] is None
+    assert any("label-match-b.json not found" in n for n in doc["notes"])
+    assert any("confirmed" in n for n in doc["notes"])
