@@ -27,6 +27,16 @@ from maudesignal.monitor.digest import CHANGE_LABELS
 from maudesignal.storage.database import Database
 from maudesignal.vision import DEMO_K_NUMBERS
 from maudesignal.vision.label import SESSION_ONLY_FIELDS, LabelResult
+from maudesignal.vision.label_match import (
+    Candidate,
+    LabelInputs,
+    candidate_from_510k,
+    inputs_from_reading,
+    legibility_banner,
+    public_url,
+    rank_candidates,
+    score_candidate,
+)
 from maudesignal.vision.pipeline import (
     DEMO_VISION_DIR,
     load_recorded_labels,
@@ -242,6 +252,13 @@ def render_label(result: LabelResult, image: bytes | None, *, session: bool) -> 
         st.image(draw_boxes(img, boxes, highlight=hi), caption=_sam_caption(result))
     else:
         st.caption(_sam_caption(result))
+    banner = legibility_banner(result.overall_legibility)
+    if banner is not None:
+        (st.error if result.overall_legibility == "illegible" else st.warning)(banner)
+    if result.overall_legibility == "illegible":
+        st.caption("Nothing was searched and no field values are shown for this photo.")
+        st.caption(f"SAM + Muse Spark cost ${result.cost_usd:.4f}.")
+        return
     rows = []
     for name, f in result.fields.items():
         if name in SESSION_ONLY_FIELDS and not session:
@@ -253,6 +270,8 @@ def render_label(result: LabelResult, image: bytes | None, *, session: bool) -> 
     outcome_status = {"pass": "VERIFIED", "fail": "CONFLICT"}
     for c in result.checks:
         status = outcome_status.get(c.outcome, "UNVERIFIABLE")
+        if c.source == "openfda_name_search" and maker_mismatch(result):
+            status = "UNVERIFIABLE"  # the records found are from another maker
         st.markdown(
             f"- {pill(status)} `{c.source}` {html.escape(c.detail)}", unsafe_allow_html=True
         )
@@ -268,8 +287,80 @@ def _sam_caption(result: LabelResult) -> str:
     return result.sam_note or "Full photo read."
 
 
+def _label_inputs(result: LabelResult) -> LabelInputs:
+    reading = {
+        "fields": {
+            k: {"value": f.value, "legibility": f.legibility} for k, f in result.fields.items()
+        }
+    }
+    return inputs_from_reading(reading)
+
+
+def scored_candidates(result: LabelResult) -> list[Candidate]:
+    """The name-search candidates scored against the label (same scoring as label_match)."""
+    inp = _label_inputs(result)
+    out: list[Candidate] = []
+    for rec in result.candidates:
+        row = {
+            "k_number": rec.k_number,
+            "applicant": rec.applicant,
+            "device_name": rec.device_name,
+            "product_code": rec.product_code,
+            "decision_date": rec.decision_date,
+        }
+        c = candidate_from_510k(row, public_url("510k", f"k_number:{rec.k_number}", 1))
+        if c is not None:
+            out.append(score_candidate(inp, c))
+    return out
+
+
+def maker_mismatch(result: LabelResult) -> bool:
+    """A name search found records, the label names a maker, and none of them is that maker."""
+    if result.match_basis == "k_number" or not result.candidates:
+        return False
+    if not _label_inputs(result).manufacturer:
+        return False
+    return not any(c.manufacturer_match for c in scored_candidates(result))
+
+
+def _confirm_match(result: LabelResult, key: str) -> str | None:
+    """Possible matches with reasons; a product code is returned only after a confirm click."""
+    inp = _label_inputs(result)
+    ranked = rank_candidates(inp, scored_candidates(result))
+    if not ranked:
+        ranked = scored_candidates(result)[:3]
+    st.warning(
+        f"None of the records found is from '{inp.manufacturer}', the maker on the label, so "
+        "the match is UNVERIFIABLE and nothing is selected for you. Pick a record and confirm "
+        "it, or none."
+    )
+    labels = [
+        f"{c.record_id} · {c.product_code} · {c.device_name} · {c.owner} · {c.decision_date}"
+        for c in ranked
+    ]
+    for c, lab in zip(ranked, labels, strict=True):
+        why = "; ".join(c.not_matched) or "no differences found"
+        st.markdown(
+            f"- `{lab}`  \n  matched: {'; '.join(c.matched) or 'nothing'}  \n  not matched: {why}"
+        )
+    choice = st.radio("Possible matches (openFDA)", ["— choose —", *labels], key=key)
+    if choice == "— choose —":
+        return None
+    code = ranked[labels.index(choice)].product_code
+    done_key = f"{key}_confirmed"
+    if st.button("Confirm this match", key=f"{key}_confirm"):
+        st.session_state[done_key] = choice
+    if st.session_state.get(done_key) == choice:
+        return code
+    return None
+
+
 def _pick_product(result: LabelResult, key: str) -> str | None:
+    if result.overall_legibility == "illegible":
+        return None  # nothing is shown or searched for an illegible photo
     if result.product_code and result.match_basis != "ambiguous":
+        if maker_mismatch(result):
+            return _confirm_match(result, key)
         if result.match_basis != "k_number":
             st.info(
                 f"Matched by name ({result.match_basis.replace('_', ' ')}), not by a printed "
@@ -279,6 +370,8 @@ def _pick_product(result: LabelResult, key: str) -> str | None:
     if not result.candidates:
         st.warning("No 510(k) match. Check the photo or search the catalog by name.")
         return None
+    if maker_mismatch(result):
+        return _confirm_match(result, key)
     st.warning("Several 510(k) records match this name. Pick one — nothing is auto-selected.")
     labels = [
         f"{c.k_number} · {c.product_code} · {c.device_name} · {c.applicant} · {c.decision_date}"
