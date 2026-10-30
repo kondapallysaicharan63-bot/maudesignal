@@ -3,6 +3,67 @@
 Coordinator plan for Oct 29 – Nov 4, 2026 (submit Nov 4, about 5 PM PT).
 Status: **approved by Charan on Oct 29** (design system kept; deploy steps go to Charan).
 
+> **Single source of truth.** Tracks, status, decisions, open items and next steps live
+> here. The coordinator updates this file after every milestone and re-reads it after any
+> context compaction before acting.
+
+## Live status (updated 2026-10-30 ~00:30 UTC)
+
+| Track / item | Branch | State | Evidence | Next |
+|---|---|---|---|---|
+| A core: A1b search protocol (#3), A2 weekly investigator (#1), A3 recall sweep (#2), A4 doc to-dos | `track-a-core` (head `3d89089`) | **All PASS** (advisor; A4 on 2nd round) | workflow `wf_2a36efa4-681` journal | Draft PR → `hackathon-day2` once CI runs on PRs into it; merge on green |
+| A follow-up: real Muse Spark runs | `hackathon-day2` after merge | Not started | — | Push `demo/INVESTIGATE_REQUEST` (weekly + recall) and `demo/RECORD_REQUEST` (re-record evidence-pack narrative + Wonder review with pack binding); Meta credit, cents |
+| B workspace: B1 shell, B2 chat, B3 artifacts | `track-b-ui` | **PASS** | `wf_d5c47891-d4b` | — |
+| B4: Charan's 6 preview fixes | `track-b-ui` (fast-forwarded to `f621f7c`) | **PASS** (2nd advisor round) | `wf_41350c6f-170`; screenshots `web/qa/screenshots/B4-*.png`; 47 vitest incl. TS↔Python parity (320 cases); 0 "coming soon" | Browser CORS to openFDA untested here (sandbox); Charan checks on the preview. PR `track-b-ui` → `hackathon-day2` after Track A merges |
+| C Muse connector v2 (Charan chose: one more C1 round, then C2): C1b fix (redact withheld text; test that no withheld sentence or 20+ char substring appears in any live response), C2 REST pack + public check endpoint, C3 MCP | `track-c-muse` | **Running** | `wf_8922564f-9f3` | After C2 PASS: ask Charan before each Vercel write: (1) create the API project, (2) turn Deployment Protection (Vercel Authentication) OFF on it so Muse and the web app's check calls don't hit a login page, (3) its env vars (`MAUDESIGNAL_API_KEYS` generated, never printed; `OPENFDA_API_KEY`; `MAUDESIGNAL_WEB_ORIGINS`; `MAUDESIGNAL_TRUST_FORWARDED=1`) |
+| B5: web check via our API (`VITE_MAUDESIGNAL_API_BASE`), "CAPA-need evidence" rename, npm audit (now 0 vulnerabilities), 00-voice-main excluded | `track-b-ui` at `c181b53` | **PASS** (2nd round); Vercel preview READY | `wf_ffc9ce07-8f8`; 55 vitest | Set `VITE_MAUDESIGNAL_API_BASE` after the API is deployed (Charan's OK); contract section added to `web/DATA_CONTRACT.md` |
+| Coordinator: live-app Settings fix + CI on PRs into `hackathon-day2` | merged (`e59f126`) | **PASS, live** | advisor report; settings screenshots | — |
+| Coordinator fix 2: `draft_capa` shown as `capa_need_evidence`; retired clip 00-voice-main hidden (chain still verified); cap fallback never offers it | `coordinator-fix-2` (`ed60e46`) | **PASS** (2nd round) | 1016 unit; 17 e2e; 0 drop-list words | Merge together with the voice branch (conflicts with 2aa8382 in copilot_pages.py) |
+| Voice (taken over from Muse's 2aa8382): fifth recording restored; 3 takes kept (take1=Q1, take6=Q2, take4=Q3) with Charan's consent in `demo/voice/README.md`; takes 2/3/5/7 and TTS `question.wav` removed | `coordinator-voice` (`232983b`) | 2aa8382 advisor review running | 1022 unit; all 10 audit exports verify | After the 2aa8382 verdict: merge fix-2 into this branch, resolve the conflict, advisor, merge to `hackathon-day2`; then re-export web data |
+| Vercel web project `maudesignal` (prj_x1NDkrSG6VoZ4Ax7OrQugC1DVHeu) | — | Connector has team access (Oct 29). `track-b-ui` preview READY at f621f7c; other branches fail by design (no `web/`) | build log read via connector | Browser check gets 403 from openFDA → web app will call the API's public check endpoint (C2); npm audit: 5 vulns (2 critical) → Track B |
+| Incident: `2aa8382` pushed by Meta Muse under Charan's name (unsigned, unreviewed) → bot recording `f53b64a` (run 40965201781) replaced all stored data | `hackathon-day2` | Advisor **BLOCK** on 2aa8382 (product-code correction rewrites real codes/words; any 3-letter word taken as a code). Data reverted to the fifth recording in `54a95fe` (byte-identical to `f53b64a^`); 2aa8382 code still on the branch pending V1 | advisor report | V1 fix running on `coordinator-voice` (`wf_3bf07d9b-6e1`); process: Muse should push to its own branch, never to `hackathon-day2`, and never bump `RECORD_REQUEST` |
+| Track A merge | PR [#10](https://github.com/kondapallysaicharan63-bot/maudesignal/pull/10) `track-a-core` → `hackathon-day2` | CI: Audit regression fixed (`4bce6f3`); Copilot count failure comes from the base (2aa8382) and is fixed by `coordinator-voice` | PR comments | Merge order: `coordinator-voice` first (after V1 PASS), then #10 on green; Vercel check on #10 fails by design until Track B merges |
+| B6 (low priority, after voice fix + C2): sweep card states the rules + "148 of 181 codes had fewer than 3 reports this week (132 had none)"; artifacts tab row wraps, no horizontal scroll | `track-b-ui` | Queued | MUD and MQB meet the detector rules (checked) | Charan to decide: minimum count for "more serious than usual"? |
+| Feature "Does this apply to us?" (§3c) | A6–A9, B7 | Planned, starts after voice fix + C2 | — | D0 contract first |
+| Daily monitor on `main` | `main` | Ran Oct 29 | commit `be05711` digest | Watch tomorrow's 11:17 UTC run (check-in 11:50 UTC) |
+
+### Decisions (with date)
+- Oct 29: plan approved; keep the design system (Newsreader + Geist); Charan deploys Vercel himself (connector has no access to team `kondapallysaicharan63-9868s-projects`).
+- Oct 29: research doc "PMS Market Research & Agentic Workflow Plan" first: workflows 1–3 + BEUDAMED + Elsa check (no Elsa line without an FDA source).
+- Oct 29: deployed Streamlit shows product pages only (`SHOW_ALL_PAGES_BY_DEFAULT = False`; `?tools=all` for the rest).
+- Oct 29: Track C = Meta Muse connector (REST + MCP on Vercel), replaces Telegram intake; `api/` moved from B to C.
+- Oct 29: Track C order: REST API + OpenAPI + docs page deployed and verified first; MCP second. Connector key lives only in a Vercel env var (`MAUDESIGNAL_API_KEYS`), never in chat or git.
+- Oct 29: Vercel connector may read previews/build logs; every Vercel write (deploy, env var, setting) needs Charan's OK in chat. API key: Claude creates `MAUDESIGNAL_API_KEYS` in the API project's env, never printed.
+- Oct 29: web "Check any device type" goes through our API's public, per-IP-limited endpoint (browser→openFDA is refused with 403); visible "CAPA draft" → "CAPA-need evidence" in both apps.
+- Oct 29: Charan turned off Vercel Authentication on the web project `maudesignal` (judges open it without login). The API project needs the same.
+- Oct 29 (correction): the "82 mypy errors" were a sandbox artifact: the bare `mypy` on PATH is an isolated uv tool without the project's packages (42 import-not-found plus knock-on untyped-decorator / unused-ignore). With the project environment, `python3 -m mypy src/maudesignal` (strict, per pyproject) reports **Success: no issues found** on `hackathon-day2` (104 files), `track-a-core` (107) and `track-c-muse` incl. `api/` (118); CI's mypy step is green too. Builders and advisors use `python3 -m mypy` from now on. Docs only claim that CI runs `mypy --strict`, which is accurate.
+- Oct 29: commits: author Saicharan Kondapally, committer Claude <noreply@anthropic.com> (Verified on GitHub).
+- Oct 29 (voice, for Charan to accept): the product-code check corrects only to codes that have records on file (JAK, LLZ, MYN, POK, QIH on the demo DB). The spec said "exactly one known code", but with the seed code LLN counted as a target, LLG and LLC would tie (LLN) and never become LLZ. So on the real code set QAH is corrected to QIH (the "QAH tie" test uses a made-up set; a separate test pins the real behaviour). In live mode the analyst confirms first.
+- Oct 29 (voice): `.github/workflows/copilot-record.yml`'s voice loop now finds only `question-a..e` and `question-take1/4/6`. A new recording run would re-record the takes (overwriting them) and recreate the hidden TTS transcripts (a, b, c, e); restrict the loop before the next `RECORD_REQUEST`.
+- Deadline: Nov 4, about 5 PM PT. Nothing into `main` without Charan's OK.
+
+### Open items needing Charan
+1. Add the four `claude/` docs (RUBRIC-100, PRD-v2-final, TASK-oct28, daily-status) to the repo, or paste them.
+2. Vercel: web project Root Directory `web`, Vite, deploy `track-b-ui`; send the preview URL. Later a second project for the API (Track C steps).
+3. Practitioner quotes (1–3), with written permission before naming anyone.
+4. Voiceover on the latest walkthrough; independent re-check of the hand-check.
+5. FDA source for any Elsa 4.0 line (until then none is used).
+6. Muse connector: submit only when ready; status stays "Not submitted" until then.
+7. Optional: `OPENFDA_API_KEY` in Streamlit Secrets; Upstash Redis for shared API limits/audit.
+
+### Next steps (coordinator, in order)
+1. Settings fix PASS → merge into `hackathon-day2`.
+2. PR `track-a-core` → `hackathon-day2`, CI green, merge; then trigger the real recordings.
+3. After A merges: re-run `scripts/export_web_data.py` on Track B so the workspace shows the new protocol and, once recorded, the investigator and recall runs.
+4. B4 PASS → screenshots + preview link to Charan; PR `track-b-ui` → `hackathon-day2`.
+5. C3 PASS → API deploy steps, Muse steps, `claude/video-script-v1.md` shot list, rubric delta; PR `track-c-muse` → `hackathon-day2`.
+6. Evening status at 03:00 UTC: score log below + `HACKATHON.md` manifest.
+
+### Score log
+| Date | Impact | Meta tooling | Demo | Technical | What moved it | Still missing |
+|---|---|---|---|---|---|---|
+| Oct 29 (coordinator estimate, not measured) | 7.5 | 8.5 | 8 (after voiceover) | 9.5 | AI device sweep (6 of 181), live check, 2:53 video, search protocol | Practitioner quotes; real investigator/recall recordings; deployed workspace |
+
 ## 0. Where things stand (checked Oct 29, 13:00 UTC)
 
 | Item | State | Evidence |
@@ -97,6 +158,27 @@ Not claimed: Meta approval or an official listing. Third-party guides describe a
 submission form at muse.ai/platform (HTTPS MCP endpoint, privacy policy, terms,
 support contact); no official Meta page was found, so the doc lists those fields as
 "to confirm against the live form".
+
+## 3c. Feature "Does this apply to us?" (Charan, Oct 30; starts after the voice fix and C2)
+
+From practitioner feedback, demonstrated with a **simulated** company. Track A builds the
+core and the Streamlit page, Track B the web workflow; advisor PASS for each milestone.
+
+Ground rules: every screen and PDF says "Simulated company — sample data. Problem
+evidence is real FDA data."; fictional device names only (no real company names, no real
+K-numbers on fictional devices); the simulated data lives in its own demo file, never in
+the real records; statuses are set only by a named (simulated) person, never by the tool;
+never the words "safe", "unsafe", "compliant".
+
+| Milestone | Work | Done when |
+|---|---|---|
+| D0 (coordinator) | Data contract for `company.json` (devices, codes, patterns, statuses, history) in `web/DATA_CONTRACT.md` | Contract committed before A/B start |
+| A6 Simulated company + patterns + statuses | "Demo MedTech Co. (simulated)": 12 fictional devices on real codes: 2 LLZ; 1 each QIH, MYN, POK; 4 on sweep-flagged codes (IYN, OTE, DSI, MUD all meet the detector rules, checked Oct 30); 3 on sweep "no change" codes. Device-type names from openFDA classification (recorded, with source). Real reports/recalls per code grouped into problem patterns (reusing the weekly-investigator groups; counts and quotes gate-checked; evidence links). Statuses: Not applicable (reason) / Already covered (sample reference, e.g. "test report TR-104 (sample)") / Testing in progress (owner, due date) / Needs review (owner) / Monitoring — nothing open; about half the devices with real patterns covering every status; forward-only; hash-chained audit | Tests: separation from real records, forward-only transitions, audit chain, banner on every surface, gate on counts/quotes, no forbidden words |
+| A7 Verification questions | Skill (structured output): Muse Spark suggests 2–3 plain verification questions per pattern; questions only; recorded in CI (key from secrets) | Skill folder complete; mocked tests; recording run on Charan's OK |
+| A8 (optional) Sample risk table | Labelled sample CSV; Spark suggests which rows MIGHT cover each pattern, quoting the table verbatim (gate-checked), "suggestion — your team confirms" | Quote check test; label on every surface |
+| A9 Streamlit + PDF | "Our devices" page (table with status chips → patterns, evidence, status history); the checklist as a section in the CAPA-need evidence PDF | e2e + PDF text check |
+| B7 Web "Our devices" | Sidebar workflow, device table with status chips, patterns + evidence + history, right-panel artifact; data from the exporter | Build, vitest, screenshots 1440/390 light/dark |
+| Video | Shot "this is how it looks when a company installs it" in `claude/video-script-v1.md` | Shot list committed |
 
 ## 4. Advisor loop (every milestone, both tracks)
 

@@ -90,9 +90,14 @@ def load_recorded_summaries(directory: Path = DEMO_VISION_DIR) -> list[VerifiedS
 
 
 def load_recorded_labels(directory: Path = DEMO_VISION_DIR) -> list[dict[str, Any]]:
-    """Recorded label runs (``label-*.json``) as dicts; unreadable files skipped."""
+    """Recorded label runs (``label-*.json``) as dicts; unreadable files skipped.
+
+    ``label-match-*.json`` files hold match results, not readings, and are skipped.
+    """
     out: list[dict[str, Any]] = []
     for p in sorted(directory.glob("label-*.json")):
+        if p.name.startswith("label-match-"):
+            continue  # match results (label_match.py) are a different record type
         try:
             data = json.loads(p.read_text(encoding="utf-8"))
         except ValueError:

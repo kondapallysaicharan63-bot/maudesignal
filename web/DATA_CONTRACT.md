@@ -137,3 +137,25 @@ Read from the workflow files and the newest outputs; no GitHub API call.
 - Track A: `tests/unit/test_data_contract.py` checks the inputs: every transcript
   parses, every claim's evidence id exists in the demo DB, every audit export
   re-verifies, every vision label has no `lot`/`serial` value.
+
+## Live check through the MaudeSignal API (added Oct 29, B5)
+
+The browser never calls openFDA (openFDA answered the preview's browser calls with 403).
+"Check any device type" calls the API's public endpoint instead:
+
+- Build-time env var `VITE_MAUDESIGNAL_API_BASE` on the web Vercel project: the API's
+  origin, no trailing slash (for example `https://<api-project>.vercel.app`).
+- Request: `GET {VITE_MAUDESIGNAL_API_BASE}/v1/public/check_device_type?product_code=XXX`
+  (keyless, per-IP rate limit, 6-hour cache, CORS limited to the web origins in the API's
+  `MAUDESIGNAL_WEB_ORIGINS`). Only the three-letter code is sent.
+- Response: the connector answer model (`speakable`, `facts[{text, link}]`, `advisory`,
+  `provenance`) plus `check` = `maudesignal.monitor.live_check.LiveCheck.to_dict()`
+  (`product_code`, `as_of`, `window`, `classification`, `change`, `triggers`, counts,
+  shares, `spike_ratio`, `prior_report_count`, `new_event_types`,
+  `current_event_type_counts`, `queries[[label, url]]`). The UI renders figures and links
+  from `check`; every query URL must start with `https://api.fda.gov/`.
+- Fallback (no result is ever invented): base unset, network error, 8-second timeout,
+  HTTP 429 or a malformed answer → the message with the link to the Streamlit app's live
+  check. Client limit: 10 checks per browser session, 6-hour local cache per code.
+- Withheld sentences: the API never returns a withheld sentence's text; the web app must
+  not display one either (tested in `web/src/liveCheck.test.tsx`).

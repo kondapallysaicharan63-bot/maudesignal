@@ -24,6 +24,7 @@ import streamlit as st
 
 from maudesignal.copilot.actions import ActionError, decide_capa
 from maudesignal.copilot.audit_export import load_exports
+from maudesignal.copilot.product_code import confirm_prompt, describe_check
 from maudesignal.copilot.spend import SpendLimitError
 from maudesignal.copilot.transcript import load_transcripts
 from maudesignal.dashboard.spend_ui import cap_notice, guarded_client, recorded_fallback
@@ -57,7 +58,30 @@ _PILL = {"pass": ("ok", "Verified"), "block": ("err", "Withheld")}
 
 #: Display names for tool ids whose wording the product no longer uses. The id stays
 #: in the Skill and in recorded runs; only the label on screen changes.
-_TOOL_LABELS = {"overnight_signals": "weekly_signals"}
+_TOOL_LABELS = {"overnight_signals": "weekly_signals", "draft_capa": "capa_need_evidence"}
+
+#: Recorded runs never shown on screen or used as a fallback answer. Their audit chains are
+#: still re-verified on the Audit page (see EXCLUDED_REASON). The files stay on disk.
+#: - 00-voice-main: an early voice test whose question uses wording the product no longer uses.
+#: - 00-voice-a, 00-voice-b: text-to-speech greeting clips that ask nothing.
+#: - 00-voice-c, 00-voice-e: text-to-speech questions superseded by Charan's own recordings
+#:   (take1 for c, take4 for e). 00-voice-d stays: no recording of his covers it.
+DISPLAY_EXCLUDED_LABELS = (
+    "00-voice-main",
+    "00-voice-a",
+    "00-voice-b",
+    "00-voice-c",
+    "00-voice-e",
+)
+
+
+def displayable_transcripts(directory: Path = TRANSCRIPT_DIR) -> list[dict[str, Any]]:
+    """Recorded copilot runs that may be shown or offered as a fallback answer."""
+    return [
+        t
+        for t in load_transcripts(directory)
+        if str(t.get("label", "")) not in DISPLAY_EXCLUDED_LABELS
+    ]
 
 
 def tool_label(name: str) -> str:
@@ -130,19 +154,32 @@ def _ymd(d: Any) -> str:
 
 
 def _voice_html(voice: dict[str, Any]) -> str:
-    """Render the "Heard: …" line so the analyst sees exactly what the ASR produced."""
+    """Render the "Heard: …" line so the analyst sees exactly what the ASR produced.
+
+    When a deterministic product-code check ran (see copilot/product_code.py),
+    a second line states what was heard and which code was asked about, as a statement.
+    """
     facts = []
     if voice.get("audio_seconds") is not None:
         facts.append(f"{float(voice['audio_seconds']):.1f} s")
     if voice.get("language"):
         facts.append(str(voice["language"]))
     facts.append("Meta Voice Transcribe")
-    return (
+    out = (
         '<div style="font-size:14px;margin:0 0 4px 0">'
         f"🎙 <b>Heard:</b> “{html.escape(str(voice.get('transcript_text', '')))}”"
         f' <span class="ms-muted" style="font-size:12px">({html.escape(" · ".join(facts))})</span>'
         "</div>"
     )
+    line = describe_check(
+        voice.get("heard_code"),
+        voice.get("suggested_code"),
+        voice.get("used_code"),
+        voice.get("product_code_status"),
+    )
+    if line:
+        out += f'<div style="font-size:14px;margin:0 0 4px 0">{html.escape(line)}</div>'
+    return out
 
 
 def render_transcript(t: dict[str, Any]) -> None:
@@ -238,8 +275,9 @@ def page_copilot(db: Database) -> None:
     )
     with tab_replay:
         # Typed questions first (the demo's story order); spoken clips after them.
+        # displayable_transcripts() applies DISPLAY_EXCLUDED_LABELS (the one exclusion list).
         transcripts = sorted(
-            load_transcripts(TRANSCRIPT_DIR),
+            displayable_transcripts(),
             key=lambda t: (str(t.get("label", "")).startswith("00-voice"), str(t.get("label", ""))),
         )
         if not transcripts:
@@ -254,7 +292,8 @@ def page_copilot(db: Database) -> None:
                 st.html(
                     f'<div class="ms-kicker">{len(transcripts)} recorded questions</div>'
                     '<p class="ms-muted ms-small">Real Muse Spark runs; every sentence was '
-                    "checked by the gate before it was shown.</p>"
+                    "checked by the gate before it was shown. Counts come from the stored demo "
+                    "sample, not from every report openFDA holds for the device type.</p>"
                 )
                 with st.container(key="ms_qlist"):
                     pick = st.radio(
@@ -345,7 +384,7 @@ def stream_verified(t: dict[str, Any]) -> Iterator[str]:
 def _fallback(question: str, message: str) -> None:
     """Cap reached: show the closest recorded answer; no Meta call is made."""
     cap_notice(message)
-    t = recorded_fallback(question, load_transcripts(TRANSCRIPT_DIR))
+    t = recorded_fallback(question, displayable_transcripts())
     if t is None:
         st.info("No recorded answers are available yet.")
         return
@@ -353,7 +392,11 @@ def _fallback(question: str, message: str) -> None:
 
 
 def _voice_question(db: Database, agent: Any) -> None:  # pragma: no cover - needs a live key
-    """Record a spoken question → Meta Voice Transcribe → the same gated copilot."""
+    """Record a spoken question → Meta Voice Transcribe → the same gated copilot.
+
+    A corrected product code is never applied on its own: the analyst picks
+    "Ask about <suggested>" or "Ask as heard (<heard>)" and only then is the model asked.
+    """
     import hashlib
 
     from maudesignal.copilot.transcript import result_to_dict
@@ -362,8 +405,44 @@ def _voice_question(db: Database, agent: Any) -> None:  # pragma: no cover - nee
         MetaTranscriber,
         Transcript,
         VoiceTranscribeError,
-        ask_by_voice,
+        answer_prepared,
+        prepare_voice_question,
     )
+
+    model = os.environ.get("META_VOICE_MODEL", DEFAULT_VOICE_MODEL)
+    g = spend_guard(db)
+
+    def finish(prepared: Any, use_suggestion: bool) -> None:
+        try:
+            with st.spinner("Muse Spark is working…"):
+                ans = answer_prepared(model, agent, prepared, use_suggestion=use_suggestion)
+        except SpendLimitError as exc:
+            _fallback(prepared.transcript.text, str(exc))
+            return
+        st.session_state["copilot_log"].append(
+            result_to_dict(ans.result, voice=ans.transcript.to_voice_block())
+        )
+
+    pending = st.session_state.get("copilot_voice_pending")
+    if pending is not None:
+        prompt = confirm_prompt(pending.check)
+        if prompt is None:
+            st.session_state.pop("copilot_voice_pending", None)
+        else:
+            question, ask_suggested, ask_heard = prompt
+            st.html(_voice_html(pending.transcript.to_voice_block()))
+            st.markdown(f"**{question}**")
+            c1, c2, _ = st.columns([1, 1, 3])
+            choice: bool | None = None
+            if c1.button(ask_suggested, key="voice_ask_suggested"):
+                choice = True
+            if c2.button(ask_heard, key="voice_ask_heard"):
+                choice = False
+            if choice is not None:
+                st.session_state.pop("copilot_voice_pending", None)
+                finish(pending, choice)
+                st.rerun()
+            return
 
     clip = st.audio_input(
         "🎙 Or ask by voice (transcribed by Meta Voice Transcribe, then answered as text)",
@@ -377,8 +456,6 @@ def _voice_question(db: Database, agent: Any) -> None:  # pragma: no cover - nee
     if st.session_state.get("copilot_voice_done") == digest:
         return  # Streamlit reruns keep the widget value; ask each recording once.
     st.session_state["copilot_voice_done"] = digest
-    g = spend_guard(db)
-    model = os.environ.get("META_VOICE_MODEL", DEFAULT_VOICE_MODEL)
     heard: list[Transcript] = []
 
     def count_voice(t: Transcript) -> None:
@@ -393,9 +470,9 @@ def _voice_question(db: Database, agent: Any) -> None:  # pragma: no cover - nee
                 base_url=os.environ.get("META_MODEL_API_BASE_URL", "https://api.meta.ai/v1"),
                 model=model,
             ) as transcriber,
-            st.spinner("Transcribing, then Muse Spark is working…"),
+            st.spinner("Transcribing…"),
         ):
-            ans = ask_by_voice(
+            prepared = prepare_voice_question(
                 transcriber, agent, data, filename="question.wav", on_transcribed=count_voice
             )
     except VoiceTranscribeError as exc:
@@ -404,9 +481,10 @@ def _voice_question(db: Database, agent: Any) -> None:  # pragma: no cover - nee
     except SpendLimitError as exc:
         _fallback(heard[0].text if heard else "voice question", str(exc))
         return
-    st.session_state["copilot_log"].append(
-        result_to_dict(ans.result, voice=ans.transcript.to_voice_block())
-    )
+    if prepared.check.needs_confirmation:
+        st.session_state["copilot_voice_pending"] = prepared
+        st.rerun()
+    finish(prepared, False)
 
 
 # ---------------------------------------------------------------------------
@@ -503,6 +581,8 @@ def _recorded_audit_trails() -> None:
                 "hash chain": "intact" if ok else f"broken at entry {bad}",
             }
         )
+        if run in DISPLAY_EXCLUDED_LABELS:
+            continue  # chain verified above; its entries are not listed (see the caption)
         rows += [
             {
                 "run": run,
@@ -516,10 +596,18 @@ def _recorded_audit_trails() -> None:
             for e in entries
         ]
     broken = [r for r in runs if r["hash chain"] != "intact"]
+    total = sum(len(d.get("entries", [])) for d in exports)
     if broken:
         st.error(f"Hash chain broken in {len(broken)} recorded run(s).")
     else:
-        st.success(f"Hash chain intact in all {len(runs)} recorded runs ({len(rows)} entries).")
+        st.success(f"Hash chain intact in all {len(runs)} recorded runs ({total} entries).")
+    hidden = [r["recorded run"] for r in runs if r["recorded run"] in DISPLAY_EXCLUDED_LABELS]
+    if hidden:
+        st.caption(
+            f"Not listed in the Copilot answers: {', '.join(hidden)}. They are an early voice "
+            "test, two text-to-speech greetings, and two text-to-speech questions replaced by "
+            "recordings of a person's own voice. Their chains are included in the check above."
+        )
     st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
     with st.expander("Per run"):
         st.dataframe(pd.DataFrame(runs), hide_index=True, width="stretch")

@@ -1,14 +1,14 @@
 name: CI
 
 # Runs on every push to main and to hackathon-day2 (the branch the live demo is
-# deployed from), on pull requests into main, and on demand. The test types it
+# deployed from), on pull requests into main or hackathon-day2 (track PRs), and on demand. The test types it
 # covers are mapped in docs/hackathon/TESTING.md.
 
 on:
   push:
     branches: [main, hackathon-day2]
   pull_request:
-    branches: [main]
+    branches: [main, hackathon-day2]
   workflow_dispatch:
 
 concurrency:

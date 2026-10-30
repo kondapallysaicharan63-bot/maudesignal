@@ -960,3 +960,10 @@ def test_vision_page_renders_keyless(tmp_path: Path, monkeypatch: pytest.MonkeyP
     assert len(at.dataframe) == 1  # recorded label run: fields table (no lot / serial)
     assert any("K990001" in m.value for m in at.markdown)
     assert any("No stored MAUDE reports for QIH" in c.value for c in at.caption)
+
+
+def test_load_recorded_labels_skips_label_match_files(tmp_path: Path) -> None:
+    (tmp_path / "label-a.json").write_text(json.dumps({"fields": {}}))
+    (tmp_path / "label-match-a.json").write_text(json.dumps({"status": "needs_person_to_confirm"}))
+    got = pipeline.load_recorded_labels(tmp_path)
+    assert [g["_file"] for g in got] == ["label-a.json"]

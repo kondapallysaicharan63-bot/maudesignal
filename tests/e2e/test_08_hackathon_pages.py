@@ -96,7 +96,7 @@ class TestHackathonNav:
         ctx.close()
 
     def test_full_website_by_default(self, browser: Any) -> None:
-        """Without a link choice every page is reachable: the sidebar lists More tools."""
+        """Without a link choice the sidebar follows SHOW_ALL_PAGES_BY_DEFAULT (product only)."""
         from maudesignal.dashboard.app import SHOW_ALL_PAGES_BY_DEFAULT
 
         ctx = browser.new_context()
@@ -243,7 +243,13 @@ class TestCopilot:
 
     def test_recorded_runs_match_transcripts(self, ms_page: Page) -> None:
         main = _open(ms_page, "Copilot")
-        transcripts = load_transcripts(TRANSCRIPT_DIR)
+        from maudesignal.dashboard.copilot_pages import DISPLAY_EXCLUDED_LABELS
+
+        transcripts = [
+            t
+            for t in load_transcripts(TRANSCRIPT_DIR)
+            if str(t.get("label", "")) not in DISPLAY_EXCLUDED_LABELS
+        ]
         if not transcripts:
             expect(main).to_contain_text("No recorded runs yet.")
             return
