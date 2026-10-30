@@ -33,7 +33,6 @@ def _body(record: dict[str, Any]) -> str:
         f"Comment: {record['comment']}",
         f"What would stop your team using it?: {record['blocker']}",
         f"One thing that would make it useful?: {record['one_thing']}",
-        f"Name: {record.get('name') or '-'}",
         f"Role: {record.get('role') or '-'}",
         f"Consent: {record['consent']}",
         f"Ref code: {record.get('ref') or '-'}",

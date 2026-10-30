@@ -651,7 +651,7 @@ def test_explicit_ref_is_unchanged(data: ConnectorData, monkeypatch: pytest.Monk
 
 
 class DeletingStore(MemoryStore):
-    """MemoryStore plus the delete a real store needs for the TEST cleanup."""
+    """MemoryStore that also records which pathnames were deleted."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -659,8 +659,21 @@ class DeletingStore(MemoryStore):
 
     def delete(self, ref: BlobRef) -> None:
         self.deleted.append(ref.pathname)
-        with self._lock:
-            del self._items[ref.pathname]
+        super().delete(ref)
+
+
+class FlakyDeleteStore(DeletingStore):
+    """Fails the first delete, then behaves normally."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.failed_once = False
+
+    def delete(self, ref: BlobRef) -> None:
+        if not self.failed_once:
+            self.failed_once = True
+            raise StoreError("blob store answered 500")
+        super().delete(ref)
 
 
 def test_ref_pattern_is_url_safe_unreserved_up_to_64() -> None:
@@ -717,6 +730,7 @@ def test_name_is_accepted_but_never_stored_exported_or_emailed(
     from maudesignal.connector.notify import _body
 
     assert "Quillfeather" not in _body(nt.sent[0])
+    assert "Name:" not in _body(nt.sent[0])
 
 
 def test_old_stored_records_with_name_do_not_leak_through_admin(
@@ -789,7 +803,7 @@ def test_summary_codes_grouped_sorted_and_labelled(
 def test_label_test_prefix_is_case_insensitive() -> None:
     from maudesignal.connector.feedback import code_label
 
-    assert code_label("TEST1") == "test" and code_label("Test-x") == "test"
+    assert code_label("TEST1") == "test" and code_label("Test-2") == "test"
     assert code_label("email-batch-1") == "email batch 1"
     assert code_label("invalid-code") == "invalid code"
     assert code_label("alice") == ""
@@ -817,18 +831,18 @@ def test_delete_test_removes_only_test_entries(
 ) -> None:
     store = DeletingStore()
     c, _, _ = make(data, monkeypatch, store=store)
-    for code in ("TEST1", "test-two", "Alice1", "attest", "invalid-code"):
+    for code in ("TEST1", "test-2", "Alice1", "attest", "tester7", "invalid-code"):
         c.post("/v1/visit", json={"ref": code, "page": "signals"}, headers=H)
         c.post("/v1/feedback", json=GOOD | {"ref": code}, headers=H)
     c.post("/v1/visit", json={"page": "signals"}, headers=H)
     r = c.post("/v1/admin/delete-test", headers=A)
     assert r.status_code == 200 and r.headers["cache-control"] == "no-store"
-    assert r.json() == {"deleted": {"visits": 2, "feedback": 2}}
+    assert r.json() == {"deleted": {"visits": 2, "feedback": 2}, "failed": 0}
     assert len(store.deleted) == 4
     left = {x["ref"] for x in all_stored(store, "visits") + all_stored(store, "feedback")}
-    assert left == {"Alice1", "attest", "invalid-code", "email-batch-1"}
+    assert left == {"Alice1", "attest", "tester7", "invalid-code", "email-batch-1"}
     again = c.post("/v1/admin/delete-test", headers=A)
-    assert again.json() == {"deleted": {"visits": 0, "feedback": 0}}
+    assert again.json() == {"deleted": {"visits": 0, "feedback": 0}, "failed": 0}
 
 
 def test_delete_test_needs_admin_key(data: ConnectorData, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -844,11 +858,75 @@ def test_delete_test_needs_admin_key(data: ConnectorData, monkeypatch: pytest.Mo
     assert c.get("/v1/admin/delete-test", headers=A).status_code == 405
 
 
-def test_delete_test_without_store_support_is_501_and_hidden(
+def test_delete_test_real_memory_store_deletes_and_route_is_hidden(
     data: ConnectorData, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     c, store, _ = make(data, monkeypatch)
     c.post("/v1/visit", json={"ref": "TEST1", "page": "signals"}, headers=H)
-    assert c.post("/v1/admin/delete-test", headers=A).status_code == 501
-    assert len(all_stored(store, "visits")) == 1
+    c.post("/v1/visit", json={"ref": "Bob", "page": "signals"}, headers=H)
+    r = c.post("/v1/admin/delete-test", headers=A)
+    assert r.status_code == 200 and r.json()["deleted"] == {"visits": 1, "feedback": 0}
+    assert [v["ref"] for v in all_stored(store, "visits")] == ["Bob"]
     assert "delete-test" not in json.dumps(c.get("/openapi.json").json())
+
+
+def test_tester7_and_similar_real_codes_are_not_test_codes(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from maudesignal.connector.feedback import code_label, is_test_code
+
+    for test in ("TEST", "test1", "TeSt-2", "TEST_9", "Test.3"):
+        assert is_test_code(test) and code_label(test) == "test"
+    for real in ("tester7", "Testa.M", "testing", "mytest", "test-a"):
+        assert not is_test_code(real), real
+    store = DeletingStore()
+    c, _, _ = make(data, monkeypatch, store=store)
+    for code in ("tester7", "Testa.M", "TEST1"):
+        c.post("/v1/visit", json={"ref": code, "page": "signals"}, headers=H)
+    r = c.post("/v1/admin/delete-test", headers=A)
+    assert r.json()["deleted"] == {"visits": 1, "feedback": 0}
+    assert {v["ref"] for v in all_stored(store, "visits")} == {"tester7", "Testa.M"}
+
+
+def test_delete_test_carries_on_after_a_store_error_and_counts_failures(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store = FlakyDeleteStore()
+    c, _, _ = make(data, monkeypatch, store=store)
+    for code in ("TEST1", "TEST2", "TEST3", "Alice1"):
+        c.post("/v1/visit", json={"ref": code, "page": "signals"}, headers=H)
+    r = c.post("/v1/admin/delete-test", headers=A)
+    assert r.status_code == 200
+    assert r.json() == {"deleted": {"visits": 2, "feedback": 0}, "failed": 1}
+    assert len(all_stored(store, "visits")) == 2
+
+
+def test_vercel_blob_delete_posts_urls_with_auth_and_raises_on_error() -> None:
+    seen: list[httpx.Request] = []
+    status = {"code": 200}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(status["code"], json={})
+
+    blob = VercelBlobStore(
+        "tok",
+        client=httpx.Client(transport=httpx.MockTransport(handler)),
+        base_url="https://b.test",
+    )
+    blob.delete(BlobRef("visits/d/x.json", "https://b.test/visits/d/x.json"))
+    req = seen[0]
+    assert req.method == "POST" and str(req.url) == "https://b.test/delete"
+    assert json.loads(req.content) == {"urls": ["https://b.test/visits/d/x.json"]}
+    assert req.headers["authorization"] == "Bearer tok"
+    status["code"] = 500
+    with pytest.raises(StoreError) as err:
+        blob.delete(BlobRef("p", "https://b.test/p"))
+    assert "tok" not in str(err.value)
+
+    def boom(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("down")
+
+    down = VercelBlobStore("tok", client=httpx.Client(transport=httpx.MockTransport(boom)))
+    with pytest.raises(StoreError):
+        down.delete(BlobRef("p", "https://x/p"))

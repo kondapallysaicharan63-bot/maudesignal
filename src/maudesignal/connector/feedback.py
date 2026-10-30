@@ -59,7 +59,7 @@ VISIT_PATH = "/v1/visit"
 CORS_PATHS = (FEEDBACK_PATH, VISIT_PATH)
 REF_PATTERN = r"^[A-Za-z0-9._~-]{1,64}$"
 INVALID_REF = "invalid-code"
-TEST_PREFIX = "test"
+TEST_CODE = re.compile(r"^test[0-9._~-]*$", re.IGNORECASE)  # TEST, TEST1, test-two; not tester7
 DEFAULT_REF_ENV = "MAUDESIGNAL_DEFAULT_REF"
 DEFAULT_REF = "email-batch-1"
 DELETE_TEST_PATH = "/v1/admin/delete-test"
@@ -212,13 +212,18 @@ def summarize(feedback: list[dict[str, Any]], visits: list[dict[str, Any]]) -> d
     }
 
 
+def is_test_code(code: str) -> bool:
+    """True for ``TEST`` plus only digits or ``. _ ~ -`` (any case); ``tester7`` is not."""
+    return TEST_CODE.fullmatch(code) is not None
+
+
 def code_label(code: str) -> str:
     """Plain-words label for special codes; empty for ordinary personal codes."""
     if code == DEFAULT_REF:
         return "email batch 1"
     if code == INVALID_REF:
         return "invalid code"
-    if code.casefold().startswith(TEST_PREFIX):
+    if is_test_code(code):
         return "test"
     return ""
 
@@ -317,7 +322,7 @@ function table(el,cols,rows){
 let DATA=null;
 const CONSENT={quote_name_role:"Quote by name and role (confirm name with them)",
   quote_anonymous:"Quote anonymously",no_quote:"Do not quote"};
-function isTest(c){return c.code.toLowerCase().startsWith("test");}
+function isTest(c){return /^test[0-9._~-]*$/i.test(c.code);}
 function render(){
   const box=$("codes");box.replaceChildren();
   if(!DATA)return;
@@ -651,22 +656,23 @@ def mount_feedback(
         """Delete visits and feedback whose code starts with TEST (any case); nothing else."""
         if (refusal := admin_gate(request)) is not None:
             return refusal
-        remove = getattr(store, "delete", None)
-        if remove is None:
-            return _err(501, "not_supported", "This record store cannot delete.", no_store)
-        counts = {"visits": 0, "feedback": 0}
-        try:
-            for kind in KINDS:
-                for blob in store.list_prefix(f"{kind}/"):
-                    try:
-                        data = json.loads(store.get(blob))
-                    except ValueError:
-                        continue
+        counts = {"visits": 0, "feedback": 0, "failed": 0}
+        for kind in KINDS:
+            try:
+                blobs = store.list_prefix(f"{kind}/")
+            except StoreError:
+                return _err(503, "store_unavailable", "Record store not reachable.", no_store)
+            for blob in blobs:
+                try:
+                    data = json.loads(store.get(blob))
                     code = data.get("ref") if isinstance(data, dict) else None
-                    if isinstance(code, str) and code.casefold().startswith(TEST_PREFIX):
-                        remove(blob)
+                    if isinstance(code, str) and is_test_code(code):
+                        store.delete(blob)
                         counts[kind] += 1
-        except StoreError:
-            return _err(503, "store_unavailable", "The record store is not reachable.", no_store)
+                except ValueError:
+                    continue
+                except StoreError:
+                    counts["failed"] += 1
         logger.info("admin_delete_test", **counts)
-        return JSONResponse({"deleted": counts}, headers=no_store)
+        deleted = {"visits": counts["visits"], "feedback": counts["feedback"]}
+        return JSONResponse({"deleted": deleted, "failed": counts["failed"]}, headers=no_store)

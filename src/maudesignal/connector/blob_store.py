@@ -58,6 +58,9 @@ class RecordStore(Protocol):
     def get(self, ref: BlobRef) -> bytes:
         """The bytes of one stored object."""
 
+    def delete(self, ref: BlobRef) -> None:
+        """Remove one stored object."""
+
 
 class MemoryStore:
     """In-process store for local runs and tests."""
@@ -87,6 +90,11 @@ class MemoryStore:
                 return self._items[ref.pathname]
             except KeyError:
                 raise StoreError("object not found") from None
+
+    def delete(self, ref: BlobRef) -> None:
+        """Remove one object (absent is not an error)."""
+        with self._lock:
+            self._items.pop(ref.pathname, None)
 
 
 class VercelBlobStore:
@@ -168,6 +176,19 @@ class VercelBlobStore:
             logger.error("blob_get_failed", status=r.status_code)
             raise StoreError(f"blob store answered {r.status_code}")
         return r.content
+
+    def delete(self, ref: BlobRef) -> None:
+        """Delete one object (``POST {base}/delete`` with its url)."""
+        try:
+            r = self._client.post(
+                f"{self._base}/delete", json={"urls": [ref.url]}, headers=self._auth()
+            )
+        except httpx.HTTPError as exc:
+            logger.error("blob_delete_failed", error_type=type(exc).__name__)
+            raise StoreError("blob store unreachable") from None
+        if r.status_code >= 300:
+            logger.error("blob_delete_failed", status=r.status_code)
+            raise StoreError(f"blob store answered {r.status_code}")
 
 
 def store_from_env(env: dict[str, str] | None = None) -> RecordStore:

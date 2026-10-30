@@ -438,12 +438,12 @@ record. The tool is an advisory triage aid, not medical advice; do not type pati
 | `GET /admin` | page holds no data | asks for the admin key (password field, kept in `sessionStorage` only), loads the summary, shows a "By code" section (one block per code: code, label, visits, pages opened, first and last seen, and a feedback table with time, page, rating, comment, blocker, one thing, role and quote consent in plain words), a "Hide TEST codes" checkbox, a "Delete TEST entries" button (asks to confirm), and two CSV downloads. States "No names, emails or IP addresses are stored." |
 | `GET /v1/admin/summary` | `X-Admin-Key` | visits and feedback per ref code and per page, average rating per ref, and `codes`: one entry per code, newest activity first, with `code`, `label`, `visits`, `pages_opened`, `first_seen_utc`, `last_seen_utc` and its `feedback` rows (no names). |
 | `GET /v1/admin/export?kind=feedback\|visits&format=csv\|json` | `X-Admin-Key` | every record (no name column). CSV cells starting with `=`, `+`, `-` or `@` are prefixed with `'`. |
-| `POST /v1/admin/delete-test` | `X-Admin-Key` | deletes every stored visit and feedback entry whose code starts with `TEST` (any case) and returns `{"deleted": {"visits": n, "feedback": n}}`. Nothing else is deleted. Answers 501 if the record store has no delete. |
+| `POST /v1/admin/delete-test` | `X-Admin-Key` | deletes every stored visit and feedback entry whose code is `TEST` followed only by numbers or `. _ ~ -` (any case, for example `TEST1`, `test-2`) and returns `{"deleted": {"visits": n, "feedback": n}, "failed": n}`. Nothing else is deleted; `tester7` or `Testa.M` are ordinary codes. An object that fails to delete is counted in `failed` and the rest carry on. Both record stores (memory and Vercel Blob) can delete; Blob uses `POST /delete` with the object url. |
 
 **Code rule.** Personal links look like `https://<web>/?r=CODE`. A code is 1 to 64 characters from
 `A-Z a-z 0-9 . _ ~ -` (`^[A-Za-z0-9._~-]{1,64}$`). A code that does not match is not lost: the visit or
 feedback is stored with the code `invalid-code` (the bad value itself is never stored). Codes
-starting with `TEST` are labelled "test" in `/admin`; `email-batch-1` is labelled "email batch 1".
+that are `TEST` plus only numbers or `. _ ~ -` (any case; not `tester7`) are labelled "test" in `/admin`; `email-batch-1` is labelled "email batch 1".
 
 **No names.** No names, emails or IP addresses are stored. Charan keeps the names-to-codes list
 privately; the connector keeps no people list. Free text is still checked for patient details,
