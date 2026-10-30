@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from collections.abc import Callable
 from datetime import date
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -435,9 +436,13 @@ def test_trace_has_steps_in_order_and_null_when_not_measured() -> None:
     assert steps[-1]["step"] == "Done"
     searches = [s for s in steps if s["model"] == "openFDA"]
     assert searches and all(s["step"].startswith("openFDA search") for s in searches)
+    singles = [s for s in searches if "MAUDE counts" not in s["step"]]
     assert all(
-        s["count"] is not None and s["url"].startswith("https://api.fda.gov/") for s in searches
+        s["count"] is not None and s["url"].startswith("https://api.fda.gov/") for s in singles
     )
+    # the MAUDE step covers several queries: no single count / url is claimed for it
+    maude = next(s for s in searches if "MAUDE counts" in s["step"])
+    assert maude["count"] is None and maude["url"] is None
     assert {s["model"] for s in steps} <= {"SAM 3.1", "Muse Spark", "openFDA", "gate"}
 
 
@@ -637,7 +642,8 @@ def test_live_check_trace_lists_each_query_with_url_and_count() -> None:
     assert "covers 5 openFDA queries" in step["note"]
     assert [q["query"] for q in step["queries"]][:2] == ["per day", "this week"]
     assert all(q["url"].startswith("https://api.fda.gov/") for q in step["queries"])
-    assert [q["count"] for q in step["queries"]] == [None, 5, 8, 120, 120]
+    assert [q["count"] for q in step["queries"]] == [None, None, None, 120, None]
+    assert [q.get("groups_sum") for q in step["queries"]] == [None, 5, 8, None, 120]
 
 
 def test_label_reading_to_dict_drops_lot_and_serial_from_udi() -> None:
@@ -654,3 +660,285 @@ def test_label_reading_to_dict_drops_lot_and_serial_from_udi() -> None:
     assert "LOT77" not in stored and "SER99" not in stored
     assert "(01)00812345678901(17)270101" in stored
     assert "LOT77" in json.dumps(r.to_dict(include_session_fields=True))
+
+
+# --- A10b: label data fixes ----------------------------------------------------------------------
+
+ILLEGIBLE_READING: dict[str, Any] = {
+    "fields": {
+        "device_name": {
+            "value": "AORTIC VALVULAR AND CARDIAC IMPLANT",
+            "legibility": "partly_legible",
+        },
+        "manufacturer": {"value": "Invented Maker Inc", "legibility": "partly_legible"},
+        "model_number": {"value": "X-1234", "legibility": "partly_legible"},
+        "k_number": {"value": "K123456", "legibility": "partly_legible"},
+        "udi": {"value": "", "legibility": "not_present"},
+        "gtin": {"value": "", "legibility": "not_present"},
+    },
+    "overall_legibility": "illegible",
+}
+
+
+def test_illegible_reading_is_never_searched() -> None:
+    s = FakeSearcher(default_responder)
+    res = lm.match_label(ILLEGIBLE_READING, searcher=s, check_fn=fake_check)
+    assert s.calls == []
+    assert res["status"] == "no_match_found"
+    assert res["note"] == "Label not legible enough to read; nothing was searched."
+    assert res["matches"] == [] and res["queries"] == [] and res["device_type_views"] == {}
+    assert all(v is None for v in res["search_inputs"].values())
+    blob = json.dumps(res)
+    for guess in ("AORTIC", "Invented Maker", "X-1234", "K123456"):
+        assert guess not in blob
+    assert res["label"]["values_withheld"] is True
+    assert res["label"]["legibility_banner"] == "Illegible label: fields not shown"
+    assert all(f["value"] == "" for f in res["label"]["fields"].values())
+
+
+def test_partly_legible_gets_a_banner_and_clear_does_not() -> None:
+    assert lm.legibility_banner("clear") is None
+    assert lm.legibility_banner("illegible") == "Illegible label: fields not shown"
+    partly = lm.legibility_banner("partly_legible")
+    assert partly == "Partly legible label: check every field against the photo"
+    reading = {**HOMEDICS_LABEL, "overall_legibility": "partly_legible"}
+    res = lm.match_label(reading, searcher=FakeSearcher(default_responder))
+    assert res["label"]["legibility_banner"] == partly and res["label"]["values_withheld"] is False
+    res = lm.match_label(HOMEDICS_LABEL, searcher=FakeSearcher(default_responder))
+    assert res["label"]["legibility_banner"] is None
+
+
+def _query_log(res: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    return {q["id"]: q for q in res["queries"]}
+
+
+def test_maude_queries_logged_are_the_ones_the_total_is_built_from() -> None:
+    res = lm.match_label(
+        HOMEDICS_LABEL, searcher=FakeSearcher(default_responder), check_fn=fake_check
+    )
+    log = _query_log(res)
+    assert "maude-FLL" not in log  # the old per-day URL paired with the all-dates total
+    before, week = log["maude-before-FLL"], log["maude-week-FLL"]
+    assert before["count"] == 120 and before["url"].endswith("search=dFLL&limit=1")
+    assert week["count"] == 5 and "limit=1" in week["url"] and "count=" not in week["url"]
+    assert "2026-10-20" in week["label"] and "2026-10-20" in before["label"]
+    assert before["count"] + week["count"] == 125  # the all-dates total shown in the view
+    per_day = "search=aFLL&count=date_received"
+    assert not any(per_day in (q["url"] or "") for q in res["queries"])
+
+
+def test_maude_queries_without_recent_reports_have_their_own_counts() -> None:
+    base = "https://api.fda.gov/device/event.json?search="
+
+    def quiet(code: str) -> LiveCheck:
+        return LiveCheck(
+            product_code=code,
+            as_of=None,
+            window=None,
+            classification="stable",
+            triggers=(),
+            current_count=0,
+            current_severe_count=0,
+            current_severe_share=None,
+            baseline_count=0,
+            baseline_weekly_mean=0.0,
+            baseline_severe_count=0,
+            baseline_severe_share=None,
+            severe_share_delta_pp=None,
+            spike_ratio=None,
+            prior_report_count=7,
+            new_event_types=(),
+            current_event_type_counts=(),
+            queries=(
+                ("Reports, all dates", base + "all&limit=1"),
+                ("Reports, last two years", base + "2y&limit=1"),
+            ),
+        )
+
+    res = lm.match_label(HOMEDICS_LABEL, searcher=FakeSearcher(default_responder), check_fn=quiet)
+    log = _query_log(res)
+    assert log["maude-all-FLL"]["count"] == 7 and log["maude-all-FLL"]["url"].endswith(
+        "all&limit=1"
+    )
+    assert log["maude-2y-FLL"]["count"] == 0 and log["maude-2y-FLL"]["url"].endswith("2y&limit=1")
+    step = next(s for s in res["trace"] if "MAUDE counts" in s["step"])
+    assert [q["count"] for q in step["queries"]] == [7, 0]
+
+
+def test_done_step_timing_is_measured_and_says_it_is_a_sum() -> None:
+    res = lm.match_label(HOMEDICS_LABEL, searcher=FakeSearcher(default_responder))
+    done = res["trace"][-1]
+    assert done["step"] == "Done" and done["timing"] == "measured"
+    assert "sum of the measured steps" in done["note"]
+    parts = [s["elapsed_ms"] for s in res["trace"][:-1] if s["timing"] == "measured"]
+    assert done["elapsed_ms"] == round(sum(parts), 1)
+
+
+def test_done_step_invents_no_number_when_nothing_was_measured() -> None:
+    steps = [
+        {
+            "step": "SAM 3.1 crop",
+            "model": "SAM 3.1",
+            "started_utc": None,
+            "elapsed_ms": None,
+            "timing": "not recorded",
+        }
+    ]
+    reading = {"fields": {}, "overall_legibility": "clear"}
+    res = lm.match_label(reading, searcher=FakeSearcher(default_responder), read_steps=steps)
+    done = res["trace"][-1]
+    # the Gate check step is measured even with nothing to check, so the sum exists
+    assert done["timing"] == "measured"
+    assert done["elapsed_ms"] == round(
+        sum(s["elapsed_ms"] for s in res["trace"][:-1] if s["timing"] == "measured"), 1
+    )
+
+
+def test_this_week_change_text_carries_the_window_dates() -> None:
+    res = lm.match_label(
+        HOMEDICS_LABEL, searcher=FakeSearcher(default_responder), check_fn=fake_check
+    )
+    fact = next(
+        f for f in res["device_type_views"]["FLL"]["facts"] if f["topic"] == "this_week_change"
+    )
+    assert fact["text"].startswith("In the 7 days ending 2026-10-20: ")
+
+
+# --- reuse of stored readings --------------------------------------------------------------
+
+
+def _stored_match(started: str = "2026-10-30T01:34:02Z") -> dict[str, Any]:
+    read = [
+        {
+            "step": "SAM 3.1 crop",
+            "model": "SAM 3.1",
+            "started_utc": started,
+            "elapsed_ms": 732.9,
+            "timing": "measured",
+            "note": "prompts tried: label; crop used",
+            "cost_usd": 0.0025,
+        },
+        {
+            "step": "Muse Spark read",
+            "model": "Muse Spark",
+            "started_utc": started,
+            "elapsed_ms": 22405.2,
+            "timing": "measured",
+            "input_tokens": 1258,
+            "output_tokens": 2825,
+            "cost_usd": 0.013579,
+        },
+    ]
+    first = lm.match_label(
+        HOMEDICS_LABEL,
+        searcher=FakeSearcher(default_responder),
+        read_steps=read,
+        model_info={
+            "model": "muse-spark-1.3",
+            "skill_version": "1.0.0",
+            "input_tokens": 1258,
+            "output_tokens": 2825,
+            "cost_usd": {"spark": 0.013579, "sam": 0.0025, "total": 0.016079},
+        },
+    )
+    first["generated_utc"] = "2026-10-30T01:34:26Z"
+    return first
+
+
+def test_reuse_keeps_recorded_timings_and_costs_and_marks_the_date() -> None:
+    prev = _stored_match()
+    again = lm.match_label(
+        lm.reading_from_match(prev),
+        searcher=FakeSearcher(default_responder),
+        check_fn=fake_check,
+        read_steps=lm.recorded_read_steps(prev),
+        model_info=lm.recorded_model_info(prev),
+    )
+    sam, spark = again["trace"][0], again["trace"][1]
+    assert sam["elapsed_ms"] == 732.9 and spark["elapsed_ms"] == 22405.2
+    assert sam["timing"] == "recorded 2026-10-30" and spark["timing"] == "recorded 2026-10-30"
+    assert spark["cost_usd"] == 0.013579 and spark["input_tokens"] == 1258
+    assert again["reading"]["cost_usd"]["total"] == 0.016079
+    assert again["reading"]["recorded"] == "recorded 2026-10-30"
+    done = again["trace"][-1]
+    assert done["timing"] == "measured"
+    assert "recorded SAM / Spark timings are not included" in done["note"]
+    measured = [s["elapsed_ms"] for s in again["trace"][:-1] if s["timing"] == "measured"]
+    assert done["elapsed_ms"] == round(sum(measured), 1)
+    assert again["search_inputs"] == prev["search_inputs"]
+    assert "LOT-SECRET-1" not in json.dumps(again)
+    # reusing a reuse keeps the original date
+    assert lm.recorded_read_steps(again)[0]["timing"] == "recorded 2026-10-30"
+    assert lm.recorded_model_info(again)["recorded"] == "recorded 2026-10-30"
+
+
+def test_reuse_with_missing_steps_does_not_invent_timings() -> None:
+    steps = lm.recorded_read_steps({"trace": []})
+    assert [s["elapsed_ms"] for s in steps] == [None, None]
+    assert all(s["timing"] == "not recorded" for s in steps)
+
+
+class _CtxSearcher(FakeSearcher):
+    def __init__(self) -> None:
+        super().__init__(default_responder)
+
+    def __enter__(self) -> _CtxSearcher:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        return None
+
+
+def test_record_script_reuse_mode_needs_no_key_and_no_meta_call(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import importlib.util
+
+    script = Path(__file__).resolve().parents[2] / "scripts" / "record_label_matches.py"
+    spec = importlib.util.spec_from_file_location("record_label_matches", script)
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    labels = tmp_path / "labels"
+    labels.mkdir()
+    (labels / "label-homedics.jpg").write_bytes(b"not read in reuse mode")
+    (tmp_path / "label-match-homedics.json").write_text(json.dumps(_stored_match()))
+    out = tmp_path / "out"
+    monkeypatch.setenv("META_MODEL_API_KEY", "must-not-be-used")  # reuse mode ignores it
+
+    def boom(*a: Any, **k: Any) -> Any:
+        raise AssertionError("Meta must not be called in reuse mode")
+
+    monkeypatch.setattr(mod, "OpenFdaSearcher", lambda key: _CtxSearcher())
+    monkeypatch.setattr(mod, "default_check_fn", lambda key: fake_check)
+    monkeypatch.setattr(mod, "read_label_timed", boom)
+    monkeypatch.setattr(mod, "SamClient", boom)
+    argv = [
+        "x",
+        "--reuse-readings",
+        "--labels",
+        str(labels),
+        "--readings",
+        str(tmp_path),
+        "--out",
+        str(out),
+    ]
+    monkeypatch.setattr("sys.argv", argv)
+    assert mod.main() == 0
+    written = json.loads((out / "label-match-homedics.json").read_text())
+    assert written["trace"][0]["timing"] == "recorded 2026-10-30"
+    assert written["reading"]["recorded"] == "recorded 2026-10-30"
+    assert written["matches"] and written["status"] == "needs_person_to_confirm"
+    # a photo with no stored match is skipped, not invented
+    (labels / "label-other.jpg").write_bytes(b"x")
+    assert mod.main() == 0
+    assert not (out / "label-match-other.json").exists()
+
+
+def test_workflow_uses_reuse_mode_when_request_starts_with_reuse() -> None:
+    root = Path(__file__).resolve().parents[2]
+    wf = (root / ".github" / "workflows" / "vision-label-match.yml").read_text()
+    assert "--reuse-readings" in wf and "grep -q '^reuse'" in wf
+    reuse_step = wf.split("--reuse-readings")[0].rsplit("- name:", 1)[1]
+    assert "META_MODEL_API_KEY" not in reuse_step

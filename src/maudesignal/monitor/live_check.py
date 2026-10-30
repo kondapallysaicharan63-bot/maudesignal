@@ -254,7 +254,10 @@ def check_product_code(
             prior_report_count=prior_all,
             new_event_types=(),
             current_event_type_counts=(),
-            queries=(("Reports, all dates", verify_url(code, None, None)),),
+            queries=(
+                ("Reports, all dates", verify_url(code, None, None)),
+                ("Reports, last two years", verify_url(code, look_from, _ymd(today))),
+            ),
         )
     w = build_window(as_of or max(parse_yyyymmdd(d) for d, _ in days))
     cs, ce = _ymd(w.current_start), _ymd(w.current_end)

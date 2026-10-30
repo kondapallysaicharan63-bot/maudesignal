@@ -67,7 +67,7 @@ from maudesignal.monitor.deterioration import (
     SPIKE_MULTIPLIER,
 )
 from maudesignal.monitor.digest import CHANGE_LABELS
-from maudesignal.monitor.live_check import LiveCheck, check_product_code
+from maudesignal.monitor.live_check import LiveCheck, check_product_code, verify_url
 from maudesignal.vision.fda_pdf import normalize_k_number
 from maudesignal.vision.label import (
     SESSION_ONLY_FIELDS,
@@ -87,6 +87,9 @@ STATUS_NEEDS_PERSON = "needs_person_to_confirm"
 STATUS_NO_MATCH = "no_match_found"
 STATUS_CONFIRMED = "confirmed_by_person"
 NOT_RECORDED = "not recorded"
+LEGIBILITY_PARTLY_BANNER = "Partly legible label: check every field against the photo"
+LEGIBILITY_ILLEGIBLE_BANNER = "Illegible label: fields not shown"
+ILLEGIBLE_NOTE = "Label not legible enough to read; nothing was searched."
 DISCLAIMER = (
     "Possible matches for a person to confirm. This is a search of public openFDA records, "
     "not an identification of the device, and not medical advice."
@@ -942,17 +945,74 @@ def recompute_change(lc: LiveCheck) -> str:
 
 
 def live_query_entries(lc: LiveCheck) -> list[dict[str, Any]]:
-    """One entry per LiveCheck query: its label, URL and the stored figure it produced."""
-    figures: list[int | None] = [
-        None,  # reports per day: a list of days, not one figure
-        lc.current_count,
-        lc.baseline_count,
-        lc.prior_report_count,
-        lc.prior_report_count,
-    ]
+    """One entry per LiveCheck query: its label, URL and, where the URL gives one, its count.
+
+    A ``limit=1`` query shows its own total in the openFDA ``meta``, so that total is the
+    count. A grouped query (``count=...``) has no single total: its count is ``None`` and
+    ``groups_sum`` says what its groups add up to.
+    """
+    if lc.as_of is None:
+        sums: list[int | None] = [None, None]
+        totals: list[int | None] = [lc.prior_report_count, lc.current_count]
+    else:
+        sums = [None, lc.current_count, lc.baseline_count, None, lc.prior_report_count]
+        totals = [None, None, None, lc.prior_report_count, None]
+    out: list[dict[str, Any]] = []
+    for i, (label, url) in enumerate(lc.queries):
+        entry: dict[str, Any] = {
+            "query": label,
+            "url": url,
+            "count": totals[i] if i < len(totals) else None,
+        }
+        if i < len(sums) and sums[i] is not None:
+            entry["groups_sum"] = sums[i]
+        out.append(entry)
+    return out
+
+
+def live_query_log(code: str, lc: LiveCheck) -> list[dict[str, Any]]:
+    """The queries ``all_dates_total`` is built from, each with its own reproducible count.
+
+    With reports in the last two years: the all-dates-before-the-window query (``limit=1``)
+    and the window query (``limit=1``). With none: the all-dates query and the two-year
+    query. The per-day query is not logged with a count: it is a list of days.
+    """
+    if lc.as_of is None or lc.window is None:
+        return [
+            {
+                "id": f"maude-all-{code}",
+                "label": f"MAUDE reports for {code}, all dates",
+                "url": lc.queries[0][1] if lc.queries else None,
+                "count": lc.prior_report_count,
+                "ok": True,
+            },
+            {
+                "id": f"maude-2y-{code}",
+                "label": f"MAUDE reports for {code}, last two years",
+                "url": lc.queries[1][1] if len(lc.queries) > 1 else None,
+                "count": 0,
+                "ok": True,
+            },
+        ]
+    w = lc.window
+    as_of = lc.as_of.isoformat()
     return [
-        {"query": label, "url": url, "count": figures[i] if i < len(figures) else None}
-        for i, (label, url) in enumerate(lc.queries)
+        {
+            "id": f"maude-before-{code}",
+            "label": f"MAUDE reports for {code} before the 7 days ending {as_of}",
+            "url": lc.queries[3][1] if len(lc.queries) > 3 else None,
+            "count": lc.prior_report_count,
+            "ok": True,
+        },
+        {
+            "id": f"maude-week-{code}",
+            "label": f"MAUDE reports for {code} in the 7 days ending {as_of}",
+            "url": verify_url(
+                code, w.current_start.strftime("%Y%m%d"), w.current_end.strftime("%Y%m%d")
+            ),
+            "count": lc.current_count,
+            "ok": True,
+        },
     ]
 
 
@@ -1167,7 +1227,13 @@ def build_view_drafts(
             FactDraft(
                 f"{code}:this_week_change",
                 "this_week_change",
-                f"This week's change for {code}: {lc.change}.",
+                (
+                    f"In the 7 days ending {lc.as_of.isoformat()}: this week's change for "
+                    f"{code}: {lc.change}."
+                    if lc.as_of
+                    else f"No MAUDE reports for {code} in the last two years; this week's "
+                    f"change: {lc.change}."
+                ),
                 lc.queries[1][1] if len(lc.queries) > 1 else None,
                 {
                     "change": lc.change,
@@ -1228,6 +1294,65 @@ def build_view_drafts(
 # ---------------------------------------------------------------------------
 
 
+def legibility_banner(overall: str) -> str | None:
+    """The warning to show above a reading: None only when the label was read as clear."""
+    if overall == "clear":
+        return None
+    if overall == "illegible":
+        return LEGIBILITY_ILLEGIBLE_BANNER
+    return LEGIBILITY_PARTLY_BANNER
+
+
+def reading_from_match(prev: Mapping[str, Any]) -> dict[str, Any]:
+    """The reading stored inside a ``label-match-*.json`` (no Meta call needed to reuse it)."""
+    label = prev.get("label") or {}
+    return {
+        "fields": copy.deepcopy(label.get("fields") or {}),
+        "overall_legibility": label.get("overall_legibility", ""),
+    }
+
+
+def recorded_read_steps(prev: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """SAM / Spark steps of a stored match, kept as recorded and marked ``recorded <date>``.
+
+    The elapsed time and cost are copied unchanged; ``timing`` says they were measured in an
+    earlier run (on the date the step started), not in this process.
+    """
+    by_model = {s.get("model"): s for s in prev.get("trace") or []}
+    out: list[dict[str, Any]] = []
+    fallback = not_recorded_read_steps("no stored SAM / Spark step in the earlier record")
+    for default, model in zip(fallback, ("SAM 3.1", "Muse Spark"), strict=True):
+        step = by_model.get(model)
+        if step is None or step.get("elapsed_ms") is None:
+            out.append(copy.deepcopy(step) if step else default)
+            continue
+        entry = copy.deepcopy(step)
+        stamp = str(entry.get("started_utc") or prev.get("generated_utc") or "")[:10]
+        if not str(entry.get("timing", "")).startswith("recorded "):
+            entry["timing"] = f"recorded {stamp}" if stamp else "recorded"
+            note = str(entry.get("note") or "").strip()
+            entry["note"] = (note + "; " if note else "") + (
+                f"timing and cost recorded {stamp}, not re-run in this process"
+            )
+        out.append(entry)
+    return out
+
+
+def recorded_model_info(prev: Mapping[str, Any]) -> dict[str, Any]:
+    """The ``reading`` block of a stored match, copied as recorded, with the record date."""
+    info = dict(prev.get("reading") or {})
+    stamp = str(prev.get("generated_utc") or "")[:10]
+    started = [
+        str(s.get("started_utc") or "")[:10]
+        for s in prev.get("trace") or []
+        if s.get("model") in ("SAM 3.1", "Muse Spark") and s.get("started_utc")
+    ]
+    date_ = (started[0] if started else stamp) or ""
+    prior = info.get("recorded")
+    info["recorded"] = prior or (f"recorded {date_}" if date_ else "recorded")
+    return info
+
+
 def _error_name(exc: Exception) -> str:
     return type(exc).__name__
 
@@ -1261,7 +1386,11 @@ def match_label(
     """
     trace = Trace()
     trace.steps.extend(copy.deepcopy(list(read_steps or not_recorded_read_steps(NOT_RECORDED))))
-    inp = inputs_from_reading(reading)
+    overall = str(reading.get("overall_legibility") or "")
+    illegible = overall == "illegible"
+    # An illegible reading is never searched: its field values are guesses (the same photo
+    # read three times gave three different invented names).
+    inp = LabelInputs(None, "", None, "", "", "") if illegible else inputs_from_reading(reading)
     queries_log: list[dict[str, Any]] = []
     cands: list[Candidate] = []
     basis = "none"
@@ -1303,7 +1432,9 @@ def match_label(
         return [c for c in found if c is not None]
 
     # 1) exact ids first
-    if inp.k_number:
+    if illegible:
+        pass
+    elif inp.k_number:
         basis = "k_number"
         hits = run(
             QuerySpec("510k-k", "510k", f"k_number:{inp.k_number}", "510(k): K-number", 1),
@@ -1312,7 +1443,7 @@ def match_label(
         for c in hits:
             c.exact_id = "k_number"
         cands += hits
-    if not cands and inp.gtin:
+    if not illegible and not cands and inp.gtin:
         basis = "gtin"
         ids = {inp.gtin, inp.gtin.zfill(14)}
         search = "+OR+".join(f"identifiers.id:{_phrase(i)}" for i in sorted(ids))
@@ -1324,7 +1455,7 @@ def match_label(
                 c.exact_id = "gtin"
         cands += hits
     # 2) model + name + manufacturer
-    if not cands:
+    if not illegible and not cands:
         basis = "model_name_manufacturer" if (inp.device_name or inp.model_number) else "none"
         for spec in plan_queries(inp):
             parse = {
@@ -1334,7 +1465,7 @@ def match_label(
             cands += run(spec, parse)
     ranked = rank_candidates(inp, cands)
     # 3) a device type only, when no record matched
-    if not ranked and basis == "model_name_manufacturer":
+    if not illegible and not ranked and basis == "model_name_manufacturer":
         spec_c = classification_by_name_query(inp)
         if spec_c is not None:
             ranked = rank_candidates(inp, run(spec_c, candidate_from_classification))
@@ -1422,23 +1553,15 @@ def match_label(
             ) as st:
                 try:
                     live = check_fn(code)
-                    st["count"] = live.all_dates_total
-                    st["url"] = live.queries[0][1] if live.queries else None
+                    st["count"] = None
+                    st["url"] = None
                     st["urls"] = [u for _, u in live.queries]
                     st["note"] = (
                         f"covers {len(live.queries)} openFDA queries; elapsed_ms is the combined "
-                        "time of the whole check"
+                        "time of the whole check; each count is shown with its own query below"
                     )
                     st["queries"] = live_query_entries(live)
-                    queries_log.append(
-                        {
-                            "id": f"maude-{code}",
-                            "label": f"MAUDE counts for {code}",
-                            "url": st["url"],
-                            "count": live.all_dates_total,
-                            "ok": True,
-                        }
-                    )
+                    queries_log.extend(live_query_log(code, live))
                 except MaudeSignalError as exc:
                     live_err = "the MAUDE count check failed"
                     st["error"] = _error_name(exc)
@@ -1488,26 +1611,43 @@ def match_label(
             }
         gate_step["count"] = passed_total
         gate_step["note"] = f"{passed_total} facts passed, {withheld_total} withheld"
-    measured = [s["elapsed_ms"] for s in trace.steps if s.get("elapsed_ms") is not None]
+    measured = [
+        s["elapsed_ms"]
+        for s in trace.steps
+        if s.get("elapsed_ms") is not None and s.get("timing") == "measured"
+    ]
+    skipped_recorded = any(
+        str(s.get("timing", "")).startswith("recorded ") for s in trace.steps[:2]
+    )
     trace.steps.append(
         {
             "step": "Done",
             "model": "gate",
             "started_utc": utc_now(),
             "elapsed_ms": round(sum(measured), 1) if measured else None,
-            "timing": "sum of the measured steps above" if measured else NOT_RECORDED,
+            "timing": "measured" if measured else NOT_RECORDED,
+            "note": (
+                "elapsed_ms is the sum of the measured steps above"
+                + ("; recorded SAM / Spark timings are not included" if skipped_recorded else "")
+            ),
         }
     )
 
     matches = [c.to_dict() for c in ranked]
     maker_found = any(c.manufacturer_match for c in ranked)
-    if not ranked:
+    if illegible:
+        status, note = STATUS_NO_MATCH, ILLEGIBLE_NOTE
+    elif not ranked:
         status, note = STATUS_NO_MATCH, _no_match_note(inp, queries_log)
     else:
         status, note = STATUS_NEEDS_PERSON, _match_note(inp, ranked, maker_found)
     label_fields = {
         k: {
-            "value": sanitize_udi(str(v.get("value", ""))) if k == "udi" else v.get("value", ""),
+            "value": (
+                ""
+                if illegible
+                else sanitize_udi(str(v.get("value", ""))) if k == "udi" else v.get("value", "")
+            ),
             "legibility": v.get("legibility", ""),
         }
         for k, v in (reading.get("fields") or {}).items()
@@ -1522,7 +1662,9 @@ def match_label(
         "label": {
             "fields": label_fields,
             "session_fields_omitted": True,
-            "overall_legibility": reading.get("overall_legibility", ""),
+            "overall_legibility": overall,
+            "legibility_banner": legibility_banner(overall),
+            "values_withheld": illegible,
         },
         "search_basis": basis,
         "search_inputs": inp.to_dict(),
@@ -1541,6 +1683,7 @@ def match_label(
             "input_tokens": mi.get("input_tokens", reading.get("input_tokens")),
             "output_tokens": mi.get("output_tokens", reading.get("output_tokens")),
             "cost_usd": mi.get("cost_usd", reading.get("cost_usd")),
+            **({"recorded": mi["recorded"]} if mi.get("recorded") else {}),
         },
         "disclaimer": DISCLAIMER,
     }

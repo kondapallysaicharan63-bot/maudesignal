@@ -2,7 +2,10 @@
 # Re-reads each stored photo (SAM 3.1 -> Muse Spark; both timed), searches openFDA, ranks up to
 # 3 possible matches for a person to confirm, and checks every device-type fact with the gate.
 # Runs ONLY when demo/vision/LABEL_MATCH_REQUEST is pushed (or by hand): it spends a little
-# Meta credit per photo. Nothing is confirmed here and no lot / serial number is stored.
+# Meta credit per photo, unless the file's content starts with "reuse": then it only re-runs
+# the openFDA search, device-type views, gate and trace over the readings already stored in
+# demo/vision/label-match-*.json (no Meta key used, no Meta spend).
+# Nothing is confirmed here and no lot / serial number is stored.
 name: Match device-label photos
 
 on:
@@ -31,7 +34,22 @@ jobs:
       - run: pip install -e .
       - name: Refuse photos that still carry metadata
         run: python scripts/prepare_label_photo.py --check demo/vision/labels
+      - name: Choose the mode from LABEL_MATCH_REQUEST
+        id: mode
+        run: |
+          if [ -f demo/vision/LABEL_MATCH_REQUEST ] && \
+             tr -d '[:space:]' < demo/vision/LABEL_MATCH_REQUEST | tr 'A-Z' 'a-z' | grep -q '^reuse'; then
+            echo "reuse=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "reuse=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Re-run openFDA, views, gate and trace over stored readings (no Meta spend)
+        if: steps.mode.outputs.reuse == 'true'
+        env:
+          OPENFDA_API_KEY: ${{ secrets.OPENFDA_API_KEY }}
+        run: python scripts/record_label_matches.py --reuse-readings
       - name: Read labels again and match them on openFDA
+        if: steps.mode.outputs.reuse != 'true'
         env:
           META_MODEL_API_KEY: ${{ secrets.META_MODEL_API_KEY }}
           META_MODEL_API_BASE_URL: https://api.meta.ai/v1
@@ -42,6 +60,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add demo/vision/label-match-*.json 2>/dev/null || true
-          git diff --cached --quiet || git commit -m "chore(demo): match device-label photos on openFDA (SAM 3.1 + Muse Spark)"
+          git diff --cached --quiet || git commit -m "chore(demo): match device-label photos on openFDA (reuse=${{ steps.mode.outputs.reuse }})"
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push origin "HEAD:${GITHUB_REF_NAME}"
