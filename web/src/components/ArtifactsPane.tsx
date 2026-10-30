@@ -94,9 +94,7 @@ export function ArtifactsPane({ open, data, tab, onTab, thread, produced, briefD
                 {t.label}
                 {made && (
                   <>
-                    <span className="rounded-xs bg-accent-soft px-1.5 text-[14px] font-semibold leading-snug text-accent" aria-hidden="true">
-                      New
-                    </span>
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-accent" aria-hidden="true" />
                     <span className="sr-only"> (created by this thread)</span>
                   </>
                 )}
@@ -105,7 +103,7 @@ export function ArtifactsPane({ open, data, tab, onTab, thread, produced, briefD
           })}
         </div>
         {produced.length > 0 && (
-          <p className="m-0 px-4 pb-1 text-[14px] text-ink-2">New: made by the question on screen.</p>
+          <p className="m-0 px-4 pb-1 text-[14px] text-ink-2">A dot marks a tab made by the question on screen.</p>
         )}
       </div>
       <div

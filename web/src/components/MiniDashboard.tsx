@@ -16,11 +16,11 @@ export function miniTitle(workflow: WorkflowId): string {
 export function MiniStats({ workflow, data, expanded = false }: { workflow: WorkflowId; data: WorkspaceData; expanded?: boolean }) {
   const stats = miniStats(workflow, data)
   return (
-    <dl className={['m-0 grid gap-2', expanded ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-2 xl:grid-cols-1'].join(' ')}>
+    <dl className={['m-0 grid gap-2', expanded ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-2 lg:grid-cols-1'].join(' ')}>
       {stats.map((s) => (
-        <div key={s.label} className="rounded-md border border-rule bg-paper p-3 max-xl:p-2">
+        <div key={s.label} className="rounded-md border border-rule bg-paper p-3 max-lg:p-2">
           <dt className="text-[15px] leading-snug text-ink-2">{s.label}</dt>
-          <dd className="t-index ms-num ws-wrap m-0 mt-1 max-xl:!text-[26px] max-xl:!leading-tight">{s.value}</dd>
+          <dd className="t-index ms-num ws-wrap m-0 mt-1 max-lg:!text-[26px] max-lg:!leading-tight">{s.value}</dd>
           {s.note && <dd className="m-0 mt-0.5 text-[15px] leading-snug text-ink-2">{s.note}</dd>}
         </div>
       ))}
@@ -43,27 +43,27 @@ function Recent({
     return (
       <div className="mt-4">
         <h3 className="ms-kicker m-0 mb-2">Recorded answers in this workflow · {items.length}</h3>
-        <div className="overflow-x-auto rounded-md border border-rule">
-          <table className="w-full border-collapse text-left text-[16px]">
+        <div className="rounded-md border border-rule">
+          <table className="w-full table-fixed border-collapse text-left text-[16px]">
             <thead>
               <tr className="bg-sunk text-[15px] text-ink-2">
                 <th className="px-3 py-2 font-semibold">Question or run</th>
-                <th className="px-3 py-2 font-semibold">Shown</th>
-                <th className="px-3 py-2 font-semibold">Withheld</th>
-                <th className="px-3 py-2 font-semibold">Cost</th>
+                <th className="w-[4.5rem] px-2 py-2 font-semibold">Shown</th>
+                <th className="w-[5.5rem] px-2 py-2 font-semibold">Withheld</th>
+                <th className="w-[6.5rem] px-2 py-2 font-semibold">Cost</th>
               </tr>
             </thead>
             <tbody>
               {items.map((i) => (
                 <tr key={i.id} className="border-t border-rule">
                   <td className="px-3 py-1">
-                    <button type="button" className="min-h-11 text-left text-accent underline" onClick={() => onOpen(i)}>
+                    <button type="button" className="ws-wrap min-h-11 text-left text-accent underline" onClick={() => onOpen(i)}>
                       {i.label}
                     </button>
                   </td>
-                  <td className="ms-num px-3 py-1">{i.shown}</td>
-                  <td className="ms-num px-3 py-1">{i.withheld}</td>
-                  <td className="ms-num whitespace-nowrap px-3 py-1">{i.cost}</td>
+                  <td className="ms-num px-2 py-1">{i.shown}</td>
+                  <td className="ms-num px-2 py-1">{i.withheld}</td>
+                  <td className="ms-num ws-wrap px-2 py-1">{i.cost}</td>
                 </tr>
               ))}
             </tbody>
@@ -107,6 +107,7 @@ export function MiniPane({
   onToggleExpand,
   onThread = () => undefined,
   onRun = () => undefined,
+  focusCode = null,
 }: {
   workflow: WorkflowId
   data: WorkspaceData
@@ -114,6 +115,8 @@ export function MiniPane({
   onToggleExpand: () => void
   onThread?: (id: string) => void
   onRun?: (id: string) => void
+  /** Product code to scroll to and mark in the flagged list (set by an alert link). */
+  focusCode?: string | null
 }) {
   // Below the xl breakpoint the numbers start folded away so the chat keeps the screen.
   const [shown, setShown] = useState(false)
@@ -130,7 +133,7 @@ export function MiniPane({
       data-expanded={expanded}
       className={[
         'flex shrink-0 flex-col border-rule bg-surface',
-        expanded ? `${FULLSCREEN} overflow-y-auto` : 'max-xl:max-h-[50dvh] max-xl:overflow-y-auto max-xl:border-b xl:w-56 xl:overflow-y-auto xl:border-r 2xl:w-64',
+        expanded ? `${FULLSCREEN} overflow-y-auto` : 'max-lg:max-h-[50dvh] max-lg:overflow-y-auto max-lg:border-b lg:w-56 lg:overflow-y-auto lg:border-r xl:w-64',
       ].join(' ')}
     >
       <div className="flex shrink-0 items-center justify-between gap-2 px-3 py-1">
@@ -139,7 +142,7 @@ export function MiniPane({
           {!expanded && (
             <button
               type="button"
-              className="ws-icon-btn min-h-11 xl:hidden"
+              className="ws-icon-btn min-h-11 lg:hidden"
               aria-expanded={shown}
               aria-controls="mini-body"
               onClick={() => setShown((s) => !s)}
@@ -150,14 +153,14 @@ export function MiniPane({
           <ExpandButton panel="mini" expanded={expanded} onToggle={onToggleExpand} iconOnly />
         </span>
       </div>
-      <div id="mini-body" className={['px-3 pb-4', shown || expanded ? '' : 'max-xl:hidden'].join(' ')}>
+      <div id="mini-body" className={['px-3 pb-4', shown || expanded ? '' : 'max-lg:hidden'].join(' ')}>
         <MiniStats workflow={workflow} data={data} expanded={expanded} />
         {!expanded && <Recent items={items} expanded={false} onOpen={open} />}
         {expanded && workflow === 'ai-sweep' && (
           <>
             <SweepRules sweep={data.sweep} />
             <div className="mt-4">
-              <SweepFlagged sweep={data.sweep} />
+              <SweepFlagged sweep={data.sweep} focusCode={focusCode} />
             </div>
           </>
         )}

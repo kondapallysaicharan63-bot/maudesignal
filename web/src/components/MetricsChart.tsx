@@ -137,7 +137,7 @@ export function MetricsChart({ threads }: { threads: Thread[] }) {
     <div>
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         <ChartCard
-          title="Answers per run"
+          title="Sentences shown per run"
           summary={`${finPass} sentences shown across ${n} recorded runs (most in one run: ${maxA}). Latest run: ${lastRun?.answers ?? 0}.`}
         >
           <div className="flex gap-2">

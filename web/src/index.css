@@ -76,16 +76,11 @@ button {
   background: color-mix(in srgb, var(--ink) 50%, transparent);
 }
 
-/* Single-row tab strip: scrolls sideways without a visible bar; the edges fade to show more. */
+/* Tab strip: wraps onto a second row instead of scrolling sideways, so every tab is always reachable. */
 .ws-tabstrip {
   display: flex;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 28px), transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 28px), transparent 100%);
-}
-.ws-tabstrip::-webkit-scrollbar {
-  display: none;
+  flex-wrap: wrap;
+  overflow: visible;
 }
 
 /* Scroll cue: the bottom edge of scrolling content fades out (a transparency mask, not a colour gradient). */

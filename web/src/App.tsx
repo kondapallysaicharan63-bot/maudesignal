@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { producedTabs, relatedTabs, type TabId } from './artifacts'
-import { alertItems, type AlertItem } from './dashboard'
+import { alertItems, sweepRowId, type AlertItem } from './dashboard'
 import { ArtifactsPane } from './components/ArtifactsPane'
 import { ChatPane, type View, type WithheldNav } from './components/ChatPane'
 import { CommandPalette } from './components/CommandPalette'
@@ -18,6 +18,20 @@ import type { WorkflowId } from './types'
 // A thread opens the artifacts pane by itself only on a wide screen; on a narrower one the chat keeps the room.
 const isWide = () => window.matchMedia('(min-width: 1600px)').matches
 
+/** True from 768px up (desktop sidebar collapses; below that it is a drawer). Follows resize and rotation. */
+function useIsDesktop(): boolean {
+  const q = '(min-width: 768px)'
+  const [on, setOn] = useState(() => window.matchMedia(q).matches)
+  useEffect(() => {
+    const mq = window.matchMedia(q)
+    const h = () => setOn(mq.matches)
+    h()
+    mq.addEventListener('change', h)
+    return () => mq.removeEventListener('change', h)
+  }, [])
+  return on
+}
+
 export default function App() {
   const { data, error } = useWorkspaceData()
   const { theme, next } = useTheme()
@@ -29,6 +43,9 @@ export default function App() {
   const [artifacts, setArtifacts] = useState(false) // home is a full dashboard; a thread opens the pane
   const [expanded, setExpanded] = useState<PanelId | null>(null) // the one panel shown full screen
   const [palette, setPalette] = useState(false)
+  const desktop = useIsDesktop()
+  // The sweep row an alert link points at (nonce so the same row can be opened again).
+  const [sweepFocus, setSweepFocus] = useState<{ code: string; nonce: number } | null>(null)
   // The newest real data (the AI device sweep) is what the artifacts pane opens on.
   const [tab, setTab] = useState<TabId>('digest')
   // Which withheld sentence the top strip opened (index into the list of all withheld sentences).
@@ -75,10 +92,20 @@ export default function App() {
     wasExpanded.current = !!expanded
   }, [expanded])
 
+  useEffect(() => {
+    if (!sweepFocus) return
+    const id = window.setTimeout(() => {
+      const el = document.getElementById(sweepRowId(sweepFocus.code))
+      el?.scrollIntoView({ block: 'center' })
+      el?.focus({ preventScroll: true })
+    }, 50)
+    return () => window.clearTimeout(id)
+  }, [sweepFocus, expanded])
+
   const withheldRefs = useMemo(() => (data ? withheldSentences(data.threads.threads) : []), [data])
 
   const toggleSidebar = () => {
-    if (window.matchMedia('(min-width: 768px)').matches) setCollapsed((c) => !c)
+    if (desktop) setCollapsed((c) => !c)
     else setDrawer((o) => !o)
   }
   const openThread = useCallback((id: string) => {
@@ -120,10 +147,16 @@ export default function App() {
 
   const openAlert = (a: AlertItem) => {
     if (a.source === 'brief') openBrief(a.date)
-    else openWorkflow('ai-sweep')
+    else {
+      // The flagged list lives in the AI device sweep's dashboard: open it full screen and scroll to the row.
+      openWorkflow('ai-sweep')
+      setExpanded('mini')
+      setSweepFocus((cur) => ({ code: a.productCode, nonce: (cur?.nonce ?? 0) + 1 }))
+    }
   }
   const goHome = () => {
     setExpanded(null)
+    setSweepFocus(null)
     setWIdx(null)
     setView({ kind: 'new' })
     setDrawer(false)
@@ -181,7 +214,7 @@ export default function App() {
       <Header
         manifest={data?.manifest ?? null}
         theme={theme}
-        sidebarOpen={window.matchMedia('(min-width: 768px)').matches ? !collapsed : drawer}
+        sidebarOpen={desktop ? !collapsed : drawer}
         alerts={data ? alertItems(data.sweep, data.briefs) : []}
         onAlert={openAlert}
         artifactsOpen={artifacts}
@@ -215,7 +248,7 @@ export default function App() {
             onBrief={openBrief}
             onClose={() => setDrawer(false)}
           />
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col xl:flex-row">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:flex-row">
             {activeWorkflow && (
               <MiniPane
                 key={activeWorkflow}
@@ -225,6 +258,7 @@ export default function App() {
                 onToggleExpand={() => toggle('mini')}
                 onThread={openThread}
                 onRun={openRun}
+                focusCode={sweepFocus?.code ?? null}
               />
             )}
             <ChatPane

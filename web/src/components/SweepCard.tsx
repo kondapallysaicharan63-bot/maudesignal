@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { CLASS_LABEL, flaggedRows } from '../artifacts'
 import { isoDay } from '../data'
-import { sweepRuleText, sweepStats, sweepStatsText } from '../dashboard'
+import { sweepRowId, sweepRuleText, sweepStats, sweepStatsText } from '../dashboard'
 import type { Sweep } from '../types'
 import { Pill } from './artifacts/common'
 
@@ -114,7 +114,7 @@ export function SweepHead({ sweep, compact = false }: { sweep: Sweep; compact?: 
 }
 
 /** The flagged product codes with their openFDA query links. */
-export function SweepFlagged({ sweep }: { sweep: Sweep }) {
+export function SweepFlagged({ sweep, focusCode = null }: { sweep: Sweep; focusCode?: string | null }) {
   const m = sweep.meta
   const flagged = flaggedRows(sweep)
   return (
@@ -125,7 +125,16 @@ export function SweepFlagged({ sweep }: { sweep: Sweep }) {
       ) : (
         <ul className="m-0 mt-2 list-none p-0">
           {flagged.map((r) => (
-            <li key={r.product_code} className="border-t border-rule py-3 first:border-t-0">
+            <li
+              key={r.product_code}
+              id={sweepRowId(r.product_code)}
+              tabIndex={-1}
+              data-focused={focusCode === r.product_code ? 'true' : undefined}
+              className={[
+                'scroll-mt-4 border-t border-rule py-3 first:border-t-0',
+                focusCode === r.product_code ? 'rounded-md bg-accent-soft px-2 outline outline-2 outline-accent' : '',
+              ].join(' ')}
+            >
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <span>
                   <span className="ms-code mr-2">{r.product_code}</span>

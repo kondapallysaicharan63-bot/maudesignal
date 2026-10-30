@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import type { ReactElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeAll, describe, expect, it } from 'vitest'
@@ -21,8 +22,8 @@ import { ChatPane } from './components/ChatPane'
 import { MetricsChart } from './components/MetricsChart'
 import { MiniPane } from './components/MiniDashboard'
 import { ExpandButton } from './components/PanelBar'
-import { SweepRules } from './components/SweepCard'
-import { alertItems, miniStats, runMetrics, SWEEP_RULES, sweepRuleText, sweepStats, sweepStatsText } from './dashboard'
+import { SweepFlagged, SweepRules } from './components/SweepCard'
+import { alertItems, miniStats, runMetrics, sweepRowId, SWEEP_RULES, sweepRuleText, sweepStats, sweepStatsText } from './dashboard'
 import { collapseOnEscape, toggleExpanded } from './layout'
 import type { Brief, Sweep, Thread, WorkspaceData } from './types'
 
@@ -206,11 +207,13 @@ describe('expand and collapse', () => {
     expect(renderToStaticMarkup(chat('new', false))).not.toContain('fixed inset-0')
   })
 
-  it('the artifacts tabs are one 44px row with no visible scrollbar and 17px text', () => {
+  it('the artifacts tabs wrap (no sideways scroll), are 44px high with 17px text and short labels', () => {
     const html = renderToStaticMarkup(artifacts(false))
     const strip = /<div role="tablist"[^>]*class="([^"]*)"/.exec(html) ?? /class="([^"]*)"[^>]*role="tablist"/.exec(html)
     expect(strip?.[1]).toContain('ws-tabstrip')
-    expect(strip?.[1]).not.toContain('flex-wrap')
+    expect(strip?.[1]).not.toContain('overflow')
+    expect(readFileSync(join(__dirname, 'index.css'), 'utf8')).toMatch(/\.ws-tabstrip\s*\{[^}]*flex-wrap:\s*wrap[^}]*overflow:\s*visible/)
+    expect(Math.max(...TABS.map((t) => t.label.length))).toBeLessThanOrEqual(10)
     expect(html).toContain('h-11 shrink-0')
     expect(html).toContain('text-[17px]')
     expect(TABS.length).toBe(7)
@@ -234,7 +237,7 @@ describe('home dashboard and mini-dashboards', () => {
     expect(html).toContain('Demo snapshot')
     expect(html).toContain(BR[0].date)
     expect(html).toContain(`Alerts · ${alertItems(SW, BR).length}`)
-    for (const t of ['Answers per run', 'Gate pass rate', 'Cost per run']) expect(html).toContain(t)
+    for (const t of ['Sentences shown per run', 'Gate pass rate', 'Cost per run']) expect(html).toContain(t)
     expect(html).toContain('Speed per run: Not recorded')
   })
 
@@ -270,5 +273,29 @@ describe('home dashboard and mini-dashboards', () => {
     const banned = ['fda-approved', 'part 11', 'validated', 'overnight', 'worsening', 'citation-checked', 'complaint data', 'unsafe', 'compliant']
     for (const b of banned) expect(html).not.toContain(b)
     expect(html).not.toMatch(/\bsafe\b/)
+  })
+
+  it('an alert for a sweep code links to the row of that code, which is marked when focused', () => {
+    const sw = SW
+    const alert = alertItems(sw, []).find((a) => a.source === 'sweep')
+    if (!alert) return // no risky sweep item in the stored data
+    const html = renderToStaticMarkup(<SweepFlagged sweep={sw} focusCode={alert.productCode} />)
+    expect(html).toContain(`id="${sweepRowId(alert.productCode)}"`)
+    const row = new RegExp(`<li[^>]*id="${sweepRowId(alert.productCode)}"[^>]*>`).exec(html)?.[0] ?? ''
+    expect(row).toContain('data-focused="true"')
+    expect(renderToStaticMarkup(<SweepFlagged sweep={sw} />)).not.toContain('data-focused')
+  })
+
+  it('"Claims in shown sentences" counts only claims inside shown sentences', () => {
+    const d = data as WorkspaceData
+    const stats = miniStats('ask-copilot', d)
+    const stat = stats.find((s) => s.label === 'Claims in shown sentences')
+    expect(stat).toBeDefined()
+    const ts = d.threads.threads.filter((t) => d.threads.workflows.find((w) => w.id === 'ask-copilot')?.thread_ids.includes(t.id))
+    const expected = ts
+      .filter((t) => t.tool_steps.length > 0 || t.sentences.some((s) => s.claims.length > 0))
+      .flatMap((t) => t.sentences.filter((s) => s.status === 'pass').flatMap((s) => s.claims))
+      .filter((c) => c.status === 'pass').length
+    expect(stat?.value).toBe(`${expected}`)
   })
 })

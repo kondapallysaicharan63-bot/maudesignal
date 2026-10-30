@@ -59,6 +59,9 @@ export interface AlertItem {
   detail: string
 }
 
+/** DOM id of a flagged sweep row, so an alert link can scroll to it. */
+export const sweepRowId = (code: string): string => `sweep-row-${code}`
+
 const plural = (n: number, word: string): string => `${n} ${word}${n === 1 ? '' : 's'}`
 
 const RISKY: string[] = ['new_signal', 'severity_escalation']
@@ -193,14 +196,17 @@ const isAnswer = (t: Thread) => t.tool_steps.length > 0 || t.sentences.some((s) 
 
 function threadStats(ts: Thread[]): MiniStat[] {
   const answers = ts.filter(isAnswer)
-  const claims = answers.flatMap((t) => t.sentences.flatMap((s) => s.claims)).filter((c) => c.status === 'pass').length
+  // Only claims inside sentences that were shown (a withheld sentence's passing claims are not on screen).
+  const claims = answers
+    .flatMap((t) => t.sentences.filter((s) => s.status === 'pass').flatMap((s) => s.claims))
+    .filter((c) => c.status === 'pass').length
   const withheld = answers.flatMap((t) => t.sentences).filter((s) => s.status === 'block').length
   const costs = runMetrics(answers)
     .map((x) => x.costUsd)
     .filter((x): x is number => x !== null)
   return [
     { label: 'Recorded answers', value: `${answers.length}` },
-    { label: 'Claims verified', value: `${claims}` },
+    { label: 'Claims in shown sentences', value: `${claims}` },
     { label: 'Sentences withheld', value: `${withheld}` },
     {
       label: 'Cost of these runs',
