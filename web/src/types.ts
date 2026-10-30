@@ -186,8 +186,74 @@ export interface LabelCheck {
   detail: string
 }
 
+/** One possible match, as stored. Nothing here is a confirmation: a person confirms in the app. */
+export interface LabelMatch {
+  source: string
+  record_id: string
+  owner: string
+  device_name: string
+  product_code: string
+  device_type_name: string
+  decision_date?: string | null
+  query_url: string
+  score: number
+  why_matched: string[]
+  why_not_matched: string[]
+  k_number?: string | null
+}
+
+export interface MatchFact {
+  id: string
+  topic: string
+  status: string
+  text: string
+  query_url: string
+  /** The stored numbers behind the sentence. */
+  data?: Record<string, unknown>
+}
+
+export interface DeviceTypeView {
+  product_code: string
+  device_type_name: string
+  facts: MatchFact[]
+  summary: { this_week_change?: { change?: string; as_of?: string | null; rules?: string[] } | null } & Record<string, unknown>
+}
+
+export interface MatchTraceStep {
+  step: string
+  model: string
+  elapsed_ms?: number | null
+  timing?: string
+  note?: string
+  cost_usd?: number | null
+  input_tokens?: number | null
+  output_tokens?: number | null
+  count?: number | null
+  url?: string | null
+  urls?: string[]
+  /** Steps that ran several openFDA queries keep one entry per query; count is null where only a sum of groups was stored. */
+  queries?: { query: string; url?: string | null; count?: number | null; groups_sum?: number | null }[]
+}
+
+/** The stored label -> possible matches record (``demo/vision/label-match-*.json``). */
+export interface LabelMatchRecord {
+  generated_utc?: string
+  label: { fields: Record<string, LabelField>; overall_legibility: string }
+  status: string
+  note: string
+  matches: LabelMatch[]
+  device_type_views: Record<string, DeviceTypeView>
+  trace: MatchTraceStep[]
+  scoring_rules?: string[]
+  reading?: { model?: string; input_tokens?: number | null; output_tokens?: number | null; cost_usd?: { total?: number | null } }
+  disclaimer?: string
+  confirmed: null
+}
+
 export interface LabelReading {
   image: string
+  /** The stored possible matches; null when no matching run was recorded for this photo. */
+  matches?: LabelMatchRecord | null
   image_size: [number, number]
   sam: { prompt_used: string | null; boxes: SamBox[]; chosen_box: SamBox | null; note: string }
   fields: Record<string, LabelField>
@@ -289,6 +355,7 @@ export interface WorkspaceData {
   vision: Vision
   sweep: Sweep
   protocol: Protocol
+  company: Company
 }
 
 export type WorkflowId =
@@ -300,9 +367,101 @@ export type WorkflowId =
   | 'weekly-investigator'
   | 'recall-sweep'
   | 'vision'
+  | 'our-devices'
 
 export interface WorkflowDef {
   id: WorkflowId
   title: string
   blurb: string
+}
+
+// ── company.json: a simulated company, real FDA evidence (DATA_CONTRACT.md) ──
+export interface CompanyHistoryEntry {
+  seq: number
+  date: string
+  ts: string
+  actor: string
+  action: 'register' | 'change'
+  from_status: string | null
+  to_status: string
+  details: Record<string, string>
+  note: string
+  entry_hash: string
+}
+
+export interface CompanyQuote {
+  report_id: string
+  text: string
+  url: string
+}
+
+export interface CompanyPattern {
+  id: string
+  label: string
+  kind: 'investigator' | 'keyword'
+  display_label: string
+  basis: string
+  count: number
+  report_ids: string[]
+  first_received: string | null
+  last_received: string | null
+  quotes: CompanyQuote[]
+  links: { label: string; url: string }[]
+  gate: { count: string; reason: string; quotes_passed: number; quotes_withheld: number }
+}
+
+export interface CompanyRecall {
+  recall_number: string
+  recalling_firm: string | null
+  status: string | null
+  date_initiated: string | null
+  excerpt: string | null
+  /** True when the excerpt is only the start of a longer sentence (shown with an ellipsis). */
+  excerpt_truncated?: boolean
+  url: string | null
+}
+
+export interface CompanyEvidence {
+  origin: 'demo_db' | 'fetched' | 'missing'
+  available: boolean
+  note: string | null
+  fetched_utc?: string | null
+  report_count: { value: number; gate: string; reason: string } | null
+  window: { date_from: string | null; date_to: string | null } | null
+  queries: { label: string; url: string }[]
+  recalls: {
+    stored: number
+    matched_total: number | null
+    gate: string
+    reason: string
+    latest: CompanyRecall[]
+  } | null
+  gate_totals?: { pass: number; block: number }
+  /** Group counts recomputed from the listed report ids (not claim-gate verdicts). */
+  recomputed?: { pass: number; block: number }
+}
+
+export interface CompanyDevice {
+  id: string
+  name: string
+  model: string
+  product_code: string
+  owner: string
+  device_type: { name: string | null; source: string | null; query_url: string | null }
+  sweep: { classification: string; as_of: string; current_count: number; query_url: string } | null
+  status: { label: string; set_by: string; date: string; detail: string; details: Record<string, string> } | null
+  history: CompanyHistoryEntry[]
+  evidence: CompanyEvidence
+  patterns: CompanyPattern[]
+}
+
+export interface Company {
+  schema_version: string
+  generated_utc: string
+  banner: string
+  company: string | null
+  statuses: { label: string; rank: number }[]
+  devices: CompanyDevice[]
+  audit: { file: string; chain_ok: boolean | null; first_bad_seq: number | null; entries: unknown[] }
+  notes: string[]
 }

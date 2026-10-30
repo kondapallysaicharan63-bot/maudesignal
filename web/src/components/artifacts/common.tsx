@@ -34,8 +34,8 @@ export function Segmented<T extends string>({
           aria-pressed={o.id === value}
           onClick={() => onChange(o.id)}
           className={[
-            'min-h-10 rounded-xs border px-3 text-[15px]',
-            o.id === value ? 'border-ink bg-sunk font-semibold text-ink' : 'border-rule text-ink-2 hover:bg-sunk',
+            'min-h-11 rounded-xs border px-3 text-[17px]',
+            o.id === value ? 'border-ink bg-inverse font-semibold text-on-inverse' : 'border-rule-strong text-ink-2 hover:bg-sunk',
           ].join(' ')}
         >
           {o.label}

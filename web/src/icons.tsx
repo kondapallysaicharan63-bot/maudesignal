@@ -23,6 +23,7 @@ const PATHS = {
   upload: 'M12 16V4M7 9l5-5 5 5M5 20h14',
   bell: 'M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0',
   expand: 'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5',
+  warn: 'M12 3.5 2.5 20h19zM12 10v5M12 17.4v.01',
   collapse: 'M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5',
 } as const
 

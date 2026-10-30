@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { CaptureMode } from '../capture'
 import { knownCodes } from '../typeahead'
 import { DEMO_WORKFLOWS, demoSnapshotLabel, WORKFLOWS } from '../data'
@@ -11,6 +11,7 @@ import { Composer } from './Composer'
 import { Dashboard } from './Dashboard'
 import { RunList, RunView } from './InvestigationViews'
 import { LiveCheckView } from './LiveCheckView'
+import { OurDevices } from './OurDevices'
 import { PanelBar } from './PanelBar'
 import { SweepCard } from './SweepCard'
 import { ThreadView } from './ThreadView'
@@ -44,6 +45,11 @@ interface Props {
   onRun: (id: string) => void
   onVision: (sel: VisionSel) => void
   onCode: (code: string) => void
+  /** Opens one device of "Our devices (simulated)", or the table when null. */
+  onDevice?: (id: string | null) => void
+  /** Our devices: the status the table is filtered to, and how to change it. */
+  deviceFilter?: string | null
+  onDeviceFilter?: (label: string | null) => void
   onCapture: (mode: CaptureMode) => void
   onBrief: (date: string) => void
   onAlert: (a: AlertItem) => void
@@ -96,6 +102,15 @@ export function ChatPane(p: Props) {
     const def = WORKFLOWS.find((w) => w.id === id) ?? WORKFLOWS[0]
     if (id === 'ai-sweep') body = <SweepCard sweep={data.sweep} />
     else if (id === 'check-device') body = <LiveCheckView key={p.view.code ?? ''} initialCode={p.view.code} />
+    else if (id === 'our-devices')
+      body = (
+        <OurDevices company={data.company} deviceId={p.view.code ?? null}
+          onDevice={(x) => p.onDevice?.(x)}
+          onBack={() => p.onDevice?.(null)}
+          filter={p.deviceFilter ?? null}
+          onFilter={p.onDeviceFilter}
+        />
+      )
     else if (id === 'vision') body = <VisionWorkflow vision={data.vision} onOpen={p.onVision} />
     else if (id === 'weekly-investigator' || id === 'recall-sweep')
       body = <RunList kind={id} runs={data.investigations.investigations} notes={data.investigations.notes} onRun={p.onRun} />
@@ -135,6 +150,9 @@ export function ChatPane(p: Props) {
       <p>That thread is not in the stored data.</p>
     )
   }
+  // Scrolled down: the composer shrinks to its one input row (phone).
+  const [scrolled, setScrolled] = useState<string | null>(null)
+  const key = viewKey(p.view)
   const codes = useMemo(() => knownCodes(data.sweep, data.briefs), [data.sweep, data.briefs])
   return (
     <main
@@ -146,8 +164,14 @@ export function ChatPane(p: Props) {
       <div className={p.expanded ? '' : 'max-lg:hidden'}>
         <PanelBar title={p.view.kind === 'new' ? 'Home' : 'Chat'} panel="main" expanded={p.expanded} onToggle={p.onToggleExpand} />
       </div>
-      <div className="ws-fade-bottom min-h-0 flex-1 overflow-y-auto px-4 py-4 md:px-8 md:py-6">
-        <div className={['mx-auto pb-28', p.view.kind === 'new' ? 'max-w-6xl' : 'max-w-3xl'].join(' ')}>{body}</div>
+      <div
+        className="ws-fade-bottom min-h-0 flex-1 scroll-pb-40 overflow-y-auto px-4 py-4 md:px-8 md:py-6"
+        onScroll={(e) => {
+          const down = e.currentTarget.scrollTop > 40
+          setScrolled((cur) => (down ? key : cur === key ? null : cur))
+        }}
+      >
+        <div className={['mx-auto pb-40 lg:pb-28', p.view.kind === 'new' ? 'max-w-6xl' : 'max-w-3xl'].join(' ')}>{body}</div>
       </div>
       <Composer
         threads={data.threads.threads}
@@ -158,6 +182,7 @@ export function ChatPane(p: Props) {
         onCamera={() => p.onCapture('label')}
         onMic={() => p.onCapture('voice')}
         captureMode={p.view.kind === 'capture' ? p.view.mode : null}
+        compact={scrolled === key}
       />
     </main>
   )

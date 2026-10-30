@@ -23,6 +23,7 @@ import shutil
 import sqlite3
 import subprocess
 import sys
+from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -31,6 +32,15 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from maudesignal.copilot.audit_export import verify_entries  # noqa: E402
+from maudesignal.gate import (  # noqa: E402
+    CountClaim,
+    EvidenceRecord,
+    EvidenceStore,
+    QuoteClaim,
+    RecallCountClaim,
+    RecallRef,
+    verify_claim,
+)
 from maudesignal.gate.evidence import normalize_source  # noqa: E402
 
 SCHEMA_VERSION = "1.0"
@@ -488,6 +498,8 @@ def build_vision(root: Path, out: Path) -> tuple[dict[str, Any], list[str]]:
     k510 = [read_json(p) for p in sorted(vdir.glob("510k-*.json"))]
     labels = []
     for p in sorted(vdir.glob("label-*.json")):
+        if p.name.startswith("label-match-"):
+            continue  # possible-match records are attached to their label below
         d = read_json(p)
         image = None
         img_name = d.get("image_file")
@@ -500,7 +512,17 @@ def build_vision(root: Path, out: Path) -> tuple[dict[str, Any], list[str]]:
             assets.append(image)
         else:
             notes.append(f"{p.name}: image {img_name} not found")
-        labels.append({**d, "image": image})
+        mp = vdir / f"label-match-{p.stem.removeprefix('label-')}.json"
+        matches: dict[str, Any] | None = None
+        if mp.exists():
+            matches = read_json(mp)
+            if matches.get("confirmed") is not None:
+                # A person confirms in the app, never in a stored file.
+                notes.append(f"{mp.name}: stored 'confirmed' value dropped (always null here)")
+                matches["confirmed"] = None
+        else:
+            notes.append(f"{mp.name} not found; {p.name} has no possible matches")
+        labels.append({**d, "image": image, "matches": matches})
     if not k510:
         notes.append("no demo/vision/510k-*.json found")
     if not labels:
@@ -623,6 +645,709 @@ def build_schedules(root: Path, briefs: dict[str, Any], sweep: dict[str, Any]) -
     return {"schema_version": SCHEMA_VERSION, "schedules": schedules, "notes": notes}
 
 
+# ── company.json (simulated company, real FDA evidence) ──────────────────────
+COMPANY_DIR = "demo/company"
+COMPANY_BANNER = "Simulated company — sample data. Problem evidence is real FDA data."
+NOT_FETCHED = "evidence not fetched yet"
+STATUS_RANK = {
+    "Needs review": 1,
+    "Testing in progress": 2,
+    "Already covered": 3,
+    "Not applicable to our device": 3,
+    "Monitoring — nothing open": 4,
+}
+# Words no company screen prints; a quote or text that holds one is dropped, never shown.
+COMPANY_FORBIDDEN = re.compile(
+    r"\b(safe|unsafe|compliant|validated|overnight)\b"
+    r"|fda[- ]approved|part 11 compliant|worsening signals?|citation-checked|complaint data",
+    re.I,
+)
+MIN_PATTERN_REPORTS = 2
+MAX_QUOTES = 2
+QUOTE_MIN_CHARS = 40
+QUOTE_MAX_CHARS = 220
+_FAIL = r"(?:unable to|not able to|fail\w* to|cannot|could not|can ?not|did not|does not|won't)"
+# Keyword rules v2.0, the same rules as maudesignal.company.patterns.RULES (Track A). Used only
+# when that module is not importable; a report joins on a MAUDE problem term or a strong phrase.
+KEYWORD_RULES: tuple[tuple[str, str, tuple[str, ...], str, str], ...] = (
+    (
+        "load-transfer",
+        "Images or data fail to load, transfer or send",
+        ("failure to transmit record", "intermittent communication failure", "loss of data"),
+        rf"\b{_FAIL} (?:\w+ ){{0,2}}(?:load|fetch|retrieve|transfer|transmit|send|import|"
+        r"export|save)\b",
+        r"\b(?:transmi\w*|transfer\w*|communicat\w*|data loss|lost data)\b",
+    ),
+    (
+        "freeze-crash",
+        "Software freezes, crashes or does not start",
+        ("application program freezes or fails to launch",),
+        r"\b(?:freez(?:es|ing)|froze|frozen|unresponsive|(?:system|software|application|"
+        r"program|unit|console|workstation|computer|monitor|screen) (?:has |had )?"
+        r"(?:crash(?:es|ed|ing)?|hung|hangs|hanging)|"
+        r"(?:fail\w*|unable|not able) to (?:launch|start up|boot|start the (?:software|"
+        r"application|system)))\b",
+        r"\b(?:freez\w*|froze|frozen|crash\w*|launch\w*|unresponsive)\b",
+    ),
+    (
+        "wrong-result",
+        "Result or measurement is incorrect or imprecise",
+        (
+            "incorrect, inadequate or imprecise result or readings",
+            "incorrect measurement",
+            "application program problem: parameter calculation error",
+        ),
+        r"\b(?:(?:incorrect|inaccurate|erroneous|wrong)(?: [\w%]+){0,2} "
+        r"(?:results?|readings?|measurements?|values?|calculations?|rhythms?|detections?|"
+        r"diagnos[ie]s|output)|false (?:positive|negative)s?|miscalculat\w*|mismeasur\w*|"
+        r"(?:over|under)-?estimat\w*)\b",
+        r"\b(?:incorrect\w*|inaccura\w*|imprecis\w*|calculat\w*)\b",
+    ),
+    (
+        "display-quality",
+        "Display problem or image artifact",
+        (
+            "image display error/artifact",
+            "poor quality image",
+            "display or visual feedback problem",
+            "no display/image",
+        ),
+        r"\b(?:image artifacts?|artifacts? (?:on|in|appear\w*|visible)|blurr(?:y|ed|ing)|"
+        r"distorted (?:image|display|screen)|(?:not|no longer|failed to) display(?:ed|ing)?|"
+        r"display error|missing image|blank (?:screen|image|display))\b",
+        r"\b(?:artifacts?|display\w*|image quality|blurr\w*|distort\w*)\b",
+    ),
+    (
+        "patient-data",
+        "Patient data, record or label mix-up",
+        ("patient data problem", "wrong label"),
+        r"\b(?:wrong patient|incorrect patient|different patient|another patient|mislabel\w*|"
+        r"patient (?:data|records?)\W+(?:\w+ ){0,2}(?:merged|mismatch\w*|mixed)|"
+        r"mismatched patient|mixed[- ]up|wrong (?:label|study))\b",
+        r"\b(?:patient (?:data|records?)|merge\w*|mismatch\w*|label\w*)\b",
+    ),
+    (
+        "install-update",
+        "Installation, update or compatibility problem",
+        (
+            "problem with software installation",
+            "installation-related problem",
+            "computer operating system problem",
+        ),
+        r"\b(?:(?:fail\w*|unable|unsuccessful\w*|errors?|problems?|issues?)"
+        r"(?: (?:to|with|during|while|in|on))? (?:the )?(?:software |firmware )?"
+        r"(?:install\w*|updat\w*|upgrad\w*)|"
+        r"(?:after|following|during) (?:the |a |an )?(?:recent )?(?:software |firmware |"
+        r"system )?(?:install(?:ation)?|update|upgrade)\b(?! of)|"
+        r"incompatib\w*|compatibility (?:issue|problem|error)s?)\b",
+        r"\b(?:install\w*|updat\w*|upgrad\w*|operating system|compatib\w*)\b",
+    ),
+    (
+        "access-security",
+        "Log-in, access or security problem",
+        ("computer system security problem",),
+        r"\b(?:(?:unable|not able|fail\w*|cannot|could not|can ?not|unsuccessful\w*) "
+        r"(?:to )?log ?(?:in|on)|log ?(?:in|on) (?:failure|problem|issue|error)s?|"
+        r"unauthori[sz]ed (?:access|user)|cyber\w*|access denied|locked out|"
+        r"security (?:breach|vulnerabilit\w*|incident))\b",
+        r"\b(?:security|cyber\w*|log ?in|access)\b",
+    ),
+)
+_SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+")
+_WS = re.compile(r"\s+")
+
+
+def _squash(text: str) -> str:
+    return _WS.sub(" ", text).strip()
+
+
+def _sentences(text: str) -> list[str]:
+    return [_squash(s) for s in _SENTENCE_SPLIT.split(text) if s.strip()]
+
+
+def _company_history(entries: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    """Per-device history from the audit entries; raises when a status rule is broken."""
+    out: dict[str, list[dict[str, Any]]] = {}
+    for e in entries:
+        p = json.loads(e["payload_json"])
+        actor = str(e["actor"])
+        if not actor.endswith("(simulated)"):
+            raise ValueError(f"audit seq {e['seq']}: a status is set by a named simulated person")
+        dev, to = str(p["device_id"]), str(p["to_status"])
+        prev = out.get(dev, [])
+        if to not in STATUS_RANK:
+            raise ValueError(f"audit seq {e['seq']}: unknown status {to!r}")
+        if prev and STATUS_RANK[to] <= STATUS_RANK[prev[-1]["to_status"]]:
+            raise ValueError(f"audit seq {e['seq']}: a status only moves forward")
+        if not prev and e["action"] != "company.status.register":
+            raise ValueError(f"audit seq {e['seq']}: first entry of a device is a register entry")
+        ts = datetime.fromisoformat(e["ts"])
+        out.setdefault(dev, []).append(
+            {
+                "seq": int(e["seq"]),
+                "date": ts.date().isoformat(),
+                "ts": ts.isoformat(),
+                "actor": actor,
+                "action": "register" if e["action"] == "company.status.register" else "change",
+                "from_status": p.get("from_status"),
+                "to_status": to,
+                "details": dict(p.get("details") or {}),
+                "note": str(p.get("note") or ""),
+                "entry_hash": e["entry_hash"],
+            }
+        )
+    return out
+
+
+def _status_detail(details: dict[str, Any]) -> str:
+    parts: list[str] = []
+    if details.get("owner"):
+        parts.append(f"owner {details['owner']}")
+    if details.get("due_date"):
+        parts.append(f"due {details['due_date']}")
+    for key in ("reference", "reason"):
+        if details.get(key):
+            parts.append(str(details[key]))
+    return "; ".join(parts)
+
+
+def _pick_quote(text: str, rx: re.Pattern[str]) -> str | None:
+    """First short sentence that matches ``rx`` and holds none of the withheld words."""
+    return next(
+        (
+            s
+            for s in _sentences(text)
+            if QUOTE_MIN_CHARS <= len(s) <= QUOTE_MAX_CHARS
+            and not COMPANY_FORBIDDEN.search(s)
+            and rx.search(s)
+        ),
+        None,
+    )
+
+
+_STOP_WORDS = frozenset({"describe", "reports", "including", "report", "errors", "error", "unable"})
+
+
+def _label_regex(label: str) -> re.Pattern[str] | None:
+    words = [w for w in re.findall(r"[a-z]{5,}", label.lower()) if w not in _STOP_WORDS]
+    return re.compile("|".join(re.escape(w) for w in words), re.I) if words else None
+
+
+def _gated_quotes(
+    members: list[dict[str, Any]],
+    pick: Callable[[dict[str, Any]], str | None],
+    store: EvidenceStore,
+) -> tuple[list[dict[str, str]], int]:
+    """Up to ``MAX_QUOTES`` quotes the claim gate passes; the second value counts withheld ones."""
+    quotes: list[dict[str, str]] = []
+    withheld = 0
+    for r in members:
+        if len(quotes) >= MAX_QUOTES:
+            break
+        text = pick(r)
+        if text is None:
+            continue
+        rid = str(r["report_id"])
+        if verify_claim(QuoteClaim(quote=text, report_id=rid), store).status == "pass":
+            quotes.append({"report_id": rid, "text": text, "url": MAUDE_DETAIL_URL.format(rid)})
+        else:
+            withheld += 1
+    return quotes, withheld
+
+
+def _company_pattern(
+    code: str,
+    pattern_id: str,
+    label: str,
+    basis: str,
+    kind: str,
+    members: list[dict[str, Any]],
+    pick: Callable[[dict[str, Any]], str | None],
+    by_id: dict[str, dict[str, Any]],
+    store: EvidenceStore,
+) -> dict[str, Any]:
+    ids = list(dict.fromkeys(str(r["report_id"]) for r in members))
+    # the group count is recomputed here: the listed ids must be distinct stored reports
+    count_ok = bool(ids) and all(i in by_id for i in ids)
+    quotes, withheld = _gated_quotes(members, pick, store)
+    dates = sorted(str(r["date_received"]) for r in members if r.get("date_received"))
+    return {
+        "id": pattern_id,
+        "label": label,
+        "kind": kind,
+        "display_label": f"Keyword match (unreviewed): {label}" if kind == "keyword" else label,
+        "basis": basis,
+        "count": len(ids),
+        "report_ids": ids,
+        "first_received": dates[0] if dates else None,
+        "last_received": dates[-1] if dates else None,
+        "quotes": quotes,
+        "links": [{"label": f"MAUDE report {i}", "url": MAUDE_DETAIL_URL.format(i)} for i in ids],
+        "gate": {
+            "count": "pass" if count_ok else "block",
+            "reason": f"recomputed {len(ids)} from {len(ids)} listed report ids",
+            "quotes_passed": len(quotes),
+            "quotes_withheld": withheld,
+        },
+    }
+
+
+def _latest_investigation(root: Path, code: str) -> tuple[str, list[tuple[str, list[str]]]] | None:
+    """Newest recorded weekly-investigator run for a code: ``(run id, [(label, ids)])``."""
+    best: tuple[str, list[tuple[str, list[str]]]] | None = None
+    for path in sorted((root / "demo" / "investigations").glob(f"*weekly-{code.lower()}.json")):
+        doc = read_json(path)
+        if doc.get("kind") != "weekly-investigator" or doc.get("product_code") != code:
+            continue
+        groups = [
+            (str(g["label"]), [str(i) for i in g["report_ids"]])
+            for g in doc.get("groups", [])
+            if g.get("label") and g.get("report_ids")
+        ]
+        if groups:
+            best = (str(doc.get("id") or path.stem), groups)
+    return best
+
+
+def _company_patterns(
+    root: Path, code: str, records: list[dict[str, Any]], store: EvidenceStore
+) -> list[dict[str, Any]]:
+    """Recorded investigator groups when a run exists, else keyword groups; counts recomputed."""
+    by_id = {str(r["report_id"]): r for r in records}
+    ordered = sorted(records, key=lambda r: str(r["report_id"]))
+    patterns: list[dict[str, Any]] = []
+    inv = _latest_investigation(root, code)
+    if inv is not None:
+        run_id, groups = inv
+        usable = [(lab, ids) for lab, ids in groups if all(i in by_id for i in ids)]
+        for n, (label, ids) in enumerate(usable, start=1):
+            lrx = _label_regex(label)
+
+            def pick_inv(r: dict[str, Any], lrx: re.Pattern[str] | None = lrx) -> str | None:
+                return _pick_quote(str(r.get("text") or ""), lrx) if lrx else None
+
+            patterns.append(
+                _company_pattern(
+                    code,
+                    f"{code}-inv-{n}",
+                    label[:1].upper() + label[1:],
+                    f"weekly investigator group, recorded run {run_id}; count recomputed",
+                    "investigator",
+                    [by_id[i] for i in ids],
+                    pick_inv,
+                    by_id,
+                    store,
+                )
+            )
+    if not patterns:
+        for rule_id, label, problems, phrase_re, hint_re in KEYWORD_RULES:
+            phrase = re.compile(phrase_re, re.I)
+            both = re.compile(f"(?:{phrase_re})|(?:{hint_re})", re.I) if hint_re else None
+            members = [
+                r
+                for r in ordered
+                if {str(p).strip().lower() for p in r.get("product_problems") or []} & set(problems)
+                or (r.get("text") and phrase.search(str(r["text"])))
+            ]
+            if len(members) < MIN_PATTERN_REPORTS:
+                continue
+
+            def pick_kw(
+                r: dict[str, Any],
+                phrase: re.Pattern[str] = phrase,
+                both: re.Pattern[str] | None = both,
+            ) -> str | None:
+                text = str(r.get("text") or "")
+                rx = phrase if phrase.search(text) else both
+                return _pick_quote(text, rx) if rx else None
+
+            patterns.append(
+                _company_pattern(
+                    code,
+                    f"{code}-{rule_id}",
+                    label,
+                    f"keyword rules v2.0 ({rule_id})",
+                    "keyword",
+                    members,
+                    pick_kw,
+                    by_id,
+                    store,
+                )
+            )
+    patterns.sort(key=lambda p: (-p["count"], p["label"]))
+    return [p for p in patterns if p["gate"]["count"] == "pass"]
+
+
+def _recall_item(rc: dict[str, Any], store: EvidenceStore) -> dict[str, Any]:
+    first = _sentences(str(rc.get("reason_for_recall") or ""))[:1]
+    excerpt: str | None = None
+    truncated = False
+    if first:
+        cand = first[0]
+        if len(cand) > QUOTE_MAX_CHARS:
+            cand = cand[:QUOTE_MAX_CHARS].rsplit(" ", 1)[0].rstrip()
+            truncated = True
+        passed = (
+            verify_claim(QuoteClaim(quote=cand, source_id=str(rc["recall_number"])), store).status
+            == "pass"
+        )
+        if passed and len(cand) >= QUOTE_MIN_CHARS and not COMPANY_FORBIDDEN.search(cand):
+            excerpt = cand
+    cfres = rc.get("cfres_id")
+    return {
+        "recall_number": rc["recall_number"],
+        "recalling_firm": rc.get("recalling_firm"),
+        "status": rc.get("recall_status"),
+        "date_initiated": rc.get("date_initiated"),
+        "excerpt": excerpt,
+        # true when the excerpt is only the start of a longer sentence (shown with an ellipsis)
+        "excerpt_truncated": bool(excerpt) and truncated,
+        "url": (
+            f"https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id={cfres}"
+            if cfres
+            else None
+        ),
+    }
+
+
+def _missing_evidence() -> dict[str, Any]:
+    return {
+        "origin": "missing",
+        "available": False,
+        "note": NOT_FETCHED,
+        "report_count": None,
+        "window": None,
+        "queries": [],
+        "recalls": None,
+    }
+
+
+def _load_fetched(folder: Path, code: str) -> dict[str, Any] | None:
+    """Neutral evidence dict from ``demo/company/evidence/<code>.json`` (None when absent)."""
+    path = folder / "evidence" / f"{code}.json"
+    if not path.is_file():
+        return None
+    doc = read_json(path)
+    win = doc.get("window") or {}
+    cls = doc.get("classification") or {}
+    return {
+        "origin": "fetched",
+        "reports": list(doc["reports"]["records"]),
+        "recalls": list(doc["recalls"]["records"]),
+        "matched_total": doc["recalls"].get("matched_total"),
+        "window": (win.get("date_from"), win.get("date_to")),
+        "queries": [
+            ("openFDA MAUDE query (last 8 weeks, limit 100)", doc["reports"]["query_url"]),
+            ("openFDA recall query (latest 100)", doc["recalls"]["query_url"]),
+        ],
+        "classification": (
+            {
+                "device_name": cls["device_name"],
+                "query_url": cls.get("query_url"),
+                "source": "openFDA device classification (fetched)",
+            }
+            if cls.get("device_name")
+            else None
+        ),
+        "fetched_utc": doc.get("fetched_utc"),
+        "note": "; ".join(doc.get("notes") or []) or None,
+    }
+
+
+def _ymd(iso: str | None) -> str | None:
+    return iso.replace("-", "") if iso else None
+
+
+def _load_demo_db(root: Path, code: str) -> dict[str, Any] | None:
+    """Neutral evidence dict from the demo database, opened read-only (None: no stored rows)."""
+    path = root / DEMO_DB
+    if not path.is_file():
+        return None
+    con = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
+    try:
+        rows = con.execute(
+            "SELECT e.maude_report_id, e.event_type, r.date_received, e.report_source, "
+            "e.brand_name, e.manufacturer, e.narrative, e.mfr_narrative, r.raw_json "
+            "FROM normalized_events e JOIN raw_reports r "
+            "ON r.maude_report_id = e.maude_report_id "
+            "WHERE e.product_code = ? ORDER BY e.maude_report_id",
+            (code,),
+        ).fetchall()
+        if not rows:
+            return None
+        reports: list[dict[str, Any]] = []
+        for rid, etype, drec, src, brand, mfr, narr, mnarr, raw in rows:
+            doc = json.loads(raw)
+            reports.append(
+                {
+                    "report_id": str(rid),
+                    "event_type": etype,
+                    "date_received": drec,
+                    "report_source": src,
+                    "brand_name": brand,
+                    "manufacturer": mfr,
+                    "product_problems": [str(p) for p in doc.get("product_problems") or []],
+                    "text": " ".join(t for t in (narr, mnarr) if t),
+                }
+            )
+        recalls: list[dict[str, Any]] = []
+        for sid, raw in con.execute(
+            "SELECT source_id, raw_json FROM external_sources "
+            "WHERE source_type = 'fda_recall' AND product_code = ? ORDER BY source_id",
+            (code,),
+        ):
+            d = json.loads(raw)
+            recalls.append(
+                {
+                    "recall_number": str(d.get("product_res_number") or sid),
+                    "event_number": d.get("res_event_number"),
+                    "recalling_firm": d.get("recalling_firm"),
+                    "product_description": str(d.get("product_description") or ""),
+                    "reason_for_recall": str(d.get("reason_for_recall") or ""),
+                    "recall_status": d.get("recall_status"),
+                    "date_initiated": _ymd(d.get("event_date_initiated")),
+                    "cfres_id": d.get("cfres_id"),
+                }
+            )
+        recalls.sort(key=lambda c: c["date_initiated"] or "", reverse=True)
+        cat = con.execute(
+            "SELECT device_name FROM device_catalog "
+            "WHERE product_code = ? AND source_keyword = 'openfda_classification'",
+            (code,),
+        ).fetchone()
+    finally:
+        con.close()
+    dates = sorted(r["date_received"] for r in reports if r["date_received"])
+    queries: list[tuple[str, str]] = []
+    manifest = root / "data" / "demo" / "SEED_MANIFEST.json"
+    if manifest.is_file():
+        for q in read_json(manifest).get("queries", []):
+            if q.get("product_code") == code and q.get("example_url"):
+                queries.append(
+                    ("openFDA MAUDE query that filled the demo database", str(q["example_url"]))
+                )
+                break
+    if recalls:
+        recall_url = f"https://api.fda.gov/device/recall.json?search=product_code:{code}"
+        queries.append(("openFDA recall query", recall_url))
+    cls_url = f"https://api.fda.gov/device/classification.json?search=product_code:{code}"
+    return {
+        "origin": "demo_db",
+        "reports": reports,
+        "recalls": recalls,
+        "matched_total": None,  # the demo database holds a stored subset; no openFDA match total
+        "window": (dates[0] if dates else None, dates[-1] if dates else None),
+        "queries": queries,
+        "classification": (
+            {
+                "device_name": str(cat[0]),
+                "query_url": cls_url,
+                "source": "openFDA device classification (stored in the demo database)",
+            }
+            if cat and cat[0]
+            else None
+        ),
+        "fetched_utc": None,
+        "note": None,
+    }
+
+
+def _company_evidence(
+    root: Path, code: str
+) -> tuple[dict[str, Any], list[dict[str, Any]], dict[str, Any] | None]:
+    """``(evidence, patterns, classification)`` for one code.
+
+    The demo database is read first for the codes it holds (origin ``demo_db``), then the
+    fetched evidence file (origin ``fetched``); a code with neither is ``missing``.
+    """
+    ev = _load_demo_db(root, code) or _load_fetched(root / COMPANY_DIR, code)
+    if ev is None:
+        return _missing_evidence(), [], None
+    records: list[dict[str, Any]] = ev["reports"]
+    recalls: list[dict[str, Any]] = ev["recalls"]
+    store = EvidenceStore.from_iterables(
+        [
+            EvidenceRecord(
+                report_id=str(r["report_id"]),
+                product_code=code,
+                event_type=r.get("event_type"),
+                date_received=r.get("date_received"),
+                text=str(r.get("text") or ""),
+                manufacturer=r.get("manufacturer"),
+                brand_name=r.get("brand_name"),
+                report_source=r.get("report_source"),
+            )
+            for r in records
+        ],
+        recalls=[
+            RecallRef(
+                recall_number=str(c["recall_number"]),
+                product_code=code,
+                event_number=c.get("event_number"),
+                recalling_firm=c.get("recalling_firm"),
+                product_description=str(c.get("product_description") or ""),
+                reason_for_recall=str(c.get("reason_for_recall") or ""),
+                recall_status=c.get("recall_status"),
+                date_initiated=c.get("date_initiated"),
+            )
+            for c in recalls
+        ],
+    )
+    patterns = _company_patterns(root, code, records, store)
+    # real claim-gate verdicts: the report count, the recall count, every quote and excerpt shown
+    count_v = verify_claim(CountClaim(product_code=code, value=len(records)), store)
+    recall_v = verify_claim(RecallCountClaim(product_code=code, value=len(recalls)), store)
+    items = [_recall_item(rc, store) for rc in recalls[:3]]
+    gate_pass = (
+        sum(p["gate"]["quotes_passed"] for p in patterns)
+        + sum(1 for it in items if it["excerpt"])
+        + int(count_v.status == "pass")
+        + int(recall_v.status == "pass")
+    )
+    gate_block = (
+        sum(p["gate"]["quotes_withheld"] for p in patterns)
+        + int(count_v.status != "pass")
+        + int(recall_v.status != "pass")
+    )
+    evidence = {
+        "origin": ev["origin"],
+        "available": True,
+        "note": ev["note"],
+        "fetched_utc": ev["fetched_utc"],
+        "report_count": {"value": len(records), "gate": count_v.status, "reason": count_v.reason},
+        "window": {"date_from": ev["window"][0], "date_to": ev["window"][1]},
+        "queries": [{"label": a, "url": b} for a, b in ev["queries"]],
+        "recalls": {
+            "stored": len(recalls),
+            "matched_total": ev["matched_total"],
+            "gate": recall_v.status,
+            "reason": recall_v.reason,
+            "latest": items,
+        },
+        # verdicts of src/maudesignal/gate: report count, recall count, quotes, recall excerpts
+        "gate_totals": {"pass": gate_pass, "block": gate_block},
+        # group counts are recomputed here from the listed report ids; they are not gate claims
+        "recomputed": {"pass": len(patterns), "block": 0},
+    }
+    return evidence, patterns, ev["classification"]
+
+
+def _company_from_files(root: Path) -> dict[str, Any]:
+    """The company document built from ``demo/company`` alone (when Track A's module is absent)."""
+    folder = root / COMPANY_DIR
+    doc = read_json(folder / "company.json")
+    entries = read_json(folder / "audit.json")["entries"]
+    history = _company_history(entries)
+    chain_ok, bad = verify_entries(entries)
+    devices: list[dict[str, Any]] = []
+    notes = list(doc.get("notes", []))
+    cache: dict[str, tuple[dict[str, Any], list[dict[str, Any]], dict[str, Any] | None]] = {}
+    for d in doc["devices"]:
+        code = d["product_code"]
+        if code not in cache:
+            cache[code] = _company_evidence(root, code)
+        evidence, patterns, cls = cache[code]
+        hist = history.get(d["device_id"], [])
+        last = hist[-1] if hist else None
+        dt = dict(d.get("device_type") or {})
+        if cls and cls.get("device_name"):
+            dt = {
+                "name": cls["device_name"],
+                "source": cls["source"],
+                "query_url": cls.get("query_url"),
+            }
+        if not evidence["available"]:
+            note = f"{code}: {NOT_FETCHED}; no count, pattern or quote is shown for it."
+            if note not in notes:
+                notes.append(note)
+        devices.append(
+            {
+                "id": d["device_id"],
+                "name": d["name"],
+                "model": d["model"],
+                "product_code": code,
+                "owner": d["owner"],
+                "device_type": {
+                    "name": dt.get("name"),
+                    "source": dt.get("source"),
+                    "query_url": dt.get("query_url"),
+                },
+                "sweep": d.get("sweep"),
+                "status": (
+                    None
+                    if last is None
+                    else {
+                        "label": last["to_status"],
+                        "set_by": last["actor"],
+                        "date": last["date"],
+                        "detail": _status_detail(last["details"]),
+                        "details": last["details"],
+                    }
+                ),
+                "history": hist,
+                "evidence": evidence,
+                "patterns": patterns,
+            }
+        )
+    return {
+        "company": doc.get("company"),
+        "statuses": [{"label": s, "rank": r} for s, r in STATUS_RANK.items()],
+        "devices": devices,
+        "audit": {
+            "file": f"{COMPANY_DIR}/audit.json",
+            "chain_ok": chain_ok,
+            "first_bad_seq": bad,
+            "entries": entries,
+        },
+        "notes": notes,
+    }
+
+
+def build_company(root: Path, generated_utc: str | None = None) -> dict[str, Any]:
+    """``company.json``: the simulated company with real FDA evidence (see DATA_CONTRACT.md).
+
+    Uses ``maudesignal.company`` (Track A) when it is importable; otherwise builds the same
+    shape from ``demo/company`` with the same keyword rules. The audit chain is re-verified here.
+    """
+    stamp = generated_utc or datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    folder = root / COMPANY_DIR
+    head: dict[str, Any] = {
+        "schema_version": SCHEMA_VERSION,
+        "generated_utc": stamp,
+        "banner": COMPANY_BANNER,
+    }
+    if not (folder / "company.json").is_file() or not (folder / "audit.json").is_file():
+        return {
+            **head,
+            "company": None,
+            "statuses": [{"label": s, "rank": r} for s, r in STATUS_RANK.items()],
+            "devices": [],
+            "audit": {
+                "file": f"{COMPANY_DIR}/audit.json",
+                "chain_ok": None,
+                "first_bad_seq": None,
+                "entries": [],
+            },
+            "notes": ["demo/company was not found; no simulated company is shown."],
+        }
+    try:
+        from maudesignal.company.build import (  # type: ignore[import-not-found]  # noqa: PLC0415
+            export_company,
+            load_company,
+        )
+    except ImportError:
+        return {**head, **_company_from_files(root)}
+    body: dict[str, Any] = export_company(
+        load_company(
+            folder, db_path=root / DEMO_DB, investigations=root / "demo" / "investigations"
+        )
+    )
+    # the audit chain is recomputed here whichever module built the document
+    ok, bad = verify_entries(body["audit"]["entries"])
+    body["audit"]["chain_ok"], body["audit"]["first_bad_seq"] = ok, bad
+    return {**body, **head}
+
+
 # ── main ─────────────────────────────────────────────────────────────────────
 def export(root: Path, out: Path, *, generated_utc: str | None = None) -> dict[str, Any]:
     """Write every output file under ``out`` and return the manifest.
@@ -660,6 +1385,7 @@ def export(root: Path, out: Path, *, generated_utc: str | None = None) -> dict[s
         "audit.json": audit,
         "dossier.json": dossier,
         "vision.json": vision,
+        "company.json": build_company(root, generated_utc),
         "sweep.json": sweep,
         "investigations.json": build_investigations(root),
         "protocol.json": build_protocol(transcripts),

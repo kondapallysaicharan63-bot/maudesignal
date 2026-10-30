@@ -24,11 +24,15 @@ export interface TraceStep {
   result: string | null
   /** Extra lines, e.g. each withheld reason. */
   lines: string[]
+  /** Optional query links, parallel to `lines` (null where a line has none). */
+  lineUrls?: (string | null)[]
   /** Model badge, or null for a step done by plain code. */
   model: string | null
   time: Metric
   tokens: Metric
   cost: Metric
+  /** True for a display step that folds several searches into one (their own counts and times are in `lines`). */
+  grouped?: boolean
 }
 
 export interface RunUsage {

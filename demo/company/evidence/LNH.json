@@ -1,0 +1,1392 @@
+{
+ "schema_version": "1.0",
+ "product_code": "LNH",
+ "fetched_utc": "2026-10-30T03:07:03Z",
+ "window": {
+  "date_from": "20260904",
+  "date_to": "20261030",
+  "weeks": 8
+ },
+ "classification": {
+  "device_name": "System, Nuclear Magnetic Resonance Imaging",
+  "device_class": "2",
+  "regulation_number": "892.1000",
+  "query_url": "https://api.fda.gov/device/classification.json?search=product_code:LNH&limit=1"
+ },
+ "reports": {
+  "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code:LNH+AND+date_received:[20260904+TO+20261030]&limit=100",
+  "matched_total": 30,
+  "stored": 30,
+  "records": [
+   {
+    "report_id": "50927968",
+    "event_type": "malfunction",
+    "date_received": "20260929",
+    "report_source": "Manufacturer report",
+    "brand_name": "Achieva 1.5T Dstream",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Detachment of Device or Device Component"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50912428",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "Ingenia 1.5T",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Detachment of Device or Device Component"
+    ],
+    "text": "Philips received a report that more than half of the Quadrature Body Coil (QBC) rubber inside the magnet had peeled off. This seal is used for protection, to avoid the patient from potentially contacting the sharp edges of the Magnet covers.If this seal is peeling off, it is likely that this could lead to serious injury. The QBC rubber that was peeled off, was cleaned and secured in place and the system was handed back to the customer for use.The failure of the QBC seal to remain in place is considered a malfunction.Remedial action:A field action was initiated under 2023-PD-MR-013.A Field Safety Notification was sent to the customers informing them about this potential issue.The updated Field correction has been made available to the field in Dec 2025 in the event country (the affected market)."
+   },
+   {
+    "report_id": "50912346",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "Ingenia",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Detachment of Device or Device Component"
+    ],
+    "text": "Philips received a report that the bore seals were coming loose. This seal is used for protection, to avoid the patient from potentially contacting the sharp edges of the Magnet covers.If this seal is loose, it is likely that this could lead to serious injury. The QBC seal upper and lower, which had become loose, were replaced and the system was handed back to the customer for use.The failure of the QBC seal to remain in place is considered a malfunction.Remedial action:A field action was initiated under 2023-PD-MR-013.A Field Safety Notification was sent to the customers informing them about this potential issue.The updated Field correction has been made available to the field in Dec 2025 in the event country (the affected market)."
+   },
+   {
+    "report_id": "50912219",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "Achieva 1.5T New",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Detachment of Device or Device Component"
+    ],
+    "text": "Philips received a report that the Quadrature Body Coil (QBC) rubber seal was loose. This seal is used for protection, to avoid the patient from potentially contacting the sharp edges of the Magnet covers.If this seal is loose it is likely that this could lead to serious injury. The QBC rubber seal that was loose, was reseated and the system was handed back to the customer for use.The failure of the QBC seal to remain in place is considered a malfunction.Remedial action:A field action was initiated under 2023-PD-MR-013.A Field Safety Notification was sent to the customers informing them about this potential issue.The updated Field correction has been made available to the field in Dec 2025 in the event country (the affected market)."
+   },
+   {
+    "report_id": "50912217",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "Achieva 1.5T",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Detachment of Device or Device Component"
+    ],
+    "text": "Philips received a report that the QBC front cone's rubber seal was torn. This seal is used for protection, to avoid the patient from potentially contacting the sharp edges of the Magnet covers.If this seal is damaged it is likely that this could lead to serious injury. The QBC front cone's rubber seal that was torn, was replaced and the system was handed back to the customer for use.The failure of the QBC seal to remain in place is considered a malfunction.Remedial action:A field action was initiated under 2023-PD-MR-013.A Field Safety Notification was sent to the customers informing them about this potential issue.The updated Field correction has been made available to the field in Dec 2025 in the event country (the affected market)."
+   },
+   {
+    "report_id": "50911944",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "Ingenia",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Detachment of Device or Device Component"
+    ],
+    "text": "Philips received a report that the upper Quadrature Body Coil (QBC) seal has come loose This seal is used for protection, to avoid the patient from potentially contacting the sharp edges of the Magnet covers.If this seal is loose it is likely that this could lead to serious injury. The issue of Quadrature Body Coil (QBC) seal that had come loose, was replaced and the system was handed back to the customer for use.The failure of the QBC seal to remain in place is considered a malfunction.Remedial action:A field action was initiated under 2023-PD-MR-013.A Field Safety Notification was sent to the customers informing them about this potential issue.The updated Field correction has been made available to the field in Dec 2025 in the event country (the affected market).The failure of the QBC seal to remain in place is considered a malfunction.Remedial action:A field action was initiated under 2023-PD-MR-013.A Field Safety Notification was sent to the customers informing them about this potential issue.The updated Field correction has been made available to the field in Dec 2025 in the event country (the affected market)."
+   },
+   {
+    "report_id": "50911659",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "Ingenia",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Detachment of Device or Device Component"
+    ],
+    "text": "Philips received a report that the Quadrature Body Coil (QBC) seal has come loose. This seal is used for protection, to avoid the patient from potentially contacting the sharp edges of the Magnet covers.If this seal comes loose it is likely that this could lead to serious injury. The issue of Quadrature Body Coil (QBC) seal that had come loose, was replaced and the system was handed back to the customer for use.The failure of the QBC seal to remain in place is considered a malfunction.Remedial action:A field action was initiated under 2023-PD-MR-013.A Field Safety Notification was sent to the customers informing them about this potential issue.The updated Field correction has been made available to the field in Dec 2025 in the event country (the affected market)."
+   },
+   {
+    "report_id": "50910858",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "Ingenia",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Detachment of Device or Device Component"
+    ],
+    "text": "Philips received a report that the upper Quadrature Body Coil (QBC) seal has peeling off. This seal is used for protection, to avoid the patient from potentially contacting the sharp edges of the Magnet covers.If this seal is peeled it is likely that this could lead to serious injury. The issue of Quadrature Body Coil (QBC) seal that had peeled off, was replaced and the system was handed back to the customer for use.The failure of the QBC seal to remain in place is considered a malfunction.Remedial action:A field action was initiated under 2023-PD-MR-013.A Field Safety Notification was sent to the customers informing them about this potential issue.The updated Field correction has been made available to the field in Dec 2025 in the event country (the affected market)."
+   },
+   {
+    "report_id": "50910611",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "Achieva 1.5T",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Detachment of Device or Device Component"
+    ],
+    "text": "Philips received a report that the Quadrature Body Coil (QBC) seal on the front cover is coming loose. This seal is used for protection, to avoid the patient from potentially contacting the sharp edges of the Magnet covers.If this seal is loose, it is likely that this could lead to serious injury. The issue of Quadrature Body Coil (QBC) seal that had come loose, was replaced and the system was handed back to the customer for use.The failure of the QBC seal to remain in place is considered a malfunction.Remedial action:A field action was initiated under 2023-PD-MR-013.A Field Safety Notification was sent to the customers informing them about this potential issue.The updated Field correction has been made available to the field in Dec 2025 in the event country (the affected market)."
+   },
+   {
+    "report_id": "50882014",
+    "event_type": "malfunction",
+    "date_received": "20260924",
+    "report_source": "Manufacturer report",
+    "brand_name": "Ingenia",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Detachment of Device or Device Component"
+    ],
+    "text": "Philips received a report that the rubber on the QBC was coming off. This seal is used for protection, to avoid the patient from potentially contacting the sharp edges of the Magnet covers.If this seal is loose, it is likely that this could lead to serious injury. The issue of Quadrature Body Coil (QBC) seal that had come off, was reattached and the system was handed back to the customer for use.The failure of the QBC seal to remain in place is considered a malfunction.Remedial action:A field action was initiated under 2023-PD-MR-013.A Field Safety Notification was sent to the customers informing them about this potential issue.The updated Field correction has been made available to the field in Dec 2025 in the event country (the affected market)."
+   },
+   {
+    "report_id": "50866824",
+    "event_type": "injury",
+    "date_received": "20260923",
+    "report_source": "Manufacturer report",
+    "brand_name": "MAGNETOM Sola",
+    "manufacturer": "Siemens Healthineers GmbH",
+    "product_problems": [
+     "Insufficient Device Problem Information"
+    ],
+    "text": "Siemens Healthineers (Siemens) was notified of a patient health event associated with an examination performed using a MAGNETOM Sola MRI system. According to the customer, the patient had a known history of allergies to latex and perfumes/fragrances.Shortly after the examination, the patient developed tingling and itching of the hands, which progressed to generalized pruritus and worsening symptoms. Subsequently, the patient experienced widespread raised skin lesions and significant respiratory difficulty. The patient sought treatment at an Urgent Care facility, where she received adrenaline, hydrocortisone (100 mg), and chlorphenamine.The patient reported that she was formally diagnosed with anaphylaxis following the event and was subsequently prescribed an EpiPen. The symptoms resolved within approximately one hour, and the patient made a full recovery. Due to the severity of the reaction and the requirement for emergency medical intervention, this event is considered reportable. H3, H6: The investigation is ongoing. A supplemental report will be submitted upon receipt of additional reportable information and/or investigation completion."
+   },
+   {
+    "report_id": "50853786",
+    "event_type": "injury",
+    "date_received": "20260922",
+    "report_source": "Manufacturer report",
+    "brand_name": "MAGNETOM Mica",
+    "manufacturer": "Siemens Shenzhen Magnetic Resonance Ltd.",
+    "product_problems": [
+     "Insufficient Device Problem Information"
+    ],
+    "text": "Siemens Healthineers (Siemens) was notified of a patient injury associated with a cerebral infarction and head examination performed using the MAGNETOM Mica MRI system on (b)(6) 2026. The patient is described as a female in her fifties. On (b)(6) 2026, swelling of the patient¿s arm was observed. A CT examination was subsequently performed, which revealed fractures of the left humerus and left tibia. On (b)(6) 2026, Siemens was informed that the patient¿s arm was fractured. In combination with the onsite assessment of the MRI by the local Customer Service Engineer and analysis by Siemens R&D experts, no abnormalities or malfunctions were identified in the MRI system, including the patient table. The patient¿s injury is classified as a severe injury, and Siemens could not determine whether this injury was caused by the MRI system or not. Siemens has requested additional event information and what medical intervention the patient received to treat the fractures. Additional information has not been received as of the date of this report. E1: A facility contact name was not provided for reporting. G3 510(k): The MAGNETOM Mica is not cleared for sale in the USA by the FDA (does not have a 510(k). This system is similar to the MAGNETOM Altea, 510(k) K252838. H6: A supplemental report will be submitted if additional reportable information is obtained either from the customer or through further investigation."
+   },
+   {
+    "report_id": "50853284",
+    "event_type": "malfunction",
+    "date_received": "20260922",
+    "report_source": "Manufacturer report",
+    "brand_name": "Ingenia",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Insufficient Device Problem Information"
+    ],
+    "text": "Philips received a report that during an MR examination, artifacts appeared and the scan was interrupted. These artifacts turned out to be caused by a broken terminal connection on the Gradient coil. There was no sign of smoke or burning smell and no patient or users were harmed. Philips has started an investigation, a follow up report will be submitted once the investigation has been completed."
+   },
+   {
+    "report_id": "50842878",
+    "event_type": "injury",
+    "date_received": "20260921",
+    "report_source": "Manufacturer report",
+    "brand_name": "Achieva 1.5T New",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Improper or Incorrect Procedure or Method",
+     "Insufficient Device Problem Information"
+    ],
+    "text": "Philips received a report that the patient suffered a burn to the outer left thigh during the examination. Unspecified treatment was provided, and the burn is expected to heal completely. A photograph provided with the report shows a small burn with three distinct contact points, exhibiting skin dimpling, blackening, and a waxy appearance. It was also reported that the patient did not have access to the nurse call light and that skin-to-coil contact occurred during the procedure. No medical intervention beyond the unspecified treatment was reported; however, based on the current clinical standard of care, the characteristics of the reported burn indicate a level of clinical severity for which referral to a specialized burn center or inpatient hospitalization may be warranted to prevent permanent impairment. Therefore, the reported event meets the criteria for a serious injury and this event has been determined to be reportable. Philips has started an investigation, a follow up report will be submitted once the investigation has been completed."
+   },
+   {
+    "report_id": "50814014",
+    "event_type": "malfunction",
+    "date_received": "20260918",
+    "report_source": "Manufacturer report",
+    "brand_name": "Achieva 1.5T Dstream",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Detachment of Device or Device Component"
+    ],
+    "text": "Philips received a report that the QBC rubber seal was loose. This seal is used for protection, to avoid the patient from potentially contacting the sharp edges of the Magnet covers.If this seal is loose it is likely that this could lead to serious injury. The QBC rubber seal that was loose, was replaced and the system was handed back to the customer for use.The failure of the QBC seal to remain in place is considered a malfunction.Remedial action:A field action was initiated under 2023-PD-MR-013.A Field Safety Notification was sent to the customers informing them about this potential issue.The updated Field correction has been made available to the field in Dec 2025 in the event country (the affected market)."
+   },
+   {
+    "report_id": "50814013",
+    "event_type": "malfunction",
+    "date_received": "20260918",
+    "report_source": "Manufacturer report",
+    "brand_name": "Ingenia",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Detachment of Device or Device Component"
+    ],
+    "text": "Philips received a report that the rubber on the Quadrature Body Coil (QBC) was peeling off. This seal is used for protection, to avoid the patient from potentially contacting the sharp edges of the Magnet covers.If this seal is damaged/comes off, it is likely that this could lead to serious injury. The QBC rubber was peeling off, was replaced and the system was returned to the customer for use.The failure of the QBC seal to remain in place is considered a malfunction.Remedial action:A field action was initiated under 2023-PD-MR-013.A Field Safety Notification was sent to the customers informing them about this potential issue.The updated Field correction has been made available to the field in Dec 2025 in the event country (the affected market)."
+   },
+   {
+    "report_id": "50797884",
+    "event_type": "malfunction",
+    "date_received": "20260917",
+    "report_source": "Manufacturer report",
+    "brand_name": "Achieva 3.0T TX",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Detachment of Device or Device Component"
+    ],
+    "text": "Philips received a report that the Quadrature Body Coil (QBC) seal has detached. This seal is used for protection, to avoid the patient from potentially contacting the sharp edges of the Magnet covers.If this seal detached it is likely that this could lead to serious injury. The issue with the Quadrature Body Coil (QBC) seal, which had detached, was repaired by re-securing and fixing the QBC sealing strip in place, and the system was handed back to the customer for use.The failure of the QBC seal to remain in place is considered a malfunction.Remedial action:A field action was initiated under 2023-PD-MR-013.A Field Safety Notification was sent to the customers informing them about this potential issue.The updated Field correction has been made available to the field in Dec 2025 in the event country (the affected market)."
+   },
+   {
+    "report_id": "50797883",
+    "event_type": "malfunction",
+    "date_received": "20260917",
+    "report_source": "Manufacturer report",
+    "brand_name": "Achieva 3.0T Dstream",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Detachment of Device or Device Component"
+    ],
+    "text": "Philips received a report that the upper Quadrature Body Coil (QBC) seal has worn. This seal is used for protection, to avoid the patient from potentially contacting the sharp edges of the Magnet covers. If this seal comes off it is likely that this could lead to serious injury. The issue of upper Quadrature Body Coil (QBC) seal that had worn, was replaced and the system was handed back to the customer for use.The failure of the QBC seal to remain in place is considered a malfunction. Remedial action: A field action was initiated under 2023-PD-MR-013. A Field Safety Notification was sent to the customers informing them about this potential issue. The updated Field correction has been made available to the field in Dec 2025 in the event country (the affected market)."
+   },
+   {
+    "report_id": "50797882",
+    "event_type": "malfunction",
+    "date_received": "20260917",
+    "report_source": "Manufacturer report",
+    "brand_name": "Ingenia",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Detachment of Device or Device Component"
+    ],
+    "text": "Philips received a report that the upper and lower Quadrature Body Coil (QBC) seal has damaged. This seal is used for protection, to avoid the patient from potentially contacting the sharp edges of the Magnet covers.If this seal is damaged it is likely that this could lead to serious injury. The issue of upper and lower Quadrature Body Coil (QBC) seal that had damaged, was replaced and the system was handed back to the customer for use.The failure of the QBC seal to remain in place is considered a malfunction.Remedial action:A field action was initiated under 2023-PD-MR-013.A Field Safety Notification was sent to the customers informing them about this potential issue.The updated Field correction has been made available to the field in Dec 2025 in the event country (the affected market)."
+   },
+   {
+    "report_id": "50773740",
+    "event_type": "injury",
+    "date_received": "20260915",
+    "report_source": "Voluntary report",
+    "brand_name": "MRI",
+    "manufacturer": "UNK",
+    "product_problems": [
+     "Excessive Heating"
+    ],
+    "text": "I am filing a formal patient safety complaint about an MRI at (b)(6) on (b)(6) 2026. Approximatelyone to two weeks earlier I presented for this exam on two separate appointments andwas turned away both times because the MRI machine was not working. I wasrescheduled. On this visit I was placed in that same machine. I was not given anemergency call bulb or call button. While in the scanner I felt warmth in my left arm thatbecame progressively hotter. I have had MRI examinations before and have neverexperienced this sensation. Because this unit had already been out of service at mytwo prior visits, I reported the heating immediately so that I would be removed before aninjury occurred. Staff could not hear me. I had to call out several times. I was told thesensation was normal. Staff remained focused on completing the remainingapproximately four minutes of the exam rather than stopping the scan and taking meout of the magnet. With no call bulb and no response to my concern, I had to get myselfout of the machine. The examination was not completed. My knee is now swollen. I amobtaining medical documentation. I was offered another reschedule. I am not refusing amedically necessary MRI. I do not accept a reschedule as resolution of this event. Irequest in writing: 1. A patient-safety / incident report 2. Service and downtime recordsfor this MRI unit for the two cancelled appointments and the date of this exam 3. Namesof the technologist and supervisor 4. Confirmation that progressive heating reported bya patient was logged 5. Confirmation whether the scanner was inspected after the priorbreakdowns and after this exam before it was used again 6. Options to complete theMRI on a different machine, with a different technologist, or at a different site, with acall bulb issued and tested before the scan (b)(6)."
+   },
+   {
+    "report_id": "50766660",
+    "event_type": "injury",
+    "date_received": "20260915",
+    "report_source": "Manufacturer report",
+    "brand_name": "Ingenia",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Insufficient Device Problem Information"
+    ],
+    "text": "Philips received a report that a 69-year-old female patient sustained a second-degree thermal burn with blistering on the upper left arm during an MRI examination. During the scan, the patient experienced an intense sensation of heat and activated the nurse call button. Following completion of the examination, a burn injury measuring approximately 1 × 3 cm with blister formation was identified. The reported injury was documented with supporting photographs, a second degree burn with a blister >2.5 cm occurred. The patient was treated with a cool, damp cloth to the affected area. Given the severity of the injury, the presence of a second-degree burn with blistering, and the inability to rule out the potential for permanent impairment, the event meets the criteria for a serious injury. Therefore, this event has been determined to be reportable. Philips has started an investigation, a follow up report will be submitted once the investigation has been completed."
+   },
+   {
+    "report_id": "50766297",
+    "event_type": "malfunction",
+    "date_received": "20260915",
+    "report_source": "Manufacturer report",
+    "brand_name": "Achieva 1.5T New",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Detachment of Device or Device Component"
+    ],
+    "text": "Philips received a report that the Quadrature body coil (QBC) seal on the front cone had peeled off. This seal is used for protection, to avoid the patient from potentially contacting the sharp edges of the Magnet covers.If this seal is damaged/peeled off, it is likely that this could lead to serious injury. The QBC seal that was peeled off and damaged, was resolved by implementing FCO and the system was handed back to the customer for use.The failure of the QBC seal to remain in place is considered a malfunction.Remedial action:A field action was initiated under 2023-PD-MR-013.A Field Safety Notification was sent to the customers informing them about this potential issue.The updated Field correction has been made available to the field in Dec 2025 in the event country (the affected market)."
+   },
+   {
+    "report_id": "50751984",
+    "event_type": "malfunction",
+    "date_received": "20260914",
+    "report_source": "Manufacturer report",
+    "brand_name": "Achieva 1.5T Dstream",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Detachment of Device or Device Component"
+    ],
+    "text": "Philips received a report that the upper Quadrature Body Coil (QBC) seal was loose. This seal is used for protection, to avoid the patient from potentially contacting the sharp edges of the Magnet covers.If this seal is loose, it is likely that this could lead to serious injury. The QBC seal upper that was coming loose, was replaced and the system was handed back to the customer for use.The failure of the QBC seal to remain in place is considered a malfunction.Remedial action:A field action was initiated under 2023-PD-MR-013.A Field Safety Notification was sent to the customers informing them about this potential issue.The updated Field correction has been made available to the field in Dec 2025 in the event country (the affected market)."
+   },
+   {
+    "report_id": "50686107",
+    "event_type": "malfunction",
+    "date_received": "20260909",
+    "report_source": "Manufacturer report",
+    "brand_name": "Ingenia",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Detachment of Device or Device Component"
+    ],
+    "text": "Philips received a report that the QBC seal cone was damaged. This seal is used for protection, to avoid the patient from potentially contacting the sharp edges of the Magnet covers.If this seal is damaged, it is likely that this could lead to serious injury. The QBC seal cone that was damaged, was replaced, and the system was returned to the customer for use.The failure of the QBC seal to remain in place is considered a malfunction.Remedial action:A field action was initiated under 2023-PD-MR-013.A Field Safety Notification was sent to the customers informing them about this potential issue.The updated Field correction has been made available to the field in Dec 2025 in the event country (the affected market)."
+   },
+   {
+    "report_id": "50666638",
+    "event_type": "injury",
+    "date_received": "20260908",
+    "report_source": "Manufacturer report",
+    "brand_name": "MAGNETOM Altea",
+    "manufacturer": "Siemens Healthineers AG",
+    "product_problems": [
+     "Improper or Incorrect Procedure or Method"
+    ],
+    "text": "Siemens Healthineers (Siemens) was notified of a potential patient injury associated with a MAGNETOM Altea MRI system. According to the report, the patient complained of hearing issues following an MRI examination on (b)(6)2026. The patient wore only headphones during the scan and did not use the combination of headphones and earplugs specified for hearing protection. It was confirmed that the hearing protection warning signage was posted on the examination room door. The patient was evaluated by an ENT specialist on (b)(6)2026. Based on additional information received on September 2, 2026, Siemens was informed by the customer that the patient was diagnosed with Stage 2 temporomandibular joint (TMJ) disorder. The customer indicated that no additional information is available from the patient's ENT specialist or directly from the patient. The customer also confirmed that the patient did not use the hearing protection prescribed in the system Instructions for Use and wore only the standard Siemens headphones during the examination. As sufficient information is not available to rule out the occurrence of a serious injury, this event is being reported. H3, H6: The investigation is ongoing. A supplemental report will be submitted upon receipt of additional reportable information and/or investigation completion.H6: Component Code G07002 was utilized for hearing protection."
+   },
+   {
+    "report_id": "50665270",
+    "event_type": "injury",
+    "date_received": "20260908",
+    "report_source": "Manufacturer report",
+    "brand_name": "Achieva 3.0T TX",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Adverse Event Without Identified Device or Use Problem"
+    ],
+    "text": "Philips received a report that a patient suffered tinnitus as a result of an MR examination back in Oct 2025. This complaint concerns the (allegation of) occurrence of an acoustic noise-related incident to a patient while using a Philips MR system. The patient indicated he suffers tinnitus since the MR scan that was performed in Oct 2025 on a Philips MR system. The patient had pre-existing mild tinnitus. According to the hospital, the patient was given earplugs and headphones and a lab technician checked whether the hearing protection was working properly using a sound test prior to the examination. The event was not reported to Philips in Oct 2025, the event was identified based on a news article about a court case.Most likely the product operated as intended. No logfile analysis was possible as the incident took place Oct 2025, logfiles from this date are no longer available on the device. No service activity was identified around the time of the event. The risks associated with acoustic noise (i.e. normal condition risks) are identified and assessed in the Risk Management File. The Instructions for Use (IfU) contains a number of warnings and cautions to assist operators in avoiding acoustic noise-related incidents. Labeling is compliant with all regulatory requirements.It is known that the acoustic noise level of an MR system may be high enough to cause discomfort when no adequate hearing protection is applied. Philips MR scanners fulfill the requirements as formulated in the IEC60601-2-33 standard with respect to the allowed maximum acoustic noise production and are designed to be quieter than the level set in this standard. Adequate hearing protection is necessary to reduce the risk of hearing impairment. The IfU contains safety information for the user.CONCLUSION: There was no indication of a MR system malfunction mentioned which could have contributed to the incident. Therefore, it was concluded that high levels of acoustic noise during normal operation could have caused the worsening of the pre-existing tinnitus."
+   },
+   {
+    "report_id": "50646076",
+    "event_type": "malfunction",
+    "date_received": "20260907",
+    "report_source": "Manufacturer report",
+    "brand_name": "Achieva 3.0 T",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Detachment of Device or Device Component"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50606181",
+    "event_type": "malfunction",
+    "date_received": "20260904",
+    "report_source": "Manufacturer report",
+    "brand_name": "Achieva 1.5T New",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Detachment of Device or Device Component"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50606180",
+    "event_type": "malfunction",
+    "date_received": "20260904",
+    "report_source": "Manufacturer report",
+    "brand_name": "Intera 1.5T Master/Nova",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Detachment of Device or Device Component"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50603832",
+    "event_type": "malfunction",
+    "date_received": "20260904",
+    "report_source": "Manufacturer report",
+    "brand_name": "Achieva 3.0T TX",
+    "manufacturer": "Philips Medical Systems Nederland B.V.",
+    "product_problems": [
+     "Detachment of Device or Device Component"
+    ],
+    "text": ""
+   }
+  ]
+ },
+ "recalls": {
+  "query_url": "https://api.fda.gov/device/recall.json?search=product_code:LNH&sort=event_date_initiated:desc&limit=100",
+  "matched_total": 723,
+  "stored": 100,
+  "records": [
+   {
+    "recall_number": "Z-3307-2026",
+    "event_number": "99834",
+    "recalling_firm": "Philips North America",
+    "product_description": "Ingenia Blue Seal SE and Blue Seal XE;\nModel number (REF): 1. 782185 (SE), 2. 782192 (XE);\nSoftware Versions: R11, R12 and R13;",
+    "reason_for_recall": "When exporting diffusion tensor imaging (DTI) scans from a MR system using the Enhanced\nMR DICOM format, the exports contain incorrect data (diffusion directions). If the Enhanced MR\nDICOM export is used in conjunction with third-party software for tractography (e.g. for mapping\nnerve fiber pathways in the brain), the software will not be able to correctly process the DTI data for\nreconstruction.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260828",
+    "cfres_id": "222668"
+   },
+   {
+    "recall_number": "Z-3308-2026",
+    "event_number": "99834",
+    "recalling_firm": "Philips North America",
+    "product_description": "Ingenia 1.5T, 1.5T CX, and 1.5T S;\nModel number (REF): 1. 781315 (1.5T), 2. 781341 (1.5T), 3. 781396 (1.5T), 4. 782115 (1.5T),\n5. 782140 (1.5T), 6. 781262 (1.5T CX), 7. 781347 (1.5T S);\nSoftware Versions: R11, R12 and R13;",
+    "reason_for_recall": "When exporting diffusion tensor imaging (DTI) scans from a MR system using the Enhanced\nMR DICOM format, the exports contain incorrect data (diffusion directions). If the Enhanced MR\nDICOM export is used in conjunction with third-party software for tractography (e.g. for mapping\nnerve fiber pathways in the brain), the software will not be able to correctly process the DTI data for\nreconstruction.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260828",
+    "cfres_id": "222669"
+   },
+   {
+    "recall_number": "Z-3309-2026",
+    "event_number": "99834",
+    "recalling_firm": "Philips North America",
+    "product_description": "Ingenia 3.0T and 3.0T CX;\nModel number (REF): 1. 781342 (3.0T), 2. 781377 (3.0T), 3. 782103 (3.0T), 4. 781271 (3.0T CX);\nSoftware Versions: R11, R12 and R13;",
+    "reason_for_recall": "When exporting diffusion tensor imaging (DTI) scans from a MR system using the Enhanced\nMR DICOM format, the exports contain incorrect data (diffusion directions). If the Enhanced MR\nDICOM export is used in conjunction with third-party software for tractography (e.g. for mapping\nnerve fiber pathways in the brain), the software will not be able to correctly process the DTI data for\nreconstruction.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260828",
+    "cfres_id": "222670"
+   },
+   {
+    "recall_number": "Z-3310-2026",
+    "event_number": "99834",
+    "recalling_firm": "Philips North America",
+    "product_description": "Ingenia Ambition S and Ingenia Ambition X.;\nModel number (REF): 1. 781359 (S), 2. 782108 (S), 3. 782139 (S), 4. 782159 (S), 5. 782194 (S), 6. 781356 (X), 7. 782109 (X), 8. 782138 (X), 9. 782160 (X), 10. 782195 (X);\nSoftware Versions: R11, R12 and R13;",
+    "reason_for_recall": "When exporting diffusion tensor imaging (DTI) scans from a MR system using the Enhanced\nMR DICOM format, the exports contain incorrect data (diffusion directions). If the Enhanced MR\nDICOM export is used in conjunction with third-party software for tractography (e.g. for mapping\nnerve fiber pathways in the brain), the software will not be able to correctly process the DTI data for\nreconstruction.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260828",
+    "cfres_id": "222671"
+   },
+   {
+    "recall_number": "Z-3311-2026",
+    "event_number": "99834",
+    "recalling_firm": "Philips North America",
+    "product_description": "Ingenia Elition S and Ingenia Elition X.;\nModel number (REF): 1. 781357 (S), 2. 782106 (S), 3. 782137 (S), 4. 782157 (S), 5. 781358 (X), 6. 782107 (X), 7. 782119 (X), 8. 782136 (X), 9. 782158 (X), 10. 782198 (X);\nSoftware Versions: R11, R12 and R13;",
+    "reason_for_recall": "When exporting diffusion tensor imaging (DTI) scans from a MR system using the Enhanced MR DICOM format, the exports contain incorrect data (diffusion directions). If the Enhanced MR DICOM export is used in conjunction with third-party software for tractography (e.g. for mapping nerve fiber pathways in the brain), the software will not be able to correctly process the DTI data for\nreconstruction.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260828",
+    "cfres_id": "222672"
+   },
+   {
+    "recall_number": "Z-3312-2026",
+    "event_number": "99834",
+    "recalling_firm": "Philips North America",
+    "product_description": "MR 5300;\nModel number (REF): 1. 782110, 2. 782152, 3. 782156, 4. 782196;\nSoftware Versions: R11, R12 and R13;",
+    "reason_for_recall": "When exporting diffusion tensor imaging (DTI) scans from a MR system using the Enhanced MR DICOM format, the exports contain incorrect data (diffusion directions). If the Enhanced MR\nDICOM export is used in conjunction with third-party software for tractography (e.g. for mapping nerve fiber pathways in the brain), the software will not be able to correctly process the DTI data for\nreconstruction.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260828",
+    "cfres_id": "222673"
+   },
+   {
+    "recall_number": "Z-3313-2026",
+    "event_number": "99834",
+    "recalling_firm": "Philips North America",
+    "product_description": "MR 7700;\nModel number (REF): 1. 782120, 2. 782153, 3. 782155, 4. 782199;\nSoftware Versions: R11, R12 and R13;",
+    "reason_for_recall": "When exporting diffusion tensor imaging (DTI) scans from a MR system using the Enhanced MR DICOM format, the exports contain incorrect data (diffusion directions). If the Enhanced MR\nDICOM export is used in conjunction with third-party software for tractography (e.g. for mapping nerve fiber pathways in the brain), the software will not be able to correctly process the DTI data for\nreconstruction.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260828",
+    "cfres_id": "222674"
+   },
+   {
+    "recall_number": "Z-3314-2026",
+    "event_number": "99834",
+    "recalling_firm": "Philips North America",
+    "product_description": "SmartPath to dStream for 1.5T, SmartPath to dStream for 3.0T, SmartPath to dStream for  XR and 3.0T, and SmartPath to Ingenia Elition X; Model number (REF): 1. 781260 (1.5T), 2. 782112 (1.5T), 3. 782146 (1.5T), 4. 782165 (1.5T), 5. 782145 (3.0T), 6. 782164 (3.0T), 7. 781270 (XR and 3.0T), 8. 782113 (XR and 3.0T), 9. 782129 (XR and 3.0T), 10. 782118 (Ingenia Elition X), 11. 782144 (Ingenia Elition X), 12. 782163 (Ingenia Elition X);\nSoftware Versions: R11, R12 and R13;",
+    "reason_for_recall": "When exporting diffusion tensor imaging (DTI) scans from a MR system using the Enhanced MR DICOM format, the exports contain incorrect data (diffusion directions). If the Enhanced MR\nDICOM export is used in conjunction with third-party software for tractography (e.g. for mapping nerve fiber pathways in the brain), the software will not be able to correctly process the DTI data for\nreconstruction.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260828",
+    "cfres_id": "222682"
+   },
+   {
+    "recall_number": "Z-3315-2026",
+    "event_number": "99834",
+    "recalling_firm": "Philips North America",
+    "product_description": "SmartPath to MR 7700;\nModel number (REF): 1. 782178, 2. 782207; \nSoftware Versions: R11, R12 and R13;",
+    "reason_for_recall": "When exporting diffusion tensor imaging (DTI) scans from a MR system using the Enhanced MR DICOM format, the exports contain incorrect data (diffusion directions). If the Enhanced MR\nDICOM export is used in conjunction with third-party software for tractography (e.g. for mapping nerve fiber pathways in the brain), the software will not be able to correctly process the DTI data for\nreconstruction.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260828",
+    "cfres_id": "222700"
+   },
+   {
+    "recall_number": "Z-3316-2026",
+    "event_number": "99834",
+    "recalling_firm": "Philips North America",
+    "product_description": "Upgrade dStream;\nModel number (REF): 782127; \nSoftware Versions: R11, R12 and R13;",
+    "reason_for_recall": "When exporting diffusion tensor imaging (DTI) scans from a MR system using the Enhanced MR DICOM format, the exports contain incorrect data (diffusion directions). If the Enhanced MR\nDICOM export is used in conjunction with third-party software for tractography (e.g. for mapping nerve fiber pathways in the brain), the software will not be able to correctly process the DTI data for\nreconstruction.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260828",
+    "cfres_id": "222701"
+   },
+   {
+    "recall_number": "Z-3317-2026",
+    "event_number": "99834",
+    "recalling_firm": "Philips North America",
+    "product_description": "Upgrade to MR 7700;\nModel number (REF): 782130; \nSoftware Versions: R11, R12 and R13;",
+    "reason_for_recall": "When exporting diffusion tensor imaging (DTI) scans from a MR system using the Enhanced MR DICOM format, the exports contain incorrect data (diffusion directions). If the Enhanced MR\nDICOM export is used in conjunction with third-party software for tractography (e.g. for mapping nerve fiber pathways in the brain), the software will not be able to correctly process the DTI data for\nreconstruction.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260828",
+    "cfres_id": "222702"
+   },
+   {
+    "recall_number": "Z-3318-2026",
+    "event_number": "99834",
+    "recalling_firm": "Philips North America",
+    "product_description": "Evolution upgrade 1.5T amd Evolution upgrade 3.0T;\nModel number (REF): 1. 782116 (1.5T), 2. 782148 (1.5T), 3. 782166 (1.5T), 4. 782201(1.5T), 5. 782117 (3.0T), 6. 782143 (3.0T), 7. 782162 (3.0T); \nSoftware Versions: R11, R12 and R13;",
+    "reason_for_recall": "When exporting diffusion tensor imaging (DTI) scans from a MR system using the Enhanced MR DICOM format, the exports contain incorrect data (diffusion directions). If the Enhanced MR\nDICOM export is used in conjunction with third-party software for tractography (e.g. for mapping nerve fiber pathways in the brain), the software will not be able to correctly process the DTI data for\nreconstruction.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260828",
+    "cfres_id": "222709"
+   },
+   {
+    "recall_number": "Z-3232-2026",
+    "event_number": "99769",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "Achieva 1.5T, Achieva 1.5T Conversion and Achieva 1.5T Initial system;\nModel Numbers (REF): 1. 781196 (Achieva 1.5T), 2. 781343 (Achieva 1.5T), 3. 781283 (Achieva 1.5T Conversion), 4. 781346 (Achieva 1.5 Conversion), 5. 781178 (Achieva 1.5T Initial System);",
+    "reason_for_recall": "A software issue will terminate an examination during the image reconstruction process if the scan parameters are manually adjusted such that reconstruction requirements exceed the available system memory.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260821",
+    "cfres_id": "222449"
+   },
+   {
+    "recall_number": "Z-3233-2026",
+    "event_number": "99769",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "Achieva 3.0T;\nModel Numbers (REF): 1. 781177, 2. 781277, 3. 781278, 4. 781344, 5. 781345;",
+    "reason_for_recall": "A software issue will terminate an examination during the image reconstruction process if the scan parameters are manually adjusted such that reconstruction requirements exceed the available system memory.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260821",
+    "cfres_id": "222450"
+   },
+   {
+    "recall_number": "Z-3234-2026",
+    "event_number": "99769",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "Achieva XR;\nModel Numbers (REF): 1. 781153, 2. 781253;",
+    "reason_for_recall": "A software issue will terminate an examination during the image reconstruction process if the scan parameters are manually adjusted such that reconstruction requirements exceed the available system memory.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260821",
+    "cfres_id": "222451"
+   },
+   {
+    "recall_number": "Z-3235-2026",
+    "event_number": "99769",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "Evolution upgrade 1.5T and Evolution upgrade 3.0T;\nModel Numbers (REF): 1. 782116 (1.5T), 2. 782148 (1.5T), 3. 782117 (3.0T), 4. 782143 (3.0T);",
+    "reason_for_recall": "A software issue will terminate an examination during the image reconstruction process if the scan parameters are manually adjusted such that reconstruction requirements exceed the available system memory.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260821",
+    "cfres_id": "222452"
+   },
+   {
+    "recall_number": "Z-3236-2026",
+    "event_number": "99769",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "Ingenia 1.5T, Ingenia 1.5T CX and Ingenia 1.5T S;\nModel Numbers (REF): 1. 781315(1.5T), 2. 781341(1.5T), 3. 781396(1.5T), 4. 782101(1.5T), 5. 782115(1.5T), 6. 782140(1.5T), 7. 781261(1.5T CX), 8. 781262(1.5T CX), 9. 781347(1.5T S);",
+    "reason_for_recall": "A software issue will terminate an examination during the image reconstruction process if the scan parameters are manually adjusted such that reconstruction requirements exceed the available system memory.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260821",
+    "cfres_id": "222455"
+   },
+   {
+    "recall_number": "Z-3237-2026",
+    "event_number": "99769",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "Ingenia Ambition S and Ingenia Ambition X;\nModel Numbers (REF): 1. 781359 (S), 2. 782108 (S), 3. 782139 (S), 4. 781356 (X), 5. 782109 (X), 6. 782138 (X);",
+    "reason_for_recall": "A software issue will terminate an examination during the image reconstruction process if the scan parameters are manually adjusted such that reconstruction requirements exceed the available system memory.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260821",
+    "cfres_id": "222456"
+   },
+   {
+    "recall_number": "Z-3238-2026",
+    "event_number": "99769",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "Ingenia 3.0T and Ingenia 3.0T CX;\nModel Numbers (REF): 1. 781342(3.0T), 2. 781377(3.0T), 3. 782103(3.0T), 4. 781271(3.0T CX), 5. 782105(3.0T CX);",
+    "reason_for_recall": "A software issue will terminate an examination during the image reconstruction process if the scan parameters are manually adjusted such that reconstruction requirements exceed the available system memory.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260821",
+    "cfres_id": "222457"
+   },
+   {
+    "recall_number": "Z-3239-2026",
+    "event_number": "99769",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "Ingenia Elition S and Ingenia Elition X;\nModel Numbers (REF): 1. 781357(S), 2. 782106(S), 3. 782137(S), 4. 781358(X), 5. 782107(X), 6. 782119(X), 7. 782136(X), 8. 782158(X);",
+    "reason_for_recall": "A software issue will terminate an examination during the image reconstruction process if the scan parameters are manually adjusted such that reconstruction requirements exceed the available system memory.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260821",
+    "cfres_id": "222458"
+   },
+   {
+    "recall_number": "Z-3240-2026",
+    "event_number": "99769",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "Name (Model Number): 1. Intera 1.5T (781195), 2. Intera 1.5T (781295), 3. Intera 1.5T Achieva IT Nova (781175), 4. Intera 1.5T Achieva Nova (781172), 5. Intera 1.5T Achieva Nova-Dual (781173), 6. Intera 1.5T Omni/Stellar (781104), 7. Intera Achieva 1.5T Pulsar (781171);",
+    "reason_for_recall": "A software issue will terminate an examination during the image reconstruction process if the scan parameters are manually adjusted such that reconstruction requirements exceed the available system memory.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260821",
+    "cfres_id": "222459"
+   },
+   {
+    "recall_number": "Z-3241-2026",
+    "event_number": "99769",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "MR 5300\nModel Number (REF): 1. 782110, 2. 782152;",
+    "reason_for_recall": "A software issue will terminate an examination during the image reconstruction process if the scan parameters are manually adjusted such that reconstruction requirements exceed the available system memory.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260821",
+    "cfres_id": "222460"
+   },
+   {
+    "recall_number": "Z-3242-2026",
+    "event_number": "99769",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "MR 7700 and Upgrade to MR 7700;\nModel Number (REF): 1. 782120, 2. 782153, 3. 782130 (Upgrade);",
+    "reason_for_recall": "A software issue will terminate an examination during the image reconstruction process if the scan parameters are manually adjusted such that reconstruction requirements exceed the available system memory.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260821",
+    "cfres_id": "222462"
+   },
+   {
+    "recall_number": "Z-3243-2026",
+    "event_number": "99769",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "SmartPath to dStream for 1.5T, SmartPath to dStream for 3.0T, SmartPath to dStream for XR and 3.0T, SmartPath to Ingenia Elition X;\nModel Numbers (REF): 1. 781260 (1.5T), 2. 782112 (1.5T), 3. 782146 (1.5T), 4. 782145 (3.0T), 5. 781270 (XR and 3.0T), 6. 782113 (XR and 3.0T), 7. 782129 (XR and 3.0T), 8. 782118 (Ingenia Elition X), 9. 782144 (Ingenia Elition X);",
+    "reason_for_recall": "A software issue will terminate an examination during the image reconstruction process if the scan parameters are manually adjusted such that reconstruction requirements exceed the available system memory.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260821",
+    "cfres_id": "222464"
+   },
+   {
+    "recall_number": "Z-1951-2026",
+    "event_number": "98779",
+    "recalling_firm": "Philips North America",
+    "product_description": "Philips Achieva 1.5T with MR Elastography (MRE). \n\n1. Model Number (REF): 781196.\n\n2. Model Number (REF): 781296.",
+    "reason_for_recall": "The potential for stiffness value errors when a specific range of image reconstruction parameters is used in combination with Resoundant's algorithm, leading to the reconstruction voxel size settings in the default MRE scan protocol displaying too small.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260414",
+    "cfres_id": "219767"
+   },
+   {
+    "recall_number": "Z-1952-2026",
+    "event_number": "98779",
+    "recalling_firm": "Philips North America",
+    "product_description": "Philips Achieva 1.5T Initial system with MR Elastography (MRE). \n\n1. Model Number (REF): 781178.",
+    "reason_for_recall": "The potential for stiffness value errors when a specific range of image reconstruction parameters is used in combination with Resoundant's algorithm, leading to the reconstruction voxel size settings in the default MRE scan protocol displaying too small.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260414",
+    "cfres_id": "219768"
+   },
+   {
+    "recall_number": "Z-1953-2026",
+    "event_number": "98779",
+    "recalling_firm": "Philips North America",
+    "product_description": "Philips Achieva 3.0T with MR Elastography (MRE). \n\n1. Model Number (REF): 781278.",
+    "reason_for_recall": "The potential for stiffness value errors when a specific range of image reconstruction parameters is used in combination with Resoundant's algorithm, leading to the reconstruction voxel size settings in the default MRE scan protocol displaying too small.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260414",
+    "cfres_id": "219769"
+   },
+   {
+    "recall_number": "Z-1954-2026",
+    "event_number": "98779",
+    "recalling_firm": "Philips North America",
+    "product_description": "Philips Evolution Upgrade 1.5T with MR Elastography (MRE). \n\n1. Model Number (REF): 782116\n\n2. Model Number (REF): 782148. \n\n3. Model Number (REF): 782166.",
+    "reason_for_recall": "The potential for stiffness value errors when a specific range of image reconstruction parameters is used in combination with Resoundant's algorithm, leading to the reconstruction voxel size settings in the default MRE scan protocol displaying too small.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260414",
+    "cfres_id": "219770"
+   },
+   {
+    "recall_number": "Z-1955-2026",
+    "event_number": "98779",
+    "recalling_firm": "Philips North America",
+    "product_description": "Philips Evolution upgrade 3.0T with MR Elastography (MRE). \n\n1. Model Number (REF): 782143. \n\n2. Model Number (REF): 782162.",
+    "reason_for_recall": "The potential for stiffness value errors when a specific range of image reconstruction parameters is used in combination with Resoundant's algorithm, leading to the reconstruction voxel size settings in the default MRE scan protocol displaying too small.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260414",
+    "cfres_id": "219772"
+   },
+   {
+    "recall_number": "Z-1956-2026",
+    "event_number": "98779",
+    "recalling_firm": "Philips North America",
+    "product_description": "Philips Ingenia 1.5T with MR Elastography (MRE). \n\n1. Model Number (REF): 781315. \n\n2. Model Number (REF): 781341. \n\n3. Model Number (REF): 781396. \n\n4. Model Number (REF): 782115. \n\n510(k) Numbers: K163116, K173079, K183063, K193215, K213583, K223458, K251397, K251808",
+    "reason_for_recall": "The potential for stiffness value errors when a specific range of image reconstruction parameters is used in combination with Resoundant's algorithm, leading to the reconstruction voxel size settings in the default MRE scan protocol displaying too small.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260414",
+    "cfres_id": "219773"
+   },
+   {
+    "recall_number": "Z-1957-2026",
+    "event_number": "98779",
+    "recalling_firm": "Philips North America",
+    "product_description": "Philips Ingenia 1.5T CX with MR Elastography (MRE). \n\n1. Model Number (REF): 781262.",
+    "reason_for_recall": "The potential for stiffness value errors when a specific range of image reconstruction parameters is used in combination with Resoundant's algorithm, leading to the reconstruction voxel size settings in the default MRE scan protocol displaying too small.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260414",
+    "cfres_id": "219774"
+   },
+   {
+    "recall_number": "Z-1958-2026",
+    "event_number": "98779",
+    "recalling_firm": "Philips North America",
+    "product_description": "Philips Ingenia 3.0T with MR Elastography (MRE). \n\n1. Model Number (REF): 781342. \n\n2. Model Number (REF): 781377. \n\n3. Model Number (REF): 782103. \n\n510(k) Numbers: K163116, K173079, K183063, K193215, K213516, K213583, K223458, K251397, K251808",
+    "reason_for_recall": "The potential for stiffness value errors when a specific range of image reconstruction parameters is used in combination with Resoundant's algorithm, leading to the reconstruction voxel size settings in the default MRE scan protocol displaying too small.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260414",
+    "cfres_id": "219775"
+   },
+   {
+    "recall_number": "Z-1959-2026",
+    "event_number": "98779",
+    "recalling_firm": "Philips North America",
+    "product_description": "Philips Ingenia 3.0T CX with MR Elastography (MRE). \n\n1. Model Number (REF): 781271. \n\n2. Model Number (REF): 782105. \n\n\n510(k) Numbers: K173079, K183063, K193215, K213583, K223458, K251397, K251808.",
+    "reason_for_recall": "The potential for stiffness value errors when a specific range of image reconstruction parameters is used in combination with Resoundant's algorithm, leading to the reconstruction voxel size settings in the default MRE scan protocol displaying too small.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260414",
+    "cfres_id": "219857"
+   },
+   {
+    "recall_number": "Z-1960-2026",
+    "event_number": "98779",
+    "recalling_firm": "Philips North America",
+    "product_description": "Philips Ingenia Ambition S with MR Elastography (MRE). \n\n1. Model Number (REF): 781359. \n\n2. Model Number (REF): 782108. \n\n3. Model Number (REF): 782139.",
+    "reason_for_recall": "The potential for stiffness value errors when a specific range of image reconstruction parameters is used in combination with Resoundant's algorithm, leading to the reconstruction voxel size settings in the default MRE scan protocol displaying too small.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260414",
+    "cfres_id": "219858"
+   },
+   {
+    "recall_number": "Z-1961-2026",
+    "event_number": "98779",
+    "recalling_firm": "Philips North America",
+    "product_description": "Philips Ingenia Ambition X with MR Elastography (MRE). \n\n1. Model Number (REF): 781356. \n\n2. Model Number (REF): 782109. \n\n3. Model Number (REF): 782138. \n\n4. Model Number (REF): 782160.",
+    "reason_for_recall": "The potential for stiffness value errors when a specific range of image reconstruction parameters is used in combination with Resoundant's algorithm, leading to the reconstruction voxel size settings in the default MRE scan protocol displaying too small.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260414",
+    "cfres_id": "219859"
+   },
+   {
+    "recall_number": "Z-1962-2026",
+    "event_number": "98779",
+    "recalling_firm": "Philips North America",
+    "product_description": "Philips Ingenia Elition S with MR Elastography (MRE). \n\n1. Model Number (REF): 781357. \n\n2. Model Number (REF): 782106. \n\n3. Model Number (REF): 782137.",
+    "reason_for_recall": "The potential for stiffness value errors when a specific range of image reconstruction parameters is used in combination with Resoundant's algorithm, leading to the reconstruction voxel size settings in the default MRE scan protocol displaying too small.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260414",
+    "cfres_id": "219860"
+   },
+   {
+    "recall_number": "Z-1963-2026",
+    "event_number": "98779",
+    "recalling_firm": "Philips North America",
+    "product_description": "Philips Ingenia Elition X with MR Elastography (MRE). \n\n1. Model Number (REF): 781358. \n\n2. Model Number (REF): 782107. \n\n3. Model Number (REF): 782136. \n\n\n\n510(k) Numbers: K213516, K223458, K230972, K232030, K251397, K251808",
+    "reason_for_recall": "The potential for stiffness value errors when a specific range of image reconstruction parameters is used in combination with Resoundant's algorithm, leading to the reconstruction voxel size settings in the default MRE scan protocol displaying too small.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260414",
+    "cfres_id": "219861"
+   },
+   {
+    "recall_number": "Z-1964-2026",
+    "event_number": "98779",
+    "recalling_firm": "Philips North America",
+    "product_description": "Philips MR 7700 with MR Elastography (MRE). \n\n1. Model Number (REF): 782120. \n\n2. Model Number (REF): 782153.",
+    "reason_for_recall": "The potential for stiffness value errors when a specific range of image reconstruction parameters is used in combination with Resoundant's algorithm, leading to the reconstruction voxel size settings in the default MRE scan protocol displaying too small.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260414",
+    "cfres_id": "219862"
+   },
+   {
+    "recall_number": "Z-1965-2026",
+    "event_number": "98779",
+    "recalling_firm": "Philips North America",
+    "product_description": "Philips SmartPath to dStream for 1.5T with MR Elastography (MRE). \n\n1. Model Number (REF): 781260. \n\n2. Model Number (REF): 782112.",
+    "reason_for_recall": "The potential for stiffness value errors when a specific range of image reconstruction parameters is used in combination with Resoundant's algorithm, leading to the reconstruction voxel size settings in the default MRE scan protocol displaying too small.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260414",
+    "cfres_id": "219863"
+   },
+   {
+    "recall_number": "Z-1966-2026",
+    "event_number": "98779",
+    "recalling_firm": "Philips North America",
+    "product_description": "Philips SmartPath to dStream for 3.0T with MR Elastography (MRE). \n\n1. Model Number (REF): 782145.",
+    "reason_for_recall": "The potential for stiffness value errors when a specific range of image reconstruction parameters is used in combination with Resoundant's algorithm, leading to the reconstruction voxel size settings in the default MRE scan protocol displaying too small.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260414",
+    "cfres_id": "219864"
+   },
+   {
+    "recall_number": "Z-1967-2026",
+    "event_number": "98779",
+    "recalling_firm": "Philips North America",
+    "product_description": "Philips SmartPath to dStream for XR and 3.0T with MR Elastography (MRE). \n\n1. Model Number (REF): 781270. \n\n2. Model Number (REF): 782113.",
+    "reason_for_recall": "The potential for stiffness value errors when a specific range of image reconstruction parameters is used in combination with Resoundant's algorithm, leading to the reconstruction voxel size settings in the default MRE scan protocol displaying too small.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260414",
+    "cfres_id": "219865"
+   },
+   {
+    "recall_number": "Z-1968-2026",
+    "event_number": "98779",
+    "recalling_firm": "Philips North America",
+    "product_description": "Philips SmartPath to Ingenia Elition X with MR Elastography (MRE). \n\n1. Model Number (REF): 782118. \n\n2. Model Number (REF): 782144.  \n\n3. Model Number (REF): 782163.",
+    "reason_for_recall": "The potential for stiffness value errors when a specific range of image reconstruction parameters is used in combination with Resoundant's algorithm, leading to the reconstruction voxel size settings in the default MRE scan protocol displaying too small.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260414",
+    "cfres_id": "219866"
+   },
+   {
+    "recall_number": "Z-1969-2026",
+    "event_number": "98779",
+    "recalling_firm": "Philips North America",
+    "product_description": "Philips Upgrade to MR 7700 with MR Elastography (MRE). \n\n1. Model Number (REF): 782130.",
+    "reason_for_recall": "The potential for stiffness value errors when a specific range of image reconstruction parameters is used in combination with Resoundant's algorithm, leading to the reconstruction voxel size settings in the default MRE scan protocol displaying too small.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260414",
+    "cfres_id": "219867"
+   },
+   {
+    "recall_number": "Z-1767-2026",
+    "event_number": "98579",
+    "recalling_firm": "GE Healthcare LLC",
+    "product_description": "SIGNA Premier systems",
+    "reason_for_recall": "Whole-Body MR scanners used to produce images of the inside of the human body to aid diagnosis of disease may have been manufactured/serviced with ferrous (steel) fittings instead of non-ferrous (brass) fittings on the magnet rear and if system is accessed to perform service while the magnet is ramped, the magnetic field could attract the ferrous fittings potentially resulting in personnel injury.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260227",
+    "cfres_id": "219106"
+   },
+   {
+    "recall_number": "Z-1017-2026",
+    "event_number": "98112",
+    "recalling_firm": "Canon Medical System, USA, INC.",
+    "product_description": "VANTAGE GALAN 3T\nModel MRT-3020/MEXL-3020",
+    "reason_for_recall": "There is a potential for formation of ice occurring in the venting system of the superconducting magnet of the MRI systems. if a quench occurs in this condition, helium gas may not be able to escape via the designed vent paths, and the pressure in the helium vessel may rise.  This pressure build-up could eventually rupture the helium vessel, causing helium gas to be released into the MR scanning room.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251219",
+    "cfres_id": "217628"
+   },
+   {
+    "recall_number": "Z-1018-2026",
+    "event_number": "98112",
+    "recalling_firm": "Canon Medical System, USA, INC.",
+    "product_description": "VANTAGE TITAN 3T\nModel MRT-3010/MEXL-3010",
+    "reason_for_recall": "There is a potential for formation of ice occurring in the venting system of the superconducting magnet of the MRI systems. if a quench occurs in this condition, helium gas may not be able to escape via the designed vent paths, and the pressure in the helium vessel may rise.  This pressure build-up could eventually rupture the helium vessel, causing helium gas to be released into the MR scanning room.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251219",
+    "cfres_id": "217629"
+   },
+   {
+    "recall_number": "Z-1204-2026",
+    "event_number": "98111",
+    "recalling_firm": "Philips North America",
+    "product_description": "Evolution Upgrade 1.5T. \nProduct Codes (REF): (1) 782148, (2) 782116. \nMR systems with SW version R11.1 and R12.1.",
+    "reason_for_recall": "The potential for stiffness value errors when viewing exported MR Elastography (MRE) stiffness maps to viewer Picture Archiving and Communication System (PACS).",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251203",
+    "cfres_id": "217633"
+   },
+   {
+    "recall_number": "Z-1205-2026",
+    "event_number": "98111",
+    "recalling_firm": "Philips North America",
+    "product_description": "Evolution Upgrade 3.0T. \nProduct Code (REF): 782143. \nMR systems with SW version R11.1 and R12.1.",
+    "reason_for_recall": "The potential for stiffness value errors when viewing exported MR Elastography (MRE) stiffness maps to viewer Picture Archiving and Communication System (PACS).",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251203",
+    "cfres_id": "217634"
+   },
+   {
+    "recall_number": "Z-1206-2026",
+    "event_number": "98111",
+    "recalling_firm": "Philips North America",
+    "product_description": "Ingenia 1.5T. \nProduct Code (REF): (1) 781341, (2) 781396. \nMR systems with SW version R11.1 and R12.1.",
+    "reason_for_recall": "The potential for stiffness value errors when viewing exported MR Elastography (MRE) stiffness maps to viewer Picture Archiving and Communication System (PACS).",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251203",
+    "cfres_id": "217636"
+   },
+   {
+    "recall_number": "Z-1207-2026",
+    "event_number": "98111",
+    "recalling_firm": "Philips North America",
+    "product_description": "Ingenia 3.0T. \nProduct Code (REF): (1) 781342, (2) 781377. \nMR systems with SW version R11.1 and R12.1.",
+    "reason_for_recall": "The potential for stiffness value errors when viewing exported MR Elastography (MRE) stiffness maps to viewer Picture Archiving and Communication System (PACS).",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251203",
+    "cfres_id": "217637"
+   },
+   {
+    "recall_number": "Z-1208-2026",
+    "event_number": "98111",
+    "recalling_firm": "Philips North America",
+    "product_description": "Ingenia 3.0T CX. \nProduct Code (REF): 781271. \nMR systems with SW version R11.1 and R12.1.",
+    "reason_for_recall": "The potential for stiffness value errors when viewing exported MR Elastography (MRE) stiffness maps to viewer Picture Archiving and Communication System (PACS).",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251203",
+    "cfres_id": "217638"
+   },
+   {
+    "recall_number": "Z-1209-2026",
+    "event_number": "98111",
+    "recalling_firm": "Philips North America",
+    "product_description": "Ingenia Ambition S. \nProduct Code (REF): 782108. \nMR systems with SW version R11.1 and R12.1.",
+    "reason_for_recall": "The potential for stiffness value errors when viewing exported MR Elastography (MRE) stiffness maps to viewer Picture Archiving and Communication System (PACS).",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251203",
+    "cfres_id": "217639"
+   },
+   {
+    "recall_number": "Z-1210-2026",
+    "event_number": "98111",
+    "recalling_firm": "Philips North America",
+    "product_description": "Ingenia Ambition X. \nProduct Code (REF): (1) 781356, (2) 782109, (3)782138. \nMR systems with SW version R11.1 and R12.1.",
+    "reason_for_recall": "The potential for stiffness value errors when viewing exported MR Elastography (MRE) stiffness maps to viewer Picture Archiving and Communication System (PACS).",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251203",
+    "cfres_id": "217640"
+   },
+   {
+    "recall_number": "Z-1211-2026",
+    "event_number": "98111",
+    "recalling_firm": "Philips North America",
+    "product_description": "Ingenia Elition S. \nProduct Code (REF): (1) 781357, (2) 782106, (3)782137. \nMR systems with SW version R11.1 and R12.1.",
+    "reason_for_recall": "The potential for stiffness value errors when viewing exported MR Elastography (MRE) stiffness maps to viewer Picture Archiving and Communication System (PACS).",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251203",
+    "cfres_id": "217641"
+   },
+   {
+    "recall_number": "Z-1212-2026",
+    "event_number": "98111",
+    "recalling_firm": "Philips North America",
+    "product_description": "Ingenia Elition X. \nProduct Code (REF): (1) 781358, (2) 782107, (3) 782136. \nMR systems with SW version R11.1 and R12.1.",
+    "reason_for_recall": "The potential for stiffness value errors when viewing exported MR Elastography (MRE) stiffness maps to viewer Picture Archiving and Communication System (PACS).",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251203",
+    "cfres_id": "217643"
+   },
+   {
+    "recall_number": "Z-1213-2026",
+    "event_number": "98111",
+    "recalling_firm": "Philips North America",
+    "product_description": "MR 7700. \nProduct Code (REF): (1) 782120, (2) 782153. \nMR systems with SW version R11.1 and R12.1.",
+    "reason_for_recall": "The potential for stiffness value errors when viewing exported MR Elastography (MRE) stiffness maps to viewer Picture Archiving and Communication System (PACS).",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251203",
+    "cfres_id": "217644"
+   },
+   {
+    "recall_number": "Z-1214-2026",
+    "event_number": "98111",
+    "recalling_firm": "Philips North America",
+    "product_description": "Upgrade to MR 7700. \nProduct Code (REF): 782130. \nMR systems with SW version R11.1 and R12.1.",
+    "reason_for_recall": "The potential for stiffness value errors when viewing exported MR Elastography (MRE) stiffness maps to viewer Picture Archiving and Communication System (PACS).",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251203",
+    "cfres_id": "217645"
+   },
+   {
+    "recall_number": "Z-1215-2026",
+    "event_number": "98111",
+    "recalling_firm": "Philips North America",
+    "product_description": "SmartPath to dStream for 3.0T. \nProduct Code (REF): 782145. \nMR systems with SW version R11.1 and R12.1.",
+    "reason_for_recall": "The potential for stiffness value errors when viewing exported MR Elastography (MRE) stiffness maps to viewer Picture Archiving and Communication System (PACS).",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251203",
+    "cfres_id": "217646"
+   },
+   {
+    "recall_number": "Z-1216-2026",
+    "event_number": "98111",
+    "recalling_firm": "Philips North America",
+    "product_description": "SmartPath to dStream for XR and 3.0T. \nProduct Code (REF): 781270. \nMR systems with SW version R11.1 and R12.1.",
+    "reason_for_recall": "The potential for stiffness value errors when viewing exported MR Elastography (MRE) stiffness maps to viewer Picture Archiving and Communication System (PACS).",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251203",
+    "cfres_id": "217647"
+   },
+   {
+    "recall_number": "Z-0327-2026",
+    "event_number": "97735",
+    "recalling_firm": "Canon Medical System, USA, INC.",
+    "product_description": "VANTAGE GALAN 3T. CMSC Model: MRT-3020/U7. Model Number: MEXL-3020/B7.",
+    "reason_for_recall": "Affected system contains components that do not meet the required distance between electrodes for compliance with the IEC 60601-1 standard for medical electrical equipment.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251016",
+    "cfres_id": "216466"
+   },
+   {
+    "recall_number": "Z-0431-2026",
+    "event_number": "97845",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "MAGNETOM Cima.X Upgrade. Model Number: 11689304.",
+    "reason_for_recall": "There is a potential for an ice blockage to form or currently exist within the primary and/or the auxiliary venting paths of the magnet helium containment venting system. In the event of a quench when both venting paths are blocked, helium gas may be unable to escape through the designed venting paths, leading to a pressure build-up within the helium containment system. This pressure build-up could ultimately rupture the helium containment system, potentially resulting in a helium leak into the scanning room.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251001",
+    "cfres_id": "216712"
+   },
+   {
+    "recall_number": "Z-0161-2026",
+    "event_number": "97750",
+    "recalling_firm": "IMPRIS Imaging Inc",
+    "product_description": "IMRIS Operating Suite, Neuro III-SV iMRI System, iMRX System, containing Siemens 3 Tesla\nMRI Magnet, Verio",
+    "reason_for_recall": "There is a potential safety issue associated with the magnet venting paths of the Siemens 3 Tesla MRI system within your IMRIS Operating Suite. Siemens notified IMRIS that an ice blockage may exist within the magnet venting system.  In the event of a quench, helium gas may be unable to escape through the designed vent paths, leading to a pressure build-up within the helium containment system which could ultimately rupture the helium containment system, potentially resulting in a helium leak into the scanning room.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250930",
+    "cfres_id": "216502"
+   },
+   {
+    "recall_number": "Z-0162-2026",
+    "event_number": "97750",
+    "recalling_firm": "IMPRIS Imaging Inc",
+    "product_description": "IMRIS Operating Suite, iMRI 3T S, containing Siemens 3 Tesla MRI Magnet, Skyra",
+    "reason_for_recall": "There is a potential safety issue associated with the magnet venting paths of the Siemens 3 Tesla MRI system within your IMRIS Operating Suite. Siemens notified IMRIS that an ice blockage may exist within the magnet venting system.  In the event of a quench, helium gas may be unable to escape through the designed vent paths, leading to a pressure build-up within the helium containment system which could ultimately rupture the helium containment system, potentially resulting in a helium leak into the scanning room.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250930",
+    "cfres_id": "216503"
+   },
+   {
+    "recall_number": "Z-0163-2026",
+    "event_number": "97750",
+    "recalling_firm": "IMPRIS Imaging Inc",
+    "product_description": "IMRIS Operating Suite, IMRIS iMRI 3T V, containing Siemens 3 Tesla MRI Magnet, vIDA",
+    "reason_for_recall": "There is a potential safety issue associated with the magnet venting paths of the Siemens 3 Tesla MRI system within your IMRIS Operating Suite. Siemens notified IMRIS that an ice blockage may exist within the magnet venting system.  In the event of a quench, helium gas may be unable to escape through the designed vent paths, leading to a pressure build-up within the helium containment system which could ultimately rupture the helium containment system, potentially resulting in a helium leak into the scanning room.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250930",
+    "cfres_id": "216504"
+   },
+   {
+    "recall_number": "Z-0164-2026",
+    "event_number": "97750",
+    "recalling_firm": "IMPRIS Imaging Inc",
+    "product_description": "IMRIS Operating Suite, InVision 3T Operating Suite, containing Siemens 3 Tesla MRI Magnet, Vida",
+    "reason_for_recall": "There is a potential safety issue associated with the magnet venting paths of the Siemens 3 Tesla MRI system within your IMRIS Operating Suite. Siemens notified IMRIS that an ice blockage may exist within the magnet venting system.  In the event of a quench, helium gas may be unable to escape through the designed vent paths, leading to a pressure build-up within the helium containment system which could ultimately rupture the helium containment system, potentially resulting in a helium leak into the scanning room.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250930",
+    "cfres_id": "216505"
+   },
+   {
+    "recall_number": "Z-2655-2025",
+    "event_number": "97530",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "BIOGRAPH One (DE). Model Number: 11689172.",
+    "reason_for_recall": "There is a potential for an ice blockage to form or currently exist within the magnet venting system. In the event of a quench, helium gas may be unable to escape through the designed venting paths, leading to a pressure build-up within the helium containment system. This pressure build-up could ultimately rupture the helium containment system, potentially resulting in a helium leak into the scanning room.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250828",
+    "cfres_id": "215854"
+   },
+   {
+    "recall_number": "Z-2656-2025",
+    "event_number": "97530",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "MAGNETOM Cima.X (DE). Model Number: 11647158.",
+    "reason_for_recall": "There is a potential for an ice blockage to form or currently exist within the magnet venting system. In the event of a quench, helium gas may be unable to escape through the designed venting paths, leading to a pressure build-up within the helium containment system. This pressure build-up could ultimately rupture the helium containment system, potentially resulting in a helium leak into the scanning room.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250828",
+    "cfres_id": "215855"
+   },
+   {
+    "recall_number": "Z-2657-2025",
+    "event_number": "97530",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "MAGNETOM Connectom.X. Model Number: 11371480.",
+    "reason_for_recall": "There is a potential for an ice blockage to form or currently exist within the magnet venting system. In the event of a quench, helium gas may be unable to escape through the designed venting paths, leading to a pressure build-up within the helium containment system. This pressure build-up could ultimately rupture the helium containment system, potentially resulting in a helium leak into the scanning room.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250828",
+    "cfres_id": "215856"
+   },
+   {
+    "recall_number": "Z-2658-2025",
+    "event_number": "97530",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "MAGNETOM Lumina (DE). Model Number: 11344916.",
+    "reason_for_recall": "There is a potential for an ice blockage to form or currently exist within the magnet venting system. In the event of a quench, helium gas may be unable to escape through the designed venting paths, leading to a pressure build-up within the helium containment system. This pressure build-up could ultimately rupture the helium containment system, potentially resulting in a helium leak into the scanning room.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250828",
+    "cfres_id": "215857"
+   },
+   {
+    "recall_number": "Z-2659-2025",
+    "event_number": "97530",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "MAGNETOM Prisma. Model Number: 10849582.",
+    "reason_for_recall": "There is a potential for an ice blockage to form or currently exist within the magnet venting system. In the event of a quench, helium gas may be unable to escape through the designed venting paths, leading to a pressure build-up within the helium containment system. This pressure build-up could ultimately rupture the helium containment system, potentially resulting in a helium leak into the scanning room.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250828",
+    "cfres_id": "215858"
+   },
+   {
+    "recall_number": "Z-2660-2025",
+    "event_number": "97530",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "MAGNETOM Skyra (DE). Model Number: 10432915.\n\n510(k) Numbers: K101347, K111242, K123510, K133435, K140253, K141977, K142515, K153343, K173592, K202014, K231560.",
+    "reason_for_recall": "There is a potential for an ice blockage to form or currently exist within the magnet venting system. In the event of a quench, helium gas may be unable to escape through the designed venting paths, leading to a pressure build-up within the helium containment system. This pressure build-up could ultimately rupture the helium containment system, potentially resulting in a helium leak into the scanning room.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250828",
+    "cfres_id": "215859"
+   },
+   {
+    "recall_number": "Z-2661-2025",
+    "event_number": "97530",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "MAGNETOM Skyra fit. Model Number: 10849580.",
+    "reason_for_recall": "There is a potential for an ice blockage to form or currently exist within the magnet venting system. In the event of a quench, helium gas may be unable to escape through the designed venting paths, leading to a pressure build-up within the helium containment system. This pressure build-up could ultimately rupture the helium containment system, potentially resulting in a helium leak into the scanning room.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250828",
+    "cfres_id": "215860"
+   },
+   {
+    "recall_number": "Z-2662-2025",
+    "event_number": "97530",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "MAGNETOM Skyra Fit BioMatrix. Model Number: 11516217.",
+    "reason_for_recall": "There is a potential for an ice blockage to form or currently exist within the magnet venting system. In the event of a quench, helium gas may be unable to escape through the designed venting paths, leading to a pressure build-up within the helium containment system. This pressure build-up could ultimately rupture the helium containment system, potentially resulting in a helium leak into the scanning room.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250828",
+    "cfres_id": "215861"
+   },
+   {
+    "recall_number": "Z-2663-2025",
+    "event_number": "97530",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "MAGNETOM Spectra as the following:\n\n1.  MAGNETOM Spectra. Model Number: 10837643.\n\n2. MAGNETOM Spectra (CN). Model Number: 10655588.",
+    "reason_for_recall": "There is a potential for an ice blockage to form or currently exist within the magnet venting system. In the event of a quench, helium gas may be unable to escape through the designed venting paths, leading to a pressure build-up within the helium containment system. This pressure build-up could ultimately rupture the helium containment system, potentially resulting in a helium leak into the scanning room.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250828",
+    "cfres_id": "215862"
+   },
+   {
+    "recall_number": "Z-2664-2025",
+    "event_number": "97530",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "MAGNETOM Verio. Model Number: 10276755.",
+    "reason_for_recall": "There is a potential for an ice blockage to form or currently exist within the magnet venting system. In the event of a quench, helium gas may be unable to escape through the designed venting paths, leading to a pressure build-up within the helium containment system. This pressure build-up could ultimately rupture the helium containment system, potentially resulting in a helium leak into the scanning room.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250828",
+    "cfres_id": "215863"
+   },
+   {
+    "recall_number": "Z-2665-2025",
+    "event_number": "97530",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "MAGNETOM Verio Dot. Model Number: 10684333.",
+    "reason_for_recall": "There is a potential for an ice blockage to form or currently exist within the magnet venting system. In the event of a quench, helium gas may be unable to escape through the designed venting paths, leading to a pressure build-up within the helium containment system. This pressure build-up could ultimately rupture the helium containment system, potentially resulting in a helium leak into the scanning room.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250828",
+    "cfres_id": "215864"
+   },
+   {
+    "recall_number": "Z-2666-2025",
+    "event_number": "97530",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "MAGNETOM Verio Dot Upgrade. Model Number: 10684334.",
+    "reason_for_recall": "There is a potential for an ice blockage to form or currently exist within the magnet venting system. In the event of a quench, helium gas may be unable to escape through the designed venting paths, leading to a pressure build-up within the helium containment system. This pressure build-up could ultimately rupture the helium containment system, potentially resulting in a helium leak into the scanning room.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250828",
+    "cfres_id": "215865"
+   },
+   {
+    "recall_number": "Z-2667-2025",
+    "event_number": "97530",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "MAGNETOM Vida (DE). Model Number: 11060815. \n\n\n510(k): K170396, K173617, K181433, K183254, K192924, K203443, K213693, K213805, K220425, K231560.",
+    "reason_for_recall": "There is a potential for an ice blockage to form or currently exist within the magnet venting system. In the event of a quench, helium gas may be unable to escape through the designed venting paths, leading to a pressure build-up within the helium containment system. This pressure build-up could ultimately rupture the helium containment system, potentially resulting in a helium leak into the scanning room.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250828",
+    "cfres_id": "215866"
+   },
+   {
+    "recall_number": "Z-2668-2025",
+    "event_number": "97530",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "MAGNETOM Vida Fit. Model Number: 11410481.",
+    "reason_for_recall": "There is a potential for an ice blockage to form or currently exist within the magnet venting system. In the event of a quench, helium gas may be unable to escape through the designed venting paths, leading to a pressure build-up within the helium containment system. This pressure build-up could ultimately rupture the helium containment system, potentially resulting in a helium leak into the scanning room.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250828",
+    "cfres_id": "215867"
+   },
+   {
+    "recall_number": "Z-2200-2025",
+    "event_number": "97172",
+    "recalling_firm": "Philips North America",
+    "product_description": "Achieva 3.0T; \nModel Numbers (REF): (1) 781177, (2) 781277, (3) 781278, (4) 781344, (5) 781345;",
+    "reason_for_recall": "The potential for component failures in the Gradient Coil of the affected MR systems may act as a heat source with a potential to produce smoke and/or fire.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250630",
+    "cfres_id": "214737"
+   },
+   {
+    "recall_number": "Z-2201-2025",
+    "event_number": "97172",
+    "recalling_firm": "Philips North America",
+    "product_description": "Achieva XR; \nModel Numbers (REF): (1) 781153, (2) 781253;",
+    "reason_for_recall": "The potential for component failures in the Gradient Coil of the affected MR systems may act as a heat source with a potential to produce smoke and/or fire.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250630",
+    "cfres_id": "214738"
+   },
+   {
+    "recall_number": "Z-2202-2025",
+    "event_number": "97172",
+    "recalling_firm": "Philips North America",
+    "product_description": "Evolution Upgrade 1.5T \nModel Numbers (REF): (1) 782116, (2) 782148;",
+    "reason_for_recall": "The potential for component failures in the Gradient Coil of the affected MR systems may act as a heat source with a potential to produce smoke and/or fire.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250630",
+    "cfres_id": "214739"
+   },
+   {
+    "recall_number": "Z-2203-2025",
+    "event_number": "97172",
+    "recalling_firm": "Philips North America",
+    "product_description": "Evolution Upgrade 3.0T \nModel Numbers (REF): (1) 782117, (2) 782143;",
+    "reason_for_recall": "The potential for component failures in the Gradient Coil of the affected MR systems may act as a heat source with a potential to produce smoke and/or fire.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250630",
+    "cfres_id": "214740"
+   },
+   {
+    "recall_number": "Z-2204-2025",
+    "event_number": "97172",
+    "recalling_firm": "Philips North America",
+    "product_description": "Ingenia 1.5T\nModel Numbers (REF): (1) 781315, (2) 718641, (3) 781396, (4) 782101, (5) 782115, (6) 782140;",
+    "reason_for_recall": "The potential for component failures in the Gradient Coil of the affected MR systems may act as a heat source with a potential to produce smoke and/or fire.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250630",
+    "cfres_id": "214741"
+   },
+   {
+    "recall_number": "Z-2205-2025",
+    "event_number": "97172",
+    "recalling_firm": "Philips North America",
+    "product_description": "Ingenia 1.5T S\nModel Number (REF): 781347;",
+    "reason_for_recall": "The potential for component failures in the Gradient Coil of the affected MR systems may act as a heat source with a potential to produce smoke and/or fire.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250630",
+    "cfres_id": "214742"
+   },
+   {
+    "recall_number": "Z-2206-2025",
+    "event_number": "97172",
+    "recalling_firm": "Philips North America",
+    "product_description": "Ingenia 3.0T\nModel Numbers (REF): (1) 781342, (2) 781377, (3) 782103;",
+    "reason_for_recall": "The potential for component failures in the Gradient Coil of the affected MR systems may act as a heat source with a potential to produce smoke and/or fire.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250630",
+    "cfres_id": "214743"
+   },
+   {
+    "recall_number": "Z-2207-2025",
+    "event_number": "97172",
+    "recalling_firm": "Philips North America",
+    "product_description": "Ingenia 3.0T CX\nModel Numbers (REF): (1) 781271, (2) 782105;",
+    "reason_for_recall": "The potential for component failures in the Gradient Coil of the affected MR systems may act as a heat source with a potential to produce smoke and/or fire.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250630",
+    "cfres_id": "214744"
+   },
+   {
+    "recall_number": "Z-2208-2025",
+    "event_number": "97172",
+    "recalling_firm": "Philips North America",
+    "product_description": "Ingenia Ambition S\nModel Numbers (REF): (1) 781359, (2) 782108, (3) 782133 (China ONLY), (4) 782139;",
+    "reason_for_recall": "The potential for component failures in the Gradient Coil of the affected MR systems may act as a heat source with a potential to produce smoke and/or fire.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250630",
+    "cfres_id": "214745"
+   },
+   {
+    "recall_number": "Z-2209-2025",
+    "event_number": "97172",
+    "recalling_firm": "Philips North America",
+    "product_description": "Ingenia Ambition X\nModel Numbers (REF): (1) 781356, (2) 782109, (3) 782138;",
+    "reason_for_recall": "The potential for component failures in the Gradient Coil of the affected MR systems may act as a heat source with a potential to produce smoke and/or fire.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250630",
+    "cfres_id": "214746"
+   },
+   {
+    "recall_number": "Z-2210-2025",
+    "event_number": "97172",
+    "recalling_firm": "Philips North America",
+    "product_description": "Ingenia Elition S\nModel Numbers (REF): (1) 781357, (2) 782106, (3) 782137, (4) 782150 (China ONLY);",
+    "reason_for_recall": "The potential for component failures in the Gradient Coil of the affected MR systems may act as a heat source with a potential to produce smoke and/or fire.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250630",
+    "cfres_id": "214747"
+   },
+   {
+    "recall_number": "Z-2211-2025",
+    "event_number": "97172",
+    "recalling_firm": "Philips North America",
+    "product_description": "Ingenia Elition X\nModel Numbers (REF): (1) 781358, (2) 782107, (3) 782119, (4) 782136, (5) 782151 (China ONLY);",
+    "reason_for_recall": "The potential for component failures in the Gradient Coil of the affected MR systems may act as a heat source with a potential to produce smoke and/or fire.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250630",
+    "cfres_id": "214748"
+   },
+   {
+    "recall_number": "Z-2212-2025",
+    "event_number": "97172",
+    "recalling_firm": "Philips North America",
+    "product_description": "Intera 3.0T Quasar Dual\nModel Number (REF): 781150;",
+    "reason_for_recall": "The potential for component failures in the Gradient Coil of the affected MR systems may act as a heat source with a potential to produce smoke and/or fire.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250630",
+    "cfres_id": "214749"
+   },
+   {
+    "recall_number": "Z-2213-2025",
+    "event_number": "97172",
+    "recalling_firm": "Philips North America",
+    "product_description": "MR 5300\nModel Numbers (REF): (1) 782110, (2) 782135 (China ONLY), (3) 782152;",
+    "reason_for_recall": "The potential for component failures in the Gradient Coil of the affected MR systems may act as a heat source with a potential to produce smoke and/or fire.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250630",
+    "cfres_id": "214751"
+   },
+   {
+    "recall_number": "Z-2214-2025",
+    "event_number": "97172",
+    "recalling_firm": "Philips North America",
+    "product_description": "MR 7700\nModel Numbers (REF): (1) 782120, (2) 782153;",
+    "reason_for_recall": "The potential for component failures in the Gradient Coil of the affected MR systems may act as a heat source with a potential to produce smoke and/or fire.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250630",
+    "cfres_id": "214752"
+   },
+   {
+    "recall_number": "Z-2215-2025",
+    "event_number": "97172",
+    "recalling_firm": "Philips North America",
+    "product_description": "SmartPath to dStream for 3.0T\nModel Number (REF): 782145;",
+    "reason_for_recall": "The potential for component failures in the Gradient Coil of the affected MR systems may act as a heat source with a potential to produce smoke and/or fire.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250630",
+    "cfres_id": "214753"
+   },
+   {
+    "recall_number": "Z-2216-2025",
+    "event_number": "97172",
+    "recalling_firm": "Philips North America",
+    "product_description": "SmartPath to dStream for XR and 3.0T\nModel Numbers (REF): (1) 781270, (2) 782113, (3) 782129;",
+    "reason_for_recall": "The potential for component failures in the Gradient Coil of the affected MR systems may act as a heat source with a potential to produce smoke and/or fire.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250630",
+    "cfres_id": "214754"
+   },
+   {
+    "recall_number": "Z-2217-2025",
+    "event_number": "97172",
+    "recalling_firm": "Philips North America",
+    "product_description": "SmartPath to Ingenia Elition X\nModel Numbers (REF): (1) 782118, (2) 782144;",
+    "reason_for_recall": "The potential for component failures in the Gradient Coil of the affected MR systems may act as a heat source with a potential to produce smoke and/or fire.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250630",
+    "cfres_id": "214755"
+   },
+   {
+    "recall_number": "Z-2218-2025",
+    "event_number": "97172",
+    "recalling_firm": "Philips North America",
+    "product_description": "Upgrade to MR 7700\nModel Number (REF): 782130;",
+    "reason_for_recall": "The potential for component failures in the Gradient Coil of the affected MR systems may act as a heat source with a potential to produce smoke and/or fire.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250630",
+    "cfres_id": "214756"
+   },
+   {
+    "recall_number": "Z-2299-2025",
+    "event_number": "97187",
+    "recalling_firm": "GE Medical Systems, LLC",
+    "product_description": "GE Signa Artist, Nuclear Magnetic Resonance Imaging System",
+    "reason_for_recall": "GE HealthCare has become aware that for certain MR systems (SIGNA Artist, SIGNA Voyager, Discovery MR450 1.5T, Optima MR450w 1.5T, SIGNA Architect, SIGNA Premier, SIGNA UHP, Discovery MR750 3.0T, Discovery MR750w 3.0T, SIGNA Hero, SIGNA PET/MR, SIGNA Artist Evo, SIGNA Voyager AIR (China Only), SIGNA Architect AIR (China Only), SIGNA Premier XT (China Only), SIGNA Premier Elite (China Only), SIGNA Premier MAX (China Only), SIGNA Hero XT (China Only), SIGNA Hero Elite (China Only), SIGNA Hero MAX (China Only), SIGNA PET/MR AIR (China Only), SIGNA PET/MR AIR Plus (China Only), the planned maintenance steps to check the functionality of the caster locks on the MR patient table may not have been performed.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250620",
+    "cfres_id": "214775"
+   },
+   {
+    "recall_number": "Z-2300-2025",
+    "event_number": "97187",
+    "recalling_firm": "GE Medical Systems, LLC",
+    "product_description": "GE Signa Voyager, Nuclear Magnetic Resonance Imaging System",
+    "reason_for_recall": "GE HealthCare has become aware that for certain MR systems (SIGNA Artist, SIGNA Voyager, Discovery MR450 1.5T, Optima MR450w 1.5T, SIGNA Architect, SIGNA Premier, SIGNA UHP, Discovery MR750 3.0T, Discovery MR750w 3.0T, SIGNA Hero, SIGNA PET/MR, SIGNA Artist Evo, SIGNA Voyager AIR (China Only), SIGNA Architect AIR (China Only), SIGNA Premier XT (China Only), SIGNA Premier Elite (China Only), SIGNA Premier MAX (China Only), SIGNA Hero XT (China Only), SIGNA Hero Elite (China Only), SIGNA Hero MAX (China Only), SIGNA PET/MR AIR (China Only), SIGNA PET/MR AIR Plus (China Only), the planned maintenance steps to check the functionality of the caster locks on the MR patient table may not have been performed.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250620",
+    "cfres_id": "214776"
+   }
+  ]
+ },
+ "notes": []
+}

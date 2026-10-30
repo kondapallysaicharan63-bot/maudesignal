@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react'
 import { DEMO_WORKFLOWS, describeCron, isoDay, demoSnapshotLabel, visibleWorkflows } from '../data'
 import { flaggedRows } from '../artifacts'
 import { Icon } from '../icons'
-import type { Brief, InvestigationRun, Schedule, Source, Sweep, Threads, Vision, WorkflowId } from '../types'
+import { NEEDS_REVIEW } from '../dashboard'
+import type { Brief, Company, InvestigationRun, Schedule, Source, Sweep, Threads, Vision, WorkflowId } from '../types'
 
 interface Props {
   open: boolean
@@ -14,6 +15,7 @@ interface Props {
   runs: InvestigationRun[]
   vision: Vision
   sweep: Sweep
+  company?: Company
   activeWorkflow: WorkflowId | null
   activeBrief: string | null
   isRead: (date: string) => boolean
@@ -56,6 +58,7 @@ export function Sidebar(p: Props) {
   counts.set('vision', p.vision.k510.length + p.vision.labels.length)
   for (const kind of ['weekly-investigator', 'recall-sweep'])
     counts.set(kind, p.runs.filter((r) => r.kind === kind).length)
+  counts.set('our-devices', (p.company?.devices ?? []).filter((d) => d.status?.label === NEEDS_REVIEW).length)
   const workflows = visibleWorkflows(p.runs)
   return (
     <>
@@ -105,8 +108,8 @@ export function Sidebar(p: Props) {
                       {DEMO_WORKFLOWS.includes(w.id) && <span className="ws-pill ml-2 bg-warning-soft text-warning">demo</span>}
                     </span>
                     {n !== undefined && (
-                      <span className="ms-num shrink-0 text-[15px] text-ink-2">
-                        {w.id === 'ai-sweep' ? `${n} flagged` : n}
+                      <span className="ms-num shrink-0 text-[17px] text-ink-2">
+                        {w.id === 'ai-sweep' ? `${n} flagged` : w.id === 'our-devices' ? `${n} to review` : n}
                       </span>
                     )}
                   </button>
@@ -117,7 +120,7 @@ export function Sidebar(p: Props) {
 
           <h2 className="ws-heading">Daily briefs · demo snapshot</h2>
           {p.briefs.length === 0 ? (
-            <p className="px-3 text-[15px] text-ink-2">No briefs stored yet.</p>
+            <p className="px-3 text-[17px] text-ink-2">No briefs stored yet.</p>
           ) : (
             <ul className="m-0 list-none p-0">
               {p.briefs.map((b) => (
@@ -129,7 +132,7 @@ export function Sidebar(p: Props) {
                   >
                     <span className="min-w-0">
                       <span className="ms-num block">{b.date}</span>
-                      <span className="ws-wrap block text-[15px] leading-snug text-ink-2">
+                      <span className="ws-wrap block text-[17px] leading-snug text-ink-2">
                         Demo snapshot · week {isoDay(b.window.current_start)} to {isoDay(b.window.current_end)}
                       </span>
                     </span>
@@ -150,7 +153,7 @@ export function Sidebar(p: Props) {
           <h3 className="ws-heading">Schedules</h3>
           <ul className="m-0 list-none space-y-2 p-0 px-3">
             {p.schedules.map((s) => (
-              <li key={s.id} className="text-[15px] leading-snug">
+              <li key={s.id} className="text-[17px] leading-snug">
                 <span className="block font-semibold">{s.label}</span>
                 <span className="block text-ink-2">{describeCron(s.cron)}</span>
                 <span className="ws-wrap block text-ink-2">{scheduleResult(s)}</span>
@@ -161,13 +164,13 @@ export function Sidebar(p: Props) {
           <h3 className="ws-heading">Sources · demo database</h3>
           <ul className="m-0 list-none p-0 px-3">
             {p.sources.map((s) => (
-              <li key={s.id} className="flex justify-between gap-3 py-[3px] text-[15px]">
+              <li key={s.id} className="flex justify-between gap-3 py-[3px] text-[17px]">
                 <span>{s.label}</span>
                 <span className="ms-num text-ink-2">{s.records.toLocaleString('en-US')}</span>
               </li>
             ))}
           </ul>
-          <p className="px-3 pt-2 text-[15px] leading-snug text-ink-2">
+          <p className="px-3 pt-2 text-[17px] leading-snug text-ink-2">
             {demoSnapshotLabel(p.sources)}: stored records in the demo database, not live openFDA. MHRA (UK) is regulator
             context only and never counted in a MAUDE number.
           </p>

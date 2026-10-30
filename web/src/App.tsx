@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { producedTabs, relatedTabs, type TabId } from './artifacts'
-import { alertItems, sweepRowId, type AlertItem } from './dashboard'
+import { alertItems, NEEDS_REVIEW, sweepRowId, type AlertItem } from './dashboard'
 import { ArtifactsPane } from './components/ArtifactsPane'
 import { ChatPane, type View, type WithheldNav } from './components/ChatPane'
 import type { CaptureMode } from './capture'
@@ -153,6 +153,21 @@ export default function App() {
     setView({ kind: 'workflow', id: 'check-device', code })
     setDrawer(false)
   }
+  // Our devices: the status the table is filtered to (null: all). Set from the chips, the left column, the bars and the bell.
+  const [deviceFilter, setDeviceFilter] = useState<string | null>(null)
+  /** Shows the table filtered to one status (from anywhere in the workflow, or from the bell). */
+  const filterDevices = (label: string | null) => {
+    setDeviceFilter(label)
+    setExpanded((c) => (c === 'mini' ? null : c))
+    setWIdx(null)
+    setView({ kind: 'workflow', id: 'our-devices' })
+    setDrawer(false)
+  }
+  const openDevice = (id: string | null) => {
+    setWIdx(null)
+    setView(id ? { kind: 'workflow', id: 'our-devices', code: id } : { kind: 'workflow', id: 'our-devices' })
+    setDrawer(false)
+  }
   const openCapture = (mode: CaptureMode) => {
     setWIdx(null)
     setView({ kind: 'capture', mode })
@@ -184,6 +199,7 @@ export default function App() {
 
   const openAlert = (a: AlertItem) => {
     if (a.source === 'brief') openBrief(a.date)
+    else if (a.source === 'company') openDevice(a.deviceId ?? null)
     else {
       // The flagged list lives in the AI device sweep's dashboard: open it full screen and scroll to the row.
       openWorkflow('ai-sweep')
@@ -252,8 +268,10 @@ export default function App() {
         manifest={data?.manifest ?? null}
         theme={theme}
         sidebarOpen={desktop ? !collapsed : drawer}
-        alerts={data ? alertItems(data.sweep, data.briefs) : []}
+        alerts={data ? alertItems(data.sweep, data.briefs, data.company) : []}
+        companyBanner={data?.company.banner}
         onAlert={openAlert}
+        onViewAll={(group) => (group === 'devices' ? filterDevices(NEEDS_REVIEW) : openWorkflow('ai-sweep'))}
         artifactsOpen={artifacts}
         onToggleSidebar={toggleSidebar}
         onToggleArtifacts={() => setArtifacts((o) => !o)}
@@ -274,6 +292,7 @@ export default function App() {
             runs={runs}
             vision={data.vision}
             sweep={data.sweep}
+            company={data.company}
             activeWorkflow={activeWorkflow}
             activeBrief={briefDate}
             isRead={isRead}
@@ -288,6 +307,7 @@ export default function App() {
           />
           <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:flex-row">
             {activeWorkflow && (
+              <div className={artifacts ? 'contents lg:max-2xl:hidden' : 'contents'} data-testid="mini-wrap">
               <MiniPane
                 key={activeWorkflow}
                 workflow={activeWorkflow}
@@ -297,8 +317,11 @@ export default function App() {
                 onThread={openThread}
                 onRun={openRun}
                 focusCode={sweepFocus?.code ?? null}
+                deviceFilter={deviceFilter}
+                onDeviceFilter={filterDevices}
                 activeId={view.kind === 'thread' || view.kind === 'run' ? view.id : null}
               />
+              </div>
             )}
             <ChatPane
               view={view}
@@ -309,6 +332,9 @@ export default function App() {
               onRun={openRun}
               onVision={openVision}
               onCode={openCode}
+              onDevice={openDevice}
+              deviceFilter={deviceFilter}
+              onDeviceFilter={filterDevices}
               onCapture={openCapture}
               onBrief={openBrief}
               onAlert={openAlert}

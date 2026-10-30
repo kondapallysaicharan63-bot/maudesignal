@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "generated_utc": "2026-10-29T22:26:27Z",
-  "source_commit": "f621f7c1c914673d77ec5511cef6662336b88a34",
+  "generated_utc": "2026-10-30T04:14:01Z",
+  "source_commit": "a7e9288d6747ad2c005c5a2642f2427b396cde29",
   "files": [
     "threads.json",
     "evidence.json",
@@ -9,6 +9,7 @@
     "audit.json",
     "dossier.json",
     "vision.json",
+    "company.json",
     "sweep.json",
     "investigations.json",
     "protocol.json",
