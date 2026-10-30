@@ -12,6 +12,7 @@
     { "source": "/docs-page", "destination": "/api/index" },
     { "source": "/openapi.json", "destination": "/api/index" },
     { "source": "/mcp", "destination": "/api/index" },
+    { "source": "/admin", "destination": "/api/index" },
     { "source": "/mcp-manifest.json", "destination": "/api/index" },
     { "source": "/v1/(.*)", "destination": "/api/index" }
   ]

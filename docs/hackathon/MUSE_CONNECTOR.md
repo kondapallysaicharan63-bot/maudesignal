@@ -426,6 +426,35 @@ and window number exactly what the gate recomputed.
 himself. Nothing here says Meta, Muse or anyone else has reviewed, accepted or endorsed this
 connector, and no such review has happened.
 
+## Feedback and visits (private)
+
+Added for outreach. Nothing here is in the public OpenAPI document, and no public route serves a
+record. The tool is an advisory triage aid, not medical advice; do not type patient details.
+
+| Route | Auth | What it does |
+|---|---|---|
+| `POST /v1/feedback` | none; browser origin must be in `MAUDESIGNAL_WEB_ORIGINS` | rating 1-5 ("Does this match real PMS/RA work?"), comment, blocker, one_thing, optional name and role, consent (`quote_name_role`, `quote_anonymous`, `no_quote`), optional `ref`, page, client_ts. 201 on success. 5 per hour per address (`MAUDESIGNAL_FEEDBACK_PER_HOUR`), 16 KB body cap (413). Free text that looks like an email, phone, SSN, "MRN" + digits or a date of birth gets 422 and is not stored (a guard, not a guarantee). |
+| `POST /v1/visit` | same | `{ref?, page, client_ts}`, 204. 60 per hour per address. |
+| `GET /admin` | page holds no data | asks for the admin key (password field, kept in `sessionStorage` only), loads the summary, offers two CSV downloads. |
+| `GET /v1/admin/summary` | `X-Admin-Key` | visits and feedback per ref code and per page, average rating per ref. |
+| `GET /v1/admin/export?kind=feedback\|visits&format=csv\|json` | `X-Admin-Key` | every record. CSV cells starting with `=`, `+`, `-` or `@` are prefixed with `'`. |
+
+Never stored: IP address, user agent. The limiter holds only a salted HMAC of the address for the
+length of its window (in memory, or Upstash when configured). Records are JSON objects in a
+private Vercel Blob store at `feedback/<YYYY-MM-DD>/<id>.json` and `visits/<YYYY-MM-DD>/<id>.json`.
+Without `BLOB_READ_WRITE_TOKEN` an in-memory store is used and `GET /v1/health` shows
+`"feedback_store": "memory"` (`"blob_private"` when the Blob store is in use).
+If `MAUDESIGNAL_ADMIN_KEY` is unset the admin routes answer 503; they are never open. Failed
+admin keys count against the same per-address failed-key limiter as API keys.
+
+Environment: `BLOB_READ_WRITE_TOKEN`, `MAUDESIGNAL_ADMIN_KEY`, `MAUDESIGNAL_WEB_ORIGINS`,
+`MAUDESIGNAL_TRUST_FORWARDED=1`; optional `MAUDESIGNAL_FEEDBACK_PER_HOUR`,
+`MAUDESIGNAL_VISIT_PER_HOUR`, `RESEND_API_KEY` + `FEEDBACK_NOTIFY_TO` (comma-separated) +
+`FEEDBACK_NOTIFY_FROM`. Email failures are logged by status or error class only and never fail the
+request. The Blob REST headers (`x-vercel-blob-access: private`, `x-add-random-suffix: 0`,
+`x-api-version`) follow the documented API from memory and were not exercised against the live
+service from this environment; check the first real write.
+
 ## 2.1 The MCP server (`POST /mcp`)
 
 Same five tools as the REST routes, same process, same code path. Each REST route and each

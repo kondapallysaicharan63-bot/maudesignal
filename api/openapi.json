@@ -230,6 +230,10 @@
       "Health": {
         "description": "``GET /v1/health`` body.",
         "properties": {
+          "feedback_store": {
+            "title": "Feedback Store",
+            "type": "string"
+          },
           "limits_scope": {
             "title": "Limits Scope",
             "type": "string"
@@ -269,7 +273,8 @@
           "read_only",
           "tools",
           "limits_scope",
-          "state_store"
+          "state_store",
+          "feedback_store"
         ],
         "title": "Health",
         "type": "object"

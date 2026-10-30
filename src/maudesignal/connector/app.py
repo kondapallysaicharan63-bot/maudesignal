@@ -10,6 +10,7 @@ endpoints need an ``X-API-Key`` header, count against a per-key rate limit and, 
 import hashlib
 import json
 import os
+import re
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -23,6 +24,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from starlette.concurrency import run_in_threadpool
 from starlette.requests import ClientDisconnect
 
+from maudesignal.common.exceptions import OpenFDAAPIError
 from maudesignal.common.logging import get_logger
 from maudesignal.connector import tools
 from maudesignal.connector.asgi import RejectKeyInQuery
@@ -32,9 +34,11 @@ from maudesignal.connector.ask import (
     AskRuntime,
     ask,
 )
+from maudesignal.connector.blob_store import RecordStore, store_from_env
 from maudesignal.connector.data import ConnectorData
 from maudesignal.connector.docs_page import render_docs_page
 from maudesignal.connector.errors import ConnectorError, InvalidInputError, NotFoundError
+from maudesignal.connector.feedback import mount_feedback
 from maudesignal.connector.manifest import build_manifest
 from maudesignal.connector.mcp_server import (
     PARSE_ERROR,
@@ -52,6 +56,7 @@ from maudesignal.connector.models import (
     PublicCheckAnswer,
     ToolAnswer,
 )
+from maudesignal.connector.notify import Notifier, notifier_from_env
 from maudesignal.connector.registry import (
     ASK_DESCRIPTION,
     CHECK_DESCRIPTION,
@@ -127,10 +132,36 @@ _ERRORS: dict[int | str, dict[str, Any]] = {
 }
 
 
+_HTTP_STATUS = re.compile(r"\b([1-5]\d\d)\b")
+
+
+def _openfda_status(exc: OpenFDAAPIError) -> int | None:
+    """HTTP status named in an openFDA error message, else None.
+
+    Transport errors ("HTTP error contacting openFDA: ...") are skipped: their text can hold
+    a URL, and a URL can hold the API key.
+    """
+    text = str(exc)
+    if text.startswith("HTTP error"):
+        return None
+    found = _HTTP_STATUS.search(text)
+    return int(found.group(1)) if found else None
+
+
 def _default_live_checker(product_code: str) -> LiveCheck:
     key = os.environ.get("OPENFDA_API_KEY") or None
-    with OpenFDAClient(api_key=key) as client:
-        return check_product_code(client, product_code, datetime.now(UTC).date())
+    try:
+        with OpenFDAClient(api_key=key) as client:
+            return check_product_code(client, product_code, datetime.now(UTC).date())
+    except OpenFDAAPIError as exc:
+        # Class and status only: never the message, URL or key. Shows why the stored fallback ran.
+        logger.warning(
+            "connector_openfda_failed",
+            error_type=type(exc).__name__,
+            cause_type=type(exc.__cause__).__name__ if exc.__cause__ else None,
+            status=_openfda_status(exc),
+        )
+        raise
 
 
 def _origins_from_env() -> tuple[str, ...]:
@@ -158,6 +189,8 @@ class Settings:
     now: Clock = utc_now
     state: ConnectorState = field(default_factory=ConnectorState.from_env)
     web_origins: tuple[str, ...] = field(default_factory=_origins_from_env)
+    feedback_store: RecordStore = field(default_factory=store_from_env)
+    notifier: Notifier = field(default_factory=notifier_from_env)
 
 
 class AskRequest(BaseModel):
@@ -183,6 +216,7 @@ class Health(BaseModel):
     tools: list[str]
     limits_scope: str
     state_store: str
+    feedback_store: str
 
 
 class ApiError(Exception):
@@ -483,6 +517,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             tools=list(tools.TOOL_NAMES),
             limits_scope="shared" if state.shared else "per_instance",
             state_store=state.backend,
+            feedback_store=cfg.feedback_store.backend,
         )
 
     @app.get(
@@ -719,4 +754,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return Response(status_code=202)
         return JSONResponse(reply)
 
+    mount_feedback(
+        app,
+        store=cfg.feedback_store,
+        notifier=cfg.notifier,
+        web_origins=web_origins,
+        client_address=_client_address,
+        failed_auth=failed_auth,
+        make_limiter=state.rate_limiter,
+    )
     return app
