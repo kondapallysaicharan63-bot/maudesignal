@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Icon } from '../icons'
 import { NOT_RECORDED, stepHasMetrics, stepMetricParts, traceSummary, type Metric, type Trace, type TraceStep } from '../trace'
 
@@ -34,6 +35,8 @@ export function TraceView({
   replayed = true,
   defaultOpen = false,
   absentLabels = false,
+  summary,
+  stepCount,
 }: {
   trace: Trace
   shown: number
@@ -43,23 +46,31 @@ export function TraceView({
   defaultOpen?: boolean
   /** Print "Time: not recorded" (and "Cost: not recorded" on model steps) where the recording stored none. */
   absentLabels?: boolean
+  /** Replaces the one-line summary (used when the steps shown are a folded view of a longer run). */
+  summary?: string
+  /** The number of steps of the whole run, for the "Show N steps" toggle. */
+  stepCount?: number
 }) {
+  const [open, setOpen] = useState(defaultOpen)
   const steps = trace.steps.slice(0, shown)
   const complete = shown >= trace.steps.length
   const anyMetrics = trace.steps.some(stepHasMetrics)
   return (
-    <details open={defaultOpen} className="rounded-md border border-rule-strong bg-surface px-3 py-1 text-[17px]" data-testid="trace">
+    <details open={open} onToggle={(e) => setOpen(e.currentTarget.open)} className="rounded-md border border-rule-strong bg-surface px-3 py-1 text-[17px]" data-testid="trace">
       <summary className="flex min-h-11 cursor-pointer flex-wrap items-center gap-x-3 gap-y-0 py-1">
         <span className="font-semibold">How this was made</span>
-        <span className="ws-wrap text-[15px] text-ink-2" data-testid="trace-summary">
-          {complete ? traceSummary(trace) : `Replaying: step ${Math.max(1, shown)} of ${trace.steps.length}`}
+        <span className="ws-wrap text-[17px] text-ink" data-testid="trace-summary">
+          {complete ? (summary ?? traceSummary(trace)) : `Replaying: step ${Math.max(1, shown)} of ${trace.steps.length}`}
+        </span>
+        <span className="ml-auto text-[16px] font-semibold text-accent underline" data-testid="trace-toggle">
+          {open ? 'Hide steps' : `Show ${stepCount ?? trace.steps.length} steps`}
         </span>
       </summary>
       <ol className="m-0 mt-2 list-none p-0" aria-label={label}>
         {steps.map((s) => {
           const parts = stepMetricParts(s)
           if (absentLabels) {
-            if (!s.time.recorded) parts.push(`time: ${NOT_RECORDED}`)
+            if (!s.time.recorded && !s.grouped) parts.push(`time: ${NOT_RECORDED}`)
             if (!s.cost.recorded && s.model) parts.push(`cost: ${NOT_RECORDED}`)
           }
           return (
@@ -68,7 +79,7 @@ export function TraceView({
               <p className="m-0 flex flex-wrap items-center gap-x-2 gap-y-1">
                 <span className="font-semibold text-ink">{s.title}</span>
                 {s.kind === 'tool' && s.args !== null && (
-                  <code className="ws-wrap rounded-xs bg-sunk px-1.5 font-mono text-[15px] text-ink">{s.args}</code>
+                  <code className="ws-wrap rounded-xs bg-sunk px-1.5 font-mono text-[16px] text-ink">{s.args}</code>
                 )}
               </p>
               <p className="ws-wrap m-0 mt-0.5 text-ink-2">{s.kind === 'tool' ? `Result: ${s.result}.` : s.detail}</p>
@@ -81,8 +92,8 @@ export function TraceView({
                   ))}
                 </ul>
               )}
-              <p className="m-0 mt-0.5 flex flex-wrap gap-x-2 text-[15px] text-ink-2">
-                <span className="font-semibold">{s.model ?? 'Plain code, no model'}</span>
+              <p className="m-0 mt-0.5 flex flex-wrap gap-x-2 text-[16px] text-ink-2">
+                <span className="font-semibold">{s.model ?? (s.grouped ? 'Plain code, no model (counts and times listed above)' : 'Plain code, no model')}</span>
                 {parts.map((p) => (
                   <span key={p} className="ms-num">
                     · {p}
@@ -104,7 +115,7 @@ export function TraceView({
           <Val label="Cost" m={trace.usage.cost} />
         </p>
       )}
-      <p className="m-0 mb-1 mt-2 flex gap-2 text-[15px] leading-snug text-ink-2">
+      <p className="m-0 mb-1 mt-2 flex gap-2 text-[16px] leading-snug text-ink-2">
         <Icon name="info" size={16} />
         <span>
           {replayed

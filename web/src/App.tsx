@@ -288,6 +288,7 @@ export default function App() {
           />
           <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:flex-row">
             {activeWorkflow && (
+              <div className={artifacts ? 'contents lg:max-2xl:hidden' : 'contents'} data-testid="mini-wrap">
               <MiniPane
                 key={activeWorkflow}
                 workflow={activeWorkflow}
@@ -299,6 +300,7 @@ export default function App() {
                 focusCode={sweepFocus?.code ?? null}
                 activeId={view.kind === 'thread' || view.kind === 'run' ? view.id : null}
               />
+              </div>
             )}
             <ChatPane
               view={view}

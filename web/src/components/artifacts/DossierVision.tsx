@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Icon } from '../../icons'
 import type { Dossier, K510Field, K510Reading, LabelReading, ReadStatus, Vision } from '../../types'
 import { buildLabelTrace, buildReviewTrace } from '../../trace'
 import { TraceView } from '../TraceView'
@@ -34,7 +35,7 @@ export function DossierTab({ dossier }: { dossier: Dossier }) {
         />
       </div>
       {which === 'approved' && (
-        <p className="mt-2 text-[15px] text-ink-2">
+        <p className="mt-2 text-[17px] text-ink-2">
           The approval in this copy is by a demo reviewer. It is a demonstration, not a Part 11 signature.
         </p>
       )}
@@ -49,7 +50,7 @@ export function DossierTab({ dossier }: { dossier: Dossier }) {
           Download {which} PDF
         </a>
       </div>
-      <dl className="m-0 mt-4 text-[15px] text-ink-2">
+      <dl className="m-0 mt-4 text-[17px] text-ink-2">
         {dossier.narrative && (
           <div>
             <dt className="inline text-ink-2">Summary written by </dt>
@@ -72,7 +73,7 @@ export function DossierTab({ dossier }: { dossier: Dossier }) {
           <TraceView trace={buildReviewTrace(r)} shown={99} label="Review steps" replayed={false} />
         </div>
       )}
-      <p className="mt-3 text-[15px] leading-snug text-ink-2">
+      <p className="mt-3 text-[17px] leading-snug text-ink-2">
         Advisory only. A named person reviews and decides; nothing is filed with FDA.
       </p>
     </article>
@@ -90,6 +91,9 @@ const K_STATUS: Record<string, string> = {
   not_in_openfda: 'The K-number was not found in openFDA.',
 }
 
+/** A search that found nothing is an expected outcome, not an error. */
+const noResult = (c: { outcome: string; detail: string }): boolean => c.outcome === 'fail' && /\b0 candidate/.test(c.detail)
+
 const OUTCOME_TONE: Record<string, Tone> = { pass: 'ok', fail: 'bad' }
 
 function SamImage({ l }: { l: LabelReading }) {
@@ -99,7 +103,7 @@ function SamImage({ l }: { l: LabelReading }) {
     <figure className="m-0">
       <div
         className="relative mx-auto overflow-hidden rounded-md border border-rule"
-        style={{ width: `min(100%, calc(52dvh * ${w} / ${h}))`, aspectRatio: `${w} / ${h}` }}
+        style={{ width: `min(100%, calc(28dvh * ${w} / ${h}))`, aspectRatio: `${w} / ${h}` }}
       >
         <img src={dataUrl(l.image)} alt="Device label photo with the detected label boxes drawn on it" className="block h-full w-full" />
         <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="absolute inset-0 h-full w-full" aria-hidden="true">
@@ -122,7 +126,7 @@ function SamImage({ l }: { l: LabelReading }) {
           })}
         </svg>
       </div>
-      <figcaption className="mt-2 text-[15px] text-ink-2">
+      <figcaption className="mt-2 text-[17px] text-ink-2">
         {l.sam.boxes.length === 0
           ? 'No label box was detected.'
           : `${l.sam.boxes.length} box${l.sam.boxes.length === 1 ? '' : 'es'} detected by SAM 3.1 (Meta); detector score on a 0 to 1 scale: ${l.sam.boxes
@@ -146,7 +150,7 @@ function LabelView({ l }: { l: LabelReading }) {
       <div className="mt-4">
         <TraceView trace={buildLabelTrace(l)} shown={99} label="Label reading steps" replayed={false} />
       </div>
-      <h3 className="ms-kicker mt-4">Fields read from the label</h3>
+      <h3 className="ms-kicker mt-6 !text-[16px]">Fields read from the label</h3>
       {banner && (
         <p
           role="note"
@@ -156,20 +160,34 @@ function LabelView({ l }: { l: LabelReading }) {
           {banner}
         </p>
       )}
-      {fromMatchRun && <p className="m-0 mt-1 text-[15px] text-ink-2">As read in the matching run below.</p>}
+      {fromMatchRun && <p className="m-0 mt-1 text-[17px] text-ink-2">As read in the matching run below.</p>}
       <dl className="m-0 mt-1" data-testid="label-fields">
         {rows.map((r) => (
-          <div key={r.key} className="flex flex-wrap items-baseline justify-between gap-x-3 border-t border-rule py-2">
-            <dt className="text-[15px] text-ink-2">{r.label}</dt>
-            <dd className="ws-wrap m-0 text-right">
-              {r.value ? r.value : <span className="text-ink-2">{r.hidden ? 'hidden: not legible' : 'not present'}</span>}{' '}
-              <span className="ms-code">{r.legibility.replace('_', ' ')}</span>
+          <div key={r.key} className="grid grid-cols-[8.5rem_1fr] items-baseline gap-x-3 border-t border-rule py-2">
+            <dt className="text-[17px] text-ink-2">{r.label}</dt>
+            <dd className="ws-wrap m-0 text-[17px]">
+              {r.hidden ? (
+                <span className="ws-pill bg-sunk text-ink-2" data-testid="field-status">
+                  Not legible
+                </span>
+              ) : r.value ? (
+                <>
+                  {r.value}
+                  {r.legibility !== 'clear' && (
+                    <span className="ws-pill ml-2 bg-sunk text-ink-2" data-testid="field-status">
+                      {r.legibility === 'partly_legible' ? 'Partly legible' : r.legibility.replace(/_/g, ' ')}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="text-ink-2">Not present</span>
+              )}
             </dd>
           </div>
         ))}
       </dl>
       <LabelMatches key={l.image} rec={l.matches} />
-      <h3 className="ms-kicker mt-4">Checks</h3>
+      <h3 className="ms-kicker mt-6 !text-[16px]">Checks</h3>
       <ul className="m-0 mt-1 list-none p-0">
         <li className="border-t border-rule py-2">
           <Pill tone={l.k_status === 'verified' ? 'ok' : l.k_status === 'not_printed' ? 'neutral' : 'warn'}>K-number</Pill>{' '}
@@ -184,14 +202,14 @@ function LabelView({ l }: { l: LabelReading }) {
         </li>
         {l.checks.map((c, i) => (
           <li key={i} className="border-t border-rule py-2">
-            <Pill tone={OUTCOME_TONE[c.outcome] ?? 'neutral'}>{c.outcome}</Pill>{' '}
+            {noResult(c) ? <Pill tone="neutral">no result</Pill> : <Pill tone={OUTCOME_TONE[c.outcome] ?? 'neutral'}>{c.outcome}</Pill>}{' '}
             <span className="ws-wrap">
               {c.source.replace(/_/g, ' ')}: {c.detail}
             </span>
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-[15px] leading-snug text-ink-2">
+      <p className="mt-3 text-[17px] leading-snug text-ink-2">
         Lot and serial numbers are read for the session only and are never stored or exported. Overall legibility: {overall.replace('_', ' ')}.
       </p>
     </div>
@@ -211,25 +229,25 @@ function ReadLine({ f }: { f: K510Field }) {
   return (
     <li className="border-t border-rule py-2">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <span className="text-[15px] text-ink-2">{f.name.replace(/_/g, ' ')}</span>
+        <span className="text-[17px] text-ink-2">{f.name.replace(/_/g, ' ')}</span>
         <Pill tone={READ_TONE[f.status]}>{READ_LABEL[f.status]}</Pill>
       </div>
       <p className="ws-wrap m-0">{fmt(f.value) || <span className="text-ink-2">no value</span>}</p>
       {f.status !== 'VERIFIED' && (
-        <p className="ws-wrap m-0 mt-1 text-[15px] text-ink-2">
+        <p className="ws-wrap m-0 mt-1 text-[17px] text-ink-2">
           Read A: {fmt(f.read_a?.value) || 'none'} · Read B: {fmt(f.read_b?.value) || 'none'}
           {f.note ? ` · ${f.note}` : ''}
         </p>
       )}
       {f.status === 'VERIFIED' && (
-        <p className="ws-wrap m-0 mt-1 text-[15px] text-ink-2">
+        <p className="ws-wrap m-0 mt-1 text-[17px] text-ink-2">
           {basis}
           {f.note ? ` · ${f.note}` : ''}
         </p>
       )}
       <details>
-        <summary className="min-h-10 cursor-pointer py-2 text-[15px] text-ink-2">How it was checked</summary>
-        <ul className="m-0 list-none p-0 text-[15px] text-ink-2">
+        <summary className="min-h-10 cursor-pointer py-2 text-[17px] text-ink-2">How it was checked</summary>
+        <ul className="m-0 list-none p-0 text-[17px] text-ink-2">
           {f.checks.map((c, i) => (
             <li key={i} className="ws-wrap py-0.5">
               {c.source.replace(/_/g, ' ')}: {c.outcome}, {c.detail}
@@ -252,14 +270,13 @@ function K510View({ k }: { k: K510Reading }) {
       <dl className="m-0 mt-3 grid grid-cols-3 gap-2">
         {(['VERIFIED', 'CONFLICT', 'UNVERIFIABLE'] as const).map((s) => (
           <div key={s} className="rounded-md border border-rule bg-surface p-3">
-            <dt className="text-[15px] leading-snug text-ink-2">{READ_LABEL[s]}</dt>
+            <dt className="text-[17px] leading-snug text-ink-2">{READ_LABEL[s]}</dt>
             <dd className="t-index ms-num m-0 mt-1">{k.counts[s]}</dd>
           </div>
         ))}
       </dl>
-      <p className="mt-2 text-[15px] text-ink-2">
-        Both reads agree on <span className="ms-num">{k.agreement_pct}%</span> of fields · {k.pages_read} of{' '}
-        {k.page_count} pages read ·{' '}
+      <p className="mt-2 text-[17px] text-ink-2">
+        <span className="ms-num">{k.agreement_pct}%</span> of fields agree · {k.pages_read} of {k.page_count} pages ·{' '}
         <a className="text-accent underline" href={k.pdf_url} target="_blank" rel="noreferrer">
           source PDF on fda.gov
         </a>
@@ -283,7 +300,7 @@ export function VisionTab({ vision, initial }: { vision: Vision; initial?: Visio
   const k = vision.k510[ki]
   return (
     <article>
-      <p className="ms-kicker">Vision</p>
+      <h2 className="m-0 text-[22px] font-semibold">Vision</h2>
       <div className="mt-2">
         <Segmented
           label="Kind of reading"
@@ -298,21 +315,26 @@ export function VisionTab({ vision, initial }: { vision: Vision; initial?: Visio
       {mode === 'labels' ? (
         label ? (
           <div className="mt-3">
-            <label className="block text-[15px] text-ink-2" htmlFor="label-pick">
+            <label className="block text-[17px] text-ink-2" htmlFor="label-pick">
               Stored label photo
             </label>
-            <select
-              id="label-pick"
-              value={li}
-              onChange={(e) => setLi(Number(e.target.value))}
-              className="mb-3 min-h-10 w-full rounded-xs border border-rule bg-surface px-2 text-ink"
-            >
-              {vision.labels.map((l, i) => (
-                <option key={l.image} value={i}>
-                  {labelName(l)}
-                </option>
-              ))}
-            </select>
+            <div className="relative mb-3 mt-1">
+              <select
+                id="label-pick"
+                value={li}
+                onChange={(e) => setLi(Number(e.target.value))}
+                className="min-h-11 w-full appearance-none rounded-xs border border-rule-strong bg-surface py-1 pl-3 pr-10 text-[17px] text-ink"
+              >
+                {vision.labels.map((l, i) => (
+                  <option key={l.image} value={i}>
+                    {labelName(l)}
+                  </option>
+                ))}
+              </select>
+              <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-3 flex rotate-90 items-center text-ink-2">
+                <Icon name="chevron" size={18} />
+              </span>
+            </div>
             <LabelView l={label} />
           </div>
         ) : (

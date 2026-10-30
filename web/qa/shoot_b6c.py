@@ -17,6 +17,13 @@ from shoot_b6a import go_workflow, overflow
 
 PUBLIC = OUT.parents[1] / "public" / "data"
 
+# Scroll only the Artifacts panel (never the page or chat behind it), leaving a little room above the element.
+PANEL_SCROLL = """e => {
+  const p = document.getElementById('artifact-panel');
+  const top = e.getBoundingClientRect().top - p.getBoundingClientRect().top + p.scrollTop;
+  p.scrollTo({top: Math.max(0, top - 8)});
+}"""
+
 
 def shot(page: Page, r: dict[str, object], tag: str, name: str) -> None:
     """Record the overflow numbers and save ``B6c-<name>-<tag>.png``."""
@@ -27,7 +34,7 @@ def shot(page: Page, r: dict[str, object], tag: str, name: str) -> None:
 
 def scroll_to(page: Page, test_id: str) -> None:
     """Bring a test-id element to the top of its scroll container."""
-    page.get_by_test_id(test_id).first.evaluate("e => e.scrollIntoView({block: 'start'})")
+    page.get_by_test_id(test_id).first.evaluate(PANEL_SCROLL)
     page.wait_for_timeout(200)
 
 
@@ -77,6 +84,12 @@ def main() -> None:
                 go_workflow(page, phone, "Label & 510(k) vision")
                 r["list_text"] = page.locator("main").inner_text()
                 shot(page, r, tag, "list")
+                r["last_label_row_clear_of_composer"] = page.evaluate("""(() => {
+                      const sc = document.querySelector('main .overflow-y-auto'); sc.scrollTop = sc.scrollHeight;
+                      const rows = [...document.querySelectorAll('main li button')]; const last = rows[rows.length - 1].getBoundingClientRect();
+                      const comp = document.querySelector('main form, main [data-testid=composer]');
+                      const top = comp ? comp.getBoundingClientRect().top : sc.getBoundingClientRect().bottom;
+                      sc.scrollTop = 0; return last.bottom <= top + 1 })()""")
                 page.locator("main").get_by_role("button").filter(
                     has_text="possible match"
                 ).first.click()
@@ -92,6 +105,15 @@ def main() -> None:
                 page.wait_for_timeout(300)
                 shot(page, r, tag, "photo-fields")
                 scroll_to(page, "label-matches")
+                r["tabs_right_edges"] = page.evaluate(
+                    "[...document.querySelectorAll('#artifacts [role=tab]')].map(t => Math.round(t.getBoundingClientRect().right))"
+                )
+                r["tabs_visible"] = page.evaluate(
+                    "[...document.querySelectorAll('#artifacts [role=tab]')].every(t => t.getBoundingClientRect().right <= innerWidth)"
+                )
+                r["photo_height_vs_panel"] = page.evaluate(
+                    "(() => { const i = document.querySelector('#artifact-panel figure img'); const p = document.getElementById('artifact-panel'); return Math.round(100 * i.getBoundingClientRect().height / p.getBoundingClientRect().height) })()"
+                )
                 r["cards_before_confirm"] = page.get_by_test_id("match-card").count()
                 r["facts_before_confirm"] = page.get_by_test_id("match-facts").count()
                 r["confirmed_before_click"] = page.get_by_test_id("confirmed-note").count()
@@ -100,7 +122,9 @@ def main() -> None:
                 page.wait_for_timeout(300)
                 r["confirmed_note"] = page.get_by_test_id("confirmed-note").inner_text()
                 r["confirmed_cards"] = page.get_by_test_id("confirmed-note").count()
-                page.get_by_test_id("match-card").first.scroll_into_view_if_needed()
+                r["confirmed_in_view"] = page.evaluate(
+                    "(() => { const c = document.querySelector('[data-confirmed=true]').getBoundingClientRect(); const p = document.getElementById('artifact-panel').getBoundingClientRect(); return c.top >= p.top - 1 && c.top < p.bottom })()"
+                )
                 shot(page, r, tag, "confirmed")
                 scroll_to(page, "match-facts")
                 shot(page, r, tag, "facts")
@@ -108,9 +132,7 @@ def main() -> None:
                     "summary"
                 ).click()
                 page.wait_for_timeout(250)
-                page.get_by_test_id("label-matches").get_by_test_id("trace").evaluate(
-                    "e => e.scrollIntoView({block: 'start'})"
-                )
+                page.get_by_test_id("label-matches").get_by_test_id("trace").evaluate(PANEL_SCROLL)
                 r["trace_text"] = (
                     page.get_by_test_id("label-matches").get_by_test_id("trace").inner_text()
                 )

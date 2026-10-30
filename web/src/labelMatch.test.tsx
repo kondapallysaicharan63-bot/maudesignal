@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client'
 import { afterEach, describe, expect, it } from 'vitest'
 import vision from '../public/data/vision.json'
 import { LabelMatches } from './components/artifacts/LabelMatches'
-import { buildMatchTrace, fieldRows, legibilityBanner, matchSummary } from './labelMatch'
+import { buildMatchTrace, fieldRows, fmtNumbers, fmtUtc, groupSearches, keyStats, legibilityBanner, matchSummary, rankMatches } from './labelMatch'
 import { NOT_RECORDED } from './trace'
 import type { LabelMatchRecord, LabelReading } from './types'
 
@@ -61,11 +61,78 @@ describe('possible matches are never auto-confirmed', () => {
     click(buttons[0])
     expect(el.querySelectorAll('[data-testid=confirmed-note]').length).toBe(1)
     expect(el.querySelector('[data-testid=confirmed-note]')?.textContent).toBe('Confirmed by you in this browser; not saved.')
+    expect(el.querySelector('[data-testid=confirmed-block]')?.textContent).toContain('You confirmed this match.')
     const facts = el.querySelector('[data-testid=match-facts]')
-    expect(facts?.textContent).toContain(rec.matches[0].product_code)
+    expect(facts?.textContent).toContain(rankMatches(rec.matches)[0].product_code)
     expect(facts?.querySelector('a[href^="https://api.fda.gov/"]')).not.toBeNull()
     expect(el.querySelector('[data-testid=trace]')).not.toBeNull()
+    expect(el.querySelector('[data-testid=match-card][data-confirmed=true] [data-testid=match-rank]')?.textContent).toContain('Confirmed')
     expect(rec.confirmed).toBeNull()
+  })
+
+  it('Undo clears the confirmation and hides the facts again', () => {
+    const rec = withMatches().matches as LabelMatchRecord
+    const el = mount(rec)
+    click([...el.querySelectorAll('button')].filter((b) => b.textContent === 'Confirm this match')[0])
+    click(el.querySelector('[data-testid=undo-confirm]') as Element)
+    expect(el.querySelector('[data-testid=confirmed-note]')).toBeNull()
+    expect(el.querySelector('[data-testid=match-facts]')).toBeNull()
+  })
+
+  it('"None of these" is offered and picks nothing', () => {
+    const rec = withMatches().matches as LabelMatchRecord
+    const el = mount(rec)
+    const b = [...el.querySelectorAll('button')].find((x) => x.textContent === 'None of these') as Element
+    click(b)
+    expect(el.querySelector('[data-testid=none-note]')?.textContent).toContain('none of these')
+    expect(el.querySelector('[data-testid=match-facts]')).toBeNull()
+  })
+
+  it('sorts cards by score and shows rank with the score out of 100', () => {
+    const rec = withMatches().matches as LabelMatchRecord
+    const ranked = rankMatches(rec.matches)
+    for (let i = 1; i < ranked.length; i++) expect(ranked[i - 1].score).toBeGreaterThanOrEqual(ranked[i].score)
+    const el = mount(rec)
+    const heads = [...el.querySelectorAll('[data-testid=match-rank]')].map((x) => x.textContent ?? '')
+    expect(heads[0]).toContain(`1 of ${ranked.length} · score ${ranked[0].score} of 100`)
+    const shuffled = rankMatches([
+      { ...ranked[0], score: 10 },
+      { ...ranked[0], score: 70 },
+      { ...ranked[0], score: 40 },
+    ])
+    expect(shuffled.map((m) => m.score)).toEqual([70, 40, 10])
+  })
+
+  it('shows the key figures with separators', () => {
+    const rec = withMatches().matches as LabelMatchRecord
+    const el = mount(rec)
+    click([...el.querySelectorAll('button')].filter((b) => b.textContent === 'Confirm this match')[0])
+    const stats = el.querySelector('[data-testid=key-stats]')?.textContent ?? ''
+    expect(stats).toMatch(/Reports[\d,]+/)
+    expect(stats).toContain('This week')
+    expect(fmtNumbers('MAUDE holds 432413 reports; K260687 on 2026-09-30, Z-1545-2026')).toBe(
+      'MAUDE holds 432,413 reports; K260687 on 2026-09-30, Z-1545-2026',
+    )
+    const view = Object.values(rec.device_type_views)[0]
+    expect(keyStats(view).every((k) => k.value.length > 0)).toBe(true)
+  })
+
+  it('folds the openFDA searches in the trace and keeps the full step count in the toggle', () => {
+    const rec = withMatches().matches as LabelMatchRecord
+    const full = buildMatchTrace(rec)
+    const grouped = groupSearches(full)
+    expect(grouped.steps.length).toBeLessThan(full.steps.length)
+    expect(grouped.steps.some((x) => x.grouped && /searches/.test(x.title))).toBe(true)
+    const el = mount(rec)
+    click([...el.querySelectorAll('button')].filter((b) => b.textContent === 'Confirm this match')[0])
+    expect(el.querySelector('[data-testid=trace]')?.hasAttribute('open')).toBe(false)
+    expect(el.querySelector('[data-testid=trace-toggle]')?.textContent).toBe(`Show ${full.steps.length} steps`)
+  })
+
+  it('formats the recording time as UTC text, never raw ISO', () => {
+    expect(fmtUtc('2026-10-30T01:34:26Z')).toBe('Oct 30, 2026, 01:34 UTC')
+    const el = mount(withMatches().matches)
+    expect(el.querySelector('[data-testid=match-recorded-note]')?.textContent).not.toMatch(/T\d\d:\d\d:\d\dZ/)
   })
 
   it('shows "No match found" plainly and no confirm button', () => {
@@ -73,6 +140,7 @@ describe('possible matches are never auto-confirmed', () => {
     expect(none).toBeDefined()
     const el = mount(none?.matches)
     expect(el.querySelector('[data-testid=no-match]')?.textContent).toContain('No match found')
+    expect(el.querySelector('[data-testid=no-match-next]')?.textContent).toContain('clearer photo')
     expect(el.querySelectorAll('button').length).toBe(0)
   })
 
@@ -183,5 +251,24 @@ describe('timings are never invented', () => {
     expect(matchSummary({ ...named('nomad-pro2'), matches: null })).toBe('no matching run recorded')
     expect(matchSummary(named('welch-module'))).toBe('no match found')
     expect(matchSummary(named('nomad-pro2'))).toBe('3 possible matches to confirm')
+  })
+})
+
+describe('one status per field on an illegible label', () => {
+  it('shows a single "Not legible" chip per row and no repeated mono tag', async () => {
+    const { VisionTab } = await import('./components/artifacts/DossierVision')
+    const idx = labels.findIndex((x) => x.image.includes('welch-module'))
+    host = document.createElement('div')
+    document.body.appendChild(host)
+    const root = createRoot(host)
+    act(() => root.render(<VisionTab vision={vision as never} initial={{ mode: 'labels', index: idx }} />))
+    const rows = [...host.querySelectorAll('[data-testid=label-fields] > div')]
+    expect(rows.length).toBeGreaterThan(0)
+    for (const r of rows) {
+      expect(r.querySelectorAll('[data-testid=field-status]').length).toBe(1)
+      expect(r.textContent).toContain('Not legible')
+      expect(r.querySelector('.ms-code')).toBeNull()
+    }
+    expect(host.textContent).not.toContain('hidden: not legible')
   })
 })

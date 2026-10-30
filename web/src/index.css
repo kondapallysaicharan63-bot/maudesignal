@@ -84,19 +84,7 @@ button {
   flex-wrap: wrap;
   overflow: visible;
 }
-/* Phone and tablet: one row that scrolls sideways, with the right edge fading out as the cue. */
-@media (max-width: 1023.98px) {
-  .ws-tabstrip {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent 100%);
-    mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent 100%);
-  }
-  .ws-tabstrip::-webkit-scrollbar {
-    display: none;
-  }
-}
+/* Every width: the tabs wrap onto a second row, so none is hidden or needs a sideways swipe. */
 
 /* Scroll cue: the bottom edge of scrolling content fades out (a transparency mask, not a colour gradient). */
 .ws-fade-bottom {

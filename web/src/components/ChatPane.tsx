@@ -147,7 +147,7 @@ export function ChatPane(p: Props) {
         <PanelBar title={p.view.kind === 'new' ? 'Home' : 'Chat'} panel="main" expanded={p.expanded} onToggle={p.onToggleExpand} />
       </div>
       <div className="ws-fade-bottom min-h-0 flex-1 overflow-y-auto px-4 py-4 md:px-8 md:py-6">
-        <div className={['mx-auto pb-28', p.view.kind === 'new' ? 'max-w-6xl' : 'max-w-3xl'].join(' ')}>{body}</div>
+        <div className={['mx-auto pb-40 lg:pb-28', p.view.kind === 'new' ? 'max-w-6xl' : 'max-w-3xl'].join(' ')}>{body}</div>
       </div>
       <Composer
         threads={data.threads.threads}

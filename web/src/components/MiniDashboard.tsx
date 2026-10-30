@@ -19,9 +19,9 @@ export function MiniStats({ workflow, data, expanded = false }: { workflow: Work
     <dl className={['m-0 grid gap-2', expanded ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-2 lg:grid-cols-1'].join(' ')}>
       {stats.map((s) => (
         <div key={s.label} className="rounded-md border border-rule bg-paper p-3 max-lg:p-2">
-          <dt className="text-[15px] leading-snug text-ink-2">{s.label}</dt>
+          <dt className="text-[17px] leading-snug text-ink-2">{s.label}</dt>
           <dd className="t-index ms-num ws-wrap m-0 mt-1 max-lg:!text-[26px] max-lg:!leading-tight">{s.value}</dd>
-          {s.note && <dd className="m-0 mt-0.5 text-[15px] leading-snug text-ink-2">{s.note}</dd>}
+          {s.note && <dd className="m-0 mt-0.5 text-[17px] leading-snug text-ink-2">{s.note}</dd>}
         </div>
       ))}
     </dl>
@@ -49,7 +49,7 @@ function Recent({
         <div className="rounded-md border border-rule">
           <table className="w-full table-fixed border-collapse text-left text-[16px]">
             <thead>
-              <tr className="bg-sunk text-[15px] text-ink-2">
+              <tr className="bg-sunk text-[17px] text-ink-2">
                 <th className="px-3 py-2 font-semibold">Question or run</th>
                 <th className="w-[4.5rem] px-2 py-2 font-semibold">Shown</th>
                 <th className="w-[5.5rem] px-2 py-2 font-semibold">Withheld</th>
@@ -77,7 +77,7 @@ function Recent({
   return (
     <div className="mt-4">
       <h3 className="ms-kicker m-0 mb-1">Recorded answers · {items.length}</h3>
-      <p className="m-0 mb-1 text-[15px] text-ink-2">Sorted newest first. The open answer is marked.</p>
+      <p className="m-0 mb-1 text-[17px] text-ink-2">Sorted newest first. The open answer is marked.</p>
       <ul className="m-0 list-none p-0">
         {items.slice(0, 8).map((i) => (
           <li key={i.id} className="border-t border-rule first:border-t-0">
@@ -92,7 +92,7 @@ function Recent({
             >
               <span className="min-w-0">
                 <span className="ws-wrap line-clamp-3 block">{i.label}</span>
-                <span className="ms-num block text-[15px] font-normal text-ink-2">
+                <span className="ms-num block text-[17px] font-normal text-ink-2">
                   {i.shown} shown · {i.cost}
                 </span>
               </span>
@@ -166,7 +166,7 @@ export function MiniPane({
             >
               <span className="min-w-0">
                 <span className="block truncate text-[17px] font-semibold">{miniTitle(workflow)}</span>
-                <span className="block text-[15px] text-ink-2">{shown ? 'Hide stats and recorded answers' : 'Stats and recorded answers'}</span>
+                <span className="block text-[17px] text-ink-2">{shown ? 'Hide stats and recorded answers' : 'Stats and recorded answers'}</span>
               </span>
               <span className="shrink-0 text-ink-2">
                 <Icon name={shown ? 'up' : 'down'} size={20} />

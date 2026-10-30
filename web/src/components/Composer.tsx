@@ -281,7 +281,7 @@ export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, 
             Open
           </button>
         </form>
-        <p className="relative z-10 m-0 mt-1 text-center text-[15px] leading-snug text-ink-2">
+        <p className="relative z-10 m-0 mt-1 text-center text-[17px] leading-snug text-ink-2">
           <span className="hidden sm:inline">{DISCLAIMER}</span>
           <span className="sm:hidden">{DISCLAIMER_SHORT}</span>
           <span className="hidden md:inline"> Camera and mic show a recorded run until the live API answers.</span>

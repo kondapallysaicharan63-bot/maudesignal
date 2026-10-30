@@ -29,6 +29,8 @@ export interface TraceStep {
   time: Metric
   tokens: Metric
   cost: Metric
+  /** True for a display step that folds several searches into one (their own counts and times are in `lines`). */
+  grouped?: boolean
 }
 
 export interface RunUsage {

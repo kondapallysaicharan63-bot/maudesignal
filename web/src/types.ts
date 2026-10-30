@@ -208,6 +208,8 @@ export interface MatchFact {
   status: string
   text: string
   query_url: string
+  /** The stored numbers behind the sentence. */
+  data?: Record<string, unknown>
 }
 
 export interface DeviceTypeView {

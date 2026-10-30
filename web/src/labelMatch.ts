@@ -1,7 +1,7 @@
 // Pure helpers for the label "possible matches" screen. They read only what a recording stored: a time, token
 // count or cost appears only if the record has it for that step, and nothing is ever chosen on the person's behalf.
 import { NOT_RECORDED, modelBadge, type Metric, type Trace, type TraceStep } from './trace'
-import type { DeviceTypeView, LabelMatchRecord, LabelReading, MatchFact, MatchTraceStep } from './types'
+import type { DeviceTypeView, LabelMatch, LabelMatchRecord, LabelReading, MatchFact, MatchTraceStep } from './types'
 
 const none: Metric = { text: NOT_RECORDED, recorded: false }
 
@@ -164,4 +164,111 @@ export function matchSummary(l: LabelReading): string {
   if (!rec) return 'no matching run recorded'
   const n = rec.matches.length
   return n === 0 ? 'no match found' : `${plural(n, 'possible match', 'possible matches')} to confirm`
+}
+
+/** Up to three possible matches, highest score first (ties keep the stored order). Ordering only; nothing is chosen. */
+export function rankMatches(matches: LabelMatch[]): LabelMatch[] {
+  return matches
+    .slice(0, 3)
+    .map((m, i) => ({ m, i }))
+    .sort((a, b) => b.m.score - a.m.score || a.i - b.i)
+    .map((x) => x.m)
+}
+
+/** True when the first card has a strictly higher score than the next (so "Highest score" is never a tie). */
+export const hasClearLeader = (ranked: LabelMatch[]): boolean =>
+  ranked.length > 0 && (ranked.length === 1 || ranked[0].score > ranked[1].score)
+
+/** "1 of 3 · score 65 of 100". */
+export const rankLine = (rank: number, total: number, score: number): string => `${rank} of ${total} · score ${score} of 100`
+
+/** Thousands separators on bare numbers of five digits or more in stored text (ids such as K260687 and dates are left alone). */
+export const fmtNumbers = (text: string): string =>
+  text.replace(/(?<![\w.-])\d{5,}(?![\w-])/g, (n) => Number(n).toLocaleString('en-US'))
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+/** "2026-10-30T01:34:26Z" -> "Oct 30, 2026, 01:34 UTC"; text that is not an ISO time comes back unchanged. */
+export function fmtUtc(iso: string | undefined | null): string | null {
+  if (!iso) return null
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(iso)
+  if (!m) return iso
+  return `${MONTHS[Number(m[2]) - 1]} ${Number(m[3])}, ${m[1]}, ${m[4]}:${m[5]} UTC`
+}
+
+export interface KeyStat {
+  label: string
+  value: string
+  note?: string
+}
+
+const num = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null)
+const f2 = (n: number): string => n.toLocaleString('en-US', { maximumFractionDigits: 2 })
+
+/** The two or three figures that matter, read from the data stored with the passed facts (never from a withheld fact). */
+export function keyStats(view: DeviceTypeView): KeyStat[] {
+  const passed = view.facts.filter((f) => f.status === 'pass')
+  const data = (topic: string): Record<string, unknown> | null => passed.find((x) => x.topic === topic)?.data ?? null
+  const out: KeyStat[] = []
+  const total = num(data('reports_total')?.total)
+  if (total !== null) out.push({ label: 'Reports', value: f2(total), note: 'all time' })
+  const win = data('reports_window')
+  const week = num(win?.count)
+  const base = num(win?.baseline_weekly_mean)
+  if (week !== null)
+    out.push({ label: 'This week', value: f2(week), note: base !== null ? `vs ${f2(base)} weekly average` : 'weekly average not recorded' })
+  const recalls = num(data('recalls_total')?.total)
+  if (recalls !== null) out.push({ label: 'Recalls', value: f2(recalls), note: 'all time' })
+  return out
+}
+
+/**
+ * The same steps with the consecutive openFDA searches folded into one ("8 searches, 0 to 8 records each"). Each search
+ * stays listed as a line with only its stored count and time. Display only; the summary line and run line come from the
+ * full trace.
+ */
+export function groupSearches(trace: Trace): Trace {
+  const steps: TraceStep[] = []
+  let run: TraceStep[] = []
+  const flush = () => {
+    if (run.length === 0) return
+    if (run.length === 1) steps.push(run[0])
+    else {
+      const counts = run.map((s) => {
+        const m = /^(\d+) record/.exec(s.result ?? '')
+        return m ? Number(m[1]) : null
+      })
+      const known = counts.filter((c): c is number => c !== null)
+      let range = 'counts not recorded'
+      if (known.length === counts.length) {
+        const lo = Math.min(...known)
+        const hi = Math.max(...known)
+        range = lo === hi ? `${plural(lo, 'record')} each` : `${lo} to ${hi} records each`
+      }
+      steps.push({
+        id: `g${steps.length}`,
+        kind: 'tool',
+        title: `openFDA: ${plural(run.length, 'search', 'searches')}`,
+        detail: '',
+        args: null,
+        result: range,
+        lines: run.map((s) => `${s.title.replace(/^openFDA: /, '')}: ${s.result}${s.time.recorded ? ` (${s.time.text})` : ''}`),
+        model: null,
+        time: none,
+        tokens: none,
+        cost: none,
+        grouped: true,
+      })
+    }
+    run = []
+  }
+  for (const s of trace.steps) {
+    if (s.kind === 'tool') run.push(s)
+    else {
+      flush()
+      steps.push(s)
+    }
+  }
+  flush()
+  return { ...trace, steps }
 }
