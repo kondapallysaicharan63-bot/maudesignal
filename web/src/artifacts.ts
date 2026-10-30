@@ -9,7 +9,7 @@ export const TABS: { id: TabId; label: string }[] = [
   { id: 'dossier', label: 'Dossier' },
   { id: 'vision', label: 'Vision' },
   { id: 'audit', label: 'Audit' },
-  { id: 'capa', label: 'CAPA-need evidence' },
+  { id: 'capa', label: 'CAPA' },
   { id: 'protocol', label: 'Protocol' },
 ]
 

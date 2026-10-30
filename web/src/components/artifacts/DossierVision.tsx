@@ -63,7 +63,7 @@ export function DossierTab({ dossier }: { dossier: Dossier }) {
           </div>
         )}
       </dl>
-      <p className="mt-3 text-[13px] leading-snug text-ink-3">
+      <p className="mt-3 text-[14px] leading-snug text-ink-3">
         Advisory only. A named person reviews and decides; nothing is filed with FDA.
       </p>
     </article>
@@ -175,7 +175,7 @@ function LabelView({ l }: { l: LabelReading }) {
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-[13px] leading-snug text-ink-3">
+      <p className="mt-3 text-[14px] leading-snug text-ink-3">
         Lot and serial numbers are read for the session only and are never stored or exported. Overall legibility: {l.overall_legibility.replace('_', ' ')}.
       </p>
     </div>

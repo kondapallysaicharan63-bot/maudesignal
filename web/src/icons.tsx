@@ -7,12 +7,19 @@ const PATHS = {
   close: 'M6 6l12 12M18 6 6 18',
   panel: 'M4 5h16v14H4zM15 5v14',
   sidebar: 'M4 5h16v14H4zM9 5v14',
+  sidebarOpen: 'M4 5h16v14H4zM9 5v14M16 9.5 13.5 12l2.5 2.5',
+  sidebarShut: 'M4 5h16v14H4zM9 5v14M13 9.5l2.5 2.5-2.5 2.5',
+  camera: 'M4 8h4l1.5-2h5L16 8h4v11H4zM12 10a3.2 3.2 0 1 0 0 6.4 3.2 3.2 0 0 0 0-6.4z',
+  back: 'M15 6l-6 6 6 6',
   sun: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4',
   moon: 'M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z',
   auto: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 3v18',
   chat: 'M5 5h14v10H9l-4 4z',
   mic: 'M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM6 11a6 6 0 0 0 12 0M12 17v4',
   chevron: 'm9 6 6 6-6 6',
+  bell: 'M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0',
+  expand: 'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5',
+  collapse: 'M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5',
 } as const
 
 export type IconName = keyof typeof PATHS

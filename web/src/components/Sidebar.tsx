@@ -48,7 +48,7 @@ export function Sidebar(p: Props) {
   return (
     <>
       {p.open && (
-        <div className="fixed inset-0 z-30 bg-ink/40 md:hidden" onClick={p.onClose} aria-hidden="true" />
+        <div className="ws-scrim z-30 md:hidden" onClick={p.onClose} aria-hidden="true" data-testid="drawer-scrim" />
       )}
       <aside
         id="sidebar"
@@ -57,7 +57,7 @@ export function Sidebar(p: Props) {
           'z-40 flex w-[min(88vw,22rem)] shrink-0 flex-col border-r border-rule bg-surface transition-transform duration-200',
           'max-md:fixed max-md:inset-y-0 max-md:left-0',
           p.open ? '' : 'max-md:invisible max-md:-translate-x-full',
-          p.collapsed ? 'md:hidden' : 'md:static md:w-80',
+          p.collapsed ? 'md:hidden' : 'md:static md:w-72',
         ].join(' ')}
       >
         <div className="flex items-center justify-between px-3 pt-3 md:hidden">
@@ -90,7 +90,7 @@ export function Sidebar(p: Props) {
                   >
                     <span className="min-w-0">
                       {w.title}
-                      {DEMO_WORKFLOWS.includes(w.id) && <span className="text-[13px] text-ink-3"> · demo</span>}
+                      {DEMO_WORKFLOWS.includes(w.id) && <span className="text-[14px] text-ink-3"> · demo</span>}
                     </span>
                     {n !== undefined && (
                       <span className="ms-num shrink-0 text-[14px] text-ink-3">
@@ -128,7 +128,11 @@ export function Sidebar(p: Props) {
             </ul>
           )}
 
-          <h2 className="ws-heading">Schedules</h2>
+          <details className="mt-4 border-t border-rule">
+            <summary className="flex min-h-11 cursor-pointer items-center px-3 text-[16px] font-semibold text-ink">
+              Schedules and sources
+            </summary>
+          <h3 className="ws-heading">Schedules</h3>
           <ul className="m-0 list-none space-y-2 p-0 px-3">
             {p.schedules.map((s) => (
               <li key={s.id} className="text-[15px] leading-snug">
@@ -139,7 +143,7 @@ export function Sidebar(p: Props) {
             ))}
           </ul>
 
-          <h2 className="ws-heading">Sources · demo database</h2>
+          <h3 className="ws-heading">Sources · demo database</h3>
           <ul className="m-0 list-none p-0 px-3">
             {p.sources.map((s) => (
               <li key={s.id} className="flex justify-between gap-3 py-[3px] text-[15px]">
@@ -148,10 +152,11 @@ export function Sidebar(p: Props) {
               </li>
             ))}
           </ul>
-          <p className="px-3 pt-2 text-[13px] leading-snug text-ink-3">
+          <p className="px-3 pt-2 text-[14px] leading-snug text-ink-3">
             {demoSnapshotLabel(p.sources)}: stored records in the demo database, not live openFDA. MHRA (UK) is regulator
             context only and never counted in a MAUDE number.
           </p>
+          </details>
         </nav>
       </aside>
     </>

@@ -31,10 +31,10 @@ button {
     @apply bg-sunk font-semibold;
   }
   .ws-heading {
-    @apply px-3 pb-1 pt-5 text-[12px] font-semibold uppercase tracking-[0.1em] text-ink-3;
+    @apply px-3 pb-1 pt-5 text-[14px] font-semibold uppercase tracking-[0.1em] text-ink-3;
   }
   .ws-pill {
-    @apply inline-flex shrink-0 items-center gap-1 rounded-xs px-2 py-[2px] text-[12px] font-semibold leading-snug;
+    @apply inline-flex shrink-0 items-center gap-1 rounded-xs px-2 py-[2px] text-[14px] font-semibold leading-snug;
   }
 }
 
@@ -57,7 +57,34 @@ button {
   }
 }
 
-/* Tab strip: thin scrollbar so a clipped tab reads as scrollable. */
+/* Small design-system text is lifted to 14px or more for this workspace. */
+.ms-kicker {
+  font-size: 14px;
+}
+.ms-code {
+  font-size: 14px;
+}
+.ms-chip {
+  font-size: 14px;
+  height: 28px;
+}
+
+/* A dimmed layer behind drawers, sheets and dialogs (Tailwind cannot add alpha to a var() colour). */
+.ws-scrim {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--ink) 50%, transparent);
+}
+
+/* Tab strip: wraps onto a second row instead of scrolling sideways, so every tab is always reachable. */
 .ws-tabstrip {
-  scrollbar-width: thin;
+  display: flex;
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+/* Scroll cue: the bottom edge of scrolling content fades out (a transparency mask, not a colour gradient). */
+.ws-fade-bottom {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent 100%);
 }

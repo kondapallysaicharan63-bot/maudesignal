@@ -165,6 +165,10 @@ describe('first screen and the placeholder wording', () => {
           onThread={() => {}}
           onRun={() => {}}
           onVision={() => {}}
+          onBrief={() => {}}
+          onAlert={() => {}}
+          expanded={false}
+          onToggleExpand={() => {}}
         />,
       )
     const html = text(raw)
@@ -172,11 +176,10 @@ describe('first screen and the placeholder wording', () => {
     const lead = `${flagged} flagged of ${sweep.meta.codes_on_list} product codes on FDA's AI-enabled device list`
     expect(html).toContain(lead)
     expect(html).toContain(`Checked ${sweep.meta.generated_utc.slice(0, 10)}`)
-    expect(html.indexOf('AI device sweep')).toBeLessThan(html.indexOf('What do you want to look into?'))
+    expect(html.indexOf('AI device sweep')).toBeLessThan(html.indexOf('Workflows'))
     expect(html).not.toMatch(SOON_RE)
-    // the composer: no menu, no placeholder wording, chips are 3 + a "more" chip
-    expect(raw).toContain('placeholder="Type a question to find the closest recorded answer"')
-    expect(html).toMatch(/2 more/)
+    // the composer: one input row ("Ask a question"), the recorded questions are a type-ahead list, no menu
+    expect(raw).toContain('placeholder="Ask a question"')
     expect(html).not.toMatch(/GitHub|Google Drive|Upload file|Connected sources/)
   })
 })

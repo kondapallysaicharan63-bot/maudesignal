@@ -46,6 +46,8 @@ export interface Thread {
   sentences: Sentence[]
   first_pass: { passed: number; blocked: number; sentences: Sentence[] } | null
   repaired: boolean
+  /** Tokens and cost of the recorded run; `duration_s` only if the recording stored one (none do today). */
+  usage?: { input_tokens: number; output_tokens: number; cost_usd: number; duration_s?: number } | null
 }
 
 export interface EvidenceReport {
@@ -85,7 +87,7 @@ export interface Brief {
   headline: string
   counts: { new: number; more_serious_than_usual: number; reports_suddenly_increased: number; stable: number }
   window: { current_start: string; current_end: string; baseline_start: string; baseline_end: string }
-  signals: { product_code: string; label: string; current_count: number; baseline_count: number }[]
+  signals: { product_code: string; classification: string; label: string; current_count: number; baseline_count: number }[]
   footer: string | null
 }
 
