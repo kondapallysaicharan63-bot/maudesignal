@@ -13,7 +13,10 @@ export const MIN_QUESTION = 3
 export const MAX_QUESTION = 500
 export const MAX_HISTORY = 4
 export const MAX_HISTORY_ANSWER = 600
-export const MAX_IMAGE_BYTES = 8 * 1024 * 1024
+/** The server takes at most 4 MB of image (Vercel rejects larger bodies before the app runs, with no CORS headers). */
+export const MAX_IMAGE_BYTES = 4 * 1024 * 1024
+/** A chosen file may be larger than that (phone photos are); it is shrunk in the browser before upload. */
+export const MAX_SOURCE_BYTES = 30 * 1024 * 1024
 /** A live answer may take a while (a model call plus the gate); the label path stays under 55 s on the server. */
 export const ASK_TIMEOUT_MS = 70_000
 /** The label path (SAM, Spark, openFDA, gate) is held to under 55 s on the server; the page gives up a little after that. */
@@ -85,6 +88,9 @@ export interface Candidate {
 export interface LiveMatchesBlock {
   status: 'needs_person_to_confirm' | 'no_match_found'
   candidates: Candidate[]
+  /** True when openFDA could not be searched: an empty list then means "not searched", not "nothing matched". */
+  search_failed?: boolean
+  note?: string
 }
 export interface LabelResponse extends Common {
   reading: LiveReading
@@ -253,7 +259,12 @@ export function parseLabelResponse(body: unknown): LabelResponse | null {
       fields: r.fields as LiveReading['fields'],
       ...(r.values_withheld != null ? { values_withheld: r.values_withheld as LiveReading['values_withheld'] } : {}),
     },
-    matches: { status: m.status === 'no_match_found' || candidates.length === 0 ? 'no_match_found' : 'needs_person_to_confirm', candidates },
+    matches: {
+      status: m.status === 'no_match_found' || candidates.length === 0 ? 'no_match_found' : 'needs_person_to_confirm',
+      candidates,
+      ...(m.search_failed === true ? { search_failed: true } : {}),
+      ...(typeof m.note === 'string' && m.note.trim() ? { note: m.note.trim().slice(0, 400) } : {}),
+    },
     confirmed: null,
   }
 }
@@ -305,7 +316,7 @@ export const postVoice = async (wav: Blob, o: Pick<AskOptions, 'history' | 'prod
 
 export function postLabel(image: Blob, d: Deps): Promise<LabelResponse> {
   if (image.size === 0) return Promise.reject(new LiveError('invalid_input', 'That image is empty.'))
-  if (image.size > MAX_IMAGE_BYTES) return Promise.reject(new LiveError('too_large', 'That image is larger than 8 MB.'))
+  if (image.size > MAX_IMAGE_BYTES) return Promise.reject(new LiveError('too_large', 'That image is larger than 4 MB.'))
   return post(LABEL_PATH, { body: buildLabelForm(image) }, parseLabelResponse, { ...d, timeoutMs: d.timeoutMs ?? LABEL_TIMEOUT_MS })
 }
 

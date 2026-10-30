@@ -24,7 +24,9 @@ from playwright.sync_api import Browser, Page, sync_playwright
 
 WEB = Path(__file__).resolve().parents[1]
 OUT = WEB / "qa" / "screenshots"
-STUB_PORT, LIVE_PORT, STORED_PORT = 8765, 4173, 4174
+# Ports can be moved with LIVE_E2E_PORT_BASE (stub, live page, stored page = base, base+1, base+2) when another run holds them.
+_BASE = int(os.environ.get("LIVE_E2E_PORT_BASE", "0"))
+STUB_PORT, LIVE_PORT, STORED_PORT = (_BASE, _BASE + 1, _BASE + 2) if _BASE else (8765, 4173, 4174)
 LIVE_URL = f"http://127.0.0.1:{LIVE_PORT}/"
 STORED_URL = f"http://127.0.0.1:{STORED_PORT}/"
 
@@ -94,6 +96,18 @@ def jpeg_with_exif() -> bytes:
     exif = b"Exif\x00\x00" + b"CAMERA-SERIAL-12345 GPS 40.7128N 74.0060W" + b"\x00" * 8
     seg = b"\xff\xe1" + (len(exif) + 2).to_bytes(2, "big") + exif
     return src[:2] + seg + src[2:]
+
+
+def big_noisy_jpeg() -> bytes:
+    """A 4000 x 3000 noisy JPEG over 4 MB, with EXIF, like a phone photo."""
+    import io
+
+    from PIL import Image
+
+    img = Image.frombytes("RGB", (4000, 3000), os.urandom(4000 * 3000 * 3))
+    out = io.BytesIO()
+    img.save(out, format="JPEG", quality=92, exif=Image.Exif())
+    return out.getvalue()
 
 
 def overflow(page: Page) -> int:
@@ -359,7 +373,8 @@ def main() -> int:
                 "camera: stub received a JPEG with no EXIF",
                 img.get("jpeg") is True
                 and img.get("exif") is False
-                and img["bytes"] < 8 * 1024 * 1024,
+                and img["bytes"] < 4 * 1024 * 1024
+                and max(img.get("width", 99999), img.get("height", 99999)) <= 1600,
                 img,
             )
             check(
@@ -370,16 +385,18 @@ def main() -> int:
             check(
                 "camera: reading shows legibility banner and withheld values",
                 page.get_by_test_id("legibility-banner").count() == 1
-                and page.get_by_test_id("reading-fields").inner_text().count("value withheld") == 3,
-                page.get_by_test_id("reading-fields").inner_text(),
+                and page.get_by_test_id("reading-fields").inner_text().count("value withheld") == 4
+                and page.get_by_test_id("lot-serial-note").count() == 1,
+                [page.get_by_test_id("legibility-banner").count(), page.get_by_test_id("lot-serial-note").count()],
             )
             steps = [s.inner_text() for s in page.locator("[data-testid=trace-step]").all()]
             check(
-                "camera: trace shows SAM -> Spark -> openFDA -> gate with ms",
+                "camera: trace shows re-encode -> SAM -> Spark -> openFDA with ms",
                 len(steps) == 4
-                and "SAM 3.1" in steps[0]
-                and "1.4 s" in steps[0]
-                and "Claim gate" in steps[3],
+                and "Re-encode" in steps[0]
+                and "SAM 3.1" in steps[1]
+                and "1.4 s" in steps[1]
+                and "openFDA" in steps[3],
                 steps,
             )
             check(
@@ -404,6 +421,28 @@ def main() -> int:
             shot(page, "camera-result-1440-light", report)
 
             # upload with EXIF -> canvas re-encode removes it
+            big_path = WEB / "qa" / "tmp" / "big-phone.jpg"
+            big_path.parent.mkdir(parents=True, exist_ok=True)
+            big_path.write_bytes(big_noisy_jpeg())
+            page.get_by_test_id("image-input").set_input_files(str(big_path))
+            for _ in range(60):  # wait for the stub to receive the shrunk photo
+                imgs_big = [e for e in stub_log(page) if e["path"] == "/v1/live/label"]
+                if len(imgs_big) > len(imgs):
+                    break
+                page.wait_for_timeout(500)
+            sent = imgs_big[-1]["image"]
+            check(
+                "upload: a 4000 x 3000 photo over 4 MB is shrunk to 1600 px and under 4 MB before upload",
+                big_path.stat().st_size > 4 * 1024 * 1024
+                and max(sent["width"], sent["height"]) == 1600
+                and sent["bytes"] < 4 * 1024 * 1024
+                and sent["exif"] is False,
+                {"original": big_path.stat().st_size, "sent": sent},
+            )
+            check(
+                "upload: the bytes sent are not the original file",
+                sent["bytes"] != big_path.stat().st_size,
+            )
             exif_path = WEB / "qa" / "tmp" / "with-exif.jpg"
             exif_path.parent.mkdir(parents=True, exist_ok=True)
             exif_path.write_bytes(jpeg_with_exif())
@@ -412,14 +451,12 @@ def main() -> int:
                 b"Exif\x00\x00" in exif_path.read_bytes()[:200],
             )
             page.get_by_test_id("image-input").set_input_files(str(exif_path))
-            page.wait_for_function(
-                "document.querySelectorAll('[data-testid=match-card]').length === 3"
-            )
-            page.wait_for_timeout(300)
+            page.wait_for_timeout(1500)
             imgs2 = [e for e in stub_log(page) if e["path"] == "/v1/live/label"]
             check(
-                "upload: EXIF is gone before it leaves the page",
-                len(imgs2) == len(imgs) + 1
+                "upload: EXIF is gone before it leaves the page, long side at most 1600",
+                len(imgs2) == len(imgs_big) + 1
+                and max(imgs2[-1]["image"]["width"], imgs2[-1]["image"]["height"]) <= 1600
                 and imgs2[-1]["image"]["exif"] is False
                 and imgs2[-1]["image"]["jpeg"] is True,
                 imgs2[-1]["image"],
@@ -443,7 +480,7 @@ def main() -> int:
             check("exploratory: an empty file is refused", True)
             before = len([e for e in stub_log(page) if e["path"] == "/v1/live/label"])
             huge = WEB / "qa" / "tmp" / "huge.jpg"
-            huge.write_bytes(b"\xff\xd8\xff" + b"0" * (17 * 1024 * 1024))
+            huge.write_bytes(b"\xff\xd8\xff" + b"0" * (31 * 1024 * 1024))
             page.get_by_test_id("image-input").set_input_files(str(huge))
             page.wait_for_function(
                 "document.querySelector('[data-testid=camera-problem]')?.innerText.includes('too large')"
@@ -493,6 +530,47 @@ def main() -> int:
             )
             page.close()
             stub.mode = "ok"
+
+            # 4b. real-API shapes: openFDA not searched, searched with no match, recorded answers
+            page = new_page(browser, 1440, 900, "light")
+            open_live(page)
+            page.get_by_test_id("composer-camera").click()
+            stub.label_mode = "search_failed"
+            page.get_by_test_id("image-input").set_input_files(str(WEB / "qa" / "tmp" / "with-exif.jpg"))
+            page.wait_for_selector("[data-testid=search-failed-note]")
+            body_text = page.get_by_test_id("label-live").inner_text()
+            check(
+                "label search_failed: the server's note is shown, with a retry hint",
+                page.get_by_test_id("search-failed-note").inner_text()
+                == "openFDA could not be searched, so there is no match result for this photo."
+                and "try again" in page.get_by_test_id("search-failed-retry").inner_text().lower(),
+            )
+            check(
+                "label search_failed: no 'No match found', no candidate cards",
+                "No match found" not in body_text and page.locator("[data-testid=match-card]").count() == 0,
+                body_text[:300],
+            )
+            shot(page, "label-search-failed-1440-light", report)
+            stub.label_mode = "no_match"
+            page.get_by_test_id("image-input").set_input_files(str(WEB / "qa" / "tmp" / "with-exif.jpg"))
+            page.wait_for_selector("[data-testid=no-match]")
+            check(
+                "label no_match (searched, nothing found): says 'No match found', not the failure note",
+                page.locator("[data-testid=search-failed]").count() == 0,
+            )
+            stub.label_mode = "ok"
+            stub.mode = "recorded"
+            ask(page, "What changed this week?")
+            page.wait_for_selector("[data-testid=recorded-note]")
+            check(
+                "recorded answer with HTTP 200: Recorded run badge and the server's note, no daily-limit banner",
+                page.get_by_test_id("mode-badge").last.inner_text() == "Recorded run"
+                and "recorded run that answered" in page.get_by_test_id("recorded-note").inner_text()
+                and page.locator("[data-testid=limit-banner]").count() == 0,
+                page.get_by_test_id("recorded-note").inner_text(),
+            )
+            stub.mode = "ok"
+            page.close()
 
             # 5. denied permissions: message + recorded runs
             deny = "navigator.mediaDevices.getUserMedia = () => Promise.reject(Object.assign(new Error('x'), {name: 'NotAllowedError'}));"

@@ -21,6 +21,7 @@ import {
 } from './api'
 import { byteLevel, downmixToMono, encodeWavPcm16, fmtClock, MAX_SECONDS, resample, rmsLevel, TARGET_RATE, toWav16k } from './audio'
 import { fitSize, isAcceptedImage, readingRows } from './label'
+import { drawToJpeg, encodeWithin, PhotoError, PHOTO_QUALITIES, type PhotoCanvas } from './photo'
 import { recordedFor, threadToResponse } from './recorded'
 import { speechText } from './speech'
 
@@ -330,7 +331,7 @@ describe('network layer with a fake fetch', () => {
     expect(await postAsk('What changed?', {}, { apiBase: null, fetcher: f }).catch((e: LiveError) => e)).toMatchObject({ kind: 'not_configured' })
     expect(await postAsk('no', {}, { apiBase: 'https://x.example', fetcher: f }).catch((e: LiveError) => e)).toMatchObject({ kind: 'invalid_input' })
     expect(await postLabel(new Blob([], { type: 'image/jpeg' }), { apiBase: 'https://x.example', fetcher: f }).catch((e: LiveError) => e)).toMatchObject({ kind: 'invalid_input' })
-    expect(await postLabel(new Blob([new Uint8Array(8 * 1024 * 1024 + 1)], { type: 'image/jpeg' }), { apiBase: 'https://x.example', fetcher: f }).catch((e: LiveError) => e)).toMatchObject({ kind: 'too_large' })
+    expect(await postLabel(new Blob([new Uint8Array(4 * 1024 * 1024 + 1)], { type: 'image/jpeg' }), { apiBase: 'https://x.example', fetcher: f }).catch((e: LiveError) => e)).toMatchObject({ kind: 'too_large' })
     expect(f).not.toHaveBeenCalled()
   })
 })
@@ -354,7 +355,7 @@ describe('label helpers', () => {
     expect(rows[0]).toMatchObject({ value: null, hidden: true })
   })
   it('fitSize keeps the aspect ratio, never enlarges, and handles bad sizes', () => {
-    expect(fitSize(4000, 3000)).toEqual({ width: 2048, height: 1536 })
+    expect(fitSize(4000, 3000)).toEqual({ width: 1600, height: 1200 })
     expect(fitSize(800, 600)).toEqual({ width: 800, height: 600 })
     expect(fitSize(0, 10)).toEqual({ width: 0, height: 0 })
     expect(fitSize(3000, 4000, 1000)).toEqual({ width: 750, height: 1000 })
@@ -391,5 +392,102 @@ describe('recorded fallback', () => {
     const cut = speechText(long)
     expect(cut.length).toBeLessThanOrEqual(1200)
     expect(cut.endsWith('.')).toBe(true)
+  })
+})
+
+describe('photo downscale and size logic (fake canvas and encoder)', () => {
+  const MB = 1024 * 1024
+  const blobOf = (n: number) => new Blob([new Uint8Array(n)], { type: 'image/jpeg' })
+
+  /** A fake canvas whose encoded size depends only on the quality asked for. */
+  function fakeCanvas(sizeAt: (q: number) => number) {
+    const calls: { w: number; h: number; q: number[]; drawn: number[] } = { w: 0, h: 0, q: [], drawn: [] }
+    const c: PhotoCanvas = {
+      width: 0,
+      height: 0,
+      getContext: () => ({ drawImage: (_s, _x, _y, w, h) => void calls.drawn.push(w, h) }),
+      toBlob: (cb, type, q) => {
+        calls.q.push(q)
+        expect(type).toBe('image/jpeg')
+        cb(blobOf(sizeAt(q)))
+      },
+    }
+    return { c, calls }
+  }
+
+  it('tries quality 0.85, then 0.7, then 0.55', () => {
+    expect([...PHOTO_QUALITIES]).toEqual([0.85, 0.7, 0.55])
+  })
+  it('draws at most 1600 px on the long side and encodes at 0.85 first', async () => {
+    const { c, calls } = fakeCanvas(() => 900_000)
+    const out = await drawToJpeg('src', 4032, 3024, () => c)
+    expect(calls.drawn).toEqual([1600, 1200])
+    expect(c.width).toBe(1600)
+    expect(c.height).toBe(1200)
+    expect(calls.q).toEqual([0.85])
+    expect(out.size).toBe(900_000)
+  })
+  it('a small image is not enlarged', async () => {
+    const { c, calls } = fakeCanvas(() => 50_000)
+    await drawToJpeg('src', 640, 480, () => c)
+    expect(calls.drawn).toEqual([640, 480])
+  })
+  it('retries at 0.7 when 0.85 is over 4 MB, and sends that result', async () => {
+    const { c, calls } = fakeCanvas((q) => (q > 0.8 ? 5 * MB : 3 * MB))
+    const out = await drawToJpeg('src', 4000, 3000, () => c)
+    expect(calls.q).toEqual([0.85, 0.7])
+    expect(out.size).toBe(3 * MB)
+  })
+  it('retries at 0.55 when 0.85 and 0.7 are over 4 MB', async () => {
+    const { c, calls } = fakeCanvas((q) => (q > 0.6 ? 4 * MB + 1 : 2 * MB))
+    const out = await drawToJpeg('src', 4000, 3000, () => c)
+    expect(calls.q).toEqual([0.85, 0.7, 0.55])
+    expect(out.size).toBe(2 * MB)
+  })
+  it('exactly 4 MB is accepted', async () => {
+    const out = await encodeWithin(async () => blobOf(4 * MB))
+    expect(out.size).toBe(4 * MB)
+  })
+  it('throws too_big when even 0.55 is over 4 MB, and never returns the original', async () => {
+    const { c, calls } = fakeCanvas(() => 6 * MB)
+    await expect(drawToJpeg('src', 4000, 3000, () => c)).rejects.toMatchObject({ name: 'PhotoError', kind: 'too_big' })
+    expect(calls.q).toEqual([0.85, 0.7, 0.55])
+  })
+  it('an empty encode result counts as too big, not as a photo', async () => {
+    await expect(encodeWithin(async () => blobOf(0))).rejects.toBeInstanceOf(PhotoError)
+  })
+  it('a source with no pixels throws no_frame before any canvas is made', async () => {
+    const make = vi.fn()
+    await expect(drawToJpeg('src', 0, 0, make as never)).rejects.toMatchObject({ kind: 'no_frame' })
+    expect(make).not.toHaveBeenCalled()
+  })
+  it('an encoder that returns null fails with encode_failed', async () => {
+    const c: PhotoCanvas = { width: 0, height: 0, getContext: () => null, toBlob: (cb) => cb(null) }
+    await expect(drawToJpeg('src', 100, 100, () => c)).rejects.toMatchObject({ kind: 'encode_failed' })
+  })
+})
+
+describe('label matches: search_failed', () => {
+  const base = (matches: Record<string, unknown>) => ({
+    mode: 'live',
+    trace: [],
+    reading: { legibility: 'clear', fields: { device_name: { value: 'X', legibility: 'clear' } } },
+    matches,
+    confirmed: null,
+  })
+  it('keeps search_failed and the note from the server', () => {
+    const r = parseLabelResponse(base({ status: 'no_match_found', candidates: [], search_failed: true, note: 'openFDA could not be searched, so there is no match result for this photo.' }))
+    expect(r?.matches.search_failed).toBe(true)
+    expect(r?.matches.note).toMatch(/could not be searched/)
+    expect(r?.matches.candidates).toEqual([])
+  })
+  it('a plain no match has neither flag nor note', () => {
+    const r = parseLabelResponse(base({ status: 'no_match_found', candidates: [] }))
+    expect(r?.matches.search_failed).toBeUndefined()
+    expect(r?.matches.note).toBeUndefined()
+  })
+  it('real-API candidates with null fields do not turn into the text "null"', () => {
+    const r = parseLabelResponse(base({ status: 'needs_person_to_confirm', candidates: [{ k_number: null, device_name: null, applicant: null, product_code: null, why_matched: [], why_not_matched: [], links: [] }] }))
+    expect(r?.matches.candidates[0]).toMatchObject({ k_number: '', device_name: '', applicant: '', product_code: '' })
   })
 })

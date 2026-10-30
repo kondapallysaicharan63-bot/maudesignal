@@ -158,7 +158,7 @@ CORS on the server: only the origins in `MAUDESIGNAL_WEB_ORIGINS`, no credential
 |---|---|
 | `POST /v1/live/ask` | JSON `{question: str 3..500, history?: [{question, answer}] (last 4; the page cuts each answer to 600 chars, the server does too), product_code?, ref?}` |
 | `POST /v1/live/voice` | multipart: part `audio` = WAV PCM16 mono 16000 Hz, at most 60 s and 4 MB (made in the browser: `MediaRecorder` -> `AudioContext.decodeAudioData` -> mono -> 16 kHz -> WAV, `src/live/audio.ts`); optional part `meta` = JSON `{history?, product_code?}` |
-| `POST /v1/live/label` | multipart: part `image` = JPEG or PNG, at most 8 MB. The page draws the photo on a canvas and sends a fresh JPEG (no EXIF); the server re-encodes it again and never stores it |
+| `POST /v1/live/label` | multipart: part `image` = JPEG or PNG, at most 4 MB (Vercel refuses larger bodies before the app runs, with no CORS headers). The page draws every photo, camera or upload, on a canvas with the long side at most 1600 px and sends a fresh JPEG at quality 0.85 (no EXIF), retrying at 0.7 then 0.55 if the result is over 4 MB and showing a message if it is still too big; the original file bytes are never sent. The server re-encodes it again and never stores it |
 
 All three answer with:
 ```json
@@ -171,9 +171,12 @@ All three answer with:
   `answer: {speakable: [{text, links: [{label, url}]}], withheld: [{reason}], spoken_text}`. Only `speakable`
   sentences are shown, with their links under them. `withheld` is shown only as "N sentences held back: <reasons>"
   (the held text is never sent or shown). `spoken_text` is the only text read aloud (`speechSynthesis`).
-- label adds `reading: {legibility, fields: {device_name, manufacturer, model, k_number, udi/gtin},
-  values_withheld?}` and `matches: {status: needs_person_to_confirm|no_match_found, candidates: [up to 3 {k_number,
-  device_name, applicant, product_code, why_matched[], why_not_matched[], links[]}]}` and `confirmed: null`.
+- label adds `reading: {legibility, fields: {device_name, manufacturer, model, k_number, udi, gtin} (each {value, legibility}, value "" when not read),
+  values_withheld?: ["lot", "serial"] (those two are never returned; the page says so)}` and `matches: {status: needs_person_to_confirm|no_match_found, candidates: [up to 3 {k_number,
+  device_name, applicant, product_code, why_matched[], why_not_matched[], links[]}], search_failed?: true, note?}` and `confirmed: null`.
+  When `search_failed` is true (or a `note` is present) and there are no candidates, openFDA could not be searched: the
+  page shows the note and a retry hint instead of "No match found" and no candidate list. `no_match_found` without it
+  means a search ran and found nothing.
   A withheld or illegible value is shown as "value withheld", never filled in. No candidate is chosen for the person;
   "Confirm this match" and "None of these" act only in the page.
 - Errors: `422 {code: "patient_data"|"invalid_input", message}` (the message is shown as is, cut to 400 chars),

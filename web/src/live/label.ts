@@ -24,8 +24,8 @@ export function readingRows(r: LiveReading): Row[] {
   })
 }
 
-/** The longest side a photo is drawn at before it is sent (keeps the upload far below the 8 MB limit). */
-export const MAX_SIDE = 2048
+/** The longest side a photo is drawn at before it is sent (matches the server's own 1600 px, keeps the upload under the 4 MB limit). */
+export const MAX_SIDE = 1600
 
 /** Size to draw a w x h image at so its longest side is at most `max`; never enlarges. */
 export function fitSize(w: number, h: number, max: number = MAX_SIDE): { width: number; height: number } {

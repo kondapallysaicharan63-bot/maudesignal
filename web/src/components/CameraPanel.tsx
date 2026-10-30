@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Icon } from '../icons'
 import { legibilityBanner } from '../labelMatch'
-import { LIMIT_TEXT, LiveError, MAX_IMAGE_BYTES, NOT_MEDICAL_ADVICE, PHOTO_NOTE, postLabel, type Candidate, type LabelResponse } from '../live/api'
-import { isAcceptedImage, readingRows } from '../live/label'
-import { cameraErrorText, fileToJpeg, frameToJpeg } from '../live/photo'
+import { LIMIT_TEXT, LiveError, MAX_SOURCE_BYTES, NOT_MEDICAL_ADVICE, PHOTO_NOTE, postLabel, type Candidate, type LabelResponse } from '../live/api'
+import { readingRows } from '../live/label'
+import { PHOTO_TOO_BIG_TEXT, PhotoError, cameraErrorText, fileToJpeg, frameToJpeg } from '../live/photo'
 import { LiveTrace } from './LiveTrace'
 
 type Fetcher = (url: string, init?: RequestInit) => Promise<Response>
@@ -104,10 +104,21 @@ export function LiveMatches({ res }: { res: LabelResponse }) {
     <section className="mt-4" data-testid="label-matches">
       <h3 className="ms-kicker m-0 !text-[16px]">Possible matches (a person confirms one)</h3>
       {cands.length === 0 ? (
-        <div data-testid="no-match" className="mt-2 rounded-md border border-rule bg-sunk p-3">
-          <p className="m-0 text-[22px] font-semibold leading-snug">No match found</p>
-          <p className="m-0 mt-1 text-[17px] font-semibold">Next step: take a clearer photo of the label.</p>
-        </div>
+        res.matches.search_failed || res.matches.note ? (
+          <div data-testid="search-failed" className="mt-2 rounded-md border-2 border-warning bg-warning-soft p-3">
+            <p className="ws-wrap m-0 text-[19px] font-semibold leading-snug" data-testid="search-failed-note">
+              {res.matches.note ?? 'openFDA could not be searched, so there is no match result for this photo.'}
+            </p>
+            <p className="m-0 mt-1 text-[17px] font-semibold" data-testid="search-failed-retry">
+              Next step: try again in a minute. A retry uses another of today's live readings.
+            </p>
+          </div>
+        ) : (
+          <div data-testid="no-match" className="mt-2 rounded-md border border-rule bg-sunk p-3">
+            <p className="m-0 text-[22px] font-semibold leading-snug">No match found</p>
+            <p className="m-0 mt-1 text-[17px] font-semibold">Next step: take a clearer photo of the label.</p>
+          </div>
+        )
       ) : (
         <>
           <p className="m-0 mt-1 text-[17px] text-ink-2">
@@ -194,6 +205,11 @@ export function LiveLabelResult({ res }: { res: LabelResponse }) {
           </div>
         ))}
       </dl>
+      {Array.isArray(res.reading.values_withheld) && res.reading.values_withheld.some((k) => k === 'lot' || k === 'serial') && (
+        <p className="m-0 mt-2 text-[15px] text-ink-2" data-testid="lot-serial-note">
+          Lot and serial numbers on the label are never shown or kept.
+        </p>
+      )}
       <LiveMatches res={res} />
       <div className="mt-4">
         <h3 className="ms-kicker m-0 !text-[16px]">Steps of this run</h3>
@@ -283,8 +299,9 @@ export function CameraPanel({ apiBase, fetcher }: { apiBase: string | null; fetc
       const blob = await frameToJpeg(video.current)
       stopCamera()
       await send(blob)
-    } catch {
-      setProblem('No picture could be taken yet. Wait a second for the camera to start, then try again.')
+    } catch (e) {
+      if (e instanceof PhotoError && e.kind === 'too_big') setProblem(PHOTO_TOO_BIG_TEXT)
+      else setProblem('No picture could be taken yet. Wait a second for the camera to start, then try again.')
     }
   }
 
@@ -292,14 +309,15 @@ export function CameraPanel({ apiBase, fetcher }: { apiBase: string | null; fetc
     if (!f) return
     setProblem(null)
     if (f.size === 0) return setProblem('That file is empty.')
-    if (f.size > MAX_IMAGE_BYTES * 2) return setProblem('That file is too large to send. Choose a photo under 8 MB.')
+    if (f.size > MAX_SOURCE_BYTES) return setProblem(`That file is too large to read here. Choose a photo under ${MAX_SOURCE_BYTES / (1024 * 1024)} MB.`)
     if (!f.type.startsWith('image/')) return setProblem('That file is not an image. Choose a JPEG or PNG photo.')
     let blob: Blob
     try {
       blob = await fileToJpeg(f)
-    } catch {
-      if (!isAcceptedImage(f.type)) return setProblem('That image could not be read. Choose a JPEG or PNG photo.')
-      blob = f
+    } catch (e) {
+      // The original file is never sent: if this browser cannot decode and shrink it, nothing is uploaded.
+      if (e instanceof PhotoError && e.kind === 'too_big') return setProblem(PHOTO_TOO_BIG_TEXT)
+      return setProblem('That image could not be read in this browser. Choose a JPEG or PNG photo.')
     }
     await send(blob)
   }

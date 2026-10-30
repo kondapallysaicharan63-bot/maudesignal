@@ -19,6 +19,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
 HEARD = "What changed this week?"
+MAX_IMAGE_BYTES = 4 * 1024 * 1024  # the real server's limit for the image part
+SEARCH_FAILED_NOTE = "openFDA could not be searched, so there is no match result for this photo."
 
 
 def check_wav(data: bytes) -> dict[str, Any]:
@@ -38,21 +40,34 @@ def check_wav(data: bytes) -> dict[str, Any]:
 
 def check_jpeg(data: bytes) -> dict[str, Any]:
     """Describe a JPEG: the magic bytes and whether any APP1 'Exif' segment is present."""
-    return {
+    info: dict[str, Any] = {
         "bytes": len(data),
         "jpeg": data[:3] == b"\xff\xd8\xff",
         "exif": b"Exif\x00\x00" in data[:65536],
     }
+    # Width and height from the first SOFn segment, so a test can see the long side the page sent.
+    i = 2
+    while info["jpeg"] and i + 9 < len(data) and data[i] == 0xFF:
+        marker = data[i + 1]
+        if 0xC0 <= marker <= 0xCF and marker not in (0xC4, 0xC8, 0xCC):
+            info["height"], info["width"] = struct.unpack(">HH", data[i + 5 : i + 9])
+            break
+        i += 2 + struct.unpack(">H", data[i + 2 : i + 4])[0]
+    return info
 
 
 class Stub:
-    """The stub server. `mode` can be set at any time: "ok", "429", "500", "422_patient"."""
+    """The stub server. `mode` can be set at any time: "ok", "429", "500", "422_patient", "recorded".
+
+    `label_mode`: "ok", "search_failed" (openFDA could not be searched), "no_match" (searched, nothing found).
+    """
 
     def __init__(self, port: int = 8765, origins: set[str] | None = None) -> None:
         self.port = port
         self.origins = origins or set()
         self.log: list[dict[str, Any]] = []
         self.mode = "ok"
+        self.label_mode = "ok"
         self.live_left = 20
         self._server: ThreadingHTTPServer | None = None
 
@@ -72,6 +87,8 @@ class Stub:
             def _send(
                 self, status: int, body: dict[str, Any], extra: dict[str, str] | None = None
             ) -> None:
+                if "code" in body and "error" not in body:  # the real API repeats code and message under "error"
+                    body = {**body, "error": {"code": body["code"], "message": body["message"]}}
                 raw = json.dumps(body).encode()
                 self.send_response(status)
                 self._cors()
@@ -106,7 +123,7 @@ class Stub:
                     "credentials_sent": "Cookie" in self.headers,
                 }
                 stub.log.append(entry)
-                if n > 12 * 1024 * 1024:
+                if n > MAX_IMAGE_BYTES + 64 * 1024:  # the real server caps the body at 4 MB plus multipart overhead
                     return self._send(413, {"code": "too_large", "message": "too large"})
                 if stub.mode == "429":
                     return self._send(
@@ -128,7 +145,16 @@ class Stub:
                             422, {"code": "invalid_input", "message": "Body is not JSON."}
                         )
                     entry["body"] = body
-                    q = body.get("question") if isinstance(body, dict) else None
+                    if not isinstance(body, dict) or set(body) - {"question", "history", "product_code", "ref"}:
+                        return self._send(
+                            422, {"code": "invalid_input", "message": "Invalid input: request."}
+                        )
+                    pc = body.get("product_code")
+                    if pc is not None and not (isinstance(pc, str) and len(pc) == 3 and pc.isalpha()):
+                        return self._send(
+                            422, {"code": "invalid_input", "message": "Invalid input: product_code."}
+                        )
+                    q = body.get("question")
                     if not isinstance(q, str) or not 3 <= len(q.strip()) <= 500:
                         return self._send(
                             422,
@@ -141,13 +167,13 @@ class Stub:
                     if (
                         not isinstance(hist, list)
                         or len(hist) > 4
-                        or any(len(h.get("answer", "")) > 600 for h in hist)
+                        or any(len(h.get("answer", "")) > 20000 for h in hist)
                     ):
                         return self._send(
                             422,
                             {
                                 "code": "invalid_input",
-                                "message": "history is limited to 4 turns of 600 characters.",
+                                "message": "Invalid input: history.",
                             },
                         )
                     if (
@@ -202,6 +228,10 @@ class Stub:
                     img = parts.get("image") or b""
                     info = check_jpeg(img)
                     entry["image"] = info
+                    if info["bytes"] > MAX_IMAGE_BYTES:
+                        return self._send(
+                            413, {"code": "too_large", "message": "The upload is too large."}
+                        )
                     if not info["jpeg"] or info["exif"]:
                         return self._send(
                             422,
@@ -221,32 +251,57 @@ class Stub:
             self._server.shutdown()
             self._server.server_close()
 
-    def common(self, trace: list[dict[str, Any]]) -> dict[str, Any]:
-        self.live_left -= 1
-        return {
-            "mode": "live",
+    def common(self, trace: list[dict[str, Any]], recorded: str | None = None) -> dict[str, Any]:
+        """Fields every real live response has: mode, recorded_note (recorded only), trace, cost_usd, limits."""
+        if recorded is None:
+            self.live_left -= 1
+        out: dict[str, Any] = {
+            "mode": "live" if recorded is None else "recorded",
             "not_medical_advice": True,
             "trace": trace,
-            "cost_usd": None,
+            "cost_usd": None,  # the real API sends null when nothing was spent
             "limits": {"remaining_today": self.live_left, "resets_utc": "2026-11-01T00:00:00Z"},
         }
+        if recorded is not None:
+            out["recorded_note"] = recorded
+        return out
 
     def answer(self, q: str, hist: list[Any], heard: str | None = None) -> dict[str, Any]:
         n = len(hist)
-        trace = [
-            {
-                "step": "Muse Spark reads the stored records",
-                "model": "muse-spark-1.3",
-                "ms": 812,
-                "status": "ok",
-            },
-            {"step": "Claim gate checks every sentence", "model": None, "ms": 6, "status": "ok"},
-        ]
+        recorded = self.mode == "recorded"
+        trace = (
+            [
+                {
+                    "step": "Muse Spark answers from stored records",
+                    "model": "muse-spark-1.3",
+                    "ms": 0,
+                    "status": "skipped",
+                    "note": "No live model key is configured here.",
+                },
+                {"step": "Closest recorded answer", "model": None, "ms": 4, "status": "ok"},
+            ]
+            if recorded
+            else [
+                {
+                    "step": "Muse Spark answers from stored records",
+                    "model": "muse-spark-1.3",
+                    "ms": 812,
+                    "status": "ok",
+                },
+                {
+                    "step": "Read-only tools and claim gate",
+                    "model": None,
+                    "ms": 6,
+                    "status": "ok",
+                    "note": "1 tool call(s): what_changed_this_week",
+                },
+            ]
+        )
         if heard:
             trace.insert(
                 0,
                 {
-                    "step": "Transcribe the question",
+                    "step": "Muse Voice Transcribe",
                     "model": "muse-voice-transcribe-1.0",
                     "ms": 540,
                     "status": "ok",
@@ -264,7 +319,12 @@ class Stub:
             },
             {"text": "Two device types had more serious reports than usual.", "links": []},
         ]
-        out = self.common(trace)
+        out = self.common(
+            trace,
+            'No live model call was made. Shown instead: a recorded run that answered "What changed this week?" (recorded 2026-10-28).'
+            if recorded
+            else None,
+        )
         out["answer"] = {
             "speakable": sentences,
             "withheld": [{"reason": "a number did not match the stored data"}],
@@ -275,48 +335,64 @@ class Stub:
         return out
 
     def label(self) -> dict[str, Any]:
+        """A label answer shaped like the real one (reading fields as the API names them, lot and serial withheld)."""
+        failed = self.label_mode == "search_failed"
         trace = [
-            {"step": "SAM 3.1 finds the label", "model": "sam-3.1", "ms": 1400, "status": "ok"},
+            {"step": "Re-encode photo, drop metadata", "model": None, "ms": 38, "status": "ok"},
+            {"step": "SAM 3.1 crop", "model": "sam-3.1", "ms": 1400, "status": "ok"},
+            {"step": "Muse Spark read", "model": "muse-spark-1.3", "ms": 4200, "status": "ok"},
             {
-                "step": "Muse Spark reads the label",
-                "model": "muse-spark-1.3",
-                "ms": 4200,
-                "status": "ok",
+                "step": "openFDA search for possible matches",
+                "model": None,
+                "ms": 900,
+                "status": "failed" if failed else "ok",
+                "note": "2 openFDA search(es), 2 failed" if failed else "2 openFDA search(es)",
             },
-            {"step": "Search openFDA", "model": None, "ms": 900, "status": "ok"},
-            {"step": "Claim gate checks the reading", "model": None, "ms": 5, "status": "ok"},
         ]
-        cands = [
-            {
-                "k_number": f"K00000{i}",
-                "device_name": f"Stub device {i}",
-                "applicant": f"Stub Maker {i}",
-                "product_code": "QIH",
-                "why_matched": [f"device name matches stub {i}"],
-                "why_not_matched": [] if i == 1 else ["model number differs"],
-                "links": [
-                    {
-                        "label": "openFDA record",
-                        "url": f"https://api.fda.gov/device/510k.json?search=k_number:K00000{i}",
-                    }
-                ],
-            }
-            for i in (1, 2, 3)
-        ]
+        cands = (
+            []
+            if failed or self.label_mode == "no_match"
+            else [
+                {
+                    "k_number": f"K00000{i}",
+                    "device_name": f"Stub device {i}",
+                    "applicant": f"Stub Maker {i}",
+                    "product_code": "QIH",
+                    "why_matched": [f"device name matches stub {i}"],
+                    "why_not_matched": [] if i == 1 else ["model number differs"],
+                    "links": [
+                        {
+                            "label": "510(k) record on openFDA",
+                            "url": f"https://api.fda.gov/device/510k.json?search=k_number:K00000{i}",
+                        }
+                    ],
+                }
+                for i in (1, 2, 3)
+            ]
+        )
+        matches: dict[str, Any] = {
+            "status": "needs_person_to_confirm" if cands else "no_match_found",
+            "candidates": cands,
+        }
+        if failed:
+            matches["search_failed"] = True
+            matches["note"] = SEARCH_FAILED_NOTE
         out = self.common(trace)
+        out["cost_usd"] = 0.0123  # fake figure for the stub only
         out.update(
             reading={
                 "legibility": "partly_legible",
                 "fields": {
                     "device_name": {"value": "Stub device", "legibility": "clear"},
                     "manufacturer": {"value": "Stub Maker", "legibility": "clear"},
-                    "model": {"value": None, "legibility": "illegible"},
-                    "k_number": {"value": None, "legibility": "illegible"},
-                    "udi/gtin": {"value": None, "legibility": "illegible"},
+                    "model": {"value": "", "legibility": "illegible"},
+                    "k_number": {"value": "", "legibility": "illegible"},
+                    "udi": {"value": "", "legibility": "illegible"},
+                    "gtin": {"value": "", "legibility": "illegible"},
                 },
-                "values_withheld": ["model", "k_number", "udi/gtin"],
+                "values_withheld": ["lot", "serial"],
             },
-            matches={"status": "needs_person_to_confirm", "candidates": cands},
+            matches=matches,
             confirmed=None,
         )
         return out
