@@ -355,6 +355,7 @@ export interface WorkspaceData {
   vision: Vision
   sweep: Sweep
   protocol: Protocol
+  company: Company
 }
 
 export type WorkflowId =
@@ -366,9 +367,97 @@ export type WorkflowId =
   | 'weekly-investigator'
   | 'recall-sweep'
   | 'vision'
+  | 'our-devices'
 
 export interface WorkflowDef {
   id: WorkflowId
   title: string
   blurb: string
+}
+
+// ── company.json: a simulated company, real FDA evidence (DATA_CONTRACT.md) ──
+export interface CompanyHistoryEntry {
+  seq: number
+  date: string
+  ts: string
+  actor: string
+  action: 'register' | 'change'
+  from_status: string | null
+  to_status: string
+  details: Record<string, string>
+  note: string
+  entry_hash: string
+}
+
+export interface CompanyQuote {
+  report_id: string
+  text: string
+  url: string
+}
+
+export interface CompanyPattern {
+  id: string
+  label: string
+  kind: 'investigator' | 'keyword'
+  display_label: string
+  basis: string
+  count: number
+  report_ids: string[]
+  first_received: string | null
+  last_received: string | null
+  quotes: CompanyQuote[]
+  links: { label: string; url: string }[]
+  gate: { count: string; reason: string; quotes_passed: number; quotes_withheld: number }
+}
+
+export interface CompanyRecall {
+  recall_number: string
+  recalling_firm: string | null
+  status: string | null
+  date_initiated: string | null
+  excerpt: string | null
+  url: string | null
+}
+
+export interface CompanyEvidence {
+  origin: 'demo_db' | 'fetched' | 'missing'
+  available: boolean
+  note: string | null
+  fetched_utc?: string | null
+  report_count: { value: number; gate: string; reason: string } | null
+  window: { date_from: string | null; date_to: string | null } | null
+  queries: { label: string; url: string }[]
+  recalls: {
+    stored: number
+    matched_total: number | null
+    gate: string
+    reason: string
+    latest: CompanyRecall[]
+  } | null
+  gate_totals?: { pass: number; block: number }
+}
+
+export interface CompanyDevice {
+  id: string
+  name: string
+  model: string
+  product_code: string
+  owner: string
+  device_type: { name: string | null; source: string | null; query_url: string | null }
+  sweep: { classification: string; as_of: string; current_count: number; query_url: string } | null
+  status: { label: string; set_by: string; date: string; detail: string; details: Record<string, string> } | null
+  history: CompanyHistoryEntry[]
+  evidence: CompanyEvidence
+  patterns: CompanyPattern[]
+}
+
+export interface Company {
+  schema_version: string
+  generated_utc: string
+  banner: string
+  company: string | null
+  statuses: { label: string; rank: number }[]
+  devices: CompanyDevice[]
+  audit: { file: string; chain_ok: boolean | null; first_bad_seq: number | null; entries: unknown[] }
+  notes: string[]
 }

@@ -3,6 +3,12 @@ import type { AlertItem } from '../dashboard'
 import { Icon } from '../icons'
 import { Pill } from './artifacts/common'
 
+const SOURCE_LABEL: Record<AlertItem['source'], string> = {
+  sweep: 'AI device sweep',
+  brief: 'Demo snapshot brief',
+  company: 'Our devices (simulated)',
+}
+
 /** The alerts, each a link to the view that shows it (chevron, 44px tap target). */
 export function AlertList({ items, onOpen }: { items: AlertItem[]; onOpen: (a: AlertItem) => void }) {
   if (items.length === 0) return <p className="m-0 text-ink-2">No alerts right now.</p>
@@ -14,7 +20,7 @@ export function AlertList({ items, onOpen }: { items: AlertItem[]; onOpen: (a: A
             type="button"
             className="flex min-h-11 w-full items-center justify-between gap-2 rounded-xs py-2 text-left text-[17px] leading-snug text-ink hover:bg-sunk"
             onClick={() => onOpen(a)}
-            aria-label={`${a.productCode}: ${a.label}. ${a.source === 'sweep' ? 'AI device sweep' : 'Demo snapshot brief'}, ${a.date}. Open.`}
+            aria-label={`${a.productCode}: ${a.label}. ${SOURCE_LABEL[a.source]}, ${a.date}. Open.`}
           >
             <span className="min-w-0">
               <span className="flex flex-wrap items-center gap-2">
@@ -22,7 +28,7 @@ export function AlertList({ items, onOpen }: { items: AlertItem[]; onOpen: (a: A
                 <Pill tone={a.kind === 'severity_escalation' ? 'bad' : 'warn'}>{a.label}</Pill>
               </span>
               <span className="ws-wrap block text-[17px] text-ink-2">
-                {a.detail} · {a.source === 'sweep' ? 'AI device sweep' : 'Demo snapshot brief'} ·{' '}
+                {a.detail} · {SOURCE_LABEL[a.source]} ·{' '}
                 <span className="ms-num whitespace-nowrap">{a.date}</span>
               </span>
             </span>
@@ -98,8 +104,8 @@ export function AlertBell({ items, onOpen }: { items: AlertItem[]; onOpen: (a: A
               }}
             />
             <p className="m-0 mt-3 text-[15px] leading-snug text-ink-2">
-              A new kind of problem, or more serious than usual, in the AI device sweep and the newest demo-snapshot brief. Signals for a
-              person to review.
+              A new kind of problem, or more serious than usual, in the AI device sweep and the newest demo-snapshot brief, and the
+              simulated devices that need review. Signals for a person to review.
             </p>
           </div>
         </>

@@ -1,0 +1,160 @@
+{
+  "schema_version": "1.0",
+  "company": "Demo MedTech Co. (simulated)",
+  "banner": "Simulated company — sample data. Problem evidence is real FDA data.",
+  "kind": "simulated-company-status-audit",
+  "chain": "SHA-256, same helper as the copilot audit trail (Database.audit_entry_hash)",
+  "chain_ok_at_export": true,
+  "entries": [
+    {
+      "seq": 1,
+      "ts": "2026-10-12T15:00:00+00:00",
+      "actor": "Mara Ellison (simulated)",
+      "action": "company.status.register",
+      "entity_id": "DMC-01",
+      "payload_json": "{\"details\": {\"owner\": \"Mara Ellison (simulated)\"}, \"device_id\": \"DMC-01\", \"from_status\": null, \"note\": \"\", \"to_status\": \"Needs review\"}",
+      "prev_hash": "GENESIS",
+      "entry_hash": "5c8aaf3b397d6cc82af9c4e34ea84ea89c46dd5c84f05865e6bf6fcb9107d369"
+    },
+    {
+      "seq": 2,
+      "ts": "2026-10-12T15:00:00+00:00",
+      "actor": "Devon Park (simulated)",
+      "action": "company.status.register",
+      "entity_id": "DMC-02",
+      "payload_json": "{\"details\": {\"owner\": \"Devon Park (simulated)\"}, \"device_id\": \"DMC-02\", \"from_status\": null, \"note\": \"\", \"to_status\": \"Needs review\"}",
+      "prev_hash": "5c8aaf3b397d6cc82af9c4e34ea84ea89c46dd5c84f05865e6bf6fcb9107d369",
+      "entry_hash": "bad76f2fe85170d781db7be459da79ebacb24bdeda452409d55262adae673303"
+    },
+    {
+      "seq": 3,
+      "ts": "2026-10-14T15:00:00+00:00",
+      "actor": "Tomas Reyes (simulated)",
+      "action": "company.status.register",
+      "entity_id": "DMC-04",
+      "payload_json": "{\"details\": {}, \"device_id\": \"DMC-04\", \"from_status\": null, \"note\": \"nothing open (sample note)\", \"to_status\": \"Monitoring — nothing open\"}",
+      "prev_hash": "bad76f2fe85170d781db7be459da79ebacb24bdeda452409d55262adae673303",
+      "entry_hash": "2c3c1676a590a2db6d78d9d31a8c227e7e1a316aa92997f923c3a59aa0426429"
+    },
+    {
+      "seq": 4,
+      "ts": "2026-10-14T15:00:00+00:00",
+      "actor": "Lena Osei (simulated)",
+      "action": "company.status.register",
+      "entity_id": "DMC-05",
+      "payload_json": "{\"details\": {}, \"device_id\": \"DMC-05\", \"from_status\": null, \"note\": \"nothing open (sample note)\", \"to_status\": \"Monitoring — nothing open\"}",
+      "prev_hash": "2c3c1676a590a2db6d78d9d31a8c227e7e1a316aa92997f923c3a59aa0426429",
+      "entry_hash": "a9bf2740451e6185f6aa30a47b66a1e1b9980d02911e33cc59a1c034a4f659bb"
+    },
+    {
+      "seq": 5,
+      "ts": "2026-10-14T15:00:00+00:00",
+      "actor": "Elin Strand (simulated)",
+      "action": "company.status.register",
+      "entity_id": "DMC-11",
+      "payload_json": "{\"details\": {}, \"device_id\": \"DMC-11\", \"from_status\": null, \"note\": \"nothing open (sample note)\", \"to_status\": \"Monitoring — nothing open\"}",
+      "prev_hash": "a9bf2740451e6185f6aa30a47b66a1e1b9980d02911e33cc59a1c034a4f659bb",
+      "entry_hash": "fd3bd0c1a863b49fd401a0c71cfa4cdfa5112170e718ddadc220ba436b9bd965"
+    },
+    {
+      "seq": 6,
+      "ts": "2026-10-20T15:00:00+00:00",
+      "actor": "Iris Tanaka (simulated)",
+      "action": "company.status.register",
+      "entity_id": "DMC-03",
+      "payload_json": "{\"details\": {\"owner\": \"Iris Tanaka (simulated)\"}, \"device_id\": \"DMC-03\", \"from_status\": null, \"note\": \"\", \"to_status\": \"Needs review\"}",
+      "prev_hash": "fd3bd0c1a863b49fd401a0c71cfa4cdfa5112170e718ddadc220ba436b9bd965",
+      "entry_hash": "b78a16897149297368e058dfd9651318e44f59c06d1f6876be02a4f72bb9fc7f"
+    },
+    {
+      "seq": 7,
+      "ts": "2026-10-30T09:00:00+00:00",
+      "actor": "Noor Haddad (simulated)",
+      "action": "company.status.register",
+      "entity_id": "DMC-06",
+      "payload_json": "{\"details\": {\"owner\": \"Noor Haddad (simulated)\"}, \"device_id\": \"DMC-06\", \"from_status\": null, \"note\": \"\", \"to_status\": \"Needs review\"}",
+      "prev_hash": "b78a16897149297368e058dfd9651318e44f59c06d1f6876be02a4f72bb9fc7f",
+      "entry_hash": "dc075007fe921cf0de5ab12c238273628ab4ce76782c80657509bd056dc65b74"
+    },
+    {
+      "seq": 8,
+      "ts": "2026-10-30T09:00:00+00:00",
+      "actor": "Callum Brodie (simulated)",
+      "action": "company.status.register",
+      "entity_id": "DMC-07",
+      "payload_json": "{\"details\": {\"owner\": \"Callum Brodie (simulated)\"}, \"device_id\": \"DMC-07\", \"from_status\": null, \"note\": \"\", \"to_status\": \"Needs review\"}",
+      "prev_hash": "dc075007fe921cf0de5ab12c238273628ab4ce76782c80657509bd056dc65b74",
+      "entry_hash": "76b963eabe0a5536cae78517dc02f293d6d093a756d0bde86804745797a2f179"
+    },
+    {
+      "seq": 9,
+      "ts": "2026-10-30T09:00:00+00:00",
+      "actor": "Yuki Sato (simulated)",
+      "action": "company.status.register",
+      "entity_id": "DMC-08",
+      "payload_json": "{\"details\": {\"owner\": \"Yuki Sato (simulated)\"}, \"device_id\": \"DMC-08\", \"from_status\": null, \"note\": \"\", \"to_status\": \"Needs review\"}",
+      "prev_hash": "76b963eabe0a5536cae78517dc02f293d6d093a756d0bde86804745797a2f179",
+      "entry_hash": "53a111e285e959377ba0fb9b1dc4cec0dd4f67fe170cfa15ca9195a1ff5bfa28"
+    },
+    {
+      "seq": 10,
+      "ts": "2026-10-30T09:00:00+00:00",
+      "actor": "Ana Moreau (simulated)",
+      "action": "company.status.register",
+      "entity_id": "DMC-09",
+      "payload_json": "{\"details\": {\"owner\": \"Ana Moreau (simulated)\"}, \"device_id\": \"DMC-09\", \"from_status\": null, \"note\": \"\", \"to_status\": \"Needs review\"}",
+      "prev_hash": "53a111e285e959377ba0fb9b1dc4cec0dd4f67fe170cfa15ca9195a1ff5bfa28",
+      "entry_hash": "f2dda2eec766cf4d98a31c5ede7877876f49959380b9773bed5b5683dbc28ddd"
+    },
+    {
+      "seq": 11,
+      "ts": "2026-10-30T09:00:00+00:00",
+      "actor": "Ravi Menon (simulated)",
+      "action": "company.status.register",
+      "entity_id": "DMC-10",
+      "payload_json": "{\"details\": {\"owner\": \"Ravi Menon (simulated)\"}, \"device_id\": \"DMC-10\", \"from_status\": null, \"note\": \"\", \"to_status\": \"Needs review\"}",
+      "prev_hash": "f2dda2eec766cf4d98a31c5ede7877876f49959380b9773bed5b5683dbc28ddd",
+      "entry_hash": "133ac12ce51b1764509e73176c2ae6d22a2d55e1b52f0ffd1ce3dbee062dfb94"
+    },
+    {
+      "seq": 12,
+      "ts": "2026-10-30T09:00:00+00:00",
+      "actor": "Joss Whitaker (simulated)",
+      "action": "company.status.register",
+      "entity_id": "DMC-12",
+      "payload_json": "{\"details\": {\"owner\": \"Joss Whitaker (simulated)\"}, \"device_id\": \"DMC-12\", \"from_status\": null, \"note\": \"\", \"to_status\": \"Needs review\"}",
+      "prev_hash": "133ac12ce51b1764509e73176c2ae6d22a2d55e1b52f0ffd1ce3dbee062dfb94",
+      "entry_hash": "469418170dfcd53dde9f172df77628c55c68ac91d18974e665ca0802ce7d8b1d"
+    },
+    {
+      "seq": 13,
+      "ts": "2026-10-30T10:00:00+00:00",
+      "actor": "Mara Ellison (simulated)",
+      "action": "company.status.change",
+      "entity_id": "DMC-01",
+      "payload_json": "{\"details\": {\"due_date\": \"2026-11-20\", \"owner\": \"Mara Ellison (simulated)\"}, \"device_id\": \"DMC-01\", \"from_status\": \"Needs review\", \"note\": \"\", \"to_status\": \"Testing in progress\"}",
+      "prev_hash": "469418170dfcd53dde9f172df77628c55c68ac91d18974e665ca0802ce7d8b1d",
+      "entry_hash": "5cebd1445dd81e8c952f27d661fb371d651999dbf9d52cabea3df6e2e209577f"
+    },
+    {
+      "seq": 14,
+      "ts": "2026-10-30T11:00:00+00:00",
+      "actor": "Devon Park (simulated)",
+      "action": "company.status.change",
+      "entity_id": "DMC-02",
+      "payload_json": "{\"details\": {\"reference\": \"test report TR-104 (sample) covers the pattern 'Unable to log in or connect, including server errors'\"}, \"device_id\": \"DMC-02\", \"from_status\": \"Needs review\", \"note\": \"\", \"to_status\": \"Already covered\"}",
+      "prev_hash": "5cebd1445dd81e8c952f27d661fb371d651999dbf9d52cabea3df6e2e209577f",
+      "entry_hash": "3bc0dfae95cf5970a2bf8e3c4207950e112e1fafd26eec77864c7441ae06e518"
+    },
+    {
+      "seq": 15,
+      "ts": "2026-10-30T12:00:00+00:00",
+      "actor": "Ravi Menon (simulated)",
+      "action": "company.status.change",
+      "entity_id": "DMC-10",
+      "payload_json": "{\"details\": {\"reason\": \"our device has no display of its own, so the pattern 'Display problem or image artifact' does not apply (sample reason)\"}, \"device_id\": \"DMC-10\", \"from_status\": \"Needs review\", \"note\": \"\", \"to_status\": \"Not applicable to our device\"}",
+      "prev_hash": "3bc0dfae95cf5970a2bf8e3c4207950e112e1fafd26eec77864c7441ae06e518",
+      "entry_hash": "63c6cf949ef3bf7157d9642728a504a03770b1331959422c44094c1184731360"
+    }
+  ]
+}

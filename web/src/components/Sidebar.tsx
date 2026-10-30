@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react'
 import { DEMO_WORKFLOWS, describeCron, isoDay, demoSnapshotLabel, visibleWorkflows } from '../data'
 import { flaggedRows } from '../artifacts'
 import { Icon } from '../icons'
-import type { Brief, InvestigationRun, Schedule, Source, Sweep, Threads, Vision, WorkflowId } from '../types'
+import { NEEDS_REVIEW } from '../dashboard'
+import type { Brief, Company, InvestigationRun, Schedule, Source, Sweep, Threads, Vision, WorkflowId } from '../types'
 
 interface Props {
   open: boolean
@@ -14,6 +15,7 @@ interface Props {
   runs: InvestigationRun[]
   vision: Vision
   sweep: Sweep
+  company?: Company
   activeWorkflow: WorkflowId | null
   activeBrief: string | null
   isRead: (date: string) => boolean
@@ -56,6 +58,7 @@ export function Sidebar(p: Props) {
   counts.set('vision', p.vision.k510.length + p.vision.labels.length)
   for (const kind of ['weekly-investigator', 'recall-sweep'])
     counts.set(kind, p.runs.filter((r) => r.kind === kind).length)
+  counts.set('our-devices', (p.company?.devices ?? []).filter((d) => d.status?.label === NEEDS_REVIEW).length)
   const workflows = visibleWorkflows(p.runs)
   return (
     <>
@@ -106,7 +109,7 @@ export function Sidebar(p: Props) {
                     </span>
                     {n !== undefined && (
                       <span className="ms-num shrink-0 text-[17px] text-ink-2">
-                        {w.id === 'ai-sweep' ? `${n} flagged` : n}
+                        {w.id === 'ai-sweep' ? `${n} flagged` : w.id === 'our-devices' ? `${n} to review` : n}
                       </span>
                     )}
                   </button>

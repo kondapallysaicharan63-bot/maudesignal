@@ -29,6 +29,7 @@ JSON_FILES = [
     "audit.json",
     "dossier.json",
     "vision.json",
+    "company.json",
     "sweep.json",
     "investigations.json",
     "protocol.json",
@@ -279,3 +280,96 @@ def test_label_matches_attach_to_their_label_and_are_never_confirmed(tmp_path: P
     assert by_file["label-b.jpg"]["matches"] is None
     assert any("label-match-b.json not found" in n for n in doc["notes"])
     assert any("confirmed" in n for n in doc["notes"])
+
+
+# ── company.json (B7) ────────────────────────────────────────────────────────
+BANNER = "Simulated company — sample data. Problem evidence is real FDA data."
+COMPANY_WORDS = re.compile(r"\b(safe|unsafe|compliant)\b", re.I)
+
+
+def _company_copy(tmp_path: Path) -> Path:
+    shutil.copytree(ROOT / "demo" / "company", tmp_path / "demo" / "company")
+    return tmp_path
+
+
+def test_company_json_follows_the_contract(out: Path) -> None:
+    doc = load(out, "company.json")
+    assert doc["banner"] == BANNER
+    assert [s["label"] for s in doc["statuses"]][0] == "Needs review"
+    assert len(doc["devices"]) == 12
+    assert doc["audit"]["chain_ok"] is True and doc["audit"]["first_bad_seq"] is None
+    for d in doc["devices"]:
+        assert set(d) >= {"id", "name", "product_code", "owner", "status", "history", "evidence"}
+        assert d["status"]["set_by"].endswith("(simulated)")
+        assert [h["to_status"] for h in d["history"]][-1] == d["status"]["label"]
+    assert "company.json" in load(out, "manifest.json")["files"]
+
+
+def test_company_missing_evidence_is_labelled_and_empty(out: Path) -> None:
+    doc = load(out, "company.json")
+    missing = [d for d in doc["devices"] if not d["evidence"]["available"]]
+    for d in missing:
+        ev = d["evidence"]
+        assert ev["note"] == "evidence not fetched yet"
+        assert ev["report_count"] is None and ev["recalls"] is None and d["patterns"] == []
+        assert any(d["product_code"] in n and "not fetched yet" in n for n in doc["notes"])
+
+
+def test_company_counts_are_recomputed_and_quotes_are_verbatim(out: Path) -> None:
+    doc = load(out, "company.json")
+    fetched = [d for d in doc["devices"] if d["evidence"]["available"]]
+    assert fetched
+    for d in fetched:
+        ev = json.loads(
+            (ROOT / "demo/company/evidence" / f"{d['product_code']}.json").read_text("utf-8")
+        )
+        by_id = {str(r["report_id"]): r for r in ev["reports"]["records"]}
+        assert d["evidence"]["report_count"]["value"] == len(by_id)
+        assert d["evidence"]["recalls"]["stored"] == len(ev["recalls"]["records"])
+        for p in d["patterns"]:
+            assert p["count"] == len(p["report_ids"]) == len(set(p["report_ids"]))
+            assert all(i in by_id for i in p["report_ids"])
+            assert p["gate"]["count"] == "pass" and p["display_label"].startswith("Keyword match")
+            for q in p["quotes"]:
+                assert q["report_id"] in p["report_ids"]
+                squashed = " ".join(str(by_id[q["report_id"]]["text"]).split())
+                assert q["text"] in squashed
+                assert q["url"].endswith(q["report_id"])
+
+
+def test_company_json_never_prints_the_banned_words(out: Path) -> None:
+    text = (out / "company.json").read_text(encoding="utf-8")
+    assert COMPANY_WORDS.search(text) is None
+    assert exporter.COMPANY_FORBIDDEN.search(text) is None
+
+
+def test_company_chain_is_reverified_not_copied(tmp_path: Path) -> None:
+    root = _company_copy(tmp_path)
+    path = root / "demo/company/audit.json"
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    assert doc["chain_ok_at_export"] is True
+    doc["entries"][4]["payload_json"] += " "
+    path.write_text(json.dumps(doc), encoding="utf-8")  # chain_ok_at_export still says true
+    built = exporter.build_company(root, "2026-10-30T00:00:00Z")
+    assert built["audit"]["chain_ok"] is False
+    assert built["audit"]["first_bad_seq"] == doc["entries"][4]["seq"]
+
+
+def test_company_status_must_be_set_by_a_named_simulated_person_and_move_forward(
+    tmp_path: Path,
+) -> None:
+    entries = json.loads((ROOT / "demo/company/audit.json").read_text("utf-8"))["entries"]
+    forged = [dict(e) for e in entries]
+    forged[0]["actor"] = "MaudeSignal"
+    with pytest.raises(ValueError, match="simulated person"):
+        exporter._company_history(forged)
+    change = next(e for e in entries if e["action"].endswith("change"))
+    payload = json.loads(change["payload_json"])
+    back = dict(change, payload_json=json.dumps({**payload, "to_status": "Needs review"}))
+    with pytest.raises(ValueError, match="only moves forward"):
+        exporter._company_history([e for e in entries if e["seq"] < change["seq"]] + [back])
+
+
+def test_company_folder_missing_gives_an_empty_banner_document(tmp_path: Path) -> None:
+    doc = exporter.build_company(tmp_path, "2026-10-30T00:00:00Z")
+    assert doc["banner"] == BANNER and doc["devices"] == [] and doc["notes"]

@@ -2,7 +2,7 @@
 // Every number is computed from the stored exports; thresholds mirror
 // src/maudesignal/monitor/deterioration.py (a test fails if they drift apart).
 import { capaDrafts, CLASS_LABEL, flaggedRows } from './artifacts'
-import type { Brief, Sweep, Thread, WorkflowId, WorkspaceData } from './types'
+import type { Brief, Company, Sweep, Thread, WorkflowId, WorkspaceData } from './types'
 
 /** Mirrors SPIKE_MIN_REPORTS, SPIKE_MULTIPLIER, BASELINE_WEEKS and SEVERITY_ESCALATION_PP in deterioration.py. */
 export const SWEEP_RULES = {
@@ -46,14 +46,17 @@ export function sweepStatsText(s: SweepStats, minReports: number = SWEEP_RULES.s
 // ── Alerts ──────────────────────────────────────────────────────────────
 
 export type AlertKind = 'new_signal' | 'severity_escalation'
+export type AlertItemKind = AlertKind | 'needs_review'
 
 export interface AlertItem {
   id: string
-  kind: AlertKind
+  kind: AlertItemKind
   productCode: string
   label: string
   /** Where the item comes from: the AI device sweep (real data) or the newest demo-snapshot brief. */
-  source: 'sweep' | 'brief'
+  source: 'sweep' | 'brief' | 'company'
+  /** Company alerts: the device the alert opens. */
+  deviceId?: string
   /** Sweep: the sweep date. Brief: the brief date. */
   date: string
   detail: string
@@ -71,7 +74,7 @@ const isRisky = (c: string): c is AlertKind => RISKY.includes(c)
  * Risky items: "new kind of problem" and "more serious than usual" from the AI device sweep and from
  * the newest brief. "Needs review" items are not included because the export holds no such data yet.
  */
-export function alertItems(sweep: Sweep, briefs: Brief[]): AlertItem[] {
+export function alertItems(sweep: Sweep, briefs: Brief[], company?: Company | null): AlertItem[] {
   const out: AlertItem[] = []
   const sweepDay = sweep.meta.generated_utc.slice(0, 10)
   for (const r of flaggedRows(sweep))
@@ -98,7 +101,30 @@ export function alertItems(sweep: Sweep, briefs: Brief[]): AlertItem[] {
           date: newest.date,
           detail: `${plural(s.current_count, 'report')} in the demo-snapshot week`,
         })
+  for (const d of company?.devices ?? [])
+    if (d.status?.label === NEEDS_REVIEW)
+      out.push({
+        id: `company:${d.id}`,
+        kind: 'needs_review',
+        productCode: d.product_code,
+        label: NEEDS_REVIEW,
+        source: 'company',
+        deviceId: d.id,
+        date: d.status.date,
+        detail: `${d.name} (simulated device)`,
+      })
   return out
+}
+
+/** The status every device starts in; set by a named simulated person, never by the tool. */
+export const NEEDS_REVIEW = 'Needs review'
+
+/** Devices per status, in the order of the contract's status list (a status with no device shows 0). */
+export function devicesPerStatus(company: Company): { label: string; count: number }[] {
+  return company.statuses.map((s) => ({
+    label: s.label,
+    count: company.devices.filter((d) => d.status?.label === s.label).length,
+  }))
 }
 
 // ── Recorded-run metrics ─────────────────────────────────────────────────
@@ -266,6 +292,13 @@ export function miniStats(workflow: WorkflowId, data: WorkspaceData): MiniStat[]
           label: 'Sentences shown',
           value: `${runs.reduce((n, r) => n + r.sentences.filter((s) => s.status === 'pass').length, 0)}`,
         },
+      ]
+    }
+    case 'our-devices': {
+      const per = devicesPerStatus(data.company)
+      return [
+        { label: 'Devices (simulated)', value: `${data.company.devices.length}` },
+        ...per.map((x) => ({ label: x.label, value: `${x.count}` })),
       ]
     }
     case 'vision': {

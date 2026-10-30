@@ -153,6 +153,11 @@ export default function App() {
     setView({ kind: 'workflow', id: 'check-device', code })
     setDrawer(false)
   }
+  const openDevice = (id: string | null) => {
+    setWIdx(null)
+    setView(id ? { kind: 'workflow', id: 'our-devices', code: id } : { kind: 'workflow', id: 'our-devices' })
+    setDrawer(false)
+  }
   const openCapture = (mode: CaptureMode) => {
     setWIdx(null)
     setView({ kind: 'capture', mode })
@@ -184,6 +189,7 @@ export default function App() {
 
   const openAlert = (a: AlertItem) => {
     if (a.source === 'brief') openBrief(a.date)
+    else if (a.source === 'company') openDevice(a.deviceId ?? null)
     else {
       // The flagged list lives in the AI device sweep's dashboard: open it full screen and scroll to the row.
       openWorkflow('ai-sweep')
@@ -252,7 +258,7 @@ export default function App() {
         manifest={data?.manifest ?? null}
         theme={theme}
         sidebarOpen={desktop ? !collapsed : drawer}
-        alerts={data ? alertItems(data.sweep, data.briefs) : []}
+        alerts={data ? alertItems(data.sweep, data.briefs, data.company) : []}
         onAlert={openAlert}
         artifactsOpen={artifacts}
         onToggleSidebar={toggleSidebar}
@@ -274,6 +280,7 @@ export default function App() {
             runs={runs}
             vision={data.vision}
             sweep={data.sweep}
+            company={data.company}
             activeWorkflow={activeWorkflow}
             activeBrief={briefDate}
             isRead={isRead}
@@ -311,6 +318,7 @@ export default function App() {
               onRun={openRun}
               onVision={openVision}
               onCode={openCode}
+              onDevice={openDevice}
               onCapture={openCapture}
               onBrief={openBrief}
               onAlert={openAlert}

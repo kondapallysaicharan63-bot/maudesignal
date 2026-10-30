@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type {
   Audit,
   Brief,
+  Company,
   Dossier,
   Evidence,
   InvestigationRun,
@@ -44,8 +45,9 @@ export function useWorkspaceData(): { data: WorkspaceData | null; error: string 
       getJson<Vision>('vision.json'),
       getJson<Sweep>('sweep.json'),
       getJson<Protocol>('protocol.json'),
+      getJson<Company>('company.json'),
     ])
-      .then(([manifest, threads, briefs, sources, schedules, investigations, evidence, audit, dossier, vision, sweep, protocol]) => {
+      .then(([manifest, threads, briefs, sources, schedules, investigations, evidence, audit, dossier, vision, sweep, protocol, company]) => {
         if (live)
           setData({
             manifest,
@@ -60,6 +62,7 @@ export function useWorkspaceData(): { data: WorkspaceData | null; error: string 
             vision,
             sweep,
             protocol,
+            company,
           })
       })
       .catch((e: unknown) => live && setError(e instanceof Error ? e.message : String(e)))
@@ -108,6 +111,11 @@ export const WORKFLOWS: WorkflowDef[] = [
     id: 'recall-sweep',
     title: 'Recall sweep',
     blurb: 'When a recall is posted, finds stored reports that describe the same problem.',
+  },
+  {
+    id: 'our-devices',
+    title: 'Our devices (simulated)',
+    blurb: 'Does this apply to us? A simulated company with fictional devices. The problem evidence next to each device is real FDA data.',
   },
   {
     id: 'vision',

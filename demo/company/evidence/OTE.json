@@ -1,0 +1,410 @@
+{
+ "schema_version": "1.0",
+ "product_code": "OTE",
+ "fetched_utc": "2026-10-30T03:07:08Z",
+ "window": {
+  "date_from": "20260904",
+  "date_to": "20261030",
+  "weeks": 8
+ },
+ "classification": {
+  "device_name": "Digital Breast Tomosynthesis",
+  "device_class": "3",
+  "regulation_number": "",
+  "query_url": "https://api.fda.gov/device/classification.json?search=product_code:OTE&limit=1"
+ },
+ "reports": {
+  "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code:OTE+AND+date_received:[20260904+TO+20261030]&limit=100",
+  "matched_total": 27,
+  "stored": 27,
+  "records": [
+   {
+    "report_id": "50954697",
+    "event_type": "malfunction",
+    "date_received": "20260930",
+    "report_source": "Manufacturer report",
+    "brand_name": "3Dimensions",
+    "manufacturer": "Hologic, Inc.",
+    "product_problems": [
+     "Loose or Intermittent Connection"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50949312",
+    "event_type": "malfunction",
+    "date_received": "20260930",
+    "report_source": "Manufacturer report",
+    "brand_name": "3Dimensions",
+    "manufacturer": "Hologic, Inc",
+    "product_problems": [
+     "Thermal Decomposition of Device",
+     "Device Emits Odor",
+     "Arcing"
+    ],
+    "text": "It was reported that a Dimensions system displayed an error related to high voltage arc detected, during a quality control testing. The system remained nonoperational following a reboot. No patient or user impact was reported. During service evaluation, the field service engineer identified arcing of the high voltage cable inside the generator and found the cable to be burnt. The high-voltage cable was replaced. An unpleasant odor for the generator during operation was also reported. the x-ray tube and generator were subsequently replaced; however, intermittent errors persisted. Following the replacement of the resistor pack, the errors cleared. Required generator and automatic exposure control calibrations were completed, and the system was verified to be operating to manufacturer specifications."
+   },
+   {
+    "report_id": "50941595",
+    "event_type": "malfunction",
+    "date_received": "20260930",
+    "report_source": "Manufacturer report",
+    "brand_name": "Selenia Dimensions Mammography Systems, 3D",
+    "manufacturer": "Hologic, Inc",
+    "product_problems": [
+     "Arcing"
+    ],
+    "text": "It was reported that a mammography system produced a loud noise described as \"like a spark\" during an exposure, followed by an electrical/burning smell. There were no reported clinical consequences associated with this event. Service evaluation identified a failed x-ray tube, generator assembly and vertical travel (VTA) drive board. The field engineer indicated that the x-ray tube appeared to have arced, resulting in damage to the generator assembly and VTA drive board. The system was also unable to rotate or move vertically. The x-ray tube, generator assembly, and VTA drive board were replaced and calibrated. Following repair, the system was verified to operate within manufacturer specifications."
+   },
+   {
+    "report_id": "50925955",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "Selenia Dimensions Mammography Systems, 3D",
+    "manufacturer": "Hologic, Inc.",
+    "product_problems": [
+     "Mechanical Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50921263",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "3Dimensions",
+    "manufacturer": "Hologic, Inc.",
+    "product_problems": [
+     "Unintended System Motion"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50914491",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "Selenia Dimensions",
+    "manufacturer": "Hologic, Inc.",
+    "product_problems": [
+     "Loose or Intermittent Connection"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50910600",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "3Dimensions",
+    "manufacturer": "Hologic, Inc.",
+    "product_problems": [
+     "Unintended System Motion"
+    ],
+    "text": "Manufacturer's Field Service Engineer (FSE) identified an issue with mammography system during a field inspection. While inspecting the Vertical Travel Assembly (VTA), three loose bolts were identified within the VTA assembly. No uncommanded movement or vibration of the C-Arm was reported. No injury to the patient or staff was reported.FSE confirmed that the VTA bolts were loose. No bolts were found to be damaged, missing, or sheared. The bolts were re-tightened to the correct torque according to manufacturer specifications, and the system remained in use. FSE returned to the site and replaced all screws. System was calibrated and passed manufacturer's quality checks. System returned to proper functionality.No additional information is available at this time."
+   },
+   {
+    "report_id": "50910594",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "3Dimensions",
+    "manufacturer": "Hologic, Inc.",
+    "product_problems": [
+     "Device Emits Odor",
+     "Smoking"
+    ],
+    "text": "Customer reported an incident involving a mammography system with a burning smell and smoke coming from the system while it was powered on, with GEN error codes 25:30 and 25:56 displayed. The incident did not occur during an examination, and no patient was present. Facility staff were present; however, no smoke inhalation, injury, or further impact was reported.Manufacturer Field Service Engineer (FSE) visited the site and evaluated the reported burning smell and error codes. The issue was identified as related to the multiplier. The multiplier was replaced, mA and kV were adjusted, and filament calibration was performed. Functional and acquisition testing were completed in different modes, and the system was confirmed to be operating within specifications.No additional information is available at this time."
+   },
+   {
+    "report_id": "50905920",
+    "event_type": "malfunction",
+    "date_received": "20260925",
+    "report_source": "Manufacturer report",
+    "brand_name": "3Dimensions",
+    "manufacturer": "Hologic, Inc.",
+    "product_problems": [
+     "Device Emits Odor",
+     "Smoking"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50905577",
+    "event_type": "malfunction",
+    "date_received": "20260925",
+    "report_source": "Manufacturer report",
+    "brand_name": "Selenia Dimensions Mammography Systems, 3D",
+    "manufacturer": "Hologic, Inc.",
+    "product_problems": [
+     "Power Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50904233",
+    "event_type": "malfunction",
+    "date_received": "20260925",
+    "report_source": "Manufacturer report",
+    "brand_name": "Selenia Dimensions Mammography Systems, 3D",
+    "manufacturer": "Hologic, Inc.",
+    "product_problems": [
+     "Unintended System Motion"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50903435",
+    "event_type": "malfunction",
+    "date_received": "20260925",
+    "report_source": "Manufacturer report",
+    "brand_name": "Selenia Dimensions Mammography Systems, 3D",
+    "manufacturer": "Hologic, Inc.",
+    "product_problems": [
+     "Unintended System Motion"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50902744",
+    "event_type": "malfunction",
+    "date_received": "20260925",
+    "report_source": "Manufacturer report",
+    "brand_name": "3Dimensions",
+    "manufacturer": "Hologic, Inc.",
+    "product_problems": [
+     "Circuit Failure"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50899349",
+    "event_type": "malfunction",
+    "date_received": "20260925",
+    "report_source": "Manufacturer report",
+    "brand_name": "Selenia Dimensions Mammography Systems, 3D",
+    "manufacturer": "Hologic, Inc.",
+    "product_problems": [
+     "Electrical Shorting"
+    ],
+    "text": "It was reported by the customer that prior to a patient procedure, the device experienced shorted stator windings within the motor assembly. The user reported discovering burnt components within the inverter drawer. No patient involvement, injury, or adverse health consequences were reported.Technical Support and Field Service evaluated the issue and determined component replacement was required. A replacement part was ordered and shipped to the customer. No further information is currently available."
+   },
+   {
+    "report_id": "50889226",
+    "event_type": "injury",
+    "date_received": "20260924",
+    "report_source": "Manufacturer report",
+    "brand_name": "Selenia Dimensions Mammography Systems 3D",
+    "manufacturer": "Hologic, Inc",
+    "product_problems": [
+     "Vibration"
+    ],
+    "text": "A technologist reported that the Mammography system's gantry was shaking during rotation. The site was advised to discontinue use. No injuries were reported. Field service confirmed loose hardware and replaced it with longer bolts. The engineer verified system operation after the repair. No unintended rotation was reported."
+   },
+   {
+    "report_id": "50854680",
+    "event_type": "malfunction",
+    "date_received": "20260922",
+    "report_source": "Manufacturer report",
+    "brand_name": "3Dimensions",
+    "manufacturer": "Hologic, Inc.",
+    "product_problems": [
+     "Mechanics Altered"
+    ],
+    "text": "Manufacturer's Field Service Engineer (FSE) identified loose bolts securing the Vertical Travel Assembly (VTA) during a field inspection on a 3Dimensions Mammography system. Repair is currently pending. No uncommanded movement or vibration of the C-arm was reported. No injury to the patient or staff was reported.No additional Information is available at this time."
+   },
+   {
+    "report_id": "50832754",
+    "event_type": "injury",
+    "date_received": "20260919",
+    "report_source": "Manufacturer report",
+    "brand_name": "Selenia Dimensions Mammography Systems, 3D",
+    "manufacturer": "Hologic, Inc",
+    "product_problems": [
+     "Unintended Movement"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50831986",
+    "event_type": "injury",
+    "date_received": "20260919",
+    "report_source": "Manufacturer report",
+    "brand_name": "Selenia Dimensions Mammography Systems, 3D",
+    "manufacturer": "Hologic, Inc",
+    "product_problems": [
+     "Unintended Movement"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50826993",
+    "event_type": "malfunction",
+    "date_received": "20260918",
+    "report_source": "Manufacturer report",
+    "brand_name": "3Dimensions",
+    "manufacturer": "Hologic, Inc.",
+    "product_problems": [
+     "Unintended Movement"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50819728",
+    "event_type": "malfunction",
+    "date_received": "20260918",
+    "report_source": "Manufacturer report",
+    "brand_name": "3DIMENSIONS",
+    "manufacturer": "Hologic, Inc.",
+    "product_problems": [
+     "Output Problem"
+    ],
+    "text": "It was reported on (b)(6)2026 during installation and calibration activities, the system was unable to generate x-rays. During troubleshooting, the system shut down twice and indicated the emergency stop button had been activated. An unsecured wire was identified in a Molex connector associated with the emergency stop button. After the wire was secured and power restored, a loud pop was heard, and sparks were observed from the inverter drawer area. No patient involvement was reported.Subsequent inspection found a resistor blown apart with black soot inside the inverter cover. The inverter, multiplier, PMC drawer, and x-ray tube were replaced during troubleshooting. The system subsequently displayed HVGEN 25:26 errors, the x-ray tube rotor failed to boost, and the system remained unable to generate x-rays. A replacement unit was approved and the investigation remains ongoing. No injury was reported.No further information is currently available."
+   },
+   {
+    "report_id": "50793155",
+    "event_type": "malfunction",
+    "date_received": "20260916",
+    "report_source": "Manufacturer report",
+    "brand_name": "Selenia Dimensions Mammography Systems, 3D",
+    "manufacturer": "Hologic, Inc.",
+    "product_problems": [
+     "Noise, Audible"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50792898",
+    "event_type": "injury",
+    "date_received": "20260916",
+    "report_source": "Manufacturer report",
+    "brand_name": "3Dimensions",
+    "manufacturer": "Hologic, Inc",
+    "product_problems": [
+     "Thermal Decomposition of Device"
+    ],
+    "text": "The field engineer reported that while onsite for an unrelated repair, a burning odor was detected, and a DTC error code was present. The system was immediately powered down. Upon investigation, a burned-out chip was identified on the DTC board. The board was replaced, which resoled the error. The system was confirmed to be functioning properly following repair. No patient or user impact was reported. Device History Record (DHR) review was unable to be conducted for the device at the time of this report. A follow-up report will be submitted in the event additional information is received."
+   },
+   {
+    "report_id": "50774744",
+    "event_type": "malfunction",
+    "date_received": "20260915",
+    "report_source": "Manufacturer report",
+    "brand_name": "3Dimensions",
+    "manufacturer": "Hologic, Inc",
+    "product_problems": [
+     "Unintended System Motion",
+     "Unexpected Shutdown"
+    ],
+    "text": "It was reported by the user site that during a mammography system procedure on (b)(6) 2026, an uncommanded c-arm movement system error code was displayed. The user site reported that the error code was displayed and the \"gantry shut off in the middle of the exam,\" with additional error codes following the shut off. No patient and/or user harm was reported. Multiple attempts to obtain additional information from the user site were unsuccessful.A manufacturer Field Service Engineer (FSE) was dispatched to exam the device and performed a lead screw backlash test, which the system passed. The FSE then replaced the vertical drag brake and confirmed that the system is functioning according to manufacturer specifications."
+   },
+   {
+    "report_id": "50765225",
+    "event_type": "malfunction",
+    "date_received": "20260914",
+    "report_source": "Manufacturer report",
+    "brand_name": "Selenia Dimensions Mammography Systems, 3D",
+    "manufacturer": "Hologic, Inc.",
+    "product_problems": [
+     "Vibration"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50763573",
+    "event_type": "malfunction",
+    "date_received": "20260914",
+    "report_source": "Manufacturer report",
+    "brand_name": "Selenia Dimensions Mammography Systems, 3D",
+    "manufacturer": "Hologic, Inc.",
+    "product_problems": [
+     "Unintended System Motion"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50722693",
+    "event_type": "malfunction",
+    "date_received": "20260910",
+    "report_source": "Manufacturer report",
+    "brand_name": "3Dimensions",
+    "manufacturer": "Hologic, Inc.",
+    "product_problems": [
+     "Mechanics Altered"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50620137",
+    "event_type": "malfunction",
+    "date_received": "20260904",
+    "report_source": "Manufacturer report",
+    "brand_name": "Selenia Dimensions Mammography Systems, 3D",
+    "manufacturer": "Hologic, Inc",
+    "product_problems": [
+     "Unintended System Motion"
+    ],
+    "text": ""
+   }
+  ]
+ },
+ "recalls": {
+  "query_url": "https://api.fda.gov/device/recall.json?search=product_code:OTE&sort=event_date_initiated:desc&limit=100",
+  "matched_total": 5,
+  "stored": 5,
+  "records": [
+   {
+    "recall_number": "Z-2168-2026",
+    "event_number": "98566",
+    "recalling_firm": "Hologic, Inc",
+    "product_description": "3DIMENSIONS MAMMOGRAPHY SYSTEM; Model Numbers: 3DM-SYS-INTL2D, 3DM-SYS-INTL2D-MOB, 3DM-SYS-INTL2D-NS, 3DM-SYS-INTL3D, 3DM-SYS-INTL3D-MOB, 3DM-SYS-INTL3D-NS, 3DM-SYS-STD, 3DM-SYS-STD-MOB, 3DM-SYS-STD-NS.",
+    "reason_for_recall": "Complaints have been received of systems developing loose, missing, or broken internal bolts over time.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260408",
+    "cfres_id": "219089"
+   },
+   {
+    "recall_number": "Z-2219-2025",
+    "event_number": "97063",
+    "recalling_firm": "FUJIFILM Healthcare Americas Corporation",
+    "product_description": "ASPRIRE Cristalle Mammography System (cleared under K212873) installed with the ASPIRE Cristalle Digital Breast Tomosynthesis (DBT) Option (approved under P160031).",
+    "reason_for_recall": "Devices had an unapproved slabbing software function enabled for use.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250611",
+    "cfres_id": "214390"
+   },
+   {
+    "recall_number": "Z-3248-2024",
+    "event_number": "95286",
+    "recalling_firm": "Hologic Inc",
+    "product_description": "Selenia Dimensions/ 3Dimensions-Digital breast tomosynthesis\nSoftware Version Dimensions 1.12.0 and 3Dimensions 2.3.0 system software as follows\nModel/Catalog Number:\n1.\tASY-16824\tFMI UPGRADE KIT, DIMENSIONS 1.12.0.3 SYSTEM SOFTWARE UPGRADE FOR 1.11.1 SYSTEMS\n2.\tASY-16825\tFMI UPGRADE KIT, 3DIMENSIONS 2.3.0.3 SYSTEM SOFTWARE UPGRADE FOR 2.2.1 SYSTEMS\n3.\tASY-17219\tFMI UPGRADE KIT, DIMENSIONS 1.12.0.3 SYSTEM SOFTWARE UPGRADE FOR 1.10.0 SYSTEMS\n4.\tASY-17220\tFMI UPGRADE KIT, 3DIMENSIONS 2.3.0.3 SYSTEM SOFTWARE UPGRADE FOR 2.1.0 SYSTEMS\n5.\tASY-17221\tFMI UPGRADE KIT, DIMENSIONS 1.12.0.3 SYSTEM SOFTWARE UPGRADE FOR 1.11.0 SYSTEMS\n6.\tASY-17222\tFMI UPGRADE KIT, 3DIMENSIONS 2.3.0.3 SYSTEM SOFTWARE UPGRADE FOR 2.2.0 SYSTEMS\n7.\t3DM-LIC-SW-UP-V2.3\tDIMENSIONS SOFTWARE 2.3 (3DIMENSIONS)\n8.\tSDM-LIC-SW-UP-V1.12\tDIMENSION SOFTWARE 1.12 (SELENIA DIMENSIONS)",
+    "reason_for_recall": "Identified an issue with Selenia Dimensions 1.12.0 and 3Dimensions 2.3.0 system software when used in combination with C-View software in which the quality of the final C-View synthesized 2D image is impacted and may appear blurry and result in misdiagnosis with the possibility being a false negative diagnosis",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240819",
+    "cfres_id": "209902"
+   },
+   {
+    "recall_number": "Z-1144-2023",
+    "event_number": "91415",
+    "recalling_firm": "Hologic, Inc.",
+    "product_description": "Hologic 3Dimensions/Selenia Dimensions \nModels:\nRM-SDM-00001-3D\nSDM-00001-2D\nSDM-00001-3D\nSDM-05000-3D3\nSDM-05000-2DC\nSDM-00001-M3D\nSDM-05000-3DC\nSDM-SYS-6000-3D\nSDM-05000-2D3\nSDA-SYS-3000-2D\nSDM-00001\nSDM-SYS-9000-2D\nSDM-00001-M2D\n3DM-SYS-STD\n3DM-SYS-STD-NS\nSDM-05000-2AC\nSDM-05000-2A2\nSDA-SYS-3000-3D\nSDA-SYS-3000-3D-UPS\nSDM-SYS-6000-3D-HTC\nSDM-05000-2D2\nSDM-05000-3D2\nSDM-SYS-6000-2D\nSDM-SYS-9000-3D",
+    "reason_for_recall": "C-Arm unexpected movement may cause blunt trauma  should the tube arm impinge upon an individual",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20230116",
+    "cfres_id": "197684"
+   },
+   {
+    "recall_number": "Z-0888-2016",
+    "event_number": "73307",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "Mammomat Inspiration with Tomosynthesis functionality",
+    "reason_for_recall": "A potential system fatal error may occur during tomosynthesis reconstruction with large breasts that cover nearly the entire detector surface and with a breast thickness larger than 90 mm. The data to be processed for the tomosynthesis application can exceed the capacity of the graphical processing unit (GPU). If the fatal error message occurs, reconstruction of the data will be aborted. The syste",
+    "recall_status": "Terminated",
+    "date_initiated": "20160212",
+    "cfres_id": "143817"
+   }
+  ]
+ },
+ "notes": []
+}

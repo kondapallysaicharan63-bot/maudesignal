@@ -11,6 +11,7 @@ import { Composer } from './Composer'
 import { Dashboard } from './Dashboard'
 import { RunList, RunView } from './InvestigationViews'
 import { LiveCheckView } from './LiveCheckView'
+import { OurDevices } from './OurDevices'
 import { PanelBar } from './PanelBar'
 import { SweepCard } from './SweepCard'
 import { ThreadView } from './ThreadView'
@@ -44,6 +45,8 @@ interface Props {
   onRun: (id: string) => void
   onVision: (sel: VisionSel) => void
   onCode: (code: string) => void
+  /** Opens one device of "Our devices (simulated)", or the table when null. */
+  onDevice?: (id: string | null) => void
   onCapture: (mode: CaptureMode) => void
   onBrief: (date: string) => void
   onAlert: (a: AlertItem) => void
@@ -96,6 +99,13 @@ export function ChatPane(p: Props) {
     const def = WORKFLOWS.find((w) => w.id === id) ?? WORKFLOWS[0]
     if (id === 'ai-sweep') body = <SweepCard sweep={data.sweep} />
     else if (id === 'check-device') body = <LiveCheckView key={p.view.code ?? ''} initialCode={p.view.code} />
+    else if (id === 'our-devices')
+      body = (
+        <OurDevices company={data.company} deviceId={p.view.code ?? null}
+          onDevice={(x) => p.onDevice?.(x)}
+          onBack={() => p.onDevice?.(null)}
+        />
+      )
     else if (id === 'vision') body = <VisionWorkflow vision={data.vision} onOpen={p.onVision} />
     else if (id === 'weekly-investigator' || id === 'recall-sweep')
       body = <RunList kind={id} runs={data.investigations.investigations} notes={data.investigations.notes} onRun={p.onRun} />

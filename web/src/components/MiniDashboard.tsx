@@ -6,6 +6,7 @@ import { FULLSCREEN } from '../layout'
 import type { WorkflowId, WorkspaceData } from '../types'
 import { MetricsChart } from './MetricsChart'
 import { Crumbs, ExpandButton } from './PanelBar'
+import { CompanyBanner, StatusBars } from './OurDevices'
 import { SweepFlagged, SweepRules } from './SweepCard'
 
 export function miniTitle(workflow: WorkflowId): string {
@@ -179,7 +180,13 @@ export function MiniPane({
         </span>
       </div>
       <div id="mini-body" className={['px-3 pb-4', shown || expanded ? '' : 'max-lg:hidden'].join(' ')}>
+        {workflow === 'our-devices' && (
+          <div className="mb-3">
+            <CompanyBanner company={data.company} />
+          </div>
+        )}
         <MiniStats workflow={workflow} data={data} expanded={expanded} />
+        {expanded && workflow === 'our-devices' && <StatusBars company={data.company} />}
         {!expanded && <Recent items={items} expanded={false} onOpen={open} activeId={activeId} />}
         {expanded && workflow === 'ai-sweep' && (
           <>

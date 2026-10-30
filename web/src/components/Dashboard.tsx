@@ -79,7 +79,7 @@ export function Dashboard({
   onAlert: (a: AlertItem) => void
 }) {
   const tiles = visibleWorkflows(data.investigations.investigations).filter((w) => w.id !== 'ai-sweep')
-  const alerts = alertItems(data.sweep, data.briefs)
+  const alerts = alertItems(data.sweep, data.briefs, data.company)
   return (
     <div>
       <p className="ms-kicker m-0">Postmarket surveillance · FDA-cleared AI/ML devices</p>
