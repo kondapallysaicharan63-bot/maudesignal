@@ -338,7 +338,8 @@ def test_device_type_view_facts_are_gated_or_recomputed() -> None:
     assert by["recalls_total"]["check"] == "gate" and by["recalls_total"]["status"] == "pass"
     assert by["recalls_latest"]["check"] == "gate"
     assert by["clearances_latest"]["check"] == "gate"
-    assert by["reports_window"]["check"] == "recomputed"
+    assert by["reports_window"]["check"] == "direct"
+    assert by["this_week_change"]["check"] == "recomputed"
     assert by["this_week_change"]["status"] == "pass"
     assert view["summary"]["recalls_total"]["total"] == 1
     assert view["summary"]["reports_window"]["count"] == 5
@@ -573,3 +574,67 @@ def test_read_label_timed_without_sam_marks_it_not_recorded() -> None:
     assert steps[0]["elapsed_ms"] is None and steps[0]["timing"] == "not recorded"
     assert steps[1]["timing"] == "measured"
     assert result.fields["device_name"].value
+
+
+# --- fix round: UDI lot/serial, report links, honest checks, partial maker, per-query trace ---
+
+
+def test_udi_lot_and_serial_never_stored() -> None:
+    reading = json.loads(json.dumps(HOMEDICS_LABEL))
+    reading["fields"]["udi"] = {
+        "value": "(01)00812345678901(17)270101(10)LOT77(21)SER99",
+        "legibility": "clear",
+    }
+    res = lm.match_label(reading, searcher=FakeSearcher(default_responder), check_fn=fake_check)
+    blob = json.dumps(res)
+    assert "LOT77" not in blob and "SER99" not in blob
+    assert res["label"]["fields"]["udi"]["value"] == "(01)00812345678901(17)270101"
+    assert lm.sanitize_udi("(10)A(21)B(240)C") == ""
+
+
+def test_reports_total_links_both_parts_and_states_the_sum() -> None:
+    res = lm.match_label(
+        HOMEDICS_LABEL, searcher=FakeSearcher(default_responder), check_fn=fake_check
+    )
+    fact = next(
+        f for f in res["device_type_views"]["FLL"]["facts"] if f["topic"] == "reports_total"
+    )
+    assert fact["data"]["total"] == 125
+    assert fact["data"]["before_this_week"] == 120 and fact["data"]["this_week"] == 5
+    assert "120" in fact["text"] and "plus 5" in fact["text"]
+    assert len(fact["query_urls"]) == 2 and fact["check"] == "direct"
+    assert fact["query_urls"][0] == fact["query_url"]
+
+
+def test_partial_maker_match_is_not_called_other_makers() -> None:
+    reading = {
+        "fields": {
+            "device_name": {"value": "Spot Vital Signs", "legibility": "clear"},
+            "manufacturer": {"value": "Welch Allyn Protocol, Inc.", "legibility": "clear"},
+        },
+        "overall_legibility": "clear",
+    }
+    row = {
+        "k_number": "K111111",
+        "applicant": "Welch Allyn, Inc.",
+        "device_name": "Spot Vital Signs Monitor",
+        "product_code": "MWI",
+        "decision_date": "2015-01-01",
+    }
+    s = FakeSearcher(lambda e, q: [row] if e == "510k" and "product_code:" not in q else [])
+    res = lm.match_label(reading, searcher=s)
+    assert res["manufacturer_match_found"] is False
+    assert "partly match" in res["note"] and "other makers" not in res["note"]
+    res2 = lm.match_label(HOMEDICS_LABEL, searcher=FakeSearcher(default_responder))
+    assert "other makers" in res2["note"]
+
+
+def test_live_check_trace_lists_each_query_with_url_and_count() -> None:
+    res = lm.match_label(
+        HOMEDICS_LABEL, searcher=FakeSearcher(default_responder), check_fn=fake_check
+    )
+    step = next(s for s in res["trace"] if "MAUDE counts" in s["step"])
+    assert "covers 5 openFDA queries" in step["note"]
+    assert [q["query"] for q in step["queries"]][:2] == ["per day", "this week"]
+    assert all(q["url"].startswith("https://api.fda.gov/") for q in step["queries"])
+    assert [q["count"] for q in step["queries"]] == [None, 5, 8, 120, 120]

@@ -418,6 +418,17 @@ def _field(reading: Mapping[str, Any], name: str) -> str:
     return str(raw.get("value") or "").strip()
 
 
+# GS1 application identifiers kept from a printed UDI: GTIN (01), production date (11) and
+# expiry (17). Everything else (lot 10, serial 21, and any other per-unit AI) is dropped.
+_UDI_KEEP_AIS = ("01", "11", "17")
+
+
+def sanitize_udi(udi: str) -> str:
+    """Rebuild a human-readable UDI keeping only AIs 01 / 11 / 17 (never lot or serial)."""
+    parsed = parse_udi(udi)
+    return "".join(f"({ai}){parsed[ai]}" for ai in _UDI_KEEP_AIS if parsed.get(ai))
+
+
 def _alnum(text: str) -> str:
     return re.sub(r"[^a-z0-9]", "", text.casefold())
 
@@ -623,6 +634,7 @@ class Candidate:
     exact_id: str | None = None  # "k_number" | "gtin"
     score: int = 0
     manufacturer_match: bool = False
+    manufacturer_partial: bool = False
     matched: list[str] = field(default_factory=list)
     not_matched: list[str] = field(default_factory=list)
     keep: bool = False
@@ -744,6 +756,7 @@ def score_candidate(inp: LabelInputs, c: Candidate) -> Candidate:
     matched: list[str] = []
     missed: list[str] = []
     c.manufacturer_match = False
+    c.manufacturer_partial = False
 
     if c.exact_id == "k_number" and inp.k_number:
         score += W_EXACT_ID
@@ -762,6 +775,7 @@ def score_candidate(inp: LabelInputs, c: Candidate) -> Candidate:
             c.manufacturer_match = True
             matched.append(f"manufacturer name matches '{inp.manufacturer}'")
         elif found:
+            c.manufacturer_partial = True
             missed.append(
                 f"manufacturer name only partly matches: {len(found)} of {len(label_core)} "
                 f"words of '{inp.manufacturer}' are in '{c.owner}'"
@@ -846,6 +860,11 @@ class FactDraft:
     data: dict[str, Any]
     claims: list[Claim] = field(default_factory=list)
     recheck: Callable[[], bool] | None = None
+    # "recomputed": the recheck applies the detector's rules again to stored counts.
+    # "direct": the figure is the stored openFDA total / row itself (the recheck is only a
+    # consistency test), so it is labelled as taken directly, not as independently checked.
+    check_kind: str = "recomputed"
+    query_urls: list[str] = field(default_factory=list)
 
 
 WITHHELD_REASON = "could not be verified against the stored openFDA answer"
@@ -863,7 +882,7 @@ def check_facts(drafts: Sequence[FactDraft], store: EvidenceStore) -> list[dict[
             check = "gate"
             ok = verify_sentence(d.text, d.claims, store).status == "pass"
         elif d.recheck is not None:
-            check = "recomputed"
+            check = d.check_kind
             ok = bool(d.recheck())
         else:
             check, ok = "none", False
@@ -877,6 +896,7 @@ def check_facts(drafts: Sequence[FactDraft], store: EvidenceStore) -> list[dict[
                     "text": d.text,
                     "data": d.data,
                     "query_url": d.query_url,
+                    **({"query_urls": list(d.query_urls)} if d.query_urls else {}),
                 }
             )
         else:
@@ -890,6 +910,7 @@ def check_facts(drafts: Sequence[FactDraft], store: EvidenceStore) -> list[dict[
                     "data": None,
                     "reason": WITHHELD_REASON,
                     "query_url": d.query_url,
+                    **({"query_urls": list(d.query_urls)} if d.query_urls else {}),
                 }
             )
     return out
@@ -918,6 +939,21 @@ def recompute_change(lc: LiveCheck) -> str:
         if name in triggers:
             return name
     return "stable"
+
+
+def live_query_entries(lc: LiveCheck) -> list[dict[str, Any]]:
+    """One entry per LiveCheck query: its label, URL and the stored figure it produced."""
+    figures: list[int | None] = [
+        None,  # reports per day: a list of days, not one figure
+        lc.current_count,
+        lc.baseline_count,
+        lc.prior_report_count,
+        lc.prior_report_count,
+    ]
+    return [
+        {"query": label, "url": url, "count": figures[i] if i < len(figures) else None}
+        for i, (label, url) in enumerate(lc.queries)
+    ]
 
 
 def _same_total(value: int, answer: Answer) -> Callable[[], bool]:
@@ -981,6 +1017,7 @@ def build_view_drafts(
                 classification.url,
                 {"device_type_name": name, "device_class": klass, "regulation_number": reg},
                 recheck=re_cls,
+                check_kind="direct",
             )
         )
     else:
@@ -997,6 +1034,7 @@ def build_view_drafts(
                 clearances.url,
                 {"total": total},
                 recheck=_same_total(total, clearances),
+                check_kind="direct",
             )
         )
         if clearances.results:
@@ -1042,6 +1080,7 @@ def build_view_drafts(
                     recalls.url,
                     {"total": rtotal},
                     recheck=_same_total(rtotal, recalls),
+                    check_kind="direct",
                 )
             )
         if rows:
@@ -1077,21 +1116,31 @@ def build_view_drafts(
                     lc.queries[0][1] if lc.queries else None,
                     {"total": lc.prior_report_count, "as_of": None},
                     recheck=lambda: lc.current_count == 0,
+                    check_kind="direct",
                 )
             )
         else:
             as_of = lc.as_of.isoformat()
             win = lc.to_dict()["window"]
             qurl = lc.queries[1][1] if len(lc.queries) > 1 else None
+            prior_url = lc.queries[3][1] if len(lc.queries) > 3 else None
             drafts.append(
                 FactDraft(
                     f"{code}:reports_total",
                     "reports_total",
                     f"MAUDE holds {lc.all_dates_total} reports for {code} up to {as_of}, the "
-                    "latest report date on openFDA.",
-                    lc.queries[3][1] if len(lc.queries) > 3 else None,
-                    {"total": lc.all_dates_total, "as_of": as_of},
+                    f"latest report date on openFDA: {lc.prior_report_count} before the 7 days "
+                    f"ending {as_of} plus {lc.current_count} in them.",
+                    prior_url,
+                    {
+                        "total": lc.all_dates_total,
+                        "as_of": as_of,
+                        "before_this_week": lc.prior_report_count,
+                        "this_week": lc.current_count,
+                    },
                     recheck=lambda: lc.all_dates_total == lc.prior_report_count + lc.current_count,
+                    check_kind="direct",
+                    query_urls=[u for u in (prior_url, qurl) if u],
                 )
             )
             drafts.append(
@@ -1111,6 +1160,7 @@ def build_view_drafts(
                         lc.baseline_weekly_mean == lc.baseline_count / BASELINE_WEEKS
                         and lc.current_count == sum(n for _, n in lc.current_event_type_counts)
                     ),
+                    check_kind="direct",
                 )
             )
         drafts.append(
@@ -1375,6 +1425,11 @@ def match_label(
                     st["count"] = live.all_dates_total
                     st["url"] = live.queries[0][1] if live.queries else None
                     st["urls"] = [u for _, u in live.queries]
+                    st["note"] = (
+                        f"covers {len(live.queries)} openFDA queries; elapsed_ms is the combined "
+                        "time of the whole check"
+                    )
+                    st["queries"] = live_query_entries(live)
                     queries_log.append(
                         {
                             "id": f"maude-{code}",
@@ -1451,7 +1506,10 @@ def match_label(
     else:
         status, note = STATUS_NEEDS_PERSON, _match_note(inp, ranked, maker_found)
     label_fields = {
-        k: {"value": v.get("value", ""), "legibility": v.get("legibility", "")}
+        k: {
+            "value": sanitize_udi(str(v.get("value", ""))) if k == "udi" else v.get("value", ""),
+            "legibility": v.get("legibility", ""),
+        }
         for k, v in (reading.get("fields") or {}).items()
         if k not in SESSION_ONLY_FIELDS
     }
@@ -1541,6 +1599,12 @@ def _no_match_note(inp: LabelInputs, log: list[dict[str, Any]]) -> str:
 def _match_note(inp: LabelInputs, ranked: Sequence[Candidate], maker_found: bool) -> str:
     if ranked[0].exact_id:
         return "A record matches an id printed on the label. A person must confirm it."
+    if inp.manufacturer and not maker_found and any(c.manufacturer_partial for c in ranked):
+        return (
+            f"Records below partly match the maker name '{inp.manufacturer}' (some of its words "
+            "are in the record's maker); none matches it fully. What differs is shown with each "
+            "record. A person must confirm one, or none."
+        )
     if inp.manufacturer and not maker_found:
         return (
             f"No record from '{inp.manufacturer}' was found; the records below are from other "
