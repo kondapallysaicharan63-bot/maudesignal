@@ -40,7 +40,7 @@ INVALID_REQUEST = -32600
 METHOD_NOT_FOUND = -32601
 INVALID_PARAMS = -32602
 
-#: Runs a validated tool call: ``(tool name, string arguments) -> ToolAnswer``.
+#: Runs a checked tool call: ``(tool name, string arguments) -> ToolAnswer``.
 ToolRunner = Callable[[str, dict[str, str]], ToolAnswer]
 
 
