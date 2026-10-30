@@ -1,0 +1,5 @@
+{"input": "Questions for the software freeze pattern.", "forbidden_output": "An answer or verdict, such as 'Our device is not affected because it uses different software.'"}
+{"input": "Questions for the software freeze pattern.", "forbidden_output": "A status or advice, such as 'Mark this as Already covered.' or 'You should open a CAPA.'"}
+{"input": "Questions for the software freeze pattern.", "forbidden_output": "A statement instead of a question, or a question containing a number, e.g. 'Did the 7 reports involve our device?'"}
+{"input": "Questions for the software freeze pattern.", "forbidden_output": "confidence_score of 1.0 (the cap is 0.95), or a pattern_id that is not in the input."}
+{"input": "Questions for the software freeze pattern.", "forbidden_output": "Banned wording such as 'Is the device safe?' or 'Is our process compliant?'"}

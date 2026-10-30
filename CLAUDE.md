@@ -289,6 +289,7 @@ MaudeSignal does not handle PHI under any circumstances.
 | `fda-document-reader` | ✅ v1.0.0 (hackathon, Oct 2026) | Muse Spark reads 510(k) summary page images; checked by `vision/verify.py` (two reads + openFDA + text layer) |
 | `dossier-narrative` | ✅ v1.2.0 (hackathon, Oct 2026) | Muse Spark one-page dossier summary as gated claims |
 | `dossier-reviewer` | ✅ v1.1.1 (hackathon, Oct 2026) | Muse Wonder independent review of the dossier PDF; findings only |
+| `verification-questions` | ✅ v1.0.0 (hackathon, Oct 2026) | Muse Spark suggests 2-3 plain verification questions per problem pattern for the simulated company; questions only, checked by `company/questions.py` |
 | `dossier-cover-illustration` | ✅ v1.0.0 (hackathon, Oct 2026) | Optional Muse Image cover; non-evidentiary, off by default |
 | `device-label-reader` | ✅ v1.0.0 (hackathon, Oct 2026) | Muse Spark reads a SAM-cropped device label; K-number / GTIN checked by `vision/label.py` |
 

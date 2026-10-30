@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "verification-questions output",
+  "type": "object",
+  "required": ["patterns"],
+  "additionalProperties": false,
+  "properties": {
+    "patterns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["pattern_id", "questions", "confidence_score"],
+        "additionalProperties": false,
+        "properties": {
+          "pattern_id": {"type": "string", "minLength": 1, "maxLength": 64},
+          "questions": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 3,
+            "items": {"type": "string", "minLength": 8, "maxLength": 200, "pattern": "\\?$"}
+          },
+          "confidence_score": {"type": "number", "minimum": 0, "maximum": 0.95}
+        }
+      }
+    }
+  }
+}

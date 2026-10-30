@@ -1,0 +1,52 @@
+# HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
+# Records Muse Spark verification questions for the simulated company's problem patterns
+# (scripts/record_company_questions.py -> demo/company/questions.json). Spends Meta Model API
+# credit (cents), so it runs ONLY when demo/company/QUESTIONS_REQUEST is pushed on
+# track-a-company (the coordinator bumps the number inside it after Charan's OK) or by hand.
+name: Company questions (Muse Spark)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [track-a-company]
+    paths:
+      - demo/company/QUESTIONS_REQUEST
+
+permissions:
+  contents: write
+
+concurrency:
+  group: company-questions-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - name: Install package
+        run: pip install -e .
+      - name: Record questions (key from secrets, never echoed)
+        env:
+          META_MODEL_API_KEY: ${{ secrets.META_MODEL_API_KEY }}
+          META_MODEL_API_BASE_URL: https://api.meta.ai/v1
+          META_MODEL_API_MODEL: muse-spark-1.3
+        run: python scripts/record_company_questions.py
+      - name: Commit questions back to the branch
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add demo/company/questions.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "chore(company): Muse Spark verification questions $(date -u +%Y-%m-%d)"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
