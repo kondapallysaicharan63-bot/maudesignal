@@ -75,8 +75,9 @@ export function resetVisits(): void {
 }
 
 /**
- * One ping per view per session: {ref?, page, client_ts}. Needs an API base; the ref code is optional
- * and is left out of the body when absent (the server labels codeless visits). Failures are silent. Returns true when a ping was handed to the browser.
+ * One ping per view per session: {ref?, page, client_ts}. Needs an API base; the ref code is
+ * optional and is left out of the body when absent (the server labels codeless visits). Failures
+ * are silent. Returns true when a ping was handed to the browser.
  */
 export function sendVisit(
   apiBase: string | null,

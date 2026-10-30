@@ -131,9 +131,11 @@ Read from the workflow files and the newest outputs; no GitHub API call.
 
 ## Feedback and visit pings
 
-`/v1/visit` fires only when a valid ref code (`?r=CODE`, `^[A-Za-z0-9_-]{1,32}$`) is present, once per
-view per session. Visitors without a ref code are not pinged. The ref code is removed from the URL
-before it is sent to Web Analytics.
+`/v1/visit` fires once per view per session whenever an API base is configured. The body is
+`{ref?, page, client_ts}`, and `ref` is sent only when a valid `?r=CODE` (`^[A-Za-z0-9_-]{1,32}$`) is
+present. Without a code, `ref` is left out and the server labels the visit "email-batch-1". No IP, user
+agent or other visitor data is sent (fetch keepalive, credentials omit). The ref code is removed from
+the URL before it is sent to Web Analytics.
 
 ## Tests
 
