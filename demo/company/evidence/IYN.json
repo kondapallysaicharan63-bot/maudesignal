@@ -1,0 +1,1691 @@
+{
+ "schema_version": "1.0",
+ "product_code": "IYN",
+ "fetched_utc": "2026-10-30T03:07:02Z",
+ "window": {
+  "date_from": "20260904",
+  "date_to": "20261030",
+  "weeks": 8
+ },
+ "classification": {
+  "device_name": "System, Imaging, Pulsed Doppler, Ultrasonic",
+  "device_class": "2",
+  "regulation_number": "892.1550",
+  "query_url": "https://api.fda.gov/device/classification.json?search=product_code:IYN&limit=1"
+ },
+ "reports": {
+  "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code:IYN+AND+date_received:[20260904+TO+20261030]&limit=100",
+  "matched_total": 55,
+  "stored": 55,
+  "records": [
+   {
+    "report_id": "50952445",
+    "event_type": "injury",
+    "date_received": "20260930",
+    "report_source": "Manufacturer report",
+    "brand_name": "EPIQ 5G",
+    "manufacturer": "Philips Ultrasound, Inc",
+    "product_problems": [
+     "Poor Quality Image"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50950965",
+    "event_type": "malfunction",
+    "date_received": "20260930",
+    "report_source": "Manufacturer report",
+    "brand_name": "AFFINITI 30",
+    "manufacturer": "Philips Ultrasound, Inc",
+    "product_problems": [
+     "Material Integrity Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50949052",
+    "event_type": "malfunction",
+    "date_received": "20260930",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON Sequoia Ultrasound System",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Computer Operating System Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50948876",
+    "event_type": "malfunction",
+    "date_received": "20260930",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON Origin Ultrasound System",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Computer Software Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50941403",
+    "event_type": "malfunction",
+    "date_received": "20260929",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON Freestyle",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Loss of Data"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50938400",
+    "event_type": "malfunction",
+    "date_received": "20260929",
+    "report_source": "Manufacturer report",
+    "brand_name": "EPIQ CVXI",
+    "manufacturer": "Philips Ultrasound, Inc",
+    "product_problems": [
+     "Application Program Freezes or Fails to Launch"
+    ],
+    "text": "It was reported that the EPIQ CVxi Ultrasound System froze with an error message during a TTEER (Transcatheter Tricuspid Edge-to-Edge Repair). The system required multiple reboots to clear the freezing, and an exchange of the ICE Catheter was made without resolving the problem. The procedure was completed by using a TEE transducer instead of an ICE Catheter. There was no user or patient harm. Philips has started an investigation, and upon completion, a follow up report will be submitted."
+   },
+   {
+    "report_id": "50935160",
+    "event_type": "malfunction",
+    "date_received": "20260929",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON Sequoia Ultrasound System",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Computer Software Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50934928",
+    "event_type": "malfunction",
+    "date_received": "20260929",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON SC2000 Ultrasound System",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Computer Software Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50928380",
+    "event_type": "malfunction",
+    "date_received": "20260929",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON Juniper",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Loss of Data"
+    ],
+    "text": "One of the patient exams performed on the Juniper system displays an \"Unarchived\" error message and they are unable to send this study to PACS. All other exams performed before are after this one are transferring over to the PACS as expected without any errors. The problem occurred after a Breast study was completed and the user tried to send it over to the network PACS. TSE worked with the customer and she confirmed that the problem cannot be reproduced, as it only is affecting this one exam. There were no reported injuries but the entire exam was lost and they had to call the patient back in to re-do the study. The customer has not been routinely clearing out the database. The exam is corrupted and cannot be retrieved. An investigation is ongoing at Siemens Healthineers to identify the root cause of the issue. The report will be supplemented after the investigation is completed. Reference# (b)(4)."
+   },
+   {
+    "report_id": "50926600",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON Juniper",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Computer Software Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50919282",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON Sequoia Ultrasound System",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Computer Software Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50905637",
+    "event_type": "malfunction",
+    "date_received": "20260925",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON S2000",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Application Program Freezes or Fails to Launch"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50904354",
+    "event_type": "malfunction",
+    "date_received": "20260925",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON S1000",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "No Display/Image"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50904166",
+    "event_type": "malfunction",
+    "date_received": "20260925",
+    "report_source": "Manufacturer report",
+    "brand_name": "",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Loss of Data"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50900342",
+    "event_type": "injury",
+    "date_received": "20260925",
+    "report_source": "Manufacturer report",
+    "brand_name": "EPIQ 5G",
+    "manufacturer": "Philips Ultrasound, Inc",
+    "product_problems": [
+     "Human-Device Interface Problem"
+    ],
+    "text": "It was reported the user felt the sensations as tingling and shooting pain in the arm lasting approximately 5-10 seconds when using the L12-5 transducer. The L12-5 transducer was associated with an EPIQ 5G Ultrasound System. The user was evaluated and received unspecified medical treatment. The customer confirmed that the symptoms are a direct result of the use of the transducer. The treatment and associated diagnosis were unspecified. Philips has started an investigation, and upon completion, a follow-up report will be submitted."
+   },
+   {
+    "report_id": "50899389",
+    "event_type": "malfunction",
+    "date_received": "20260925",
+    "report_source": "Manufacturer report",
+    "brand_name": "EPIQ ELITE",
+    "manufacturer": "Philips Ultrasound, Inc",
+    "product_problems": [
+     "Unintended System Motion"
+    ],
+    "text": "It was reported the control panel arm on an EPIQ Elite Diagnostic Ultrasound System's dropped quickly. The problem occurred outside of clinical use and no patient or user was harmed.Philips has started an investigation, and upon completion, a follow up report will be submitted."
+   },
+   {
+    "report_id": "50892827",
+    "event_type": "malfunction",
+    "date_received": "20260925",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON S3000",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Unstable"
+    ],
+    "text": "Brake on the machine keeps unlocking. Initial onset of the issue was not provided, however it has been getting progressively worse. There was no patient or user injury. An investigation is ongoing at Siemens Healthineers to identify the root cause of the issue. The report will be supplemented after the investigation is completed. Reference# (b)(4)"
+   },
+   {
+    "report_id": "50892813",
+    "event_type": "injury",
+    "date_received": "20260925",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON Origin",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Sharp Edges"
+    ],
+    "text": "The Control Panel levers on the Origin system are prematurely fractured/cracked and a piece broke off. On the bottom of the handle there is a plastic piece that hangs down because it's broken off from the screw. It's very sharp and cut a sonographer on the night shift. A band-aid was applied but no medical intervention was required. An investigation is ongoing at Siemens Healthineers to identify the root cause of the issue. The report will be supplemented after the investigation is completed. Reference# (b)(4)."
+   },
+   {
+    "report_id": "50888696",
+    "event_type": "malfunction",
+    "date_received": "20260924",
+    "report_source": "Manufacturer report",
+    "brand_name": "EPIQ CVX",
+    "manufacturer": "Philips Ultrasound, Inc",
+    "product_problems": [
+     "Application Program Freezes or Fails to Launch"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50886261",
+    "event_type": "malfunction",
+    "date_received": "20260924",
+    "report_source": "Manufacturer report",
+    "brand_name": "EPIQ ELITE",
+    "manufacturer": "Philips Ultrasound, Inc",
+    "product_problems": [
+     "Material Separation"
+    ],
+    "text": "During service and testing at the manufacturing site, it was found the 3D9-3v transducer casing was gapping/separating. The transducer was associated with an EPIQ Elite Ultrasound System at the customer site. The customer had initially reported to Philips the transducer had image drop out affecting the image quality. A replacement transducer was shipped directly to the customer to address their concerns. The reported issue of casing being gapped/separating was found at the manufacturer site and there was no patient or user harm reported.Philips has started an investigation, and upon completion, a follow up report will be submitted."
+   },
+   {
+    "report_id": "50886260",
+    "event_type": "malfunction",
+    "date_received": "20260924",
+    "report_source": "Manufacturer report",
+    "brand_name": "EPIQ 5",
+    "manufacturer": "Philips Ultrasound, Inc",
+    "product_problems": [
+     "Crack"
+    ],
+    "text": "During service and testing at the manufacturing site, it was found the 3D9-3v transducer casing was cracked. The transducer was associated with an EPIQ 5W Ultrasound System at the customer site. The customer had initially reported to Philips the transducer had a cracked strain relief. A replacement transducer was shipped directly to the customer to address their concerns. The reported issue of cracked casing was found at the manufacturer site and there was no patient or user harm reported.Philips has started an investigation, and upon completion, a follow up report will be submitted."
+   },
+   {
+    "report_id": "50872772",
+    "event_type": "malfunction",
+    "date_received": "20260923",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON Origin Ultrasound Device",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Application Program Freezes or Fails to Launch"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50872601",
+    "event_type": "injury",
+    "date_received": "20260923",
+    "report_source": "Manufacturer report",
+    "brand_name": "Affiniti CVx Ultrasound System",
+    "manufacturer": "Philips Ultrasound, Inc",
+    "product_problems": [
+     "Application Program Version or Upgrade Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50871884",
+    "event_type": "injury",
+    "date_received": "20260923",
+    "report_source": "Manufacturer report",
+    "brand_name": "Affiniti CVx Ultrasound System",
+    "manufacturer": "Philips Ultrasound, Inc",
+    "product_problems": [
+     "Application Program Version or Upgrade Problem"
+    ],
+    "text": "It was reported the sonographer was experiencing fatigue and pain due to increased scan times and slow responses when using the Affiniti CVx Ultrasound System. No further information was received. This event will be reported out of an abundance of caution. There is an allegation of injury; however, there is insufficient information regarding the user outcome at this time. Philips has started an investigation, and upon completion, a follow up report will be submitted."
+   },
+   {
+    "report_id": "50856469",
+    "event_type": "injury",
+    "date_received": "20260922",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON Sequoia Ultrasound System",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Computer Software Problem"
+    ],
+    "text": "The ACUSON Sequoia system was being used for a stress-echo examination. The system shut down during the exam. The exact examination delay is unknown; however the patient was re-stressed to complete the exam. There was no injury reported. An investigation is ongoing at Siemens Healthineers to identify the root cause of the issue. The report will be supplemented after the investigation is completed. Reference #(b)(4)"
+   },
+   {
+    "report_id": "50856016",
+    "event_type": "malfunction",
+    "date_received": "20260922",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON Sequoia Ultrasound System",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Computer Software Problem"
+    ],
+    "text": "The ACUSON Sequoia system was being used for an Arterial exam. During use, the system locked up and displayed and error message. The error occurred when any probe was connected. The patient was rescanned on a different system to complete the exam. There was no reported injury. An investigation is ongoing at Siemens Healthineers to identify the root cause of the issue. The report will be supplemented after the investigation is completed. Reference (b)(4)."
+   },
+   {
+    "report_id": "50829472",
+    "event_type": "malfunction",
+    "date_received": "20260918",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON SC2000 Ultrasound System",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Computer Software Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50809116",
+    "event_type": "injury",
+    "date_received": "20260917",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON Sequoia Ultrasound System",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "No Display/Image"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50808890",
+    "event_type": "malfunction",
+    "date_received": "20260917",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON Sequoia Ultrasound System",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Computer Software Problem"
+    ],
+    "text": "During a low-risk ultrasound examination with the ACUSON Sequoia, the system displayed an error indicating that an image could not be saved or printed. The affected system may not have been recoverable, and the examination was successfully completed on another system. There was no injury reported. An investigation is ongoing at Siemens Healthineers to identify the root cause of the issue. The report will be supplemented after the investigation is completed. Reference #(b)(4)."
+   },
+   {
+    "report_id": "50808488",
+    "event_type": "injury",
+    "date_received": "20260917",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON Sequoia Ultrasound System",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Display or Visual Feedback Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50805638",
+    "event_type": "malfunction",
+    "date_received": "20260917",
+    "report_source": "Manufacturer report",
+    "brand_name": "EPIQ 7",
+    "manufacturer": "Philips Ultrasound, Inc",
+    "product_problems": [
+     "Material Integrity Problem"
+    ],
+    "text": "It was reported the 3D9-3v transducer was leaking oil. The transducer was associated with the EPIQ 7W Ultrasound System. There was no patient or user harm. Philips has started an investigation and upon completion, a follow up report will be submitted."
+   },
+   {
+    "report_id": "50805491",
+    "event_type": "malfunction",
+    "date_received": "20260917",
+    "report_source": "Manufacturer report",
+    "brand_name": "EPIQ 7",
+    "manufacturer": "Philips Ultrasound, Inc",
+    "product_problems": [
+     "Material Integrity Problem"
+    ],
+    "text": "It was reported the 3D9-3v transducer was leaking oil. The transducer was associated with the EPIQ 7W Ultrasound System. There was no patient or user harm. Philips has started an investigation and upon completion, a follow up report will be submitted."
+   },
+   {
+    "report_id": "50805035",
+    "event_type": "malfunction",
+    "date_received": "20260917",
+    "report_source": "Manufacturer report",
+    "brand_name": "EPIQ 7",
+    "manufacturer": "Philips Ultrasound, Inc",
+    "product_problems": [
+     "Material Integrity Problem"
+    ],
+    "text": "It was reported the 3D9-3v transducer was leaking oil. The transducer was associated with the EPIQ 7W Ultrasound System. There was no patient or user harm. Philips has started an investigation and upon completion, a follow up report will be submitted."
+   },
+   {
+    "report_id": "50795107",
+    "event_type": "injury",
+    "date_received": "20260916",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON Origin",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Application Program Freezes or Fails to Launch"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50794900",
+    "event_type": "injury",
+    "date_received": "20260916",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON Origin",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Application Program Freezes or Fails to Launch"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50793988",
+    "event_type": "malfunction",
+    "date_received": "20260916",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON Juniper",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Computer Software Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50793749",
+    "event_type": "malfunction",
+    "date_received": "20260916",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON X300",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Computer Software Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50793180",
+    "event_type": "malfunction",
+    "date_received": "20260916",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON Juniper",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Computer Software Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50791832",
+    "event_type": "injury",
+    "date_received": "20260916",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON ORIGIN",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Application Program Freezes or Fails to Launch"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50791830",
+    "event_type": "injury",
+    "date_received": "20260916",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON ORIGIN",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Application Program Freezes or Fails to Launch"
+    ],
+    "text": "The report is being submitted as a part of a containment action for CAPA 2026-000014, which was initiated to address the FDA form 483 Observation #1 received on 27-August-2026.The complaint submitter stated that the ACUSON Origin System lis showing error message \"clip aborted\" and cannot save cine clips. Customer rebooted the system 3 times and which temporarily fixed issue. No patient injury or adverse outcome was reported. NOTE: Our standard procedure is to submit Medical Device Reports (MDRs) directly through our complaint handling software. Because this specific complaint record is closed, software constraints necessitate a manual submission. To maintain the integrity and continuity of the automated submission sequence for active complaints, this manual report has been assigned MDR# 3023245-2026-01002. Engineers reviewed the log files provided and stated that they do not include (b)(6) 2026 data (logs from this time is unavailable). However, the provided logs showed the error described by the customer: system displayed error message \"clip aborted\" and could save cine clips. Issue initially started with first clip store lag.Engineers also checked that the D drive storage space was less:-D drive:Size 894.25 GB (960,195,719,168 bytes),Free Space 390.37 GB (419,152,347,136 bytes).The root cause was determined as a software defect, where the system displays error message when customer has several hundreds of patients in the database. The issue was resolved at the site by rebuilding the database. This issue is improved in the software patch VC10 via Defect (b)(4).Reference# (b)(4)."
+   },
+   {
+    "report_id": "50778719",
+    "event_type": "injury",
+    "date_received": "20260915",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON Sequoia Ultrasound System",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Computer Software Problem"
+    ],
+    "text": "The ACUSON Sequoia locked up during an interventional procedure with Ultrasound support for localization. An error message was displayed. The system was only recoverable for a few minutes at time. After the second lock up occurred, the system was replaced to complete the exam. No patient injury or adverse patient outcome was reported. The procedure was completed successfully using another ultrasound system, with no reported death, serious injury, or medical intervention attributable to the malfunction. An investigation is ongoing at Siemens Healthineers to identify the root cause of the issue. The report will be supplemented after the investigation is completed. Reference #(b)(4)."
+   },
+   {
+    "report_id": "50770945",
+    "event_type": "malfunction",
+    "date_received": "20260915",
+    "report_source": "Manufacturer report",
+    "brand_name": "EPIQ 7",
+    "manufacturer": "Philips Ultrasound, Inc",
+    "product_problems": [
+     "Crack"
+    ],
+    "text": "A customer reported their S8-3t transducer had a crack in the lens. This probe is associated with the EPIQ 7G Ultrasound System. The issue was found outside of patient use, and there was no patient or user harm. The service engineer confirmed the lens damage, and the replacement process was initiated to resolve the customer¿s immediate concerns. Philips has started an investigation, and upon completion, a follow up report will be submitted."
+   },
+   {
+    "report_id": "50752679",
+    "event_type": "malfunction",
+    "date_received": "20260914",
+    "report_source": "User Facility report",
+    "brand_name": "RAR Flexi Probe",
+    "manufacturer": "A.M.I. AGENCY FOR MEDICAL INNOVATIONS GMBH",
+    "product_problems": [
+     "Detachment of Device or Device Component"
+    ],
+    "text": "While setting up for the case, we tested the flexi probe (RAR2081) to ensure to was working properly before I got the pt, which it was not. We noticed the sensor was coming off. This product was just opened and had not been used on the pt. We opened another one which worked. Manufacturer response for flexi probe (RAR2081), flexi probe (RAR2081) (per site reporter).Incident reported to rep. Rep was able to replace product and pick up defective item."
+   },
+   {
+    "report_id": "50736441",
+    "event_type": "malfunction",
+    "date_received": "20260911",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON Juniper",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Computer Software Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50725270",
+    "event_type": "injury",
+    "date_received": "20260911",
+    "report_source": "Manufacturer report",
+    "brand_name": "SIUI Apogee 2300 Digital Color Doppler Ultrasound Imaging System",
+    "manufacturer": "Shantou Institute of Ultrasonic Instruments Co.,Lt",
+    "product_problems": [
+     "Adverse Event Without Identified Device or Use Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50718128",
+    "event_type": "malfunction",
+    "date_received": "20260910",
+    "report_source": "Manufacturer report",
+    "brand_name": "EPIQ 5G",
+    "manufacturer": "Philips Ultrasound, Inc",
+    "product_problems": [
+     "Unintended System Motion"
+    ],
+    "text": "It was reported the control panel arm on an EPIQ 5G Ultrasound System dropped down rapidly. There was no patient or user harm associated with this event. Philips has started an investigation, and upon completion, a follow up report will be submitted."
+   },
+   {
+    "report_id": "50717869",
+    "event_type": "malfunction",
+    "date_received": "20260910",
+    "report_source": "Manufacturer report",
+    "brand_name": "EPIQ 5G",
+    "manufacturer": "Philips Ultrasound, Inc",
+    "product_problems": [
+     "Unintended System Motion"
+    ],
+    "text": "It was reported the control panel arm on an EPIQ 5G Ultrasound System dropped down rapidly. There was no patient or user harm associated with this event. Philips has started an investigation, and upon completion, a follow up report will be submitted."
+   },
+   {
+    "report_id": "50714905",
+    "event_type": "malfunction",
+    "date_received": "20260910",
+    "report_source": "Manufacturer report",
+    "brand_name": "EPIQ 5G",
+    "manufacturer": "Philips Ultrasound, Inc",
+    "product_problems": [
+     "Material Separation"
+    ],
+    "text": "It was reported the C10-3v transducer seam was no longer sealed, there was a separation. The transducer was associated with the EPIQ 5G Ultrasound System. The failure occurred outside of clinical use, and no patient or user harm associated with this event. The transducer was replaced to address the customer's immediate concerns. Philips has started an investigation and upon completion, a follow up report will be submitted."
+   },
+   {
+    "report_id": "50712457",
+    "event_type": "malfunction",
+    "date_received": "20260910",
+    "report_source": "Manufacturer report",
+    "brand_name": "AFFINITI 70",
+    "manufacturer": "Philips Ultrasound, Inc",
+    "product_problems": [
+     "Unintended System Motion"
+    ],
+    "text": "It was reported the swivel mechanism of the Affiniti 70 Ultrasound System's control panel did not lock properly while transporting the unit within the user facility. This issue was found outside of clinical use, and there was no patient or user harm. The service engineer confirmed the intermittent locking issue. The locking mechanism was cleaned and realigned to resolve the customer¿s immediate issue. Philips has started an investigation, and upon completion, a follow-up report will be submitted."
+   },
+   {
+    "report_id": "50698219",
+    "event_type": "malfunction",
+    "date_received": "20260909",
+    "report_source": "Manufacturer report",
+    "brand_name": "ACUSON Redwood",
+    "manufacturer": "Siemens Medical Solutions USA, Inc.",
+    "product_problems": [
+     "Computer Software Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50674206",
+    "event_type": "injury",
+    "date_received": "20260908",
+    "report_source": "Distributor report",
+    "brand_name": "Apogee 2300 Digital Color Doppler Ultrasound Imaging System",
+    "manufacturer": "Shantou Institute of Ultrasonic Instrument Co. Lt",
+    "product_problems": [
+     "Adverse Event Without Identified Device or Use Problem"
+    ],
+    "text": "On (b)(6)2026, a male patient underwent Aquablation therapy for symptomatic benign prostatic hyperplasia (BPH). PROCEPT became aware that, post-Aquablation therapy, the patient presented with a rectal perforation. According to the information received, the night following the procedure, the patient complained of pain. A computed tomography (CT) scan was subsequently performed, which identified a rectal perforation. The patient required additional surgery to repair the perforation and currently has a temporary stoma in place as part of the postoperative management. Additional information indicated no resistance during TRUS probe insertion and no blood on the TRUS probe upon removal. According to the treating surgeon, the confirmed cause of the perforation remains unknown. No malfunction of the Apogee 2300 Digital Color Doppler Ultrasound Imaging System was reported. PROCEPT BioRobotics is an importer of the Apogee 2300 Digital Color Doppler Ultrasound Imaging System. The system is a purchased device hence manufacturer date is not available. The receiving inspection record for the Apogee 2300 Digital Color Doppler Ultrasound Imaging System Serial Number (b)(6)was reviewed. It passed the receiving inspection. No reworks were performed by PROCEPT BioRobotics that were related to the reported event. The review indicated that the device met specifications when released for distribution.The treatment log files were reviewed, which confirmed no malfunction occurred and the system functioned as intended.The review of the Operation Manual for the Apogee 2300 device (IFU) found that it has covered the related safety instruction:1.6 Safety.l) When performing the rectal ultrasound exam, be gentle in the movement. Do not perform violent operation, otherwise it may cause risks of perforation of the rectal wall, damage to the anus and perianal tissues, damage to the rectal mucosa or bleeding.The Apogee 2300 Digital Color Doppler Ultrasound Imaging System is a reusable device; therefore, it is still currently in possession of the user facility. The ECBP-1, SIUI TRUS Probe was not returned for investigation of this complaint. It was reported that post-Aquablation therapy, the patient presented with a rectal perforation. The patient required additional surgery to repair the perforation and was required to have a temporary stoma in place as part of the postoperative management. According to the treating surgeon, the confirmed cause of the perforation remains unknown. Based on review of the information provided, plus a review of the treatment log files, and IFU, the root cause is considered to be undeterminable.Submission of this report does not constitute an admission that the manufacturer's product caused or contributed to the event."
+   },
+   {
+    "report_id": "50671734",
+    "event_type": "malfunction",
+    "date_received": "20260908",
+    "report_source": "Manufacturer report",
+    "brand_name": "EPIQ CVX",
+    "manufacturer": "Philips Ultrasound, Inc",
+    "product_problems": [
+     "Application Program Freezes or Fails to Launch"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50646571",
+    "event_type": "malfunction",
+    "date_received": "20260907",
+    "report_source": "Manufacturer report",
+    "brand_name": "EPIQ CVX",
+    "manufacturer": "Philips Ultrasound, Inc",
+    "product_problems": [
+     "Unintended System Motion"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50614982",
+    "event_type": "malfunction",
+    "date_received": "20260904",
+    "report_source": "Manufacturer report",
+    "brand_name": "AFFINITI 70",
+    "manufacturer": "Philips Ultrasound, Inc",
+    "product_problems": [
+     "Unintended System Motion"
+    ],
+    "text": "It was reported the control panel arm on an Affiniti 70 Ultrasound System dropped rapidly. This issue was found outside of clinical use and there was no patient or user harm. Philips has started an investigation, and upon completion, a follow-up report will be submitted."
+   },
+   {
+    "report_id": "50614149",
+    "event_type": "malfunction",
+    "date_received": "20260904",
+    "report_source": "Manufacturer report",
+    "brand_name": "EPIQ 7",
+    "manufacturer": "Philips Ultrasound, Inc",
+    "product_problems": [
+     "Fracture"
+    ],
+    "text": ""
+   }
+  ]
+ },
+ "recalls": {
+  "query_url": "https://api.fda.gov/device/recall.json?search=product_code:IYN&sort=event_date_initiated:desc&limit=100",
+  "matched_total": 300,
+  "stored": 100,
+  "records": [
+   {
+    "recall_number": "Z-0152-2027",
+    "event_number": "99878",
+    "recalling_firm": "Philips Ultrasound, LLC",
+    "product_description": "Philips Lumify Diagnostic Ultrasound System",
+    "reason_for_recall": "Ultrasound system may: 1) Not recognize previous transducer registration, prevent scanning, require re-registration with Wi-Fi/cellular access, which may be unavailable outside of the hospital (ambulances/aircraft/field); 2) At connection between transducer USB cable to tablet/phone, there may be an unstable connection/may disconnect disrupting function. May cause diagnosis/treatment delay.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260924",
+    "cfres_id": "222793"
+   },
+   {
+    "recall_number": "Z-3249-2026",
+    "event_number": "99706",
+    "recalling_firm": "Philips Ultrasound, LLC",
+    "product_description": "Philips EPIQ Elite Diagnostic Ultrasound System\nModel # 795234",
+    "reason_for_recall": "Due to software issue with ultrasound system, doppler sample is displayed shallower than its actual measurement location, potentially causing inaccurate blood flow velocity measurements and misdiagnosis.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260807",
+    "cfres_id": "222248"
+   },
+   {
+    "recall_number": "Z-0883-2026",
+    "event_number": "97843",
+    "recalling_firm": "Philips Ultrasound, LLC",
+    "product_description": "Lumify Diagnostic Ultrasound System models : 795005, 795161, 989605449841,",
+    "reason_for_recall": "Ultrasound system compatibility issues with Apple devices running iOS 18 may cause a failure to perform live imagining.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251031",
+    "cfres_id": "216707"
+   },
+   {
+    "recall_number": "Z-0435-2026",
+    "event_number": "97830",
+    "recalling_firm": "B-K Medical A/S",
+    "product_description": "1202 Flex Focus Ultrasound System, cart models UA1214 and UA1814, used with:   Flex Focus 200, Flex Focus 300, Flex Focus 400, Flex Focus 500, Flex Focus 700, Flex Focus 800; System, Imaging, Pulsed Doppler, Ultrasonic",
+    "reason_for_recall": "GE HealthCare has become aware that the Instructions for Use within the user guide and service manual do not adequately state the required battery replacement intervals, end-of-life handling procedures, or general battery safety precautions.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251009",
+    "cfres_id": "216679"
+   },
+   {
+    "recall_number": "Z-0436-2026",
+    "event_number": "97830",
+    "recalling_firm": "B-K Medical A/S",
+    "product_description": "Ultrasound System 1300, bkSpecto w/battery; Model No. 1300-21 or 1300-S1; System, Imaging, Pulsed Doppler, Ultrasonic",
+    "reason_for_recall": "GE HealthCare has become aware that the Instructions for Use within the user guide and service manual do not adequately state the required battery replacement intervals, end-of-life handling procedures, or general battery safety precautions.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251009",
+    "cfres_id": "216680"
+   },
+   {
+    "recall_number": "Z-0437-2026",
+    "event_number": "97830",
+    "recalling_firm": "B-K Medical A/S",
+    "product_description": "UUltrasound System 2300, bkActiv w/battery; Model No. 2300-11; System, Imaging, Pulsed Doppler, Ultrasonic",
+    "reason_for_recall": "GE HealthCare has become aware that the Instructions for Use within the user guide and service manual do not adequately state the required battery replacement intervals, end-of-life handling procedures, or general battery safety precautions.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251009",
+    "cfres_id": "216681"
+   },
+   {
+    "recall_number": "Z-0438-2026",
+    "event_number": "97830",
+    "recalling_firm": "B-K Medical A/S",
+    "product_description": "bk3000 Ultrasound System w/battery; Model No. 2300-66; System, Imaging, Pulsed Doppler, Ultrasonic",
+    "reason_for_recall": "GE HealthCare has become aware that the Instructions for Use within the user guide and service manual do not adequately state the required battery replacement intervals, end-of-life handling procedures, or general battery safety precautions.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251009",
+    "cfres_id": "216682"
+   },
+   {
+    "recall_number": "Z-0439-2026",
+    "event_number": "97830",
+    "recalling_firm": "B-K Medical A/S",
+    "product_description": "bk3500 Ultrasound System w/battery; Model No. 2300-41; System, Imaging, Pulsed Doppler, Ultrasonic",
+    "reason_for_recall": "GE HealthCare has become aware that the Instructions for Use within the user guide and service manual do not adequately state the required battery replacement intervals, end-of-life handling procedures, or general battery safety precautions.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251009",
+    "cfres_id": "216683"
+   },
+   {
+    "recall_number": "Z-0440-2026",
+    "event_number": "97830",
+    "recalling_firm": "B-K Medical A/S",
+    "product_description": "bk5000 Ultrasound System w/battery; Model No. 2300-61; System, Imaging, Pulsed Doppler, Ultrasonic",
+    "reason_for_recall": "GE HealthCare has become aware that the Instructions for Use within the user guide and service manual do not adequately state the required battery replacement intervals, end-of-life handling procedures, or general battery safety precautions.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251009",
+    "cfres_id": "216684"
+   },
+   {
+    "recall_number": "Z-0155-2026",
+    "event_number": "97726",
+    "recalling_firm": "GE Medical Systems, LLC",
+    "product_description": "LOGIQ P10 series with software version R4.5.7 Model Number\n 5877534",
+    "reason_for_recall": "The Ultrasound-Guided Attenuation Parameter (UGAP) measurement data may display inaccurate values representing liver steatosis. This could potentially lead to inappropriate clinical decisions impacting overall care.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250918",
+    "cfres_id": "216412"
+   },
+   {
+    "recall_number": "Z-0156-2026",
+    "event_number": "97726",
+    "recalling_firm": "GE Medical Systems, LLC",
+    "product_description": "LOGIQ P10 R4.5 HD ultrasound system with system software version R4.5.7., Model Number 5877535",
+    "reason_for_recall": "The Ultrasound-Guided Attenuation Parameter (UGAP) measurement data may display inaccurate values representing liver steatosis. This could potentially lead to inappropriate clinical decisions impacting overall care.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250918",
+    "cfres_id": "216413"
+   },
+   {
+    "recall_number": "Z-0157-2026",
+    "event_number": "97726",
+    "recalling_firm": "GE Medical Systems, LLC",
+    "product_description": "LOGIQ P9 R4.5 ultrasound system with system software version R4.5.7., Model Number 5877533",
+    "reason_for_recall": "The Ultrasound-Guided Attenuation Parameter (UGAP) measurement data may display inaccurate values representing liver steatosis. This could potentially lead to inappropriate clinical decisions impacting overall care.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250918",
+    "cfres_id": "216414"
+   },
+   {
+    "recall_number": "Z-2346-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "3D6-2 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "214858"
+   },
+   {
+    "recall_number": "Z-2347-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "3D9-3v Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215027"
+   },
+   {
+    "recall_number": "Z-2349-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "BP10-5ec Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215058"
+   },
+   {
+    "recall_number": "Z-2350-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "C10-3v Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215059"
+   },
+   {
+    "recall_number": "Z-2351-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "C10-4ec Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215060"
+   },
+   {
+    "recall_number": "Z-2352-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "c5-1 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215116"
+   },
+   {
+    "recall_number": "Z-2353-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "C5-2 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215117"
+   },
+   {
+    "recall_number": "Z-2354-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "C5-2 Lumify Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215149"
+   },
+   {
+    "recall_number": "Z-2355-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "C6-2 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215150"
+   },
+   {
+    "recall_number": "Z-2356-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "C6-3 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215151"
+   },
+   {
+    "recall_number": "Z-2357-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "C8-4v Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215152"
+   },
+   {
+    "recall_number": "Z-2358-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "C8-4v Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215153"
+   },
+   {
+    "recall_number": "Z-2359-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "C8-5 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215156"
+   },
+   {
+    "recall_number": "Z-2360-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "C9-2 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215157"
+   },
+   {
+    "recall_number": "Z-2361-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "C9-3io Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215164"
+   },
+   {
+    "recall_number": "Z-2362-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "C9-3v Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215165"
+   },
+   {
+    "recall_number": "Z-2363-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "C9-4 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215166"
+   },
+   {
+    "recall_number": "Z-2364-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "C9-4v Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215168"
+   },
+   {
+    "recall_number": "Z-2365-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "C9-5ec Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215169"
+   },
+   {
+    "recall_number": "Z-2366-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "D2cwc Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215170"
+   },
+   {
+    "recall_number": "Z-2367-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "D2TCD Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215171"
+   },
+   {
+    "recall_number": "Z-2368-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "D5cwc Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215172"
+   },
+   {
+    "recall_number": "Z-2369-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "eL18-4 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215173"
+   },
+   {
+    "recall_number": "Z-2370-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "L10-4LAP Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215174"
+   },
+   {
+    "recall_number": "Z-2371-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "L11-3 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215175"
+   },
+   {
+    "recall_number": "Z-2372-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "L12-3 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215176"
+   },
+   {
+    "recall_number": "Z-2373-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "L12-4 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215177"
+   },
+   {
+    "recall_number": "Z-2374-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "L12-4 Lumify Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215178"
+   },
+   {
+    "recall_number": "Z-2375-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "L12-5 38mm Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215179"
+   },
+   {
+    "recall_number": "Z-2376-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "L12-5 50 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215180"
+   },
+   {
+    "recall_number": "Z-2377-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "L15-7io Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215181"
+   },
+   {
+    "recall_number": "Z-2378-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "L15-7IO TRANSDUCER Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215182"
+   },
+   {
+    "recall_number": "Z-2379-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "L17-5 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215183"
+   },
+   {
+    "recall_number": "Z-2380-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "L18-5 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215184"
+   },
+   {
+    "recall_number": "Z-2381-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "L8-4 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215185"
+   },
+   {
+    "recall_number": "Z-2382-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "L9-3 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215187"
+   },
+   {
+    "recall_number": "Z-2383-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "mC12-3 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215189"
+   },
+   {
+    "recall_number": "Z-2384-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "mC7-2 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215190"
+   },
+   {
+    "recall_number": "Z-2385-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "Mini Multi TEE Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215191"
+   },
+   {
+    "recall_number": "Z-2386-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "mL26-8 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215192"
+   },
+   {
+    "recall_number": "Z-2387-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "OMNI II TEE Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215193"
+   },
+   {
+    "recall_number": "Z-2388-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "OMNI III TEE Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215195"
+   },
+   {
+    "recall_number": "Z-2389-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "S12-4 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215196"
+   },
+   {
+    "recall_number": "Z-2390-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "S3-1 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215197"
+   },
+   {
+    "recall_number": "Z-2391-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "S4-1 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215198"
+   },
+   {
+    "recall_number": "Z-2392-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "S4-1 Lumify Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215199"
+   },
+   {
+    "recall_number": "Z-2393-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "S4-2 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215200"
+   },
+   {
+    "recall_number": "Z-2394-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "S5-2 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215201"
+   },
+   {
+    "recall_number": "Z-2395-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "S7-3t Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215202"
+   },
+   {
+    "recall_number": "Z-2396-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "S7-2t Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215210"
+   },
+   {
+    "recall_number": "Z-2397-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "S8-3 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215213"
+   },
+   {
+    "recall_number": "Z-2398-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "S8-3t Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215214"
+   },
+   {
+    "recall_number": "Z-2399-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "S9-2 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215215"
+   },
+   {
+    "recall_number": "Z-2401-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "Transducer C10-3v Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215217"
+   },
+   {
+    "recall_number": "Z-2402-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "TRANSDUCER L12-5 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215241"
+   },
+   {
+    "recall_number": "Z-2403-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "V6-2 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215242"
+   },
+   {
+    "recall_number": "Z-2404-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "V9-2 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215243"
+   },
+   {
+    "recall_number": "Z-2405-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "VL13-5 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215247"
+   },
+   {
+    "recall_number": "Z-2406-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "X11-4t Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215248"
+   },
+   {
+    "recall_number": "Z-2407-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "X3-1 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215249"
+   },
+   {
+    "recall_number": "Z-2408-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "X5-1 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215250"
+   },
+   {
+    "recall_number": "Z-2409-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "X5-1c Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215251"
+   },
+   {
+    "recall_number": "Z-2410-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "X6-1 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215252"
+   },
+   {
+    "recall_number": "Z-2411-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "X7-2 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215254"
+   },
+   {
+    "recall_number": "Z-2412-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "X7-2t Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215256"
+   },
+   {
+    "recall_number": "Z-2413-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "X8-2t Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215259"
+   },
+   {
+    "recall_number": "Z-2414-2025",
+    "event_number": "97217",
+    "recalling_firm": "Philips Ultrasound, Inc",
+    "product_description": "XL14-3 Transducer Probe",
+    "reason_for_recall": "To provide clarification and labelling to define the useful life of ultrasound transducers in the field.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250703",
+    "cfres_id": "215260"
+   },
+   {
+    "recall_number": "Z-2029-2025",
+    "event_number": "96992",
+    "recalling_firm": "GE Medical Systems China Co., Ltd.",
+    "product_description": "GE Healthcare LOGIQ F R3 Ultrasound System, Model/Catalog Number 5943263, diagnostic ultrasound system",
+    "reason_for_recall": "GE HealthCare has become aware that the Estimated Fetal Weight (EFW) measurement data feature on the Versana Premier R3 and LOGIQ F R3 series ultrasound systems can display previous obstetric patient data in the  Whizz report. This could potentially lead to an incorrect clinical decision due to inaccuracy in the fetal size and growth calculation.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250516",
+    "cfres_id": "214160"
+   },
+   {
+    "recall_number": "Z-2030-2025",
+    "event_number": "96992",
+    "recalling_firm": "GE Medical Systems China Co., Ltd.",
+    "product_description": "GE Healthcare Versana Ultrasound Systems, sold under the following names and Model/Catalog Numbers:  \n1) Versana Premier R3 VS, Model/Catalog Number 5938558; \n2) Versana Premier R3 VA, Model/Catalog Number 5938559; \n3) Versana Premier Lotus 4PP, Model/Catalog Number 5938560; \n4) Versana Premier Lotus 5PP, Model/Catalog Number 5938561; \n5) Versana Premier R3 VA Vet, Model/Catalog Number 5946387; \n6) Versana Premier R3 VS Vet, Model/Catalog Number 5946481.\n7) Versana Premier R3 Expert, Model/Catalog Number 5946950; \n8) Versana Premier R3, Model/Catalog Number 5946951; \n9) Versana Premier R3 Pro, Model/Catalog Number 5946952; \n10) Versana Premier R3 Elite, Model/Catalog Number 5946953; \n11) Versana Premier R3 Plus, Model/Catalog Number 5946954; \n12) Versana Premier R3 Ultra, Model/Catalog Number 5946955; \n13) Versana Premier R3 Max, Model/Catalog Number 5946956; \n14) Versana Premier R3 Super, Model/Catalog Number 5946957; \n15) Versana Premier R3 VS India, Model/Catalog Number 5948398; \n16) Versana Premier R3 VA India, Model/Catalog Number 5948399; \ndiagnostic ultrasound system",
+    "reason_for_recall": "GE HealthCare has become aware that the Estimated Fetal Weight (EFW) measurement data feature on the Versana Premier R3 and LOGIQ F R3 series ultrasound systems can display previous obstetric patient data in the  Whizz report. This could potentially lead to an incorrect clinical decision due to inaccuracy in the fetal size and growth calculation.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250516",
+    "cfres_id": "214162"
+   },
+   {
+    "recall_number": "Z-1555-2025",
+    "event_number": "96538",
+    "recalling_firm": "GE Medical Systems, LLC",
+    "product_description": "Venue Go Models: R2 (Model Number H45181VG), R3 (Model Number H45193VG), R4 (Model Number H45114VG), R5 (Model Numbers H45135VG, H45135VGW), R3 Surgery for China (Model Number H45113VGSU), R3 PeriOP for China (Model Number H45113VGPO), R3 Expert for China (Model Number H45113VGEX ), R3 Pro for China (Model Number H45113VGPR), R3 Performance for China, R3 Intervention for China, R3 Surgery for China (Model Number H45113VGSU) diagnostic ultrasound systems",
+    "reason_for_recall": "The battery for certain ultrasound systems can potentially develop an internal failure which could result in smoke or fire.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250306",
+    "cfres_id": "213122"
+   },
+   {
+    "recall_number": "Z-1556-2025",
+    "event_number": "96538",
+    "recalling_firm": "GE Medical Systems, LLC",
+    "product_description": "Venue Fit Models: R3 (Model Number H45303VFSC, H45303VFSW), R4 (Model Number H45314VFS, H45314VFSW), Venue Fit R5 system (Model Numbers H45335VFS, H45335VFSW), R3 Surgery for China, R3 PeriOP for China, R3 Expert for China, R3 Pro for China, R3 Performance for China, R3 Intervention for China diagnostic ultrasound systems",
+    "reason_for_recall": "The battery for certain ultrasound systems can potentially develop an internal failure which could result in smoke or fire.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250306",
+    "cfres_id": "213123"
+   },
+   {
+    "recall_number": "Z-0136-2025",
+    "event_number": "95431",
+    "recalling_firm": "B-K Medical A/S",
+    "product_description": "bk3000, model #2300-11; bk3500, model #2300-41; bk5000, model #2300-61; and bkActive 2300, model #2300-66, ultrasound system with battery option.",
+    "reason_for_recall": "The internal power connections at the power inlet of the ultrasound devices can come loose resulting in the potential for excessive heat which could lead to a thermal event or the device becoming inoperable.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240904",
+    "cfres_id": "210240"
+   },
+   {
+    "recall_number": "Z-3215-2024",
+    "event_number": "95254",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc.",
+    "product_description": "ACUSON Juniper 1.0, 1.5, 2.0, 2.5 Diagnostic Ultrasound Systems, REF: 11335791, with software.\nACUSON Juniper Select 2.0, 2.5 Diagnostic Ultrasound Systems, REF: 11653093, with software.",
+    "reason_for_recall": "If ultrasound systems with software, are changed from factory default to : 1) Milliliters per second (ml/sec, mL/sec) or 2) Milliliters per minute (ml/min, mL/min); then systems will perform incorrect unit conversion of liters to milliliters using multiplier 100 instead of 1000, resulting values 10x smaller than actual, which could contribute misdiagnosis or negatively influence patient management",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240815",
+    "cfres_id": "209828"
+   },
+   {
+    "recall_number": "Z-3216-2024",
+    "event_number": "95254",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc.",
+    "product_description": "ACUSON Redwood 1.0 and 2.0 Diagnostic Ultrasound Systems, REF: 11503314, with software",
+    "reason_for_recall": "If ultrasound systems with software, are changed from factory default to : 1) Milliliters per second (ml/sec, mL/sec) or 2) Milliliters per minute (ml/min, mL/min); then systems will perform incorrect unit conversion of liters to milliliters using multiplier 100 instead of 1000, resulting values 10x smaller than actual, which could contribute misdiagnosis or negatively influence patient management",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240815",
+    "cfres_id": "209871"
+   },
+   {
+    "recall_number": "Z-3217-2024",
+    "event_number": "95254",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc.",
+    "product_description": "ACUSON Maple 1.0 Diagnostic Ultrasound System, REF: 11711750, with software.\nACUSON Maple Select 1.0 Diagnostic Ultrasound System, REF: 11711779, with software",
+    "reason_for_recall": "If ultrasound systems with software, are changed from factory default to : 1) Milliliters per second (ml/sec, mL/sec) or 2) Milliliters per minute (ml/min, mL/min); then systems will perform incorrect unit conversion of liters to milliliters using multiplier 100 instead of 1000, resulting values 10x smaller than actual, which could contribute misdiagnosis or negatively influence patient management",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240815",
+    "cfres_id": "209873"
+   },
+   {
+    "recall_number": "Z-2325-2024",
+    "event_number": "94709",
+    "recalling_firm": "Echonous Inc",
+    "product_description": "Kosmos on iOS impacting iOS, Model Numbers: P007639, P007944, software is part of a general-purpose diagnostic ultrasound system.",
+    "reason_for_recall": "Ultrasound system has a bug in affected iOS software, which after DICOM export, can cause inaccuracy in postprocessed measurements done in 3rd party software, such as PACS or other post-processing software, which may lead to inaccurate diagnoses or treatment.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240509",
+    "cfres_id": "208061"
+   },
+   {
+    "recall_number": "Z-2216-2024",
+    "event_number": "94673",
+    "recalling_firm": "NovaSignal Corp.",
+    "product_description": "NovaGuide 2 Intelligent Ultrasound, REFs: NSC-NVGSYS2 & NSC-NVGSYS2-CA",
+    "reason_for_recall": "Due to inadvertently disconnecting grounding cable of ultrasound system could result in electrical shock, electrical interference and/or equipment malfunction.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240506",
+    "cfres_id": "207961"
+   },
+   {
+    "recall_number": "Z-2217-2024",
+    "event_number": "94673",
+    "recalling_firm": "NovaSignal Corp.",
+    "product_description": "NovaGuide 2 Traditional Ultrasound , REF: NSC-TCDNG2",
+    "reason_for_recall": "Due to inadvertently disconnecting grounding cable of ultrasound system could result in electrical shock, electrical interference and/or equipment malfunction.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240506",
+    "cfres_id": "207962"
+   },
+   {
+    "recall_number": "Z-2316-2024",
+    "event_number": "94772",
+    "recalling_firm": "GE Vingmed Ultrasound As",
+    "product_description": "GE Vivid Ultrasound products, Model Numbers:  \na) Vivid E90, H45581LB; \nb) Vivid E95, H45581DA",
+    "reason_for_recall": "GE HealthCare has become aware of an issue with certain Vivid ultrasound systems where, due to a slow DICOM Worklist response time, incorrect patient name and demographics can be displayed on the ultrasound scanner screen rather than the intended patient selected by the user.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240502",
+    "cfres_id": "208235"
+   },
+   {
+    "recall_number": "Z-2317-2024",
+    "event_number": "94772",
+    "recalling_firm": "GE Vingmed Ultrasound As",
+    "product_description": "GE Vivid Ultrasound products, Model Numbers:  \na) Vivid S70, H45041SW",
+    "reason_for_recall": "GE HealthCare has become aware of an issue with certain Vivid ultrasound systems where, due to a slow DICOM Worklist response time, incorrect patient name and demographics can be displayed on the ultrasound scanner screen rather than the intended patient selected by the user.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240502",
+    "cfres_id": "208236"
+   },
+   {
+    "recall_number": "Z-1884-2024",
+    "event_number": "94441",
+    "recalling_firm": "FUJIFILM Healthcare Americas Corporation",
+    "product_description": "Noblus AC Adapter used with the Noblus Ultrasound Imaging System\nModel : AHM250PS24",
+    "reason_for_recall": "AC adapters of Noblus can heat up, and cause smoke in the worst case, when an excessive mechanical stress is applied to the socket for power cable (frequent insertion/removal of the power cable).",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240411",
+    "cfres_id": "207222"
+   },
+   {
+    "recall_number": "Z-1757-2024",
+    "event_number": "94328",
+    "recalling_firm": "Philips Ultrasound, Inc.",
+    "product_description": "5000 Compact Series Ultrasound Systems, Product/REF: 5500 CV/795141, 5500 P/795143, 5500 W/795144, 5500 G/795145, and Product/REF: 5300 W/795146, 5300 P/795147, 5300 G/795148, used with Deluxe and Premium Carts that come with multiport adapters.",
+    "reason_for_recall": "Ultrasound system with: 1) transesophageal echocardiography transducer (TEE) connected/not selected 2) 1, 2 non-TEE connected 3) Imaging with non-TEE 4) Selected/not selected imaging transducer removed 5) Transducer connected 6) Non-TEE imaging continues, Then though TEE is unselected, it may have power, no temperature monitoring/control, and may result in temperature above limit and patient burns",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240323",
+    "cfres_id": "206941"
+   },
+   {
+    "recall_number": "Z-1599-2024",
+    "event_number": "94211",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc.",
+    "product_description": "ACUSON Juniper Diagnostic Ultrasound System, REF: 11335791, and ACUSON Juniper Select Diagnostic Ultrasound System, REF: 11653093, running software version VA10x with DICOM SR Cardiac option, from VB10A to VB10G, VB11A, VB11B, VB30B and VB30C",
+    "reason_for_recall": "On ultrasound systems, when Cardiac DICOM SR feature is configured to display either minimum or maximum measured value, and multiple cardiac region measurements are made, and results are exported into the SR feature, then The SR viewer will display the LAST measured value, not min or max, which could contribute to patient condition misdiagnosis or negatively influence patient management decisions.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240223",
+    "cfres_id": "206576"
+   },
+   {
+    "recall_number": "Z-1600-2024",
+    "event_number": "94211",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc.",
+    "product_description": "ACUSON Redwood 1.0 Diagnostic Ultrasound System, REF: 11503314, running software version VA10A to VA10G",
+    "reason_for_recall": "On ultrasound systems, when Cardiac DICOM SR feature is configured to display either minimum or maximum measured value, and multiple cardiac region measurements are made, and results are exported into the SR feature, then The SR viewer will display the LAST measured value, not min or max, which could contribute to patient condition misdiagnosis or negatively influence patient management decisions.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240223",
+    "cfres_id": "206578"
+   },
+   {
+    "recall_number": "Z-1601-2024",
+    "event_number": "94211",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc.",
+    "product_description": "ACUSON Maple Diagnostic Ultrasound System, REF: 11711750, ACUSON Maple Select, REF: 11711779, running software version VA10A",
+    "reason_for_recall": "On ultrasound systems, when Cardiac DICOM SR feature is configured to display either minimum or maximum measured value, and multiple cardiac region measurements are made, and results are exported into the SR feature, then The SR viewer will display the LAST measured value, not min or max, which could contribute to patient condition misdiagnosis or negatively influence patient management decisions.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240223",
+    "cfres_id": "206580"
+   },
+   {
+    "recall_number": "Z-0865-2024",
+    "event_number": "93727",
+    "recalling_firm": "GE HEALTHCARE AUSTRIA GMBH & CO",
+    "product_description": "GE Voluson IC9-RS intracavitary probes, Model Number J48691PJ,  Diagnostic ultrasound imaging and fluid flow analysis",
+    "reason_for_recall": "GE HealthCare has become aware of an issue with certain IC9-RS ultrasound probes (see Affected Products List) that can result in a double image artifact creating a ghost image with realistic features. An unrecognized artifact may lead to misdiagnosis.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20231222",
+    "cfres_id": "205320"
+   },
+   {
+    "recall_number": "Z-0813-2024",
+    "event_number": "93598",
+    "recalling_firm": "B-K Medical A/S",
+    "product_description": "bkActiv Ultrasound System 2300, Model numbers 2300-56 and 2300-66.",
+    "reason_for_recall": "An issue on the Dual Live Compare feature on the bkActiv system could result in a measurement error.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20231130",
+    "cfres_id": "204941"
+   },
+   {
+    "recall_number": "Z-0283-2024",
+    "event_number": "93218",
+    "recalling_firm": "Philips Ultrasound, Inc.",
+    "product_description": "Philips EPIQ Diagnostic Ultrasound System Models:  EPIQ 7G(model # 795200), EPIQ 7C (Model # 795201), EPIQ 7W (Model # 795202), EPIQ 5G (model # 795204), EPIQ 5W (model # 795206), EPIQ CVx (Model # 795231), EPIQ Elite (model # 795234)",
+    "reason_for_recall": "Their is the potential that diagnostic ultrasound systems operating with software version 10.0 may present a delayed image instead of a real time image.",
+    "recall_status": "Completed",
+    "date_initiated": "20231009",
+    "cfres_id": "203691"
+   }
+  ]
+ },
+ "notes": []
+}
