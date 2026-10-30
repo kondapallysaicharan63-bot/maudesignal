@@ -38,6 +38,7 @@ from maudesignal.monitor.deterioration import (
     CLASSIFICATION_PRECEDENCE,
     SEVERE_EVENT_TYPES,
     SEVERITY_ESCALATION_PP,
+    SEVERITY_MIN_REPORTS,
     SPIKE_MIN_REPORTS,
     SPIKE_MULTIPLIER,
     UNKNOWN_EVENT_TYPE,
@@ -146,6 +147,41 @@ def _round(value: Fraction | None, digits: int = 4) -> float | None:
     return None if value is None else round(float(value), digits)
 
 
+def skipped_for_few_reports(cur: int, cur_severe: int, base: int, base_severe: int) -> bool:
+    """True when a rule's trigger is there but this week has too few reports.
+
+    Either the severity rule's share jump (needs ``SEVERITY_MIN_REPORTS``) or the spike rule's
+    multiple of the weekly mean (needs ``SPIKE_MIN_REPORTS``) would fire but for the minimum.
+    Such a code is *not* flagged by that rule; this lets a page say how many were held back.
+    """
+    if not cur or cur >= max(SEVERITY_MIN_REPORTS, SPIKE_MIN_REPORTS):
+        return False
+    if cur < SPIKE_MIN_REPORTS and cur * 4 >= SPIKE_MULTIPLIER * base:
+        return True
+    if cur < SEVERITY_MIN_REPORTS and base:
+        delta = (Fraction(cur_severe, cur) - Fraction(base_severe, base)) * 100
+        return delta >= SEVERITY_ESCALATION_PP
+    return False
+
+
+def count_skipped(rows: list[dict[str, Any]]) -> int:
+    """How many stored sweep rows were held back by a minimum-report floor and not flagged.
+
+    A row that is flagged anyway (for example a new kind of problem from one report) is not
+    counted: the floor only held back codes that came out ``stable``.
+    """
+    return sum(
+        r.get("classification", "stable") == "stable"
+        and skipped_for_few_reports(
+            r.get("current_count", 0),
+            r.get("current_severe_count", 0),
+            r.get("baseline_count", 0),
+            r.get("baseline_severe_count", 0),
+        )
+        for r in rows
+    )
+
+
 def classify_counts(product_code: str, counts: WindowCounts, window: DetectionWindow) -> LiveCheck:
     """Apply the detector's four rules to counts (mirrors ``_classify_product_code``)."""
     cur, base, prior = counts.current_total, counts.baseline_total, counts.prior_total
@@ -162,7 +198,7 @@ def classify_counts(product_code: str, counts: WindowCounts, window: DetectionWi
     delta: Fraction | None = None
     if cur_share is not None and base_share is not None:
         delta = (cur_share - base_share) * 100
-        if delta >= SEVERITY_ESCALATION_PP:
+        if delta >= SEVERITY_ESCALATION_PP and cur >= SEVERITY_MIN_REPORTS:
             triggers.append("severity_escalation")
     mean = Fraction(base, BASELINE_WEEKS)
     if cur >= SPIKE_MIN_REPORTS and cur >= SPIKE_MULTIPLIER * mean:

@@ -12,6 +12,8 @@ import pytest
 
 from maudesignal.ingestion.openfda_client import OpenFDAClient
 from maudesignal.monitor.deterioration import (
+    SEVERITY_MIN_REPORTS,
+    SPIKE_MIN_REPORTS,
     EventFact,
     build_window,
     detect_deterioration,
@@ -21,7 +23,9 @@ from maudesignal.monitor.live_check import (
     WindowCounts,
     check_product_code,
     classify_counts,
+    count_skipped,
     normalize_code,
+    skipped_for_few_reports,
 )
 
 TYPES = ("Malfunction", "Injury", "Death", "Other", "")
@@ -192,3 +196,82 @@ def test_a_refused_request_says_why() -> None:
     with pytest.raises(OpenFDAForbiddenError, match="403.*API_KEY_MISSING"):
         check_product_code(client, "LLZ", today=date(2026, 10, 29))
     assert "MaudeSignal" in OpenFDAClient()._client.headers["User-Agent"]
+
+
+def _severity_facts(n_cur: int, n_cur_severe: int, as_of: date) -> list[EventFact]:
+    """A code with 20 quiet baseline reports and ``n_cur`` this week (some Injury)."""
+    w = build_window(as_of)
+    facts = [
+        EventFact(f"b{i}", "ABC", w.baseline_start + timedelta(days=i), "malfunction")
+        for i in range(20)
+    ]
+    for i in range(n_cur):
+        facts.append(
+            EventFact(
+                f"c{i}",
+                "ABC",
+                w.current_start + timedelta(days=i % 7),
+                "injury" if i < n_cur_severe else "malfunction",
+            )
+        )
+    return facts
+
+
+def test_severity_minimum_matches_spike_minimum() -> None:
+    assert SEVERITY_MIN_REPORTS == SPIKE_MIN_REPORTS == 3
+
+
+@pytest.mark.parametrize(
+    ("n_cur", "n_severe", "flagged"),
+    [(1, 1, False), (2, 1, False), (2, 2, False), (3, 1, True), (3, 3, True), (3, 0, False)],
+)
+def test_severity_needs_the_minimum_count(n_cur: int, n_severe: int, flagged: bool) -> None:
+    as_of = date(2026, 8, 31)
+    facts = _severity_facts(n_cur, n_severe, as_of)
+    stored = detect_deterioration(facts, as_of).signals[0]
+    live = classify_counts("ABC", _counts(facts, as_of), build_window(as_of))
+    assert ("severity_escalation" in stored.triggers) is flagged
+    assert live.triggers == stored.triggers
+    assert live.classification == stored.classification
+
+
+def test_skipped_codes_are_counted_not_flagged() -> None:
+    assert skipped_for_few_reports(2, 1, 20, 0)  # +50 pp but only 2 reports
+    assert not skipped_for_few_reports(3, 1, 20, 0)  # flagged instead
+    assert not skipped_for_few_reports(0, 0, 20, 0)
+    rows = [
+        {
+            "current_count": 1,
+            "current_severe_count": 1,
+            "baseline_count": 10,
+            "baseline_severe_count": 0,
+        },
+        {
+            "current_count": 5,
+            "current_severe_count": 0,
+            "baseline_count": 10,
+            "baseline_severe_count": 0,
+        },
+    ]
+    assert count_skipped(rows) == 1
+
+
+def test_stored_sweep_skipped_count_matches_both_floors() -> None:
+    import json
+    from pathlib import Path
+
+    data = json.loads(Path("demo/sweep/ai-device-sweep.json").read_text(encoding="utf-8"))
+    held = sorted(
+        r["product_code"]
+        for r in data["rows"]
+        if r["classification"] == "stable"
+        and skipped_for_few_reports(
+            r["current_count"],
+            r["current_severe_count"],
+            r["baseline_count"],
+            r["baseline_severe_count"],
+        )
+    )
+    assert held == sorted(["MUJ", "KPS", "MNR", "QDA", "KGI", "IZL", "MLO"])
+    assert count_skipped(data["rows"]) == 7
+    assert len(data["rows"]) == 181

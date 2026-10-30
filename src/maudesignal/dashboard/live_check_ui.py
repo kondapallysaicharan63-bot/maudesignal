@@ -27,10 +27,12 @@ from maudesignal.common.exceptions import (
 )
 from maudesignal.config import openfda_api_key_from_env
 from maudesignal.ingestion.openfda_client import OpenFDAClient
+from maudesignal.monitor.deterioration import SEVERITY_MIN_REPORTS
 from maudesignal.monitor.live_check import (
     LiveCheck,
     LiveCheckError,
     check_product_code,
+    count_skipped,
     normalize_code,
 )
 
@@ -229,6 +231,12 @@ def render_sweep() -> None:
             + (" (keyless run, capped)" if m.get("capped") else "")
             + ". Same rules, counts only. A triage signal for a person to review, not a "
             "finding about any device or company."
+        )
+        st.caption(
+            f'"Reports suddenly increased" and "more serious than usual" flags need at '
+            f"least {SEVERITY_MIN_REPORTS} reports this week (a new kind of problem can be "
+            f"flagged from 1). {count_skipped(data['rows'])} of {len(data['rows'])} codes "
+            "held back for having too few reports."
         )
         if flagged:
             st.dataframe(

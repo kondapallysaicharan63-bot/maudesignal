@@ -27,6 +27,7 @@ from maudesignal.monitor.deterioration import (
     CLASSIFICATION_PRECEDENCE,
     CURRENT_WINDOW_DAYS,
     SEVERITY_ESCALATION_PP,
+    SEVERITY_MIN_REPORTS,
     SPIKE_MIN_REPORTS,
     SPIKE_MULTIPLIER,
     DetectionResult,
@@ -166,7 +167,7 @@ def rule_evidence(signal: ProductCodeSignal) -> str:
             f"({signal.current_severe_count}/{signal.current_count}) vs baseline "
             f"{_pct(signal.baseline_severe_share)} "
             f"({signal.baseline_severe_count}/{signal.baseline_count}), {delta:+.1f} pp; "
-            f"the rule needs >= +{SEVERITY_ESCALATION_PP} pp"
+            f"the rule needs >= +{SEVERITY_ESCALATION_PP} pp and >= {SEVERITY_MIN_REPORTS} reports"
         )
     return (
         f"reports suddenly increased: {signal.current_count} reports this window vs a "
@@ -439,7 +440,7 @@ def render_markdown(digest: Digest) -> str:
         f"- Rules: new kind of problem = first reports / never-seen event type; "
         f"reports suddenly increased = >= {SPIKE_MULTIPLIER}x baseline weekly mean and "
         f">= {SPIKE_MIN_REPORTS} reports; more serious than usual = Injury/Death share up "
-        f">= {SEVERITY_ESCALATION_PP} pp",
+        f">= {SEVERITY_ESCALATION_PP} pp and >= {SEVERITY_MIN_REPORTS} reports",
         f"- Ranking (most urgent first): {'; then '.join(RANKING_ORDER)}",
     ]
     if digest.fetch_summary:
@@ -540,6 +541,7 @@ def digest_to_dict(digest: Digest) -> dict[str, Any]:
             "spike_multiplier": SPIKE_MULTIPLIER,
             "spike_min_reports": SPIKE_MIN_REPORTS,
             "severity_escalation_pp": SEVERITY_ESCALATION_PP,
+            "severity_min_reports": SEVERITY_MIN_REPORTS,
             "severe_event_types": ["death", "injury"],
             "ranking_order": list(RANKING_ORDER),
         },

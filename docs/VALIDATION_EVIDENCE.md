@@ -44,12 +44,12 @@ records and papers, each tied to the stored FDA record.
 
 | Check | Result | Source |
 |---|---|---|
-| Unit tests | 706 pass; 77% line + branch coverage (run 2026-10-29) | `pytest tests/unit --cov=src/maudesignal --cov-branch` |
+| Unit tests | 1147 pass; 78% line + branch coverage (run 2026-10-30) | `pytest tests/unit --cov=src/maudesignal --cov-branch` |
 | CI | ruff, black, `mypy --strict`, tests on Python 3.11 and 3.12 | `.github/workflows/ci.yml` |
 | Adversarial gate set | 112 cases (70 must be withheld, 42 must pass): 0 false passes, 0 false blocks | `tests/fixtures/gate/adversarial.jsonl`, `tests/unit/test_gate.py` |
 | Gate on real model output | fifth 2026-10-28 recording (run 40764365995), 28 answers (22 typed, 6 text-to-speech): 63/65 sentences passed first time (96.9%), 64/65 after repair; the one withheld sentence was true (a false block: a year read as a count, fixed with cases dt03–dt05); 0 unparsed, 0 token-cap stops. Earlier runs that day: 49/50 (fourth), 52/53 (third, 1 unparsed), 45/48 (second), and the first exposed unparsed replies counted as passed (fixed) | `docs/hackathon/HAND_CHECK.md` |
 | Hand-check of the recorded answers | 27 of 28 answers fully correct (typed 21 of 22, text-to-speech 6 of 6; Oct-29 voice run 40965201781, Charan's takes 1/4/6: 3 of 3 answers, 8 of 8 sentences correct and gate 8/8); of 65 sentences 64 correct, 1 incomplete (wrongly withheld), 0 wrong; checked against the demo database by Claude; independent check by Charan pending. Fourth run: 24 of 24; third: 21 of 24; second: 19 of 21; first: 6 of 21 | `docs/hackathon/HAND_CHECK.md` |
-| Independent review of the evidence PDF | Muse Wonder 1.0: 0 findings on the third, fourth and fifth recordings' PDFs (the second recording's 4 findings were fixed in code first) | `demo/dossier/*-review.json` |
+| Independent review of the evidence PDF | Muse Wonder 1.0: 0 findings on the third, fourth and fifth recordings' PDFs (the second recording's 4 findings were fixed in code first). A re-record of the narrative and Muse Wonder review for the current pack (SER-LLZ-20260831-001) is pending | `demo/dossier/*-review.json` |
 | 510(k) reading | 5 of 5 summaries read; agreement between the two reads 100% / 90% / 90% / 90% / 80% (fifth recording; 100/100/100/100/80 in the fourth); every disagreement, and every field that conflicts with openFDA, left for a person | `demo/vision/510k-*.json` |
 | Label camera | 7 of 7 photos read (run 40792998780): CareSens N, both HoMedics thermometers and Welch Allyn 802 LTR read correctly; thermometers matched to product code FLL; NOMAD Pro 2 left for a person to pick (device name only partly legible); Spot Vital Signs (label rotated 90°) returned nothing; the Welch module was misread ("AEROSOL, VASCULAR AND PULMONARY EQUIPMENT" for "MEDICAL-CARDIO VASCULAR AND PULMONARY EQUIPMENT"), every field marked only partly legible and no product code assigned. No lot or serial stored; checked against each photo by Claude | `demo/vision/label-*.json`, `demo/vision/labels/` |
 | Audit-chain tamper test | editing any stored entry breaks the chain at that entry; detected in the database and in exported trails | `tests/unit/test_copilot_agent.py::test_audit_chain_detects_tampering`, `tests/unit/test_voice.py::test_audit_export_roundtrip_and_tamper_detection` |
@@ -61,7 +61,7 @@ records and papers, each tied to the stored FDA record.
 
 | Workflow | State | Source |
 |---|---|---|
-| Weekly investigator | Built; tested with mocked model calls only. No real recording exists yet (`demo/investigations/` is absent); this page gives no real-run number for it until one is committed. | `src/maudesignal/copilot/investigator.py`, `tests/unit/test_weekly_investigator.py` |
+| Weekly investigator | Built; tested with mocked model calls, plus one real recording: `demo/investigations/20261030T010942Z-weekly-llz.json` (LLZ, window 2026-08-25 to 2026-08-31, Muse Spark 1.3). 7 of 7 sentences and 9 of 9 claims passed the gate on the first pass, no repair, $0.224989. One run only, not a statistical estimate. | `src/maudesignal/copilot/investigator.py`, `tests/unit/test_weekly_investigator.py` |
 | Recall-triggered sweep | Built; tested with mocked model calls only. No real recording yet. | `src/maudesignal/copilot/recall_sweep.py`, `tests/unit/test_recall_sweep.py` |
 | Search protocol (methodology appendix) | Built; tested. Derived from the stored tool-call log, so it contains no model-written text. | `src/maudesignal/copilot/protocol.py`, `tests/unit/test_search_protocol.py` |
 

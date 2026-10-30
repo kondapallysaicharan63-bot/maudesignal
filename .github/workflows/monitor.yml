@@ -45,17 +45,23 @@ jobs:
         run: |
           case "$MAX_NEW" in ''|*[!0-9]*) MAX_NEW=20 ;; esac
           if [ "$MAX_NEW" -gt 100 ]; then MAX_NEW=100; fi
+          # The frozen demo DB (137 reports, quoted by every recording) is never
+          # written. The monitor keeps its own database, seeded once from the demo DB.
+          mkdir -p data/monitor
+          if [ ! -f data/monitor/maudesignal_monitor.db ]; then
+            cp data/demo/maudesignal_demo.db data/monitor/maudesignal_monitor.db
+          fi
           maudesignal monitor \
-            --db data/demo/maudesignal_demo.db \
+            --db data/monitor/maudesignal_monitor.db \
             --max-new "$MAX_NEW" \
             --fetch \
-            --out-dir digests
+            --out-dir data/monitor/digests
 
       - name: Upload digest artifact
         uses: actions/upload-artifact@v4
         with:
           name: digest-${{ github.run_id }}
-          path: digests/
+          path: data/monitor/digests/
           retention-days: 30
 
       - name: Commit digest back to the branch
@@ -63,12 +69,16 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # The demo DB is committed too so the next run's capped fetch continues
-          # from where this one stopped instead of re-fetching the same days.
-          git add digests/ data/demo/maudesignal_demo.db
+          # The monitor's own DB is committed so the next run's capped fetch
+          # continues from where this one stopped. data/demo/ and the frozen
+          # digests/ (read by the dashboard and the web export) are never touched;
+          # new digests go to data/monitor/digests/. -f because data/* and *.db
+          # are gitignored.
+          git add -f data/monitor/digests data/monitor/maudesignal_monitor.db
           if git diff --cached --quiet; then
             echo "No digest changes to commit."
             exit 0
           fi
           git commit -m "chore(monitor): what-changed digest $(date -u +%Y-%m-%d)"
-          git push
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

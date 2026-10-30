@@ -53,7 +53,7 @@ recorded run or a test in this repository (sources in brackets).
 - 510(k) summaries: 5 of 5 read; two reads agree on 80–100% of fields (100% on 4 of
   5), the rest are flagged for a person [`demo/vision/`].
 - Report sources vs openFDA: 0 mismatches [`docs/hackathon/SOURCE_COUNTS.md`].
-- Tests: 706 unit tests, 77% coverage; Playwright on every page and theme; all 21
+- Tests: 1147 unit tests, 78% coverage; Playwright on every page and theme; all 21
   test types reported, with the external ones marked PENDING
   [`docs/hackathon/TESTING.md`].
 - Spend so far: about $8.35 of the $150 credit (estimates) [`docs/hackathon/BUDGET.md`].
