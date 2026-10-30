@@ -76,6 +76,7 @@ _LEADS = {
     "no_model": f"Live answers are not switched on here, so {_RECORDED}",
     "live_off": f"Live answers are switched off on this server, so {_RECORDED}",
     "model_error": f"The live model is not available just now, so {_RECORDED}",
+    "timeout": f"This request ran out of time, so {_RECORDED}",
     "no_transcript": (
         "Your recording could not be turned into text, so this is a recorded answer to a "
         "different spoken question"
@@ -90,6 +91,7 @@ _REASON_NOTES = {
     ),
     "model_error": "The live model call failed, so no live answer is shown.",
     "no_transcript": "The recording could not be transcribed, so no live model call was made.",
+    "timeout": "The time limit for this request was used up, so no live model call was made.",
 }
 _UNLINKED_REASON = "passed the claim gate but has no openFDA or record link, so it is not spoken"
 _FORBIDDEN_REASON = "contains a term this service does not use, so it is not spoken"

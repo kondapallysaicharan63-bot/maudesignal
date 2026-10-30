@@ -139,7 +139,7 @@ LEDGER_ID = "live-global"
 # Upload and body limits.
 MAX_JSON_BYTES = 64 * 1024
 MAX_AUDIO_BYTES = 4 * 1024 * 1024
-MAX_IMAGE_BYTES = 8 * 1024 * 1024
+MAX_IMAGE_BYTES = 4 * 1024 * 1024  # Vercel rejects bodies over 4.5 MB before the app runs
 MAX_META_BYTES = 16 * 1024
 MULTIPART_OVERHEAD = 64 * 1024
 MAX_AUDIO_SECONDS = 60.0
@@ -158,8 +158,12 @@ SAM_PROMPT_DEADLINE_S = 12.0
 SAM_CALL_TIMEOUT_S = 10.0
 OPENFDA_DEADLINE_S = 45.0
 OPENFDA_CALL_TIMEOUT_S = 6.0
+#: Hard wall-clock cap per openFDA call (an httpx timeout applies per phase, not per call).
+OPENFDA_CALL_WALL_S = 8.0
 ASK_BUDGET_S = 50.0
 VOICE_TRANSCRIBE_TIMEOUT_S = 15.0
+#: One deadline for the whole voice request (transcription plus answer), under Vercel's 60 s.
+VOICE_REQUEST_BUDGET_S = 52.0
 MIN_CALL_BUDGET_S = 3.0
 CALL_TIMEOUT_S = 25.0
 
@@ -172,8 +176,8 @@ _PNG = b"\x89PNG\r\n\x1a\n"
 _PRODUCT_CODE = r"^[A-Za-z]{3}$"
 
 PHI_MESSAGE = (
-    "Please remove patient details (email addresses, phone numbers, ID or record numbers, "
-    "dates of birth) and send again. Nothing was answered or kept."
+    "Please remove patient details (names, ages, email addresses, phone numbers, ID or "
+    "record numbers, dates of birth) and send again. Nothing was answered or kept."
 )
 NOT_MEDICAL_ADVICE = True
 
@@ -370,11 +374,22 @@ class _DeadlineSearcher:
         self._inner, self._deadline, self._clock = inner, deadline, clock
 
     def query(self, endpoint: str, search: str, *, limit: int = 25, sort: str | None = None) -> Any:
+        from concurrent.futures import ThreadPoolExecutor
+        from concurrent.futures import TimeoutError as FutureTimeout
+
         from maudesignal.common.exceptions import OpenFDAUnavailableError
 
         if self._clock() > self._deadline:
             raise OpenFDAUnavailableError("openFDA time budget used up")
-        return self._inner.query(endpoint, search, limit=limit, sort=sort)
+        # A slowly dripping response must not outlast the call limit: wait at most that long.
+        pool = ThreadPoolExecutor(max_workers=1)
+        future = pool.submit(self._inner.query, endpoint, search, limit=limit, sort=sort)
+        try:
+            return future.result(timeout=OPENFDA_CALL_WALL_S)
+        except FutureTimeout as exc:
+            raise OpenFDAUnavailableError("openFDA call took longer than its time limit") from exc
+        finally:
+            pool.shutdown(wait=False)
 
 
 @dataclass
@@ -438,9 +453,20 @@ def with_code(question: str, code: str | None) -> str:
     return question
 
 
+#: Extra patterns for the live routes, whose text goes to an external model: a patient title
+#: with a name ("Mrs. Jane Smith") and an age ("age 67", "67-year-old", "67 y/o").
+_PATIENT_NAME = re.compile(r"\b(?:Mr|Mrs|Ms|Miss|Mx)\.?\s+[A-Z][a-z]+")
+_PATIENT_AGE = re.compile(
+    r"\b(?:aged?\s*:?\s*\d{1,3}\b|\d{1,3}\s*-?\s*(?:year|yr)s?\s*-?\s*old\b|\d{1,3}\s*y/?o\b)",
+    re.IGNORECASE,
+)
+
+
 def phi_in(texts: list[str]) -> bool:
     """True when any text looks like patient details (a guard, not a guarantee)."""
-    return any(looks_like_phi(t) for t in texts)
+    return any(
+        looks_like_phi(t) or _PATIENT_NAME.search(t) or _PATIENT_AGE.search(t) for t in texts
+    )
 
 
 def history_texts(history: list[HistoryItem]) -> list[str]:
@@ -721,13 +747,24 @@ def _candidate(c: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _matches_block(matches: list[dict[str, Any]]) -> dict[str, Any]:
-    """Up to three candidates; a person must confirm one. None is ever picked here."""
+SEARCH_FAILED_NOTE = "openFDA could not be searched, so there is no match result for this photo."
+
+
+def _matches_block(matches: list[dict[str, Any]], *, search_failed: bool = False) -> dict[str, Any]:
+    """Up to three candidates; a person must confirm one. None is ever picked here.
+
+    ``search_failed`` is true when no openFDA search ran or every one failed: the empty list then
+    means "not searched", and the block says so instead of claiming nothing matched.
+    """
     cands = [_candidate(m) for m in matches[:MAX_CANDIDATES]]
-    return {
+    block: dict[str, Any] = {
         "status": "needs_person_to_confirm" if cands else "no_match_found",
         "candidates": _scrub(cands),
     }
+    if search_failed and not cands:
+        block["search_failed"] = True
+        block["note"] = SEARCH_FAILED_NOTE
+    return block
 
 
 def _stored_to_candidates(d: dict[str, Any]) -> list[dict[str, Any]]:
@@ -852,6 +889,12 @@ def mount_live(
         "label": state.daily_counter("live-label", cfg.label_per_day, today=today),
     }
     pepper_src = (env if env is not None else os.environ).get(PEPPER_ENV)
+    if not pepper_src and state.shared:
+        logger.warning(
+            "live_pepper_missing",
+            detail=f"{PEPPER_ENV} is not set: each instance hashes addresses differently, "
+            "so the shared per-address daily limits are multiplied by the number of instances",
+        )
     pepper = (pepper_src or secrets.token_hex(16)).encode("utf-8")
 
     def who(request: Request) -> str:
@@ -1044,14 +1087,20 @@ def mount_live(
     # --- voice -------------------------------------------------------------------------
 
     def do_voice(
-        wav: bytes, seconds: float, meta: MetaIn
+        wav: bytes, seconds: float, meta: MetaIn, deadline: float
     ) -> tuple[dict[str, Any], int | None, str | None]:
-        """Transcribe and answer. Returns ``(response_without_limits, http_status, code)``."""
+        """Transcribe and answer within ``deadline``.
+
+        ``deadline`` is a reading of the backend clock for the whole request. Returns
+        ``(response_without_limits, http_status, code)``.
+        """
         trace: list[dict[str, Any]] = []
         pairs = history_pairs(meta.history)
         reason = room_for_live()
         heard: str | None = None
         transcribe_cost = 0.0
+        if reason is None and deadline - be.clock() < MIN_CALL_BUDGET_S * 2:
+            reason = "timeout"
         if reason is None:
             with held(cfg.voice_usd) as ok:
                 if not ok:
@@ -1059,7 +1108,9 @@ def mount_live(
                 else:
                     t0 = be.clock()
                     try:
-                        transcriber = be.transcriber(VOICE_TRANSCRIBE_TIMEOUT_S)
+                        transcriber = be.transcriber(
+                            min(VOICE_TRANSCRIBE_TIMEOUT_S, deadline - be.clock())
+                        )
                         transcript = transcriber.transcribe_bytes(wav)
                         ms = (be.clock() - t0) * 1000
                         transcribe_cost = estimate_cost_usd(seconds)
@@ -1121,7 +1172,34 @@ def mount_live(
         if phi_in([heard]):
             return {}, 422, "patient_data"
         question = with_code(heard, meta.product_code)
-        rt = runtime(max(cfg.voice_usd - transcribe_cost, 0.01), ASK_BUDGET_S)
+        left = deadline - be.clock()
+        if left < MIN_CALL_BUDGET_S:
+            # No time left for the answer: the words were heard, a recorded run answers.
+            outcome = recorded_voice_answer(data, "timeout")
+            trace.append(
+                _step(
+                    "Muse Spark answers from stored records",
+                    SPARK_MODEL,
+                    0,
+                    "skipped",
+                    _REASON_NOTES["timeout"],
+                )
+            )
+            trace.extend(ask_trace(outcome)[1:])
+            return (
+                {
+                    "mode": "recorded",
+                    "not_medical_advice": NOT_MEDICAL_ADVICE,
+                    "heard": heard,
+                    "recorded_note": recorded_note(outcome),
+                    "answer": answer_block(outcome.answer),
+                    "trace": trace,
+                    "cost_usd": _cost(transcribe_cost),
+                },
+                None,
+                None,
+            )
+        rt = runtime(max(cfg.voice_usd - transcribe_cost, 0.01), left)
         outcome = ask_detailed(
             data, question, key_id=LEDGER_ID, runtime=rt, history=pairs, spoken=True
         )
@@ -1171,7 +1249,9 @@ def mount_live(
         if refused is not None:
             return refused
         try:
-            response, status, code = await run_in_threadpool(do_voice, wav, seconds, meta)
+            response, status, code = await run_in_threadpool(
+                do_voice, wav, seconds, meta, started + VOICE_REQUEST_BUDGET_S
+            )
         except SourceUnavailableError:
             return _err(503, "unavailable", "No answer is available right now.")
         except InvalidInputError as exc:
@@ -1299,7 +1379,12 @@ def mount_live(
             "mode": "live",
             "not_medical_advice": NOT_MEDICAL_ADVICE,
             "reading": _reading_block(reading, withheld),
-            "matches": _matches_block(list(matched.get("matches") or [])),
+            "matches": _matches_block(
+                list(matched.get("matches") or []),
+                search_failed=_search_failed(
+                    matched, deadline_passed=be.clock() > t_start + OPENFDA_DEADLINE_S
+                ),
+            ),
             "confirmed": None,
             "trace": trace,
             "cost_usd": _cost(cost),
@@ -1353,6 +1438,17 @@ def _label_read_steps(steps: list[dict[str, Any]]) -> list[dict[str, Any]]:
             )
         )
     return out
+
+
+def _search_failed(matched: dict[str, Any], *, deadline_passed: bool) -> bool:
+    """True when openFDA could not be searched: every query failed, or the deadline stopped them.
+
+    A label with nothing to search for (no queries planned, time left) is a real "no match".
+    """
+    queries = list(matched.get("queries") or [])
+    if queries:
+        return all(not q.get("ok") for q in queries)
+    return deadline_passed
 
 
 def _openfda_step(matched: dict[str, Any], wall_ms: float) -> dict[str, Any]:

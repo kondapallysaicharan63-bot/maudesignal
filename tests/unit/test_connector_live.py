@@ -463,6 +463,9 @@ def test_requests_are_logged_without_address_text_or_bytes(
         "Call 555-123-4567 about LLZ reports",
         "MRN 8837261 had an LLZ event",
         "Born 1961-04-02 and the LLZ device failed",
+        "Mrs. Jane Smith, age 67, died after LLZ",
+        "A 67-year-old had an LLZ event",
+        "LLZ event in a 71 y/o",
     ],
 )
 def test_patient_data_in_a_question_is_refused(tmp_path: Path, text: str) -> None:
@@ -470,6 +473,12 @@ def test_patient_data_in_a_question_is_refused(tmp_path: Path, text: str) -> Non
     r = env.ask(text)
     assert r.status_code == 422 and r.json()["code"] == "patient_data"
     assert env.spark.requests == []
+
+
+def test_ordinary_device_questions_are_not_mistaken_for_patient_data(tmp_path: Path) -> None:
+    env = Env(tmp_path)
+    for q in (QUESTION, "Show recalls for QIH since January"):
+        assert env.ask(q).status_code == 200
 
 
 def test_patient_data_in_history_is_refused(tmp_path: Path) -> None:
@@ -541,6 +550,82 @@ def test_voice_live_shows_what_was_heard_and_answers_through_the_gate(tmp_path: 
     # the audio never reaches the chat model
     assert all("audio" not in json.dumps(q["messages"]).lower() for q in env.spark.requests)
     assert body["limits"]["remaining_today"] == 9  # 10 voice questions a day
+
+
+def _slow_voice_env(
+    tmp_path: Path, transcribe_s: float, spark_s: float, real_deadline: bool = True
+) -> Env:
+    """Voice app whose fake transcriber and fake Spark advance the fake clock."""
+    from maudesignal.connector.live import DeadlineClient
+
+    env = Env(tmp_path)
+    clock = env.clock
+    inner_transcriber = env.transcriber
+    spark = env.spark
+
+    class SlowTranscriber:
+        def transcribe_bytes(self, data: bytes, *, filename: str = "audio.wav") -> Transcript:
+            clock.advance(transcribe_s)
+            return inner_transcriber.transcribe_bytes(data)
+
+    def make_slow(timeout: float) -> Any:
+        def slow_create(**kwargs: Any) -> Any:
+            # like a real client: a call longer than its timeout stops at the timeout and fails
+            clock.advance(min(spark_s, timeout))
+            if spark_s > timeout:
+                raise TimeoutError("request timed out")
+            return spark._create(**kwargs)
+
+        return SimpleNamespace(
+            chat=SimpleNamespace(completions=SimpleNamespace(create=slow_create))
+        )
+
+    slow = make_slow(1e9)
+    slow.with_options = lambda timeout, max_retries: make_slow(timeout)  # type: ignore[attr-defined]
+
+    def agent_factory(deadline: float, ck: Callable[[], float]) -> AgentFactory:
+        def factory(d: ConnectorData, guard: SpendGuard) -> CopilotAgent:
+            client = DeadlineClient(slow, deadline, ck) if real_deadline else slow
+            return CopilotAgent(guard.wrap(client), d.tool_context())
+
+        return factory
+
+    env.backends.transcriber = lambda _t: SlowTranscriber()  # type: ignore[assignment,return-value]
+    env.backends.agent_factory = agent_factory
+    return env
+
+
+def test_voice_slow_transcription_and_slow_spark_end_recorded_inside_the_vercel_limit(
+    tmp_path: Path,
+) -> None:
+    # transcription takes its 15 s, then every Spark call takes 24 s: before the single request
+    # deadline this took 63 s of fake time; now the answer is recorded, with a note, under 55 s.
+    env = _slow_voice_env(tmp_path, transcribe_s=15, spark_s=24)
+    started = env.clock.mono
+    body = env.voice().json()
+    assert env.clock.mono - started < 55
+    assert_contract(body)
+    assert body["mode"] == "recorded" and body["recorded_note"]
+    assert body["heard"] == "What changed this week for LLZ?" or "heard" not in body
+
+
+def test_voice_with_no_time_left_after_transcription_skips_spark(tmp_path: Path) -> None:
+    env = _slow_voice_env(tmp_path, transcribe_s=50, spark_s=1)
+    started = env.clock.mono
+    body = env.voice().json()
+    assert env.clock.mono - started < 55
+    assert_contract(body)
+    assert body["mode"] == "recorded" and "time limit" in body["recorded_note"]
+    assert env.spark.requests == [], "no Spark call starts with under 3 s left"
+    assert body["heard"] == "What changed this week for LLZ?"
+    assert any(s["status"] == "skipped" and s["model"] == "muse-spark-1.3" for s in body["trace"])
+    assert_answer(body)
+
+
+def test_voice_fast_path_still_answers_live_with_the_remaining_time(tmp_path: Path) -> None:
+    env = _slow_voice_env(tmp_path, transcribe_s=3, spark_s=2)
+    body = env.voice().json()
+    assert body["mode"] == "live" and body["heard"]
 
 
 def test_voice_without_a_key_returns_a_recorded_voice_run(tmp_path: Path) -> None:
@@ -691,9 +776,9 @@ def test_png_is_accepted_and_reencoded_as_jpeg() -> None:
         (jpeg_with_exif()[:200], "image/jpeg", 422),  # truncated
         (jpeg_with_exif(), "text/plain", 422),
         (jpeg_with_exif(), "image/webp", 422),
-        (b"\xff\xd8\xff" + b"\x00" * (8 * 1024 * 1024 + 10), "image/jpeg", 413),
+        (b"\xff\xd8\xff" + b"\x00" * (4 * 1024 * 1024 + 10), "image/jpeg", 413),
     ],
-    ids=["empty", "gif", "text-as-jpeg", "truncated", "text-type", "webp-type", "over-8mb"],
+    ids=["empty", "gif", "text-as-jpeg", "truncated", "text-type", "webp-type", "over-4mb"],
 )
 def test_images_are_checked_before_any_model_call(
     tmp_path: Path, data: bytes, ctype: str, status: int
@@ -789,8 +874,70 @@ def test_label_openfda_failure_is_reported_in_the_trace(tmp_path: Path) -> None:
     )
     body = env.label().json()
     assert body["mode"] == "live" and body["matches"]["status"] == "no_match_found"
+    assert body["matches"]["search_failed"] is True
+    assert "could not be searched" in body["matches"]["note"]
     step = next(s for s in body["trace"] if s["step"].startswith("openFDA"))
     assert step["status"] == "failed"
+
+
+def test_label_openfda_past_deadline_is_reported_as_not_searched(tmp_path: Path) -> None:
+    env = Env(tmp_path)
+    inner = env.searcher
+
+    class Slow:
+        def query(self, endpoint: str, search: str, **kw: Any) -> Any:
+            env.clock.advance(46)  # the first call uses the whole openFDA window
+            raise TimeoutError("slow")
+
+    env.backends.searcher = lambda _t: Slow()  # type: ignore[assignment,return-value]
+    body = env.label().json()
+    assert body["mode"] == "live" and inner is not None
+    assert body["matches"]["search_failed"] is True and body["matches"]["note"]
+
+
+def test_label_a_real_search_that_finds_nothing_is_not_marked_failed(tmp_path: Path) -> None:
+    env = Env(tmp_path, searcher=FakeSearcher(lambda e, s: []))
+    body = env.label().json()
+    assert body["matches"]["status"] == "no_match_found" and "search_failed" not in body["matches"]
+
+
+def test_a_dripping_openfda_call_is_cut_at_the_wall_clock_limit(monkeypatch: Any) -> None:
+    import time
+
+    from maudesignal.common.exceptions import OpenFDAUnavailableError
+    from maudesignal.connector import live
+    from maudesignal.connector.live import _DeadlineSearcher
+
+    monkeypatch.setattr(live, "OPENFDA_CALL_WALL_S", 0.2)
+
+    class Drip:
+        def query(self, endpoint: str, search: str, **kw: Any) -> Any:
+            time.sleep(1.0)
+
+    started = time.monotonic()
+    with pytest.raises(OpenFDAUnavailableError):
+        _DeadlineSearcher(Drip(), 1e12, lambda: 0.0).query("510k", "x", limit=1)  # type: ignore[arg-type]
+    assert time.monotonic() - started < 0.8
+
+
+def test_missing_pepper_with_shared_state_logs_a_warning(tmp_path: Path, monkeypatch: Any) -> None:
+    from maudesignal.connector import live
+
+    seen: list[str] = []
+    monkeypatch.setattr(
+        live.logger, "warning", lambda event, **kw: seen.append(event), raising=False
+    )
+
+    class SharedState(ConnectorState):
+        @property
+        def shared(self) -> bool:
+            return True
+
+    Env(tmp_path, state=SharedState())
+    assert "live_pepper_missing" in seen
+    seen.clear()
+    Env(tmp_path)  # not shared: nothing to warn about
+    assert "live_pepper_missing" not in seen
 
 
 def test_label_without_a_key_returns_a_stored_run_labelled_recorded(tmp_path: Path) -> None:

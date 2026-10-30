@@ -478,7 +478,7 @@ medical advice. Nothing is filed with FDA. Not in the public OpenAPI document.
 |---|---|---|---|
 | `POST /v1/live/ask` | JSON `{question (3-500 chars), history? (max 4 of {question, answer}), product_code? (3 letters), ref?}`. Each history answer is cut to 600 characters on the server. | Muse Spark 1.3 (read-only tools) | the answer sentences with their links, left-out reasons, spoken text |
 | `POST /v1/live/voice` | multipart: `audio` (WAV, PCM16, mono, 16000 Hz, at most 60 s and 4 MB) and an optional `meta` JSON part `{history?, product_code?}` | Muse Voice Transcribe 1.0, then Muse Spark 1.3 | `heard` (the transcript, shown before the answer) plus the same answer block |
-| `POST /v1/live/label` | multipart: `image` (JPEG or PNG, at most 8 MB) | SAM 3.1, then Muse Spark 1.3, then openFDA searches | `reading` and up to 3 possible matches; `confirmed` is always `null` (a person confirms) |
+| `POST /v1/live/label` | multipart: `image` (JPEG or PNG, at most 4 MB; the website shrinks photos to 1600 px on the long side, JPEG quality 0.85, before sending) | SAM 3.1, then Muse Spark 1.3, then openFDA searches | `reading` and up to 3 possible matches; `confirmed` is always `null` (a person confirms) |
 
 Every response has `mode` (`live` or `recorded`), `recorded_note` (when recorded: why, and which
 recorded run), `not_medical_advice: true`, `trace` (one entry per step: `step`, `model`
@@ -517,18 +517,36 @@ or `invalid_input`, 429 `rate_limited` with `retry_after_s` and a `Retry-After` 
   text is never returned live, only a fixed reason. Tools are read-only (`readonly.py`);
   temperature 0; the prompts live in `skills/`.
 - *Patient data:* a question, a history entry or a voice transcript that looks like patient
-  details (email, phone, SSN, MRN, date of birth) is refused with 422 `patient_data` and not
-  answered. A guard, not a guarantee.
+  details (email, phone, SSN, MRN, date of birth, a title with a name such as "Mrs. Jane Smith",
+  an age such as "age 67" or "67-year-old") is refused with 422 `patient_data` and not answered.
+  A guard, not a guarantee: other free-text names are not caught, so the website input keeps the
+  "not a guarantee" wording.
 - *Uploads:* size, type, duration and pixel count are checked before any model call. Multipart is
   parsed in memory (the standard form parsers spool large parts to temporary files, which uploads
   here must not be). The photo is decoded and re-encoded as a plain JPEG from its pixels, so EXIF,
   GPS, ICC and comment blocks are dropped; orientation is applied first. Audio and image bytes are
   never written to disk or Blob and never logged. Lot and serial numbers are never returned (the
   UDI keeps only the 01, 11 and 17 identifiers).
-- *Time:* the label request is built to end in under 55 s: SAM calls time out at 10 s and start
-  no new prompt after 12 s; each Spark call gets the time left of a 50 s budget; openFDA calls
-  time out at 6 s and start no new query after 45 s. On a timeout the stored run answers, with a
-  note. `vercel.json` keeps `maxDuration` 60.
+- *Time:* the label request is designed to end in under 55 s when upstream services behave: SAM
+  calls time out at 10 s and start no new prompt after 12 s; each Spark call gets the time left of
+  a 50 s budget; openFDA calls time out at 6 s, are cut at 8 s of wall-clock time (an httpx
+  timeout counts each phase, not the whole call) and start no new query after 45 s. SAM's 10 s is
+  a per-phase timeout, so a slowly dripping SAM response can run longer; no figure here is
+  measured against the real services. The voice request has one deadline of 52 s from the start
+  (transcription gets at most 15 s, Spark gets the time left, and with under 3 s left the
+  recorded run answers with a timeout note). On a timeout the stored run answers, with a note.
+  `vercel.json` keeps `maxDuration` 60.
+- *Request size on Vercel:* Vercel rejects request bodies over 4.5 MB before the app runs, with a
+  413 that has no CORS headers, so a browser sees a network error. The server limit is therefore
+  4 MB for photos and audio, and the web client must downscale or re-encode a photo (1600 px long
+  side, JPEG quality 0.85) before upload.
+- *Label with no search:* if openFDA could not be searched (every query failed, or the 45 s window
+  ended), `matches` has `search_failed: true` and a `note`; the web side shows that note instead of
+  "no match found". `no_match_found` without the flag means a search ran and found nothing.
+- *Shared limits need a pepper:* set `MAUDESIGNAL_KEY_PEPPER` (required when Upstash is configured).
+  Without it each instance makes its own random pepper, one address gets a different id on every
+  instance, and the per-address daily limits are multiplied by the number of warm instances; a
+  warning (`live_pepper_missing`) is logged at start-up when this happens.
 - *CORS:* only the exact origins in `MAUDESIGNAL_WEB_ORIGINS`, `POST` and `OPTIONS`, header
   `Content-Type`, no credentials; another origin gets 403.
 
