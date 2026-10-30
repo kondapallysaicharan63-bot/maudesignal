@@ -248,3 +248,24 @@ def test_skipped_codes_are_counted_not_flagged() -> None:
         },
     ]
     assert count_skipped(rows) == 1
+
+
+def test_stored_sweep_skipped_count_matches_both_floors() -> None:
+    import json
+    from pathlib import Path
+
+    data = json.loads(Path("demo/sweep/ai-device-sweep.json").read_text(encoding="utf-8"))
+    held = sorted(
+        r["product_code"]
+        for r in data["rows"]
+        if r["classification"] == "stable"
+        and skipped_for_few_reports(
+            r["current_count"],
+            r["current_severe_count"],
+            r["baseline_count"],
+            r["baseline_severe_count"],
+        )
+    )
+    assert held == sorted(["MUJ", "KPS", "MNR", "QDA", "KGI", "IZL", "MLO"])
+    assert count_skipped(data["rows"]) == 7
+    assert len(data["rows"]) == 181

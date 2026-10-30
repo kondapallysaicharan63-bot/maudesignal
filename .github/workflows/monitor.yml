@@ -55,13 +55,13 @@ jobs:
             --db data/monitor/maudesignal_monitor.db \
             --max-new "$MAX_NEW" \
             --fetch \
-            --out-dir digests
+            --out-dir data/monitor/digests
 
       - name: Upload digest artifact
         uses: actions/upload-artifact@v4
         with:
           name: digest-${{ github.run_id }}
-          path: digests/
+          path: data/monitor/digests/
           retention-days: 30
 
       - name: Commit digest back to the branch
@@ -70,8 +70,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # The monitor's own DB is committed so the next run's capped fetch
-          # continues from where this one stopped. data/demo/ is never touched.
-          git add digests/ data/monitor/maudesignal_monitor.db
+          # continues from where this one stopped. data/demo/ and the frozen
+          # digests/ (read by the dashboard and the web export) are never touched;
+          # new digests go to data/monitor/digests/. -f because data/* and *.db
+          # are gitignored.
+          git add -f data/monitor/digests data/monitor/maudesignal_monitor.db
           if git diff --cached --quiet; then
             echo "No digest changes to commit."
             exit 0

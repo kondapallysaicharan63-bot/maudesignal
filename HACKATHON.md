@@ -136,7 +136,7 @@ Plus this manifest, the demo video, and the submission write-up.
 | `copilot/tools.py`, `skills/safety-copilot` 1.3.0 | Tools `my_device_types`, `compare_signals`, `mhra_alerts` (13 tools) |
 | `copilot/agent.py` | `ask(on_event=…)` progress events for streaming |
 | `demo/voice/question-a.wav`, `question-b.wav` | Charan's two ElevenLabs text-to-speech samples (greetings; not a real practitioner) |
-| `demo/voice/question-c.wav`, `question-d.wav`, `question-e.wav` | Charan's ElevenLabs text-to-speech product questions (voice "Adam"; not a real practitioner), recorded as `00-voice-main`, `-c`, `-d`, `-e` |
+| `demo/voice/question-c.wav`, `question-d.wav`, `question-e.wav` | Charan's ElevenLabs text-to-speech product questions (voice "Adam"; not a real practitioner), recorded as `00-voice-c`, `-d`, `-e`; the `00-voice-main` recording's audio (`question.wav`) is no longer in the repo; its transcript stays. The monitor rule text changed on Oct 30 (the "more serious than usual" flag now also needs >= 3 reports); stored digests keep the old wording and no stored flag changed |
 | `tests/unit/test_theme.py`, `test_memory_compare.py`, `test_mhra.py` | Contrast for every theme, memory/compare/tools/streaming, MHRA parsing/storage/gate |
 | `tests/unit/test_compliance_journey.py` | Offline end-to-end: openFDA (mock transport, real records) → ingestion → three Skills (real schemas) → SQLite → dashboard → PSUR Markdown + PDF |
 | `scripts/scale_test.py`, `scripts/load_test.py` | Seeded scalability/stress (breaking point ~100k records) and concurrent-session load (no Meta calls) |

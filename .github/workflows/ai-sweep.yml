@@ -7,13 +7,16 @@ name: AI device sweep (openFDA)
 
 on:
   workflow_dispatch:
-  push:
-    branches: [hackathon-day2]
-    paths:
-      - scripts/ai_device_sweep.py
-      - src/maudesignal/monitor/live_check.py
-      - .github/workflows/ai-sweep.yml
-  # schedule paused until 2026-11-05 (Charan, Oct 30); restore cron '23 12 * * 1'
+  # PAUSED until 2026-11-05 (Charan, Oct 30) so "6 of 181" stays true. On Nov 5
+  # restore BOTH of these:
+  #   schedule:
+  #     - cron: '23 12 * * 1'
+  #   push:
+  #     branches: [hackathon-day2]
+  #     paths:
+  #       - scripts/ai_device_sweep.py
+  #       - src/maudesignal/monitor/live_check.py
+  #       - .github/workflows/ai-sweep.yml
 
 permissions:
   contents: write

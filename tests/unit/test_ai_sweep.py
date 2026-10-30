@@ -82,7 +82,10 @@ def test_report_lists_only_flagged_codes_with_their_query(tmp_path: Path) -> Non
     )
     assert "| QIH |" not in text
     assert "not a finding about any device or company" in text
-    assert "Flags need at least 3 reports this week; 0 code(s) skipped" in text
+    assert (
+        "flags need at least 3 reports this week (a new kind of problem can be "
+        "flagged from 1); 0 code(s) held back" in text
+    )
 
 
 def test_app_summary_reads_the_sweep_file(tmp_path: Path) -> None:

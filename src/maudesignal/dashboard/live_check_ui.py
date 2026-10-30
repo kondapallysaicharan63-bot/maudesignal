@@ -233,9 +233,10 @@ def render_sweep() -> None:
             "finding about any device or company."
         )
         st.caption(
-            f"Flags need at least {SEVERITY_MIN_REPORTS} reports this week. "
-            f"{count_skipped(data['rows'])} of {len(data['rows'])} codes skipped for having "
-            "too few reports."
+            f'"Reports suddenly increased" and "more serious than usual" flags need at '
+            f"least {SEVERITY_MIN_REPORTS} reports this week (a new kind of problem can be "
+            f"flagged from 1). {count_skipped(data['rows'])} of {len(data['rows'])} codes "
+            "held back for having too few reports."
         )
         if flagged:
             st.dataframe(

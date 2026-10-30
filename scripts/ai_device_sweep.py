@@ -131,8 +131,9 @@ def write_markdown(meta: dict[str, Any], rows: list[dict[str, Any]], path: Path)
         )
         + ".",
         "",
-        f"Flags need at least {SEVERITY_MIN_REPORTS} reports this week; "
-        f"{count_skipped(rows)} code(s) skipped for too few reports.",
+        f'"Reports suddenly increased" and "more serious than usual" flags need at least '
+        f"{SEVERITY_MIN_REPORTS} reports this week (a new kind of problem can be flagged "
+        f"from 1); {count_skipped(rows)} code(s) held back for too few reports.",
         "",
         "Same four rules as the app (7 days vs the 4 weeks before; counts only). A triage",
         "signal for a person to review, not a finding about any device or company.",

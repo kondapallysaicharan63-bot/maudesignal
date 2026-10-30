@@ -121,10 +121,11 @@ SCORING_RULES: tuple[str, ...] = (
 )
 
 _GENERIC_COMPANY = frozenset(
-    (  # noqa: SIM905
-        "usa us america americas international intl group holdings holding company technology "
-        "technologies medical healthcare health systems system products product"
-    ).split()
+    [
+        *("usa", "us", "america", "americas", "international", "intl", "group", "holdings"),
+        *("holding", "company", "technology", "technologies", "medical", "healthcare"),
+        *("health", "systems", "system", "products", "product"),
+    ]
 )
 _STOP_WORDS = frozenset("a an and of the for with by in to or".split())  # noqa: SIM905
 _TERM_CLEAN = re.compile(r"[^A-Za-z0-9 .\-]")
