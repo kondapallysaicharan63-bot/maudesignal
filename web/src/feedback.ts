@@ -62,8 +62,8 @@ export function apiBaseOrNull(raw: unknown): string | null {
 
 // ---- visits -------------------------------------------------------------------------------
 
+/** Cross-origin visit ping: fetch with keepalive and credentials 'omit' only. */
 export interface VisitSender {
-  beacon?: (url: string, body: Blob) => boolean
   fetcher?: (url: string, init: RequestInit) => Promise<unknown>
 }
 
@@ -104,7 +104,8 @@ export function sendVisit(
   const url = `${apiBase}/v1/visit`
   const body = JSON.stringify({ ref, page, client_ts: now().toISOString() })
   try {
-    if (sender.beacon && sender.beacon(url, new Blob([body], { type: 'application/json' }))) return true
+    // Never navigator.sendBeacon: it always sends credentials, and the API (another origin) answers
+    // the CORS preflight without Allow-Credentials, so the browser would drop the POST silently.
     void Promise.resolve(
       sender.fetcher?.(url, {
         method: 'POST',
@@ -252,21 +253,16 @@ export interface KeyLike {
 }
 
 /**
- * Esc closes; Tab and Shift+Tab wrap inside the dialog. `focusables` are the dialog's focusable
+ * Tab and Shift+Tab wrap inside the dialog (Esc is the document listener's job). `focusables` are the dialog's focusable
  * elements in order and `active` the element that has focus now.
  */
 export function dialogKey<T>(
   e: KeyLike,
   focusables: T[],
   active: T | null,
-  close: () => void,
   focus: (el: T) => void,
 ): void {
-  if (e.key === 'Escape') {
-    e.preventDefault()
-    close()
-    return
-  }
+  // Esc is handled by the dialog's document listener, so it is not handled twice here.
   if (e.key !== 'Tab' || focusables.length === 0) return
   const first = focusables[0]
   const last = focusables[focusables.length - 1]

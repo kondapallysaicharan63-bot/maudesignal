@@ -62,4 +62,21 @@ describe('mounted dialog', () => {
     host.remove()
     outside.remove()
   })
+
+  it('Escape pressed inside the dialog closes it exactly once', async () => {
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+    const onClose = vi.fn()
+    const root = createRoot(host)
+    await act(async () => {
+      root.render(<FeedbackDialog open onClose={onClose} apiBase={null} refCode={null} page="home" />)
+    })
+    const inner = document.querySelector('textarea') as HTMLElement
+    await act(async () => {
+      inner.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    })
+    expect(onClose).toHaveBeenCalledTimes(1)
+    await act(async () => root.unmount())
+    host.remove()
+  })
 })

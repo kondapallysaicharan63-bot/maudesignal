@@ -43,7 +43,6 @@ export default function App() {
       page,
       sessionStore(),
       {
-        beacon: typeof navigator.sendBeacon === 'function' ? (u, b) => navigator.sendBeacon(u, b) : undefined,
         fetcher: (u, init) => fetch(u, init),
       },
     )

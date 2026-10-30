@@ -65,7 +65,8 @@ export function FeedbackDialog({ open, onClose, apiBase, refCode, page }: Props)
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink/40 px-3 py-6"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto px-3 py-6"
+      style={{ background: 'color-mix(in srgb, var(--ink) 40%, transparent)' }}
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
@@ -77,7 +78,7 @@ export function FeedbackDialog({ open, onClose, apiBase, refCode, page }: Props)
         style={{ boxShadow: 'var(--shadow-pop)' }}
         onKeyDown={(e) => {
           const els = Array.from(box.current?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? [])
-          dialogKey(e, els, document.activeElement as HTMLElement | null, onClose, (el) => el.focus())
+          dialogKey(e, els, document.activeElement as HTMLElement | null, (el) => el.focus())
         }}
       >
         <h2 id="fb-title" className="m-0 text-[22px] font-semibold text-ink">

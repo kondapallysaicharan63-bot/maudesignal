@@ -89,14 +89,22 @@ describe('visit pings', () => {
     expect(sendVisit(BASE, 'abc', 'new', s, { fetcher }, NOW)).toBe(false)
   })
 
-  it('prefers sendBeacon and falls back to fetch', () => {
+  it('always uses fetch keepalive with credentials omit and never builds a beacon', () => {
+    const fetcher = vi.fn((_u: string, _i: RequestInit) => Promise.resolve({}))
     const beacon = vi.fn(() => true)
-    const fetcher = vi.fn(() => Promise.resolve({}))
-    sendVisit(BASE, 'abc', 'a', fakeStore(), { beacon, fetcher }, NOW)
-    expect(beacon).toHaveBeenCalledTimes(1)
-    expect(fetcher).not.toHaveBeenCalled()
-    sendVisit(BASE, 'abc', 'b', fakeStore(), { beacon: () => false, fetcher }, NOW)
+    const sendBeacon = vi.fn(() => true)
+    Object.defineProperty(globalThis.navigator, 'sendBeacon', { value: sendBeacon, configurable: true })
+    // an extra beacon property on the sender must be ignored
+    sendVisit(BASE, 'abc', 'a', fakeStore(), { fetcher, beacon } as never, NOW)
+    expect(beacon).not.toHaveBeenCalled()
+    expect(sendBeacon).not.toHaveBeenCalled()
     expect(fetcher).toHaveBeenCalledTimes(1)
+    const [url, init] = fetcher.mock.calls[0]
+    expect(url).toBe(`${BASE}/v1/visit`)
+    expect(init.keepalive).toBe(true)
+    expect(init.credentials).toBe('omit')
+    expect(init.body).not.toBeInstanceOf(Blob)
+    Reflect.deleteProperty(globalThis.navigator, 'sendBeacon')
   })
 
   it('sends nothing without a ref or an API base, and fetch failures are silent', async () => {
@@ -214,20 +222,13 @@ describe('dialog', () => {
 
 describe('dialog keyboard', () => {
   const key = (k: string, shiftKey = false) => ({ key: k, shiftKey, preventDefault: vi.fn() })
-  it('Escape closes', () => {
-    const close = vi.fn()
-    dialogKey(key('Escape'), ['a', 'b'], 'a', close, vi.fn())
-    expect(close).toHaveBeenCalledTimes(1)
-  })
   it('Tab wraps last to first and Shift+Tab first to last', () => {
     const focus = vi.fn()
-    const close = vi.fn()
-    dialogKey(key('Tab'), ['a', 'b', 'c'], 'c', close, focus)
+    dialogKey(key('Tab'), ['a', 'b', 'c'], 'c', focus)
     expect(focus).toHaveBeenLastCalledWith('a')
-    dialogKey(key('Tab', true), ['a', 'b', 'c'], 'a', close, focus)
+    dialogKey(key('Tab', true), ['a', 'b', 'c'], 'a', focus)
     expect(focus).toHaveBeenLastCalledWith('c')
-    dialogKey(key('Tab'), ['a', 'b', 'c'], 'b', close, focus)
+    dialogKey(key('Tab'), ['a', 'b', 'c'], 'b', focus)
     expect(focus).toHaveBeenCalledTimes(2)
-    expect(close).not.toHaveBeenCalled()
   })
 })
