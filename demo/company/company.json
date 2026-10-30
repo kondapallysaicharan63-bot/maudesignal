@@ -62,8 +62,8 @@
       "owner": "Iris Tanaka (simulated)",
       "device_type": {
         "name": "Automated Radiological Image Processing Software",
-        "source": "device.openfda.device_name of a stored MAUDE report",
-        "query_url": "https://api.fda.gov/device/classification.json?search=product_code:QIH"
+        "source": "openFDA device classification",
+        "query_url": "https://api.fda.gov/device/classification.json?search=product_code:QIH&limit=1"
       },
       "sweep": {
         "file": "demo/sweep/ai-device-sweep.json",
