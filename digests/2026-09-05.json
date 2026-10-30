@@ -37,10 +37,12 @@
   "events_considered": 154,
   "events_after_as_of": 0,
   "events_skipped_missing_date": 0,
-  "fetch_summary": {
-    "LLZ": 17
-  },
-  "notes": [],
+  "fetch_summary": {},
+  "notes": [
+    "LLZ: openFDA fetch failed (openFDA server error 500); used stored data only",
+    "POK: openFDA fetch failed (openFDA server error 500); used stored data only",
+    "QIH: openFDA fetch failed (openFDA server error 500); used stored data only"
+  ],
   "signals": [
     {
       "product_code": "LLZ",
