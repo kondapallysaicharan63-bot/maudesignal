@@ -25,6 +25,7 @@ import streamlit as st
 from maudesignal.copilot.actions import ActionError, decide_capa
 from maudesignal.copilot.audit_export import load_exports
 from maudesignal.copilot.product_code import confirm_prompt, describe_check
+from maudesignal.copilot.protocol import protocol_from_transcript, tool_label
 from maudesignal.copilot.spend import SpendLimitError
 from maudesignal.copilot.transcript import load_transcripts
 from maudesignal.dashboard.spend_ui import cap_notice, guarded_client, recorded_fallback
@@ -56,10 +57,6 @@ FRAMING_LINE = (
 _PILL = {"pass": ("ok", "Verified"), "block": ("err", "Withheld")}
 
 
-#: Display names for tool ids whose wording the product no longer uses. The id stays
-#: in the Skill and in recorded runs; only the label on screen changes.
-_TOOL_LABELS = {"overnight_signals": "weekly_signals", "draft_capa": "capa_need_evidence"}
-
 #: Recorded runs never shown on screen or used as a fallback answer. Their audit chains are
 #: still re-verified on the Audit page (see EXCLUDED_REASON). The files stay on disk.
 #: - 00-voice-main: an early voice test whose question uses wording the product no longer uses.
@@ -82,11 +79,6 @@ def displayable_transcripts(directory: Path = TRANSCRIPT_DIR) -> list[dict[str, 
         for t in load_transcripts(directory)
         if str(t.get("label", "")) not in DISPLAY_EXCLUDED_LABELS
     ]
-
-
-def tool_label(name: str) -> str:
-    """Name of a copilot tool as shown on screen."""
-    return _TOOL_LABELS.get(name, name)
 
 
 def short(text: str, limit: int) -> str:
@@ -213,6 +205,30 @@ def render_transcript(t: dict[str, Any]) -> None:
         with st.expander("What the gate blocked on the first pass"):
             for s in t["first_pass"]["sentences"]:
                 st.html(_sentence_html(s))
+    # Always rebuilt from the stored calls (deterministic), so a count fixed in the builder
+    # shows here too and the filters and times print the same way as in the PDF.
+    rows = protocol_from_transcript(t)
+    if rows:
+        with st.expander(f"Search protocol ({len(rows)} searches)"):
+            st.caption(
+                "What was searched, so a reviewer can repeat it. "
+                '"not recorded" means the stored log did not keep that value.'
+            )
+            st.dataframe(
+                [
+                    {
+                        "Search": row.label,
+                        "Dataset": row.dataset,
+                        "Filters": row.filters_text,
+                        "From": row.date_from or "",
+                        "To": row.date_to or "",
+                        "Count": row.count_text,
+                        "Run at (UTC)": row.run_at or "not recorded",
+                    }
+                    for row in rows
+                ],
+                hide_index=True,
+            )
     with st.expander("Tool calls"):
         for c in t["tool_calls"]:
             st.markdown(f"`{tool_label(c['name'])}` `{json.dumps(c['arguments'])}`")
@@ -492,6 +508,23 @@ def _voice_question(db: Database, agent: Any) -> None:  # pragma: no cover - nee
 # ---------------------------------------------------------------------------
 
 
+def _restored_note(db: Database, capa_id: str) -> str:
+    """'Restored from demo/transcripts/<file> (recorded <UTC>)' for a replayed pack, else ''."""
+    for a in db.list_audit(entity_id=capa_id):
+        if a.action != "capa.draft":
+            continue
+        try:
+            payload = json.loads(a.payload_json)
+        except ValueError:
+            return ""
+        src = payload.get("restored_from")
+        if not src:
+            return ""
+        when = payload.get("recorded_at_utc")
+        return f"Restored from demo/transcripts/{src}" + (f" (recorded {when})" if when else "")
+    return ""
+
+
 def render_approvals(db: Database, drafts: list[Any]) -> None:
     """CAPA-need evidence packs with the named-person Accept / Reject decision."""
     st.caption(CAPA_NEED_NOTE)
@@ -506,6 +539,9 @@ def render_approvals(db: Database, drafts: list[Any]) -> None:
                 + ", ".join(f"[{i}]({MAUDE_URL.format(i.split('-')[0])})" for i in ids)
             )
             st.caption(f"Prepared by {d.created_by} at {d.created_at:%Y-%m-%d %H:%M} UTC")
+            restored = _restored_note(db, d.capa_id)
+            if restored:
+                st.caption(restored)
             if d.status == "draft":
                 c1, c2, _ = st.columns([1, 1, 4])
                 for col, decision, label in (
@@ -529,10 +565,18 @@ def page_audit(db: Database) -> None:
     if drafts:
         st.subheader(f"CAPA-need evidence packs ({len(pending)} awaiting a decision)")
         render_approvals(db, drafts)
+    from maudesignal.dashboard.demo_db import keyless
+
     rows = db.list_audit()
     if not rows:
         _recorded_audit_trails()
         return
+    if keyless():
+        # The keyless demo runs on a copy of the demo database with the recorded packs
+        # restored, so its own trail holds only those restore entries; the recorded Meta
+        # runs' trails are shown too.
+        _recorded_audit_trails()
+        st.subheader("This demo database")
     ok, bad = db.verify_audit_chain()
     if ok:
         st.success(f"Hash chain intact across {len(rows)} entries.")

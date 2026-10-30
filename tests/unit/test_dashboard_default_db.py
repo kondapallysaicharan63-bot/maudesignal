@@ -23,8 +23,23 @@ def test_uses_demo_db_when_nothing_configured(
 ) -> None:
     demo = _setup(tmp_path, monkeypatch)
     monkeypatch.delenv("MAUDESIGNAL_DB_PATH", raising=False)
+    monkeypatch.setenv("META_MODEL_API_KEY", "test-key-not-real")
     db = app._load_db()
     assert db.path.resolve() == demo.resolve()
+
+
+def test_keyless_demo_runs_on_a_copy_and_never_touches_the_committed_db(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    demo = _setup(tmp_path, monkeypatch)
+    monkeypatch.delenv("MAUDESIGNAL_DB_PATH", raising=False)
+    monkeypatch.delenv("META_MODEL_API_KEY", raising=False)
+    monkeypatch.setattr("maudesignal.dashboard.demo_db._COPIES", {})
+    before = demo.read_bytes()
+    db = app._load_db()
+    assert db.path.resolve() != demo.resolve()
+    assert app._load_db().path == db.path  # one copy per process, reused on re-runs
+    assert demo.read_bytes() == before
 
 
 def test_env_var_wins_over_demo_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

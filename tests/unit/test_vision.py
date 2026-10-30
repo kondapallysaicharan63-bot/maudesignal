@@ -967,3 +967,124 @@ def test_load_recorded_labels_skips_label_match_files(tmp_path: Path) -> None:
     (tmp_path / "label-match-a.json").write_text(json.dumps({"status": "needs_person_to_confirm"}))
     got = pipeline.load_recorded_labels(tmp_path)
     assert [g["_file"] for g in got] == ["label-a.json"]
+
+
+# --- A10b: legibility banner, hidden fields, maker mismatch -------------------------------------
+
+
+def _label_run(**over: Any) -> dict[str, Any]:
+    base: dict[str, Any] = {
+        "fields": {
+            "device_name": {
+                "value": "Non-contact Infrared Body Thermometer",
+                "legibility": "clear",
+            },
+            "manufacturer": {"value": "HoMedics USA, LLC.", "legibility": "clear"},
+        },
+        "overall_legibility": "clear",
+        "product_code": "FLL",
+        "match_basis": "name_match_one_product_code",
+        "candidates": [
+            {
+                "k_number": f"K20333{i}",
+                "applicant": "Hetaida Technology Co., Ltd.",
+                "device_name": "Non-contact Infrared Body Thermometer",
+                "product_code": "FLL",
+                "decision_date": "2021-02-25",
+                "regulation_number": "880.2910",
+            }
+            for i in range(2)
+        ],
+        "checks": [
+            {
+                "source": "openfda_name_search",
+                "outcome": "pass",
+                "detail": "2 candidate(s), product code(s): FLL",
+            }
+        ],
+    }
+    base.update(over)
+    return base
+
+
+def _run_label_script(tmp_path: Path, run: dict[str, Any], body: str) -> Any:
+    from streamlit.testing.v1 import AppTest
+
+    f = tmp_path / "run.json"
+    f.write_text(json.dumps(run))
+    script = (
+        "import json\n"
+        "import streamlit as st\n"
+        "from pathlib import Path\n"
+        "from maudesignal.vision.label import LabelResult\n"
+        "from maudesignal.dashboard import vision_pages as vp\n"
+        f"res = LabelResult.from_dict(json.loads(Path({str(f)!r}).read_text()))\n" + body
+    )
+    return AppTest.from_string(script, default_timeout=60).run()
+
+
+def test_partly_legible_label_shows_banner_and_fields(tmp_path: Path) -> None:
+    run = _label_run(overall_legibility="partly_legible", match_basis="k_number")
+    at = _run_label_script(tmp_path, run, "vp.render_label(res, None, session=False)\n")
+    assert not at.exception
+    assert any(
+        "Partly legible label: check every field against the photo" in w.value for w in at.warning
+    )
+    assert len(at.dataframe) == 1
+
+
+def test_clear_label_has_no_legibility_banner(tmp_path: Path) -> None:
+    run = _label_run(match_basis="k_number")
+    at = _run_label_script(tmp_path, run, "vp.render_label(res, None, session=False)\n")
+    assert not any("legible label" in w.value for w in at.warning)
+    assert not any("legible label" in e.value for e in at.error)
+
+
+def test_illegible_label_hides_field_values_and_picks_nothing(tmp_path: Path) -> None:
+    run = _label_run(overall_legibility="illegible")
+    body = "vp.render_label(res, None, session=False)\ncode = vp._pick_product(res, key='k')\n"
+    at = _run_label_script(tmp_path, run, body)
+    assert not at.exception
+    assert any("Illegible label: fields not shown" in e.value for e in at.error)
+    assert len(at.dataframe) == 0  # no field table
+    shown = " ".join(m.value for m in at.markdown) + " ".join(c.value for c in at.caption)
+    assert "Infrared" not in shown and "HoMedics" not in shown
+    assert not at.radio  # nothing to pick
+
+
+def test_maker_mismatch_is_unverifiable_and_requires_a_confirmed_pick(tmp_path: Path) -> None:
+    from maudesignal.dashboard import vision_pages as vp
+
+    res = label.LabelResult.from_dict(_label_run())
+    assert vp.maker_mismatch(res) is True
+    same_maker = _label_run()
+    same_maker["fields"]["manufacturer"]["value"] = "Hetaida Technology Co., Ltd."
+    assert vp.maker_mismatch(label.LabelResult.from_dict(same_maker)) is False
+    k_run = label.LabelResult.from_dict(_label_run(match_basis="k_number"))
+    assert vp.maker_mismatch(k_run) is False
+
+    body = (
+        "vp.render_label(res, None, session=False)\n"
+        "code = vp._pick_product(res, key='pick')\n"
+        "st.caption('picked=' + str(code))\n"
+    )
+    at = _run_label_script(tmp_path, _label_run(), body)
+    assert not at.exception
+    page = " ".join(m.value for m in at.markdown)
+    assert "UNVERIFIABLE" in page and "VERIFIED" not in page.replace("UNVERIFIABLE", "")
+    assert any("UNVERIFIABLE" in w.value and "nothing is selected" in w.value for w in at.warning)
+    assert any("picked=None" in c.value for c in at.caption)  # never auto-picked
+    assert "differs" in page  # reasons are shown with each possible match
+    # choosing is not enough: the person must also press the confirm button
+    at.radio[0].set_value(at.radio[0].options[1]).run()
+    assert any("picked=None" in c.value for c in at.caption)
+    at.button[0].click().run()
+    assert any("picked=FLL" in c.value for c in at.caption)
+
+
+def test_maker_match_keeps_the_verified_name_search(tmp_path: Path) -> None:
+    run = _label_run()
+    run["fields"]["manufacturer"]["value"] = "Hetaida Technology Co., Ltd."
+    at = _run_label_script(tmp_path, run, "vp.render_label(res, None, session=False)\n")
+    page = " ".join(m.value for m in at.markdown)
+    assert "VERIFIED" in page and "UNVERIFIABLE" not in page

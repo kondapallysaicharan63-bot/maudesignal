@@ -1,0 +1,15 @@
+# Editing this file on hackathon-day2 and pushing triggers
+# .github/workflows/investigator-record.yml, which runs the weekly investigator
+# (real Muse Spark, spends Meta API credit, ~cents per device type) and commits the
+# outputs to demo/investigations/.
+# (workflow_dispatch only works once the workflow is on the default branch.)
+#
+# product_codes: space-separated FDA product codes to investigate, or "flagged" for
+# every device type the weekly check flagged in the stored data, or "none" to skip
+# the weekly investigator.
+#
+# recall_ids: space-separated stored recall numbers (for example Z-0186-2027) to run
+# the recall-triggered sweep on, or empty to skip it (maudesignal recall-sweep).
+request: 0
+product_codes: flagged
+recall_ids:

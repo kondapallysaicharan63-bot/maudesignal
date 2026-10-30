@@ -1,0 +1,521 @@
+{
+  "kind": "device_label_match",
+  "schema_version": "1.0",
+  "image_file": "label-thermometer-2.jpg",
+  "generated_utc": "2026-10-30T01:33:48Z",
+  "label": {
+    "fields": {
+      "device_name": {
+        "value": "Non-contact Infrared Body Thermometer",
+        "legibility": "clear"
+      },
+      "manufacturer": {
+        "value": "HoMedics USA, LLC",
+        "legibility": "clear"
+      },
+      "model_number": {
+        "value": "TIE-240",
+        "legibility": "clear"
+      },
+      "k_number": {
+        "value": "",
+        "legibility": "not_present"
+      },
+      "udi": {
+        "value": "",
+        "legibility": "not_present"
+      },
+      "gtin": {
+        "value": "",
+        "legibility": "not_present"
+      }
+    },
+    "session_fields_omitted": true,
+    "overall_legibility": "partly_legible"
+  },
+  "search_basis": "model_name_manufacturer",
+  "search_inputs": {
+    "k_number": null,
+    "gtin": null,
+    "model_number": "TIE-240",
+    "device_name": "Non-contact Infrared Body Thermometer",
+    "manufacturer": "HoMedics USA, LLC"
+  },
+  "queries": [
+    {
+      "id": "510k-maker-model",
+      "label": "510(k): maker + model number",
+      "url": "https://api.fda.gov/device/510k.json?search=applicant:\"homedics\"+AND+device_name:\"TIE-240\"&limit=25",
+      "count": 0,
+      "ok": true
+    },
+    {
+      "id": "510k-maker-name",
+      "label": "510(k): maker + device name word",
+      "url": "https://api.fda.gov/device/510k.json?search=applicant:\"homedics\"+AND+device_name:\"thermometer\"&limit=25",
+      "count": 0,
+      "ok": true
+    },
+    {
+      "id": "510k-name",
+      "label": "510(k): device name",
+      "url": "https://api.fda.gov/device/510k.json?search=device_name:\"Non-contact+Infrared+Body+Thermometer\"&limit=25",
+      "count": 3,
+      "ok": true
+    },
+    {
+      "id": "rl-maker-model",
+      "label": "Registration & listing: maker + model number",
+      "url": "https://api.fda.gov/device/registrationlisting.json?search=registration.owner_operator.firm_name:\"homedics\"+AND+proprietary_name:\"TIE-240\"&limit=25",
+      "count": 0,
+      "ok": true
+    },
+    {
+      "id": "rl-maker-name",
+      "label": "Registration & listing: maker + device name word",
+      "url": "https://api.fda.gov/device/registrationlisting.json?search=registration.owner_operator.firm_name:\"homedics\"+AND+products.openfda.device_name:\"thermometer\"&limit=25",
+      "count": 1,
+      "ok": true
+    },
+    {
+      "id": "class-codes",
+      "label": "Classification: device type of the matched product codes",
+      "url": "https://api.fda.gov/device/classification.json?search=product_code:FLL&limit=3",
+      "count": 1,
+      "ok": true
+    },
+    {
+      "id": "510k-FLL",
+      "label": "510(k) records for FLL",
+      "url": "https://api.fda.gov/device/510k.json?search=product_code:FLL&limit=3&sort=decision_date:desc",
+      "count": 798,
+      "ok": true
+    },
+    {
+      "id": "recall-FLL",
+      "label": "Recalls for FLL",
+      "url": "https://api.fda.gov/device/recall.json?search=product_code:FLL&limit=100&sort=event_date_initiated:desc",
+      "count": 19,
+      "ok": true
+    },
+    {
+      "id": "maude-FLL",
+      "label": "MAUDE counts for FLL",
+      "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received",
+      "count": 1636,
+      "ok": true
+    }
+  ],
+  "matches": [
+    {
+      "source": "registrationlisting",
+      "record_id": "3008011951",
+      "owner": "Homedics Group Canada",
+      "device_name": "Continuous Measurement Thermometer",
+      "product_code": "FLL",
+      "device_type_name": "Continuous Measurement Thermometer",
+      "decision_date": null,
+      "query_url": "https://api.fda.gov/device/registrationlisting.json?search=registration.owner_operator.firm_name:\"homedics\"+AND+products.openfda.device_name:\"thermometer\"&limit=25",
+      "score": 45,
+      "manufacturer_match": true,
+      "why_matched": [
+        "manufacturer name matches 'HoMedics USA, LLC'",
+        "device name shares 1 of 5 words"
+      ],
+      "why_not_matched": [
+        "model TIE-240 does not appear in the listed product names",
+        "device name words not in the record: non, contact, infrared, body"
+      ],
+      "listing_name": null,
+      "fei_number": "3008011951"
+    },
+    {
+      "source": "510k",
+      "record_id": "K203332",
+      "owner": "Hetaida Technology Co., Ltd.",
+      "device_name": "Non-contact Infrared Body Thermometer, Model HTD8808C, HTD8818A, HTD8816C",
+      "product_code": "FLL",
+      "device_type_name": "Continuous Measurement Thermometer",
+      "decision_date": "2021-02-25",
+      "query_url": "https://api.fda.gov/device/510k.json?search=device_name:\"Non-contact+Infrared+Body+Thermometer\"&limit=25",
+      "score": 25,
+      "manufacturer_match": false,
+      "why_matched": [
+        "device name shares 5 of 5 words"
+      ],
+      "why_not_matched": [
+        "applicant differs: Hetaida Technology Co., Ltd. vs HoMedics USA, LLC on the label",
+        "model TIE-240 does not appear in the 510(k) device name"
+      ],
+      "k_number": "K203332"
+    },
+    {
+      "source": "510k",
+      "record_id": "K200159",
+      "owner": "Hetaida Technology Co., Ltd.",
+      "device_name": "Non-contact Infrared Body Thermometer, model:HTD8823US",
+      "product_code": "FLL",
+      "device_type_name": "Continuous Measurement Thermometer",
+      "decision_date": "2021-01-05",
+      "query_url": "https://api.fda.gov/device/510k.json?search=device_name:\"Non-contact+Infrared+Body+Thermometer\"&limit=25",
+      "score": 25,
+      "manufacturer_match": false,
+      "why_matched": [
+        "device name shares 5 of 5 words"
+      ],
+      "why_not_matched": [
+        "applicant differs: Hetaida Technology Co., Ltd. vs HoMedics USA, LLC on the label",
+        "model TIE-240 does not appear in the 510(k) device name"
+      ],
+      "k_number": "K200159"
+    }
+  ],
+  "manufacturer_match_found": true,
+  "note": "These are possible matches. A person must confirm one, or none.",
+  "status": "needs_person_to_confirm",
+  "confirmed": null,
+  "device_type_views": {
+    "FLL": {
+      "product_code": "FLL",
+      "device_type_name": "Continuous Measurement Thermometer",
+      "facts": [
+        {
+          "id": "FLL:device_type",
+          "topic": "device_type",
+          "status": "pass",
+          "check": "direct",
+          "text": "Product code FLL is the device type 'Continuous Measurement Thermometer' in the FDA classification database.",
+          "data": {
+            "device_type_name": "Continuous Measurement Thermometer",
+            "device_class": "2",
+            "regulation_number": "880.2910"
+          },
+          "query_url": "https://api.fda.gov/device/classification.json?search=product_code:FLL&limit=3"
+        },
+        {
+          "id": "FLL:clearances_total",
+          "topic": "clearances_total",
+          "status": "pass",
+          "check": "direct",
+          "text": "openFDA lists 798 510(k) records under product code FLL.",
+          "data": {
+            "total": 798
+          },
+          "query_url": "https://api.fda.gov/device/510k.json?search=product_code:FLL&limit=3&sort=decision_date:desc"
+        },
+        {
+          "id": "FLL:clearances_latest",
+          "topic": "clearances_latest",
+          "status": "pass",
+          "check": "gate",
+          "text": "Most recent 510(k) under FLL on openFDA: K253162 (Unimed Medical Supplies, Inc., decided 2026-06-05).",
+          "data": {
+            "k_number": "K253162",
+            "applicant": "Unimed Medical Supplies, Inc.",
+            "decision_date": "2026-06-05"
+          },
+          "query_url": "https://api.fda.gov/device/510k.json?search=product_code:FLL&limit=3&sort=decision_date:desc"
+        },
+        {
+          "id": "FLL:recalls_total",
+          "topic": "recalls_total",
+          "status": "pass",
+          "check": "gate",
+          "text": "openFDA lists 19 recalls under product code FLL.",
+          "data": {
+            "total": 19
+          },
+          "query_url": "https://api.fda.gov/device/recall.json?search=product_code:FLL&limit=100&sort=event_date_initiated:desc"
+        },
+        {
+          "id": "FLL:recalls_latest",
+          "topic": "recalls_latest",
+          "status": "pass",
+          "check": "gate",
+          "text": "Most recent recall under FLL on openFDA: Z-3256-2026 (DeRoyal Industries Inc, started 2026-08-20).",
+          "data": {
+            "recall_number": "Z-3256-2026",
+            "firm": "DeRoyal Industries Inc",
+            "date_initiated": "2026-08-20"
+          },
+          "query_url": "https://api.fda.gov/device/recall.json?search=product_code:FLL&limit=100&sort=event_date_initiated:desc"
+        },
+        {
+          "id": "FLL:reports_total",
+          "topic": "reports_total",
+          "status": "pass",
+          "check": "direct",
+          "text": "MAUDE holds 1636 reports for FLL up to 2026-09-30, the latest report date on openFDA: 1530 before the 7 days ending 2026-09-30 plus 106 in them.",
+          "data": {
+            "total": 1636,
+            "as_of": "2026-09-30",
+            "before_this_week": 1530,
+            "this_week": 106
+          },
+          "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B19900101+TO+20260923%5D&limit=1",
+          "query_urls": [
+            "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B19900101+TO+20260923%5D&limit=1",
+            "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
+          ]
+        },
+        {
+          "id": "FLL:reports_window",
+          "topic": "reports_window",
+          "status": "pass",
+          "check": "direct",
+          "text": "In the 7 days ending 2026-09-30, openFDA has 106 reports for FLL; the 4 weeks before averaged 52.75 per week.",
+          "data": {
+            "count": 106,
+            "from": "2026-09-24",
+            "to": "2026-09-30",
+            "baseline_weekly_mean": 52.75
+          },
+          "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
+        },
+        {
+          "id": "FLL:this_week_change",
+          "topic": "this_week_change",
+          "status": "pass",
+          "check": "recomputed",
+          "text": "This week's change for FLL: reports suddenly increased.",
+          "data": {
+            "change": "reports suddenly increased",
+            "classification": "spike",
+            "triggers": [
+              "spike"
+            ],
+            "as_of": "2026-09-30",
+            "rules": [
+              "new kind of problem: reports this week and none before, or an event type not seen before",
+              "more serious than usual: Injury/Death share up 15 points or more vs the 4 weeks before",
+              "reports suddenly increased: at least 3 reports and 2 times the 4-week weekly average"
+            ]
+          },
+          "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
+        }
+      ],
+      "summary": {
+        "device_type": {
+          "device_type_name": "Continuous Measurement Thermometer",
+          "device_class": "2",
+          "regulation_number": "880.2910"
+        },
+        "clearances_total": {
+          "total": 798
+        },
+        "clearances_latest": {
+          "k_number": "K253162",
+          "applicant": "Unimed Medical Supplies, Inc.",
+          "decision_date": "2026-06-05"
+        },
+        "recalls_total": {
+          "total": 19
+        },
+        "recalls_latest": {
+          "recall_number": "Z-3256-2026",
+          "firm": "DeRoyal Industries Inc",
+          "date_initiated": "2026-08-20"
+        },
+        "reports_total": {
+          "total": 1636,
+          "as_of": "2026-09-30",
+          "before_this_week": 1530,
+          "this_week": 106
+        },
+        "reports_window": {
+          "count": 106,
+          "from": "2026-09-24",
+          "to": "2026-09-30",
+          "baseline_weekly_mean": 52.75
+        },
+        "this_week_change": {
+          "change": "reports suddenly increased",
+          "classification": "spike",
+          "triggers": [
+            "spike"
+          ],
+          "as_of": "2026-09-30",
+          "rules": [
+            "new kind of problem: reports this week and none before, or an event type not seen before",
+            "more serious than usual: Injury/Death share up 15 points or more vs the 4 weeks before",
+            "reports suddenly increased: at least 3 reports and 2 times the 4-week weekly average"
+          ]
+        }
+      }
+    }
+  },
+  "trace": [
+    {
+      "step": "SAM 3.1 crop",
+      "model": "SAM 3.1",
+      "started_utc": "2026-10-30T01:33:32Z",
+      "elapsed_ms": 697.5,
+      "timing": "measured",
+      "note": "prompts tried: label; crop used",
+      "cost_usd": 0.0025
+    },
+    {
+      "step": "Muse Spark read",
+      "model": "Muse Spark",
+      "started_utc": "2026-10-30T01:33:33Z",
+      "elapsed_ms": 12254.2,
+      "timing": "measured",
+      "input_tokens": 1597,
+      "output_tokens": 1700,
+      "cost_usd": 0.009221
+    },
+    {
+      "step": "openFDA search: 510(k): maker + model number",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T01:33:46Z",
+      "elapsed_ms": 432.7,
+      "timing": "measured",
+      "count": 0,
+      "url": "https://api.fda.gov/device/510k.json?search=applicant:\"homedics\"+AND+device_name:\"TIE-240\"&limit=25"
+    },
+    {
+      "step": "openFDA search: 510(k): maker + device name word",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T01:33:46Z",
+      "elapsed_ms": 146.2,
+      "timing": "measured",
+      "count": 0,
+      "url": "https://api.fda.gov/device/510k.json?search=applicant:\"homedics\"+AND+device_name:\"thermometer\"&limit=25"
+    },
+    {
+      "step": "openFDA search: 510(k): device name",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T01:33:46Z",
+      "elapsed_ms": 154.6,
+      "timing": "measured",
+      "count": 3,
+      "url": "https://api.fda.gov/device/510k.json?search=device_name:\"Non-contact+Infrared+Body+Thermometer\"&limit=25"
+    },
+    {
+      "step": "openFDA search: Registration & listing: maker + model number",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T01:33:46Z",
+      "elapsed_ms": 151.7,
+      "timing": "measured",
+      "count": 0,
+      "url": "https://api.fda.gov/device/registrationlisting.json?search=registration.owner_operator.firm_name:\"homedics\"+AND+proprietary_name:\"TIE-240\"&limit=25"
+    },
+    {
+      "step": "openFDA search: Registration & listing: maker + device name word",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T01:33:46Z",
+      "elapsed_ms": 152.3,
+      "timing": "measured",
+      "count": 1,
+      "url": "https://api.fda.gov/device/registrationlisting.json?search=registration.owner_operator.firm_name:\"homedics\"+AND+products.openfda.device_name:\"thermometer\"&limit=25"
+    },
+    {
+      "step": "openFDA search: Classification: device type of the matched product codes",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T01:33:47Z",
+      "elapsed_ms": 163.6,
+      "timing": "measured",
+      "count": 1,
+      "url": "https://api.fda.gov/device/classification.json?search=product_code:FLL&limit=3"
+    },
+    {
+      "step": "openFDA search: 510(k) records for FLL",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T01:33:47Z",
+      "elapsed_ms": 160.4,
+      "timing": "measured",
+      "count": 798,
+      "url": "https://api.fda.gov/device/510k.json?search=product_code:FLL&limit=3&sort=decision_date:desc"
+    },
+    {
+      "step": "openFDA search: Recalls for FLL",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T01:33:47Z",
+      "elapsed_ms": 343.2,
+      "timing": "measured",
+      "count": 19,
+      "url": "https://api.fda.gov/device/recall.json?search=product_code:FLL&limit=100&sort=event_date_initiated:desc"
+    },
+    {
+      "step": "openFDA search: MAUDE counts and this week's change for FLL",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T01:33:47Z",
+      "elapsed_ms": 1076.0,
+      "timing": "measured",
+      "count": 1636,
+      "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received",
+      "urls": [
+        "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received",
+        "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact",
+        "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact",
+        "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B19900101+TO+20260923%5D&limit=1",
+        "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B19900101+TO+20260923%5D&count=event_type.exact"
+      ],
+      "note": "covers 5 openFDA queries; elapsed_ms is the combined time of the whole check",
+      "queries": [
+        {
+          "query": "Reports per day (latest date, both windows)",
+          "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received",
+          "count": null
+        },
+        {
+          "query": "This week, by event type",
+          "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact",
+          "count": 106
+        },
+        {
+          "query": "4 weeks before, by event type",
+          "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact",
+          "count": 211
+        },
+        {
+          "query": "Everything before this week",
+          "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B19900101+TO+20260923%5D&limit=1",
+          "count": 1530
+        },
+        {
+          "query": "Everything before this week, by event type",
+          "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AFLL+AND+date_received%3A%5B19900101+TO+20260923%5D&count=event_type.exact",
+          "count": 1530
+        }
+      ]
+    },
+    {
+      "step": "Gate check",
+      "model": "gate",
+      "started_utc": "2026-10-30T01:33:48Z",
+      "elapsed_ms": 0.2,
+      "timing": "measured",
+      "count": 8,
+      "note": "8 facts passed, 0 withheld"
+    },
+    {
+      "step": "Done",
+      "model": "gate",
+      "started_utc": "2026-10-30T01:33:48Z",
+      "elapsed_ms": 15732.6,
+      "timing": "sum of the measured steps above"
+    }
+  ],
+  "scoring_rules": [
+    "Exact K-number or GTIN printed on the label equals the record: 100 points.",
+    "Manufacturer: up to 40 points, in proportion to the label's maker words found in the record's applicant / owner. A maker match needs all of them.",
+    "Model number found in the record's device name or model field: 25 points.",
+    "Device name: up to 25 points, in proportion to the label's name words found in the record.",
+    "A record is kept only if it has an exact id, a maker match, a model match, or at least 50% of the label's name words.",
+    "Order: exact id first, then maker match, then score, then newest decision date, then id.",
+    "At most 3 are shown. None is chosen for the person."
+  ],
+  "reading": {
+    "model": "muse-spark-1.3",
+    "skill_version": "1.0.0",
+    "input_tokens": 1597,
+    "output_tokens": 1700,
+    "cost_usd": {
+      "spark": 0.009221,
+      "sam": 0.0025,
+      "total": 0.011721
+    }
+  },
+  "disclaimer": "Possible matches for a person to confirm. This is a search of public openFDA records, not an identification of the device, and not medical advice."
+}

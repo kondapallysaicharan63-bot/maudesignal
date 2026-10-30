@@ -75,7 +75,7 @@ class ExtractionRecord(Base):
     skill_name: Mapped[str] = mapped_column(String)
     skill_version: Mapped[str] = mapped_column(String)
     model_used: Mapped[str] = mapped_column(String)
-    output_json: Mapped[str] = mapped_column(Text)  # full validated JSON
+    output_json: Mapped[str] = mapped_column(Text)  # full schema-checked JSON
     confidence_score: Mapped[float] = mapped_column(Float)
     requires_review: Mapped[bool] = mapped_column(Boolean, index=True)
 

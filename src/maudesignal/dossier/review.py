@@ -22,6 +22,7 @@ your data).
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import re
 from dataclasses import asdict, dataclass, field
@@ -77,6 +78,22 @@ class ReviewResult:
     input_tokens: int = 0
     output_tokens: int = 0
     schema: str = RECORDING_SCHEMA
+    #: sha256 of the PDF bytes the reviewer saw (empty: reviewed the HTML text only, or a
+    #: recording made before the hash was stored, which can never be matched to a PDF).
+    reviewed_sha256: str = ""
+
+    def reviewed(self, pdf: bytes | None) -> bool:
+        """True when ``pdf`` is byte-for-byte the document this review looked at."""
+        return bool(pdf) and self.reviewed_sha256 == sha256_hex(pdf or b"")
+
+    @property
+    def predates_binding(self) -> bool:
+        """True for a PDF-mode recording made before ``reviewed_sha256`` was stored.
+
+        Such a review can not be matched to a PDF; it is still shown, with a visible note
+        (``UNBOUND_REVIEW_NOTE``). A recording that carries a hash must match the PDF.
+        """
+        return self.mode == "pdf" and not self.reviewed_sha256
 
     @property
     def cost_usd(self) -> float:
@@ -86,6 +103,14 @@ class ReviewResult:
             + self.output_tokens * WONDER_USD_PER_M_OUTPUT / 1e6,
             6,
         )
+
+
+UNBOUND_REVIEW_NOTE = "recorded before pack binding; a re-record is pending"
+
+
+def sha256_hex(data: bytes) -> str:
+    """Hex sha256 of ``data``."""
+    return hashlib.sha256(data).hexdigest()
 
 
 def check_model(model: str) -> None:
@@ -285,6 +310,7 @@ def review_dossier(
         raw_output=raw,
         input_tokens=int(getattr(usage, "prompt_tokens", 0) or 0) if usage else 0,
         output_tokens=int(getattr(usage, "completion_tokens", 0) or 0) if usage else 0,
+        reviewed_sha256=sha256_hex(pdf) if used == "pdf" and pdf else "",
     )
     try:
         result.findings = parse_findings(raw, store)
@@ -325,6 +351,7 @@ def load_review(path: Path, store: EvidenceStore | None = None) -> ReviewResult 
         parse_error=str(d.get("parse_error", "")),
         input_tokens=int(d.get("input_tokens", 0)),
         output_tokens=int(d.get("output_tokens", 0)),
+        reviewed_sha256=str(d.get("reviewed_sha256", "")),
     )
     if store is not None:
         try:

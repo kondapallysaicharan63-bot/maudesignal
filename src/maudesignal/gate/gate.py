@@ -37,6 +37,7 @@ from maudesignal.gate.claims import (
     Claim,
     CountClaim,
     DeviceClaim,
+    GroupCountClaim,
     LiteratureClaim,
     QuoteClaim,
     RecallClaim,
@@ -199,6 +200,8 @@ def verify_claim(claim: Claim, store: EvidenceStore) -> ClaimVerdict:
         return _verify_literature(claim, store)
     if isinstance(claim, SourceCountClaim):
         return _verify_source_count(claim, store)
+    if isinstance(claim, GroupCountClaim):
+        return _verify_group_count(claim, store)
     return _verify_regulation(claim)
 
 
@@ -276,6 +279,46 @@ def _verify_source_count(c: SourceCountClaim, store: EvidenceStore) -> ClaimVerd
     if n == c.value:
         return ClaimVerdict(c, "pass", f"recomputed {n} {label}", ids, float(n))
     return ClaimVerdict(c, "block", f"claimed {c.value}, records show {n} {label}", ids, float(n))
+
+
+def _verify_group_count(c: GroupCountClaim, store: EvidenceStore) -> ClaimVerdict:
+    """A group's count is the number of distinct listed ids, every one a real in-scope report."""
+    if not c.label:
+        return ClaimVerdict(c, "block", "group has no label")
+    ids = tuple(dict.fromkeys(c.report_ids))
+    if not ids:
+        return ClaimVerdict(c, "block", "group lists no report ids", (), 0.0)
+    if len(ids) != len(c.report_ids):
+        return ClaimVerdict(c, "block", "group lists the same report id more than once")
+    missing = [i for i in ids if store.record(i) is None]
+    if missing:
+        return ClaimVerdict(
+            c, "block", f"report {', '.join(missing[:3])} not in evidence store", ids[:20]
+        )
+    recs = [r for i in ids if (r := store.record(i)) is not None]
+    wrong = [r.report_id for r in recs if r.product_code != c.product_code]
+    if wrong:
+        return ClaimVerdict(
+            c, "block", f"report {', '.join(wrong[:3])} is not a {c.product_code} report"
+        )
+    outside = [
+        r.report_id
+        for r in recs
+        if (c.date_from and (r.date_received or "") < c.date_from)
+        or (c.date_to and (r.date_received or "99999999") > c.date_to)
+    ]
+    if outside:
+        return ClaimVerdict(
+            c, "block", f"report {', '.join(outside[:3])} was received outside the stated dates"
+        )
+    n = len(ids)
+    if n == c.value:
+        return ClaimVerdict(
+            c, "pass", f"recomputed {n} from {n} listed report ids", ids[:20], float(n)
+        )
+    return ClaimVerdict(
+        c, "block", f"claimed {c.value}, group lists {n} reports", ids[:20], float(n)
+    )
 
 
 def _verify_share(c: ShareClaim, store: EvidenceStore) -> ClaimVerdict:
@@ -484,7 +527,9 @@ def _ungrounded_mentions(text: str, claims: list[Claim]) -> list[str]:
         v = float(m.group(1))
         if not any(abs(v - p) < 1e-6 for p in pct_claimed):
             out.append(f"{m.group(0)} has no share claim")
-    count_claimed = {c.value for c in claims if isinstance(c, CountClaim | SourceCountClaim)}
+    count_claimed = {
+        c.value for c in claims if isinstance(c, CountClaim | SourceCountClaim | GroupCountClaim)
+    }
     for m in _COUNT_RE.finditer(text):
         token = m.group(1).rstrip(",")
         if _looks_like_date(token) or _is_year_after_month(text, m.start(1), token):

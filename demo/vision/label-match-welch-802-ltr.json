@@ -1,0 +1,174 @@
+{
+  "kind": "device_label_match",
+  "schema_version": "1.0",
+  "image_file": "label-welch-802-ltr.jpg",
+  "generated_utc": "2026-10-30T01:34:02Z",
+  "label": {
+    "fields": {
+      "device_name": {
+        "value": "",
+        "legibility": "not_present"
+      },
+      "manufacturer": {
+        "value": "Welch Allyn Protocol, Inc.",
+        "legibility": "clear"
+      },
+      "model_number": {
+        "value": "802 LTR",
+        "legibility": "clear"
+      },
+      "k_number": {
+        "value": "",
+        "legibility": "not_present"
+      },
+      "udi": {
+        "value": "",
+        "legibility": "not_present"
+      },
+      "gtin": {
+        "value": "",
+        "legibility": "not_present"
+      }
+    },
+    "session_fields_omitted": true,
+    "overall_legibility": "partly_legible"
+  },
+  "search_basis": "model_name_manufacturer",
+  "search_inputs": {
+    "k_number": null,
+    "gtin": null,
+    "model_number": "802 LTR",
+    "device_name": null,
+    "manufacturer": "Welch Allyn Protocol, Inc."
+  },
+  "queries": [
+    {
+      "id": "510k-maker-model",
+      "label": "510(k): maker + model number",
+      "url": "https://api.fda.gov/device/510k.json?search=applicant:\"welch+allyn+protocol\"+AND+device_name:\"802+LTR\"&limit=25",
+      "count": 0,
+      "ok": true
+    },
+    {
+      "id": "510k-model",
+      "label": "510(k): model number",
+      "url": "https://api.fda.gov/device/510k.json?search=device_name:\"802+LTR\"&limit=25",
+      "count": 0,
+      "ok": true
+    },
+    {
+      "id": "rl-maker-model",
+      "label": "Registration & listing: maker + model number",
+      "url": "https://api.fda.gov/device/registrationlisting.json?search=registration.owner_operator.firm_name:\"welch+allyn+protocol\"+AND+proprietary_name:\"802+LTR\"&limit=25",
+      "count": 0,
+      "ok": true
+    },
+    {
+      "id": "rl-model",
+      "label": "Registration & listing: model number",
+      "url": "https://api.fda.gov/device/registrationlisting.json?search=proprietary_name:\"802+LTR\"&limit=25",
+      "count": 0,
+      "ok": true
+    }
+  ],
+  "matches": [],
+  "manufacturer_match_found": false,
+  "note": "No openFDA record matched what was read from this label.",
+  "status": "no_match_found",
+  "confirmed": null,
+  "device_type_views": {},
+  "trace": [
+    {
+      "step": "SAM 3.1 crop",
+      "model": "SAM 3.1",
+      "started_utc": "2026-10-30T01:33:48Z",
+      "elapsed_ms": 952.3,
+      "timing": "measured",
+      "note": "prompts tried: label; crop used",
+      "cost_usd": 0.0025
+    },
+    {
+      "step": "Muse Spark read",
+      "model": "Muse Spark",
+      "started_utc": "2026-10-30T01:33:49Z",
+      "elapsed_ms": 12053.9,
+      "timing": "measured",
+      "input_tokens": 1507,
+      "output_tokens": 1694,
+      "cost_usd": 0.009083
+    },
+    {
+      "step": "openFDA search: 510(k): maker + model number",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T01:34:02Z",
+      "elapsed_ms": 387.5,
+      "timing": "measured",
+      "count": 0,
+      "url": "https://api.fda.gov/device/510k.json?search=applicant:\"welch+allyn+protocol\"+AND+device_name:\"802+LTR\"&limit=25"
+    },
+    {
+      "step": "openFDA search: 510(k): model number",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T01:34:02Z",
+      "elapsed_ms": 148.6,
+      "timing": "measured",
+      "count": 0,
+      "url": "https://api.fda.gov/device/510k.json?search=device_name:\"802+LTR\"&limit=25"
+    },
+    {
+      "step": "openFDA search: Registration & listing: maker + model number",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T01:34:02Z",
+      "elapsed_ms": 153.9,
+      "timing": "measured",
+      "count": 0,
+      "url": "https://api.fda.gov/device/registrationlisting.json?search=registration.owner_operator.firm_name:\"welch+allyn+protocol\"+AND+proprietary_name:\"802+LTR\"&limit=25"
+    },
+    {
+      "step": "openFDA search: Registration & listing: model number",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T01:34:02Z",
+      "elapsed_ms": 150.8,
+      "timing": "measured",
+      "count": 0,
+      "url": "https://api.fda.gov/device/registrationlisting.json?search=proprietary_name:\"802+LTR\"&limit=25"
+    },
+    {
+      "step": "Gate check",
+      "model": "gate",
+      "started_utc": "2026-10-30T01:34:02Z",
+      "elapsed_ms": 0.0,
+      "timing": "measured",
+      "count": 0,
+      "note": "0 facts passed, 0 withheld"
+    },
+    {
+      "step": "Done",
+      "model": "gate",
+      "started_utc": "2026-10-30T01:34:02Z",
+      "elapsed_ms": 13847.0,
+      "timing": "sum of the measured steps above"
+    }
+  ],
+  "scoring_rules": [
+    "Exact K-number or GTIN printed on the label equals the record: 100 points.",
+    "Manufacturer: up to 40 points, in proportion to the label's maker words found in the record's applicant / owner. A maker match needs all of them.",
+    "Model number found in the record's device name or model field: 25 points.",
+    "Device name: up to 25 points, in proportion to the label's name words found in the record.",
+    "A record is kept only if it has an exact id, a maker match, a model match, or at least 50% of the label's name words.",
+    "Order: exact id first, then maker match, then score, then newest decision date, then id.",
+    "At most 3 are shown. None is chosen for the person."
+  ],
+  "reading": {
+    "model": "muse-spark-1.3",
+    "skill_version": "1.0.0",
+    "input_tokens": 1507,
+    "output_tokens": 1694,
+    "cost_usd": {
+      "spark": 0.009083,
+      "sam": 0.0025,
+      "total": 0.011583
+    }
+  },
+  "disclaimer": "Possible matches for a person to confirm. This is a search of public openFDA records, not an identification of the device, and not medical advice."
+}

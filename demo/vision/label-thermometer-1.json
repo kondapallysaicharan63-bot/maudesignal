@@ -31,7 +31,7 @@
     }
   },
   "session_fields_omitted": true,
-  "overall_legibility": "clear",
+  "overall_legibility": "partly_legible",
   "sam": {
     "prompts_tried": [
       "label"
@@ -111,11 +111,11 @@
   "model": "muse-spark-1.3",
   "skill_version": "1.0.0",
   "input_tokens": 1637,
-  "output_tokens": 879,
+  "output_tokens": 1478,
   "cost_usd": {
-    "spark": 0.005782,
+    "spark": 0.008328,
     "sam": 0.0025,
-    "total": 0.008282
+    "total": 0.010828
   },
   "image_file": "label-thermometer-1.jpg"
 }

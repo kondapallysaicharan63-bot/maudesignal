@@ -27,6 +27,7 @@ from maudesignal.dashboard.spend_ui import guarded_client
 from maudesignal.dossier.builder import DossierError, top_flagged_signal
 from maudesignal.dossier.render import pdf_page_png
 from maudesignal.dossier.review import (
+    UNBOUND_REVIEW_NOTE,
     WONDER_MODEL,
     ReviewError,
     ReviewResult,
@@ -206,8 +207,31 @@ def render_dossier(db: Database, *, capa_id: str | None, product_code: str | Non
             f"Narrative: {d.narrative.source} {d.narrative.model} · shown {d.narrative.passed} · "
             f"withheld {d.narrative.withheld}"
         )
+        if d.narrative.binding_note:
+            st.caption(d.narrative.binding_note.capitalize() + ".")
     else:
         st.caption(d.narrative.note)
+
+    with st.expander(f"Search methodology ({len(d.protocol)} searches)"):
+        st.caption(
+            "Every search behind this pack (Appendix B of the PDF), from stored values only. "
+            '"not recorded" means the stored log did not keep it.'
+        )
+        st.dataframe(
+            [
+                {
+                    "Search": r.label,
+                    "Dataset": r.dataset,
+                    "Filters": r.filters_text,
+                    "From": r.date_from or "",
+                    "To": r.date_to or "",
+                    "Count": r.count_text,
+                    "Run at (UTC)": r.run_at or "not recorded",
+                }
+                for r in d.protocol
+            ],
+            hide_index=True,
+        )
 
     left, right = st.columns([3, 2], gap="large")
     with left:
@@ -245,8 +269,17 @@ def render_dossier(db: Database, *, capa_id: str | None, product_code: str | Non
         live = st.session_state.get("dossier_review")
         if isinstance(live, ReviewResult) and live.doc_id == d.doc_id:
             _show_review(live, source="Live run")
-        elif recorded is not None:
+        elif recorded is not None and recorded.reviewed(out.pdf):
             _show_review(recorded, source="Recorded run")
+        elif recorded is not None and recorded.predates_binding:
+            _show_review(recorded, source="Recorded run")
+            st.caption(UNBOUND_REVIEW_NOTE.capitalize() + ".")
+        elif recorded is not None:
+            st.warning(
+                f"A recorded reviewer run ({recorded.created_at}) reviewed an earlier revision "
+                "of this document, not this PDF, so its result is not shown as the review of "
+                "this document. Run the reviewer live to review this revision."
+            )
         else:
             st.info(
                 "No reviewer run recorded for this document. With META_MODEL_API_KEY set, run "

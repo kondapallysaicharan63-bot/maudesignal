@@ -333,7 +333,7 @@ It is the foundation on which every downstream Skill depends. Extraction quality
 
 ## 8. Validation
 
-This Skill is validated against the gold standard test set at `tests/gold_set/gold_100.jsonl`.
+This Skill is checked against the gold standard test set at `tests/gold_set/gold_100.jsonl`.
 
 ### Passing criteria (per FR-08):
 - **Per-field accuracy ≥90%** across 100 hand-labeled records
@@ -375,6 +375,7 @@ This Skill is validated against the gold standard test set at `tests/gold_set/go
 
 ## 11. Changelog
 
+- **v1.0.0+wording** (2026-10-29) — Wording only: one verb in the gold-set section changed to "checked"; behavior, schema and examples unchanged. No version bump because behavior is unchanged.
 - **v1.0.0** (2026-04-23) — Initial release. Supports 6 extracted fields, confidence scoring, human-review flagging, mandatory citation verification.
 - **v1.0.0+alias** (2026-04-26) — Severity enum extended to accept `insufficient_information` as a backward-compatible alias for `unknown`, aligning vocabulary with `severity-triage` v1.0.0. No breaking change: existing extractions emitting `unknown` remain valid and equivalent. Schema, field doc, and procedure step 4 updated accordingly. No version bump because the change is additive and behaviorally equivalent.
 

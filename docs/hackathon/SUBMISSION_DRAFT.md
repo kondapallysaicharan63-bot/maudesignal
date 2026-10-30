@@ -24,7 +24,7 @@ recorded run or a test in this repository (sources in brackets).
   `HACKATHON.md`).
 - **Live demo:** https://maudesignal-4vniqswm9ptaxqtf2iawox.streamlit.app/ (keyless: recorded
   Muse runs, no live model calls unless a key is set).
-- **Video:** _[link — Charan records the voiceover over the 2:52 walkthrough. Deadline: our notes say Oct 30, 11:15 PM PT; a copy of the rules says Wed Nov 4, 9 PM ET. Confirm on the official page.]_
+- **Video:** _[link — Charan records the voiceover over the 2:52 walkthrough. Deadline: Nov 4, about 5 PM PT (Charan's date; confirm the exact time on the official page).]_
 
 ## Meta models used
 
@@ -151,4 +151,5 @@ firsthand (the problem statement is "Build for Your World").
 - External beta and expert sign-off (Harish / PSM QA).
 - Making `hackathon-day2` the default branch (or an OK to merge) so the daily
   monitor cron can run.
+- FDA Elsa 4.0 and MAUDE: any sentence about it needs a check against an FDA source by Charan first (fda.gov was not reachable from the build environment); it is not used anywhere in the project until then.
 - The final submit click.

@@ -13,6 +13,11 @@ For every photo in ``demo/vision/labels/`` this writes
   SAM / Spark steps are marked "not recorded" (no timing is invented). The openFDA part
   still runs, so this is testable without any Meta credit.
 
+* With ``--reuse-readings``: no Meta call at all (no key needed, none used). The reading,
+  the SAM / Spark timings and the costs already stored in ``label-match-<name>.json`` are
+  kept as recorded (timings are marked ``recorded <date>``); only the openFDA search, the
+  device-type views, the gate and the trace are run again.
+
 Nothing is confirmed here: a person confirms a match in the app.
 
     python3 scripts/record_label_matches.py
@@ -41,6 +46,9 @@ from maudesignal.vision.label_match import (  # noqa: E402
     match_label,
     not_recorded_read_steps,
     read_label_timed,
+    reading_from_match,
+    recorded_model_info,
+    recorded_read_steps,
 )
 from maudesignal.vision.pipeline import DEMO_VISION_DIR  # noqa: E402
 from maudesignal.vision.sam import DEFAULT_SAM_MODEL, SamClient  # noqa: E402
@@ -59,6 +67,12 @@ def main() -> int:
     ap.add_argument("--labels", type=Path, default=DEMO_VISION_DIR / "labels")
     ap.add_argument("--readings", type=Path, default=DEMO_VISION_DIR, help="stored label-*.json")
     ap.add_argument("--out", type=Path, default=DEMO_VISION_DIR)
+    ap.add_argument(
+        "--reuse-readings",
+        action="store_true",
+        help="re-run only openFDA / views / gate / trace over the readings stored in "
+        "label-match-*.json (no Meta call, no key needed)",
+    )
     ap.add_argument("--only", nargs="*", help="photo file names to process (default: all)")
     ap.add_argument("--model", default=os.environ.get("META_MODEL_API_MODEL", "muse-spark-1.3"))
     ap.add_argument("--sam-model", default=os.environ.get("META_SAM_MODEL", DEFAULT_SAM_MODEL))
@@ -70,9 +84,13 @@ def main() -> int:
     photos = sorted(p for p in args.labels.iterdir() if p.suffix.lower() in LABEL_SUFFIXES)
     if args.only:
         photos = [p for p in photos if p.name in set(args.only)]
-    key = os.environ.get("META_MODEL_API_KEY", "")
+    key = "" if args.reuse_readings else os.environ.get("META_MODEL_API_KEY", "")
     base_url = os.environ.get("META_MODEL_API_BASE_URL", "https://api.meta.ai/v1")
-    mode = "SAM 3.1 + Muse Spark re-run" if key else "stored readings (no META_MODEL_API_KEY)"
+    mode = (
+        "readings stored in label-match-*.json (--reuse-readings; no Meta call)"
+        if args.reuse_readings
+        else "SAM 3.1 + Muse Spark re-run" if key else "stored readings (no META_MODEL_API_KEY)"
+    )
     print(f"[label-match] {len(photos)} photo(s); reading from: {mode}")
 
     client = None
@@ -109,6 +127,19 @@ def main() -> int:
                             },
                         }
                         total_cost += result.cost_usd
+                    elif args.reuse_readings:
+                        prev_path = args.readings / f"label-match-{name}.json"
+                        if not prev_path.is_file():
+                            skipped += 1
+                            print(
+                                f"[label-match] {photo.name}: SKIPPED, no stored match "
+                                f"{prev_path.name} to reuse"
+                            )
+                            continue
+                        prev = json.loads(prev_path.read_text(encoding="utf-8"))
+                        reading = reading_from_match(prev)
+                        read_steps = recorded_read_steps(prev)
+                        info = recorded_model_info(prev)
                     else:
                         stored = args.readings / f"label-{name}.json"
                         if not stored.is_file():

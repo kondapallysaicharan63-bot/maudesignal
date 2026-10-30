@@ -163,6 +163,12 @@ def test_code_with_no_recent_reports_is_reported_plainly() -> None:
     client._client = _fake_openfda({"20200101": 3}, {"20200101": {"Malfunction": 3}})
     r = check_product_code(client, "LLZ", today=date(2026, 10, 29))
     assert r.as_of is None and r.classification == "stable" and r.prior_report_count == 3
+    # "no reports in the last two years" has a query behind it, next to the all-dates one
+    assert [label for label, _ in r.queries] == ["Reports, all dates", "Reports, last two years"]
+    all_dates, two_years = (u for _, u in r.queries)
+    assert "limit=1" in two_years and "limit=1" in all_dates
+    assert "date_received" not in all_dates
+    assert all(u.startswith("https://api.fda.gov/") for _, u in r.queries)
 
 
 def test_a_sweep_date_compares_every_code_on_the_same_week() -> None:

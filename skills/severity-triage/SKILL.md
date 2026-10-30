@@ -247,7 +247,7 @@ contradiction of MAUDE event_type, and using training-data knowledge.
 
 ## 8. Validation
 
-This Skill is validated against the 100-record gold standard severity labels
+This Skill is checked against the 100-record gold standard severity labels
 at `tests/gold_set/severity_gold_100.jsonl`.
 
 ### Passing criteria:
@@ -292,6 +292,7 @@ passes at the thresholds above.**
 
 ## 11. Changelog
 
+- **v1.0.0+wording** (2026-10-29) — Wording only: one verb in the gold-set section changed to "checked"; behavior, schema and examples unchanged. No version bump because behavior is unchanged.
 - **v1.0.0** (2026-04-26) — Initial release. 5-category enum, narrative-driven
   triage with MAUDE event_type reconciliation, mandatory citation verification,
   hard rules for unambiguous death calls.

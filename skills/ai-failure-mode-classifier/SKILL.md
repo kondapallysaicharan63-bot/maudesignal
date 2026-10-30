@@ -250,7 +250,7 @@ subgroup, fabricated quote, and category-from-product-code.
 
 ## 8. Validation
 
-This Skill is validated against `tests/gold_set/ai_failure_classifier_gold_100.jsonl`.
+This Skill is checked against `tests/gold_set/ai_failure_classifier_gold_100.jsonl`.
 
 ### Passing criteria:
 - **Top-1 accuracy ≥80%** across the gold set
@@ -299,6 +299,7 @@ passes at the thresholds above.**
 
 ## 11. Changelog
 
+- **v1.0.0+wording** (2026-10-29) — Wording only: one verb in the gold-set section changed to "checked"; behavior, schema and examples unchanged. No version bump because behavior is unchanged.
 - **v1.0.0** (2026-04-26) — Initial release. 11-category taxonomy, mutually
   exclusive primary with up to 2 secondary observations, mandatory citation
   verification, consistency rules for drift / automation bias / bias_or_fairness.
