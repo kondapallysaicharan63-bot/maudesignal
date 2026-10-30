@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generated_utc": "2026-10-29T07:42:52Z",
-  "run_id": "40836844281",
+  "generated_utc": "2026-10-30T02:55:38Z",
+  "run_id": "40994117980",
   "source": "https://www.fda.gov/medical-devices/artificial-intelligence-enabled-medical-devices/list-artificial-intelligence-enabled-medical-devices",
   "devices_on_list": 1614,
   "codes_on_list": 181,
@@ -45,7 +45,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQIH+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQIH+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -99,7 +99,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -159,7 +159,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AIYN+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AIYN+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -213,7 +213,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AJAK+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AJAK+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -267,7 +267,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALNH+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALNH+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -316,7 +316,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQAS+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQAS+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -365,7 +365,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQKB+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQKB+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -414,7 +414,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMYN+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMYN+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -463,7 +463,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQFM+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQFM+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -512,7 +512,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQDQ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQDQ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -566,7 +566,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMUJ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMUJ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -620,7 +620,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADQK+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADQK+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -674,7 +674,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AKPS+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AKPS+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -723,7 +723,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APOK+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APOK+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -772,7 +772,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQNP+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQNP+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -830,7 +830,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOWB+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOWB+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -879,7 +879,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADQD+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADQD+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -933,7 +933,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMNR+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMNR+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -991,7 +991,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AIYO+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AIYO+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -1040,7 +1040,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AJOY+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AJOY+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -1089,7 +1089,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOEB+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOEB+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -1138,7 +1138,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQBS+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQBS+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -1196,7 +1196,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOLO+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOLO+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -1245,7 +1245,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOLZ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOLZ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -1294,7 +1294,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQJU+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQJU+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -1352,7 +1352,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AHAW+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AHAW+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -1410,7 +1410,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMXD+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMXD+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -1459,7 +1459,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APJA+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APJA+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -1508,7 +1508,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOMB+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOMB+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -1557,7 +1557,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQME+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQME+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -1611,7 +1611,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADPS+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADPS+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -1660,7 +1660,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APIB+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APIB+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -1709,7 +1709,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQPF+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQPF+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -1758,7 +1758,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADXH+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADXH+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -1812,7 +1812,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AKPR+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AKPR+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -1861,7 +1861,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AGXY+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AGXY+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -1910,7 +1910,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APOV+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APOV+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -1959,7 +1959,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AGKZ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AGKZ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -2008,7 +2008,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASBF+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASBF+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -2057,7 +2057,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQYE+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQYE+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -2115,7 +2115,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMWI+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMWI+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -2164,7 +2164,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQNL+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQNL+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -2213,7 +2213,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APHZ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APHZ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -2262,7 +2262,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQTZ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQTZ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -2311,7 +2311,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANQQ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANQQ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -2360,7 +2360,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQHE+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQHE+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -2409,7 +2409,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APOS+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APOS+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -2458,7 +2458,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQWO+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQWO+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -2512,7 +2512,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AJAA+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AJAA+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -2561,7 +2561,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQEA+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQEA+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -2610,7 +2610,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APIW+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APIW+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -2659,7 +2659,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOIW+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOIW+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -2708,7 +2708,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASAO+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASAO+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -2757,7 +2757,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APBH+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APBH+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -2806,7 +2806,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APNN+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APNN+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -2855,7 +2855,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APBZ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APBZ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -2904,7 +2904,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADRG+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADRG+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -2958,7 +2958,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AIYE+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AIYE+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -3020,7 +3020,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMHX+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMHX+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -3069,7 +3069,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQUO+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQUO+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -3118,7 +3118,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQRG+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQRG+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -3167,7 +3167,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASDJ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASDJ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -3216,7 +3216,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQDB+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQDB+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -3265,7 +3265,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQNV+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQNV+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -3322,7 +3322,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMQB+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMQB+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -3371,7 +3371,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQXO+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQXO+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -3420,7 +3420,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASFE+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASFE+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -3469,7 +3469,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASAK+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASAK+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -3518,7 +3518,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASAT+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASAT+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -3567,7 +3567,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQZF+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQZF+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -3627,7 +3627,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADSI+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADSI+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -3676,7 +3676,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APPU+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APPU+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -3725,7 +3725,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOUO+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOUO+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -3785,7 +3785,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOTE+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOTE+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -3847,7 +3847,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALWS+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALWS+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -3896,7 +3896,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQHA+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQHA+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -3954,7 +3954,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APZP+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APZP+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -4003,7 +4003,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQZB+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQZB+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -4057,7 +4057,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQDA+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQDA+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -4106,7 +4106,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADSH+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADSH+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -4155,7 +4155,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQER+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQER+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -4213,7 +4213,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AKGI+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AKGI+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -4262,7 +4262,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQPN+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQPN+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -4311,7 +4311,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQZW+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQZW+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -4365,7 +4365,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AJIR+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AJIR+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -4414,7 +4414,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APCS+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APCS+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -4463,7 +4463,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQEK+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQEK+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -4512,7 +4512,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APLB+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APLB+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -4561,7 +4561,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQCC+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQCC+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -4610,7 +4610,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQAQ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQAQ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -4668,7 +4668,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANDC+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANDC+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -4717,7 +4717,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOBH+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOBH+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -4779,7 +4779,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANBW+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANBW+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -4828,7 +4828,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APEX+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APEX+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -4884,7 +4884,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASIG+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASIG+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -4933,7 +4933,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASIF+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASIF+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -4982,7 +4982,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASHY+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASHY+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -5040,7 +5040,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APHX+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APHX+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -5089,7 +5089,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASHW+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASHW+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -5143,7 +5143,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ACCK+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ACCK+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -5201,7 +5201,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOBJ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOBJ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -5250,7 +5250,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASHQ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASHQ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -5299,7 +5299,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASHP+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASHP+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -5348,7 +5348,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASHL+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASHL+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -5397,7 +5397,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASHH+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASHH+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -5446,7 +5446,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASHE+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASHE+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -5500,7 +5500,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AGWF+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AGWF+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -5549,7 +5549,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APPW+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APPW+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -5598,7 +5598,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQKQ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQKQ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -5647,7 +5647,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANCG+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANCG+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -5705,7 +5705,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ABZD+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ABZD+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -5754,7 +5754,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMYE+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMYE+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -5808,7 +5808,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOXO+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOXO+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -5857,7 +5857,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQQI+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQQI+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -5906,7 +5906,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASGH+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASGH+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -5955,7 +5955,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASFR+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASFR+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -6004,7 +6004,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APZM+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APZM+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -6053,7 +6053,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASFH+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASFH+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -6102,7 +6102,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQBC+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQBC+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -6151,7 +6151,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASEZ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASEZ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -6213,7 +6213,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMVK+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMVK+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -6275,7 +6275,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMAX+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMAX+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -6324,7 +6324,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ABZQ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ABZQ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -6373,7 +6373,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASDY+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASDY+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -6422,7 +6422,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOLV+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOLV+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -6480,7 +6480,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AKWS+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AKWS+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -6534,7 +6534,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AHGM+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AHGM+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -6583,7 +6583,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APRE+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APRE+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -6632,7 +6632,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQMS+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQMS+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -6681,7 +6681,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASBQ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASBQ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -6730,7 +6730,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASBC+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASBC+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -6779,7 +6779,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASAX+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASAX+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -6828,7 +6828,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMWJ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMWJ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -6877,7 +6877,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALKM+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALKM+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -6926,7 +6926,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASAR+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASAR+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -6975,7 +6975,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALEL+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALEL+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -7024,7 +7024,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQRY+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQRY+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -7073,7 +7073,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQYV+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQYV+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -7122,7 +7122,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQZS+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQZS+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -7171,7 +7171,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQWT+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQWT+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -7220,7 +7220,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOOG+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOOG+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -7269,7 +7269,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALDK+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALDK+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -7318,7 +7318,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQXZ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQXZ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -7367,7 +7367,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQXX+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQXX+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -7416,7 +7416,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQWZ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQWZ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -7465,7 +7465,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQFJ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQFJ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -7514,7 +7514,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APQP+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APQP+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -7568,7 +7568,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APGW+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APGW+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -7617,7 +7617,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQVT+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQVT+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -7666,7 +7666,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AGYD+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AGYD+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -7715,7 +7715,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQVD+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQVD+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -7764,7 +7764,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQVE+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQVE+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -7826,7 +7826,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMKJ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMKJ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -7875,7 +7875,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ABXQ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ABXQ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -7929,7 +7929,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AIZL+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AIZL+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -7978,7 +7978,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQOK+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQOK+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -8027,7 +8027,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQNK+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQNK+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -8076,7 +8076,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APRH+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APRH+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -8130,7 +8130,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMLO+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMLO+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -8179,7 +8179,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ABZG+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ABZG+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -8228,7 +8228,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQJB+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQJB+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -8277,7 +8277,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMRZ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMRZ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -8333,7 +8333,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMUD+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMUD+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -8387,7 +8387,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AJFY+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AJFY+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -8436,7 +8436,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOZE+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOZE+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -8490,7 +8490,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADQA+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADQA+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -8539,7 +8539,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AGWN+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AGWN+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -8588,7 +8588,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQCJ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQCJ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -8642,7 +8642,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AJIL+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AJIL+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -8708,7 +8708,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANAY+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANAY+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -8757,7 +8757,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADSB+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADSB+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -8806,7 +8806,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADPT+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADPT+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -8855,7 +8855,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AONV+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AONV+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -8904,7 +8904,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APTA+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APTA+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -8953,7 +8953,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANFJ+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANFJ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -9002,7 +9002,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOEE+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOEE+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -9051,7 +9051,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOYD+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOYD+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -9100,7 +9100,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMWM+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMWM+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -9149,7 +9149,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANVI+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANVI+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -9198,7 +9198,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMNM+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMNM+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
@@ -9247,7 +9247,7 @@
    "queries": [
     [
      "Reports per day (latest date, both windows)",
-     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANMN+AND+date_received%3A%5B20241029+TO+20261029%5D&count=date_received"
+     "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ANMN+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
     ],
     [
      "This week, by event type",
