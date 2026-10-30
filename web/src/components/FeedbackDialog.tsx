@@ -17,6 +17,7 @@ interface Props {
 }
 
 export const PATIENT_WARNING = "Please don't include patient details or any patient data."
+export const NO_NAME_NOTE = "We don't store your name or email. Please don't include patient details."
 export const PRIVATE_NOTE = 'Sent privately to the MaudeSignal builder; never shown publicly.'
 
 const FOCUSABLE = 'button:not([disabled]), input:not([disabled]), textarea:not([disabled])'
@@ -158,30 +159,17 @@ export function FeedbackDialog({ open, onClose, apiBase, refCode, page }: Props)
                 onChange={(e) => set('one_thing', e.target.value)}
               />
             </label>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className={LABEL}>
-                Name (optional)
-                <input
-                  type="text"
-                  autoComplete="off"
-                  maxLength={120}
-                  className={FIELD}
-                  value={form.name}
-                  onChange={(e) => set('name', e.target.value)}
-                />
-              </label>
-              <label className={LABEL}>
-                Role (optional)
-                <input
-                  type="text"
-                  autoComplete="off"
-                  maxLength={120}
-                  className={FIELD}
-                  value={form.role}
-                  onChange={(e) => set('role', e.target.value)}
-                />
-              </label>
-            </div>
+            <label className={LABEL}>
+              Role (optional)
+              <input
+                type="text"
+                autoComplete="off"
+                maxLength={120}
+                className={FIELD}
+                value={form.role}
+                onChange={(e) => set('role', e.target.value)}
+              />
+            </label>
 
             <fieldset className="m-0 border-0 p-0">
               <legend className="mb-1 text-[16px] font-semibold text-ink">May we quote you?</legend>
@@ -204,6 +192,7 @@ export function FeedbackDialog({ open, onClose, apiBase, refCode, page }: Props)
                 {result.message}
               </p>
             )}
+            <p className="m-0 text-[14px] text-ink-3">{NO_NAME_NOTE}</p>
             <p className="m-0 text-[14px] text-ink-3">{PRIVATE_NOTE}</p>
             <div className="flex justify-end gap-2">
               <button type="button" className="ms-btn ms-btn--secondary" onClick={onClose}>

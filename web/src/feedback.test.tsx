@@ -1,8 +1,10 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { FeedbackDialog, PATIENT_WARNING, PRIVATE_NOTE } from './components/FeedbackDialog'
+import { FeedbackDialog, NO_NAME_NOTE, PATIENT_WARNING, PRIVATE_NOTE } from './components/FeedbackDialog'
 import {
   EMPTY_FORM,
+  INVALID_REF,
+  REF_PATTERN,
   buildPayload,
   dialogKey,
   parseRef,
@@ -24,28 +26,57 @@ const BASE = 'https://api.example'
 const form = (over: Partial<FeedbackForm> = {}): FeedbackForm => ({ ...EMPTY_FORM, rating: 4, ...over })
 
 describe('ref codes', () => {
-  it('accepts allowed codes and ignores the rest', () => {
+  it('uses the same pattern as the API', () => {
+    expect(REF_PATTERN.source).toBe('^[A-Za-z0-9._~-]{1,64}$')
+  })
+
+  it('accepts allowed codes, flags bad ones, and reports absence', () => {
     expect(parseRef('?r=abc_DEF-12')).toBe('abc_DEF-12')
+    expect(parseRef('?r=a.b~c-1')).toBe('a.b~c-1')
     expect(parseRef('?x=1&r=ok')).toBe('ok')
     expect(parseRef('')).toBeNull()
-    expect(parseRef('?r=')).toBeNull()
-    expect(parseRef('?r=has space')).toBeNull()
-    expect(parseRef('?r=a<b>')).toBeNull()
-    expect(parseRef('?r=' + 'a'.repeat(33))).toBeNull()
-    expect(parseRef('?r=' + 'a'.repeat(32))).toBe('a'.repeat(32))
+    expect(parseRef('?x=1')).toBeNull()
+    expect(parseRef('?r=')).toBe(INVALID_REF)
+    expect(parseRef('?r=has space')).toBe(INVALID_REF)
+    expect(parseRef('?r=a<b>')).toBe(INVALID_REF)
+    expect(parseRef('?r=' + 'a'.repeat(65))).toBe(INVALID_REF)
+    expect(parseRef('?r=' + 'a'.repeat(64))).toBe('a'.repeat(64))
   })
 
-  it('is kept for the session after the parameter is gone', () => {
+  it('fresh: a valid code is read and stored', () => {
     const s = fakeStore()
-    expect(resolveRef('?r=dr-smith', s)).toBe('dr-smith')
+    expect(resolveRef('?r=TEST1', s)).toBe('TEST1')
+    expect(s.data.get('ms-ref')).toBe('TEST1')
+  })
+
+  it('kept: a later view without ?r= keeps the code', () => {
+    const s = fakeStore()
+    resolveRef('?r=dr-smith', s)
     expect(resolveRef('', s)).toBe('dr-smith')
-    expect(resolveRef('?r=bad code!', s)).toBe('dr-smith')
+    expect(resolveRef('?page=2', s)).toBe('dr-smith')
   })
 
-  it('does not store an invalid code, and survives a throwing store', () => {
+  it('replaced: a new valid code replaces the old one', () => {
     const s = fakeStore()
-    expect(resolveRef('?r=bad!', s)).toBeNull()
+    resolveRef('?r=one', s)
+    expect(resolveRef('?r=two', s)).toBe('two')
+    expect(resolveRef('', s)).toBe('two')
+  })
+
+  it('invalid: a bad code is sent as invalid-code and kept for the session', () => {
+    const s = fakeStore()
+    expect(resolveRef('?r=bad code!', s)).toBe('invalid-code')
+    expect(resolveRef('', s)).toBe('invalid-code')
+    expect(resolveRef('?r=good', s)).toBe('good')
+  })
+
+  it('absent: no code at all gives null so the ref is omitted', () => {
+    const s = fakeStore()
+    expect(resolveRef('', s)).toBeNull()
     expect(s.data.size).toBe(0)
+  })
+
+  it('survives a throwing store', () => {
     const boom: KeyValueStore = {
       getItem: () => {
         throw new Error('blocked')
@@ -56,6 +87,13 @@ describe('ref codes', () => {
     }
     expect(resolveRef('?r=ok1', boom)).toBe('ok1')
     expect(resolveRef('', boom)).toBeNull()
+  })
+
+  it('an invalid-code visit body carries ref invalid-code', () => {
+    const fetcher = vi.fn((_u: string, _i: RequestInit) => Promise.resolve({}))
+    resetVisits()
+    sendVisit(BASE, resolveRef('?r=%20', fakeStore()), 'new', fakeStore(), { fetcher }, NOW)
+    expect(JSON.parse(fetcher.mock.calls[0][1].body as string).ref).toBe('invalid-code')
   })
 })
 
@@ -132,19 +170,19 @@ describe('visit pings', () => {
 })
 
 describe('feedback payload', () => {
-  it('has the agreed fields and trims text', () => {
+  it('has the agreed fields, no name, and trims text', () => {
     const p = buildPayload(
-      form({ comment: ' hi ', blocker: 'b', one_thing: 'o', name: ' Ann ', role: 'RA', consent: 'quote_name_role' }),
+      form({ comment: ' hi ', blocker: 'b', one_thing: 'o', role: 'RA', consent: 'quote_name_role' }),
       'abc',
       'thread:1',
       NOW,
     )
+    expect(p && 'name' in p).toBe(false)
     expect(p).toEqual({
       rating: 4,
       comment: 'hi',
       blocker: 'b',
       one_thing: 'o',
-      name: 'Ann',
       role: 'RA',
       consent: 'quote_name_role',
       ref: 'abc',
@@ -208,14 +246,15 @@ describe('dialog', () => {
   it('shows the patient-data warning, private note and labelled fields', () => {
     expect(html).toContain(PATIENT_WARNING)
     expect(html).toContain(PRIVATE_NOTE)
+    expect(html).toContain(NO_NAME_NOTE)
+    expect(html).not.toContain('Name (optional)')
     for (const t of [
       'Does this match real PMS/RA work?',
       'Comment',
       'What would stop your team using it?',
       'One thing that would make it useful?',
-      'Name (optional)',
       'Role (optional)',
-      'Quote me by name and role',
+      "Quote me by name and role (we'll confirm with you first)",
       'Quote me anonymously',
       "Don't quote me",
     ])

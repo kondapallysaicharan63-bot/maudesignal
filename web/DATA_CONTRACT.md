@@ -132,10 +132,16 @@ Read from the workflow files and the newest outputs; no GitHub API call.
 ## Feedback and visit pings
 
 `/v1/visit` fires once per view per session whenever an API base is configured. The body is
-`{ref?, page, client_ts}`, and `ref` is sent only when a valid `?r=CODE` (`^[A-Za-z0-9_-]{1,32}$`) is
-present. Without a code, `ref` is left out and the server labels the visit "email-batch-1". No IP, user
-agent or other visitor data is sent (fetch keepalive, credentials omit). The ref code is removed from
-the URL before it is sent to Web Analytics.
+`{ref?, page, client_ts}`. `?r=CODE` (`^[A-Za-z0-9._~-]{1,64}$`, same as the API) is read once and kept
+in sessionStorage for the session: a later view without `?r=` keeps it, and a new `?r=` replaces it. A
+`?r=` value that fails the pattern (or is empty) is sent as `ref: "invalid-code"` and kept the same
+way. With no `?r=` at all, `ref` is left out and the server labels the visit "email-batch-1".
+
+`/v1/feedback` sends `{rating, comment, blocker, one_thing, role, consent, ref, page, client_ts}`.
+There is no name field. `consent` is `quote_name_role` ("Quote me by name and role (we'll confirm with
+you first)"), `quote_anonymous` or `no_quote`. No name, email, IP, user agent or other visitor data
+is sent (fetch keepalive, credentials omit). The ref code is removed from the URL before it is sent to
+Web Analytics (`beforeSend` in `main.tsx`, `stripRef` in `analytics.ts`).
 
 ## Tests
 

@@ -13,6 +13,25 @@ describe('analytics url', () => {
     expect(stripRef('https://x.app/?r=dr-smith&a=1#v')).toBe('https://x.app/?a=1#v')
     expect(stripRef('https://x.app/')).toBe('https://x.app/')
     expect(stripRef('not a url')).toBe('not a url')
+    expect(stripRef('https://x.app/?r=TEST1')).toBe('https://x.app/')
+    expect(stripRef('https://x.app/p?r=a.b~c&r=d')).toBe('https://x.app/p')
+  })
+})
+
+describe('mounted dialog fields', () => {
+  it('has no Name input and the name note is shown', async () => {
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+    const root = createRoot(host)
+    await act(async () => {
+      root.render(<FeedbackDialog open onClose={() => undefined} apiBase={null} refCode={null} page="home" />)
+    })
+    const labels = Array.from(document.querySelectorAll('label')).map((l) => l.textContent ?? '')
+    expect(labels.some((t) => /^Name/.test(t))).toBe(false)
+    expect(labels.some((t) => t.startsWith('Role (optional)'))).toBe(true)
+    expect(document.body.textContent).toContain("We don't store your name or email. Please don't include patient details.")
+    await act(async () => root.unmount())
+    host.remove()
   })
 })
 

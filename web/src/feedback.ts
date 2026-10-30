@@ -1,15 +1,17 @@
 // Private feedback and personal ref codes. Everything here is plain functions so it can be tested
 // without a browser. Nothing about the visitor is sent except what the person types in the panel,
-// the ref code from their link, the page name and a client timestamp.
+// the ref code from their link (letters, digits and . _ ~ -), the page name and a client timestamp.
 
-export const REF_PATTERN = /^[A-Za-z0-9_-]{1,32}$/
+export const REF_PATTERN = /^[A-Za-z0-9._~-]{1,64}$/
+/** Sent instead of a ?r= value that fails REF_PATTERN, so the visit is not labelled as a batch visit. */
+export const INVALID_REF = 'invalid-code'
 const REF_KEY = 'ms-ref'
 const VISITED_KEY = 'ms-visited'
 
 export type Consent = 'quote_name_role' | 'quote_anonymous' | 'no_quote'
 
 export const CONSENT_OPTIONS: { value: Consent; label: string }[] = [
-  { value: 'quote_name_role', label: 'Quote me by name and role' },
+  { value: 'quote_name_role', label: "Quote me by name and role (we'll confirm with you first)" },
   { value: 'quote_anonymous', label: 'Quote me anonymously' },
   { value: 'no_quote', label: "Don't quote me" },
 ]
@@ -28,7 +30,10 @@ export function sessionStore(): KeyValueStore | null {
   }
 }
 
-/** A ref code from the ?r= parameter, or null when absent or not matching the allowed pattern. */
+/**
+ * The ?r= parameter: the code when valid, INVALID_REF when present but not matching the allowed
+ * pattern (or empty), null when absent.
+ */
 export function parseRef(search: string): string | null {
   let value: string | null = null
   try {
@@ -36,10 +41,14 @@ export function parseRef(search: string): string | null {
   } catch {
     return null
   }
-  return value !== null && REF_PATTERN.test(value) ? value : null
+  if (value === null) return null
+  return REF_PATTERN.test(value) ? value : INVALID_REF
 }
 
-/** Reads ?r= and keeps it for the session; a later view without ?r= keeps the stored code. */
+/**
+ * Reads ?r= once and keeps it for the session. A later view without ?r= keeps the stored code; a
+ * new ?r= (valid or not) replaces it. No ?r= and nothing stored gives null (ref omitted).
+ */
 export function resolveRef(search: string, store: KeyValueStore | null): string | null {
   const fromUrl = parseRef(search)
   try {
@@ -131,7 +140,6 @@ export interface FeedbackForm {
   comment: string
   blocker: string
   one_thing: string
-  name: string
   role: string
   consent: Consent
 }
@@ -141,7 +149,6 @@ export const EMPTY_FORM: FeedbackForm = {
   comment: '',
   blocker: '',
   one_thing: '',
-  name: '',
   role: '',
   consent: 'no_quote',
 }
@@ -151,7 +158,6 @@ export interface FeedbackPayload {
   comment: string
   blocker: string
   one_thing: string
-  name: string
   role: string
   consent: Consent
   ref: string | null
@@ -171,7 +177,6 @@ export function buildPayload(
     comment: form.comment.trim(),
     blocker: form.blocker.trim(),
     one_thing: form.one_thing.trim(),
-    name: form.name.trim(),
     role: form.role.trim(),
     consent: form.consent,
     ref,
