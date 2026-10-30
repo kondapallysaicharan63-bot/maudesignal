@@ -80,7 +80,6 @@ _PHI_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"(?<!\d)\d{3}-\d{2}-\d{4}(?!\d)"),  # US SSN
     re.compile(r"\bMRN\b[\s:#.-]{0,4}\d{3,}", re.IGNORECASE),  # MRN + digits
     re.compile(r"\b(?:DOB|date\s+of\s+birth|born)\b[^0-9]{0,12}\d", re.IGNORECASE),  # DOB cue
-    re.compile(r"(?<!\d)\d{1,2}[/-]\d{1,2}[/-](?:19|20)\d{2}(?!\d)"),  # full numeric date
 )
 PHI_MESSAGE = (
     "Please remove patient details (email addresses, phone numbers, ID or record numbers, "
@@ -106,8 +105,8 @@ class FeedbackIn(BaseModel):
     role: str | None = Field(default=None, max_length=100)
     consent: Literal["quote_name_role", "quote_anonymous", "no_quote"]
     ref: str | None = Field(default=None, pattern=REF_PATTERN)
-    page: str = Field(default="", max_length=64)
-    client_ts: str = Field(default="", max_length=40)
+    page: str = Field(default="", max_length=64, pattern=r"^[A-Za-z0-9_:.-]*$")
+    client_ts: str = Field(default="", max_length=40, pattern=r"^[0-9TZ:.+-]*$")
 
 
 class VisitIn(BaseModel):
@@ -116,8 +115,10 @@ class VisitIn(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     ref: str | None = Field(default=None, pattern=REF_PATTERN)
-    page: str = Field(min_length=1, max_length=64, description="Workflow id")
-    client_ts: str = Field(default="", max_length=40)
+    page: str = Field(
+        min_length=1, max_length=64, pattern=r"^[A-Za-z0-9_:.-]+$", description="Workflow id"
+    )
+    client_ts: str = Field(default="", max_length=40, pattern=r"^[0-9TZ:.+-]*$")
 
 
 def _err(status: int, code: str, message: str, headers: dict[str, str] | None = None) -> Response:

@@ -190,7 +190,6 @@ def test_body_over_16kb_is_413(data: ConnectorData, monkeypatch: pytest.MonkeyPa
         "MRN: 99887766",
         "DOB 04/12/1961",
         "date of birth: 1961",
-        "seen 3/14/2025",
     ],
 )
 def test_phi_guard_returns_422_and_stores_nothing(
@@ -208,7 +207,10 @@ def test_phi_guard_lets_ordinary_text_through(
     data: ConnectorData, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     c, _, _ = make(data, monkeypatch)
-    text = "We review 510(k) K231234 and 3 product codes in 2026; FDA MDR 30-day clock."
+    text = (
+        "We review 510(k) K231234 and 3 product codes in 2026; FDA MDR 30-day clock; "
+        "report received 10/12/2025."
+    )
     assert c.post("/v1/feedback", json=GOOD | {"comment": text}, headers=H).status_code == 201
 
 
@@ -254,7 +256,7 @@ def test_visit_204_stores_no_identity_and_validates(
     c, store, _ = make(data, monkeypatch)
     r = c.post(
         "/v1/visit",
-        json={"ref": "abc", "page": "signals", "client_ts": "t"},
+        json={"ref": "abc", "page": "signals", "client_ts": "2026-10-30T01:00:00.000Z"},
         headers=H | {"User-Agent": "UA-SECRET-STRING"},
     )
     assert r.status_code == 204 and r.content == b""
@@ -585,3 +587,12 @@ def test_no_ip_in_limiter_ids_or_logs(
     c, _, _ = make(data, monkeypatch)
     c.post("/v1/feedback", json=GOOD, headers=H | {"X-Forwarded-For": "203.0.113.9"})
     assert "203.0.113.9" not in " ".join(rec.lines) and "testclient" not in " ".join(rec.lines)
+
+
+@pytest.mark.parametrize("field,value", [("page", "home<script>"), ("client_ts", "jane doe")])
+def test_page_and_client_ts_are_format_checked(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch, field: str, value: str
+) -> None:
+    c, store, _ = make(data, monkeypatch)
+    assert c.post("/v1/feedback", json=GOOD | {field: value}, headers=H).status_code == 422
+    assert all_stored(store, "feedback") == []
