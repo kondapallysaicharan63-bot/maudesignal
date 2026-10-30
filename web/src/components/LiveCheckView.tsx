@@ -33,7 +33,7 @@ function Result({ r, cached, advisory }: { r: LiveCheckResult; cached: boolean; 
         <p className="ws-wrap mt-2">
           <strong>{flagged ? 'Why it is flagged.' : 'Status.'}</strong> {reasonText(r)}
         </p>
-        <p className="ws-wrap m-0 text-[14px] text-ink-3">
+        <p className="ws-wrap m-0 text-[15px] text-ink-2">
           {r.window
             ? `${isoDay(r.window.current_start)} to ${isoDay(r.window.current_end)} (the latest week on openFDA) against the 4 weeks before.`
             : 'No report in the last two years.'}
@@ -43,7 +43,7 @@ function Result({ r, cached, advisory }: { r: LiveCheckResult; cached: boolean; 
       <dl className="m-0 mt-3 grid grid-cols-2 gap-2">
         {stats.map(([k, v]) => (
           <div key={k} className="rounded-md border border-rule bg-surface p-3">
-            <dt className="text-[14px] leading-snug text-ink-2">{k}</dt>
+            <dt className="text-[15px] leading-snug text-ink-2">{k}</dt>
             <dd className="t-index ms-num m-0 mt-1">{v}</dd>
           </div>
         ))}
@@ -60,7 +60,7 @@ function Result({ r, cached, advisory }: { r: LiveCheckResult; cached: boolean; 
           ))}
         </ul>
       </details>
-      <p className="mt-2 text-[14px] leading-snug text-ink-3">
+      <p className="mt-2 text-[15px] leading-snug text-ink-2">
         openFDA lags real time by weeks, so "this week" is the latest week it has. A triage signal for a person to review, not
         a finding.
         {advisory ? ` ${advisory}` : ''}
@@ -136,7 +136,7 @@ export function LiveCheckView({ initialCode = '' }: { initialCode?: string }) {
           if (!busy) void go()
         }}
       >
-        <label className="block text-[14px] text-ink-3" htmlFor="live-code">
+        <label className="block text-[15px] text-ink-2" htmlFor="live-code">
           Any FDA product code
           <input
             id="live-code"
@@ -147,14 +147,14 @@ export function LiveCheckView({ initialCode = '' }: { initialCode?: string }) {
             autoCapitalize="characters"
             spellCheck={false}
             placeholder="e.g. LLZ, QIH, FLL"
-            className="mt-1 block h-11 w-44 rounded-xs border border-rule-strong bg-surface px-3 text-[17px] uppercase text-ink placeholder:normal-case placeholder:text-ink-3"
+            className="mt-1 block h-11 w-44 rounded-xs border border-rule-strong bg-surface px-3 text-[17px] uppercase text-ink placeholder:normal-case placeholder:text-ink-2"
           />
         </label>
         <button type="submit" disabled={busy || code.length !== 3} className="ms-btn ms-btn--primary" style={{ height: 44 }}>
           {busy ? 'Checking…' : 'Check device type'}
         </button>
       </form>
-      <p className="mt-2 text-[14px] text-ink-3">
+      <p className="mt-2 text-[15px] text-ink-2">
         {used} of {SESSION_CHECKS} checks used in this browser session; a code checked in the last 6 hours is shown from this
         browser without asking again.
       </p>

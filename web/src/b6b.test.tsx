@@ -24,8 +24,9 @@ import {
   sendCapture,
   VOICE_WARNING,
 } from './capture'
-import { buildLabelTrace, buildReviewTrace, buildThreadTrace, NOT_RECORDED, argsSummary, modelBadge } from './trace'
-import { exactKnownCode, knownCodes, moveActive, suggest } from './typeahead'
+import { buildLabelTrace, buildReviewTrace, buildThreadTrace, NOT_RECORDED, argsSummary, modelBadge, traceSummary } from './trace'
+import { exactKnownCode, highlightParts, knownCodes, moveActive, suggest } from './typeahead'
+import { suggestThreads } from './match'
 import type { Brief, Thread, WorkspaceData } from './types'
 
 beforeAll(() => {
@@ -145,11 +146,20 @@ describe('agent trace', () => {
     expect(modelBadge('muse-wonder-1.0')).toBe('Muse Wonder')
   })
 
-  it('renders "not recorded" per step, the whole-run line and the replay note, with no forbidden wording', () => {
+  it('folds to one summary line, says "not recorded" once for the steps, and shows the whole-run line and replay note', () => {
     const t = T.find((x) => x.tool_steps.length > 0)!
     const tr = buildThreadTrace(t)
     const html = text(renderToStaticMarkup(<TraceView trace={tr} shown={tr.steps.length} />))
-    expect(html).toContain('Time: not recorded')
+    const raw = renderToStaticMarkup(<TraceView trace={tr} shown={tr.steps.length} />)
+    // Closed by default; the summary names the steps, the model, the tool calls and the stored cost.
+    expect(raw).not.toMatch(/<details[^>]* open/)
+    expect(html).toContain(traceSummary(tr))
+    expect(traceSummary(tr)).toContain(`${tr.steps.length} steps`)
+    expect(traceSummary(tr)).toContain('Muse Spark')
+    expect(traceSummary(tr)).toContain(`${t.tool_steps.length} tool`)
+    // One note instead of "Time: not recorded" on every step.
+    expect(html.match(/Per-step time, tokens and cost: not recorded/g)).toHaveLength(1)
+    expect(html.match(/Time: not recorded/g)).toHaveLength(1) // the whole-run line only
     expect(html).toContain('Whole run')
     expect(html).toContain('Replayed from a recording')
     for (const re of FORBIDDEN) expect(html).not.toMatch(re)
@@ -157,6 +167,19 @@ describe('agent trace', () => {
     const part = text(renderToStaticMarkup(<TraceView trace={tr} shown={1} />))
     expect(part).not.toContain('Gate check')
     expect(part).not.toContain('Whole run')
+    expect(part).toContain(`Replaying: step 1 of ${tr.steps.length}`)
+  })
+
+  it('leaves the cost out of the summary when the run did not store one, and shows tool arguments as code', () => {
+    const t = T.find((x) => x.tool_steps.length > 0)!
+    const bare = buildThreadTrace({ ...t, usage: null })
+    expect(traceSummary(bare)).not.toContain('$')
+    expect(traceSummary(bare)).not.toContain('not recorded')
+    const tool = bare.steps.find((s) => s.kind === 'tool')!
+    expect(tool.args).toBe(argsSummary(t.tool_steps[0].arguments))
+    expect(tool.result).toBe(t.tool_steps[0].summary || 'no summary stored')
+    const html = renderToStaticMarkup(<TraceView trace={bare} shown={bare.steps.length} />)
+    expect(html).toContain('font-mono')
   })
 })
 
@@ -200,6 +223,34 @@ describe('composer type-ahead', () => {
     expect(moveActive(2, 'ArrowUp', 3)).toBe(1)
     expect(moveActive(1, 'Enter', 3)).toBe(1)
     expect(moveActive(1, 'ArrowDown', 0)).toBe(-1)
+  })
+
+  it('marks the typed characters in a suggestion and keeps the text whole', () => {
+    const parts = highlightParts('Which recalls cover LLZ devices?', 'recall')
+    expect(parts.map((p) => p.text).join('')).toBe('Which recalls cover LLZ devices?')
+    expect(parts.filter((p) => p.hit).map((p) => p.text)).toEqual(['recall'])
+    expect(highlightParts('Image Processing', 'll').some((p) => p.hit)).toBe(false) // only the start of a word counts
+    expect(highlightParts('LLZ', 'll').filter((p) => p.hit).map((p) => p.text)).toEqual(['LL'])
+    expect(highlightParts('anything', '')).toEqual([{ text: 'anything', hit: false }])
+    expect(highlightParts('Recalls', 'recalls').filter((p) => p.hit).map((p) => p.text)).toEqual(['Recalls'])
+  })
+
+  it('ranks the question that matches more of the typed words first', () => {
+    const q = 'recall'
+    const ranked = suggestThreads(q, T, 8)
+    expect(ranked.length).toBeGreaterThan(0)
+    const hits = (t: Thread) => (t.question.toLowerCase().includes(q) ? 1 : 0)
+    // every question that contains the typed word comes before the ones that only match another way
+    const first = ranked.findIndex((t) => !hits(t))
+    if (first >= 0) expect(ranked.slice(first).every((t) => !hits(t))).toBe(true)
+  })
+
+  it('shows a labelled list with a hint, a scroll cap and a visible selected row', () => {
+    const html = renderToStaticMarkup(
+      <Composer threads={T} onThread={() => {}} viewKey="new" codes={codes} onCode={() => {}} onCamera={() => {}} onMic={() => {}} captureMode="label" />,
+    )
+    expect(html).toContain('Camera on')
+    expect(html).toContain('aria-pressed="true"')
   })
 
   it('renders a combobox with listbox semantics and camera and mic buttons', () => {

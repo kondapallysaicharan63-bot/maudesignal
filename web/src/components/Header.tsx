@@ -112,7 +112,7 @@ export function Header(p: Props) {
             )}
           </>
         ) : (
-          <span className="text-ink-3">Loading stored counts…</span>
+          <span className="text-ink-2">Loading stored counts…</span>
         )}
       </div>
     </header>

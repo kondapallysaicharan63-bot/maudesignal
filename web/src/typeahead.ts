@@ -67,3 +67,33 @@ export function moveActive(active: number, key: string, count: number): number {
   if (key === 'ArrowUp') return active <= 0 ? count - 1 : active - 1
   return active
 }
+
+export interface Part {
+  text: string
+  hit: boolean
+}
+
+const escapeRe = (w: string): string => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+/**
+ * Splits `text` into parts, marking the characters that match what was typed: each typed word (and the typed word
+ * without a trailing "s") where it starts a word of `text`. Used to highlight the match in a suggestion.
+ */
+export function highlightParts(text: string, query: string): Part[] {
+  const words = [...new Set(query.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean))]
+  const alts = words.flatMap((w) => (w.length > 3 && w.endsWith('s') ? [w, w.slice(0, -1)] : [w]))
+  // One-letter words are only marked when they are the only thing typed (they would light up half the sentence).
+  const usable = alts.filter((w) => w.length >= 2 || alts.length === 1).sort((a, b) => b.length - a.length)
+  if (usable.length === 0) return [{ text, hit: false }]
+  const re = new RegExp(`(?<![a-z0-9])(?:${usable.map(escapeRe).join('|')})`, 'gi')
+  const parts: Part[] = []
+  let at = 0
+  for (const m of text.matchAll(re)) {
+    const i = m.index ?? 0
+    if (i > at) parts.push({ text: text.slice(at, i), hit: false })
+    parts.push({ text: m[0], hit: true })
+    at = i + m[0].length
+  }
+  if (at < text.length) parts.push({ text: text.slice(at), hit: false })
+  return parts.length ? parts : [{ text, hit: false }]
+}

@@ -45,14 +45,14 @@ export function ExpandButton({
 export function Crumbs({ panel }: { panel: PanelId }) {
   const { onHome, workflow } = useContext(PanelNav)
   return (
-    <nav aria-label="Breadcrumb" className="min-w-0 flex-1 truncate text-[17px] text-ink-2">
+    <nav aria-label="Breadcrumb" className="min-w-0 flex-1 truncate whitespace-nowrap text-[17px] text-ink-2">
       <button type="button" className="min-h-11 px-1 font-semibold text-accent underline" onClick={onHome}>
         Home
       </button>
       {workflow && (
         <>
-          <span aria-hidden="true"> › </span>
-          <span>{workflow}</span>
+          <span aria-hidden="true" className="max-sm:hidden"> › </span>
+          <span className="inline-block max-w-[14rem] truncate align-bottom max-sm:hidden">{workflow}</span>
         </>
       )}
       <span aria-hidden="true"> › </span>

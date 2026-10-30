@@ -135,7 +135,7 @@ def main() -> None:
                 ).first.inner_text()
                 shot(page, r, tag, "workflow-mini")
                 if phone:
-                    page.get_by_role("button", name="Show numbers").click()
+                    page.get_by_test_id("mini-toggle").click()
                 r["mini_inner_overflow"] = inner_overflow(page, "aside[aria-label$='dashboard']")
 
                 # 4. expanded mini-dashboard, Esc collapses
@@ -154,12 +154,19 @@ def main() -> None:
                     "data-expanded"
                 )
                 # expand chat via button, collapse via button
-                page.get_by_test_id("expand-main").click()
-                page.wait_for_timeout(200)
-                r["main_expanded_attr"] = page.locator("main").get_attribute("data-expanded")
-                shot(page, r, tag, "expanded-chat")
-                page.get_by_test_id("expand-main").click()
-                r["main_after_button"] = page.locator("main").get_attribute("data-expanded")
+                if (
+                    phone
+                ):  # the chat title bar and its expand button are dropped on a phone (one column already)
+                    r["chat_expand_button_visible_on_phone"] = page.get_by_test_id(
+                        "expand-main"
+                    ).is_visible()
+                else:
+                    page.get_by_test_id("expand-main").click()
+                    page.wait_for_timeout(200)
+                    r["main_expanded_attr"] = page.locator("main").get_attribute("data-expanded")
+                    shot(page, r, tag, "expanded-chat")
+                    page.get_by_test_id("expand-main").click()
+                    r["main_after_button"] = page.locator("main").get_attribute("data-expanded")
 
                 # 5. AI sweep workflow (rules + stats)
                 go_workflow(page, phone, "AI device sweep")
@@ -185,11 +192,11 @@ def main() -> None:
                 shot(page, r, tag, "artifacts-tabs-thread")
                 for key in ("tabs_ai_sweep", "tabs_capa_thread"):
                     chk = r[key]
-                    assert (
-                        isinstance(chk, dict)
-                        and chk["no_sideways_scroll"]
-                        and chk["all_inside_pane"]
-                    ), (tag, key, chk)
+                    assert isinstance(chk, dict), (tag, key, chk)
+                    if phone:  # one row that scrolls sideways, with a fade at the edge
+                        assert chk["rows"] == 1, (tag, key, chk)
+                    else:
+                        assert chk["no_sideways_scroll"] and chk["all_inside_pane"], (tag, key, chk)
                 page.get_by_test_id("expand-artifacts").click()
                 page.wait_for_timeout(250)
                 shot(page, r, tag, "expanded-artifacts")

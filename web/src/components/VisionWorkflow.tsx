@@ -34,7 +34,7 @@ export function VisionWorkflow({ vision, onOpen }: { vision: Vision; onOpen: (se
                 <span className="ms-num">
                   {k.counts.VERIFIED} verified · {k.counts.CONFLICT} conflict · {k.counts.UNVERIFIABLE} unverifiable
                 </span>
-                <span className="block text-[14px] text-ink-3">
+                <span className="block text-[15px] text-ink-2">
                   Both reads agree on {k.agreement_pct}% of fields · {k.pages_read} of {k.page_count} pages read
                 </span>
               </span>
@@ -50,7 +50,7 @@ export function VisionWorkflow({ vision, onOpen }: { vision: Vision; onOpen: (se
             <button className="ws-side-item items-start border-b border-rule" onClick={() => onOpen({ mode: 'labels', index: i })}>
               <span className="min-w-0">
                 <span className="ws-wrap block">{labelName(l)}</span>
-                <span className="block text-[14px] text-ink-3">
+                <span className="block text-[15px] text-ink-2">
                   {K_STATUS[l.k_status] ?? l.k_status} · {l.sam.boxes.length} label {l.sam.boxes.length === 1 ? 'box' : 'boxes'} found
                 </span>
               </span>

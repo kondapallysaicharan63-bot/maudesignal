@@ -142,9 +142,12 @@ export function ChatPane(p: Props) {
       aria-label={p.view.kind === 'new' ? 'Home' : 'Chat'}
       data-expanded={p.expanded}
     >
-      <PanelBar title={p.view.kind === 'new' ? 'Home' : 'Chat'} panel="main" expanded={p.expanded} onToggle={p.onToggleExpand} />
+      {/* Below lg the title row and its expand button are dropped (the page is one column already), so the top of the screen is not spent on a second title bar. */}
+      <div className={p.expanded ? '' : 'max-lg:hidden'}>
+        <PanelBar title={p.view.kind === 'new' ? 'Home' : 'Chat'} panel="main" expanded={p.expanded} onToggle={p.onToggleExpand} />
+      </div>
       <div className="ws-fade-bottom min-h-0 flex-1 overflow-y-auto px-4 py-4 md:px-8 md:py-6">
-        <div className={['mx-auto pb-16', p.view.kind === 'new' ? 'max-w-6xl' : 'max-w-3xl'].join(' ')}>{body}</div>
+        <div className={['mx-auto pb-28', p.view.kind === 'new' ? 'max-w-6xl' : 'max-w-3xl'].join(' ')}>{body}</div>
       </div>
       <Composer
         threads={data.threads.threads}
@@ -154,6 +157,7 @@ export function ChatPane(p: Props) {
         onCode={p.onCode}
         onCamera={() => p.onCapture('label')}
         onMic={() => p.onCapture('voice')}
+        captureMode={p.view.kind === 'capture' ? p.view.mode : null}
       />
     </main>
   )

@@ -270,6 +270,7 @@ export default function App() {
                 onThread={openThread}
                 onRun={openRun}
                 focusCode={sweepFocus?.code ?? null}
+                activeId={view.kind === 'thread' || view.kind === 'run' ? view.id : null}
               />
             )}
             <ChatPane

@@ -28,13 +28,13 @@ button {
     @apply flex w-full items-center justify-between gap-2 rounded-xs px-3 py-2 text-left text-[16px] leading-snug text-ink hover:bg-sunk;
   }
   .ws-side-item[aria-current='true'] {
-    @apply bg-sunk font-semibold;
+    @apply bg-accent-soft font-semibold shadow-[inset_4px_0_0_var(--accent)];
   }
   .ws-heading {
-    @apply px-3 pb-1 pt-5 text-[14px] font-semibold uppercase tracking-[0.1em] text-ink-3;
+    @apply px-3 pb-1 pt-5 text-[15px] font-semibold uppercase tracking-[0.06em] text-ink-2;
   }
   .ws-pill {
-    @apply inline-flex shrink-0 items-center gap-1 rounded-xs px-2 py-[2px] text-[14px] font-semibold leading-snug;
+    @apply inline-flex shrink-0 items-center gap-1 rounded-xs px-2 py-[2px] text-[15px] font-semibold leading-snug;
   }
 }
 
@@ -59,13 +59,15 @@ button {
 
 /* Small design-system text is lifted to 14px or more for this workspace. */
 .ms-kicker {
-  font-size: 14px;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
 }
 .ms-code {
-  font-size: 14px;
+  font-size: 15px;
 }
 .ms-chip {
-  font-size: 14px;
+  font-size: 15px;
   height: 28px;
 }
 
@@ -82,9 +84,40 @@ button {
   flex-wrap: wrap;
   overflow: visible;
 }
+/* Phone and tablet: one row that scrolls sideways, with the right edge fading out as the cue. */
+@media (max-width: 1023.98px) {
+  .ws-tabstrip {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent 100%);
+    mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent 100%);
+  }
+  .ws-tabstrip::-webkit-scrollbar {
+    display: none;
+  }
+}
 
 /* Scroll cue: the bottom edge of scrolling content fades out (a transparency mask, not a colour gradient). */
 .ws-fade-bottom {
   -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent 100%);
   mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent 100%);
+}
+
+/* A filled primary action: the accent fill for the one main action on a screen. */
+.ms-btn.ws-btn-primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+.ms-btn.ws-btn-primary:hover {
+  opacity: 0.9;
+}
+
+/* Buttons read at 16px (the design-system size is 14px); the small variant at 15px. */
+.ms-btn {
+  font-size: 16px;
+}
+.ms-btn--sm {
+  font-size: 15px;
 }

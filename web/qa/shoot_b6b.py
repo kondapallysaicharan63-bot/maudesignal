@@ -92,12 +92,18 @@ def main() -> None:
                 page.wait_for_selector("[role=option]")
                 r["typeahead_q_options"] = page.get_by_role("option").count()
                 r["typeahead_q_expanded"] = box.get_attribute("aria-expanded")
+                r["typeahead_q_texts"] = page.get_by_role("option").all_inner_texts()
+                r["typeahead_hint"] = page.get_by_test_id("typeahead-hint").inner_text()
+                r["typeahead_marks"] = page.locator("[role=option] mark").all_inner_texts()
+                r["typeahead_list_box"] = page.locator("[role=listbox]").bounding_box()
+                r["typeahead_scrim"] = page.get_by_test_id("typeahead-scrim").count()
                 shot(page, r, tag, "typeahead-questions")
                 # keyboard: ArrowDown highlights, ArrowUp wraps to the last, Esc closes
                 box.press("ArrowDown")
                 r["typeahead_active_after_down"] = box.get_attribute("aria-activedescendant")
                 box.press("ArrowUp")
                 r["typeahead_active_after_up"] = box.get_attribute("aria-activedescendant")
+                shot(page, r, tag, "typeahead-selected")
                 box.press("Escape")
                 r["typeahead_closed_on_esc"] = box.get_attribute("aria-expanded")
                 # type-ahead: codes
@@ -123,14 +129,19 @@ def main() -> None:
                 # thread with the trace (a repaired / withheld answer)
                 q = blocked["question"]
                 open_by_typing(page, " ".join(q.split()[:4]), q[:40])
-                page.wait_for_selector("[data-testid=trace-run]", timeout=15000)
+                page.wait_for_selector("[data-testid=trace-run]", state="attached", timeout=15000)
                 page.wait_for_timeout(500)
                 r["trace_steps"] = page.locator("[data-testid=trace] li[data-step]").evaluate_all(
                     "els => els.map(e => e.getAttribute('data-step'))"
                 )
-                r["trace_text"] = page.locator("[data-testid=trace]").inner_text()
+                r["trace_summary"] = page.get_by_test_id("trace-summary").inner_text()
+                page.locator("main div.overflow-y-auto").first.evaluate("e => e.scrollTo(0, 0)")
                 shot(page, r, tag, "trace-thread")
-                page.locator("main [data-testid=trace]").scroll_into_view_if_needed()
+                page.get_by_test_id("trace").locator("summary").click()
+                page.wait_for_timeout(250)
+                r["trace_text"] = page.locator("[data-testid=trace]").inner_text()
+                page.get_by_test_id("trace").scroll_into_view_if_needed()
+                shot(page, r, tag, "trace-open")
                 page.locator("main div.overflow-y-auto").first.evaluate("e => e.scrollTo(0, 0)")
                 shot(page, r, tag, "trace-thread-top")
 
@@ -138,6 +149,11 @@ def main() -> None:
                 page.get_by_test_id("composer-camera").click()
                 page.wait_for_selector("[data-testid=patient-warning]")
                 r["warning_text"] = page.locator("[data-testid=patient-warning]").inner_text()
+                r["capture_on_label"] = page.get_by_test_id("capture-on").inner_text()
+                r["camera_btn_pressed"] = page.get_by_test_id("composer-camera").get_attribute(
+                    "aria-pressed"
+                )
+                r["take_photo_y"] = page.get_by_text("Take a photo").bounding_box()["y"]
                 r["recorded_tag_present"] = page.locator("text=Recorded run").count()
                 shot(page, r, tag, "camera")
                 page.get_by_test_id("image-input").set_input_files(str(png))
@@ -162,8 +178,10 @@ def main() -> None:
                 shot(page, r, tag, "mic-recorded")
                 # the recorded voice answer: the trace starts with the Voice Transcribe "Heard" step
                 page.get_by_role("button", name="Open the recorded answer").click()
-                page.wait_for_selector("[data-testid=trace-run]", timeout=15000)
+                page.wait_for_selector("[data-testid=trace-run]", state="attached", timeout=15000)
                 page.wait_for_timeout(300)
+                page.get_by_test_id("trace").locator("summary").click()
+                page.wait_for_timeout(200)
                 r["voice_trace_first_step"] = page.locator(
                     "[data-testid=trace] li[data-step]"
                 ).first.inner_text()

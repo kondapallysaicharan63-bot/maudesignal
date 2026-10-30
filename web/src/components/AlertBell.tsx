@@ -64,7 +64,7 @@ export function AlertBell({ items, onOpen }: { items: AlertItem[]; onOpen: (a: A
         <Icon name="bell" />
         {n > 0 && (
           <span
-            className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-critical px-1 text-[14px] font-bold leading-none text-[var(--on-critical)]"
+            className="absolute -right-1.5 -top-1.5 flex h-7 min-w-7 items-center justify-center rounded-full bg-critical px-1.5 text-[15px] font-bold leading-none text-[var(--on-critical)] ring-2 ring-paper"
             data-testid="alert-badge"
             aria-hidden="true"
           >

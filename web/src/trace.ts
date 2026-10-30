@@ -19,6 +19,9 @@ export interface TraceStep {
   kind: StepKind
   title: string
   detail: string
+  /** Tool calls only: the arguments as short "key: value" text, and the stored result summary. */
+  args: string | null
+  result: string | null
   /** Extra lines, e.g. each withheld reason. */
   lines: string[]
   /** Model badge, or null for a step done by plain code. */
@@ -92,9 +95,9 @@ function runUsage(u: Thread['usage']): RunUsage {
 const count = (n: number, one: string, many = `${one}s`): string => `${n} ${n === 1 ? one : many}`
 
 type StepInit = Pick<TraceStep, 'id' | 'kind' | 'title' | 'detail'> &
-  Partial<Pick<TraceStep, 'lines' | 'model' | 'time' | 'tokens' | 'cost'>>
+  Partial<Pick<TraceStep, 'lines' | 'model' | 'time' | 'tokens' | 'cost' | 'args' | 'result'>>
 
-const step = (p: StepInit): TraceStep => ({ lines: [], model: null, time: none, tokens: none, cost: none, ...p })
+const step = (p: StepInit): TraceStep => ({ lines: [], args: null, result: null, model: null, time: none, tokens: none, cost: none, ...p })
 
 /** The gate's reason for every withheld sentence. */
 function withheldLines(sentences: Sentence[]): string[] {
@@ -134,6 +137,8 @@ export function buildThreadTrace(t: Thread): Trace {
         kind: 'tool',
         title: toolDisplayName(s.name),
         detail: `Arguments: ${argsSummary(s.arguments)}. Result: ${s.summary || 'no summary stored'}.`,
+        args: argsSummary(s.arguments),
+        result: s.summary || 'no summary stored',
         model: modelBadge(t.model),
       }),
     ),
@@ -225,4 +230,26 @@ export function buildReviewTrace(review: { model: string; findings: unknown[]; p
     step({ id: 'done', kind: 'done', title: 'Done', detail: 'Advisory only. A named person reviews and decides.' }),
   ]
   return { steps, beforeGate: 1, usage: { tokens: none, cost: none, time: none } }
+}
+
+/** True when this step stored at least one of time, tokens or cost. */
+export const stepHasMetrics = (s: TraceStep): boolean => s.time.recorded || s.tokens.recorded || s.cost.recorded
+
+/** The recorded values of one step as short text parts, e.g. ["4.2 s", "1,203 in · 88 out"]. Empty when none was stored. */
+export function stepMetricParts(s: TraceStep): string[] {
+  return [s.time, s.tokens, s.cost].filter((m) => m.recorded).map((m) => m.text)
+}
+
+/**
+ * One line for the collapsed trace, e.g. "7 steps · Muse Spark · 4 tools · $0.0470". Only what was stored:
+ * the cost is left out when the run did not record one, and tools are left out when no tool was called.
+ */
+export function traceSummary(trace: Trace): string {
+  const models = [...new Set(trace.steps.map((s) => s.model).filter((m): m is string => !!m))]
+  const tools = trace.steps.filter((s) => s.kind === 'tool').length
+  const parts = [count(trace.steps.length, 'step')]
+  if (models.length) parts.push(models.join(' + '))
+  if (tools) parts.push(count(tools, 'tool'))
+  if (trace.usage.cost.recorded) parts.push(trace.usage.cost.text)
+  return parts.join(' · ')
 }

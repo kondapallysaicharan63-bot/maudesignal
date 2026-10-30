@@ -74,7 +74,7 @@ export function ArtifactsPane({ open, data, tab, onTab, thread, produced, briefD
         </span>
       </div>
       <div className="relative shrink-0 border-b border-rule">
-        <div role="tablist" aria-label="Artifacts" className="ws-tabstrip gap-x-1 px-2" data-testid="tabstrip">
+        <div role="tablist" aria-label="Artifacts" className="ws-tabstrip gap-x-1 px-2" data-testid="tabstrip" title={produced.length > 0 ? 'A dot marks a tab made by the question on screen' : undefined}>
           {TABS.map((t) => {
             const selected = t.id === tab
             const made = produced.includes(t.id)
@@ -94,7 +94,7 @@ export function ArtifactsPane({ open, data, tab, onTab, thread, produced, briefD
                 {t.label}
                 {made && (
                   <>
-                    <span className="h-2 w-2 shrink-0 rounded-full bg-accent" aria-hidden="true" />
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-accent" aria-hidden="true" title="Made by the question on screen" />
                     <span className="sr-only"> (created by this thread)</span>
                   </>
                 )}
@@ -102,9 +102,6 @@ export function ArtifactsPane({ open, data, tab, onTab, thread, produced, briefD
             )
           })}
         </div>
-        {produced.length > 0 && (
-          <p className="m-0 px-4 pb-1 text-[14px] text-ink-2">A dot marks a tab made by the question on screen.</p>
-        )}
       </div>
       <div
         id="artifact-panel"

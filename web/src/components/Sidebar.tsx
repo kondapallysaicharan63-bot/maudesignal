@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { DEMO_WORKFLOWS, describeCron, isoDay, demoSnapshotLabel, visibleWorkflows } from '../data'
 import { flaggedRows } from '../artifacts'
 import { Icon } from '../icons'
@@ -31,6 +32,17 @@ function scheduleResult(s: Schedule): string {
 }
 
 export function Sidebar(p: Props) {
+  const closeRef = useRef<HTMLButtonElement>(null)
+  // The phone drawer: Esc closes it, and keyboard focus starts on its close button.
+  useEffect(() => {
+    if (!p.open) return
+    if (window.matchMedia('(max-width: 767px)').matches) closeRef.current?.focus()
+    const key = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') p.onClose()
+    }
+    window.addEventListener('keydown', key)
+    return () => window.removeEventListener('keydown', key)
+  }, [p.open]) // eslint-disable-line react-hooks/exhaustive-deps
   // Greetings (no tool steps, no claims) are not answers, so they are not counted.
   const greeting = new Set(
     p.threads.threads
@@ -54,7 +66,7 @@ export function Sidebar(p: Props) {
         id="sidebar"
         aria-label="Workspace"
         className={[
-          'z-40 flex w-[min(88vw,22rem)] shrink-0 flex-col border-r border-rule bg-surface transition-transform duration-200',
+          'z-40 flex w-[min(82vw,22rem)] shrink-0 flex-col border-r border-rule bg-surface transition-transform duration-200',
           'max-md:fixed max-md:inset-y-0 max-md:left-0',
           p.open ? '' : 'max-md:invisible max-md:-translate-x-full',
           p.collapsed ? 'md:hidden' : 'md:static md:w-72',
@@ -62,7 +74,7 @@ export function Sidebar(p: Props) {
       >
         <div className="flex items-center justify-between px-3 pt-3 md:hidden">
           <span className="font-serif text-xl font-semibold">MaudeSignal</span>
-          <button className="ws-icon-btn" onClick={p.onClose} aria-label="Close menu">
+          <button ref={closeRef} className="ws-icon-btn min-h-11 min-w-11" onClick={p.onClose} aria-label="Close menu">
             <Icon name="close" />
           </button>
         </div>
@@ -76,7 +88,7 @@ export function Sidebar(p: Props) {
           </button>
         </div>
 
-        <nav className="min-h-0 flex-1 overflow-y-auto px-2 pb-24" aria-label="Sections">
+        <nav className="min-h-0 flex-1 overflow-y-auto px-2 pb-4" aria-label="Sections">
           <h2 className="ws-heading">Workflows</h2>
           <ul className="m-0 list-none p-0">
             {workflows.map((w) => {
@@ -90,10 +102,10 @@ export function Sidebar(p: Props) {
                   >
                     <span className="min-w-0">
                       {w.title}
-                      {DEMO_WORKFLOWS.includes(w.id) && <span className="text-[14px] text-ink-3"> · demo</span>}
+                      {DEMO_WORKFLOWS.includes(w.id) && <span className="ws-pill ml-2 bg-warning-soft text-warning">demo</span>}
                     </span>
                     {n !== undefined && (
-                      <span className="ms-num shrink-0 text-[14px] text-ink-3">
+                      <span className="ms-num shrink-0 text-[15px] text-ink-2">
                         {w.id === 'ai-sweep' ? `${n} flagged` : n}
                       </span>
                     )}
@@ -105,7 +117,7 @@ export function Sidebar(p: Props) {
 
           <h2 className="ws-heading">Daily briefs · demo snapshot</h2>
           {p.briefs.length === 0 ? (
-            <p className="px-3 text-[15px] text-ink-3">No briefs stored yet.</p>
+            <p className="px-3 text-[15px] text-ink-2">No briefs stored yet.</p>
           ) : (
             <ul className="m-0 list-none p-0">
               {p.briefs.map((b) => (
@@ -117,7 +129,7 @@ export function Sidebar(p: Props) {
                   >
                     <span className="min-w-0">
                       <span className="ms-num block">{b.date}</span>
-                      <span className="block truncate text-[14px] text-ink-3">
+                      <span className="ws-wrap block text-[15px] leading-snug text-ink-2">
                         Demo snapshot · week {isoDay(b.window.current_start)} to {isoDay(b.window.current_end)}
                       </span>
                     </span>
@@ -128,16 +140,19 @@ export function Sidebar(p: Props) {
             </ul>
           )}
 
-          <details className="mt-4 border-t border-rule">
-            <summary className="flex min-h-11 cursor-pointer items-center px-3 text-[16px] font-semibold text-ink">
+        </nav>
+        <div className="max-h-[60%] shrink-0 overflow-y-auto border-t-2 border-rule-strong bg-sunk pb-[env(safe-area-inset-bottom)]" data-testid="sidebar-footer">
+          <details className="group">
+            <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-2 px-4 text-[17px] font-semibold text-ink">
               Schedules and sources
+              <Icon name="chevron" size={18} />
             </summary>
           <h3 className="ws-heading">Schedules</h3>
           <ul className="m-0 list-none space-y-2 p-0 px-3">
             {p.schedules.map((s) => (
               <li key={s.id} className="text-[15px] leading-snug">
                 <span className="block font-semibold">{s.label}</span>
-                <span className="block text-ink-3">{describeCron(s.cron)}</span>
+                <span className="block text-ink-2">{describeCron(s.cron)}</span>
                 <span className="ws-wrap block text-ink-2">{scheduleResult(s)}</span>
               </li>
             ))}
@@ -152,12 +167,12 @@ export function Sidebar(p: Props) {
               </li>
             ))}
           </ul>
-          <p className="px-3 pt-2 text-[14px] leading-snug text-ink-3">
+          <p className="px-3 pt-2 text-[15px] leading-snug text-ink-2">
             {demoSnapshotLabel(p.sources)}: stored records in the demo database, not live openFDA. MHRA (UK) is regulator
             context only and never counted in a MAUDE number.
           </p>
           </details>
-        </nav>
+        </div>
       </aside>
     </>
   )

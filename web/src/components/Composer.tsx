@@ -1,8 +1,8 @@
-import { useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { STREAMLIT_URL } from '../data'
 import { Icon } from '../icons'
 import { closestThread } from '../match'
-import { exactKnownCode, moveActive, suggest, type CodeInfo, type Suggestion } from '../typeahead'
+import { exactKnownCode, highlightParts, moveActive, suggest, type CodeInfo, type Suggestion } from '../typeahead'
 import type { Thread } from '../types'
 
 const DISCLAIMER =
@@ -25,6 +25,25 @@ interface Props {
   onCamera: () => void
   /** Mic: opens the voice screen (live when the API answers, a recorded run otherwise). */
   onMic: () => void
+  /** Which capture screen is open, so its button can say so ("Camera on"). */
+  captureMode?: 'label' | 'voice' | null
+}
+
+/** The typed characters shown in bold and underlined inside a suggestion. */
+function Marked({ text, query }: { text: string; query: string }) {
+  return (
+    <>
+      {highlightParts(text, query).map((p, i) =>
+        p.hit ? (
+          <mark key={i} className="bg-transparent font-bold text-ink underline decoration-accent decoration-2 underline-offset-2">
+            {p.text}
+          </mark>
+        ) : (
+          <span key={i}>{p.text}</span>
+        ),
+      )}
+    </>
+  )
 }
 
 type Notice = ({ kind: 'match'; question: string } | { kind: 'live' }) & { forKey: string }
@@ -33,13 +52,14 @@ type Notice = ({ kind: 'match'; question: string } | { kind: 'live' }) & { forKe
  * One input row with a type-ahead list of recorded questions (also shown on focus, as the starting points),
  * plus camera and mic buttons that open recorded runs until the live API is on.
  */
-export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, onMic }: Props) {
+export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, onMic, captureMode = null }: Props) {
   const [text, setText] = useState('')
   const [saved, setNotice] = useState<Notice | null>(null)
   const notice = saved && saved.forKey === viewKey ? saved : null
   const [focus, setFocus] = useState(false)
   const [active, setActive] = useState(-1)
   const listId = useId()
+  const wrapRef = useRef<HTMLDivElement>(null)
 
   const starters = useMemo(
     () => SUGGESTED.map((id) => threads.find((t) => t.id === id)).filter((t): t is Thread => !!t),
@@ -51,6 +71,10 @@ export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, 
     [typed, text, threads, codes, starters],
   )
   const open = focus && options.length > 0
+  // The highlighted row stays inside the scrolling list (arrow keys can move past the visible rows).
+  useEffect(() => {
+    if (open && active >= 0) document.getElementById(`${listId}-${active}`)?.scrollIntoView?.({ block: 'nearest' })
+  }, [open, active, listId])
 
   const pick = (sg: Suggestion) => {
     setNotice(null)
@@ -86,8 +110,22 @@ export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, 
   }
 
   return (
-    <div className="shrink-0 border-t border-rule bg-paper px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 md:px-6">
-      <div className="mx-auto max-w-3xl">
+    <div
+      ref={wrapRef}
+      className={['relative shrink-0 border-t border-rule bg-paper px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 md:px-6', open ? 'z-40' : 'z-20'].join(' ')}
+      data-testid="composer"
+    >
+      {open && (
+        // Dims the page behind the list (the composer itself stays clear). It only dims: a click anywhere else
+        // moves focus away from the input, which closes the list.
+        <div
+          className="ws-scrim pointer-events-none !bottom-auto"
+          style={{ height: `calc(100% - ${wrapRef.current?.offsetHeight ?? 0}px)` }}
+          aria-hidden="true"
+          data-testid="typeahead-scrim"
+        />
+      )}
+      <div className="relative mx-auto max-w-3xl">
         {notice && (
           <div role="status" className="ms-banner ms-banner--info mb-2 text-[16px]">
             {notice.kind === 'match' ? (
@@ -105,8 +143,14 @@ export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, 
             )}
           </div>
         )}
+        {captureMode && (
+          <p className="relative z-10 m-0 mb-1 flex items-center gap-2 text-[15px] font-semibold text-ink" data-testid="capture-on">
+            <span className="ws-pill bg-accent text-[var(--on-accent)]">{captureMode === 'label' ? 'Camera on' : 'Mic on'}</span>
+            <span className="font-normal text-ink-2">{captureMode === 'label' ? 'Reading a device label' : 'Asking by voice'}</span>
+          </p>
+        )}
         <form
-          className="relative flex items-center gap-1 rounded-md border border-rule-strong bg-surface py-1 pl-3 pr-1"
+          className="relative z-10 flex items-center gap-1 rounded-md border border-rule-strong bg-surface py-1 pl-3 pr-1"
           onSubmit={(e) => {
             e.preventDefault()
             submit()
@@ -115,12 +159,18 @@ export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, 
           {open && (
             <div
               data-popover-open
-              className="absolute inset-x-0 bottom-full z-40 mb-1 max-h-[45dvh] overflow-y-auto rounded-md border border-rule-strong bg-surface p-1 shadow-[var(--shadow-pop)]"
+              className="absolute inset-x-0 bottom-full z-40 mb-1 flex flex-col overflow-hidden rounded-md border-2 border-rule-strong bg-surface shadow-[var(--shadow-pop)]"
             >
-              <p className="m-0 px-3 pb-1 pt-2 text-[14px] font-semibold text-ink-2" id={`${listId}-h`}>
-                {typed ? 'Suggestions: recorded questions and device codes' : 'Recorded questions you can open'}
+              <p className="m-0 border-b border-rule px-3 py-1.5 text-[15px] font-semibold text-ink-2" id={`${listId}-h`}>
+                {typed ? 'Recorded questions and device codes' : 'Recorded questions you can open'} ·{' '}
+                <span className="ms-num">{options.length}</span>
               </p>
-              <ul id={listId} role="listbox" aria-labelledby={`${listId}-h`} className="m-0 list-none p-0">
+              <ul
+                id={listId}
+                role="listbox"
+                aria-labelledby={`${listId}-h`}
+                className="ws-fade-bottom m-0 max-h-[min(19rem,40dvh)] list-none overflow-y-auto overscroll-contain p-1 pb-5"
+              >
                 {options.map((sg, i) => (
                   <li
                     key={sg.kind === 'code' ? `code-${sg.code}` : sg.thread.id}
@@ -132,24 +182,43 @@ export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, 
                       e.preventDefault()
                       pick(sg)
                     }}
+                    onMouseMove={() => i !== active && setActive(i)}
                     className={[
-                      'flex min-h-11 cursor-pointer items-center gap-2 rounded-xs px-3 py-2 text-[17px] leading-snug text-ink hover:bg-sunk',
-                      i === active ? 'bg-sunk' : '',
+                      'flex min-h-11 cursor-pointer items-start gap-2 rounded-xs px-3 py-2 text-[17px] leading-snug text-ink',
+                      i === active ? 'bg-accent-soft shadow-[inset_4px_0_0_var(--accent)]' : 'hover:bg-sunk',
                     ].join(' ')}
                   >
                     {sg.kind === 'code' ? (
                       <span className="ws-wrap min-w-0 flex-1">
-                        <span className="ms-code mr-2">{sg.code}</span>
+                        <span className="ms-code mr-2 !text-[17px] !text-ink">
+                          <Marked text={sg.code} query={text} />
+                        </span>
                         Check any device type
-                        {sg.name ? <span className="text-ink-2"> · {sg.name}</span> : null}
+                        {sg.name ? (
+                          <span className="text-ink-2">
+                            {' '}
+                            · <Marked text={sg.name} query={text} />
+                          </span>
+                        ) : null}
                       </span>
                     ) : (
-                      <span className="ws-wrap line-clamp-2 min-w-0 flex-1">{sg.thread.question}</span>
+                      <span className="ws-wrap min-w-0 flex-1">
+                        <Marked text={sg.thread.question} query={text} />
+                      </span>
                     )}
-                    <Icon name="chevron" size={18} />
+                    <span className={['mt-0.5 shrink-0', i === active ? 'text-accent' : 'text-ink-2'].join(' ')}>
+                      <Icon name="chevron" size={18} />
+                    </span>
                   </li>
                 ))}
               </ul>
+              <p className="m-0 border-t border-rule px-3 py-1.5 text-[15px] text-ink-2" data-testid="typeahead-hint">
+                <span className="sm:hidden">Tap a row to open it.</span>
+                <span className="max-sm:hidden">
+                  <kbd className="ms-code !text-[15px] !text-ink">↑ ↓</kbd> move · <kbd className="ms-code !text-[15px] !text-ink">Enter</kbd> to
+                  open · <kbd className="ms-code !text-[15px] !text-ink">Esc</kbd> close
+                </span>
+              </p>
             </div>
           )}
           <Icon name="search" size={18} />
@@ -184,11 +253,12 @@ export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, 
             aria-label="Ask a question"
             placeholder="Ask a question"
             autoComplete="off"
-            className="h-11 min-w-0 flex-1 bg-transparent text-[17px] text-ink placeholder:text-ink-3 focus:outline-none"
+            className="h-11 min-w-0 flex-1 bg-transparent text-[17px] text-ink placeholder:text-ink-2 focus:outline-none"
           />
           <button
             type="button"
-            className="ws-icon-btn min-h-11 min-w-11 shrink-0"
+            className={['ws-icon-btn min-h-11 min-w-11 shrink-0', captureMode === 'label' ? '!bg-accent !text-[var(--on-accent)]' : ''].join(' ')}
+            aria-pressed={captureMode === 'label'}
             onClick={onCamera}
             aria-label="Camera: photograph a device label"
             title="Camera: photograph a device label"
@@ -198,7 +268,8 @@ export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, 
           </button>
           <button
             type="button"
-            className="ws-icon-btn min-h-11 min-w-11 shrink-0"
+            className={['ws-icon-btn min-h-11 min-w-11 shrink-0', captureMode === 'voice' ? '!bg-accent !text-[var(--on-accent)]' : ''].join(' ')}
+            aria-pressed={captureMode === 'voice'}
             onClick={onMic}
             aria-label="Mic: ask by voice"
             title="Mic: ask by voice"
@@ -210,7 +281,7 @@ export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, 
             Open
           </button>
         </form>
-        <p className="m-0 mt-1 text-center text-[14px] leading-snug text-ink-2">
+        <p className="relative z-10 m-0 mt-1 text-center text-[15px] leading-snug text-ink-2">
           <span className="hidden sm:inline">{DISCLAIMER}</span>
           <span className="sm:hidden">{DISCLAIMER_SHORT}</span>
           <span className="hidden md:inline"> Camera and mic show a recorded run until the live API answers.</span>

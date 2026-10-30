@@ -33,16 +33,19 @@ function Recent({
   items,
   expanded,
   onOpen,
+  activeId,
 }: {
   items: RecentItem[]
   expanded: boolean
   onOpen: (i: RecentItem) => void
+  /** The recorded answer open in the chat, marked in the list. */
+  activeId: string | null
 }) {
   if (items.length === 0) return null
   if (expanded)
     return (
       <div className="mt-4">
-        <h3 className="ms-kicker m-0 mb-2">Recorded answers in this workflow · {items.length}</h3>
+        <h3 className="ms-kicker m-0 mb-2">Recorded answers in this workflow · {items.length} · sorted newest first</h3>
         <div className="rounded-md border border-rule">
           <table className="w-full table-fixed border-collapse text-left text-[16px]">
             <thead>
@@ -55,7 +58,7 @@ function Recent({
             </thead>
             <tbody>
               {items.map((i) => (
-                <tr key={i.id} className="border-t border-rule">
+                <tr key={i.id} className={['border-t border-rule', i.id === activeId ? 'bg-accent-soft font-semibold' : ''].join(' ')} aria-current={i.id === activeId ? 'true' : undefined}>
                   <td className="px-3 py-1">
                     <button type="button" className="ws-wrap min-h-11 text-left text-accent underline" onClick={() => onOpen(i)}>
                       {i.label}
@@ -74,17 +77,22 @@ function Recent({
   return (
     <div className="mt-4">
       <h3 className="ms-kicker m-0 mb-1">Recorded answers · {items.length}</h3>
+      <p className="m-0 mb-1 text-[15px] text-ink-2">Sorted newest first. The open answer is marked.</p>
       <ul className="m-0 list-none p-0">
         {items.slice(0, 8).map((i) => (
           <li key={i.id} className="border-t border-rule first:border-t-0">
             <button
               type="button"
-              className="flex min-h-11 w-full items-center justify-between gap-1 rounded-xs py-2 text-left text-[16px] leading-snug text-ink hover:bg-sunk"
+              className={[
+                'flex min-h-11 w-full items-center justify-between gap-1 rounded-xs px-2 py-2 text-left text-[17px] leading-snug text-ink hover:bg-sunk',
+                i.id === activeId ? 'bg-accent-soft font-semibold shadow-[inset_4px_0_0_var(--accent)]' : '',
+              ].join(' ')}
+              aria-current={i.id === activeId ? 'true' : undefined}
               onClick={() => onOpen(i)}
             >
               <span className="min-w-0">
                 <span className="ws-wrap line-clamp-3 block">{i.label}</span>
-                <span className="ms-num block text-[14px] text-ink-2">
+                <span className="ms-num block text-[15px] font-normal text-ink-2">
                   {i.shown} shown · {i.cost}
                 </span>
               </span>
@@ -108,6 +116,7 @@ export function MiniPane({
   onThread = () => undefined,
   onRun = () => undefined,
   focusCode = null,
+  activeId = null,
 }: {
   workflow: WorkflowId
   data: WorkspaceData
@@ -117,6 +126,8 @@ export function MiniPane({
   onRun?: (id: string) => void
   /** Product code to scroll to and mark in the flagged list (set by an alert link). */
   focusCode?: string | null
+  /** Id of the thread or run open in the chat. */
+  activeId?: string | null
 }) {
   // Below the xl breakpoint the numbers start folded away so the chat keeps the screen.
   const [shown, setShown] = useState(false)
@@ -137,25 +148,39 @@ export function MiniPane({
       ].join(' ')}
     >
       <div className="flex shrink-0 items-center justify-between gap-2 px-3 py-1">
-        {expanded ? <Crumbs panel="mini" /> : <h2 className="m-0 min-w-0 truncate text-[17px] font-semibold" title={miniTitle(workflow)}>{miniTitle(workflow)}</h2>}
-        <span className="flex shrink-0 items-center">
-          {!expanded && (
+        {expanded ? (
+          <Crumbs panel="mini" />
+        ) : (
+          <>
+            <h2 className="m-0 min-w-0 truncate text-[17px] font-semibold max-lg:hidden" title={miniTitle(workflow)}>
+              {miniTitle(workflow)}
+            </h2>
+            {/* Phone and tablet: one bar that names the workflow and opens its numbers and recorded answers. */}
             <button
               type="button"
-              className="ws-icon-btn min-h-11 lg:hidden"
+              className="flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 text-left lg:hidden"
               aria-expanded={shown}
               aria-controls="mini-body"
               onClick={() => setShown((s) => !s)}
+              data-testid="mini-toggle"
             >
-              <span className="text-[17px]">{shown ? 'Hide numbers' : 'Show numbers'}</span>
+              <span className="min-w-0">
+                <span className="block truncate text-[17px] font-semibold">{miniTitle(workflow)}</span>
+                <span className="block text-[15px] text-ink-2">{shown ? 'Hide stats and recorded answers' : 'Stats and recorded answers'}</span>
+              </span>
+              <span className="shrink-0 text-ink-2">
+                <Icon name={shown ? 'up' : 'down'} size={20} />
+              </span>
             </button>
-          )}
+          </>
+        )}
+        <span className="flex shrink-0 items-center">
           <ExpandButton panel="mini" expanded={expanded} onToggle={onToggleExpand} iconOnly />
         </span>
       </div>
       <div id="mini-body" className={['px-3 pb-4', shown || expanded ? '' : 'max-lg:hidden'].join(' ')}>
         <MiniStats workflow={workflow} data={data} expanded={expanded} />
-        {!expanded && <Recent items={items} expanded={false} onOpen={open} />}
+        {!expanded && <Recent items={items} expanded={false} onOpen={open} activeId={activeId} />}
         {expanded && workflow === 'ai-sweep' && (
           <>
             <SweepRules sweep={data.sweep} />
@@ -164,7 +189,7 @@ export function MiniPane({
             </div>
           </>
         )}
-        {expanded && <Recent items={items} expanded onOpen={open} />}
+        {expanded && <Recent items={items} expanded onOpen={open} activeId={activeId} />}
         {expanded && threads.length > 0 && (
           <div className="mt-4">
             <h3 className="ms-kicker m-0 mb-2">Recorded runs in this workflow</h3>

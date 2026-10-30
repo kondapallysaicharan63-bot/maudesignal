@@ -43,11 +43,12 @@ function Tag({ live }: { live: boolean }) {
 
 function Warning({ text }: { text: string }) {
   return (
-    <p className="ms-banner ms-banner--warn mt-4 flex gap-2" data-testid="patient-warning">
+    <p
+      className="mt-3 flex gap-2 rounded-md border border-rule-strong bg-surface px-3 py-2 text-[16px] leading-snug text-ink"
+      data-testid="patient-warning"
+    >
       <Icon name="info" size={20} />
-      <span className="ws-wrap">
-        <strong>{text}</strong>
-      </span>
+      <span className="ws-wrap font-semibold">{text}</span>
     </p>
   )
 }
@@ -59,7 +60,7 @@ function LabelCard({ l, live, image, note }: { l: LabelReading; live: boolean; i
     <article className="mt-3 rounded-md border border-rule bg-surface p-4" data-testid={live ? 'label-live' : 'label-recorded'}>
       <p className="m-0 flex flex-wrap items-center gap-2">
         <Tag live={live} />
-        {note && <span className="text-[14px] text-ink-3">{note}</span>}
+        {note && <span className="text-[15px] text-ink-2">{note}</span>}
       </p>
       <h3 className="t-title-lg ws-wrap m-0 mt-2" style={{ fontSize: 20 }}>
         {labelName(l)}
@@ -89,6 +90,24 @@ function LabelCard({ l, live, image, note }: { l: LabelReading; live: boolean; i
         <TraceView trace={trace} shown={99} replayed={false} label="Label reading steps" />
       </div>
     </article>
+  )
+}
+
+/** One recorded sample in a vertical list: "Sample 1" and the sample's own text, at least 44px high. */
+function SampleButton({ on, n, text, onClick }: { on: boolean; n: number; text: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      onClick={onClick}
+      className={[
+        'flex min-h-11 w-full items-start gap-2 rounded-xs border px-3 py-2 text-left text-[16px] leading-snug text-ink',
+        on ? 'border-accent bg-accent-soft shadow-[inset_4px_0_0_var(--accent)]' : 'border-rule hover:bg-sunk',
+      ].join(' ')}
+    >
+      <span className="shrink-0 font-semibold">Sample {n}</span>
+      <span className="ws-wrap line-clamp-2 min-w-0 flex-1 text-ink-2">{text}</span>
+    </button>
   )
 }
 
@@ -219,28 +238,22 @@ export function CaptureView({ mode, data, onThread, onLabel, fetcher, apiBase }:
   const failed = outcome && !outcome.ok ? outcome : null
   const noApi = !base_
 
+  const btn = 'w-full sm:w-auto'
   return (
     <div>
       <p className="ms-kicker">{isLabel ? 'Camera' : 'Mic'}</p>
       <h1 className="t-title-lg m-0">{isLabel ? 'Read a device label' : 'Ask by voice'}</h1>
-      <p className="mt-2 max-w-xl text-ink-2">
+      <p className="mt-1 max-w-xl text-ink-2">
         {isLabel
-          ? 'Photograph a device label, or upload a picture of one. SAM 3.1 finds the label and Muse Spark reads it; the K-number and GTIN are then checked.'
-          : 'Record a question or upload an audio file. It is transcribed, and the copilot answers from stored records; every sentence is checked first.'}
+          ? 'Photograph or upload a device label. SAM 3.1 finds it, Muse Spark reads it, and the K-number and GTIN are checked.'
+          : 'Record or upload a question. It is transcribed, and the copilot answers from stored records; every sentence is checked first.'}
       </p>
       <Warning text={isLabel ? PHOTO_WARNING : VOICE_WARNING} />
-      {noApi && (
-        <p className="ms-banner ms-banner--info mt-3" role="status" data-testid="no-api">
-          <span className="ws-wrap">
-            {FAILURE_TEXT.unconfigured} The recorded run below shows what a reading looks like.
-          </span>
-        </p>
-      )}
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         {isLabel ? (
           <>
-            <label className="ms-btn ms-btn--secondary cursor-pointer" style={{ height: 44 }}>
+            <label className={`ms-btn ws-btn-primary cursor-pointer ${btn}`} style={{ height: 48 }}>
               <Icon name="camera" size={18} /> Take a photo
               <input
                 type="file"
@@ -251,7 +264,7 @@ export function CaptureView({ mode, data, onThread, onLabel, fetcher, apiBase }:
                 onChange={(e) => choose(e.target.files?.[0])}
               />
             </label>
-            <label className="ms-btn ms-btn--secondary cursor-pointer" style={{ height: 44 }}>
+            <label className={`ms-btn ms-btn--secondary cursor-pointer ${btn}`} style={{ height: 48 }}>
               <Icon name="upload" size={18} /> Upload an image
               <input
                 type="file"
@@ -265,15 +278,15 @@ export function CaptureView({ mode, data, onThread, onLabel, fetcher, apiBase }:
         ) : (
           <>
             {rec === 'idle' ? (
-              <button type="button" className="ms-btn ms-btn--secondary" style={{ height: 44 }} onClick={() => void startRecording()}>
+              <button type="button" className={`ms-btn ws-btn-primary ${btn}`} style={{ height: 48 }} onClick={() => void startRecording()}>
                 <Icon name="mic" size={18} /> Record a question
               </button>
             ) : (
-              <button type="button" className="ms-btn ms-btn--primary" style={{ height: 44 }} onClick={stopRecording}>
+              <button type="button" className={`ms-btn ws-btn-primary ${btn}`} style={{ height: 48 }} onClick={stopRecording}>
                 Stop recording
               </button>
             )}
-            <label className="ms-btn ms-btn--secondary cursor-pointer" style={{ height: 44 }}>
+            <label className={`ms-btn ms-btn--secondary cursor-pointer ${btn}`} style={{ height: 48 }}>
               <Icon name="upload" size={18} /> Upload an audio file
               <input
                 type="file"
@@ -286,7 +299,12 @@ export function CaptureView({ mode, data, onThread, onLabel, fetcher, apiBase }:
           </>
         )}
       </div>
-      <p className="m-0 mt-2 text-[14px] text-ink-3" role="status" aria-live="polite">
+      {noApi && !picked && !outcome && !problem && (
+        <p className="m-0 mt-2 text-[16px] leading-snug text-ink-2" role="status" data-testid="no-api">
+          {FAILURE_TEXT.unconfigured} The recorded run below shows what a reading looks like.
+        </p>
+      )}
+      <p className="m-0 mt-2 text-[16px] text-ink-2" role="status" aria-live="polite">
         {rec === 'recording' ? `Recording... stops by itself after ${MAX_RECORD_SECONDS} seconds.` : ''}
       </p>
       {problem && (
@@ -294,17 +312,17 @@ export function CaptureView({ mode, data, onThread, onLabel, fetcher, apiBase }:
           <span className="ws-wrap">{problem}</span>
         </p>
       )}
-      {picked && (
-        <div className="mt-3 rounded-md border border-rule bg-surface p-3" data-testid="picked">
+      {picked && !outcome && (
+        <div className="mt-3 rounded-md border border-rule-strong bg-surface p-3" data-testid="picked">
           <p className="ws-wrap m-0">
             Ready: <strong>{picked.name}</strong> ({Math.max(1, Math.round(picked.blob.size / 1024)).toLocaleString('en-US')} KB)
           </p>
-          <p className="m-0 mt-1 text-[14px] text-ink-3">
+          <p className="m-0 mt-1 text-[16px] leading-snug text-ink-2">
             {noApi
-              ? 'The live API is not connected, so sending shows the recorded run instead; the file leaves nothing in this browser.'
+              ? 'The live API is not connected, so sending shows the recorded run instead.'
               : 'Sending uploads this file to the MaudeSignal API. The server removes the camera metadata (EXIF).'}
           </p>
-          <button type="button" className="ms-btn ms-btn--primary mt-2" style={{ height: 44 }} disabled={busy} onClick={() => void send()}>
+          <button type="button" className="ms-btn ws-btn-primary mt-2 w-full sm:w-auto" style={{ height: 48 }} disabled={busy} onClick={() => void send()}>
             {busy ? 'Sending…' : isLabel ? 'Send photo' : 'Send recording'}
           </button>
         </div>
@@ -329,7 +347,7 @@ export function CaptureView({ mode, data, onThread, onLabel, fetcher, apiBase }:
         <section className="mt-3" data-testid="voice-live">
           <p className="m-0 flex flex-wrap items-center gap-2">
             <Tag live />
-            <span className="text-[14px] text-ink-3">Transcribed just now by the API.</span>
+            <span className="text-[15px] text-ink-2">Transcribed just now by the API.</span>
           </p>
           <p className="ws-wrap m-0 mt-2">
             <span className="font-semibold">Heard:</span> &ldquo;{outcome.transcript}&rdquo;
@@ -350,26 +368,17 @@ export function CaptureView({ mode, data, onThread, onLabel, fetcher, apiBase }:
         </section>
       )}
 
-      <h2 className="ms-kicker mt-8">Recorded run</h2>
+      <h2 className="ms-kicker mt-6">Recorded run</h2>
       {isLabel ? (
         label ? (
           <>
-            <p className="m-0 mt-1 text-[14px] text-ink-3">
+            <p className="m-0 mt-1 text-[15px] text-ink-2">
               A stored reading of a sample label photo, replayed from a recording. Nothing here was read live.
             </p>
             {labels.length > 1 && (
-              <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Recorded label examples">
+              <div className="mt-2 flex flex-col gap-2" role="group" aria-label="Recorded label examples">
                 {labels.map((l, i) => (
-                  <button
-                    key={l.image}
-                    type="button"
-                    className="ms-chip"
-                    aria-pressed={i === labelIdx}
-                    onClick={() => setLabelIdx(i)}
-                    style={i === labelIdx ? { outline: '2px solid var(--accent)' } : undefined}
-                  >
-                    {labelName(l).slice(0, 28)}
-                  </button>
+                  <SampleButton key={l.image} on={i === labelIdx} n={i + 1} text={labelName(l)} onClick={() => setLabelIdx(i)} />
                 ))}
               </div>
             )}
@@ -385,21 +394,12 @@ export function CaptureView({ mode, data, onThread, onLabel, fetcher, apiBase }:
         <section data-testid="voice-recorded">
           <p className="m-0 mt-1 flex flex-wrap items-center gap-2">
             <Tag live={false} />
-            <span className="text-[14px] text-ink-3">A stored voice question, replayed from a recording. Nothing was transcribed live.</span>
+            <span className="text-[15px] text-ink-2">A stored voice question, replayed from a recording. Nothing was transcribed live.</span>
           </p>
           {voiceThreads.length > 1 && (
-            <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Recorded voice questions">
+            <div className="mt-2 flex flex-col gap-2" role="group" aria-label="Recorded voice questions">
               {voiceThreads.map((t, i) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  className="ms-chip"
-                  aria-pressed={i === voiceIdx}
-                  onClick={() => setVoiceIdx(i)}
-                  style={i === voiceIdx ? { outline: '2px solid var(--accent)' } : undefined}
-                >
-                  {t.id}
-                </button>
+                <SampleButton key={t.id} on={i === voiceIdx} n={i + 1} text={t.voice?.transcript_text ?? t.question} onClick={() => setVoiceIdx(i)} />
               ))}
             </div>
           )}
