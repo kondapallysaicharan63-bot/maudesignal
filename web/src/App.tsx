@@ -22,7 +22,9 @@ const API_BASE = apiBaseOrNull(import.meta.env.VITE_MAUDESIGNAL_API_BASE)
 
 /** A short name for the open view, e.g. "thread:06-trap"; sent with feedback and visit pings. */
 export function pageName(view: View): string {
-  return view.kind === 'new' ? 'new' : `${view.kind}:${view.id}`
+  if (view.kind === 'new') return 'new'
+  if (view.kind === 'capture') return `capture:${view.mode}`
+  return `${view.kind}:${view.id}`
 }
 
 // A thread opens the artifacts pane by itself only on a wide screen; on a narrower one the chat keeps the room.

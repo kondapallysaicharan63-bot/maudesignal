@@ -75,8 +75,8 @@ export function resetVisits(): void {
 }
 
 /**
- * One ping per view per session: {ref, page, client_ts}. Needs a ref code and an API base; failures
- * are silent. Returns true when a ping was handed to the browser.
+ * One ping per view per session: {ref?, page, client_ts}. Needs an API base; the ref code is optional
+ * and is left out of the body when absent (the server labels codeless visits). Failures are silent. Returns true when a ping was handed to the browser.
  */
 export function sendVisit(
   apiBase: string | null,
@@ -86,7 +86,7 @@ export function sendVisit(
   sender: VisitSender,
   now: () => Date = () => new Date(),
 ): boolean {
-  if (!apiBase || !ref) return false
+  if (!apiBase) return false
   let seen: string[] = []
   try {
     const raw = JSON.parse(store?.getItem(VISITED_KEY) ?? '[]') as unknown
@@ -102,7 +102,9 @@ export function sendVisit(
     /* ignore */
   }
   const url = `${apiBase}/v1/visit`
-  const body = JSON.stringify({ ref, page, client_ts: now().toISOString() })
+  const body = JSON.stringify(
+    ref ? { ref, page, client_ts: now().toISOString() } : { page, client_ts: now().toISOString() },
+  )
   try {
     // Never navigator.sendBeacon: it always sends credentials, and the API (another origin) answers
     // the CORS preflight without Allow-Credentials, so the browser would drop the POST silently.

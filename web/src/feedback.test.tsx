@@ -107,10 +107,24 @@ describe('visit pings', () => {
     Reflect.deleteProperty(globalThis.navigator, 'sendBeacon')
   })
 
-  it('sends nothing without a ref or an API base, and fetch failures are silent', async () => {
+  it('sends a ping without a ref code, leaving ref out of the body, once per view', () => {
+    const fetcher = vi.fn((_u: string, _i: RequestInit) => Promise.resolve({}))
+    const s = fakeStore()
+    expect(sendVisit(BASE, null, 'new', s, { fetcher }, NOW)).toBe(true)
+    expect(sendVisit(BASE, null, 'new', s, { fetcher }, NOW)).toBe(false)
+    expect(fetcher).toHaveBeenCalledTimes(1)
+    const [, init] = fetcher.mock.calls[0]
+    const body = JSON.parse(init.body as string) as Record<string, unknown>
+    expect(body).toEqual({ page: 'new', client_ts: '2026-10-30T12:00:00.000Z' })
+    expect('ref' in body).toBe(false)
+    expect(init.keepalive).toBe(true)
+    expect(init.credentials).toBe('omit')
+  })
+
+  it('sends nothing without an API base, and fetch failures are silent', async () => {
     const fetcher = vi.fn(() => Promise.reject(new Error('offline')))
-    expect(sendVisit(BASE, null, 'a', null, { fetcher }, NOW)).toBe(false)
     expect(sendVisit(null, 'abc', 'a', null, { fetcher }, NOW)).toBe(false)
+    expect(sendVisit(null, null, 'a', null, { fetcher }, NOW)).toBe(false)
     expect(fetcher).not.toHaveBeenCalled()
     expect(sendVisit(BASE, 'abc', 'a', null, { fetcher }, NOW)).toBe(true)
     await Promise.resolve()
