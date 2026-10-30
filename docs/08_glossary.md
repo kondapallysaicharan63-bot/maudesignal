@@ -51,9 +51,6 @@ Pathway for **novel low-to-moderate-risk devices** that have no valid predicate.
 ### **eSTAR**
 FDA's mandatory electronic submission template for 510(k) applications (and increasingly other submission types).
 
-### **FDA Elsa**
-"Electronic Language System Assistant" — FDA's internal AI copilot (deployed 2025) that helps reviewers summarize submissions, flag gaps, and organize documents. Runs on AWS GovCloud. **Does not train on industry submissions.**
-
 ### **GMLP (Good Machine Learning Practice)**
 FDA's 10 guiding principles for ML-enabled medical device development. Joint principles with Health Canada and UK MHRA.
 

@@ -73,7 +73,7 @@ At the headline level, MaudeSignal is seven features composed into one pipeline.
 
 | # | Feature | What it does | Status |
 |---|---|---|---|
-| **F1** | **MAUDE Ingestion** | Pulls adverse event reports from openFDA for configured product codes; stores raw + parsed records; idempotent re-runs | ✅ Working (pilot validated on LLZ, QIH) |
+| **F1** | **MAUDE Ingestion** | Pulls adverse event reports from openFDA for configured product codes; stores raw + parsed records; idempotent re-runs | ✅ Working (pilot checked on LLZ, QIH) |
 | **F2** | **LLM-Powered Extraction** | Reads MAUDE narratives via the active LLM provider + `maude-narrative-extractor` Skill; emits structured records with confidence scores | ✅ Working (22 extractions, 0.90 avg confidence) |
 | **F3** | **AI-Failure Taxonomy Classification** | Assigns each extracted record to one of 11 AI failure modes (false negative, drift, automation bias, …) | 🚧 Skill #4 (this PR) |
 | **F4** | **Drift Simulation & Detection** | Synthesizes drift on labeled cohorts; runs KS / PSI tests; flags statistically significant changes | 📋 Planned (Week 5) |

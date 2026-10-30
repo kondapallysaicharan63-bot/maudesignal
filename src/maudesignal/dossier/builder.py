@@ -12,12 +12,19 @@ the result on the cover page. No model is called here.
 from __future__ import annotations
 
 import json
+import os
 from collections import Counter
-from dataclasses import dataclass
+from collections.abc import Sequence
+from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from maudesignal.copilot.protocol import (
+    ProtocolRow,
+    load_transcripts,
+    protocol_for_capa,
+)
 from maudesignal.dossier.chart import weekly_chart_svg
 from maudesignal.dossier.figures import (
     Figure,
@@ -39,7 +46,14 @@ from maudesignal.dossier.model import (
     SignalSection,
     WeeklyBar,
 )
-from maudesignal.dossier.narrative import gate_narrative, load_recording, omitted_section
+from maudesignal.dossier.narrative import (
+    STALE_NARRATIVE_NOTE,
+    UNBOUND_RECORDING_NOTE,
+    gate_narrative,
+    load_recording,
+    omitted_section,
+    pack_hash,
+)
 from maudesignal.gate import EvidenceStore, verify_sentence
 from maudesignal.gate.loader import store_from_database
 from maudesignal.monitor.deterioration import (
@@ -245,6 +259,74 @@ def signal_section(sig: ProductCodeSignal, as_of: date, store: EvidenceStore) ->
     )
 
 
+def transcripts_dir() -> Path:
+    """Folder of stored copilot transcripts (``demo/transcripts``, or the env override)."""
+    env = os.environ.get("MAUDESIGNAL_TRANSCRIPTS_DIR")
+    return Path(env) if env else Path(__file__).resolve().parents[3] / "demo" / "transcripts"
+
+
+def build_protocol(
+    pc: str,
+    signal: SignalSection,
+    evidence_count: Figure,
+    run_at: str,
+    capa_id: str | None,
+    transcripts: Path | None,
+    report_ids: Sequence[str] = (),
+) -> tuple[ProtocolRow, ...]:
+    """Search protocol of the pack: the builder's own queries, then the copilot's for the CAPA.
+
+    Every count is the value already printed (and gate-verified) in the pack; copilot rows
+    come from the stored transcripts whose recorded ``capa_ids`` contain this pack's id (the
+    link is the id the copilot's ``draft_capa`` call returned; none is inferred).
+    """
+    maude = "openFDA MAUDE reports (stored copy)"
+
+    def row(tool: str, filters: dict[str, Any], df: str, dt: str, n: int) -> ProtocolRow:
+        return ProtocolRow(tool, maude, filters, df, dt, n, run_at)
+
+    rows = [
+        row(
+            "dossier: current window",
+            {"product_code": pc},
+            _ymd(signal.current_start),
+            _ymd(signal.current_end),
+            int(signal.current_count.value),
+        ),
+        row(
+            "dossier: baseline window",
+            {"product_code": pc},
+            _ymd(signal.baseline_start),
+            _ymd(signal.baseline_end),
+            int(signal.baseline_count.value),
+        ),
+    ]
+    for et, fig in signal.event_type_counts:
+        rows.append(
+            row(
+                "dossier: event type",
+                {"product_code": pc, "event_type": et},
+                _ymd(signal.current_start),
+                _ymd(signal.current_end),
+                int(fig.value),
+            )
+        )
+    rows.append(
+        ProtocolRow(
+            "dossier: cited reports",
+            maude,
+            {"product_code": pc, "report_ids": list(report_ids)},
+            None,
+            None,
+            int(evidence_count.value),
+            run_at,
+        )
+    )
+    if capa_id:
+        rows.extend(protocol_for_capa(load_transcripts(transcripts or transcripts_dir()), capa_id))
+    return tuple(rows)
+
+
 def _doc_seq(db: Database, product_code: str, capa_id: str | None) -> int:
     capas = sorted(
         (c for c in db.list_capa_drafts() if c.product_code == product_code),
@@ -262,6 +344,18 @@ def _capa_info(db: Database, row: CapaDraftRecord, store: EvidenceStore) -> Capa
         None,
     )
     flags = verify_sentence(row.problem_statement, [], store).ungrounded
+    created = next(
+        (a for a in db.list_audit(entity_id=row.capa_id) if a.action == "capa.draft"), None
+    )
+    restored_from: str | None = None
+    recorded_at: str | None = None
+    if created is not None:
+        try:
+            payload = json.loads(created.payload_json)
+        except ValueError:
+            payload = {}
+        restored_from = payload.get("restored_from") or None
+        recorded_at = payload.get("recorded_at_utc") or None
     return CapaInfo(
         capa_id=row.capa_id,
         title=row.title,
@@ -276,6 +370,8 @@ def _capa_info(db: Database, row: CapaDraftRecord, store: EvidenceStore) -> Capa
         decision_audit_seq=decision.seq if decision and row.status != "draft" else None,
         decision_audit_hash=decision.entry_hash if decision and row.status != "draft" else None,
         report_ids=tuple(json.loads(row.report_ids_json)),
+        restored_from=restored_from,
+        recorded_at_utc=recorded_at,
     )
 
 
@@ -305,6 +401,7 @@ def build_dossier(
     recorded_dir: Path | None = None,
     illustration: Illustration | None = None,
     generated_at: datetime | None = None,
+    transcripts: Path | None = None,
 ) -> DossierBuild:
     """Build the dossier for one CAPA-need evidence pack, or for a signal when no CAPA is given.
 
@@ -320,10 +417,15 @@ def build_dossier(
         recorded_dir: Folder holding ``<doc_id>-narrative.json`` recordings.
         illustration: Optional AI cover illustration (default: none).
         generated_at: Timestamp to print (default: now, UTC).
+        transcripts: Folder of stored copilot transcripts for the search protocol
+            (default: ``demo/transcripts``).
 
     Raises:
         DossierError: unknown CAPA id, no signal for the product code, or no data.
     """
+    # Time the builder's own queries ran (the protocol's "Run at"); generated_at is only the
+    # printed document time and may be supplied (tests, re-renders).
+    queried_at = datetime.now(UTC).replace(tzinfo=None, microsecond=0)
     capa_row = db.get_capa_draft(capa_id) if capa_id else None
     if capa_id and capa_row is None:
         raise DossierError(f"unknown CAPA-need evidence pack {capa_id}")
@@ -390,20 +492,34 @@ def build_dossier(
     if narrative is None:
         rec_path = recorded_dir / f"{doc_id}-narrative.json" if recorded_dir else None
         recording = load_recording(rec_path) if rec_path else None
-        narrative = (
-            gate_narrative(recording, store, source="recorded") if recording else omitted_section()
+        expected = pack_hash(
+            capa.capa_id if capa else None,
+            [r.report_id for r in rows],
+            capa.problem_statement if capa else None,
         )
+        if recording is None:
+            narrative = omitted_section()
+        elif recording.pack_hash and recording.pack_hash != expected:
+            narrative = omitted_section(STALE_NARRATIVE_NOTE)
+        else:
+            narrative = gate_narrative(
+                recording, store, source="recorded", cited_report_ids=[r.report_id for r in rows]
+            )
+            if not recording.pack_hash:
+                # Predates the pack binding: still shown (every sentence is re-gated), flagged.
+                narrative = replace(narrative, binding_note=UNBOUND_RECORDING_NOTE)
 
     entity_ids = {doc_id} | ({capa.capa_id} if capa else set())
     audit = _audit_rows(db, entity_ids, capa.capa_id if capa else None)
     chain_ok, first_bad = db.verify_audit_chain()
 
     evidence_count = records_figure([r.report_id for r in rows])
+    generated = generated_at or datetime.now(UTC).replace(tzinfo=None, microsecond=0)
     data = DossierData(
         doc_id=doc_id,
         revision=revision,
         status=status,
-        generated_at=generated_at or datetime.now(UTC).replace(tzinfo=None, microsecond=0),
+        generated_at=generated,
         prepared_by=capa.created_by if capa else DETERMINISTIC_ACTOR,
         prepared_at=capa.created_at if capa else None,
         device=device,
@@ -419,6 +535,15 @@ def build_dossier(
         audit_chain_total=len(db.list_audit()),
         db_label=f"{db.path.name} (latest openFDA date_received {db.max_date_received()})",
         illustration=illustration,
+        protocol=build_protocol(
+            pc,
+            signal,
+            evidence_count,
+            queried_at.isoformat(timespec="seconds") + "Z",
+            capa.capa_id if capa else None,
+            transcripts,
+            [r.report_id for r in rows],
+        ),
     )
     report = verify_figures(all_figures(data), store)
     data.figures_checked = report.total

@@ -90,14 +90,14 @@ class Extractor:
         skill: LoadedSkill,
         input_record: dict[str, Any],
     ) -> ExtractionResult:
-        """Run the given Skill on the input record and return validated output.
+        """Run the given Skill on the input record and return schema-checked output.
 
         Args:
             skill: A loaded Skill (from SkillLoader.load()).
             input_record: Data matching the Skill's expected input shape.
 
         Returns:
-            An ExtractionResult containing validated JSON output and metadata.
+            An ExtractionResult containing schema-checked JSON output and metadata.
 
         Raises:
             BudgetExceededError: If cumulative LLM spend has exceeded

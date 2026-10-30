@@ -78,7 +78,7 @@ jobs:
   e2e:
     name: Browser tests (product pages)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     env:
       # The live "Check any device type" panel calls openFDA; the public site uses a key too.
       OPENFDA_API_KEY: ${{ secrets.OPENFDA_API_KEY }}
@@ -111,6 +111,8 @@ jobs:
         run: pytest tests/e2e/test_08_hackathon_pages.py -p no:cacheprovider --no-cov -o addopts="" -rs
       - name: Classic pages (reported, not blocking — they need LLM extraction rows the keyless demo database does not hold)
         continue-on-error: true
+        # Own limit so this non-blocking step can never use up the job's time and cancel it.
+        timeout-minutes: 10
         run: >
           pytest tests/e2e/test_01_dashboard.py tests/e2e/test_02_signal_explorer.py
           tests/e2e/test_03_ingestion.py tests/e2e/test_04_extraction.py

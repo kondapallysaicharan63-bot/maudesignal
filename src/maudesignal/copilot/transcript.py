@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from maudesignal.copilot.agent import CopilotResult
+from maudesignal.copilot.protocol import protocol_from_calls
 from maudesignal.gate import GateReport
 
 TRANSCRIPT_SCHEMA_VERSION = "1.0"
@@ -59,10 +60,11 @@ def result_to_dict(
             (``transcript_text``, ``language``, ``audio_seconds``). Omitted when None, so
             text-only transcripts are unchanged.
     """
+    recorded = datetime.now(UTC).isoformat(timespec="seconds")
     out: dict[str, Any] = {
         "schema_version": TRANSCRIPT_SCHEMA_VERSION,
         "label": label,
-        "recorded_at_utc": datetime.now(UTC).isoformat(timespec="seconds"),
+        "recorded_at_utc": recorded,
         "model": result.model,
         "question": result.question,
         "answer": result.answer,
@@ -75,6 +77,16 @@ def result_to_dict(
         "repaired": result.repaired,
         "sentences_repaired": result.sentences_repaired,
         "capa_ids": result.capa_ids,
+        "protocol": [
+            r.to_dict()
+            for r in protocol_from_calls(
+                [
+                    {"name": t.name, "arguments": t.arguments, "result_preview": t.result_preview}
+                    for t in result.tool_calls
+                ],
+                recorded,
+            )
+        ],
         "parse_failed": result.parse_failed,
         "length_stops": result.length_stops,
         "usage": {

@@ -1,6 +1,6 @@
 """HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
-Unit tests for the overnight deterioration monitor (detector, digest, fetch, CLI).
+Unit tests for the weekly deterioration monitor (detector, digest, fetch, CLI).
 """
 
 from __future__ import annotations

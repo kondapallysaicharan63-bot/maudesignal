@@ -23,7 +23,7 @@
 
 | Risk | Mitigation |
 |---|---|
-| Tool used as clinical decision support | Explicit disclaimer on every generated output; "decision-support only" framing |
+| Tool used as clinical decision support | Explicit disclaimer on every generated output; "signal-review aid only" framing |
 | PHI accidentally ingested | MAUDE is pre-anonymized; PHI detection logging; immediate CRITICAL log + record skip |
 | Regulatory citation errors | Citation verifier hard gate; only verified sources (openFDA, CFR, FDA guidance index) |
 | Export control issues | All local data; no cross-border data transfer in self-hosted mode |

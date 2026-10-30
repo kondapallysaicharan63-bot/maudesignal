@@ -11,6 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date, datetime
 
+from maudesignal.copilot.protocol import ProtocolRow
 from maudesignal.dossier.figures import Figure
 
 CONFIDENTIALITY_LINE = (
@@ -104,6 +105,10 @@ class CapaInfo:
     decision_audit_seq: int | None
     decision_audit_hash: str | None
     report_ids: tuple[str, ...]
+    #: Transcript file the pack was replayed from (None for a pack made live).
+    restored_from: str | None = None
+    #: UTC time the transcript recorded the original drafting (``...Z``), when restored.
+    recorded_at_utc: str | None = None
 
 
 @dataclass(frozen=True)
@@ -151,6 +156,8 @@ class NarrativeSection:
     source: str = ""  # "live" | "recorded"
     recorded_at: str = ""
     cost_usd: float = 0.0
+    #: Visible note when the recording cannot be bound to this pack (made before binding).
+    binding_note: str = ""
 
     @property
     def passed(self) -> int:
@@ -209,6 +216,7 @@ class DossierData:
     figures_checked: int = 0
     figures_failed: int = 0
     illustration: Illustration | None = None
+    protocol: tuple[ProtocolRow, ...] = ()
     software: str = "MaudeSignal 0.1.0 (maudesignal.dossier)"
     extra_notes: list[str] = field(default_factory=list)
 

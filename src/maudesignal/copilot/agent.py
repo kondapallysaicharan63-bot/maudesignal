@@ -36,6 +36,7 @@ from pathlib import Path
 from typing import Any
 
 from maudesignal.copilot.meta_provider import SPARK_USD_PER_M_INPUT, SPARK_USD_PER_M_OUTPUT
+from maudesignal.copilot.protocol import ProtocolRow, protocol_from_calls
 from maudesignal.copilot.tools import TOOL_SCHEMAS, ToolContext, call_tool
 from maudesignal.extraction.skill_loader import LoadedSkill, SkillLoader
 from maudesignal.gate import (
@@ -86,6 +87,16 @@ class CopilotResult:
     model: str = ""
     parse_failed: bool = False
     length_stops: int = 0
+
+    @property
+    def protocol(self) -> list[ProtocolRow]:
+        """Search protocol of this answer: one row per search tool call, from stored values."""
+        return protocol_from_calls(
+            [
+                {"name": t.name, "arguments": t.arguments, "result_preview": t.result_preview}
+                for t in self.tool_calls
+            ]
+        )
 
     @property
     def cost_usd(self) -> float:
@@ -194,6 +205,7 @@ class CopilotAgent:
         max_tokens: int = 8000,
         structured_output: bool = True,
         reasoning_effort: str | None = None,
+        allowed_tools: frozenset[str] | None = None,
     ) -> None:
         """Create an agent.
 
@@ -215,6 +227,8 @@ class CopilotAgent:
             reasoning_effort: Optional Chat Completions ``reasoning_effort``
                 (``minimal`` ... ``max``); None omits the parameter so the model
                 reasons at its own default level.
+            allowed_tools: Tool names the model may use; None allows all. A call to any
+                other tool is refused with an error result and is not executed.
         """
         if "contributor" in model.lower():
             raise ValueError("Contributor-tier models train on your data; use Standard tier.")
@@ -229,6 +243,7 @@ class CopilotAgent:
         self._max_tokens = max_tokens
         self._structured = structured_output
         self._reasoning_effort = reasoning_effort
+        self._allowed_tools = allowed_tools
         self._response_format = response_format_from_schema(self._skill.output_schema)
         self._history: list[dict[str, Any]] = []
         self._on_event: EventFn | None = None
@@ -264,7 +279,11 @@ class CopilotAgent:
         if self._reasoning_effort is not None:
             kwargs["reasoning_effort"] = self._reasoning_effort
         if tools:
-            kwargs["tools"] = TOOL_SCHEMAS
+            kwargs["tools"] = [
+                t
+                for t in TOOL_SCHEMAS
+                if self._allowed_tools is None or t["function"]["name"] in self._allowed_tools
+            ]
             kwargs["tool_choice"] = "auto"  # the only value Meta's API accepts
         elif self._structured:
             kwargs["response_format"] = self._response_format
@@ -377,7 +396,10 @@ class CopilotAgent:
             )
             for tc in tool_calls:
                 self._emit("tool", name=tc.function.name, arguments=tc.function.arguments)
-                out = call_tool(self._ctx, tc.function.name, tc.function.arguments)
+                if self._allowed_tools is not None and tc.function.name not in self._allowed_tools:
+                    out = {"error": f"tool {tc.function.name} is not available in this run"}
+                else:
+                    out = call_tool(self._ctx, tc.function.name, tc.function.arguments)
                 payload = json.dumps(out, default=str)
                 try:
                     args = json.loads(tc.function.arguments or "{}")

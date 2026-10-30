@@ -56,7 +56,7 @@ class RecordExtractionResult:
 
     @property
     def any_success(self) -> bool:
-        """True if at least one Skill produced a validated output."""
+        """True if at least one Skill produced a schema-checked output."""
         return any(
             r is not None
             for r in (self.extractor_result, self.severity_result, self.classifier_result)
@@ -213,7 +213,7 @@ def _persist(
     skill: LoadedSkill,
     result: ExtractionResult,
 ) -> None:
-    """Write one Skill's validated output to the extractions table."""
+    """Write one Skill's schema-checked output to the extractions table."""
     db.insert_extraction(
         extraction_id=result.extraction_id,
         maude_report_id=maude_report_id,

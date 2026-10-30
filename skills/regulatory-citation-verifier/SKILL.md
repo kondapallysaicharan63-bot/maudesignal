@@ -280,7 +280,7 @@ Citations: K100001, K100002, K100003
 
 ## 8. Validation
 
-This Skill is validated by the test set at `tests/fixtures/citation_verifier_test_set.jsonl`, which includes:
+This Skill is checked by the test set at `tests/fixtures/citation_verifier_test_set.jsonl`, which includes:
 
 - 20 inputs containing verified real citations (expect all `verified=true`)
 - 15 inputs containing known-fake citations (expect all `verified=false`, action `redact`)
@@ -317,6 +317,7 @@ This Skill is validated by the test set at `tests/fixtures/citation_verifier_tes
 
 ## 11. Changelog
 
+- **v1.0.0+wording** (2026-10-29) — Wording only: one verb in the gold-set section changed to "checked"; behavior, schema and examples unchanged. No version bump because behavior is unchanged.
 - **v1.0.0** (2026-04-23) — Initial release. Supports K-number, De Novo, PMA, CFR, guidance title verification.
 
 ### Planned for v1.1.0 (deferred per Charter §4 cap)

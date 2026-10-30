@@ -211,5 +211,5 @@ tools too expensive or too cloud-heavy.
 
 See [DISCLAIMER.md](../DISCLAIMER.md).
 
-MaudeSignal is a decision-support tool. Final regulatory responsibility remains with the
+MaudeSignal is a signal-review aid. Final regulatory responsibility remains with the
 device manufacturer.
