@@ -111,7 +111,7 @@ so a person can repeat it.
 
 | Workflow | Command | Status |
 |---|---|---|
-| Weekly investigator: for a device type the weekly check flagged, Muse Spark pulls the new reports, groups them by kind of problem, checks recalls, 510(k)s and non-manufacturer reports, and writes the digest entry through the gate | `maudesignal investigate` | Built and tested with mocked model calls (`tests/unit/test_weekly_investigator.py`). Real recordings pending: `demo/investigations/` does not exist yet. |
+| Weekly investigator: for a device type the weekly check flagged, Muse Spark pulls the new reports, groups them by kind of problem, checks recalls, 510(k)s and non-manufacturer reports, and writes the digest entry through the gate | `maudesignal investigate` | Built and tested with mocked model calls (`tests/unit/test_weekly_investigator.py`). One real recording is stored: `demo/investigations/20261030T010942Z-weekly-llz.json` (LLZ; 7 of 7 sentences and 9 of 9 claims passed the gate on the first pass; $0.224989). |
 | Recall-triggered sweep: Muse Spark reads a recall's reason and searches stored narratives for the same problem; quotes matched word for word, counts recomputed by the gate | `maudesignal recall-sweep` | Built and tested with mocked model calls (`tests/unit/test_recall_sweep.py`). Real recordings pending. |
 | Search protocol: every tool call's dataset, filters, dates and counts, listed as a search-methodology appendix in the evidence-pack PDF | part of the dossier build | Built and tested (`tests/unit/test_search_protocol.py`). |
 
@@ -134,7 +134,7 @@ From [`demo/transcripts/`](demo/transcripts/), [`demo/vision/`](demo/vision/),
 | Cost per answer | $0.0454 (28 answers, $1.2717) |
 | 510(k) reading | **5 of 5 summaries read**: the two reads agree on 100% of fields for K031779, 90% for K190442, K210666 and K261677, and 80% for K043333; the 6 conflicting fields are flagged for a person, never guessed |
 | Label camera (SAM 3.1 + Muse Spark) | **7 of 7 photos read**: 4 devices read correctly (CareSens N, HoMedics thermometer ×2, Welch Allyn 802 LTR), thermometers matched to FDA product code FLL; 1 left for a person to pick; 1 returned nothing (rotated label); 1 misread (Welch module: wrong text, every field marked only partly legible, no product code); no lot/serial stored |
-| Evidence pack (PDF) | Muse Spark summary: 5 sentences shown, 0 withheld, in plain words (no "spike"); Muse Wonder review: 0 findings |
+| Evidence pack (PDF) | Muse Spark summary: 5 sentences shown, 0 withheld, in plain words (no "spike"); Muse Wonder review: 0 findings. A re-record of the narrative and Muse Wonder review for the current pack (SER-LLZ-20260831-001) is pending |
 | Report sources vs openFDA | 0 mismatches |
 
 Oct-29 voice run (GitHub Actions run 40965201781, 3 answers, stored in the repo
@@ -147,9 +147,10 @@ recordings, public with his consent (`demo/voice/question-take1.wav`, `-take4.wa
 `-take6.wav`). They were not heard word for word: Voice Transcribe wrote "LLG" and "LLC"
 for LLZ and added stray words ("devices? devices?", "week. week."). The product code is
 corrected by a fixed one-letter rule (`src/maudesignal/copilot/product_code.py`), and the
-screen states it ("Heard LLG; asked about LLZ (one letter different; the only close code
-on file)."); the heard text is kept next to the question. In live mode the analyst
-confirms a corrected code before anything is sent. Take 4 is the "50 injury reports" trap
+screen states it ("Heard LLG -> did you mean LLZ? The answer used LLZ (one letter
+different; the only close code on file)."); the heard text is kept next to the question.
+The correction is never silent: in live mode the analyst confirms it before anything is sent,
+and the stored demo shows both codes and says which one the recorded answer used. Take 4 is the "50 injury reports" trap
 the copilot rejects: 33 reports, 0 injuries (in the stored demo sample). Take 6's answer, "all 121 stored LLZ
 reports were filed by a manufacturer", is about the stored demo sample of 121 LLZ reports,
 not openFDA as a whole (19,970 LLZ reports, 99.3% manufacturer-filed). The earlier
@@ -300,7 +301,7 @@ openFDA pipeline below predates the event. The file-by-file list is in
 
 ## Tests
 
-**706 unit tests pass, 77% line + branch coverage** (2026-10-29); all 21 test types
+**1147 unit tests pass, 78% line + branch coverage** (2026-10-30); all 21 test types
 are reported in [docs/hackathon/TESTING.md](docs/hackathon/TESTING.md)
 (`pytest tests/unit`; CI also runs ruff, black and `mypy --strict` on Python
 3.11 and 3.12).

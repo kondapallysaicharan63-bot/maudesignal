@@ -28,8 +28,10 @@ Rules, in order:
    the scan continues; if nothing else is found it is reported as not
    recognised.
 
-The correction is a suggestion. In recorded runs it is applied and shown as a
-statement. In live mode the analyst chooses (see ``copilot/voice.py``).
+The correction is a suggestion and is never silent. The display always reads
+"Heard QAH -> did you mean QIH?". In live mode the suggested code is used only after
+the analyst confirms (see ``copilot/voice.py``). In the stored demo both the heard and the
+suggested code are shown, with a statement of which one the recorded answer used.
 """
 
 from __future__ import annotations
@@ -132,11 +134,14 @@ def describe_check(
         return None
     if suggested and used and used == suggested and heard != suggested:
         return (
-            f"Heard {heard}; asked about {suggested} "
+            f"Heard {heard} -> did you mean {suggested}? The answer used {suggested} "
             "(one letter different; the only close code on file)."
         )
     if status == "declined":
-        return f"Heard {heard}; the suggested code {suggested or ''} was declined, asked as heard."
+        return (
+            f"Heard {heard} -> did you mean {suggested or ''}? "
+            f"Not confirmed: the answer used {heard} as heard."
+        )
     if status == "ambiguous":
         return f"Heard {heard}; two codes on file are one letter away, so it was asked as heard."
     if status == "unknown":
@@ -156,7 +161,7 @@ def confirm_prompt(check: ProductCodeCheck) -> tuple[str, str, str] | None:
         return None
     heard, suggested = check.heard_code or "", check.suggested_code
     return (
-        f"Heard {heard}. Did you mean {suggested}?",
+        f"Heard {heard} -> did you mean {suggested}?",
         f"Ask about {suggested}",
         f"Ask as heard ({heard})",
     )

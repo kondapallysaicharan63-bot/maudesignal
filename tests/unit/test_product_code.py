@@ -97,7 +97,8 @@ def test_llg_corrects_to_llz_with_a_statement() -> None:
     assert check.status == "corrected" and check.needs_confirmation
     assert check.corrected_text == "What changed this week for LLZ devices?"
     assert check.display == (
-        "Heard LLG; asked about LLZ (one letter different; the only close code on file)."
+        "Heard LLG -> did you mean LLZ? The answer used LLZ "
+        "(one letter different; the only close code on file)."
     )
 
 
@@ -135,6 +136,13 @@ def test_qah_on_the_demo_database_is_corrected_to_qih() -> None:
     check = check_product_code("What changed this week for QAH devices?", sets)
     assert (check.heard_code, check.suggested_code, check.status) == ("QAH", "QIH", "corrected")
     assert check.needs_confirmation
+    assert confirm_prompt(check) is not None
+    assert confirm_prompt(check)[0] == "Heard QAH -> did you mean QIH?"  # type: ignore[index]
+    # The stored-demo statement shows both codes and says which one the answer used.
+    assert check.display is not None
+    assert "Heard QAH -> did you mean QIH?" in check.display and "used QIH" in check.display
+    declined = describe_check("QAH", "QIH", "QAH", "declined")
+    assert declined is not None and "QIH" in declined and "used QAH as heard" in declined
 
 
 @pytest.mark.parametrize(
@@ -164,7 +172,8 @@ def test_no_code_found() -> None:
 
 def test_recorded_runs_describe_with_the_new_statement() -> None:
     assert describe_check("LLC", "LLZ", "LLZ", "corrected") == (
-        "Heard LLC; asked about LLZ (one letter different; the only close code on file)."
+        "Heard LLC -> did you mean LLZ? The answer used LLZ "
+        "(one letter different; the only close code on file)."
     )
     assert describe_check("LLZ", None, "LLZ", "known") == "Product code: LLZ."
     assert describe_check(None, None, None, None) is None
@@ -173,7 +182,7 @@ def test_recorded_runs_describe_with_the_new_statement() -> None:
 def test_confirm_prompt_labels() -> None:
     check = check_product_code("for LLG devices", CODES)
     assert confirm_prompt(check) == (
-        "Heard LLG. Did you mean LLZ?",
+        "Heard LLG -> did you mean LLZ?",
         "Ask about LLZ",
         "Ask as heard (LLG)",
     )
@@ -269,7 +278,7 @@ def test_live_mode_asks_what_the_analyst_chose(
 
 def test_declined_status_reads_as_a_statement() -> None:
     text = describe_check("LLG", "LLZ", "LLG", "declined")
-    assert text == "Heard LLG; the suggested code LLZ was declined, asked as heard."
+    assert text == "Heard LLG -> did you mean LLZ? Not confirmed: the answer used LLG as heard."
 
 
 def test_voice_block_and_html_carry_heard_suggested_used() -> None:
@@ -292,7 +301,8 @@ def test_voice_block_and_html_carry_heard_suggested_used() -> None:
         "LLZ",
     )
     out = _voice_html(block)
-    assert "Heard LLG; asked about LLZ (one letter different; the only close code on file)." in out
+    assert "Heard LLG -&gt; did you mean LLZ? The answer used LLZ" in out
+    assert "(one letter different; the only close code on file)." in out
     assert "00-voice-main" in DISPLAY_EXCLUDED_LABELS
 
 

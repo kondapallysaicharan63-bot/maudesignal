@@ -63,6 +63,7 @@ from maudesignal.ingestion.openfda_client import USER_AGENT, OpenFDAClient
 from maudesignal.monitor.deterioration import (
     BASELINE_WEEKS,
     SEVERITY_ESCALATION_PP,
+    SEVERITY_MIN_REPORTS,
     SPIKE_MIN_REPORTS,
     SPIKE_MULTIPLIER,
 )
@@ -930,7 +931,7 @@ def recompute_change(lc: LiveCheck) -> str:
         triggers.append("new_signal")
     if cur and base:
         delta = Fraction(lc.current_severe_count, cur) - Fraction(lc.baseline_severe_count, base)
-        if delta * 100 >= SEVERITY_ESCALATION_PP:
+        if delta * 100 >= SEVERITY_ESCALATION_PP and cur >= SEVERITY_MIN_REPORTS:
             triggers.append("severity_escalation")
     mean = Fraction(base, BASELINE_WEEKS)
     if cur >= SPIKE_MIN_REPORTS and cur >= SPIKE_MULTIPLIER * mean:
@@ -1178,7 +1179,8 @@ def build_view_drafts(
                         "new kind of problem: reports this week and none before, or an event "
                         "type not seen before",
                         f"more serious than usual: Injury/Death share up {SEVERITY_ESCALATION_PP} "
-                        f"points or more vs the 4 weeks before",
+                        f"points or more vs the 4 weeks before, with at least "
+                        f"{SEVERITY_MIN_REPORTS} reports this week",
                         f"reports suddenly increased: at least {SPIKE_MIN_REPORTS} reports and "
                         f"{SPIKE_MULTIPLIER} times the 4-week weekly average",
                     ],

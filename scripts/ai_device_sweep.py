@@ -42,7 +42,12 @@ from maudesignal.ingestion.openfda_client import (  # noqa: E402
     OPENFDA_EVENT_ENDPOINT,
     OpenFDAClient,
 )
-from maudesignal.monitor.live_check import LiveCheck, check_product_code  # noqa: E402
+from maudesignal.monitor.deterioration import SEVERITY_MIN_REPORTS  # noqa: E402
+from maudesignal.monitor.live_check import (  # noqa: E402
+    LiveCheck,
+    check_product_code,
+    count_skipped,
+)
 
 AI_LIST_URL = (
     "https://www.fda.gov/medical-devices/artificial-intelligence-enabled-medical-devices/"
@@ -125,6 +130,9 @@ def write_markdown(meta: dict[str, Any], rows: list[dict[str, Any]], path: Path)
             else ""
         )
         + ".",
+        "",
+        f"Flags need at least {SEVERITY_MIN_REPORTS} reports this week; "
+        f"{count_skipped(rows)} code(s) skipped for too few reports.",
         "",
         "Same four rules as the app (7 days vs the 4 weeks before; counts only). A triage",
         "signal for a person to review, not a finding about any device or company.",
