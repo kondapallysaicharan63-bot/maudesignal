@@ -6,8 +6,8 @@ import { exactKnownCode, highlightParts, moveActive, suggest, type CodeInfo, typ
 import type { Thread } from '../types'
 
 const DISCLAIMER =
-  'Signals for a person to review. Not medical advice. Nothing is filed with FDA.'
-const DISCLAIMER_SHORT = 'Signals for review, not medical advice.'
+  'Signals for a person to review. Not medical advice; a named person makes every decision. Nothing is filed with FDA.'
+const DISCLAIMER_SHORT = 'Signals for review. Not medical advice.'
 
 // Recorded threads offered as starting points (ids from threads.json). Missing ids are skipped.
 const SUGGESTED = ['01-what-changed', '05-capa-need-evidence', '06-trap', '10-recalls', '23-mhra']
@@ -27,7 +27,7 @@ interface Props {
   onMic: () => void
   /** Which capture screen is open, so its button can say so ("Camera on"). */
   captureMode?: 'label' | 'voice' | null
-  /** Phone, page scrolled down: only the input row stays (the disclaimer line folds away). */
+  /** Phone, page scrolled down (the disclaimer line stays: it is the one place that says not medical advice). */
   compact?: boolean
 }
 
@@ -54,7 +54,7 @@ type Notice = ({ kind: 'match'; question: string } | { kind: 'live' }) & { forKe
  * One input row with a type-ahead list of recorded questions (also shown on focus, as the starting points),
  * plus camera and mic buttons that open recorded runs until the live API is on.
  */
-export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, onMic, captureMode = null, compact = false }: Props) {
+export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, onMic, captureMode = null }: Props) {
   const [text, setText] = useState('')
   const [saved, setNotice] = useState<Notice | null>(null)
   const notice = saved && saved.forKey === viewKey ? saved : null
@@ -262,8 +262,8 @@ export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, 
             className={['ws-icon-btn min-h-11 min-w-11 shrink-0', captureMode === 'label' ? '!bg-accent !text-[var(--on-accent)]' : ''].join(' ')}
             aria-pressed={captureMode === 'label'}
             onClick={onCamera}
-            aria-label="Camera: photograph a device label"
-            title="Camera: photograph a device label"
+            aria-label="Camera: photograph a device label (opens a recorded run until the live API answers)"
+            title="Camera: photograph a device label (opens a recorded run until the live API answers)"
             data-testid="composer-camera"
           >
             <Icon name="camera" />
@@ -273,8 +273,8 @@ export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, 
             className={['ws-icon-btn min-h-11 min-w-11 shrink-0', captureMode === 'voice' ? '!bg-accent !text-[var(--on-accent)]' : ''].join(' ')}
             aria-pressed={captureMode === 'voice'}
             onClick={onMic}
-            aria-label="Mic: ask by voice"
-            title="Mic: ask by voice"
+            aria-label="Mic: ask by voice (opens a recorded run until the live API answers)"
+            title="Mic: ask by voice (opens a recorded run until the live API answers)"
             data-testid="composer-mic"
           >
             <Icon name="mic" />
@@ -283,10 +283,10 @@ export function Composer({ threads, onThread, viewKey, codes, onCode, onCamera, 
             Open
           </button>
         </form>
-        <p className={['relative z-10 m-0 mt-1 text-center text-[17px] leading-snug text-ink-2', compact ? 'max-sm:hidden' : ''].join(' ')} data-testid="disclaimer">
+        <p className="relative z-10 m-0 mt-1 text-center text-[17px] leading-snug text-ink-2" data-testid="disclaimer">
           <span className="hidden sm:inline">{DISCLAIMER}</span>
           <span className="sm:hidden">{DISCLAIMER_SHORT}</span>
-          {captureMode && <span className="hidden md:inline"> Camera and mic show a recorded run until the live API answers.</span>}
+          <span className="hidden md:inline"> Camera and mic show a recorded run until the live API answers.</span>
         </p>
       </div>
     </div>

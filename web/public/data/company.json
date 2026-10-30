@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_utc": "2026-10-30T04:14:01Z",
+  "generated_utc": "2026-10-30T04:44:20Z",
   "banner": "Simulated company — sample data. Problem evidence is real FDA data.",
   "company": "Demo MedTech Co. (simulated)",
   "statuses": [
@@ -90,15 +90,211 @@
         }
       ],
       "evidence": {
-        "origin": "missing",
-        "available": false,
-        "note": "evidence not fetched yet",
-        "report_count": null,
-        "window": null,
-        "queries": [],
-        "recalls": null
+        "origin": "demo_db",
+        "available": true,
+        "note": null,
+        "fetched_utc": null,
+        "report_count": {
+          "value": 121,
+          "gate": "pass",
+          "reason": "recomputed 121"
+        },
+        "window": {
+          "date_from": "20260701",
+          "date_to": "20260831"
+        },
+        "queries": [
+          {
+            "label": "openFDA MAUDE query that filled the demo database",
+            "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code:LLZ+AND+date_received:[20260701+TO+20260831]&limit=121"
+          },
+          {
+            "label": "openFDA recall query",
+            "url": "https://api.fda.gov/device/recall.json?search=product_code:LLZ"
+          }
+        ],
+        "recalls": {
+          "stored": 561,
+          "matched_total": null,
+          "gate": "pass",
+          "reason": "recomputed 561 stored recalls",
+          "latest": [
+            {
+              "recall_number": "Z-0186-2027",
+              "recalling_firm": "INTELERAD MEDICAL SYSTEMS INCORPORATED",
+              "status": "Open, Classified",
+              "date_initiated": "20260905",
+              "excerpt": "Following a Chromium-based web-browser, report and displayed images may not match.",
+              "excerpt_truncated": false,
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222843"
+            },
+            {
+              "recall_number": "Z-3166-2026",
+              "recalling_firm": "GE Healthcare",
+              "status": "Open, Classified",
+              "date_initiated": "20260731",
+              "excerpt": "Under certain conditions historical imaging data migrated from a legacy system may become incorrectly associated with a different patient.",
+              "excerpt_truncated": false,
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222118"
+            },
+            {
+              "recall_number": "Z-3167-2026",
+              "recalling_firm": "GE Healthcare",
+              "status": "Open, Classified",
+              "date_initiated": "20260731",
+              "excerpt": "Under certain conditions historical imaging data migrated from a legacy system may become incorrectly associated with a different patient.",
+              "excerpt_truncated": false,
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222119"
+            }
+          ]
+        },
+        "gate_totals": {
+          "pass": 11,
+          "block": 0
+        },
+        "recomputed": {
+          "pass": 3,
+          "block": 0
+        }
       },
-      "patterns": []
+      "patterns": [
+        {
+          "id": "LLZ-inv-2",
+          "label": "Unable to finalize or process reports",
+          "kind": "investigator",
+          "display_label": "Unable to finalize or process reports",
+          "basis": "weekly investigator group, recorded run 20261030T010942Z-weekly-llz; count recomputed",
+          "count": 3,
+          "report_ids": [
+            "50503662",
+            "50448213",
+            "50426773"
+          ],
+          "first_received": "20260825",
+          "last_received": "20260828",
+          "quotes": [
+            {
+              "report_id": "50503662",
+              "text": "Philips identified a software defect in ISCV (IntelliSpace Cardiovascular) system wherein the user was unable to finalize the report.",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50503662"
+            },
+            {
+              "report_id": "50448213",
+              "text": "Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that an error 500 occurs for one study, preventing the doctor from processing the report.",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50448213"
+            }
+          ],
+          "links": [
+            {
+              "label": "MAUDE report 50503662",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50503662"
+            },
+            {
+              "label": "MAUDE report 50448213",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50448213"
+            },
+            {
+              "label": "MAUDE report 50426773",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50426773"
+            }
+          ],
+          "gate": {
+            "count": "pass",
+            "reason": "recomputed 3 from 3 listed report ids",
+            "quotes_passed": 2,
+            "quotes_withheld": 0
+          }
+        },
+        {
+          "id": "LLZ-inv-3",
+          "label": "Unable to log in or connect, including server errors",
+          "kind": "investigator",
+          "display_label": "Unable to log in or connect, including server errors",
+          "basis": "weekly investigator group, recorded run 20261030T010942Z-weekly-llz; count recomputed",
+          "count": 3,
+          "report_ids": [
+            "50516576",
+            "50448215",
+            "50448216"
+          ],
+          "first_received": "20260826",
+          "last_received": "20260831",
+          "quotes": [
+            {
+              "report_id": "50448215",
+              "text": "Philips received a complaint on the IntelliSpace Cardiovascular (ISCV) indicating that customer reports intermittent HTTP 500 Internal Server Errors affecting all users and all study types.",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50448215"
+            },
+            {
+              "report_id": "50448216",
+              "text": "Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that user experiencing connectivity error with the workstation.",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50448216"
+            }
+          ],
+          "links": [
+            {
+              "label": "MAUDE report 50516576",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50516576"
+            },
+            {
+              "label": "MAUDE report 50448215",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50448215"
+            },
+            {
+              "label": "MAUDE report 50448216",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50448216"
+            }
+          ],
+          "gate": {
+            "count": "pass",
+            "reason": "recomputed 3 from 3 listed report ids",
+            "quotes_passed": 2,
+            "quotes_withheld": 0
+          }
+        },
+        {
+          "id": "LLZ-inv-1",
+          "label": "Unable to fetch or retrieve images",
+          "kind": "investigator",
+          "display_label": "Unable to fetch or retrieve images",
+          "basis": "weekly investigator group, recorded run 20261030T010942Z-weekly-llz; count recomputed",
+          "count": 2,
+          "report_ids": [
+            "50515470",
+            "50516613"
+          ],
+          "first_received": "20260831",
+          "last_received": "20260831",
+          "quotes": [
+            {
+              "report_id": "50515470",
+              "text": "Philips identified a software defect in ISCV (IntelliSpace Cardiovascular) system wherein unable to fetch images for some records.",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50515470"
+            },
+            {
+              "report_id": "50516613",
+              "text": "Philips identified a software defect in ISCV (IntelliSpace Cardiovascular) system wherein the user was unable to retrieve images from Vue Picture Archiving and Communication System (PACS).",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50516613"
+            }
+          ],
+          "links": [
+            {
+              "label": "MAUDE report 50515470",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50515470"
+            },
+            {
+              "label": "MAUDE report 50516613",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50516613"
+            }
+          ],
+          "gate": {
+            "count": "pass",
+            "reason": "recomputed 2 from 2 listed report ids",
+            "quotes_passed": 2,
+            "quotes_withheld": 0
+          }
+        }
+      ]
     },
     {
       "id": "DMC-02",
@@ -162,15 +358,211 @@
         }
       ],
       "evidence": {
-        "origin": "missing",
-        "available": false,
-        "note": "evidence not fetched yet",
-        "report_count": null,
-        "window": null,
-        "queries": [],
-        "recalls": null
+        "origin": "demo_db",
+        "available": true,
+        "note": null,
+        "fetched_utc": null,
+        "report_count": {
+          "value": 121,
+          "gate": "pass",
+          "reason": "recomputed 121"
+        },
+        "window": {
+          "date_from": "20260701",
+          "date_to": "20260831"
+        },
+        "queries": [
+          {
+            "label": "openFDA MAUDE query that filled the demo database",
+            "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code:LLZ+AND+date_received:[20260701+TO+20260831]&limit=121"
+          },
+          {
+            "label": "openFDA recall query",
+            "url": "https://api.fda.gov/device/recall.json?search=product_code:LLZ"
+          }
+        ],
+        "recalls": {
+          "stored": 561,
+          "matched_total": null,
+          "gate": "pass",
+          "reason": "recomputed 561 stored recalls",
+          "latest": [
+            {
+              "recall_number": "Z-0186-2027",
+              "recalling_firm": "INTELERAD MEDICAL SYSTEMS INCORPORATED",
+              "status": "Open, Classified",
+              "date_initiated": "20260905",
+              "excerpt": "Following a Chromium-based web-browser, report and displayed images may not match.",
+              "excerpt_truncated": false,
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222843"
+            },
+            {
+              "recall_number": "Z-3166-2026",
+              "recalling_firm": "GE Healthcare",
+              "status": "Open, Classified",
+              "date_initiated": "20260731",
+              "excerpt": "Under certain conditions historical imaging data migrated from a legacy system may become incorrectly associated with a different patient.",
+              "excerpt_truncated": false,
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222118"
+            },
+            {
+              "recall_number": "Z-3167-2026",
+              "recalling_firm": "GE Healthcare",
+              "status": "Open, Classified",
+              "date_initiated": "20260731",
+              "excerpt": "Under certain conditions historical imaging data migrated from a legacy system may become incorrectly associated with a different patient.",
+              "excerpt_truncated": false,
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222119"
+            }
+          ]
+        },
+        "gate_totals": {
+          "pass": 11,
+          "block": 0
+        },
+        "recomputed": {
+          "pass": 3,
+          "block": 0
+        }
       },
-      "patterns": []
+      "patterns": [
+        {
+          "id": "LLZ-inv-2",
+          "label": "Unable to finalize or process reports",
+          "kind": "investigator",
+          "display_label": "Unable to finalize or process reports",
+          "basis": "weekly investigator group, recorded run 20261030T010942Z-weekly-llz; count recomputed",
+          "count": 3,
+          "report_ids": [
+            "50503662",
+            "50448213",
+            "50426773"
+          ],
+          "first_received": "20260825",
+          "last_received": "20260828",
+          "quotes": [
+            {
+              "report_id": "50503662",
+              "text": "Philips identified a software defect in ISCV (IntelliSpace Cardiovascular) system wherein the user was unable to finalize the report.",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50503662"
+            },
+            {
+              "report_id": "50448213",
+              "text": "Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that an error 500 occurs for one study, preventing the doctor from processing the report.",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50448213"
+            }
+          ],
+          "links": [
+            {
+              "label": "MAUDE report 50503662",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50503662"
+            },
+            {
+              "label": "MAUDE report 50448213",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50448213"
+            },
+            {
+              "label": "MAUDE report 50426773",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50426773"
+            }
+          ],
+          "gate": {
+            "count": "pass",
+            "reason": "recomputed 3 from 3 listed report ids",
+            "quotes_passed": 2,
+            "quotes_withheld": 0
+          }
+        },
+        {
+          "id": "LLZ-inv-3",
+          "label": "Unable to log in or connect, including server errors",
+          "kind": "investigator",
+          "display_label": "Unable to log in or connect, including server errors",
+          "basis": "weekly investigator group, recorded run 20261030T010942Z-weekly-llz; count recomputed",
+          "count": 3,
+          "report_ids": [
+            "50516576",
+            "50448215",
+            "50448216"
+          ],
+          "first_received": "20260826",
+          "last_received": "20260831",
+          "quotes": [
+            {
+              "report_id": "50448215",
+              "text": "Philips received a complaint on the IntelliSpace Cardiovascular (ISCV) indicating that customer reports intermittent HTTP 500 Internal Server Errors affecting all users and all study types.",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50448215"
+            },
+            {
+              "report_id": "50448216",
+              "text": "Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that user experiencing connectivity error with the workstation.",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50448216"
+            }
+          ],
+          "links": [
+            {
+              "label": "MAUDE report 50516576",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50516576"
+            },
+            {
+              "label": "MAUDE report 50448215",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50448215"
+            },
+            {
+              "label": "MAUDE report 50448216",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50448216"
+            }
+          ],
+          "gate": {
+            "count": "pass",
+            "reason": "recomputed 3 from 3 listed report ids",
+            "quotes_passed": 2,
+            "quotes_withheld": 0
+          }
+        },
+        {
+          "id": "LLZ-inv-1",
+          "label": "Unable to fetch or retrieve images",
+          "kind": "investigator",
+          "display_label": "Unable to fetch or retrieve images",
+          "basis": "weekly investigator group, recorded run 20261030T010942Z-weekly-llz; count recomputed",
+          "count": 2,
+          "report_ids": [
+            "50515470",
+            "50516613"
+          ],
+          "first_received": "20260831",
+          "last_received": "20260831",
+          "quotes": [
+            {
+              "report_id": "50515470",
+              "text": "Philips identified a software defect in ISCV (IntelliSpace Cardiovascular) system wherein unable to fetch images for some records.",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50515470"
+            },
+            {
+              "report_id": "50516613",
+              "text": "Philips identified a software defect in ISCV (IntelliSpace Cardiovascular) system wherein the user was unable to retrieve images from Vue Picture Archiving and Communication System (PACS).",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50516613"
+            }
+          ],
+          "links": [
+            {
+              "label": "MAUDE report 50515470",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50515470"
+            },
+            {
+              "label": "MAUDE report 50516613",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50516613"
+            }
+          ],
+          "gate": {
+            "count": "pass",
+            "reason": "recomputed 2 from 2 listed report ids",
+            "quotes_passed": 2,
+            "quotes_withheld": 0
+          }
+        }
+      ]
     },
     {
       "id": "DMC-03",
@@ -220,15 +612,133 @@
         }
       ],
       "evidence": {
-        "origin": "missing",
-        "available": false,
-        "note": "evidence not fetched yet",
-        "report_count": null,
-        "window": null,
-        "queries": [],
-        "recalls": null
+        "origin": "demo_db",
+        "available": true,
+        "note": null,
+        "fetched_utc": null,
+        "report_count": {
+          "value": 10,
+          "gate": "pass",
+          "reason": "recomputed 10"
+        },
+        "window": {
+          "date_from": "20240729",
+          "date_to": "20260702"
+        },
+        "queries": [
+          {
+            "label": "openFDA MAUDE query that filled the demo database",
+            "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code:QIH&limit=10"
+          },
+          {
+            "label": "openFDA recall query",
+            "url": "https://api.fda.gov/device/recall.json?search=product_code:QIH"
+          }
+        ],
+        "recalls": {
+          "stored": 2,
+          "matched_total": null,
+          "gate": "pass",
+          "reason": "recomputed 2 stored recalls",
+          "latest": [
+            {
+              "recall_number": "Z-2767-2026",
+              "recalling_firm": "PIE Medical Imaging B.V.",
+              "status": "Open, Classified",
+              "date_initiated": "20260507",
+              "excerpt": "User measurement value reported by diagnostic bioimaging software intended to measure/visualize cardiovascular structures may be larger (0.8% to 34.4%) than the actual anatomical dimension, if all the following occur:",
+              "excerpt_truncated": true,
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=220230"
+            },
+            {
+              "recall_number": "Z-2111-2021",
+              "recalling_firm": "Caption Health",
+              "status": "Terminated",
+              "date_initiated": "20210519",
+              "excerpt": "The firm is aware of a issue with ultrasound software that results in unintended video frames being included.",
+              "excerpt_truncated": false,
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=187913"
+            }
+          ]
+        },
+        "gate_totals": {
+          "pass": 6,
+          "block": 0
+        },
+        "recomputed": {
+          "pass": 1,
+          "block": 0
+        }
       },
-      "patterns": []
+      "patterns": [
+        {
+          "id": "QIH-patient-data",
+          "label": "Patient data, record or label mix-up",
+          "kind": "keyword",
+          "display_label": "Keyword match (unreviewed): Patient data, record or label mix-up",
+          "basis": "keyword rules v2.0 (patient-data)",
+          "count": 7,
+          "report_ids": [
+            "21002079",
+            "21179265",
+            "21949668",
+            "22340256",
+            "22794883",
+            "24453186",
+            "24827620"
+          ],
+          "first_received": "20241223",
+          "last_received": "20260409",
+          "quotes": [
+            {
+              "report_id": "21002079",
+              "text": "IF THE PATIENT ID OF ONE PATIENT RECORD IS CHANGED FROM ITS ORIGINAL VALUE TO A NEW VALUE AND SUBSEQUENTLY, THIS ORIGINAL VALUE IS APPLIED (VIA MERGE OR EDIT FUNCTION) AS THE TARGET PATIENT ID OF ANOTHER PATIENT RECORD.",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=21002079"
+            },
+            {
+              "report_id": "21179265",
+              "text": "IF THE PATIENT ID OF ONE PATIENT RECORD IS CHANGED FROM ITS ORIGINAL VALUE TO A NEW VALUE AND SUBSEQUENTLY, THIS ORIGINAL VALUE IS APPLIED (VIA MERGE OR EDIT FUNCTION) AS THE TARGET PATIENT ID OF ANOTHER PATIENT RECORD.",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=21179265"
+            }
+          ],
+          "links": [
+            {
+              "label": "MAUDE report 21002079",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=21002079"
+            },
+            {
+              "label": "MAUDE report 21179265",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=21179265"
+            },
+            {
+              "label": "MAUDE report 21949668",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=21949668"
+            },
+            {
+              "label": "MAUDE report 22340256",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=22340256"
+            },
+            {
+              "label": "MAUDE report 22794883",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=22794883"
+            },
+            {
+              "label": "MAUDE report 24453186",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=24453186"
+            },
+            {
+              "label": "MAUDE report 24827620",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=24827620"
+            }
+          ],
+          "gate": {
+            "count": "pass",
+            "reason": "recomputed 7 from 7 listed report ids",
+            "quotes_passed": 2,
+            "quotes_withheld": 0
+          }
+        }
+      ]
     },
     {
       "id": "DMC-04",
@@ -274,15 +784,127 @@
         }
       ],
       "evidence": {
-        "origin": "missing",
-        "available": false,
-        "note": "evidence not fetched yet",
-        "report_count": null,
-        "window": null,
-        "queries": [],
-        "recalls": null
+        "origin": "demo_db",
+        "available": true,
+        "note": null,
+        "fetched_utc": null,
+        "report_count": {
+          "value": 5,
+          "gate": "pass",
+          "reason": "recomputed 5"
+        },
+        "window": {
+          "date_from": "20060518",
+          "date_to": "20250313"
+        },
+        "queries": [
+          {
+            "label": "openFDA MAUDE query that filled the demo database",
+            "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code:MYN&limit=5"
+          },
+          {
+            "label": "openFDA recall query",
+            "url": "https://api.fda.gov/device/recall.json?search=product_code:MYN"
+          }
+        ],
+        "recalls": {
+          "stored": 3,
+          "matched_total": null,
+          "gate": "pass",
+          "reason": "recomputed 3 stored recalls",
+          "latest": [
+            {
+              "recall_number": "Z-1537-2015",
+              "recalling_firm": "GA Industries",
+              "status": "Terminated",
+              "date_initiated": "20150406",
+              "excerpt": "GA Industries is recalling the Logicon Caries Detector, version 5.0, for Carestream Dental because it was not submitted for approval to the FDA prior to product release.",
+              "excerpt_truncated": false,
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=135053"
+            },
+            {
+              "recall_number": "Z-1173-06",
+              "recalling_firm": "Riverain Medical Group",
+              "status": "Terminated",
+              "date_initiated": "20060504",
+              "excerpt": "The device has an actual sensitivity of 58.2% and a specificity of 3.9% (false positives per image).",
+              "excerpt_truncated": false,
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=46158"
+            },
+            {
+              "recall_number": "Z-1174-06",
+              "recalling_firm": "Riverain Medical Group",
+              "status": "Terminated",
+              "date_initiated": "20060504",
+              "excerpt": "The device has an actual sensitivity of 58.2% and a specificity of 3.9% (false positives per image).",
+              "excerpt_truncated": false,
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=46160"
+            }
+          ]
+        },
+        "gate_totals": {
+          "pass": 7,
+          "block": 0
+        },
+        "recomputed": {
+          "pass": 1,
+          "block": 0
+        }
       },
-      "patterns": []
+      "patterns": [
+        {
+          "id": "MYN-wrong-result",
+          "label": "Result or measurement is incorrect or imprecise",
+          "kind": "keyword",
+          "display_label": "Keyword match (unreviewed): Result or measurement is incorrect or imprecise",
+          "basis": "keyword rules v2.0 (wrong-result)",
+          "count": 4,
+          "report_ids": [
+            "19116683",
+            "21395648",
+            "21593974",
+            "716559"
+          ],
+          "first_received": "20060518",
+          "last_received": "20250313",
+          "quotes": [
+            {
+              "report_id": "19116683",
+              "text": "I HAVE PERSONALLY SEEN AN UNREASONABLE AMOUNT OF FALSE POSITIVES AND FALSE NEGATIVES, AND THIS HAS DIRECT IMPLICATIONS FOR MY USE OF THE TOOL AND RISKS TO MY DIAGNOSTIC ABILITY BY USING THIS TOOL.",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=19116683"
+            },
+            {
+              "report_id": "21395648",
+              "text": "SUCH A HIGH RATE OF FALSE POSITIVES HAS THE POTENTIAL TO RESULT IN OVER-TREATMENT DUE TO FALSELY IDENTIFYING A CARIOUS LESION WHEN NONE EXISTS.",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=21395648"
+            }
+          ],
+          "links": [
+            {
+              "label": "MAUDE report 19116683",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=19116683"
+            },
+            {
+              "label": "MAUDE report 21395648",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=21395648"
+            },
+            {
+              "label": "MAUDE report 21593974",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=21593974"
+            },
+            {
+              "label": "MAUDE report 716559",
+              "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=716559"
+            }
+          ],
+          "gate": {
+            "count": "pass",
+            "reason": "recomputed 4 from 4 listed report ids",
+            "quotes_passed": 2,
+            "quotes_withheld": 0
+          }
+        }
+      ]
     },
     {
       "id": "DMC-05",
@@ -328,13 +950,40 @@
         }
       ],
       "evidence": {
-        "origin": "missing",
-        "available": false,
-        "note": "evidence not fetched yet",
-        "report_count": null,
-        "window": null,
-        "queries": [],
-        "recalls": null
+        "origin": "demo_db",
+        "available": true,
+        "note": null,
+        "fetched_utc": null,
+        "report_count": {
+          "value": 1,
+          "gate": "pass",
+          "reason": "recomputed 1"
+        },
+        "window": {
+          "date_from": "20210115",
+          "date_to": "20210115"
+        },
+        "queries": [
+          {
+            "label": "openFDA MAUDE query that filled the demo database",
+            "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code:POK&limit=1"
+          }
+        ],
+        "recalls": {
+          "stored": 0,
+          "matched_total": null,
+          "gate": "pass",
+          "reason": "recomputed 0 stored recalls",
+          "latest": []
+        },
+        "gate_totals": {
+          "pass": 2,
+          "block": 0
+        },
+        "recomputed": {
+          "pass": 0,
+          "block": 0
+        }
       },
       "patterns": []
     },
@@ -395,7 +1044,7 @@
         "report_count": {
           "value": 55,
           "gate": "pass",
-          "reason": "recomputed 55 from the stored report ids"
+          "reason": "recomputed 55"
         },
         "window": {
           "date_from": "20260904",
@@ -403,11 +1052,11 @@
         },
         "queries": [
           {
-            "label": "openFDA MAUDE reports query",
+            "label": "openFDA MAUDE query (last 8 weeks, limit 100)",
             "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code:IYN+AND+date_received:[20260904+TO+20261030]&limit=100"
           },
           {
-            "label": "openFDA recalls query",
+            "label": "openFDA recall query (latest 100)",
             "url": "https://api.fda.gov/device/recall.json?search=product_code:IYN&sort=event_date_initiated:desc&limit=100"
           }
         ],
@@ -423,6 +1072,7 @@
               "status": "Open, Classified",
               "date_initiated": "20260924",
               "excerpt": "Ultrasound system may: 1) Not recognize previous transducer registration, prevent scanning, require re-registration with Wi-Fi/cellular access, which may be unavailable outside of the hospital",
+              "excerpt_truncated": true,
               "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222793"
             },
             {
@@ -431,6 +1081,7 @@
               "status": "Open, Classified",
               "date_initiated": "20260807",
               "excerpt": "Due to software issue with ultrasound system, doppler sample is displayed shallower than its actual measurement location, potentially causing inaccurate blood flow velocity measurements and misdiagnosis.",
+              "excerpt_truncated": false,
               "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222248"
             },
             {
@@ -439,12 +1090,17 @@
               "status": "Open, Classified",
               "date_initiated": "20251031",
               "excerpt": "Ultrasound system compatibility issues with Apple devices running iOS 18 may cause a failure to perform live imagining.",
+              "excerpt_truncated": false,
               "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=216707"
             }
           ]
         },
         "gate_totals": {
           "pass": 7,
+          "block": 0
+        },
+        "recomputed": {
+          "pass": 3,
           "block": 0
         }
       },
@@ -668,7 +1324,7 @@
         "report_count": {
           "value": 27,
           "gate": "pass",
-          "reason": "recomputed 27 from the stored report ids"
+          "reason": "recomputed 27"
         },
         "window": {
           "date_from": "20260904",
@@ -676,11 +1332,11 @@
         },
         "queries": [
           {
-            "label": "openFDA MAUDE reports query",
+            "label": "openFDA MAUDE query (last 8 weeks, limit 100)",
             "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code:OTE+AND+date_received:[20260904+TO+20261030]&limit=100"
           },
           {
-            "label": "openFDA recalls query",
+            "label": "openFDA recall query (latest 100)",
             "url": "https://api.fda.gov/device/recall.json?search=product_code:OTE&sort=event_date_initiated:desc&limit=100"
           }
         ],
@@ -696,6 +1352,7 @@
               "status": "Open, Classified",
               "date_initiated": "20260408",
               "excerpt": "Complaints have been received of systems developing loose, missing, or broken internal bolts over time.",
+              "excerpt_truncated": false,
               "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=219089"
             },
             {
@@ -704,6 +1361,7 @@
               "status": "Open, Classified",
               "date_initiated": "20250611",
               "excerpt": "Devices had an unapproved slabbing software function enabled for use.",
+              "excerpt_truncated": false,
               "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=214390"
             },
             {
@@ -712,12 +1370,17 @@
               "status": "Open, Classified",
               "date_initiated": "20240819",
               "excerpt": "Identified an issue with Selenia Dimensions 1.12.0 and 3Dimensions 2.3.0 system software when used in combination with C-View software in which the quality of the final C-View synthesized 2D image is impacted and may",
+              "excerpt_truncated": true,
               "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=209902"
             }
           ]
         },
         "gate_totals": {
-          "pass": 2,
+          "pass": 5,
+          "block": 0
+        },
+        "recomputed": {
+          "pass": 0,
           "block": 0
         }
       },
@@ -780,7 +1443,7 @@
         "report_count": {
           "value": 27,
           "gate": "pass",
-          "reason": "recomputed 27 from the stored report ids"
+          "reason": "recomputed 27"
         },
         "window": {
           "date_from": "20260904",
@@ -788,11 +1451,11 @@
         },
         "queries": [
           {
-            "label": "openFDA MAUDE reports query",
+            "label": "openFDA MAUDE query (last 8 weeks, limit 100)",
             "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code:DSI+AND+date_received:[20260904+TO+20261030]&limit=100"
           },
           {
-            "label": "openFDA recalls query",
+            "label": "openFDA recall query (latest 100)",
             "url": "https://api.fda.gov/device/recall.json?search=product_code:DSI&sort=event_date_initiated:desc&limit=100"
           }
         ],
@@ -808,6 +1471,7 @@
               "status": "Open, Classified",
               "date_initiated": "20260326",
               "excerpt": null,
+              "excerpt_truncated": false,
               "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=219564"
             },
             {
@@ -816,6 +1480,7 @@
               "status": "Open, Classified",
               "date_initiated": "20260227",
               "excerpt": "Multi-parameter command module has a circuit board issue and when in Auto mode, Cardiac Output (CO) measurement may activate early, resulting in Bad Curve error with no CO measurement or Irregular Curve error with CO",
+              "excerpt_truncated": true,
               "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=218485"
             },
             {
@@ -824,12 +1489,17 @@
               "status": "Open, Classified",
               "date_initiated": "20251031",
               "excerpt": "Potential issue where the IntelliVue monitors did not alarm.",
+              "excerpt_truncated": false,
               "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=217156"
             }
           ]
         },
         "gate_totals": {
-          "pass": 2,
+          "pass": 4,
+          "block": 0
+        },
+        "recomputed": {
+          "pass": 0,
           "block": 0
         }
       },
@@ -892,7 +1562,7 @@
         "report_count": {
           "value": 4,
           "gate": "pass",
-          "reason": "recomputed 4 from the stored report ids"
+          "reason": "recomputed 4"
         },
         "window": {
           "date_from": "20260904",
@@ -900,11 +1570,11 @@
         },
         "queries": [
           {
-            "label": "openFDA MAUDE reports query",
+            "label": "openFDA MAUDE query (last 8 weeks, limit 100)",
             "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code:MUD+AND+date_received:[20260904+TO+20261030]&limit=100"
           },
           {
-            "label": "openFDA recalls query",
+            "label": "openFDA recall query (latest 100)",
             "url": "https://api.fda.gov/device/recall.json?search=product_code:MUD&sort=event_date_initiated:desc&limit=100"
           }
         ],
@@ -920,6 +1590,7 @@
               "status": "Open, Classified",
               "date_initiated": "20260811",
               "excerpt": "Due to incorrect switching of Channel 1 and 2 on the module and flag labels on the tissue oximetry cables.",
+              "excerpt_truncated": false,
               "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=221435"
             },
             {
@@ -928,6 +1599,7 @@
               "status": "Open, Classified",
               "date_initiated": "20240109",
               "excerpt": "manufacturing defects to sensor cable connectors may result in error codes or non-functioning channel",
+              "excerpt_truncated": false,
               "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=205778"
             },
             {
@@ -936,12 +1608,17 @@
               "status": "Open, Classified",
               "date_initiated": "20240109",
               "excerpt": "manufacturing defects to sensor cable connectors may result in error codes or non-functioning channel",
+              "excerpt_truncated": false,
               "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=205779"
             }
           ]
         },
         "gate_totals": {
-          "pass": 3,
+          "pass": 5,
+          "block": 0
+        },
+        "recomputed": {
+          "pass": 1,
           "block": 0
         }
       },
@@ -1058,7 +1735,7 @@
         "report_count": {
           "value": 57,
           "gate": "pass",
-          "reason": "recomputed 57 from the stored report ids"
+          "reason": "recomputed 57"
         },
         "window": {
           "date_from": "20260904",
@@ -1066,11 +1743,11 @@
         },
         "queries": [
           {
-            "label": "openFDA MAUDE reports query",
+            "label": "openFDA MAUDE query (last 8 weeks, limit 100)",
             "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code:DQK+AND+date_received:[20260904+TO+20261030]&limit=100"
           },
           {
-            "label": "openFDA recalls query",
+            "label": "openFDA recall query (latest 100)",
             "url": "https://api.fda.gov/device/recall.json?search=product_code:DQK&sort=event_date_initiated:desc&limit=100"
           }
         ],
@@ -1086,6 +1763,7 @@
               "status": "Open, Classified",
               "date_initiated": "20260730",
               "excerpt": "Device may not resume patient monitoring for at least 3 minutes following system restart.",
+              "excerpt_truncated": false,
               "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222040"
             },
             {
@@ -1094,6 +1772,7 @@
               "status": "Open, Classified",
               "date_initiated": "20260424",
               "excerpt": "Electrical sparking may occur at the printer head.",
+              "excerpt_truncated": false,
               "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=220231"
             },
             {
@@ -1102,12 +1781,17 @@
               "status": "Open, Classified",
               "date_initiated": "20250916",
               "excerpt": null,
+              "excerpt_truncated": false,
               "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=216340"
             }
           ]
         },
         "gate_totals": {
-          "pass": 8,
+          "pass": 7,
+          "block": 0
+        },
+        "recomputed": {
+          "pass": 3,
           "block": 0
         }
       },
@@ -1430,7 +2114,7 @@
         "report_count": {
           "value": 30,
           "gate": "pass",
-          "reason": "recomputed 30 from the stored report ids"
+          "reason": "recomputed 30"
         },
         "window": {
           "date_from": "20260904",
@@ -1438,11 +2122,11 @@
         },
         "queries": [
           {
-            "label": "openFDA MAUDE reports query",
+            "label": "openFDA MAUDE query (last 8 weeks, limit 100)",
             "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code:LNH+AND+date_received:[20260904+TO+20261030]&limit=100"
           },
           {
-            "label": "openFDA recalls query",
+            "label": "openFDA recall query (latest 100)",
             "url": "https://api.fda.gov/device/recall.json?search=product_code:LNH&sort=event_date_initiated:desc&limit=100"
           }
         ],
@@ -1458,6 +2142,7 @@
               "status": "Open, Classified",
               "date_initiated": "20260828",
               "excerpt": "When exporting diffusion tensor imaging (DTI) scans from a MR system using the Enhanced MR DICOM format, the exports contain incorrect data (diffusion directions).",
+              "excerpt_truncated": false,
               "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222668"
             },
             {
@@ -1466,6 +2151,7 @@
               "status": "Open, Classified",
               "date_initiated": "20260828",
               "excerpt": "When exporting diffusion tensor imaging (DTI) scans from a MR system using the Enhanced MR DICOM format, the exports contain incorrect data (diffusion directions).",
+              "excerpt_truncated": false,
               "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222669"
             },
             {
@@ -1474,12 +2160,17 @@
               "status": "Open, Classified",
               "date_initiated": "20260828",
               "excerpt": "When exporting diffusion tensor imaging (DTI) scans from a MR system using the Enhanced MR DICOM format, the exports contain incorrect data (diffusion directions).",
+              "excerpt_truncated": false,
               "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222670"
             }
           ]
         },
         "gate_totals": {
-          "pass": 2,
+          "pass": 5,
+          "block": 0
+        },
+        "recomputed": {
+          "pass": 0,
           "block": 0
         }
       },
@@ -1540,7 +2231,7 @@
         "report_count": {
           "value": 97,
           "gate": "pass",
-          "reason": "recomputed 97 from the stored report ids"
+          "reason": "recomputed 97"
         },
         "window": {
           "date_from": "20260904",
@@ -1548,11 +2239,11 @@
         },
         "queries": [
           {
-            "label": "openFDA MAUDE reports query",
+            "label": "openFDA MAUDE query (last 8 weeks, limit 100)",
             "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code:MWI+AND+date_received:[20260904+TO+20261030]&limit=100"
           },
           {
-            "label": "openFDA recalls query",
+            "label": "openFDA recall query (latest 100)",
             "url": "https://api.fda.gov/device/recall.json?search=product_code:MWI&sort=event_date_initiated:desc&limit=100"
           }
         ],
@@ -1568,6 +2259,7 @@
               "status": "Open, Classified",
               "date_initiated": "20260821",
               "excerpt": "A performance issue may result in inaccurate blood pressure readings when the Linear Deflation Method is used.",
+              "excerpt_truncated": false,
               "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222051"
             },
             {
@@ -1576,6 +2268,7 @@
               "status": "Open, Classified",
               "date_initiated": "20260821",
               "excerpt": "A performance issue may result in inaccurate blood pressure readings when the Linear Deflation Method is used.",
+              "excerpt_truncated": false,
               "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222178"
             },
             {
@@ -1584,12 +2277,17 @@
               "status": "Open, Classified",
               "date_initiated": "20260821",
               "excerpt": "A performance issue may result in inaccurate blood pressure readings when the Linear Deflation Method is used.",
+              "excerpt_truncated": false,
               "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222180"
             }
           ]
         },
         "gate_totals": {
-          "pass": 5,
+          "pass": 7,
+          "block": 0
+        },
+        "recomputed": {
+          "pass": 1,
           "block": 0
         }
       },
@@ -1864,10 +2562,6 @@
   "notes": [
     "Simulated company: every name, owner, model, status and date in this file is sample data.",
     "Problem evidence (reports, recalls) is real openFDA data kept in separate files; this file holds none of it.",
-    "Product codes: LLZ (x2), QIH, MYN, POK are in the demo database; IYN, OTE, DSI, MUD are sweep-flagged codes; DQK, LNH, MWI are sweep 'no change' codes with 3 or more prior reports.",
-    "LLZ: evidence not fetched yet; no count, pattern or quote is shown for it.",
-    "QIH: evidence not fetched yet; no count, pattern or quote is shown for it.",
-    "MYN: evidence not fetched yet; no count, pattern or quote is shown for it.",
-    "POK: evidence not fetched yet; no count, pattern or quote is shown for it."
+    "Product codes: LLZ (x2), QIH, MYN, POK are in the demo database; IYN, OTE, DSI, MUD are sweep-flagged codes; DQK, LNH, MWI are sweep 'no change' codes with 3 or more prior reports."
   ]
 }

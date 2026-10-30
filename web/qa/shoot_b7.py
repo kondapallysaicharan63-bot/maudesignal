@@ -11,11 +11,12 @@ from __future__ import annotations
 
 import json
 
-from playwright.sync_api import Page, sync_playwright
+from playwright.sync_api import Page, Route, sync_playwright
 from shoot_b1 import OUT, local_only, serve
 from shoot_b6a import go_workflow, overflow
 
 PUBLIC = OUT.parents[1] / "public" / "data"
+BANNER = "Simulated company \u2014 sample data. Problem evidence is real FDA data."
 TITLE = "Our devices (simulated)"
 
 
@@ -35,16 +36,44 @@ def inner_x_overflow(page: Page) -> list[str]:
     )
 
 
+def with_one_device_missing(code_device_id: str):  # type: ignore[no-untyped-def]
+    """A route handler that serves company.json with one device's evidence emptied.
+
+    No device in the shipped file is missing (every code is backed by the demo database or a fetched
+    file), so the missing-evidence screen is shot on a test copy of the real file: one real device,
+    its evidence written the way the exporter writes a missing code. Nothing else is changed.
+    """
+
+    def handler(route: Route) -> None:
+        doc = json.loads((PUBLIC / "company.json").read_text())
+        for d in doc["devices"]:
+            if d["id"] == code_device_id:
+                d["evidence"] = {
+                    "origin": "missing",
+                    "available": False,
+                    "note": "evidence not fetched yet",
+                    "report_count": None,
+                    "window": None,
+                    "queries": [],
+                    "recalls": None,
+                }
+                d["patterns"] = []
+        route.fulfill(status=200, content_type="application/json", body=json.dumps(doc))
+
+    return handler
+
+
 def main() -> None:
     """Take the B7 screenshots and print the checks."""
     company = json.loads((PUBLIC / "company.json").read_text())
     fetched = next(d for d in company["devices"] if d["evidence"]["available"] and d["patterns"])
-    missing = next(d for d in company["devices"] if not d["evidence"]["available"])
+    assert all(d["evidence"]["available"] for d in company["devices"]), "a device is missing"
+    missing = company["devices"][-1]  # shot on a test copy where its evidence is emptied
     srv, port = serve()
     url = f"http://127.0.0.1:{port}/"
     report: dict[str, object] = {
         "detail_with_evidence": fetched["name"],
-        "detail_without_evidence": missing["name"],
+        "detail_without_evidence_test_copy": missing["name"],
         "needs_review": sum(
             1 for d in company["devices"] if d["status"]["label"] == "Needs review"
         ),
@@ -111,6 +140,8 @@ def main() -> None:
                 )
                 page.wait_for_timeout(300)
                 if page.get_by_test_id("status-bars").count():
+                    r["mini_expanded_banner"] = page.get_by_test_id("status-bars").inner_text()
+                    assert BANNER in r["mini_expanded_banner"], "no banner in the expanded view"
                     shot(page, r, tag, "mini-expanded")
                     page.keyboard.press("Escape")
                     page.wait_for_timeout(300)
@@ -131,18 +162,25 @@ def main() -> None:
                 r["history_text"] = page.get_by_test_id("history").inner_text()
                 r["chain_ok_shown"] = page.get_by_text("Chain ok").count()
 
-                # device without evidence
-                page.get_by_role("button", name="All devices").first.click()
-                page.wait_for_timeout(300)
-                page.get_by_role("button", name=f"{missing['name']} {missing['model']}").click()
-                page.wait_for_timeout(400)
-                r["missing_text"] = page.get_by_test_id("evidence-missing").inner_text()
-                shot(page, r, tag, "missing-evidence")
+                # device without evidence: a test copy of the real file (see with_one_device_missing)
+                page2 = ctx.new_page()
+                page2.route("**/*", local_only)
+                page2.route("**/data/company.json", with_one_device_missing(missing["id"]))
+                page2.goto(url, wait_until="load")
+                page2.wait_for_selector("text=claims verified")
+                page2.evaluate("document.fonts.ready")
+                go_workflow(page2, phone, TITLE)
+                page2.get_by_role("button", name=f"{missing['name']} {missing['model']}").click()
+                page2.wait_for_timeout(400)
+                r["missing_text"] = page2.get_by_test_id("evidence-missing").inner_text()
+                shot(page2, r, tag, "missing-evidence")
+                page2.close()
 
                 # alert bell
                 page.get_by_test_id("alert-bell").click()
                 page.wait_for_timeout(300)
-                r["bell_list"] = page.locator("#alert-list").inner_text()[:400]
+                r["bell_list"] = page.locator("#alert-list").inner_text()[:600]
+                assert BANNER in page.locator("#alert-list").inner_text(), "no banner in the bell"
                 shot(page, r, tag, "bell")
                 report[tag] = r
                 ctx.close()

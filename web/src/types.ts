@@ -416,6 +416,8 @@ export interface CompanyRecall {
   status: string | null
   date_initiated: string | null
   excerpt: string | null
+  /** True when the excerpt is only the start of a longer sentence (shown with an ellipsis). */
+  excerpt_truncated?: boolean
   url: string | null
 }
 
@@ -435,6 +437,8 @@ export interface CompanyEvidence {
     latest: CompanyRecall[]
   } | null
   gate_totals?: { pass: number; block: number }
+  /** Group counts recomputed from the listed report ids (not claim-gate verdicts). */
+  recomputed?: { pass: number; block: number }
 }
 
 export interface CompanyDevice {

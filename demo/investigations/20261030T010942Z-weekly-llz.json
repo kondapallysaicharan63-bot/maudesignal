@@ -1,0 +1,1476 @@
+{
+  "schema_version": "1.0",
+  "id": "20261030T010942Z-weekly-llz",
+  "kind": "weekly-investigator",
+  "product_code": "LLZ",
+  "trigger": "weekly check: reports suddenly increased",
+  "recorded_at_utc": "2026-10-30T01:09:42Z",
+  "model": "muse-spark-1.3",
+  "skill_version": "1.0.0",
+  "window": {
+    "date_from": "20260825",
+    "date_to": "20260831"
+  },
+  "tool_steps": [
+    {
+      "name": "search_reports",
+      "arguments": {
+        "date_from": "20260825",
+        "date_to": "20260831",
+        "limit": 10,
+        "offset": 0,
+        "product_code": "LLZ"
+      },
+      "summary": "searched 33 reports"
+    },
+    {
+      "name": "report_sources",
+      "arguments": {
+        "date_from": "20260825",
+        "date_to": "20260831",
+        "product_code": "LLZ"
+      },
+      "summary": "searched 33 reports"
+    },
+    {
+      "name": "recalls",
+      "arguments": {
+        "limit": 20,
+        "product_code": "LLZ"
+      },
+      "summary": "checked recalls"
+    },
+    {
+      "name": "search_reports",
+      "arguments": {
+        "date_from": "20260825",
+        "date_to": "20260831",
+        "limit": 10,
+        "offset": 10,
+        "product_code": "LLZ"
+      },
+      "summary": "searched 33 reports"
+    },
+    {
+      "name": "search_reports",
+      "arguments": {
+        "date_from": "20260825",
+        "date_to": "20260831",
+        "limit": 10,
+        "offset": 20,
+        "product_code": "LLZ"
+      },
+      "summary": "searched 33 reports"
+    },
+    {
+      "name": "search_reports",
+      "arguments": {
+        "date_from": "20260825",
+        "date_to": "20260831",
+        "limit": 10,
+        "offset": 30,
+        "product_code": "LLZ"
+      },
+      "summary": "searched 33 reports"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50516578"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50517192"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50519907"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50502511"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50503657"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "device_510k",
+      "arguments": {
+        "k_number": "K151774"
+      },
+      "summary": "checked a 510(k) record"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50515470"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50516613"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50503662"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50448213"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50426773"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50516576"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50448215"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50448216"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50448217"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50453041"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50426770"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50517935"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50519908"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50519912"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50519913"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50531298"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50531301"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50513025"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50513122"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50515017"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50502514"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50502888"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50503658"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50504539"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50504540"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50504541"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50504545"
+      },
+      "summary": "read one report"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50451032"
+      },
+      "summary": "read one report"
+    }
+  ],
+  "sentences": [
+    {
+      "text": "Product code LLZ reports suddenly increased, with 33 reports received from 20260825 to 20260831.",
+      "status": "pass",
+      "reasons": [],
+      "claims": [
+        {
+          "kind": "count",
+          "status": "pass",
+          "reason": "recomputed 33",
+          "evidence_ids": [
+            "50426770",
+            "50426773",
+            "50448213",
+            "50448215",
+            "50448216",
+            "50448217",
+            "50451032",
+            "50453041",
+            "50502511",
+            "50502514",
+            "50502888",
+            "50503657",
+            "50503658",
+            "50503662",
+            "50504539",
+            "50504540",
+            "50504541",
+            "50504545",
+            "50513025",
+            "50513122"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "2 reports describe unable to fetch or retrieve images.",
+      "status": "pass",
+      "reasons": [],
+      "claims": [
+        {
+          "kind": "group_count",
+          "status": "pass",
+          "reason": "recomputed 2 from 2 listed report ids",
+          "evidence_ids": [
+            "50515470",
+            "50516613"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "3 reports describe unable to finalize or process reports.",
+      "status": "pass",
+      "reasons": [],
+      "claims": [
+        {
+          "kind": "group_count",
+          "status": "pass",
+          "reason": "recomputed 3 from 3 listed report ids",
+          "evidence_ids": [
+            "50503662",
+            "50448213",
+            "50426773"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "3 reports describe unable to log in or connect, including server errors.",
+      "status": "pass",
+      "reasons": [],
+      "claims": [
+        {
+          "kind": "group_count",
+          "status": "pass",
+          "reason": "recomputed 3 from 3 listed report ids",
+          "evidence_ids": [
+            "50516576",
+            "50448215",
+            "50448216"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "For this product code 561 recalls are on file, including Z-1692-2026, and 510(k) K151774 lists CARESTREAM Vue Motion.",
+      "status": "pass",
+      "reasons": [],
+      "claims": [
+        {
+          "kind": "recall_count",
+          "status": "pass",
+          "reason": "recomputed 561 stored recalls",
+          "evidence_ids": [
+            "Z-0012-2022",
+            "Z-0023-2016",
+            "Z-0030-2026",
+            "Z-0032-2012",
+            "Z-0033-2007",
+            "Z-0034-2014",
+            "Z-0035-2014",
+            "Z-0039-2025",
+            "Z-0048-2013",
+            "Z-0055-2025",
+            "Z-0068-2015",
+            "Z-0068-2026",
+            "Z-0069-2007",
+            "Z-0070-2007",
+            "Z-0071-2007",
+            "Z-0072-2007",
+            "Z-0072-2021",
+            "Z-0073-2017",
+            "Z-0092-06",
+            "Z-0093-04"
+          ]
+        },
+        {
+          "kind": "recall",
+          "status": "pass",
+          "reason": "FDA recall: PHILIPS MEDICAL SYSTEMS NEDERLAND B.V. (Open, Classified)",
+          "evidence_ids": [
+            "Z-1692-2026"
+          ]
+        },
+        {
+          "kind": "device",
+          "status": "pass",
+          "reason": "openFDA 510(k): CARESTREAM Vue Motion",
+          "evidence_ids": [
+            "K151774"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "In this window 33 reports were filed by the manufacturer and 0 by sources outside the manufacturer channel.",
+      "status": "pass",
+      "reasons": [],
+      "claims": [
+        {
+          "kind": "source_count",
+          "status": "pass",
+          "reason": "recomputed 33 manufacturer reports",
+          "evidence_ids": [
+            "50426770",
+            "50426773",
+            "50448213",
+            "50448215",
+            "50448216",
+            "50448217",
+            "50451032",
+            "50453041",
+            "50502511",
+            "50502514",
+            "50502888",
+            "50503657",
+            "50503658",
+            "50503662",
+            "50504539",
+            "50504540",
+            "50504541",
+            "50504545",
+            "50513025",
+            "50513122"
+          ]
+        },
+        {
+          "kind": "source_count",
+          "status": "pass",
+          "reason": "recomputed 0 reports not filed by a manufacturer",
+          "evidence_ids": []
+        }
+      ]
+    },
+    {
+      "text": "A QA/RA reviewer should read these reports and decide on any follow-up.",
+      "status": "pass",
+      "reasons": [],
+      "claims": []
+    }
+  ],
+  "groups": [
+    {
+      "label": "unable to fetch or retrieve images",
+      "report_ids": [
+        "50515470",
+        "50516613"
+      ],
+      "count": 2
+    },
+    {
+      "label": "unable to finalize or process reports",
+      "report_ids": [
+        "50503662",
+        "50448213",
+        "50426773"
+      ],
+      "count": 3
+    },
+    {
+      "label": "unable to log in or connect, including server errors",
+      "report_ids": [
+        "50516576",
+        "50448215",
+        "50448216"
+      ],
+      "count": 3
+    }
+  ],
+  "protocol": [
+    {
+      "tool": "search_reports",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "limit": 10,
+        "offset": 0,
+        "product_code": "LLZ"
+      },
+      "date_from": "20260825",
+      "date_to": "20260831",
+      "count": 33,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "report_sources",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "product_code": "LLZ"
+      },
+      "date_from": "20260825",
+      "date_to": "20260831",
+      "count": 33,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "recalls",
+      "dataset": "openFDA device recalls (stored copy)",
+      "filters": {
+        "limit": 20,
+        "product_code": "LLZ"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": null,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "search_reports",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "limit": 10,
+        "offset": 10,
+        "product_code": "LLZ"
+      },
+      "date_from": "20260825",
+      "date_to": "20260831",
+      "count": 33,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "search_reports",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "limit": 10,
+        "offset": 20,
+        "product_code": "LLZ"
+      },
+      "date_from": "20260825",
+      "date_to": "20260831",
+      "count": 33,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "search_reports",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "limit": 10,
+        "offset": 30,
+        "product_code": "LLZ"
+      },
+      "date_from": "20260825",
+      "date_to": "20260831",
+      "count": 33,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50516578"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50517192"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50519907"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50502511"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50503657"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "device_510k",
+      "dataset": "510(k) clearance records (stored copy)",
+      "filters": {
+        "k_number": "K151774"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": null,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50515470"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50516613"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50503662"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50448213"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50426773"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50516576"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50448215"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50448216"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50448217"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50453041"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50426770"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50517935"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50519908"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50519912"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50519913"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50531298"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50531301"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50513025"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50513122"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50515017"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50502514"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50502888"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50503658"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50504539"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50504540"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50504541"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50504545"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    },
+    {
+      "tool": "get_report",
+      "dataset": "openFDA MAUDE reports (stored copy)",
+      "filters": {
+        "report_id": "50451032"
+      },
+      "date_from": null,
+      "date_to": null,
+      "count": 1,
+      "run_at": "2026-10-30T01:09:42Z"
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "search_reports",
+      "arguments": {
+        "date_from": "20260825",
+        "date_to": "20260831",
+        "limit": 10,
+        "offset": 0,
+        "product_code": "LLZ"
+      },
+      "result_preview": "{\"matched\": 33, \"reports\": [{\"report_id\": \"50515470\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260831\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative_excerpt\": \"Philips identified a software defect in ISCV (IntelliSpace Cardiovascular) system wherein unable t"
+    },
+    {
+      "name": "report_sources",
+      "arguments": {
+        "date_from": "20260825",
+        "date_to": "20260831",
+        "product_code": "LLZ"
+      },
+      "result_preview": "{\"product_code\": \"LLZ\", \"date_from\": \"20260825\", \"date_to\": \"20260831\", \"report_count\": 33, \"latest_date_received\": \"20260831\", \"source_counts\": {\"manufacturer\": 33}, \"non_manufacturer_count\": 0, \"non_manufacturer_reports\": [], \"claim_hint\": \"state counts with source_count claims; source is one of m"
+    },
+    {
+      "name": "recalls",
+      "arguments": {
+        "limit": 20,
+        "product_code": "LLZ"
+      },
+      "result_preview": "{\"product_code\": \"LLZ\", \"date_from\": null, \"date_to\": null, \"stored_recall_count\": 561, \"source\": \"openFDA device/recall.json (stored copy)\", \"recalls\": [{\"recall_number\": \"Z-0186-2027\", \"event_number\": \"99899\", \"recalling_firm\": \"INTELERAD MEDICAL SYSTEMS INCORPORATED\", \"recall_status\": \"Open, Clas"
+    },
+    {
+      "name": "search_reports",
+      "arguments": {
+        "date_from": "20260825",
+        "date_to": "20260831",
+        "limit": 10,
+        "offset": 10,
+        "product_code": "LLZ"
+      },
+      "result_preview": "{\"matched\": 33, \"reports\": [{\"report_id\": \"50531298\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260831\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative_excerpt\": \"\"}, {\"report_id\": \"50531301\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\":"
+    },
+    {
+      "name": "search_reports",
+      "arguments": {
+        "date_from": "20260825",
+        "date_to": "20260831",
+        "limit": 10,
+        "offset": 20,
+        "product_code": "LLZ"
+      },
+      "result_preview": "{\"matched\": 33, \"reports\": [{\"report_id\": \"50503662\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260828\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative_excerpt\": \"Philips identified a software defect in ISCV (IntelliSpace Cardiovascular) system wherein the user"
+    },
+    {
+      "name": "search_reports",
+      "arguments": {
+        "date_from": "20260825",
+        "date_to": "20260831",
+        "limit": 10,
+        "offset": 30,
+        "product_code": "LLZ"
+      },
+      "result_preview": "{\"matched\": 33, \"reports\": [{\"report_id\": \"50453041\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260826\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative_excerpt\": \"Philips received a complaint on the IntelliSpace Cardiovascular (ISCV) indicating that customer fa"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50516578"
+      },
+      "result_preview": "{\"report_id\": \"50516578\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260831\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"\"}"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50517192"
+      },
+      "result_preview": "{\"report_id\": \"50517192\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260831\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"\"}"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50519907"
+      },
+      "result_preview": "{\"report_id\": \"50519907\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260831\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"\"}"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50502511"
+      },
+      "result_preview": "{\"report_id\": \"50502511\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260828\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"\"}"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50503657"
+      },
+      "result_preview": "{\"report_id\": \"50503657\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260828\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"\"}"
+    },
+    {
+      "name": "device_510k",
+      "arguments": {
+        "k_number": "K151774"
+      },
+      "result_preview": "{\"k_number\": \"K151774\", \"source\": \"openFDA device/510k.json (stored copy)\", \"applicant\": \"Carestream Health, Inc.\", \"device_name\": \"CARESTREAM Vue Motion\", \"product_code\": \"LLZ\", \"decision_date\": \"2015-09-21\", \"decision_code\": \"SESE\", \"statement_or_summary\": \"Summary\", \"recalls_citing_this_k_number\""
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50515470"
+      },
+      "result_preview": "{\"report_id\": \"50515470\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260831\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"Philips identified a software defect in ISCV (IntelliSpace Cardiovascular) s"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50516613"
+      },
+      "result_preview": "{\"report_id\": \"50516613\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260831\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"Philips identified a software defect in ISCV (IntelliSpace Cardiovascular) s"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50503662"
+      },
+      "result_preview": "{\"report_id\": \"50503662\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260828\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"Philips identified a software defect in ISCV (IntelliSpace Cardiovascular) s"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50448213"
+      },
+      "result_preview": "{\"report_id\": \"50448213\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260826\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), i"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50426773"
+      },
+      "result_preview": "{\"report_id\": \"50426773\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260825\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), i"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50516576"
+      },
+      "result_preview": "{\"report_id\": \"50516576\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260831\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"Philips identified a software defect in ISCV (Intelli Space Cardiovascular) "
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50448215"
+      },
+      "result_preview": "{\"report_id\": \"50448215\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260826\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"Philips received a complaint on the IntelliSpace Cardiovascular (ISCV) indic"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50448216"
+      },
+      "result_preview": "{\"report_id\": \"50448216\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260826\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), i"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50448217"
+      },
+      "result_preview": "{\"report_id\": \"50448217\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260826\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), i"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50453041"
+      },
+      "result_preview": "{\"report_id\": \"50453041\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260826\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"Philips received a complaint on the IntelliSpace Cardiovascular (ISCV) indic"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50426770"
+      },
+      "result_preview": "{\"report_id\": \"50426770\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260825\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), i"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50517935"
+      },
+      "result_preview": "{\"report_id\": \"50517935\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260831\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"\"}"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50519908"
+      },
+      "result_preview": "{\"report_id\": \"50519908\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260831\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace CardioVascular\", \"narrative\": \"\"}"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50519912"
+      },
+      "result_preview": "{\"report_id\": \"50519912\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260831\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"\"}"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50519913"
+      },
+      "result_preview": "{\"report_id\": \"50519913\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260831\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"\"}"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50531298"
+      },
+      "result_preview": "{\"report_id\": \"50531298\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260831\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"\"}"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50531301"
+      },
+      "result_preview": "{\"report_id\": \"50531301\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260831\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"\"}"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50513025"
+      },
+      "result_preview": "{\"report_id\": \"50513025\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260830\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"\"}"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50513122"
+      },
+      "result_preview": "{\"report_id\": \"50513122\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260830\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"\"}"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50515017"
+      },
+      "result_preview": "{\"report_id\": \"50515017\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260830\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"\"}"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50502514"
+      },
+      "result_preview": "{\"report_id\": \"50502514\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260828\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"\"}"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50502888"
+      },
+      "result_preview": "{\"report_id\": \"50502888\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260828\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"\"}"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50503658"
+      },
+      "result_preview": "{\"report_id\": \"50503658\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260828\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"\"}"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50504539"
+      },
+      "result_preview": "{\"report_id\": \"50504539\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260828\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"\"}"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50504540"
+      },
+      "result_preview": "{\"report_id\": \"50504540\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260828\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"\"}"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50504541"
+      },
+      "result_preview": "{\"report_id\": \"50504541\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260828\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"\"}"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50504545"
+      },
+      "result_preview": "{\"report_id\": \"50504545\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260828\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"\"}"
+    },
+    {
+      "name": "get_report",
+      "arguments": {
+        "report_id": "50451032"
+      },
+      "result_preview": "{\"report_id\": \"50451032\", \"product_code\": \"LLZ\", \"event_type\": \"malfunction\", \"date_received\": \"20260826\", \"manufacturer\": \"Philips Medical Systems Nederland B.V.\", \"brand_name\": \"IntelliSpace Cardiovascular\", \"narrative\": \"\"}"
+    }
+  ],
+  "first_pass": {
+    "passed": 7,
+    "blocked": 0,
+    "claims": {
+      "pass": 9,
+      "block": 0
+    },
+    "sentences": [
+      {
+        "text": "Product code LLZ reports suddenly increased, with 33 reports received from 20260825 to 20260831.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "count",
+            "status": "pass",
+            "reason": "recomputed 33",
+            "evidence_ids": [
+              "50426770",
+              "50426773",
+              "50448213",
+              "50448215",
+              "50448216",
+              "50448217",
+              "50451032",
+              "50453041",
+              "50502511",
+              "50502514",
+              "50502888",
+              "50503657",
+              "50503658",
+              "50503662",
+              "50504539",
+              "50504540",
+              "50504541",
+              "50504545",
+              "50513025",
+              "50513122"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "2 reports describe unable to fetch or retrieve images.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "group_count",
+            "status": "pass",
+            "reason": "recomputed 2 from 2 listed report ids",
+            "evidence_ids": [
+              "50515470",
+              "50516613"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "3 reports describe unable to finalize or process reports.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "group_count",
+            "status": "pass",
+            "reason": "recomputed 3 from 3 listed report ids",
+            "evidence_ids": [
+              "50503662",
+              "50448213",
+              "50426773"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "3 reports describe unable to log in or connect, including server errors.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "group_count",
+            "status": "pass",
+            "reason": "recomputed 3 from 3 listed report ids",
+            "evidence_ids": [
+              "50516576",
+              "50448215",
+              "50448216"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "For this product code 561 recalls are on file, including Z-1692-2026, and 510(k) K151774 lists CARESTREAM Vue Motion.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "recall_count",
+            "status": "pass",
+            "reason": "recomputed 561 stored recalls",
+            "evidence_ids": [
+              "Z-0012-2022",
+              "Z-0023-2016",
+              "Z-0030-2026",
+              "Z-0032-2012",
+              "Z-0033-2007",
+              "Z-0034-2014",
+              "Z-0035-2014",
+              "Z-0039-2025",
+              "Z-0048-2013",
+              "Z-0055-2025",
+              "Z-0068-2015",
+              "Z-0068-2026",
+              "Z-0069-2007",
+              "Z-0070-2007",
+              "Z-0071-2007",
+              "Z-0072-2007",
+              "Z-0072-2021",
+              "Z-0073-2017",
+              "Z-0092-06",
+              "Z-0093-04"
+            ]
+          },
+          {
+            "kind": "recall",
+            "status": "pass",
+            "reason": "FDA recall: PHILIPS MEDICAL SYSTEMS NEDERLAND B.V. (Open, Classified)",
+            "evidence_ids": [
+              "Z-1692-2026"
+            ]
+          },
+          {
+            "kind": "device",
+            "status": "pass",
+            "reason": "openFDA 510(k): CARESTREAM Vue Motion",
+            "evidence_ids": [
+              "K151774"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "In this window 33 reports were filed by the manufacturer and 0 by sources outside the manufacturer channel.",
+        "status": "pass",
+        "reasons": [],
+        "claims": [
+          {
+            "kind": "source_count",
+            "status": "pass",
+            "reason": "recomputed 33 manufacturer reports",
+            "evidence_ids": [
+              "50426770",
+              "50426773",
+              "50448213",
+              "50448215",
+              "50448216",
+              "50448217",
+              "50451032",
+              "50453041",
+              "50502511",
+              "50502514",
+              "50502888",
+              "50503657",
+              "50503658",
+              "50503662",
+              "50504539",
+              "50504540",
+              "50504541",
+              "50504545",
+              "50513025",
+              "50513122"
+            ]
+          },
+          {
+            "kind": "source_count",
+            "status": "pass",
+            "reason": "recomputed 0 reports not filed by a manufacturer",
+            "evidence_ids": []
+          }
+        ]
+      },
+      {
+        "text": "A QA/RA reviewer should read these reports and decide on any follow-up.",
+        "status": "pass",
+        "reasons": [],
+        "claims": []
+      }
+    ]
+  },
+  "repaired": false,
+  "sentences_repaired": 0,
+  "parse_failed": false,
+  "length_stops": 0,
+  "usage": {
+    "input_tokens": 119495,
+    "output_tokens": 17793,
+    "cost_usd": 0.224989
+  }
+}

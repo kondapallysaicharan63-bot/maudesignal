@@ -3,7 +3,7 @@ import { beforeAll, describe, expect, it } from 'vitest'
 import briefs from '../public/data/briefs.json'
 import company from '../public/data/company.json'
 import sweep from '../public/data/sweep.json'
-import { AlertList } from './components/AlertBell'
+import { AlertGroup, AlertList } from './components/AlertBell'
 import { MiniStats } from './components/MiniDashboard'
 import { chipName, CompanyDeviceView, CompanyList, OurDevices, shortPatternLabel, StatusBars, StatusFilterList } from './components/OurDevices'
 import { alertItems, devicesPerStatus, groupAlerts, miniStats, sortedDevices, statusesByPriority } from './dashboard'
@@ -27,8 +27,15 @@ const text = (html: string) =>
     .replace(/\s+/g, ' ')
 const noop = () => {}
 const view = (d: CompanyDevice) => renderToStaticMarkup(<CompanyDeviceView company={C} device={d} onBack={noop} />)
-const withEvidence = C.devices.find((d) => d.evidence.available && d.patterns.some((p) => p.quotes.length > 0))!
-const withoutEvidence = C.devices.find((d) => !d.evidence.available)!
+const withEvidence = C.devices.find((d) => d.evidence.available && d.patterns.some((p) => p.kind === 'keyword' && p.quotes.length > 0))!
+const llz = C.devices.find((d) => d.product_code === 'LLZ')!
+// No code in the shipped file is missing (the demo database or a fetched file backs all of them), so the
+// missing state is tested on a real device whose evidence is emptied the way the exporter writes it.
+const withoutEvidence: CompanyDevice = {
+  ...C.devices[0],
+  evidence: { origin: 'missing', available: false, note: 'evidence not fetched yet', report_count: null, window: null, queries: [], recalls: null },
+  patterns: [],
+}
 const asData = { company: C } as unknown as WorkspaceData
 
 describe('Our devices (simulated)', () => {
@@ -41,6 +48,46 @@ describe('Our devices (simulated)', () => {
     expect(text(renderToStaticMarkup(<CompanyList company={C} onDevice={noop} />))).toContain(BANNER)
     for (const d of C.devices) expect(text(view(d))).toContain(BANNER)
     expect(text(renderToStaticMarkup(<OurDevices company={C} deviceId="NOPE" onDevice={noop} onBack={noop} />))).toContain(BANNER)
+  })
+
+  it('every origin the contract names is served: the demo-database codes are demo_db, never missing', () => {
+    const inDemoDb = C.notes.find((n) => /are in the demo database/.test(n)) ?? ''
+    const codes = ['LLZ', 'QIH', 'MYN', 'POK']
+    for (const c of codes) expect(inDemoDb).toContain(c)
+    for (const d of C.devices.filter((x) => codes.includes(x.product_code))) {
+      expect(d.evidence.origin).toBe('demo_db')
+      expect(d.evidence.available).toBe(true)
+      expect(d.evidence.report_count?.gate).toBe('pass')
+      expect(d.evidence.recalls?.matched_total).toBeNull()
+    }
+    expect(C.devices.filter((d) => !d.evidence.available)).toHaveLength(0)
+  })
+
+  it('the expanded devices-per-status view, the bell group and the missing state each carry the banner', () => {
+    expect(text(renderToStaticMarkup(<StatusBars company={C} />))).toContain(BANNER)
+    const mine = alertItems(sweep as never, briefs.briefs as never, C).filter((a) => a.source === 'company')
+    const group = renderToStaticMarkup(
+      <AlertGroup title="Our devices (simulated)" items={mine} onOpen={noop} onViewAll={noop} viewAllLabel="View all" seen={[]} banner={C.banner} />,
+    )
+    expect(text(group)).toContain(BANNER)
+    expect(text(view(withoutEvidence))).toContain(BANNER)
+  })
+
+  it('the missing-evidence reason does not say a demo-database code has nothing stored', () => {
+    const t = text(view(withoutEvidence))
+    expect(t).toContain('no rows in the demo database and no fetched evidence file')
+    expect(t).not.toContain('is in the exported file')
+  })
+
+  it('a truncated recall excerpt is shown with an ellipsis, a whole one without', () => {
+    const base = C.devices.find((d) => d.evidence.recalls && d.evidence.recalls.latest.some((r) => r.excerpt))!
+    const r0 = base.evidence.recalls!.latest.find((r) => r.excerpt)!
+    const mk = (cut: boolean): CompanyDevice => ({
+      ...base,
+      evidence: { ...base.evidence, recalls: { ...base.evidence.recalls!, latest: [{ ...r0, excerpt_truncated: cut }] } },
+    })
+    expect(text(view(mk(true)))).toContain(`“${r0.excerpt}…”`)
+    expect(text(view(mk(false)))).toContain(`“${r0.excerpt}”`)
   })
 
   it('the mini-dashboard counts devices per status and the counts add up', () => {
@@ -94,17 +141,29 @@ describe('Our devices (simulated)', () => {
     for (const p of withEvidence.patterns) {
       expect(t).toContain(shortPatternLabel(p))
       expect(shortPatternLabel(p)).not.toMatch(/^Keyword match/)
-      expect(t).toContain('Unreviewed')
+      if (p.kind === 'keyword') expect(t).toContain('Unreviewed')
       for (const q of p.quotes) {
         expect(t).toContain(`“${q.text}”`)
         expect(html).toContain(q.url)
       }
       for (const l of p.links) expect(html).toContain(l.url)
     }
-    expect(t).toContain('Keyword groups are deterministic keyword matches')
+    if (withEvidence.patterns.some((p) => p.kind === 'keyword')) expect(t).toContain('Keyword groups are deterministic keyword matches')
     expect(t).toContain('Status history')
     expect(t).toContain('Chain ok')
     for (const h of withEvidence.history) expect(t).toContain(`entry ${h.seq}`)
+  })
+
+  it('the LLZ device shows the recorded investigator groups, not keyword groups, with its stored recalls', () => {
+    expect(llz.evidence.origin).toBe('demo_db')
+    expect(llz.patterns.length).toBeGreaterThan(0)
+    expect(llz.patterns.every((p) => p.kind === 'investigator')).toBe(true)
+    const t = text(view(llz))
+    expect(t).not.toContain('Evidence not fetched')
+    expect(t).not.toContain('evidence not fetched yet')
+    expect(t).toContain(String(llz.evidence.report_count!.value))
+    expect(t).toContain(String(llz.evidence.recalls!.stored))
+    expect(t).not.toContain('Unreviewed')
   })
 
   it('a broken chain is stated, not hidden', () => {

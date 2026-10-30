@@ -10,6 +10,9 @@ const SOURCE_LABEL: Record<AlertItem['source'], string> = {
   company: 'Our devices (simulated)',
 }
 
+/** Shown over the simulated devices in the bell when company.json is not at hand (the contract string). */
+const FALLBACK_BANNER = 'Simulated company — sample data. Problem evidence is real FDA data.'
+
 const SEEN_KEY = 'ms-seen-alerts'
 
 /** Alert ids the person marked as seen (a per-browser convenience; the alerts themselves stay listed). */
@@ -75,14 +78,16 @@ export function AlertList({ items, onOpen, seen = [] }: { items: AlertItem[]; on
 }
 
 /** One group with its heading, count and a link to everything of that kind. */
-function Group({
+export function AlertGroup({
   title,
   items,
   onOpen,
   onViewAll,
   viewAllLabel,
   seen,
+  banner,
 }: {
+  banner?: string
   title: string
   items: AlertItem[]
   onOpen: (a: AlertItem) => void
@@ -101,6 +106,11 @@ function Group({
           {viewAllLabel}
         </button>
       </div>
+      {banner && (
+        <p className="ms-banner ms-banner--warn m-0 mt-2" data-testid="alert-group-banner">
+          <span className="ws-wrap font-semibold">{banner}</span>
+        </p>
+      )}
       <AlertList items={items} onOpen={onOpen} seen={seen} />
     </section>
   )
@@ -111,8 +121,11 @@ export function AlertBell({
   items,
   onOpen,
   onViewAll = () => undefined,
+  companyBanner = FALLBACK_BANNER,
 }: {
   items: AlertItem[]
+  /** The banner of company.json, printed over the simulated devices. */
+  companyBanner?: string
   onOpen: (a: AlertItem) => void
   /** "View all" of a group: the AI device sweep for signals, the Needs review devices for the simulated company. */
   onViewAll?: (group: 'signals' | 'devices') => void
@@ -173,7 +186,7 @@ export function AlertBell({
             </div>
             <div className="ws-fade-bottom min-h-0 flex-1 overflow-y-auto px-4 pb-6 pt-3" data-testid="alert-scroll">
               {items.length === 0 && <p className="m-0 text-ink-2">No alerts right now.</p>}
-              <Group
+              <AlertGroup
                 title="Signals"
                 items={signals}
                 onOpen={(a) => {
@@ -187,7 +200,7 @@ export function AlertBell({
                 viewAllLabel="View all"
                 seen={seen}
               />
-              <Group
+              <AlertGroup
                 title="Our devices (simulated)"
                 items={devices}
                 onOpen={(a) => {
@@ -200,6 +213,7 @@ export function AlertBell({
                 }}
                 viewAllLabel="View all"
                 seen={seen}
+                banner={companyBanner}
               />
               <p className="m-0 mt-2 text-[16px] leading-snug text-ink-2">
                 Signals: a new kind of problem, or more serious than usual, in the AI device sweep and the newest demo-snapshot brief.

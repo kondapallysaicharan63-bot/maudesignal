@@ -269,6 +269,7 @@ export default function App() {
         theme={theme}
         sidebarOpen={desktop ? !collapsed : drawer}
         alerts={data ? alertItems(data.sweep, data.briefs, data.company) : []}
+        companyBanner={data?.company.banner}
         onAlert={openAlert}
         onViewAll={(group) => (group === 'devices' ? filterDevices(NEEDS_REVIEW) : openWorkflow('ai-sweep'))}
         artifactsOpen={artifacts}

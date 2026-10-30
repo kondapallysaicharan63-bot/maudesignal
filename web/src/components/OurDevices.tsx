@@ -77,7 +77,8 @@ export function StatusBars({ company, onFilter }: { company: Company; onFilter?:
   const max = Math.max(1, ...per.map((x) => x.count))
   return (
     <div className="mt-2" data-testid="status-bars">
-      <h3 className="m-0 font-serif text-[22px] font-semibold">Devices per status</h3>
+      <CompanyBanner company={company} />
+      <h3 className="m-0 mt-3 font-serif text-[22px] font-semibold">Devices per status</h3>
       <p className="m-0 mb-2 text-[17px] text-ink-2">Tap a bar to see those devices in the table.</p>
       <ul className="m-0 list-none p-0">
         {per.map((x) => (
@@ -330,8 +331,8 @@ function MissingEvidence({ d }: { d: CompanyDevice }) {
           <SectionTitle>Real FDA evidence for {d.product_code}</SectionTitle>
           <p className="ws-wrap m-0 mt-2 text-[20px] font-semibold text-ink">{ev.note ?? 'evidence not fetched yet'}</p>
           <p className="ws-wrap m-0 mt-1 text-ink">
-            Reason: no stored openFDA data for product code {d.product_code} is in the exported file (origin: {ev.origin}). No count,
-            pattern or quote is shown for this device until the evidence is fetched.
+            Reason: this product code has no rows in the demo database and no fetched evidence file, so nothing is stored for it
+            (origin: {ev.origin}). No count, pattern or quote is shown for this device until the evidence is fetched.
           </p>
           <button
             type="button"
@@ -407,7 +408,9 @@ function Evidence({ d }: { d: CompanyDevice }) {
         )}
         {ev.gate_totals && (
           <p className="m-0 mt-1 text-[16px] text-ink-2">
-            Claim gate on this device: {ev.gate_totals.pass} passed, {ev.gate_totals.block} blocked.
+            Claim gate (report count, recall count, quotes and recall excerpts shown): {ev.gate_totals.pass} passed,{' '}
+            {ev.gate_totals.block} blocked.
+            {ev.recomputed && ` Group counts recomputed from the listed reports: ${ev.recomputed.pass}.`}
           </p>
         )}
       </section>
@@ -445,7 +448,12 @@ function Evidence({ d }: { d: CompanyDevice }) {
                 <p className="m-0 text-[17px] text-ink-2">
                   {r.status ?? 'status not stored'} · initiated {day(r.date_initiated)}
                 </p>
-                {r.excerpt && <p className="ws-wrap m-0 mt-1 text-[17px]">“{r.excerpt}”</p>}
+                {r.excerpt && (
+                  <p className="ws-wrap m-0 mt-1 text-[17px]">
+                    “{r.excerpt}
+                    {r.excerpt_truncated ? '…' : ''}”
+                  </p>
+                )}
                 {r.url && (
                   <a className="ws-wrap block min-h-11 py-2 text-[17px] text-accent underline" href={r.url} target="_blank" rel="noreferrer">
                     FDA recall page

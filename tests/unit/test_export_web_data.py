@@ -305,14 +305,98 @@ def test_company_json_follows_the_contract(out: Path) -> None:
     assert "company.json" in load(out, "manifest.json")["files"]
 
 
-def test_company_missing_evidence_is_labelled_and_empty(out: Path) -> None:
+def test_company_demo_database_codes_are_demo_db_never_missing(out: Path) -> None:
+    """Every code company.json lists as "in the demo database" is read from it (read-only)."""
     doc = load(out, "company.json")
+    note = next(n for n in doc["notes"] if "are in the demo database" in n)
+    codes = {c for c in ("LLZ", "QIH", "MYN", "POK") if c in note}
+    assert codes == {"LLZ", "QIH", "MYN", "POK"}
+    seen = set()
+    for d in doc["devices"]:
+        if d["product_code"] not in codes:
+            continue
+        seen.add(d["product_code"])
+        ev = d["evidence"]
+        assert ev["origin"] == "demo_db" and ev["available"] is True, d["id"]
+        assert ev["report_count"]["gate"] == "pass" and ev["report_count"]["value"] > 0
+        assert ev["recalls"]["matched_total"] is None
+        assert ev["recalls"]["gate"] == "pass"
+        assert not any("not fetched yet" in n and d["product_code"] in n for n in doc["notes"])
+    assert seen == codes
+    llz = next(d for d in doc["devices"] if d["product_code"] == "LLZ")
+    assert llz["evidence"]["report_count"]["value"] == 121
+    assert all(p["kind"] == "investigator" for p in llz["patterns"]) and llz["patterns"]
+    assert not [d for d in doc["devices"] if not d["evidence"]["available"]]
+
+
+def test_company_demo_db_counts_match_the_database_rows(out: Path) -> None:
+    import sqlite3
+
+    doc = load(out, "company.json")
+    con = sqlite3.connect(f"file:{ROOT / exporter.DEMO_DB}?mode=ro", uri=True)
+    try:
+        for d in doc["devices"]:
+            if d["evidence"]["origin"] != "demo_db":
+                continue
+            code = d["product_code"]
+            n = con.execute(
+                "SELECT COUNT(*) FROM normalized_events WHERE product_code = ?", (code,)
+            ).fetchone()[0]
+            r = con.execute(
+                "SELECT COUNT(*) FROM external_sources "
+                "WHERE source_type = 'fda_recall' AND product_code = ?",
+                (code,),
+            ).fetchone()[0]
+            assert d["evidence"]["report_count"]["value"] == n
+            assert d["evidence"]["recalls"]["stored"] == r
+    finally:
+        con.close()
+
+
+def test_company_missing_evidence_is_labelled_and_empty(tmp_path: Path) -> None:
+    """A code with no database rows and no evidence file is missing (here: no database at all)."""
+    root = _company_copy(tmp_path)
+    doc = exporter.build_company(root, "2026-10-30T00:00:00Z")
     missing = [d for d in doc["devices"] if not d["evidence"]["available"]]
+    assert {d["product_code"] for d in missing} >= {"LLZ", "QIH", "MYN", "POK"}
     for d in missing:
         ev = d["evidence"]
-        assert ev["note"] == "evidence not fetched yet"
+        assert ev["origin"] == "missing" and ev["note"] == "evidence not fetched yet"
         assert ev["report_count"] is None and ev["recalls"] is None and d["patterns"] == []
         assert any(d["product_code"] in n and "not fetched yet" in n for n in doc["notes"])
+
+
+def test_company_gate_totals_come_from_the_claim_gate(out: Path) -> None:
+    doc = load(out, "company.json")
+    for d in doc["devices"]:
+        ev = d["evidence"]
+        quotes = sum(p["gate"]["quotes_passed"] for p in d["patterns"])
+        excerpts = sum(1 for r in ev["recalls"]["latest"] if r["excerpt"])
+        assert ev["gate_totals"] == {"pass": quotes + excerpts + 2, "block": 0}, d["id"]
+        assert ev["recomputed"]["pass"] == len(d["patterns"])
+
+
+def test_company_recall_excerpt_is_marked_when_cut() -> None:
+    long_reason = "The image display software shows a blank screen " + "again and " * 40 + "today"
+    short_reason = "The firm found a defect in the image display software of the unit."
+    store = exporter.EvidenceStore.from_iterables(
+        [],
+        recalls=[
+            exporter.RecallRef(
+                recall_number="Z-1", product_code="AAA", reason_for_recall=long_reason
+            ),
+            exporter.RecallRef(
+                recall_number="Z-2", product_code="AAA", reason_for_recall=short_reason
+            ),
+        ],
+    )
+    cut = exporter._recall_item({"recall_number": "Z-1", "reason_for_recall": long_reason}, store)
+    assert cut["excerpt_truncated"] is True and long_reason.startswith(cut["excerpt"])
+    assert len(cut["excerpt"]) <= exporter.QUOTE_MAX_CHARS
+    whole = exporter._recall_item(
+        {"recall_number": "Z-2", "reason_for_recall": short_reason}, store
+    )
+    assert whole["excerpt"] == short_reason and whole["excerpt_truncated"] is False
 
 
 def test_company_counts_are_recomputed_and_quotes_are_verbatim(out: Path) -> None:
@@ -320,16 +404,22 @@ def test_company_counts_are_recomputed_and_quotes_are_verbatim(out: Path) -> Non
     fetched = [d for d in doc["devices"] if d["evidence"]["available"]]
     assert fetched
     for d in fetched:
-        ev = json.loads(
-            (ROOT / "demo/company/evidence" / f"{d['product_code']}.json").read_text("utf-8")
-        )
-        by_id = {str(r["report_id"]): r for r in ev["reports"]["records"]}
+        if d["evidence"]["origin"] == "demo_db":
+            ev = exporter._load_demo_db(ROOT, d["product_code"])
+            assert ev is not None
+            records, recalls = ev["reports"], ev["recalls"]
+        else:
+            path = ROOT / "demo/company/evidence" / f"{d['product_code']}.json"
+            ev = json.loads(path.read_text("utf-8"))
+            records, recalls = ev["reports"]["records"], ev["recalls"]["records"]
+        by_id = {str(r["report_id"]): r for r in records}
         assert d["evidence"]["report_count"]["value"] == len(by_id)
-        assert d["evidence"]["recalls"]["stored"] == len(ev["recalls"]["records"])
+        assert d["evidence"]["recalls"]["stored"] == len(recalls)
         for p in d["patterns"]:
             assert p["count"] == len(p["report_ids"]) == len(set(p["report_ids"]))
             assert all(i in by_id for i in p["report_ids"])
-            assert p["gate"]["count"] == "pass" and p["display_label"].startswith("Keyword match")
+            assert p["gate"]["count"] == "pass"
+            assert p["display_label"].startswith("Keyword match") == (p["kind"] == "keyword")
             for q in p["quotes"]:
                 assert q["report_id"] in p["report_ids"]
                 squashed = " ".join(str(by_id[q["report_id"]]["text"]).split())
