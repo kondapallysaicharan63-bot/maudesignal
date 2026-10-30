@@ -141,7 +141,7 @@ describe('recorded runs render from investigations.json', () => {
       renderToStaticMarkup(<RunView run={SAMPLE_RUN} ev={evidence as never} onThread={() => {}} />),
     )
     expect(html).toContain('Weekly investigator')
-    expect(html).toContain('search_reports')
+    expect(html).toContain('Search reports')
     expect(html).toContain('Sample sentence about the grouped reports.')
     expect(html).toContain('Image not displayed')
     expect(html).toContain('2 reports')
@@ -165,6 +165,8 @@ describe('first screen and the placeholder wording', () => {
           onThread={() => {}}
           onRun={() => {}}
           onVision={() => {}}
+        onCode={() => {}}
+        onCapture={() => {}}
           onBrief={() => {}}
           onAlert={() => {}}
           expanded={false}

@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { chipState, fmtDate, resolveClaim, type ChipState } from '../claims'
 import { Icon } from '../icons'
+import { buildThreadTrace } from '../trace'
 import type { Evidence, Sentence, Thread } from '../types'
+import { TraceView } from './TraceView'
 
 const MAX_ROWS = 6
 // Threads already streamed in this session show at once when re-opened.
@@ -223,14 +225,18 @@ export function ThreadView({ t, ev, siblings, onThread, highlight = null, withhe
   useEffect(() => {
     if (highlight !== null) setStage((s) => Math.max(s, 1000))
   }, [highlight])
+  const trace = useMemo(() => buildThreadTrace(t), [t])
+  const lead = trace.beforeGate // steps replayed before the sentences (heard, planning, tool calls)
   useEffect(() => {
-    if (stage >= t.tool_steps.length + t.sentences.length) played.add(t.id)
-  }, [stage, t])
+    if (stage >= lead + t.sentences.length) played.add(t.id)
+  }, [stage, t, lead])
   useEffect(() => {
-    if (stage >= t.tool_steps.length || reduced()) return
-    const id = window.setTimeout(() => setStage((s) => s + 1), 350)
+    if (stage >= lead || reduced()) return
+    const id = window.setTimeout(() => setStage((s) => s + 1), 450)
     return () => window.clearTimeout(id)
-  }, [stage, t.tool_steps.length])
+  }, [stage, lead])
+  // The gate check and the closing step appear once every sentence has been shown.
+  const shownSteps = stage >= lead + t.sentences.length ? trace.steps.length : Math.min(stage, lead)
 
   const heard = t.voice ? t.voice.transcript_text : null
   const heardWords = (heard ?? '').split(' ')
@@ -301,18 +307,9 @@ export function ThreadView({ t, ev, siblings, onThread, highlight = null, withhe
           <p className="ws-wrap m-0">{t.question}</p>
         )}
       </div>
-      {t.tool_steps.length > 0 && (
-        <ul className="m-0 list-none space-y-1 p-0 text-[15px] text-ink-2" aria-label="Steps taken">
-          {t.tool_steps.slice(0, stage).map((s, i) => (
-            <li key={i} className="flex gap-2">
-              <span className="ms-code shrink-0">{s.name}</span>
-              <span className="ws-wrap">{s.summary}</span>
-            </li>
-          ))}
-        </ul>
-      )}
+      <TraceView trace={trace} shown={shownSteps} />
       <ul className="m-0 list-none p-0">
-        {t.sentences.slice(0, Math.max(0, stage - t.tool_steps.length + 1)).map((s, i) => (
+        {t.sentences.slice(0, Math.max(0, stage - lead + 1)).map((s, i) => (
           <SentenceLine
             key={`${t.id}-${i}`}
             s={s}
@@ -320,7 +317,7 @@ export function ThreadView({ t, ev, siblings, onThread, highlight = null, withhe
             instant={instant}
             focus={highlight === i}
             id={`sentence-${i}`}
-            onDone={() => setStage((c) => Math.max(c, t.tool_steps.length + i + 1))}
+            onDone={() => setStage((c) => Math.max(c, lead + i + 1))}
           />
         ))}
       </ul>

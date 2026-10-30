@@ -101,8 +101,8 @@ export function OutcomeView({ out }: { out: CheckOutcome }) {
 const API_BASE = apiBaseFrom(import.meta.env.VITE_MAUDESIGNAL_API_BASE)
 
 /** "Check any device type": the browser asks the MaudeSignal API, which applies the four rules to openFDA counts. */
-export function LiveCheckView() {
-  const [code, setCode] = useState('')
+export function LiveCheckView({ initialCode = '' }: { initialCode?: string }) {
+  const [code, setCode] = useState(initialCode.replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase())
   const [busy, setBusy] = useState(false)
   const [out, setOut] = useState<CheckOutcome | null>(null)
   const [used, setUsed] = useState(() => checksUsed(browserStore('session')))

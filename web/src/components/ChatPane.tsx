@@ -1,8 +1,12 @@
+import { useMemo } from 'react'
+import type { CaptureMode } from '../capture'
+import { knownCodes } from '../typeahead'
 import { DEMO_WORKFLOWS, demoSnapshotLabel, WORKFLOWS } from '../data'
 import type { AlertItem } from '../dashboard'
 import { FULLSCREEN } from '../layout'
 import { Icon } from '../icons'
 import type { WorkflowDef, WorkflowId, WorkspaceData } from '../types'
+import { CaptureView } from './CaptureView'
 import { Composer } from './Composer'
 import { Dashboard } from './Dashboard'
 import { RunList, RunView } from './InvestigationViews'
@@ -14,12 +18,14 @@ import { VisionWorkflow, type VisionSel } from './VisionWorkflow'
 
 export type View =
   | { kind: 'new' }
-  | { kind: 'workflow'; id: WorkflowId }
+  | { kind: 'workflow'; id: WorkflowId; code?: string }
   | { kind: 'thread'; id: string }
   | { kind: 'run'; id: string }
+  | { kind: 'capture'; mode: CaptureMode }
 
 /** Stable identity of the screen shown (used to scope the composer's messages). */
-export const viewKey = (v: View): string => (v.kind === 'new' ? 'new' : `${v.kind}:${v.id}`)
+export const viewKey = (v: View): string =>
+  v.kind === 'new' ? 'new' : v.kind === 'capture' ? `capture:${v.mode}` : `${v.kind}:${v.id}${v.kind === 'workflow' && v.code ? `:${v.code}` : ''}`
 
 export interface WithheldNav {
   /** Sentence to highlight in the open thread. */
@@ -37,6 +43,8 @@ interface Props {
   onThread: (id: string) => void
   onRun: (id: string) => void
   onVision: (sel: VisionSel) => void
+  onCode: (code: string) => void
+  onCapture: (mode: CaptureMode) => void
   onBrief: (date: string) => void
   onAlert: (a: AlertItem) => void
   expanded: boolean
@@ -87,11 +95,21 @@ export function ChatPane(p: Props) {
     const id = p.view.id
     const def = WORKFLOWS.find((w) => w.id === id) ?? WORKFLOWS[0]
     if (id === 'ai-sweep') body = <SweepCard sweep={data.sweep} />
-    else if (id === 'check-device') body = <LiveCheckView />
+    else if (id === 'check-device') body = <LiveCheckView key={p.view.code ?? ''} initialCode={p.view.code} />
     else if (id === 'vision') body = <VisionWorkflow vision={data.vision} onOpen={p.onVision} />
     else if (id === 'weekly-investigator' || id === 'recall-sweep')
       body = <RunList kind={id} runs={data.investigations.investigations} notes={data.investigations.notes} onRun={p.onRun} />
     else body = <StoredList def={def} data={data} onThread={p.onThread} />
+  } else if (p.view.kind === 'capture') {
+    body = (
+      <CaptureView
+        key={p.view.mode}
+        mode={p.view.mode}
+        data={data}
+        onThread={p.onThread}
+        onLabel={(index) => p.onVision({ mode: 'labels', index })}
+      />
+    )
   } else if (p.view.kind === 'run') {
     const id = p.view.id
     const run = data.investigations.investigations.find((r) => r.id === id)
@@ -117,8 +135,7 @@ export function ChatPane(p: Props) {
       <p>That thread is not in the stored data.</p>
     )
   }
-  // The recorded voice questions (threads.json `voice`) that are answers, not greetings.
-  const voiceThread = data.threads.threads.find((t) => t.voice && (t.tool_steps.length > 0 || t.sentences.some((x) => x.claims.length > 0)))
+  const codes = useMemo(() => knownCodes(data.sweep, data.briefs), [data.sweep, data.briefs])
   return (
     <main
       className={['flex min-h-0 min-w-0 flex-1 flex-col bg-paper', p.expanded ? FULLSCREEN : ''].join(' ')}
@@ -133,8 +150,10 @@ export function ChatPane(p: Props) {
         threads={data.threads.threads}
         onThread={p.onThread}
         viewKey={viewKey(p.view)}
-        onCamera={data.vision.labels.length > 0 ? () => p.onWorkflow('vision') : undefined}
-        onMic={voiceThread ? () => p.onThread(voiceThread.id) : undefined}
+        codes={codes}
+        onCode={p.onCode}
+        onCamera={() => p.onCapture('label')}
+        onMic={() => p.onCapture('voice')}
       />
     </main>
   )

@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import type { Dossier, K510Field, K510Reading, LabelReading, ReadStatus, Vision } from '../../types'
+import { buildLabelTrace, buildReviewTrace } from '../../trace'
+import { TraceView } from '../TraceView'
 import { labelName, type VisionSel } from '../VisionWorkflow'
 import { PdfView } from './PdfView'
 import { Empty, Pill, Segmented, type Tone } from './common'
@@ -63,6 +65,11 @@ export function DossierTab({ dossier }: { dossier: Dossier }) {
           </div>
         )}
       </dl>
+      {r && !r.parse_error && (
+        <div className="mt-4">
+          <TraceView trace={buildReviewTrace(r)} shown={99} label="Review steps" replayed={false} />
+        </div>
+      )}
       <p className="mt-3 text-[14px] leading-snug text-ink-3">
         Advisory only. A named person reviews and decides; nothing is filed with FDA.
       </p>
@@ -141,6 +148,9 @@ function LabelView({ l }: { l: LabelReading }) {
   return (
     <div>
       <SamImage l={l} />
+      <div className="mt-4">
+        <TraceView trace={buildLabelTrace(l)} shown={99} label="Label reading steps" replayed={false} />
+      </div>
       <h3 className="ms-kicker mt-4">Fields read from the label</h3>
       <dl className="m-0 mt-1">
         {Object.entries(l.fields).map(([k, f]) => (
