@@ -13,8 +13,7 @@ on:
       - scripts/ai_device_sweep.py
       - src/maudesignal/monitor/live_check.py
       - .github/workflows/ai-sweep.yml
-  schedule:
-    - cron: "23 12 * * 1" # weekly, Monday 12:23 UTC (runs from the default branch)
+  # schedule paused until 2026-11-05 (Charan, Oct 30); restore cron '23 12 * * 1'
 
 permissions:
   contents: write
