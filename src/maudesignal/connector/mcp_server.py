@@ -3,9 +3,10 @@
 HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
 A minimal, spec-shaped implementation (protocol version 2025-06-18) of ``initialize``,
-``ping``, ``tools/list`` and ``tools/call``. It is stateless on purpose: no session id, no
-server-sent events, no state between requests, so it runs on a serverless function. Auth, the
-rate limit, the cost cap and the audit entry are the same code as the REST routes (the
+``ping``, ``tools/list``, ``tools/call``, ``prompts/list`` and ``prompts/get``. It is
+stateless on purpose: no session id, no server-sent events, no state between requests, so it
+runs on a serverless function. Auth, the rate limit, the cost cap and the audit entry are the
+same code as the REST routes (the
 ``/mcp`` route in ``app.py`` uses the same dependency and the same ``dispatch``). A successful
 ``tools/call`` carries the speakable text as text content and the full :class:`ToolAnswer` as
 ``structuredContent``; the structured content equals the REST body of the same call.
@@ -20,7 +21,8 @@ from typing import Any
 from maudesignal.common.logging import get_logger
 from maudesignal.connector.errors import ConnectorError
 from maudesignal.connector.models import LookupAnswer, ToolAnswer
-from maudesignal.connector.registry import SPECS_BY_NAME, mcp_tools
+from maudesignal.connector.prompts import get_prompt, prompt_list
+from maudesignal.connector.registry import GUIDANCE, SPECS_BY_NAME, mcp_tools
 
 logger = get_logger(__name__)
 
@@ -28,12 +30,7 @@ PROTOCOL_VERSION = "2025-06-18"
 SUPPORTED_VERSIONS = frozenset({"2025-06-18", "2025-03-26"})
 SERVER_NAME = "maudesignal-connector"
 SERVER_TITLE = "MaudeSignal (read-only)"
-INSTRUCTIONS = (
-    "Read-only MaudeSignal tools over openFDA device data. Speak the text content; every fact "
-    "in structuredContent has an openFDA or record link. Sentences listed under withheld were "
-    "not verified: never state them as fact. Advisory triage aid for quality and regulatory "
-    "review; not medical advice; nothing is filed with FDA."
-)
+INSTRUCTIONS = GUIDANCE
 
 PARSE_ERROR = -32700
 INVALID_REQUEST = -32600
@@ -80,6 +77,15 @@ def answer_result(answer: ToolAnswer) -> dict[str, Any]:
     }
 
 
+def _prompt(request_id: Any, params: Any) -> dict[str, Any]:
+    if not isinstance(params, dict) or not isinstance(params.get("name"), str):
+        return rpc_error(request_id, INVALID_PARAMS, "prompts/get needs a prompt name.")
+    try:
+        return _result(request_id, get_prompt(params["name"], params.get("arguments")))
+    except ConnectorError as exc:
+        return rpc_error(request_id, INVALID_PARAMS, str(exc))
+
+
 def _call(request_id: Any, params: Any, run: ToolRunner) -> dict[str, Any]:
     if not isinstance(params, dict) or not isinstance(params.get("name"), str):
         return rpc_error(request_id, INVALID_PARAMS, "tools/call needs a tool name.")
@@ -121,7 +127,10 @@ def handle_message(message: Any, run: ToolRunner) -> dict[str, Any] | None:
             request_id,
             {
                 "protocolVersion": PROTOCOL_VERSION,
-                "capabilities": {"tools": {"listChanged": False}},
+                "capabilities": {
+                    "tools": {"listChanged": False},
+                    "prompts": {"listChanged": False},
+                },
                 "serverInfo": {"name": SERVER_NAME, "title": SERVER_TITLE, "version": "0.1.0"},
                 "instructions": INSTRUCTIONS,
             },
@@ -132,4 +141,8 @@ def handle_message(message: Any, run: ToolRunner) -> dict[str, Any] | None:
         return _result(request_id, {"tools": tool_list()})
     if method == "tools/call":
         return _call(request_id, message.get("params"), run)
+    if method == "prompts/list":
+        return _result(request_id, {"prompts": prompt_list()})
+    if method == "prompts/get":
+        return _prompt(request_id, message.get("params"))
     return rpc_error(request_id, METHOD_NOT_FOUND, "Method not found.")

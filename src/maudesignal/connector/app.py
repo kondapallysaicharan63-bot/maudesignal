@@ -62,9 +62,11 @@ from maudesignal.connector.models import (
     ToolAnswer,
 )
 from maudesignal.connector.notify import Notifier, notifier_from_env
+from maudesignal.connector.prompts import PROMPT_SPECS
 from maudesignal.connector.registry import (
     ASK_DESCRIPTION,
     CHECK_DESCRIPTION,
+    GUIDANCE,
     LOOKUP_DESCRIPTION,
     LOOKUP_PATTERN_K,
     PRODUCT_CODE_PATTERN,
@@ -72,6 +74,7 @@ from maudesignal.connector.registry import (
     REPORT_DESCRIPTION,
     REPORT_ID_PATTERN,
     WHAT_CHANGED_DESCRIPTION,
+    explain_error,
 )
 from maudesignal.connector.security import (
     DEFAULT_DEMO_RATE_PER_MIN,
@@ -128,7 +131,9 @@ DEMO_LABEL = "demo"
 MAX_MCP_BODY_BYTES = 64 * 1024
 
 DESCRIPTION = (
-    "Read-only MaudeSignal tools for a Meta Muse connector. Each answer has a short speakable "
+    "How to use this server: "
+    + GUIDANCE
+    + " Read-only MaudeSignal tools for a Meta Muse connector. Each answer has a short speakable "
     "summary, facts that each carry an openFDA or record link, a fixed advisory line and "
     "provenance (stored demo snapshot with dates, or live openFDA with the query time). "
     "Advisory triage aid for quality and regulatory review; not medical advice; nothing is "
@@ -249,6 +254,14 @@ class DemoLimits(BaseModel):
     note: str
 
 
+class ConnectPrompt(BaseModel):
+    """One MCP prompt, as listed by ``prompts/list``."""
+
+    name: str
+    description: str
+    arguments: list[str]
+
+
 class ConnectInfo(BaseModel):
     """``GET /v1/connect`` body."""
 
@@ -261,6 +274,8 @@ class ConnectInfo(BaseModel):
     demo_key: str | None
     demo_limits: DemoLimits
     steps: list[str]
+    prompts: list[ConnectPrompt]
+    instructions: str
 
 
 class ApiError(Exception):
@@ -293,9 +308,19 @@ LOOKUP_FIELDS = ("device_name", "model", "manufacturer", "k_number", "udi", "gti
 LOOKUP_AUDIT_CHARS = 100
 
 
-def _error(status: int, code: str, message: str, headers: dict[str, str] | None = None) -> Response:
-    body = ErrorResponse(error=ErrorBody(code=code, message=message))
-    return JSONResponse(status_code=status, content=body.model_dump(), headers=headers)
+def _error(
+    status: int,
+    code: str,
+    message: str,
+    headers: dict[str, str] | None = None,
+    suggestions: list[str] | None = None,
+) -> Response:
+    body = ErrorResponse(
+        error=ErrorBody(code=code, message=message, suggestions=suggestions or None)
+    )
+    return JSONResponse(
+        status_code=status, content=body.model_dump(exclude_none=True), headers=headers
+    )
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -544,12 +569,24 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             status = 404
         else:  # SourceUnavailableError and any other connector error
             status = 502
-        return _error(status, exc.code, str(exc))
+        return _error(status, exc.code, str(exc), suggestions=exc.suggestions)
 
     @app.exception_handler(RequestValidationError)
     async def _invalid(_: Request, exc: RequestValidationError) -> Response:
-        where = ", ".join(sorted({str(e["loc"][-1]) for e in exc.errors() if e.get("loc")}))
-        return _error(422, "invalid_input", f"Invalid input: {where or 'request'}.")
+        messages: list[str] = []
+        names: list[str] = []
+        for err in exc.errors():
+            name = str(err["loc"][-1]) if err.get("loc") else ""
+            helpful = explain_error(name, str(err.get("type", "")))
+            if helpful is not None and helpful not in messages:
+                messages.append(helpful)
+            elif helpful is None and name and name not in names:
+                names.append(name)
+        if messages:
+            return _error(422, "invalid_input", " ".join(messages))
+        return _error(
+            422, "invalid_input", f"Invalid input: {', '.join(sorted(names)) or 'request'}."
+        )
 
     @app.exception_handler(Exception)
     async def _unexpected(_: Request, exc: Exception) -> Response:
@@ -631,6 +668,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "Send the key in the X-API-Key header (the demo key above works for a first try).",
                 "Call a tool, for example what_changed_this_week with product_code LLZ.",
             ],
+            prompts=[
+                ConnectPrompt(
+                    name=p.name,
+                    description=p.description,
+                    arguments=[a.name for a in p.arguments],
+                )
+                for p in PROMPT_SPECS
+            ],
+            instructions=GUIDANCE,
         )
 
     @app.get("/", response_class=HTMLResponse, include_in_schema=False)

@@ -110,6 +110,65 @@ To enable it: in Vercel > Project > Settings > Environment Variables (Production
 `check_device_type` has a keyless twin, `GET /v1/public/check_device_type`, limited per address and
 never calling a model.
 
+### Tool descriptions
+
+Each tool description (the same text in `tools/list`, the OpenAPI document and the manifest)
+starts with "Use this ..." to say when to pick the tool, says it is read-only, and ends with
+example questions: `what_changed_this_week` ("What changed for LLZ this week?"),
+`check_device_type` ("Is anything unusual with QIH right now?"), `lookup_device` ("I photographed
+a label: Welch Allyn 802 LTR - which FDA records match?"), `recalls` ("Show recalls for LLZ."),
+`get_report` ("Show me report 50426770.") and `ask` ("What changed this week for LLZ?"). The input
+schemas were not changed.
+
+### MCP prompts
+
+`prompts/list` and `prompts/get` (also listed by `GET /v1/connect` under `prompts`). A prompt only
+returns one user message that asks the model to call the connector's own read-only tools; it reads
+no data. Every message tells the model to cite the FDA links, that this is not medical advice, and
+to say "recorded" for recorded answers.
+
+| Prompt | Arguments | Message asks the model to |
+|---|---|---|
+| `morning_brief` | `product_codes` (comma-separated, up to 10, upper-cased, duplicates dropped) | call `what_changed_this_week` for each code and summarise with links |
+| `check_this_device` | `text` (name, model, maker, K-number or UDI, up to 500 characters) | call `lookup_device`, list up to 3 possible matches with why, and ask the person to confirm one record, or none, before going further |
+| `does_this_apply_to_us` | `product_code`; `our_device_description` (optional) | call `check_device_type`, `what_changed_this_week` and `recalls`, and present the problem patterns as questions for the person's own records, never as a verdict |
+
+A bad prompt call is a JSON-RPC error `-32602` whose message names the argument (for example
+"product_codes is required for this prompt.").
+
+### Server instructions
+
+Sent in the MCP `initialize` reply (`instructions`), used as the manifest `description`, and put
+at the start of the OpenAPI `info.description` (one text, `GUIDANCE` in `connector/registry.py`):
+always cite the FDA links given in each answer; not medical advice and nothing is filed with FDA;
+confirm the product code with the person before guessing one (use `lookup_device` or ask); when an
+answer is labelled recorded, say "recorded" and its date; never present withheld sentences as
+fact; a person confirms every device match.
+
+### Error format
+
+Same JSON on every route: `{"error": {"code": "...", "message": "..."}}`, with
+`"suggestions": ["..."]` added only when there is something to offer. Over MCP the message is the
+text of an `isError: true` tool result. Messages are fixed text and never repeat a caller's value.
+
+| Case | Message |
+|---|---|
+| Product code not three letters | A product code is three letters, for example LLZ or QIH. |
+| Three-letter code with no stored data and no openFDA reports (`unknown_product_code`) | QAH isn't a product code we know - did you mean QIH? ... (up to 3 closest known codes, by edit distance, also in `suggestions`) |
+| Malformed K-number | K-numbers look like K123456 (the letter K and six digits). |
+| UDI / GTIN fails the GS1 check digit | The GTIN ... does not pass the GS1 check digit test ... Re-read the digits from the label. |
+| Report id not letters, digits, dashes | A report id is letters, digits and dashes, up to 24 characters. |
+| Missing input | `<name> is required.` plus what it should be |
+| Question too short or long | `question is too long: the limit is 500 characters.` (or at least 3) |
+| Input longer than its limit | `<name> is too long: the limit is N characters.` |
+
+"Known" codes are those in the stored reports, the device catalog, the stored digest and the stored
+AI-device sweep (`ConnectorData.known_product_codes`); this repository holds no offline copy of the
+full openFDA classification list. A suggestion is only shown, never applied, and a code that is
+known is never corrected. The unknown-code error is raised only when the code is not known and
+openFDA also has no report for it; `recalls` (stored data only) keeps its "no recalls on file"
+answer for such a code.
+
 ## Example prompts
 
 1. What changed this week for LLZ?
@@ -699,7 +758,7 @@ entry and the cost cap are shared.
 | Endpoint | `https://maudesignal-api.vercel.app/mcp` |
 | Transport | Streamable HTTP, **stateless**: one JSON-RPC message per `POST`, a JSON reply, no session id, no event stream. `GET`, `DELETE`, `PUT`, `PATCH` on `/mcp` return 405. |
 | Protocol version | `2025-06-18` (header `MCP-Protocol-Version` may be `2025-06-18` or `2025-03-26`; anything else is 400) |
-| Methods | `initialize`, `ping`, `tools/list`, `tools/call`; notifications and client replies get 202 with no body. Batches are refused (protocol 2025-06-18 removed them). |
+| Methods | `initialize`, `ping`, `tools/list`, `tools/call`, `prompts/list`, `prompts/get`; notifications and client replies get 202 with no body. Batches are refused (protocol 2025-06-18 removed them). |
 | Auth | `X-API-Key: <key>` **or** `Authorization: Bearer <key>` (the Bearer form also works on the REST routes). A key in the URL is refused (400). Wrong or missing key: 401; repeated wrong keys from one address: 429. |
 | Limits | The same per-key rate limit as REST (every HTTP request to `/mcp` counts once, also `tools/list`), the same per-key daily cost cap for `ask`, the same audit log (`GET /v1/audit/recent`). |
 | Browsers | A request that carries an `Origin` header is refused (403) unless the origin is listed in `MAUDESIGNAL_WEB_ORIGINS` (the MCP DNS-rebinding guard). Server-side clients send no `Origin`. |

@@ -50,6 +50,26 @@
     <tr><td><code>recalls</code></td><td><code>GET /v1/tools/recalls</code></td><td><code>product_code</code> (3 letters)</td><td>Stored openFDA recalls for the code, newest first.</td></tr>
   </table>
 
+  <h2 id="prompts">Prompts and server instructions</h2>
+  <p>Over MCP the server also offers three prompts (<code>prompts/list</code>, <code>prompts/get</code>; also listed by <code>GET /v1/connect</code>). Each returns one message that asks the model to call the tools above. Each message says: cite the FDA links, this is not medical advice, and say "recorded" for recorded answers.</p>
+  <table>
+    <tr><th>Prompt</th><th>Arguments</th><th>What it asks the model to do</th></tr>
+    <tr><td><code>morning_brief</code></td><td><code>product_codes</code> (comma-separated, up to 10)</td><td>Call <code>what_changed_this_week</code> for each code and summarise with links.</td></tr>
+    <tr><td><code>check_this_device</code></td><td><code>text</code> (name, model, maker, K-number or UDI, read from a photo or typed)</td><td>Call <code>lookup_device</code>, list up to 3 possible matches with why, and ask the person to confirm one before going further.</td></tr>
+    <tr><td><code>does_this_apply_to_us</code></td><td><code>product_code</code>; <code>our_device_description</code> (optional)</td><td>Call <code>check_device_type</code>, <code>what_changed_this_week</code> and <code>recalls</code> and show the problem patterns as questions for the person's own records, never as a verdict.</td></tr>
+  </table>
+  <p>The MCP <code>initialize</code> reply carries these instructions, and the OpenAPI description starts with the same text: always cite the FDA links in each answer; not medical advice and nothing is filed with FDA; confirm the product code with the person before guessing one (use <code>lookup_device</code> or ask); say "recorded" and the date for a recorded answer; never present withheld sentences as fact; a person confirms every device match.</p>
+
+  <h2 id="errors">Error format</h2>
+  <p>A refused input gets HTTP 422 (REST) or <code>isError: true</code> (MCP) with a short message that says what to fix. The JSON body is always <code>{"error": {"code": "...", "message": "..."}}</code>, plus <code>"suggestions": [...]</code> when there is something to offer.</p>
+  <ul>
+    <li>A product code that is not three letters: "A product code is three letters, for example LLZ or QIH."</li>
+    <li>A three-letter code with no stored data and no reports on openFDA (<code>unknown_product_code</code>): "QAH isn't a product code we know - did you mean QIH?", with up to 3 closest known codes in <code>suggestions</code>. Suggestions are never applied automatically, and a code that exists is never corrected.</li>
+    <li>A malformed K-number: "K-numbers look like K123456 (the letter K and six digits)."</li>
+    <li>A UDI or GTIN whose last digit fails the GS1 check: the message says so.</li>
+    <li>A missing input is named ("product_code is required."); a question outside 3 to 500 characters gets the limit.</li>
+  </ul>
+
   <h3>Answer shape</h3>
 <pre>{
   "tool": "recalls",

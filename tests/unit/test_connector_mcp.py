@@ -73,7 +73,10 @@ def test_initialize_and_notification(data: ConnectorData, tmp_path: Path) -> Non
     assert r.status_code == 200
     res = r.json()["result"]
     assert res["protocolVersion"] == "2025-06-18"
-    assert res["capabilities"] == {"tools": {"listChanged": False}}
+    assert res["capabilities"] == {
+        "tools": {"listChanged": False},
+        "prompts": {"listChanged": False},
+    }
     assert "Mcp-Session-Id" not in r.headers and "mcp-session-id" not in r.headers
     note = c.post("/mcp", json={"jsonrpc": "2.0", "method": "notifications/initialized"}, headers=H)
     assert note.status_code == 202 and note.content == b""

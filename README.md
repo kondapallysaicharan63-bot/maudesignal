@@ -132,6 +132,7 @@ as a date (adversarial cases dt03–dt05).
   about $200–300/month, against existing tools from $499/month.
 - **Pilot metric:** time to prepare the signal-evidence section for the device types you choose
   in a PMS report, with and without MaudeSignal.
+- Team accounts / SSO (not built: today it is a public demo key plus personal keys, no logins)
 
 ## How Meta AI is used
 

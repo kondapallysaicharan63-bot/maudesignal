@@ -22,6 +22,7 @@ from maudesignal.connector import links
 from maudesignal.connector.data import ConnectorData
 from maudesignal.connector.errors import InvalidInputError, NotFoundError, SourceUnavailableError
 from maudesignal.connector.forbidden import is_clean
+from maudesignal.connector.guidance import unknown_code_error
 from maudesignal.connector.models import Fact, Provenance, ToolAnswer
 from maudesignal.connector.speech import compose, plain, plural, speak_date, speak_range, were
 from maudesignal.monitor.digest import CHANGE_LABELS
@@ -320,16 +321,28 @@ def what_changed_this_week(
     stored = {str(s["product_code"]) for s in data.digest()["signals"]}
     if code in stored:
         return screen(_stored_what_changed(data, code))
-    return _live(code, "what_changed_this_week", live_checker, now)
+    return _live(data, code, "what_changed_this_week", live_checker, now)
 
 
-def _live(code: str, tool: str, live_checker: LiveChecker, now: Clock) -> ToolAnswer:
+def _live(
+    data: ConnectorData, code: str, tool: str, live_checker: LiveChecker, now: Clock
+) -> ToolAnswer:
     try:
         check = live_checker(code)
     except OpenFDAAPIError as exc:
         raise SourceUnavailableError(
             "openFDA could not be reached just now; try again shortly."
         ) from exc
+    known = data.known_product_codes()
+    if (
+        code not in known
+        and check.window is None
+        and check.prior_report_count == 0
+        and check.current_count == 0
+    ):
+        # No stored data and no report on openFDA ever: most likely a typo. A known code is
+        # never touched, and the suggestions are only shown, never applied.
+        raise unknown_code_error(code, known)
     return screen(_live_answer(tool, check, now()))
 
 
@@ -352,7 +365,7 @@ def check_device_type(
     """
     code = _code(product_code)
     try:
-        return _live(code, "check_device_type", live_checker, now)
+        return _live(data, code, "check_device_type", live_checker, now)
     except SourceUnavailableError:
         if code not in {str(s["product_code"]) for s in data.digest()["signals"]}:
             raise

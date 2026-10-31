@@ -53,6 +53,7 @@ from maudesignal.common.exceptions import (
 from maudesignal.connector import links
 from maudesignal.connector.errors import InvalidInputError
 from maudesignal.connector.forbidden import is_clean
+from maudesignal.connector.guidance import CODE_HINT, GTIN_HINT, K_HINT
 from maudesignal.connector.models import (
     Fact,
     LookupAnswer,
@@ -284,7 +285,7 @@ def clean_inputs(
         try:
             k = normalize_k_number(raw_k)
         except ValueError:
-            notes.append(f"The K-number '{raw_k}' is not K plus six digits, so it was not used.")
+            notes.append(f"{K_HINT} The K-number you gave was not used.")
     digits = re.sub(r"\D", "", gtin or "")
     if not digits and raw_udi:
         digits = re.sub(r"\D", "", parse_udi(raw_udi).get("01", ""))
@@ -295,15 +296,18 @@ def clean_inputs(
         if gtin_check_digit_ok(digits):
             g = digits
         else:
-            notes.append("The UDI / GTIN did not pass the GS1 check digit, so it was not used.")
+            notes.append(f"{GTIN_HINT} It was not used.")
     elif raw_udi or raw_gtin:
-        notes.append("No GTIN could be read from the UDI, so it was not used.")
+        notes.append(
+            "No GTIN could be read from the UDI. A UDI has (01) followed by 8 to 14 digits; "
+            "it was not used."
+        )
     code: str | None = None
     if raw_code:
         try:
             code = normalize_code(raw_code)
         except Exception:  # LiveCheckError: a code is three letters
-            notes.append(f"The product code '{raw_code}' is not three letters, so it was not used.")
+            notes.append(f"{CODE_HINT} The product code you gave was not used.")
     out = LookupInputs(name, mdl, maker, k, g, code, tuple(notes))
     if not out.used():
         raise InvalidInputError(" ".join(notes) or "None of the inputs can be searched.")

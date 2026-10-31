@@ -8,7 +8,7 @@
     "note": "Read-only key. Never send a key in the URL.",
     "type": "api-key"
   },
-  "description": "Read-only MaudeSignal tools over openFDA device data. Speak the text content; every fact in structuredContent has an openFDA or record link. Sentences listed under withheld were not verified: never state them as fact. Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+  "description": "Read-only MaudeSignal tools over openFDA device data, for quality and regulatory review. Always cite the FDA links given in each answer. This is not medical advice, and nothing is filed with FDA. Confirm the product code with the person before guessing one: use lookup_device, or ask. When an answer is labelled recorded, say 'recorded' and give its date. Never present withheld sentences as fact; they were not verified. A person confirms every device match.",
   "name": "maudesignal-connector",
   "protocolVersion": "2025-06-18",
   "readOnly": true,
@@ -22,7 +22,7 @@
         "readOnlyHint": true,
         "title": "What changed this week"
       },
-      "description": "Read-only. Latest stored week from the demo snapshot (labelled with its dates). A product code outside the stored set is checked live on openFDA.",
+      "description": "Use this to see which device types had a change in adverse-event reports in the latest stored week, or one product code if given. Read-only. Answers come from the stored demo snapshot, labelled with its dates; a product code outside the stored set is checked live on openFDA. Each fact has an openFDA link. Example questions: 'What changed for LLZ this week?'; 'Anything new in the stored week?'; 'Did MYN change?'.",
       "inputSchema": {
         "additionalProperties": false,
         "properties": {
@@ -224,7 +224,7 @@
         "readOnlyHint": true,
         "title": "Check any device type live on openFDA"
       },
-      "description": "Read-only. Live openFDA report counts for any product code, using the same four rules, windows and thresholds as the weekly detector.",
+      "description": "Use this to check any device type on openFDA right now, by three-letter product code. Read-only. Gives live report counts for the latest week against the four weeks before, using the same four rules, windows and thresholds as the weekly detector. Each fact has an openFDA link. Example questions: 'Is anything unusual with QIH right now?'; 'Check product code LLZ on openFDA.'; 'How many reports did POK get this week?'.",
       "inputSchema": {
         "additionalProperties": false,
         "properties": {
@@ -428,7 +428,7 @@
         "readOnlyHint": true,
         "title": "Ask the Muse Spark copilot"
       },
-      "description": "Read-only (POST only because the question is in the body). Muse Spark answers through deterministic tools over stored records; every sentence passes the claim gate. Withheld sentences are listed in `withheld` and are never in `speakable`. With no model key, or after the key's daily cost cap, the closest recorded answer is returned and labelled recorded.",
+      "description": "Use this for a free-text question about stored MAUDE reports, recalls, 510(k)s or the MDR clock when no other tool fits. Read-only (POST only because the question is in the body). Muse Spark answers through deterministic tools over stored records; every sentence passes the claim gate. Withheld sentences are listed in `withheld` and are never in `speakable`. With no model key, or after the key's daily cost cap, the closest recorded answer is returned and labelled recorded. Example questions: 'What changed this week for LLZ?'; 'Which recalls are on file for QIH?'; 'When is a malfunction report due to FDA?'.",
       "inputSchema": {
         "additionalProperties": false,
         "properties": {
@@ -636,7 +636,7 @@
         "readOnlyHint": true,
         "title": "One stored MAUDE report"
       },
-      "description": "Read-only. Key fields and the start of the narrative of one stored report.",
+      "description": "Use this to read one stored MAUDE report when you have its report id. Read-only. Gives key fields and the start of the narrative, word for word, with the openFDA record link. Only reports in the stored demo snapshot are found; a missing report may still be on openFDA. Example questions: 'Show me report 50426770.'; 'What does MAUDE report 50426770 say?'.",
       "inputSchema": {
         "additionalProperties": false,
         "properties": {
@@ -840,7 +840,7 @@
         "readOnlyHint": true,
         "title": "FDA recalls for a product code"
       },
-      "description": "Read-only. Stored openFDA recalls for a product code, newest first.",
+      "description": "Use this to list FDA recalls on file for a product code, newest first. Read-only. Reads the stored openFDA recall snapshot (top five as facts, each with its openFDA link); no recalls on file does not mean none exist. Example questions: 'Show recalls for LLZ.'; 'Has QIH had a recall?'; 'Who recalled POK devices?'.",
       "inputSchema": {
         "additionalProperties": false,
         "properties": {
@@ -1044,7 +1044,7 @@
         "readOnlyHint": true,
         "title": "Look up possible FDA records for a device"
       },
-      "description": "Read-only; no model call. Give what you read from a device photo or label (device_name, model, manufacturer, k_number, udi or gtin, product_code; at least one) and get up to 3 possible FDA records from openFDA (510(k), registration & listing, UDI), each with why_matched and why_not_matched, plus this week's change, recent recalls and the report count for the top product code, each with its openFDA link. status is needs_person_to_confirm, no_match_found or search_failed. `confirmed` is always null: a person confirms one record, or none.",
+      "description": "Use this when a person has a device in hand (a photographed label, a model name, a K-number or UDI) and needs the matching FDA records. Read-only; no model call. Give what was read from the photo or label (device_name, model, manufacturer, k_number, udi or gtin, product_code; at least one) and get up to 3 possible FDA records from openFDA (510(k), registration & listing, UDI), each with why_matched and why_not_matched, plus this week's change, recent recalls and the report count for the top product code, each with its openFDA link. status is needs_person_to_confirm, no_match_found or search_failed. `confirmed` is always null: a person confirms one record, or none. Example questions: 'I photographed a label: Welch Allyn 802 LTR - which FDA records match?'; 'Which device is K123456?'; 'Find the FDA record for UDI (01)00380740000000(17)261231.'.",
       "inputSchema": {
         "additionalProperties": false,
         "properties": {
