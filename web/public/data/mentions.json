@@ -1,5 +1,4 @@
 {
-  "schema_version": "1.0",
   "codes": {
     "LLZ": {
       "dropped": {
@@ -42,12 +41,6 @@
           "name": "MedTech Dive (RSS)",
           "status": "ok",
           "url": "https://www.medtechdive.com/feeds/news/"
-        },
-        {
-          "n": 0,
-          "name": "MassDevice (RSS)",
-          "status": "failed: http 403",
-          "url": "https://www.massdevice.com/feed/"
         }
       ],
       "trace": [
@@ -77,11 +70,6 @@
           "step": "Search: MedTech Dive (RSS)"
         },
         {
-          "ms": 173,
-          "status": "failed: http 403",
-          "step": "Search: MassDevice (RSS)"
-        },
-        {
           "ms": 0,
           "status": "0 page(s) tried",
           "step": "Fetch pages and check each quote against the page text"
@@ -89,5 +77,6 @@
       ]
     }
   },
-  "notes": []
+  "notes": [],
+  "schema_version": "1.0"
 }

@@ -458,6 +458,7 @@ class Stub:
                 {"name": "FDA warning letters (RSS)", "url": "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/warning-letters/rss.xml", "status": "failed: http 404", "n": 0},
                 {"name": "MedTech Dive (RSS)", "url": "https://www.medtechdive.com/feeds/news/", "status": "ok", "n": 0},
                 {"name": "MassDevice (RSS)", "url": "https://www.massdevice.com/feed/", "status": "failed: http 403", "n": 0},
+                {"name": "Example Wire (RSS)", "url": "https://example.com/feed/", "status": "skipped: time", "n": 0},
             ]
             trace = [
                 {"step": "Search: GDELT DOC 2.0 (news index)", "model": None, "ms": 6031, "status": "failed: ConnectTimeout"},
@@ -466,6 +467,7 @@ class Stub:
                 {"step": "Search: FDA warning letters (RSS)", "model": None, "ms": 431, "status": "failed: http 404"},
                 {"step": "Search: MedTech Dive (RSS)", "model": None, "ms": 228, "status": "ok"},
                 {"step": "Search: MassDevice (RSS)", "model": None, "ms": 173, "status": "failed: http 403"},
+                {"step": "Search: Example Wire (RSS)", "model": None, "ms": 0, "status": "skipped: time"},
                 {"step": "Fetch pages and check each quote against the page text", "model": None, "ms": 0, "status": "0 page(s) tried"},
             ]
         else:

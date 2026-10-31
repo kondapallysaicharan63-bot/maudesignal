@@ -28,7 +28,7 @@ export const VOICE_NOTE = 'Audio is sent once for transcription and not stored. 
 export const PHOTO_NOTE = 'Photo is read once and not stored. Do not photograph patient details.'
 export const LIMIT_TEXT = 'Daily live limit reached - showing recorded runs'
 
-export type TraceStatus = 'ok' | 'skipped' | 'failed'
+export type TraceStatus = 'ok' | 'skipped' | 'failed' | 'not_searched' | 'unknown'
 export interface LiveTraceStep {
   step: string
   model?: string | null

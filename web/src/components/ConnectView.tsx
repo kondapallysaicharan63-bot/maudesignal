@@ -62,7 +62,7 @@ export function ConnectView({ apiBase, fetcher }: { apiBase: string | null; fetc
           Add MaudeSignal to Muse as a custom connector. It answers from stored public FDA records, read-only. Signals for a person to review; nothing is filed with FDA.
         </p>
         <p className="mt-2 max-w-2xl font-semibold text-ink" data-testid="connect-status">
-          Submitted to Meta&apos;s Muse Connector Program — pending review (submitted Oct 30). Not approved or listed.
+          Submitted to Meta&apos;s Muse Connector Program — pending review.
         </p>
       </div>
 

@@ -102,11 +102,26 @@ export function zeroLine(searchedUtc: string): string {
   return `0 found in these sources (${d})`
 }
 
-/** "ok" stays "ok"; anything else is shown as "failed: reason" so a silent failure is never read as "nothing there". */
+export type StatusKind = 'done' | 'failed' | 'not_searched' | 'unknown'
+
+/** One mapping for the trace and the source list, by prefix: ok* = done, failed* = failed, skipped* = not searched, else unknown (never "done"). */
+export function classifyStatus(raw: unknown): { kind: StatusKind; reason: string } {
+  const t = typeof raw === 'string' ? raw.trim() : ''
+  const lower = t.toLowerCase()
+  const i = t.indexOf(':')
+  const after = i >= 0 ? t.slice(i + 1).trim() : ''
+  if (lower.startsWith('ok')) return { kind: 'done', reason: '' }
+  if (lower.startsWith('failed')) return { kind: 'failed', reason: after }
+  if (lower.startsWith('skipped')) return { kind: 'not_searched', reason: after }
+  return { kind: 'unknown', reason: t }
+}
+
+const KIND_TEXT: Record<StatusKind, string> = { done: 'done', failed: 'failed', not_searched: 'not searched', unknown: 'unknown' }
+
+/** "done", "failed: ConnectTimeout", "not searched: time limit", "unknown: <raw>" (or just "unknown" when nothing was recorded). */
 export function statusLabel(status: string): string {
-  const s = status.trim()
-  if (!s) return 'status not recorded'
-  return s === 'ok' || /^failed/i.test(s) ? s : `failed: ${s}`
+  const { kind, reason } = classifyStatus(status)
+  return reason ? `${KIND_TEXT[kind]}: ${reason}` : KIND_TEXT[kind]
 }
 
 function parseMention(v: unknown): Mention | 'personal' | null {
@@ -130,11 +145,12 @@ function parseMention(v: unknown): Mention | 'personal' | null {
 }
 
 const traceStatus = (raw: unknown): { status: LiveTraceStep['status']; note?: string } => {
-  const t = typeof raw === 'string' ? raw.trim() : ''
-  if (t === 'skipped') return { status: 'skipped' }
-  if (/^failed/i.test(t)) return { status: 'failed', note: t }
-  if (t === '' || t === 'ok') return { status: 'ok' }
-  return { status: 'ok', note: t } // a plain remark such as "0 page(s) tried"
+  const { kind, reason } = classifyStatus(raw)
+  const note = reason || undefined
+  if (kind === 'done') return { status: 'ok' }
+  if (kind === 'failed') return { status: 'failed', ...(note ? { note } : {}) }
+  if (kind === 'not_searched') return { status: 'not_searched', ...(note ? { note } : {}) }
+  return { status: 'unknown', ...(note ? { note } : {}) }
 }
 
 const traceOf = (v: unknown): LiveTraceStep[] =>
@@ -144,7 +160,7 @@ const traceOf = (v: unknown): LiveTraceStep[] =>
         .filter((s) => !isDropped(String(s.step ?? '')) && !isDropped(String(s.note ?? '')))
         .map((s) => {
           const st = traceStatus(s.status)
-          const note = st.note ?? (typeof s.note === 'string' ? s.note : undefined)
+          const note = st.note ?? (typeof s.note === 'string' && s.note ? s.note : undefined)
           return {
             step: String(s.step ?? ''),
             model: typeof s.model === 'string' ? s.model : null,

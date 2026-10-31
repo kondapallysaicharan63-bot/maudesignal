@@ -174,7 +174,7 @@ describe('MentionsBox', () => {
     const rows = Array.from(host.querySelectorAll('[data-testid=source-row]')).map((r) => r.textContent ?? '')
     expect(rows).toHaveLength(2)
     expect(rows[0]).toContain('failed: ConnectTimeout')
-    expect(rows[1]).toContain('ok')
+    expect(rows[1]).toContain('done')
     expect(rows[1]).toContain('0 pages')
     expect(host.textContent).not.toMatch(/massdevice/i)
     expect(host.textContent).not.toContain('Nothing was kept')
@@ -194,7 +194,7 @@ describe('MentionsBox', () => {
     expect(warn).not.toContain('done')
     expect(steps.find((t) => t.includes('recalls'))).toContain('done')
   })
-  it('a "failed: ConnectTimeout" trace step is failed, a skipped one skipped, anything else ok', () => {
+  it('a "failed: ConnectTimeout" trace step is failed, a skipped one not searched, anything else unknown', () => {
     const r = parseMentions({
       ...mentionsBody,
       trace: [
@@ -206,14 +206,14 @@ describe('MentionsBox', () => {
       ],
     })!
     expect(r.trace.map((t) => t.step)).toEqual(['A', 'B', 'C', 'D'])
-    expect(r.trace.map((t) => t.status)).toEqual(['failed', 'skipped', 'ok', 'ok'])
-    expect(r.trace[0].note).toBe('failed: ConnectTimeout')
+    expect(r.trace.map((t) => t.status)).toEqual(['failed', 'not_searched', 'ok', 'unknown'])
+    expect(r.trace[0].note).toBe('ConnectTimeout')
   })
   it('zeroLine and statusLabel handle missing data honestly', () => {
     expect(zeroLine('')).toBe('0 found in these sources (date not recorded)')
-    expect(statusLabel('')).toBe('status not recorded')
-    expect(statusLabel('http 500')).toBe('failed: http 500')
-    expect(statusLabel('ok')).toBe('ok')
+    expect(statusLabel('')).toBe('unknown')
+    expect(statusLabel('http 500')).toBe('unknown: http 500')
+    expect(statusLabel('ok')).toBe('done')
   })
   it('a MassDevice mention in the data is dropped', () => {
     const r = parseMentions({ ...mentionsBody, mentions: [{ source_name: 'MassDevice', source_kind: 'news', url: 'https://www.massdevice.com/a', quote: 'A sentence.', why_matched: 'x', badge: 'x' }] })!
@@ -245,7 +245,7 @@ describe('ConnectView', () => {
     expect(t).toContain('https://maudesignal-api.vercel.app/mcp')
     expect(t).toContain('https://maudesignal-api.vercel.app/openapi.json')
     expect(t).toContain('Ask Charan for a key')
-    expect(q('connect-status')?.textContent).toContain("Submitted to Meta's Muse Connector Program — pending review (submitted Oct 30). Not approved or listed.")
+    expect(q('connect-status')?.textContent).toContain("Submitted to Meta's Muse Connector Program — pending review.")
     expect(q('no-demo-key')).not.toBeNull()
     expect(q('link-privacy')?.getAttribute('href')).toBe('https://maudesignal-api.vercel.app/privacy')
     expect(q('link-terms')?.getAttribute('href')).toBe('https://maudesignal-api.vercel.app/terms')

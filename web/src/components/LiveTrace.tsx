@@ -10,6 +10,8 @@ const STATUS: Record<LiveTraceStep['status'], { text: string; cls: string }> = {
   ok: { text: 'done', cls: 'bg-success-soft text-success' },
   skipped: { text: 'skipped', cls: 'bg-sunk text-ink-2' },
   failed: { text: 'failed', cls: 'bg-critical-soft text-critical' },
+  not_searched: { text: 'not searched', cls: 'bg-sunk text-ink-2' },
+  unknown: { text: 'unknown', cls: 'bg-sunk text-ink-2' },
 }
 
 /** The steps of one live run, in order, each with the model that did it, its time in milliseconds and its outcome. */
