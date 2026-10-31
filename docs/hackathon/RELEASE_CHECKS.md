@@ -21,8 +21,18 @@ nothing in a report is typed in. Scripts: `scripts/release/`. Unit tests of the 
 | NOT_PRESENT | the feature is not in this build (for example `lookup_device` before it is merged) | only when the check is required |
 | KNOWN_GAP | the test environment cannot test it (for example a fake microphone in WebKit) | no, and it is never counted as a pass |
 
-The overall verdict is FAIL if any check failed, else BLOCKED if any was blocked, else PASS. A
-report with no checks is a FAIL. A job that produced no report is a FAIL in the merged report.
+A report has four verdicts, computed by `report.py`:
+
+| Verdict | When |
+|---|---|
+| FAIL | any required check failed (a report with no checks is a FAIL) |
+| BLOCKED | no failure, and at least one check is BLOCKED |
+| PASS | no failure, nothing blocked, and at least one check passed |
+| INFO | none of the above: the part holds only informational or KNOWN_GAP lines and nothing passed |
+
+The merged `overall()` verdict ignores INFO parts: FAIL if any part failed (or none ran), else
+BLOCKED if any part was blocked, else PASS if at least one part is not INFO, and INFO only when
+every part is INFO. A job that produced no report is a FAIL in the merged report.
 
 ## Release check (`release/**`)
 
@@ -157,14 +167,15 @@ admin key separately (GitHub masks the secret only as the whole comma-joined str
 secret present the API URL must be https on `maudesignal-api*.vercel.app`; otherwise the run
 exits with code 2 before sending anything (a `workflow_dispatch` input cannot redirect the keys).
 Responses and the web bundle are scanned for the secrets given to the run and for key-shaped
-strings. Every scan-type check goes through one helper (`Smoke.scan`): when the response status
-is 0 or anything other than 200 there is nothing to scan, so the line is FAIL `no answer to check
-(HTTP <status>)`, never a pass. A live answer whose `cost_usd` is not a non-negative number (missing,
+strings. The key scans in `smoke.py` (`Smoke.clean`: no secret value and no key-shaped string in the
+responses) are the only checks that go through `Smoke.scan`. `clean` handles a non-200 response
+first: when the status is 0 or anything other than 200 there is nothing to scan, so the line is
+FAIL `no answer to check (HTTP <status>)`, never a pass; `scan` keeps the same test as a second guard. A live answer whose `cost_usd` is not a non-negative number (missing,
 a string, a boolean, negative, NaN or infinite) is counted at the full cap of its kind.
 
 **Spend budget per smoke run** (`scripts/release/budget.py`): one `Budget` object is shared by the
 live checks and the load test, and the web quick pass is kept out of live spending. In total at
-most **$0.60**, **1** live ask (enforced in code by the smoke budget), **2** photos and **1** spoken question. Before each live call
+most **$0.60**, **1** live ask, **0** photos and **1** spoken question. The smoke run sets these counts in code (`SMOKE_LIMITS` in `budget.py`, used by `Smoke`), not only through flags. Before each live call
 the budget checks the cost already spent, plus the holds of calls in flight, plus this call's
 maximum hold: **$0.25 ask, $0.30 voice, $0.30 photo**. These are the *deployed* API's default
 per-request caps (`globalcap.py` on `track-c-live`), the most one call can cost there; they are
@@ -195,8 +206,9 @@ quotes the last `remaining_today`. It confirms nothing by itself.
 ## Reading a report
 
 1. Open the `release-report` (or `smoke-report`) artifact, or the job summary in the run.
-2. Read the top line: PASS, BLOCKED or FAIL. BLOCKED means something could not run; read the
-   BLOCKED lines before deciding.
+2. Read the top line: PASS, BLOCKED, FAIL or INFO. BLOCKED means something could not run; read the
+   BLOCKED lines before deciding. INFO means nothing in that part passed or failed (only notes
+   and known gaps); it is not a pass.
 3. Under **Failures**, each line is a status, the check name and the evidence (HTTP status, the
    response start, the line that differs). Group names: `service`, `rest`, `mcp`, `auth`,
    `limits`, `validation`, `cors`, `live`, `feedback`, `injection`, `security`, `numbers`,

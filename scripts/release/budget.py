@@ -40,6 +40,8 @@ SMOKE_PLAN = {
     "web": (),
 }
 LIMITS = {"ask": MAX_ASKS, "photo": MAX_PHOTOS, "voice": MAX_VOICE}
+# What a smoke run itself allows: 1 ask, 1 voice, 0 photos (``Smoke`` builds its Budget from this).
+SMOKE_LIMITS = {"ask": 1, "photo": 0, "voice": 1}
 SKIPPED_BUDGET = "skipped: budget"
 KIND_OF_PATH = {"ask": "ask", "label": "photo", "voice": "voice"}  # /v1/live/<path>
 

@@ -38,7 +38,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 
-from budget import HOLD_USD, LIMITS, SKIPPED_BUDGET, Budget  # noqa: E402
+from budget import HOLD_USD, LIMITS, SKIPPED_BUDGET, SMOKE_LIMITS, Budget  # noqa: E402
 from compare import llz_snapshot_diffs  # noqa: E402
 from leaks import contains_any, find_key_shapes  # noqa: E402
 from load_test import evaluate, run_load, summarize  # noqa: E402
@@ -84,8 +84,9 @@ class Smoke:
     ) -> None:
         """Remember the targets, the report, the secret values and the one shared budget."""
         self.api, self.web, self.rep, self.secrets = api.rstrip("/"), web.rstrip("/"), rep, secrets
-        # the plan is one ask and one spoken question: the ask count is capped in code, not only by a flag
-        self.budget = budget if budget is not None else Budget(limits={**LIMITS, "ask": 1})
+        # the plan is one ask and one spoken question: max 1 ask, 1 voice and 0 photos, set in
+        # code (not only by the ``with_photo`` / ``--max-live-asks`` flags)
+        self.budget = budget if budget is not None else Budget(limits={**LIMITS, **SMOKE_LIMITS})
         self.live_cost = 0.0
         self.load_cost = 0.0
         self.web_live_cost = 0.0  # cost_usd of the live calls the browser pass made
@@ -99,10 +100,11 @@ class Smoke:
     def scan(self, name: str, r: Response, detect: Callable[[str], bool], fail_detail: str) -> bool:
         """Run one scan-type check on a response; FAIL when there is no 200 answer to scan.
 
-        Every check that looks for something in a response body (a key, key-shaped text, skill or
-        system text, an auto-confirmed action) goes through here, so a response with status 0 or
-        any status other than 200 is never a pass: the line is FAIL "no answer to check (HTTP
-        <status>)". Returns True when the response was scanned.
+        In this script the only caller is ``clean`` (secret values and key-shaped strings in a
+        response). ``clean`` handles a non-200 response first, before calling here; the 200 test
+        in this method is a second guard so that a status 0 or any other status is never a pass:
+        the line is FAIL "no answer to check (HTTP <status>)". Returns True when the response
+        was scanned.
         """
         if r.status != 200:
             self.rep.add(name, FAIL, no_answer_detail(r.status), group="security")

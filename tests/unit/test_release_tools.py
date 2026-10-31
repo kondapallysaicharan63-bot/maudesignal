@@ -984,3 +984,13 @@ def test_smoke_default_budget_allows_one_live_ask() -> None:
     s = smoke.Smoke("https://a", "", rpt.Report("t"), [])
     assert s.budget.reserve("ask")
     assert not s.budget.reserve("ask")
+
+
+def test_smoke_default_budget_allows_one_ask_one_voice_and_no_photo() -> None:
+    import smoke
+
+    s = smoke.Smoke("https://a", "", rpt.Report("t"), [])
+    assert s.budget.limits == {"ask": 1, "photo": 0, "voice": 1}
+    assert s.budget.reserve("ask") and not s.budget.reserve("ask")
+    assert s.budget.reserve("voice") and not s.budget.reserve("voice")
+    assert not s.budget.reserve("photo")

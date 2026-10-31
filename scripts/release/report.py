@@ -102,7 +102,12 @@ class Report:
         return [c for c in self.checks if c.counts_as_failure()]
 
     def verdict(self) -> str:
-        """FAIL, BLOCKED or PASS (see the module text)."""
+        """FAIL, BLOCKED, PASS or INFO for one report.
+
+        FAIL if any required check failed (or no check ran); else BLOCKED if any check was
+        blocked; else PASS if at least one check passed; else INFO (only informational and
+        known-gap lines, nothing passed).
+        """
         if self.failures() or not self.checks:  # nothing ran: never a pass
             return FAIL
         if any(c.status == BLOCKED for c in self.checks):
@@ -148,7 +153,11 @@ def _cell(text: object) -> str:
 
 
 def overall(verdicts: list[str]) -> str:
-    """FAIL if any job failed (or none ran), else BLOCKED if any was blocked, else PASS."""
+    """FAIL if any job failed (or none ran), else BLOCKED if any was blocked, else PASS.
+
+    INFO parts are ignored: the result is PASS if at least one part is not INFO, and INFO only
+    when every part is INFO.
+    """
     if FAIL in verdicts or not verdicts:
         return FAIL
     if BLOCKED in verdicts:
