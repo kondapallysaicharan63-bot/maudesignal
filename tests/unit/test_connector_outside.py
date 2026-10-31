@@ -43,7 +43,7 @@ class FakeRunner:
     def __call__(self, question: str, product_code: str | None, **kw: Any) -> dict[str, Any]:
         self.calls.append({"question": question, "product_code": product_code, **kw})
         item = {"title": WEB_TITLE, "url": WEB_URL, "date": None, "source": "news.example.com"}
-        return research.block("ok", [item], WEB_SUMMARY, 0.0123, None)
+        return research.block("ok", [item], None, 0.0123, None)
 
 
 @pytest.fixture(scope="module")
@@ -124,7 +124,7 @@ def test_flag_off_tool_is_absent_everywhere(
     assert c.post(PATH, json={"bad": 1}).status_code == 404  # 404 before key or body checks
     assert PATH not in c.get("/openapi.json").json()["paths"]
     assert "outside_mentions" not in [t["name"] for t in build_manifest()["tools"]]
-    assert "Web research is off here" in c.get("/privacy").text
+    assert "outside_mentions" not in c.get("/privacy").text
     assert fake.calls == []
 
 
@@ -149,7 +149,7 @@ def test_flag_on_listed_with_hints_and_description(
     assert tool["inputSchema"]["properties"]["topic"]["maxLength"] == 120
     op = c.get("/openapi.json").json()["paths"][PATH]["post"]
     assert op["description"] == desc
-    assert "Web research is ON here" in " ".join(c.get("/privacy").text.split())
+    assert "<code>outside_mentions</code> (full API keys only" in c.get("/privacy").text
 
 
 def test_label_is_exact_over_rest_and_mcp(
@@ -216,13 +216,33 @@ def test_demo_key_is_refused(data: ConnectorData, monkeypatch: pytest.MonkeyPatc
 
 def test_per_key_daily_limit(data: ConnectorData, monkeypatch: pytest.MonkeyPatch) -> None:
     c, fake, _ks, _st = make(data, monkeypatch, per_day=2)
-    bodies = [c.post(PATH, json={"product_code": "LLZ"}, headers=H).json() for _ in range(3)]
-    assert len(fake.calls) == 2
-    last = bodies[-1]
-    assert last["status"] == "unavailable" and last["items"] == [] and last["cost_usd"] == 0
-    assert last["label"] == EXACT_LABEL and "Daily limit of 2" in last["note"]
+    for _ in range(2):
+        assert c.post(PATH, json={"product_code": "LLZ"}, headers=H).status_code == 200
+    r = c.post(PATH, json={"product_code": "LLZ"}, headers=H)
+    assert r.status_code == 429 and int(r.headers["Retry-After"]) > 0
+    assert r.json()["error"]["code"] == "rate_limited"
+    assert "Daily limit of 2" in r.json()["error"]["message"]
+    res = rpc(
+        c, KEY, "tools/call", {"name": "outside_mentions", "arguments": {"product_code": "LLZ"}}
+    )["result"]
+    assert res["isError"] is True and "Daily limit of 2" in res["content"][0]["text"]
+    blk = res["structuredContent"]
+    assert blk["status"] == "unavailable" and blk["items"] == [] and blk["cost_usd"] == 0
+    assert blk["label"] == EXACT_LABEL and "00:00 UTC" in blk["note"]
+    assert len(fake.calls) == 2  # nothing searched past the limit
     assert outside.per_key_day({}) == 10
     assert outside.per_key_day({"MAUDESIGNAL_RESEARCH_PER_KEY_DAY": "x"}) == 10
+
+
+def test_outside_mentions_calls_are_counted_in_the_clients_panel(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    c, _fake, ks, _st = make(data, monkeypatch)
+    c.post(PATH, json={"product_code": "LLZ"}, headers=H)
+    rpc(c, KEY, "tools/call", {"name": "outside_mentions", "arguments": {"product_code": "LLZ"}})
+    body = c.get("/v1/admin/clients", headers={"X-Admin-Key": ADMIN}).json()
+    [row] = [x for x in body["clients"] if x["client_id"] == str(ks.verify(KEY))[:8]]
+    assert row["calls_today"] == 2 and row["kind"] == "REST, MCP"
 
 
 def test_bad_inputs_never_reach_the_paid_search(

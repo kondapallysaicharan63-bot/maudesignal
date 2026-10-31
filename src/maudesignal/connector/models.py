@@ -344,8 +344,8 @@ class OutsideMentionsAnswer(BaseModel):
     status: Literal["ok", "news_only", "unavailable"]
     label: Literal["Web research — not FDA records, not verified by the gate"]
     items: list[WebResearchItem] = Field(max_length=8)
-    summary_text: str | None = Field(
-        max_length=1500, description="The model's own short text; not verified by the gate."
+    summary_text: None = Field(
+        description="Always null: only title, link, date and source are shown."
     )
     cost_usd: float = Field(ge=0, description="What the daily spend ledger counts for this call.")
     note: str | None

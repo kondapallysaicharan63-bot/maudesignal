@@ -473,21 +473,6 @@
       "Health": {
         "description": "``GET /v1/health`` body.",
         "properties": {
-          "features": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "boolean"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Optional features that are switched on; absent when none is.",
-            "title": "Features"
-          },
           "feedback_store": {
             "title": "Feedback Store",
             "type": "string"

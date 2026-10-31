@@ -3,43 +3,54 @@
 HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
 One function, :func:`run_research`, used by the website route (``POST /v1/live/ask`` with
-``research: true``) and, later, by the connector tool. It sends ONE Responses API request to
+``research: true``) and by the connector tool. It sends at most ONE Responses API request to
 Muse Spark 1.3 with the built-in ``web_search`` tool and turns the reply into a research
 block::
 
     {"status": "ok" | "news_only" | "unavailable",
      "label": "Web research — not FDA records, not verified by the gate",
      "items": [{"title", "url", "date" | null, "source"}],   # http(s) only, deduped, <= 8
-     "summary_text": str | null, "cost_usd": float, "note": str | null}
+     "summary_text": null, "cost_usd": float, "note": str | null}
+
+``summary_text`` is always ``null``: only title, link, date and source are shown.
+
+SWITCH ON ONLY AFTER probe 2 (``scripts/research_probe.py``) has shown that Meta honours
+``max_tool_calls`` and once the per-search fee is known. ``MAUDESIGNAL_RESEARCH`` is off by
+default (``1`` / ``true`` / ``on`` turns it on); when off nothing here runs.
 
 Rules:
 
-* Off unless ``MAUDESIGNAL_RESEARCH`` is ``1`` / ``true`` / ``on``. When off, nothing here runs.
-* The research block is never mixed into the gated answer: it is built here, from the web
-  reply only, and the route puts it next to the answer, never inside it. Nothing in it goes
-  through or past the claim gate, and it is never counted as a MAUDE fact.
-* The instructions come from the ``web-research`` Skill (section "Instructions (sent to the
-  model)"); no prompt text lives in Python.
-* Request: ``reasoning.effort`` low, ``max_output_tokens`` 3000, ``max_tool_calls`` 2,
-  ``include: ["web_search_call.action.sources"]``, 45 s timeout, no SDK retries. If a 400 names
-  ``max_tool_calls`` or ``include``, that parameter is remembered as rejected for this process
-  and ONE more request is sent without it (each request reserves its own worst case).
-* Spend: every request goes through the daily per-call ledger (``callcap``). Its worst-case
-  hold is ``RESEARCH_INPUT_TOKENS`` input tokens and the output cap at the Spark 1.3 prices,
-  plus a search-fee allowance of ``MAUDESIGNAL_RESEARCH_SEARCH_FEE_USD`` (default $0.01) per
-  search x 2 searches. Meta's web-search fee is NOT known to this repo (no price table has
-  it); the allowance is a conservative stand-in, and the real fee should be read from the
-  Meta console. After a successful reply the hold is settled to tokens x price + searches
-  made x the allowance. A failed or timed-out request stays counted at its hold.
-* Failure gives ``status: "unavailable"`` and ``cost_usd`` = what the ledger counts for this
-  request (worst-case holds of failed requests included), so no partial cost is hidden. When
-  the web search fails, the GDELT news index (the mentions module's free source) is tried
-  for news links; those items say ``source: "GDELT news index"`` and the status is
-  ``news_only``.
+* The block is never mixed into the gated answer: it is built here, from the web reply only,
+  and the route puts it next to the answer. Nothing in it goes through or past the claim
+  gate, and it is never counted as a MAUDE fact. The instructions come from the
+  ``web-research`` Skill; no prompt text lives in Python.
+* Request: ``reasoning.effort`` low, ``max_output_tokens`` 3000 (reasoning included),
+  ``max_tool_calls`` 2, ``include: ["web_search_call.action.sources"]``, 45 s timeout, no SDK
+  retries and NO retry of any kind. A 400 that names ``max_tool_calls`` or ``include`` switches
+  web research off for this process (later questions skip the paid call) and the GDELT news
+  index answers instead.
+* Spend, worst case per request (the hold, reserved in the daily per-call ledger before the
+  request is sent): 60,000 input tokens x $1.25/M + 3,000 output tokens x $4.25/M + the
+  search-fee allowance ``MAUDESIGNAL_RESEARCH_SEARCH_FEE_USD`` (default $0.01; Meta's fee is NOT
+  known to this repo, so this is a conservative stand-in) x max(``MAX_SEARCHES``, 2)
+  = $0.075 + $0.01275 + $0.02 = $0.10775. That is above the $0.10 per-call limit of the other
+  routes, so Research has its own per-call limit ``MAUDESIGNAL_RESEARCH_HOLD_USD`` (default and
+  ceiling $0.12) and reserves against a lower cap: the enforced cap minus (research limit -
+  $0.10), 2.88 with the defaults. With list-after-put visibility the later of two concurrent
+  reservations sees the earlier one; if it did not, the day total is still at most
+  min(2.90 + 0.12, 2.88 + 0.10) = 2.98 for a research call racing another call, and
+  2.88 + 0.12 = 3.00 for two research calls racing. In addition only ONE research request may be
+  in flight at a time (``exclusive``), so overshoots cannot stack.
+* After each reply: if it made more than ``MAX_SEARCHES`` searches, used more than
+  ``MAX_OUTPUT_TOKENS`` output tokens or more than the 60,000 input-token allowance, or its
+  real cost is above the hold, web research is switched off for this process AND for the rest
+  of the UTC day in the ledger (flag ``research``), with a warning; the real cost is still
+  settled. A failed or timed-out request stays counted at its hold.
+* Failure gives ``status: "unavailable"`` (or ``news_only`` when GDELT answers) and
+  ``cost_usd`` = what the ledger counts for this request, so no partial cost is hidden.
 * Items: url citations of the final message first, then ``web_search_call.action.sources``.
-  Dates only from a date field the API returns, never read out of prose (``null`` otherwise).
-  A title or summary holding a forbidden word (``connector.forbidden``) is replaced by the
-  domain / dropped.
+  Dates only from a date field the API returns (``null`` otherwise). A title holding a
+  forbidden word (``connector.forbidden``) is replaced by the domain.
 """
 
 from __future__ import annotations
@@ -56,7 +67,7 @@ from urllib.parse import quote_plus, urlparse
 import httpx
 
 from maudesignal.common.logging import get_logger
-from maudesignal.connector.callcap import CallLedger, CallRefusedError
+from maudesignal.connector.callcap import MAX_CALL_HOLD_USD, CallLedger, CallRefusedError
 from maudesignal.connector.forbidden import is_clean
 from maudesignal.connector.mentions import SOURCES as MENTION_SOURCES
 from maudesignal.connector.mentions import Fetcher, parse_gdelt
@@ -69,6 +80,8 @@ RESEARCH_ENV = "MAUDESIGNAL_RESEARCH"
 SEARCH_FEE_ENV = "MAUDESIGNAL_RESEARCH_SEARCH_FEE_USD"
 PER_DAY_ENV = "MAUDESIGNAL_RESEARCH_PER_DAY"
 SAVE_PER_DAY_ENV = "MAUDESIGNAL_RESEARCH_SAVE_PER_DAY"
+HOLD_CAP_ENV = "MAUDESIGNAL_RESEARCH_HOLD_USD"
+KILL_FLAG = "research"
 
 LABEL = "Web research — not FDA records, not verified by the gate"
 GDELT_SOURCE = "GDELT news index"
@@ -82,11 +95,14 @@ MAX_OUTPUT_TOKENS = 3000
 MAX_SEARCHES = 2
 INCLUDE_SOURCES = "web_search_call.action.sources"
 TIMEOUT_S = 45.0
-MAX_REQUESTS = 2
+MAX_REQUESTS = 1
 #: Input-token allowance for the hold. Search results are added to the input by the API, so
 #: the prompt size says nothing about it; probe 1 used 24,256 input tokens for 7 searches.
-RESEARCH_INPUT_TOKENS = 40_000
+RESEARCH_INPUT_TOKENS = 60_000
 DEFAULT_SEARCH_FEE_USD = 0.01
+#: Research's own per-call hold limit (default and ceiling); see the module docstring.
+DEFAULT_HOLD_CAP_USD = 0.12
+MAX_HOLD_CAP_USD = 0.12
 DEFAULT_PER_DAY = 5
 DEFAULT_SAVE_PER_DAY = 20
 MAX_ITEMS = 8
@@ -104,6 +120,7 @@ NOTE_LIMIT = "Daily limit of {n} web research requests reached. It resets at 00:
 NOTE_UNAVAILABLE = "Web research is not available right now."
 NOTE_NEWS_ONLY = "Web search was not available; showing news links from the GDELT news index."
 NOTE_CAP = "Today's live-call budget is used up, so web search was not run."
+NOTE_OFF = "Web search is switched off for now; showing news links only."
 
 
 # ---------------------------------------------------------------------------
@@ -136,6 +153,11 @@ def per_day(env: dict[str, str] | None = None) -> int:
     return max(1, int(_num_env(env, PER_DAY_ENV, DEFAULT_PER_DAY)))
 
 
+def hold_cap_usd(env: dict[str, str] | None = None) -> float:
+    """Research's per-call hold limit (``MAUDESIGNAL_RESEARCH_HOLD_USD``; default/ceiling 0.12)."""
+    return min(MAX_HOLD_CAP_USD, _num_env(env, HOLD_CAP_ENV, DEFAULT_HOLD_CAP_USD))
+
+
 def save_per_day(env: dict[str, str] | None = None) -> int:
     """Saved links per visitor per UTC day (default 20)."""
     return max(1, int(_num_env(env, SAVE_PER_DAY_ENV, DEFAULT_SAVE_PER_DAY)))
@@ -149,7 +171,8 @@ def token_cost_usd(input_tokens: int, output_tokens: int) -> float:
 def hold_usd(fee_per_search: float) -> float:
     """Worst-case cost of one research request (reserved before it is sent)."""
     return round(
-        token_cost_usd(RESEARCH_INPUT_TOKENS, MAX_OUTPUT_TOKENS) + fee_per_search * MAX_SEARCHES,
+        token_cost_usd(RESEARCH_INPUT_TOKENS, MAX_OUTPUT_TOKENS)
+        + fee_per_search * max(MAX_SEARCHES, 2),
         6,
     )
 
@@ -305,9 +328,7 @@ def parse_reply(body: dict[str, Any]) -> ParsedReply:
     seen: set[str] = set()
     for obj in citations + sources:
         _add(out.items, seen, obj, "")
-    summary = "\n".join(t.strip() for t in texts if t.strip()).strip()
-    if summary and is_clean(summary):
-        out.summary_text = summary[:MAX_SUMMARY_CHARS]
+    # summary_text stays None: Research mode shows title, link, date and source only.
     usage = body.get("usage")
     if isinstance(usage, dict):
         tin, tout = usage.get("input_tokens"), usage.get("output_tokens")
@@ -327,7 +348,7 @@ def error_text(body: Any) -> str:
 
 
 def rejected_params(status: int, message: str) -> frozenset[str]:
-    """Optional parameters a 400 names (dropped on the one retry)."""
+    """Optional parameters a 400 names (web research is then switched off; never retried)."""
     if status != 400:
         return frozenset()
     low = message.lower()
@@ -371,15 +392,40 @@ class HttpResearchTransport:
             return resp.status_code, resp.text[:500]
 
 
-#: Optional parameters a 400 has rejected in this process (not sent again).
-_REJECTED: set[str] = set()
-_REJECTED_LOCK = threading.Lock()
+#: Why web research is switched off in this process (empty: it is on).
+_DISABLED: list[str] = []
+_DISABLED_LOCK = threading.Lock()
+
+
+def disable_for_process(reason: str) -> None:
+    """Switch the paid web search off for this process (later questions get GDELT only)."""
+    with _DISABLED_LOCK:
+        if not _DISABLED:
+            _DISABLED.append(reason)
+    logger.warning("research_disabled_for_process", reason=reason)
+
+
+def disabled_reason() -> str | None:
+    """Why web research is off in this process, or ``None``."""
+    with _DISABLED_LOCK:
+        return _DISABLED[0] if _DISABLED else None
 
 
 def reset_rejected() -> None:
-    """Forget rejected parameters (tests)."""
-    with _REJECTED_LOCK:
-        _REJECTED.clear()
+    """Switch web research back on for this process (tests)."""
+    with _DISABLED_LOCK:
+        _DISABLED.clear()
+
+
+def overshoot(parsed: ParsedReply) -> str | None:
+    """Why a reply went past the limits the hold assumes, or ``None``."""
+    if parsed.searches > MAX_SEARCHES:
+        return f"{parsed.searches} searches (limit {MAX_SEARCHES})"
+    if parsed.output_tokens is not None and parsed.output_tokens > MAX_OUTPUT_TOKENS:
+        return "output tokens above max_output_tokens"
+    if parsed.input_tokens is not None and parsed.input_tokens > RESEARCH_INPUT_TOKENS:
+        return "input tokens above the hold's allowance"
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -463,6 +509,7 @@ def run_research(
     fee_per_search: float = DEFAULT_SEARCH_FEE_USD,
     news_fetcher: Callable[[], Fetcher] | None = None,
     instructions: str | None = None,
+    hold_cap: float = DEFAULT_HOLD_CAP_USD,
 ) -> dict[str, Any]:
     """Run Research mode for one question and return the research block.
 
@@ -474,66 +521,22 @@ def run_research(
         fee_per_search: Search-fee allowance in USD (see the module docstring).
         news_fetcher: Factory for the GDELT backup's HTTP fetcher (``None``: no backup).
         instructions: Instructions text (tests); read from the Skill when omitted.
+        hold_cap: Research's per-call hold limit (at most ``MAX_HOLD_CAP_USD``).
 
     Returns:
         The research block. Never raises for a model, network or ledger failure.
     """
     counted = 0.0
-    note: str | None = None
-    if transport is None or ledger is None:
-        note = NOTE_UNAVAILABLE
-    else:
-        try:
-            text = instructions if instructions is not None else load_instructions()
-        except Exception as exc:  # noqa: BLE001 - a broken Skill file means no research
-            logger.error("research_skill_unreadable", error_type=type(exc).__name__)
-            return block("unavailable", [], None, 0.0, NOTE_UNAVAILABLE)
-        hold = hold_usd(fee_per_search)
-        for _attempt in range(MAX_REQUESTS):
-            with _REJECTED_LOCK:
-                drop = frozenset(_REJECTED)
-            body = build_request(question, product_code, text, drop)
-            reply: dict[str, Any] = {}
-
-            def call(body: dict[str, Any] = body, reply: dict[str, Any] = reply) -> ParsedReply:
-                status, data = transport.post(body)
-                reply["status"], reply["data"] = status, data
-                if not 200 <= status < 300 or not isinstance(data, dict):
-                    raise RuntimeError(f"research http {status}")
-                return parse_reply(data)
-
-            def actual(parsed: ParsedReply) -> float | None:
-                if parsed.input_tokens is None or parsed.output_tokens is None:
-                    return None
-                return round(
-                    token_cost_usd(parsed.input_tokens, parsed.output_tokens)
-                    + parsed.searches * fee_per_search,
-                    6,
-                )
-
-            try:
-                parsed: ParsedReply = ledger.metered(hold, call, actual)
-            except CallRefusedError as exc:
-                note = NOTE_CAP if exc.cap == "cap" else NOTE_UNAVAILABLE
-                break
-            except Exception as exc:  # noqa: BLE001 - the request was sent: its hold counts
-                counted += hold
-                status = int(reply.get("status") or 0)
-                logger.warning(
-                    "research_call_failed", error_type=type(exc).__name__, http_status=status
-                )
-                newly = rejected_params(status, error_text(reply.get("data"))) - drop
-                if newly:
-                    with _REJECTED_LOCK:
-                        _REJECTED.update(newly)
-                    continue
-                note = NOTE_UNAVAILABLE
-                break
-            cost = actual(parsed)
-            counted += hold if cost is None else cost
-            return block("ok", parsed.items, parsed.summary_text, counted, None)
-        else:
-            note = NOTE_UNAVAILABLE
+    note: str | None = NOTE_UNAVAILABLE
+    if disabled_reason() is not None:
+        note = NOTE_OFF
+    elif transport is not None and ledger is not None:
+        result = _web_search(
+            question, product_code, transport, ledger, fee_per_search, instructions, hold_cap
+        )
+        if isinstance(result, dict):
+            return result
+        counted, note = result
     if news_fetcher is not None:
         news = gdelt_items(question, product_code, news_fetcher())
         if news:
@@ -541,11 +544,109 @@ def run_research(
     return block("unavailable", [], None, counted, note)
 
 
+def _web_search(
+    question: str,
+    product_code: str | None,
+    transport: ResearchTransport,
+    ledger: CallLedger,
+    fee_per_search: float,
+    instructions: str | None,
+    hold_cap: float,
+) -> dict[str, Any] | tuple[float, str]:
+    """The one paid request: the ``ok`` block, or ``(counted_usd, note)`` when it failed."""
+    try:
+        text = instructions if instructions is not None else load_instructions()
+    except Exception as exc:  # noqa: BLE001 - a broken Skill file means no research
+        logger.error("research_skill_unreadable", error_type=type(exc).__name__)
+        return 0.0, NOTE_UNAVAILABLE
+    cap_limit = min(max(hold_cap, 0.0), MAX_HOLD_CAP_USD)
+    hold = hold_usd(fee_per_search)
+    reply: dict[str, Any] = {}
+    body = build_request(question, product_code, text)
+
+    def call() -> ParsedReply:
+        status, data = transport.post(body)
+        reply["status"], reply["data"] = status, data
+        if not 200 <= status < 300 or not isinstance(data, dict):
+            if rejected_params(status, error_text(data)):
+                # Switched off before the hold is released, so no request slips in between.
+                disable_for_process("a 400 rejected max_tool_calls or include")
+            raise RuntimeError(f"research http {status}")
+        return parse_reply(data)
+
+    def actual(parsed: ParsedReply) -> float | None:
+        if parsed.input_tokens is None or parsed.output_tokens is None:
+            return None
+        return round(
+            token_cost_usd(parsed.input_tokens, parsed.output_tokens)
+            + parsed.searches * fee_per_search,
+            6,
+        )
+
+    def checked_cost(parsed: ParsedReply) -> float | None:
+        """The real cost; a reply past the hold's limits first switches research off."""
+        why = overshoot(parsed)
+        if why is not None:  # before the settle, so no request is reserved in between
+            disable_for_process(why)
+            ledger.set_flag(KILL_FLAG, why)
+        return actual(parsed)
+
+    try:
+        parsed: ParsedReply = ledger.metered(
+            hold,
+            call,
+            checked_cost,
+            kill_flag=KILL_FLAG,
+            max_hold_usd=cap_limit,
+            cap_usd=research_cap(ledger.cap_usd, cap_limit),
+            kind=KILL_FLAG,
+            exclusive=True,
+            blocked_by=KILL_FLAG,
+        )
+    except CallRefusedError as exc:
+        if exc.cap == "flag":
+            return 0.0, NOTE_OFF
+        return 0.0, NOTE_CAP if exc.cap == "cap" else NOTE_UNAVAILABLE
+    except Exception as exc:  # noqa: BLE001 - the request was sent: its hold counts
+        status = int(reply.get("status") or 0)
+        logger.warning("research_call_failed", error_type=type(exc).__name__, http_status=status)
+        return hold, NOTE_UNAVAILABLE
+    cost = actual(parsed)
+    return block("ok", parsed.items, None, hold if cost is None else cost, None)
+
+
+def research_cap(enforced_cap_usd: float, hold_cap: float) -> float:
+    """The cap research reserves against: the enforced cap minus (its limit - the $0.10 limit)."""
+    return round(enforced_cap_usd - max(0.0, hold_cap - MAX_CALL_HOLD_USD), 6)
+
+
+#: What a saved link records as its saver: never an identity (a typed ref is not one).
+SAVED_BY = "unverified visitor"
+
+
 def save_payload(
-    url: str, title: str, date: str | None, saved_by: str, saved_at: str
+    url: str,
+    title: str,
+    date: str | None,
+    saved_at: str,
+    *,
+    visitor: str,
+    ref: str | None = None,
 ) -> dict[str, Any]:
-    """The audit payload of one saved link (no question text, ever)."""
-    return {"url": url, "title": title, "date": date, "saved_by": saved_by, "saved_at": saved_at}
+    """The audit payload of one saved link (no question text, ever).
+
+    ``visitor`` is the peppered one-way hash the live limits use; ``ref`` the referral code
+    the visitor's link carried, if any. Neither identifies a person.
+    """
+    return {
+        "url": url,
+        "title": title,
+        "date": date,
+        "saved_by": SAVED_BY,
+        "visitor": visitor,
+        "ref": ref,
+        "saved_at": saved_at,
+    }
 
 
 __all__ = [

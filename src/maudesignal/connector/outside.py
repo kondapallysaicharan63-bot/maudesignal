@@ -51,6 +51,7 @@ class ResearchRunner(Protocol):
         fee_per_search: float = ...,
         news_fetcher: Callable[[], Fetcher] | None = ...,
         instructions: str | None = ...,
+        hold_cap: float = ...,
     ) -> dict[str, Any]:
         """Run web research and return the research block."""
 
@@ -102,6 +103,7 @@ def outside_mentions(
     ledger: CallLedger | None,
     news_fetcher: Callable[[], Fetcher] | None,
     fee_per_search: float,
+    hold_cap: float,
 ) -> OutsideMentionsAnswer:
     """Run web research for one product code and return the labelled block, unchanged.
 
@@ -113,6 +115,7 @@ def outside_mentions(
         ledger: The daily per-call ledger; ``None`` means no call is made.
         news_fetcher: GDELT backup fetcher factory (``None``: no backup).
         fee_per_search: Search-fee allowance in USD.
+        hold_cap: Research's per-call hold limit in USD (``research.hold_cap_usd``).
     """
     try:
         question = build_question(topic)
@@ -127,6 +130,7 @@ def outside_mentions(
         ledger=ledger,
         fee_per_search=fee_per_search,
         news_fetcher=news_fetcher,
+        hold_cap=hold_cap,
     )
     return OutsideMentionsAnswer.model_validate(found)
 

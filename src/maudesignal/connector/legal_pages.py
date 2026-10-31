@@ -112,6 +112,28 @@ def _shell(title: str, body: str) -> str:
     )
 
 
+RESEARCH_PRIVACY = """
+<h2>Research mode (switched on here)</h2>
+<p>When a person ticks Research on the website, the question is sent to Meta's Muse Spark
+(Meta Model API), which runs web searches built from it. This applies even to a question that
+would otherwise be answered without a model. If the web search fails, words from the question
+are sent to the GDELT news index instead. The links shown are public web pages, not FDA records,
+and are not checked by the claim gate. When a person clicks Save on a link, its address, title
+and date, the time, and an unverified visitor marker (a salted one-way hash of the address, plus
+the referral code of the link the visitor came from, if any) are kept in the audit trail. The
+question itself is not kept.</p>
+<p>The connector tool <code>outside_mentions</code> (full API keys only, never the demo key)
+works the same way: the product code and the optional short topic are sent, inside a fixed
+question, to Muse Spark with web search (or GDELT as the backup). The audit trail keeps the
+product code and the topic's SHA-256 and length, never the topic's text.</p>
+"""
+
+
+def research_section(on: bool) -> str:
+    """The Research-mode paragraph of the privacy page, or nothing while it is off."""
+    return RESEARCH_PRIVACY if on else ""
+
+
 def render_privacy(
     *,
     rate_per_min: int,
@@ -129,7 +151,8 @@ def render_privacy(
         shared_store: True when an Upstash Redis store is configured.
         live_on: Whether live Meta calls are on here; ``None`` reads the environment.
         clients_on: Whether per-client call counts are kept (``MAUDESIGNAL_CLIENTS_PANEL``).
-        research_on: Whether web research is on (``MAUDESIGNAL_RESEARCH``).
+        research_on: Whether Research mode (``MAUDESIGNAL_RESEARCH``) is on; its section is
+            shown only then, so the page is unchanged while it is off.
     """
     redis = (
         "Upstash Redis is configured here: rate-limit counters, the per-key daily totals, a "
@@ -149,14 +172,6 @@ def render_privacy(
         "time. No question, tool input, answer, address or user agent is kept with it.</li>"
         if clients_on
         else "<li>Per-client call counts are switched off here: none are kept.</li>"
-    )
-    web = (
-        "Web research is ON here: the outside_mentions tool (full keys only) sends the product "
-        "code and the optional topic, and the website's Research mode sends the question, to "
-        "Muse Spark with its web search tool. Web results are labelled as not FDA records and "
-        "are not verified."
-        if research_on
-        else "Web research is off here: nothing is sent for a web search."
     )
     clients_kept = " and per-client call counts" if clients_on else ""
     # With Upstash configured the counts live in Redis, not in Blob.
@@ -191,7 +206,7 @@ succeeded, its real cost) and no text, no address and no key. {html.escape(redis
 <li>Vercel Inc.: hosting, runtime logs and Blob storage.</li>
 <li>Meta Platforms: Meta Model API, only when a model key is set on the server: for the
 <code>ask</code> tool (full keys only) and for the website's live ask, voice and label routes.
-{live_ask_line(live_on)} {live_routes_line(live_on)} {html.escape(web)}</li>
+{live_ask_line(live_on)} {live_routes_line(live_on)}</li>
 <li>Upstash: only if a Redis store is configured (see above).</li>
 <li>Resend: only if an email notifier is configured. {html.escape(resend)}</li>
 </ul>
@@ -207,7 +222,7 @@ The website's outside-mentions search sends a product code and device search ter
 details; the route refuses text that looks like patient data) to public sources: GDELT, FDA
 press-release, recall, MedWatch and medical-device feeds, and MedTech Dive. No model is called
 for it.</p>
-
+{research_section(research_on)}
 <h2>What is logged</h2>
 <ul>
 <li>For each tool call: a key id (a peppered one-way hash, never the key), the tool name, the time,

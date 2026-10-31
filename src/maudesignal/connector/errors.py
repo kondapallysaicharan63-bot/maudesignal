@@ -48,6 +48,22 @@ class SourceUnavailableError(ConnectorError):
     code = "source_unavailable"
 
 
+class DailyLimitError(ConnectorError):
+    """A per-key daily limit is used up (REST: 429 with Retry-After; MCP: an error result).
+
+    ``structured`` is the tool's own answer saying so (MCP ``structuredContent``), and
+    ``retry_after`` the seconds until 00:00 UTC.
+    """
+
+    code = "rate_limited"
+
+    def __init__(self, message: str, *, retry_after: int, structured: dict[str, object]) -> None:
+        """Keep the message, the wait and the structured answer."""
+        super().__init__(message)
+        self.retry_after = retry_after
+        self.structured = structured
+
+
 class DemoKeyRefusedError(ConnectorError):
     """The public demo key may not use this tool (maps to 403)."""
 

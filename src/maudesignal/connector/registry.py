@@ -88,12 +88,13 @@ OUTSIDE_DESCRIPTION = (
     "results are not FDA records and are not verified by the claim gate: every answer carries "
     "the label 'Web research — not FDA records, not verified by the gate', and nothing from it "
     "is ever part of a gated answer, a MAUDE count or a signal. Read-only. Muse Spark searches "
-    "the web (at most two searches); if that fails, news links from the GDELT news index may be "
-    "shown instead (status news_only). Each item has a title, link, source and a date only "
-    "when one was returned. Full keys only (not the public demo key), a small daily limit per "
-    "key, and only when the operator has switched web research on. POST only because the "
-    "topic is in the body. Example questions: 'Any news about LLZ software problems?'; "
-    "'Outside mentions of QIH recalls'."
+    "the web (asks for at most two searches; spend is capped per call and per day); if that "
+    "fails, news links from the GDELT news index may be shown instead (status news_only). Each "
+    "item has a title, link, source and a date only when one was returned. Full keys only (not "
+    "the public demo key), a small daily limit per key (past it: HTTP 429 with Retry-After, or "
+    "an MCP error result), and only when the operator has switched web research on. POST "
+    "only because the topic is in the body. Example questions: 'Any news about LLZ software "
+    "problems?'; 'Outside mentions of QIH recalls'."
 )
 TOPIC_MAX_CHARS = 120
 

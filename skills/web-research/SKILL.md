@@ -1,6 +1,6 @@
 # Skill: web-research
 
-**Version:** 1.1.0 (HACKATHON-BUILT — Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026)
+**Version:** 1.2.0 (HACKATHON-BUILT — Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026)
 **Model:** Meta Muse Spark (`muse-spark-1.3`, Standard tier) via the Meta Model API
 Responses endpoint, with the built-in `web_search` tool
 **Consumers:** `maudesignal.connector.research.run_research` (website Research mode, behind
@@ -57,14 +57,18 @@ has passed the same patient-data check as the website routes.
 - `date` is taken only from a date field the API returns; otherwise `null`. The code never
   reads a date out of the model's prose.
 - `source` is the link's domain (`www.` removed). GDELT backup items say "GDELT news index".
-- `summary_text` is the message text, cut to 1500 characters, or `null` when it is empty or
-  holds a word from the connector's forbidden list.
+- `summary_text` is always `null` (since 1.1.0): only title, link, date and source are shown;
+  the model's prose is never displayed.
 
 ## Changelog
 
-- 1.1.0 (2026-10-31): "Connector question (outside_mentions)" section: the two question
-  templates the connector tool `outside_mentions` sends (without and with a topic). The
-  instructions sent to the model are unchanged.
+- 1.2.0 (2026-11-01): merges two parallel 1.1.0 changes into one version. Adds the
+  "Connector question (outside_mentions)" section: the two question templates the connector
+  tool `outside_mentions` sends (without and with a topic). The instructions sent to the model
+  and the output schema are unchanged from 1.1.0 below.
+- 1.1.0 (2026-11-01): `summary_text` is always `null` (schema: `"type": "null"`); only links
+  are shown. No retry after a 400; Research is off unless `MAUDESIGNAL_RESEARCH` is set, and
+  should be switched on only after probe 2 confirms `max_tool_calls` is honoured.
 - 1.0.0 (2026-10-31): initial version. Instructions for Muse Spark 1.3 with the built-in
   `web_search` tool (at most two searches, low reasoning, 3000 output tokens), and the research
   block schema. Probe 1 (run 41246131207) showed the tool is accepted on `muse-spark-1.3`.

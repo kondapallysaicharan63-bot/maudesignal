@@ -45,6 +45,7 @@ from maudesignal.connector.data import ConnectorData
 from maudesignal.connector.docs_page import render_docs_page
 from maudesignal.connector.errors import (
     ConnectorError,
+    DailyLimitError,
     DemoKeyRefusedError,
     InvalidInputError,
     NotFoundError,
@@ -303,10 +304,6 @@ class Health(BaseModel):
     limits_scope: str
     state_store: str
     feedback_store: str
-    features: dict[str, bool] | None = Field(
-        default=None,
-        description="Optional features that are switched on; absent when none is.",
-    )
 
 
 class DemoLimits(BaseModel):
@@ -609,19 +606,26 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             else {}
         )
         ok, _left = outside_daily.hit(key_id)
-        if not ok:
-            answer = outside.limit_answer(outside_daily.limit)
-        else:
-            local = os.environ.get(ALLOW_PER_INSTANCE_ENV, "").strip() == "1"
-            answer = outside.outside_mentions(
-                code,
-                topic,
-                runner=cfg.research_runner or research.run_research,
-                transport=research_transport(),
-                ledger=state.call_ledger(allow_memory=local),
-                news_fetcher=cfg.research_fetcher,
-                fee_per_search=research.search_fee_usd(),
+        if not ok:  # nothing is searched or spent; REST 429, MCP an error result with the block
+            refusal = outside.limit_answer(outside_daily.limit)
+            now = cfg.now()
+            midnight = datetime.combine(now.date(), datetime.min.time(), tzinfo=UTC)
+            raise DailyLimitError(
+                refusal.note or "Daily limit reached.",
+                retry_after=max(1, 86_400 - int((now - midnight).total_seconds())),
+                structured=json.loads(refusal.model_dump_json()),
             )
+        local = os.environ.get(ALLOW_PER_INSTANCE_ENV, "").strip() == "1"
+        answer = outside.outside_mentions(
+            code,
+            topic,
+            runner=cfg.research_runner or research.run_research,
+            transport=research_transport(),
+            ledger=state.call_ledger(allow_memory=local),
+            news_fetcher=cfg.research_fetcher,
+            fee_per_search=research.search_fee_usd(),
+            hold_cap=research.hold_cap_usd(),
+        )
         canonical = answer.model_dump_json()
         payload: dict[str, Any] = {
             "tool": "outside_mentions",
@@ -755,6 +759,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def _connector_error(_: Request, exc: ConnectorError) -> Response:
         if isinstance(exc, InvalidInputError):
             status = 422
+        elif isinstance(exc, DailyLimitError):
+            return _error(429, exc.code, str(exc), {"Retry-After": str(exc.retry_after)})
         elif isinstance(exc, DemoKeyRefusedError):
             status = 403
         elif isinstance(exc, NotFoundError):
@@ -926,13 +932,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get(
         "/v1/health",
         response_model=Health,
-        response_model_exclude_none=True,
         operation_id="health",
         summary="Service status (no key needed)",
         tags=["service"],
     )
-    def health() -> Health:
-        return Health(
+    def health() -> Health | JSONResponse:
+        body = Health(
             status="ok",
             service="maudesignal-connector",
             version=API_VERSION,
@@ -941,8 +946,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             limits_scope="shared" if state.shared else "per_instance",
             state_store=state.backend,
             feedback_store=cfg.feedback_store.backend,
-            features={"research": True} if research_enabled() else None,
         )
+        if research_enabled():  # off: the body (and the OpenAPI schema) stay exactly as before
+            return JSONResponse(body.model_dump() | {"features": {"research": True}})
+        return body
 
     @app.get(
         "/v1/tools/what_changed_this_week",

@@ -109,7 +109,7 @@ To enable it: in Vercel > Project > Settings > Environment Variables (Production
 | `get_report` | Key fields and the start of the narrative of one stored report. | stored snapshot |
 | `recalls` | Stored openFDA recalls for a product code, newest first. | stored snapshot |
 | `lookup_device` | For what a model read from a device photo (any of `device_name`, `model`, `manufacturer`, `k_number`, `udi`, `gtin`, `product_code`; at least one): up to 3 possible FDA records from openFDA 510(k), registration & listing and UDI, each with `why_matched`, `why_not_matched` and links; plus, for the top product code(s), this week's change (same check as `check_device_type`), recalls started in the last two years (count and link) and the report count (count and link). `status` is `needs_person_to_confirm`, `no_match_found` or `search_failed` (with a `note`). `confirmed` is always `null`: the tool never picks a record, a person confirms one or none. No model call; read-only; the demo key may use it. | live openFDA |
-| `outside_mentions` | **Off unless the operator sets `MAUDESIGNAL_RESEARCH=1`** (while off it is absent from `tools/list`, the manifest and the OpenAPI document, and `POST /v1/tools/outside_mentions` answers 404). Input: `product_code` (three letters, same check and "did you mean" suggestions as the other tools; a code that is neither stored nor in the openFDA classification is refused before any paid call) and an optional `topic` (2 to 120 characters, refused if it looks like patient details). The question sent is built from the `web-research` Skill's "Connector question" templates; Muse Spark 1.3 runs at most two web searches. Returns the website's research block unchanged: `{status: ok \| news_only \| unavailable, label: "Web research — not FDA records, not verified by the gate", items: [{title, url, date \| null, source}], summary_text, cost_usd, note}`. Web results are not FDA records and are not checked by the claim gate; nothing from them enters a gated answer, the answer cache, a count or a signal, and the audit entry keeps only the product code, the topic's SHA-256 and length, the block's SHA-256, status, item count and cost. Full keys only: the demo key gets 403 `demo_key` ("not available with the demo key"). Per key `MAUDESIGNAL_RESEARCH_PER_KEY_DAY` calls per UTC day (default 10); past it the block says so with `status: unavailable` and nothing is spent. Every request reserves its worst case in the daily per-call ledger (`callcap`), like the website's Research mode; with no model key or no ledger it answers `unavailable` (or GDELT news links, `news_only`). MCP annotations: `readOnlyHint` true, `openWorldHint` true, `idempotentHint` false. Counted in the admin clients panel. | Muse Spark web search (Meta), GDELT backup |
+| `outside_mentions` | **Off unless the operator sets `MAUDESIGNAL_RESEARCH=1`** (while off it is absent from `tools/list`, the manifest and the OpenAPI document, and `POST /v1/tools/outside_mentions` answers 404). Input: `product_code` (three letters, same check and "did you mean" suggestions as the other tools; a code that is neither stored nor in the openFDA classification is refused before any paid call) and an optional `topic` (2 to 120 characters, refused if it looks like patient details). The question sent is built from the `web-research` Skill's "Connector question" templates; Muse Spark 1.3 is asked for at most two web searches; spend is capped per call (research hold limit, `MAUDESIGNAL_RESEARCH_HOLD_USD`) and per day, like the website's Research mode. Returns the website's research block unchanged: `{status: ok \| news_only \| unavailable, label: "Web research — not FDA records, not verified by the gate", items: [{title, url, date \| null, source}], summary_text: null, cost_usd, note}`. Web results are not FDA records and are not checked by the claim gate; nothing from them enters a gated answer, the answer cache, a count or a signal, and the audit entry keeps only the product code, the topic's SHA-256 and length, the block's SHA-256, status, item count and cost. Full keys only: the demo key gets 403 `demo_key` ("not available with the demo key"). Per key `MAUDESIGNAL_RESEARCH_PER_KEY_DAY` calls per UTC day (default 10); past it nothing is searched or spent: REST answers 429 `rate_limited` with `Retry-After` (seconds to 00:00 UTC), MCP answers an error result (`isError: true`) whose `structuredContent` is the block with `status: unavailable` and the reset note. Every request reserves its worst case in the daily per-call ledger (`callcap`), like the website's Research mode; with no model key or no ledger it answers `unavailable` (or GDELT news links, `news_only`). MCP annotations: `readOnlyHint` true, `openWorldHint` true, `idempotentHint` false. Counted in the admin clients panel. | Muse Spark web search (Meta), GDELT backup |
 
 `check_device_type` has a keyless twin, `GET /v1/public/check_device_type`, limited per address and
 never calling a model.
@@ -255,6 +255,24 @@ An original mark (the words MAUDE and SIGNAL above a pulse line); no Meta or FDA
 | Sale, advertising, cookies? | No sale of data, no advertising, no tracking cookies. |
 | Deletion or questions? | The support email above or the GitHub issues URL. |
 | Medical advice? | No. Not medical advice; nothing is filed with FDA; not an FDA-cleared device. Open-source project by Saicharan Kondapally. |
+
+### If Research is switched on (`MAUDESIGNAL_RESEARCH=1`; OFF by default)
+
+**This note applies ONLY when the operator switches Research mode on. While it is off (the
+default), none of it happens and the answers above are complete.** `/privacy` shows the same
+paragraph only while it is on.
+
+- When a person ticks Research on the website, the question is sent to Meta's Muse Spark
+  (Meta Model API), which runs web searches built from it. This applies even to a question that
+  would otherwise be answered without a model. (Greetings, medical-advice and "is it safe"
+  refusals, and questions refused as patient data, never start a web search.)
+- If the web search fails, words from the question are sent to the GDELT news index instead.
+- The links shown are public web pages, not FDA records, and are not checked by the claim gate.
+- When a person clicks Save on a link, its address, title and date, the time, and an unverified
+  visitor marker (a salted one-way hash of the address, plus the referral code of the link the
+  visitor came from, if any) are kept in the audit trail. The question itself is not kept.
+- Switch it on only after the web-search probe has shown that Meta honours the two-search limit
+  and the per-search fee is known (see `src/maudesignal/connector/research.py`).
 
 ## Two keys (reviewer key plus your own)
 

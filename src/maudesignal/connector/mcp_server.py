@@ -81,10 +81,19 @@ def _result(request_id: Any, result: dict[str, Any]) -> dict[str, Any]:
     return {"jsonrpc": "2.0", "id": request_id, "result": result}
 
 
-def _tool_error(request_id: Any, message: str) -> dict[str, Any]:
-    """A tool execution error: the call reached the tool and the tool said no."""
+def _tool_error(
+    request_id: Any, message: str, structured: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """A tool execution error: the call reached the tool and the tool said no.
+
+    ``structured`` (for example the web research block saying a daily limit is used up) is
+    sent as ``structuredContent`` next to the text.
+    """
     content = [{"type": "text", "text": message}]
-    return _result(request_id, {"content": content, "isError": True})
+    result: dict[str, Any] = {"content": content, "isError": True}
+    if structured is not None:
+        result["structuredContent"] = structured
+    return _result(request_id, result)
 
 
 def answer_result(answer: Answer) -> dict[str, Any]:
@@ -115,7 +124,7 @@ def _call(request_id: Any, params: Any, run: ToolRunner) -> dict[str, Any]:
         args = spec.validate(params.get("arguments"))
         answer = run(spec.name, args)
     except ConnectorError as exc:
-        return _tool_error(request_id, str(exc))
+        return _tool_error(request_id, str(exc), getattr(exc, "structured", None))
     except Exception as exc:  # never leak internals or a key into a response
         logger.error("connector_mcp_unexpected_error", error_type=type(exc).__name__)
         return _tool_error(request_id, "Something went wrong on the server.")
