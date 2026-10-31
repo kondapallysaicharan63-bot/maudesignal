@@ -125,6 +125,15 @@ PUBLIC_ACTOR = "public"
 PUBLIC_CACHE_PREFIX = "public-check:v1"  # bump the version when PublicCheckAnswer changes
 
 
+#: How ``/v1/audit/recent`` describes a stored ``ask`` question (public demo: the default).
+AUDIT_ASK_PUBLIC = "An `ask` question is stored as its SHA-256 and length, not its text."
+AUDIT_ASK_COMPANY = (
+    "Self-hosted company audit mode is on in this deployment: an `ask` entry also keeps the "
+    "question text and the answer's spoken text inside the hashed record, except text that "
+    "looks like patient details, which is withheld (SHA-256 and length only)."
+)
+
+
 def _question_audit_inputs(question: str) -> dict[str, str]:
     """What the audit log keeps of a question: its SHA-256 and length, never its text.
 
@@ -389,6 +398,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     audit_full_text = resolve_full_text(
         full_text_requested() if cfg.audit_full_text is None else cfg.audit_full_text,
         demo_keys=cfg.keys.demo_configured,
+        web_origins=bool(cfg.web_origins),
     )
     ask_cache = AnswerCache(state, "tool", now=cfg.now, version=cfg.data.version)
     demo_limiter = cfg.demo_limiter or state.rate_limiter(
@@ -798,6 +808,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 shared_store=state.backend == "upstash_redis",
                 live_on=live_mode_allowed()
                 and (state.has_call_ledger or os.environ.get(ALLOW_PER_INSTANCE_ENV) == "1"),
+                audit_full_text=audit_full_text,
             )
         )
 
@@ -1053,8 +1064,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "Read-only. The last entries (default 20, at most 200) of the append-only, "
             "hash-chained log of tool calls: tool, inputs, answer SHA-256, gate counts, "
             "provenance and the caller's label (if any) and key id (a keyed hash held by the "
-            "server; never the key). An `ask` question is stored as its SHA-256 and length, not "
-            "its text. Full keys only: the public demo key gets 403. "
+            "server; never the key). "
+            + (AUDIT_ASK_COMPANY if audit_full_text else AUDIT_ASK_PUBLIC)
+            + " Full keys only: the public demo key gets 403. "
             "`chain.verified` is recomputed on every call."
         ),
         tags=["service"],
