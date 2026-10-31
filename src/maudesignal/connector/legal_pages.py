@@ -143,8 +143,10 @@ and the status. Spend on <code>ask</code> is kept as a daily total per key id (n
 <li>The text of a question is <strong>not</strong> logged: only its SHA-256 and its length.
 During a live <code>ask</code> the question is held briefly in the server instance's temporary
 working database and replaced by its SHA-256 when the answer is done.</li>
-<li>Feedback stores: rating, comments, role, quote consent, referral code, page and time. No names
-and no email addresses.</li>
+<li>New feedback stores rating, comments, role, quote consent, referral code, page and time -
+no names and no email addresses. Feedback sent before 31 October 2026 could include a name the
+person typed; names are removed from those entries except where the person chose to be quoted by
+name and role.</li>
 <li>Visits store: referral code, page and time.</li>
 <li>IP addresses are never stored by this code. Before any rate limit sees an address it is turned
 into a salted one-way hash (HMAC-SHA256); only that hash is used as the limit key, in memory or, if

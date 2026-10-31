@@ -52,6 +52,9 @@ class RecordStore(Protocol):
     def put_json(self, pathname: str, record: dict[str, Any]) -> None:
         """Write one JSON record (pathnames carry a uuid, so nothing is overwritten)."""
 
+    def overwrite_json(self, pathname: str, record: dict[str, Any]) -> None:
+        """Replace the record stored at an existing ``pathname`` (same path, new content)."""
+
     def list_prefix(self, prefix: str) -> list[BlobRef]:
         """Every stored object whose pathname starts with ``prefix``."""
 
@@ -77,6 +80,10 @@ class MemoryStore:
         data = json.dumps(record, sort_keys=True).encode("utf-8")
         with self._lock:
             self._items[pathname] = data
+
+    def overwrite_json(self, pathname: str, record: dict[str, Any]) -> None:
+        """Replace a record at the same pathname."""
+        self.put_json(pathname, record)
 
     def list_prefix(self, prefix: str) -> list[BlobRef]:
         """Objects under ``prefix``."""
@@ -125,6 +132,13 @@ class VercelBlobStore:
 
     def put_json(self, pathname: str, record: dict[str, Any]) -> None:
         """PUT one private JSON object, no random suffix (the pathname already has a uuid)."""
+        self._put(pathname, record, overwrite=False)
+
+    def overwrite_json(self, pathname: str, record: dict[str, Any]) -> None:
+        """PUT over an existing private object at the same pathname (``x-allow-overwrite``)."""
+        self._put(pathname, record, overwrite=True)
+
+    def _put(self, pathname: str, record: dict[str, Any], *, overwrite: bool) -> None:
         body = json.dumps(record, sort_keys=True).encode("utf-8")
         headers = self._auth() | {
             "x-vercel-blob-access": "private",
@@ -132,6 +146,8 @@ class VercelBlobStore:
             "x-content-type": "application/json",
             "content-type": "application/json",
         }
+        if overwrite:
+            headers["x-allow-overwrite"] = "1"
         try:
             r = self._client.put(f"{self._base}/{pathname}", content=body, headers=headers)
         except httpx.HTTPError as exc:

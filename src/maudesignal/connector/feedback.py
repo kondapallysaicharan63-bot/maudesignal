@@ -5,9 +5,10 @@ Routes (all hidden from the public OpenAPI document):
 * ``POST /v1/feedback`` and ``POST /v1/visit``: keyless, browser origin must be listed in
   ``MAUDESIGNAL_WEB_ORIGINS``, rate limited per address. No IP address and no user agent is ever
   stored; the limiter sees only a salted hash of the address for the length of its window.
-* ``GET /v1/admin/export``, ``GET /v1/admin/summary``, ``POST /v1/admin/delete-test`` and
-  ``GET /admin``: need the ``X-Admin-Key`` header (constant-time check against
-  ``MAUDESIGNAL_ADMIN_KEY``). If that variable is unset the admin routes answer 503, never open.
+* ``GET /v1/admin/export``, ``GET /v1/admin/summary``, ``POST /v1/admin/delete-test``,
+  ``POST /v1/admin/redact-names`` and ``GET /admin``: need the ``X-Admin-Key`` header
+  (constant-time check against ``MAUDESIGNAL_ADMIN_KEY``). If that variable is unset
+  the admin routes answer 503, never open.
 
 No names or email addresses are stored: an optional ``name`` sent by an old client is dropped
 before storage. Referral codes are the only link to a person, and the owner keeps that list
@@ -63,6 +64,8 @@ TEST_CODE = re.compile(r"^test[0-9._~-]*$", re.IGNORECASE)  # TEST, TEST1, test-
 DEFAULT_REF_ENV = "MAUDESIGNAL_DEFAULT_REF"
 DEFAULT_REF = "email-batch-1"
 DELETE_TEST_PATH = "/v1/admin/delete-test"
+REDACT_NAMES_PATH = "/v1/admin/redact-names"
+QUOTE_BY_NAME = "quote_name_role"
 FETCH_WORKERS = 8
 KINDS = ("feedback", "visits")
 
@@ -302,7 +305,8 @@ No data is in this page until you unlock it; the key stays in this tab (session 
 <p><button type="button" data-kind="feedback">Download feedback CSV</button>
 <button type="button" data-kind="visits">Download visits CSV</button></p>
 <p><label><input type="checkbox" id="hide"> Hide TEST codes</label>
-<button type="button" id="deltest">Delete TEST entries</button></p>
+<button type="button" id="deltest">Delete TEST entries</button>
+<button type="button" id="redact">Remove names (keep only 'quote me by name')</button></p>
 <h2>Totals</h2><p id="tot"></p>
 <h2>By code</h2><div id="codes"></div>
 <h2>By referral code</h2><div class="scroll"><table id="refs"></table></div>
@@ -371,6 +375,23 @@ $("deltest").addEventListener("click",async()=>{
   await load();
   $("msg").textContent="Deleted "+d.deleted.visits+" visits and "+d.deleted.feedback+
     " feedback entries.";
+});
+async function redact(dry){
+  return fetch("/v1/admin/redact-names",{method:"POST",
+    headers:Object.assign({"Content-Type":"application/json"},hdr()),
+    body:JSON.stringify({dry_run:dry}),cache:"no-store"});
+}
+$("redact").addEventListener("click",async()=>{
+  const p=await redact(true);
+  if(!p.ok){$("msg").textContent="Check failed: "+p.status;return;}
+  const c=await p.json();
+  if(!confirm("This will remove "+c.names_removed+" names and keep "+
+    c.names_kept_quote_by_name+" (quote me by name). Continue?"))return;
+  const r=await redact(false);
+  if(!r.ok){$("msg").textContent="Remove names failed: "+r.status;return;}
+  const d=await r.json();
+  $("msg").textContent="Checked "+d.checked+", removed "+d.names_removed+" names, kept "+
+    d.names_kept_quote_by_name+" (quote me by name), failed "+d.failed+".";
 });
 $("f").addEventListener("submit",e=>{e.preventDefault();
   sessionStorage.setItem(K,$("k").value);$("k").value="";load();});
@@ -676,3 +697,43 @@ def mount_feedback(
         logger.info("admin_delete_test", **counts)
         deleted = {"visits": counts["visits"], "feedback": counts["feedback"]}
         return JSONResponse({"deleted": deleted, "failed": counts["failed"]}, headers=no_store)
+
+    @app.post(REDACT_NAMES_PATH, include_in_schema=False)
+    async def admin_redact_names(request: Request) -> Response:
+        """Remove a stored ``name`` from feedback unless the person chose to be quoted by name."""
+        if (refusal := admin_gate(request)) is not None:
+            return refusal
+        try:
+            body = await request.json()
+        except ValueError:
+            body = None
+        if not isinstance(body, dict) or not isinstance(body.get("dry_run"), bool):
+            return _err(422, "invalid_request", "Send JSON {dry_run: true|false}.", no_store)
+        dry_run: bool = body["dry_run"]
+
+        def run() -> dict[str, int]:
+            counts = {"checked": 0, "names_removed": 0, "names_kept_quote_by_name": 0, "failed": 0}
+            for blob in store.list_prefix("feedback/"):  # StoreError here -> 503
+                counts["checked"] += 1
+                try:
+                    data = json.loads(store.get(blob))
+                    name = data.get("name") if isinstance(data, dict) else None
+                    if not isinstance(name, str) or not name.strip():
+                        continue
+                    if data.get("consent") == QUOTE_BY_NAME:
+                        counts["names_kept_quote_by_name"] += 1
+                        continue
+                    if not dry_run:
+                        data.pop("name")
+                        store.overwrite_json(blob.pathname, data)
+                    counts["names_removed"] += 1
+                except (ValueError, StoreError):
+                    counts["failed"] += 1
+            return counts
+
+        try:
+            result = await run_in_threadpool(run)
+        except StoreError:
+            return _err(503, "store_unavailable", "Record store not reachable.", no_store)
+        logger.info("admin_redact_names", dry_run=dry_run, **result)
+        return JSONResponse(result, headers=no_store)
