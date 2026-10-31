@@ -25,7 +25,9 @@ from playwright.sync_api import Browser, Page, sync_playwright
 WEB = Path(__file__).resolve().parents[1]
 OUT = WEB / "qa" / "screenshots"
 # Ports can be moved with LIVE_E2E_PORT_BASE (stub, live page, stored page = base, base+1, base+2) when another run holds them.
-_BASE = int(os.environ.get("MAUDESIGNAL_QA_PORT_BASE") or os.environ.get("LIVE_E2E_PORT_BASE") or "0")
+_BASE = int(
+    os.environ.get("MAUDESIGNAL_QA_PORT_BASE") or os.environ.get("LIVE_E2E_PORT_BASE") or "0"
+)
 STUB_PORT, LIVE_PORT, STORED_PORT = (_BASE, _BASE + 1, _BASE + 2) if _BASE else (8765, 4173, 4174)
 LIVE_URL = f"http://127.0.0.1:{LIVE_PORT}/"
 STORED_URL = f"http://127.0.0.1:{STORED_PORT}/"
@@ -44,7 +46,9 @@ def require_free_ports() -> None:
             if s.connect_ex(("127.0.0.1", port)) == 0:
                 busy.append(port)
     if busy:
-        sys.exit(f"QA ports already in use: {busy}. Set MAUDESIGNAL_QA_PORT_BASE to three free ports in a row.")
+        sys.exit(
+            f"QA ports already in use: {busy}. Set MAUDESIGNAL_QA_PORT_BASE to three free ports in a row."
+        )
 
 
 def check(name: str, ok: bool, detail: object = "") -> None:
@@ -403,7 +407,10 @@ def main() -> int:
                 and page.get_by_test_id("reading-fields").inner_text().count("not read") == 4
                 and page.get_by_test_id("reading-fields").inner_text().count("value withheld") == 0
                 and page.get_by_test_id("lot-serial-note").count() == 1,
-                [page.get_by_test_id("legibility-banner").count(), page.get_by_test_id("lot-serial-note").count()],
+                [
+                    page.get_by_test_id("legibility-banner").count(),
+                    page.get_by_test_id("lot-serial-note").count(),
+                ],
             )
             steps = [s.inner_text() for s in page.locator("[data-testid=trace-step]").all()]
             check(
@@ -552,7 +559,9 @@ def main() -> int:
             open_live(page)
             page.get_by_test_id("composer-camera").click()
             stub.label_mode = "search_failed"
-            page.get_by_test_id("image-input").set_input_files(str(WEB / "qa" / "tmp" / "with-exif.jpg"))
+            page.get_by_test_id("image-input").set_input_files(
+                str(WEB / "qa" / "tmp" / "with-exif.jpg")
+            )
             page.wait_for_selector("[data-testid=search-failed-note]")
             body_text = page.get_by_test_id("label-live").inner_text()
             check(
@@ -563,12 +572,15 @@ def main() -> int:
             )
             check(
                 "label search_failed: no 'No match found', no candidate cards",
-                "No match found" not in body_text and page.locator("[data-testid=match-card]").count() == 0,
+                "No match found" not in body_text
+                and page.locator("[data-testid=match-card]").count() == 0,
                 body_text[:300],
             )
             shot(page, "label-search-failed-1440-light", report)
             stub.label_mode = "no_match"
-            page.get_by_test_id("image-input").set_input_files(str(WEB / "qa" / "tmp" / "with-exif.jpg"))
+            page.get_by_test_id("image-input").set_input_files(
+                str(WEB / "qa" / "tmp" / "with-exif.jpg")
+            )
             page.wait_for_selector("[data-testid=no-match]")
             check(
                 "label no_match (searched, nothing found): says 'No match found', not the failure note",
@@ -581,7 +593,8 @@ def main() -> int:
             check(
                 "recorded answer with HTTP 200: Recorded run badge and the server's note, no daily-limit banner",
                 page.get_by_test_id("mode-badge").last.inner_text() == "Recorded run"
-                and "recorded run that answered" in page.get_by_test_id("recorded-note").inner_text()
+                and "recorded run that answered"
+                in page.get_by_test_id("recorded-note").inner_text()
                 and page.locator("[data-testid=limit-banner]").count() == 0,
                 page.get_by_test_id("recorded-note").inner_text(),
             )
@@ -684,7 +697,10 @@ def main() -> int:
             open_live(page)
             page.get_by_test_id("composer-camera").click()
             page.get_by_test_id("use-camera").click()
-            page.wait_for_function("document.querySelector('video') && document.querySelector('video').videoWidth > 0", timeout=10000)
+            page.wait_for_function(
+                "document.querySelector('video') && document.querySelector('video').videoWidth > 0",
+                timeout=10000,
+            )
             page.get_by_test_id("capture").click()
             page.wait_for_selector("[data-testid=label-live][data-mode=recorded]", timeout=20000)
             check(

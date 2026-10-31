@@ -77,7 +77,9 @@ def ratio(page: Page, selector: str) -> float:
 
 def focus_is(page: Page, selector: str) -> bool:
     """True when the first match has focus."""
-    return bool(page.evaluate("(s) => document.activeElement === document.querySelector(s)", selector))
+    return bool(
+        page.evaluate("(s) => document.activeElement === document.querySelector(s)", selector)
+    )
 
 
 def panel_checks(page: Page, label: str, *, company: bool, phone: bool) -> None:
@@ -85,28 +87,77 @@ def panel_checks(page: Page, label: str, *, company: bool, phone: bool) -> None:
     panel = page.get_by_test_id("alert-panel")
     text = panel.inner_text()
     low = text.lower()  # the kickers are upper-cased by CSS
-    check(f"{label}: panel has its sections in order", all(s.lower() in low for s in SECTIONS) and [low.index(s.lower()) for s in SECTIONS] == sorted(low.index(s.lower()) for s in SECTIONS))
-    check(f"{label}: rule in plain words", page.get_by_test_id("alert-rule-words").inner_text().strip() != "")
-    check(f"{label}: numbers each have an openFDA link", page.get_by_test_id("alert-number").count() >= 3 and page.locator("[data-testid=alert-number] a[href^='https://api.fda.gov']").count() == page.get_by_test_id("alert-number").count())
+    check(
+        f"{label}: panel has its sections in order",
+        all(s.lower() in low for s in SECTIONS)
+        and [low.index(s.lower()) for s in SECTIONS]
+        == sorted(low.index(s.lower()) for s in SECTIONS),
+    )
+    check(
+        f"{label}: rule in plain words",
+        page.get_by_test_id("alert-rule-words").inner_text().strip() != "",
+    )
+    check(
+        f"{label}: numbers each have an openFDA link",
+        page.get_by_test_id("alert-number").count() >= 3
+        and page.locator("[data-testid=alert-number] a[href^='https://api.fda.gov']").count()
+        == page.get_by_test_id("alert-number").count(),
+    )
     has_reports = page.get_by_test_id("alert-report").count() > 0
     check(
         f"{label}: reports show 'showing N of M' or say none are stored",
-        (has_reports and re.search(r"showing \d+ of \d+", page.get_by_test_id("alert-showing").inner_text()) is not None) or page.get_by_test_id("alert-no-reports").count() == 1,
+        (
+            has_reports
+            and re.search(r"showing \d+ of \d+", page.get_by_test_id("alert-showing").inner_text())
+            is not None
+        )
+        or page.get_by_test_id("alert-no-reports").count() == 1,
     )
-    check(f"{label}: gate line", re.fullmatch(r"\s*(\d+) facts? checked, (\d+) passed, (\d+) held back\s*", page.get_by_test_id("alert-gate").inner_text()) is not None, page.get_by_test_id("alert-gate").inner_text())
+    check(
+        f"{label}: gate line",
+        re.fullmatch(
+            r"\s*(\d+) facts? checked, (\d+) passed, (\d+) held back\s*",
+            page.get_by_test_id("alert-gate").inner_text(),
+        )
+        is not None,
+        page.get_by_test_id("alert-gate").inner_text(),
+    )
     check(f"{label}: next steps say a person decides", "A person decides" in text)
     check(f"{label}: no forbidden words", FORBIDDEN.search(text) is None, FORBIDDEN.search(text))
     banner = page.get_by_test_id("alert-simulated-banner")
     owner_shown = page.get_by_test_id("alert-owner").count() == 1
-    check(f"{label}: the simulated banner is printed with the owner section and only then", (banner.count() == 1 and "Simulated company — sample data. Problem evidence is real FDA data." in banner.inner_text()) == owner_shown)
+    check(
+        f"{label}: the simulated banner is printed with the owner section and only then",
+        (
+            banner.count() == 1
+            and "Simulated company — sample data. Problem evidence is real FDA data."
+            in banner.inner_text()
+        )
+        == owner_shown,
+    )
     if company:
         check(f"{label}: a device alert always has an owner section", owner_shown)
     vw = page.viewport_size["width"] if page.viewport_size else 0
     box = panel.bounding_box() or {"width": 0, "x": 0}
-    check(f"{label}: {'full screen on a phone' if phone else 'side sheet on desktop'}", (abs(box["width"] - vw) < 2) if phone else (box["width"] < vw - 100 and box["x"] > 100), box)
-    check(f"{label}: panel text contrast is at least 4.5", ratio(page, "[data-testid=alert-rule-words]") >= 4.5, ratio(page, "[data-testid=alert-rule-words]"))
+    check(
+        f"{label}: {'full screen on a phone' if phone else 'side sheet on desktop'}",
+        (abs(box["width"] - vw) < 2) if phone else (box["width"] < vw - 100 and box["x"] > 100),
+        box,
+    )
+    check(
+        f"{label}: panel text contrast is at least 4.5",
+        ratio(page, "[data-testid=alert-rule-words]") >= 4.5,
+        ratio(page, "[data-testid=alert-rule-words]"),
+    )
     for q in page.locator("[data-testid=alert-report] blockquote").all():
-        check(f"{label}: quote has no personal details", re.search(r"\b(Dr|Mr|Mrs|Ms)\.? [A-Z]|@|\d{3}[ -.]\d{3}[ -.]\d{4}|\d+[- ]year[- ]old", q.inner_text()) is None)
+        check(
+            f"{label}: quote has no personal details",
+            re.search(
+                r"\b(Dr|Mr|Mrs|Ms)\.? [A-Z]|@|\d{3}[ -.]\d{3}[ -.]\d{4}|\d+[- ]year[- ]old",
+                q.inner_text(),
+            )
+            is None,
+        )
 
 
 def main() -> int:
@@ -132,19 +183,45 @@ def main() -> int:
             row.focus()
             row.click()
             page.wait_for_selector("[data-testid=alert-panel]")
-            check("dashboard alert opens the panel", page.get_by_test_id("alert-panel").is_visible())
+            check(
+                "dashboard alert opens the panel", page.get_by_test_id("alert-panel").is_visible()
+            )
             panel_checks(page, "dashboard alert", company=False, phone=False)
-            check("focus moves into the panel", bool(page.evaluate("document.querySelector('[data-testid=alert-panel]').contains(document.activeElement)")))
+            check(
+                "focus moves into the panel",
+                bool(
+                    page.evaluate(
+                        "document.querySelector('[data-testid=alert-panel]').contains(document.activeElement)"
+                    )
+                ),
+            )
             for _ in range(60):
                 page.keyboard.press("Tab")
-            check("focus trap: after 60 Tab presses focus is still inside the panel", bool(page.evaluate("document.querySelector('[data-testid=alert-panel]').contains(document.activeElement)")))
+            check(
+                "focus trap: after 60 Tab presses focus is still inside the panel",
+                bool(
+                    page.evaluate(
+                        "document.querySelector('[data-testid=alert-panel]').contains(document.activeElement)"
+                    )
+                ),
+            )
             for _ in range(60):
                 page.keyboard.press("Shift+Tab")
-            check("focus trap: and after 60 Shift+Tab presses", bool(page.evaluate("document.querySelector('[data-testid=alert-panel]').contains(document.activeElement)")))
+            check(
+                "focus trap: and after 60 Shift+Tab presses",
+                bool(
+                    page.evaluate(
+                        "document.querySelector('[data-testid=alert-panel]').contains(document.activeElement)"
+                    )
+                ),
+            )
             snap(page, "alert-panel", 1440, "light", report)
             page.keyboard.press("Escape")
             page.wait_for_selector("[data-testid=alert-panel]", state="detached")
-            check("Esc closes the panel and focus returns to the alert that was clicked", row.evaluate("el => el === document.activeElement"))
+            check(
+                "Esc closes the panel and focus returns to the alert that was clicked",
+                row.evaluate("el => el === document.activeElement"),
+            )
 
             # 1b. bell
             page.get_by_test_id("alert-bell").click()
@@ -154,7 +231,10 @@ def main() -> int:
             page.get_by_test_id("alert-panel-close").click()
             page.wait_for_selector("[data-testid=alert-panel]", state="detached")
             page.wait_for_timeout(100)
-            check("close button: focus returns to the bell (the list had closed)", focus_is(page, "[data-testid=alert-bell]"))
+            check(
+                "close button: focus returns to the bell (the list had closed)",
+                focus_is(page, "[data-testid=alert-bell]"),
+            )
 
             # 1c. Signals list (flagged product codes)
             sig = page.get_by_test_id("sweep-alert-details").first
@@ -162,11 +242,19 @@ def main() -> int:
             sig.focus()
             sig.click()
             page.wait_for_selector("[data-testid=alert-panel]")
-            check("Signals list row opens the panel", page.get_by_test_id("alert-panel").is_visible())
-            check("Signals list panel names the code of its row", re.search(r"[A-Z]{3}", page.locator("#alert-panel-title").inner_text()) is not None)
+            check(
+                "Signals list row opens the panel", page.get_by_test_id("alert-panel").is_visible()
+            )
+            check(
+                "Signals list panel names the code of its row",
+                re.search(r"[A-Z]{3}", page.locator("#alert-panel-title").inner_text()) is not None,
+            )
             page.keyboard.press("Escape")
             page.wait_for_selector("[data-testid=alert-panel]", state="detached")
-            check("Signals list: focus returns to the row's button", sig.evaluate("el => el === document.activeElement"))
+            check(
+                "Signals list: focus returns to the row's button",
+                sig.evaluate("el => el === document.activeElement"),
+            )
 
             # 1d. Our devices
             page.get_by_role("button", name=re.compile("Our devices")).first.click()
@@ -175,12 +263,21 @@ def main() -> int:
             dev.focus()
             dev.click()
             page.wait_for_selector("[data-testid=alert-panel]")
-            check("Our devices row opens the panel", page.get_by_test_id("alert-panel").is_visible())
+            check(
+                "Our devices row opens the panel", page.get_by_test_id("alert-panel").is_visible()
+            )
             panel_checks(page, "device alert", company=True, phone=False)
-            check("device alert: owner and status are printed", page.get_by_test_id("alert-owner").inner_text().count("(simulated)") == 1, page.get_by_test_id("alert-owner").inner_text())
+            check(
+                "device alert: owner and status are printed",
+                page.get_by_test_id("alert-owner").inner_text().count("(simulated)") == 1,
+                page.get_by_test_id("alert-owner").inner_text(),
+            )
             page.keyboard.press("Escape")
             page.wait_for_selector("[data-testid=alert-panel]", state="detached")
-            check("Our devices: focus returns to Alert details", dev.evaluate("el => el === document.activeElement"))
+            check(
+                "Our devices: focus returns to Alert details",
+                dev.evaluate("el => el === document.activeElement"),
+            )
             page.close()
 
             # ---- 2. Open in chat: live (stub receives the code) and recorded ---------------------------------------
@@ -193,16 +290,29 @@ def main() -> int:
             page.wait_for_selector("[data-testid=live-turn]", timeout=20000)
             asks = [x for x in e.stub_log(page) if x["path"] == "/v1/live/ask"]
             body = asks[-1].get("body", {}) if asks else {}
-            check("Open in chat (live): the stub got the product code and a question naming it", body.get("product_code") == code and code in str(body.get("question")), body)
-            check("Open in chat: the panel is closed", page.get_by_test_id("alert-panel").count() == 0)
+            check(
+                "Open in chat (live): the stub got the product code and a question naming it",
+                body.get("product_code") == code and code in str(body.get("question")),
+                body,
+            )
+            check(
+                "Open in chat: the panel is closed", page.get_by_test_id("alert-panel").count() == 0
+            )
             page.close()
             page = page_for(browser, 1440, 900, "light")
             open_site(page, e.STORED_URL)
             page.locator("article[aria-label=Alerts] ul button").first.click()
             page.wait_for_selector("[data-testid=alert-panel]")
             page.get_by_test_id("open-in-chat").click()
-            page.wait_for_function("document.body.innerText.includes('Stored run') || document.querySelector('main h1')", timeout=15000)
-            check("Open in chat (no API): a stored run opens, no live turn", page.get_by_test_id("alert-panel").count() == 0 and page.locator("[data-testid=live-turn]").count() == 0)
+            page.wait_for_function(
+                "document.body.innerText.includes('Stored run') || document.querySelector('main h1')",
+                timeout=15000,
+            )
+            check(
+                "Open in chat (no API): a stored run opens, no live turn",
+                page.get_by_test_id("alert-panel").count() == 0
+                and page.locator("[data-testid=live-turn]").count() == 0,
+            )
             page.close()
 
             # ---- 3. mentions box -------------------------------------------------------------------------------------
@@ -212,13 +322,29 @@ def main() -> int:
             page.locator("article[aria-label=Alerts] ul button").first.click()
             page.wait_for_selector("[data-testid=mentions-box]")
             box = page.get_by_test_id("mentions-box")
-            check("mentions box title and separate look", "News and public web (unverified)" in box.inner_text() and "border-dashed" in (box.get_attribute("class") or ""))
-            check("no stored search: says 'No stored search yet', invents nothing", page.get_by_test_id("mentions-none").inner_text().strip() == "No stored search yet" and page.get_by_test_id("mention").count() == 0)
+            check(
+                "mentions box title and separate look",
+                "News and public web (unverified)" in box.inner_text()
+                and "border-dashed" in (box.get_attribute("class") or ""),
+            )
+            check(
+                "no stored search: says 'No stored search yet', invents nothing",
+                page.get_by_test_id("mentions-none").inner_text().strip() == "No stored search yet"
+                and page.get_by_test_id("mention").count() == 0,
+            )
             page.get_by_test_id("search-outside").click()
-            check("no API: the button says the live search is not connected", "not connected" in page.get_by_test_id("mentions-notice").inner_text())
+            check(
+                "no API: the button says the live search is not connected",
+                "not connected" in page.get_by_test_id("mentions-notice").inner_text(),
+            )
             page.close()
             # 3b. live
-            for scheme, w, h in (("light", 1440, 900), ("dark", 1440, 900), ("light", 390, 844), ("dark", 390, 844)):
+            for scheme, w, h in (
+                ("light", 1440, 900),
+                ("dark", 1440, 900),
+                ("light", 390, 844),
+                ("dark", 390, 844),
+            ):
                 stub.mode = "ok"
                 page = page_for(browser, w, h, scheme)
                 open_site(page, e.LIVE_URL)
@@ -227,18 +353,58 @@ def main() -> int:
                 if w == 390:
                     panel_checks(page, f"alert panel {w} {scheme}", company=False, phone=True)
                 page.get_by_test_id("search-outside").click()
-                page.wait_for_selector("[data-testid=mentions-result][data-mode=live]", timeout=15000)
+                page.wait_for_selector(
+                    "[data-testid=mentions-result][data-mode=live]", timeout=15000
+                )
                 dropped = page.get_by_test_id("mentions-dropped").inner_text()
-                check(f"mentions {w} {scheme}: dropped line (the quote with a person's name is dropped and counted)", dropped == "2 found, 2 dropped because the quote was not on the page, 1 dropped for personal details", dropped)
-                check(f"mentions {w} {scheme}: every mention carries the fixed Unverified badge", page.get_by_test_id("unverified-badge").count() == 2 and all(t == "Unverified — not checked against FDA records" for t in page.get_by_test_id("unverified-badge").all_inner_texts()))
-                check(f"mentions {w} {scheme}: 'Official source' only on the fda.gov address", page.get_by_test_id("official-badge").count() == 1 and page.locator("[data-testid=mention][data-kind=web]").count() == 1)
-                check(f"mentions {w} {scheme}: no personal details shown", "Dr. Smith" not in page.get_by_test_id("mentions-box").inner_text())
-                check(f"mentions {w} {scheme}: each mention links out over https", page.locator("[data-testid=mention] a[href^='https://']").count() == 2)
+                check(
+                    f"mentions {w} {scheme}: dropped line (the quote with a person's name is dropped and counted)",
+                    dropped
+                    == "2 found, 2 dropped because the quote was not on the page, 1 dropped for personal details",
+                    dropped,
+                )
+                check(
+                    f"mentions {w} {scheme}: every mention carries the fixed Unverified badge",
+                    page.get_by_test_id("unverified-badge").count() == 2
+                    and all(
+                        t == "Unverified — not checked against FDA records"
+                        for t in page.get_by_test_id("unverified-badge").all_inner_texts()
+                    ),
+                )
+                check(
+                    f"mentions {w} {scheme}: 'Official source' only on the fda.gov address",
+                    page.get_by_test_id("official-badge").count() == 1
+                    and page.locator("[data-testid=mention][data-kind=web]").count() == 1,
+                )
+                check(
+                    f"mentions {w} {scheme}: no personal details shown",
+                    "Dr. Smith" not in page.get_by_test_id("mentions-box").inner_text(),
+                )
+                check(
+                    f"mentions {w} {scheme}: each mention links out over https",
+                    page.locator("[data-testid=mention] a[href^='https://']").count() == 2,
+                )
                 last = [x for x in e.stub_log(page) if x["path"] == "/v1/live/mentions"][-1]
-                check(f"mentions {w} {scheme}: request is only the code and short terms; no cookies", set(last["body"]) <= {"product_code", "device_terms"} and len(last["body"]["product_code"]) == 3 and last["credentials_sent"] is False, last)
-                badge_right = page.get_by_test_id("unverified-badge").first.evaluate("el => el.getBoundingClientRect().right")
-                check(f"mentions {w} {scheme}: the Unverified badge stays inside the screen", badge_right <= w, badge_right)
-                check(f"mentions {w} {scheme}: box contrast", ratio(page, "[data-testid=mentions-dropped]") >= 4.5, ratio(page, "[data-testid=mentions-dropped]"))
+                check(
+                    f"mentions {w} {scheme}: request is only the code and short terms; no cookies",
+                    set(last["body"]) <= {"product_code", "device_terms"}
+                    and len(last["body"]["product_code"]) == 3
+                    and last["credentials_sent"] is False,
+                    last,
+                )
+                badge_right = page.get_by_test_id("unverified-badge").first.evaluate(
+                    "el => el.getBoundingClientRect().right"
+                )
+                check(
+                    f"mentions {w} {scheme}: the Unverified badge stays inside the screen",
+                    badge_right <= w,
+                    badge_right,
+                )
+                check(
+                    f"mentions {w} {scheme}: box contrast",
+                    ratio(page, "[data-testid=mentions-dropped]") >= 4.5,
+                    ratio(page, "[data-testid=mentions-dropped]"),
+                )
                 page.get_by_test_id("mentions-box").scroll_into_view_if_needed()
                 snap(page, "mentions", w, scheme, report)
                 page.close()
@@ -249,59 +415,165 @@ def main() -> int:
             page.locator("article[aria-label=Alerts] ul button").first.click()
             page.get_by_test_id("search-outside").click()
             page.wait_for_selector("[data-testid=mentions-notice]")
-            check("mentions 429: falls back to the stored search (none stored here) with the limit named", "Daily live limit reached" in page.get_by_test_id("mentions-notice").inner_text() and page.get_by_test_id("mentions-none").count() == 1)
+            check(
+                "mentions 429: falls back to the stored search (none stored here) with the limit named",
+                "Daily live limit reached" in page.get_by_test_id("mentions-notice").inner_text()
+                and page.get_by_test_id("mentions-none").count() == 1,
+            )
             page.close()
             stub.mode = "ok"
             stub.mentions_mode = "empty"
-            for scheme, w, h in (("light", 1440, 900), ("dark", 1440, 900), ("light", 390, 844), ("dark", 390, 844)):
+            for scheme, w, h in (
+                ("light", 1440, 900),
+                ("dark", 1440, 900),
+                ("light", 390, 844),
+                ("dark", 390, 844),
+            ):
                 page = page_for(browser, w, h, scheme)
                 open_site(page, e.LIVE_URL)
                 page.locator("article[aria-label=Alerts] ul button").first.click()
                 page.get_by_test_id("search-outside").click()
                 page.wait_for_selector("[data-testid=mentions-zero]")
                 zero = page.get_by_test_id("mentions-zero-line").inner_text()
-                check(f"mentions zero {w} {scheme}: '0 found in these sources (date)', never an empty box", zero == "0 found in these sources (2026-10-31)" and page.get_by_test_id("mention").count() == 0, zero)
+                check(
+                    f"mentions zero {w} {scheme}: '0 found in these sources (date)', never an empty box",
+                    zero == "0 found in these sources (2026-10-31)"
+                    and page.get_by_test_id("mention").count() == 0,
+                    zero,
+                )
                 rows = page.get_by_test_id("source-row").all_inner_texts()
-                check(f"mentions zero {w} {scheme}: every source tried is listed with status and count", len(rows) == 6 and sum("failed: " in r for r in rows) == 2 and sum("not searched: time" in r for r in rows) == 1 and all("page" in r for r in rows), rows)
+                check(
+                    f"mentions zero {w} {scheme}: every source tried is listed with status and count",
+                    len(rows) == 6
+                    and sum("failed: " in r for r in rows) == 2
+                    and sum("not searched: time" in r for r in rows) == 1
+                    and all("page" in r for r in rows),
+                    rows,
+                )
                 box_text = page.get_by_test_id("mentions-box").inner_text()
-                check(f"mentions zero {w} {scheme}: no MassDevice text (sources or steps)", "massdevice" not in box_text.lower())
+                check(
+                    f"mentions zero {w} {scheme}: no MassDevice text (sources or steps)",
+                    "massdevice" not in box_text.lower(),
+                )
                 steps = page.get_by_test_id("trace-step").all_inner_texts()
-                check(f"mentions zero {w} {scheme}: failed sources read failed in the steps too, never done", len(steps) == 7 and sum("failed" in t for t in steps) == 2 and sum("not searched" in t for t in steps) == 1 and sum("unknown" in t for t in steps) == 1 and not any(("GDELT" in t or "warning" in t or "Example" in t) and "done" in t for t in steps), steps)
-                check(f"mentions zero {w} {scheme}: contrast", ratio(page, "[data-testid=mentions-zero-line]") >= 4.5, ratio(page, "[data-testid=mentions-zero-line]"))
+                check(
+                    f"mentions zero {w} {scheme}: failed sources read failed in the steps too, never done",
+                    len(steps) == 7
+                    and sum("failed" in t for t in steps) == 2
+                    and sum("not searched" in t for t in steps) == 1
+                    and sum("unknown" in t for t in steps) == 1
+                    and not any(
+                        ("GDELT" in t or "warning" in t or "Example" in t) and "done" in t
+                        for t in steps
+                    ),
+                    steps,
+                )
+                check(
+                    f"mentions zero {w} {scheme}: contrast",
+                    ratio(page, "[data-testid=mentions-zero-line]") >= 4.5,
+                    ratio(page, "[data-testid=mentions-zero-line]"),
+                )
                 page.get_by_test_id("mentions-box").scroll_into_view_if_needed()
                 snap(page, "mentions-zero", w, scheme, report)
-                check(f"mentions zero {w} {scheme}: no sideways scroll", not report[f"overflow_mentions-zero_{w}_{scheme}"], report[f"overflow_mentions-zero_{w}_{scheme}"])
+                check(
+                    f"mentions zero {w} {scheme}: no sideways scroll",
+                    not report[f"overflow_mentions-zero_{w}_{scheme}"],
+                    report[f"overflow_mentions-zero_{w}_{scheme}"],
+                )
                 page.close()
             stub.mentions_mode = "ok"
 
             # ---- 4. Connect to Muse ---------------------------------------------------------------------------------
-            for scheme, w, h in (("light", 1440, 900), ("dark", 1440, 900), ("light", 390, 844), ("dark", 390, 844)):
+            for scheme, w, h in (
+                ("light", 1440, 900),
+                ("dark", 1440, 900),
+                ("light", 390, 844),
+                ("dark", 390, 844),
+            ):
                 stub.connect_mode = "ok"
                 page = page_for(browser, w, h, scheme)
                 open_site(page, e.LIVE_URL)
                 if w == 390:
                     page.get_by_test_id("more-menu-button").click()
-                    check("390: header menu lists Connect to Muse, search, feedback and theme", page.get_by_test_id("more-connect").is_visible() and page.get_by_test_id("more-search").is_visible() and page.get_by_test_id("more-feedback").is_visible() and page.get_by_test_id("more-theme").is_visible())
+                    check(
+                        "390: header menu lists Connect to Muse, search, feedback and theme",
+                        page.get_by_test_id("more-connect").is_visible()
+                        and page.get_by_test_id("more-search").is_visible()
+                        and page.get_by_test_id("more-feedback").is_visible()
+                        and page.get_by_test_id("more-theme").is_visible(),
+                    )
                     snap(page, "header-menu", w, scheme, report)
                     page.get_by_test_id("more-connect").click()
                 else:
                     page.get_by_test_id("connect-button").click()
                 page.wait_for_selector("[data-testid=connect-view] [data-testid=demo-key-block]")
                 page.wait_for_selector("[data-testid=value-demo-key]")
-                check(f"connect {w} {scheme}: MCP address, OpenAPI address and demo key are shown", page.get_by_test_id("value-mcp-address").inner_text() == "https://maudesignal-api.vercel.app/mcp" and page.get_by_test_id("value-openapi-address").inner_text().endswith("/openapi.json") and page.get_by_test_id("value-demo-key").inner_text().startswith("stub-demo-key"))
+                check(
+                    f"connect {w} {scheme}: MCP address, OpenAPI address and demo key are shown",
+                    page.get_by_test_id("value-mcp-address").inner_text()
+                    == "https://maudesignal-api.vercel.app/mcp"
+                    and page.get_by_test_id("value-openapi-address")
+                    .inner_text()
+                    .endswith("/openapi.json")
+                    and page.get_by_test_id("value-demo-key")
+                    .inner_text()
+                    .startswith("stub-demo-key"),
+                )
                 lim_txt = page.get_by_test_id("demo-key-limits").inner_text()
-                check(f"connect {w} {scheme}: limits from demo_limits are stated (read tools, no live Spark, per minute, per day)", all(x in lim_txt for x in ("Read tools only", "No live Spark", "10 calls a minute", "200 a day")), lim_txt)
+                check(
+                    f"connect {w} {scheme}: limits from demo_limits are stated (read tools, no live Spark, per minute, per day)",
+                    all(
+                        x in lim_txt
+                        for x in (
+                            "Read tools only",
+                            "No live Spark",
+                            "10 calls a minute",
+                            "200 a day",
+                        )
+                    ),
+                    lim_txt,
+                )
                 steps = page.locator("[data-testid=connect-steps] li").all_inner_texts()
-                check(f"connect {w} {scheme}: three numbered steps", len(steps) == 3 and "connectors" in steps[0] and "https://maudesignal-api.vercel.app/mcp" in steps[1] and "X-API-Key" in steps[2], steps)
-                check(f"connect {w} {scheme}: privacy and terms link to the API", page.get_by_test_id("link-privacy").get_attribute("href") == "https://maudesignal-api.vercel.app/privacy" and page.get_by_test_id("link-terms").get_attribute("href") == "https://maudesignal-api.vercel.app/terms")
+                check(
+                    f"connect {w} {scheme}: three numbered steps",
+                    len(steps) == 3
+                    and "connectors" in steps[0]
+                    and "https://maudesignal-api.vercel.app/mcp" in steps[1]
+                    and "X-API-Key" in steps[2],
+                    steps,
+                )
+                check(
+                    f"connect {w} {scheme}: privacy and terms link to the API",
+                    page.get_by_test_id("link-privacy").get_attribute("href")
+                    == "https://maudesignal-api.vercel.app/privacy"
+                    and page.get_by_test_id("link-terms").get_attribute("href")
+                    == "https://maudesignal-api.vercel.app/terms",
+                )
                 page.get_by_test_id("copy-demo-key").click()
                 page.wait_for_timeout(200)
                 clip = page.evaluate("navigator.clipboard.readText()")
-                check(f"connect {w} {scheme}: one-click Copy puts the demo key on the clipboard", clip.startswith("stub-demo-key"), clip)
-                check(f"connect {w} {scheme}: no OAuth button anywhere", "OAuth is not available" in page.get_by_test_id("connect-view").inner_text() and page.get_by_role("button", name=re.compile("sign in|log in|authorize", re.I)).count() == 0)
+                check(
+                    f"connect {w} {scheme}: one-click Copy puts the demo key on the clipboard",
+                    clip.startswith("stub-demo-key"),
+                    clip,
+                )
+                check(
+                    f"connect {w} {scheme}: no OAuth button anywhere",
+                    "OAuth is not available" in page.get_by_test_id("connect-view").inner_text()
+                    and page.get_by_role(
+                        "button", name=re.compile("sign in|log in|authorize", re.I)
+                    ).count()
+                    == 0,
+                )
                 get = [x for x in e.stub_log(page) if x["path"] == "/v1/connect"]
-                check(f"connect {w} {scheme}: GET /v1/connect without cookies", len(get) >= 1 and get[-1]["credentials_sent"] is False)
-                check(f"connect {w} {scheme}: contrast", ratio(page, "[data-testid=connect-view] p") >= 4.5)
+                check(
+                    f"connect {w} {scheme}: GET /v1/connect without cookies",
+                    len(get) >= 1 and get[-1]["credentials_sent"] is False,
+                )
+                check(
+                    f"connect {w} {scheme}: contrast",
+                    ratio(page, "[data-testid=connect-view] p") >= 4.5,
+                )
                 snap(page, "connect", w, scheme, report)
                 page.close()
             # no key handed out, API 404, and no API at all
@@ -313,7 +585,12 @@ def main() -> int:
                 page.wait_for_selector("[data-testid=connect-view]")
                 page.wait_for_function("!document.body.innerText.includes('Loading the connector')")
                 txt = page.get_by_test_id("connect-view").inner_text()
-                check(f"connect ({mode}): no key is shown and the page says to ask Charan", "Ask Charan for a key" in txt and page.get_by_test_id("value-demo-key").count() == 0 and "https://maudesignal-api.vercel.app/mcp" in txt)
+                check(
+                    f"connect ({mode}): no key is shown and the page says to ask Charan",
+                    "Ask Charan for a key" in txt
+                    and page.get_by_test_id("value-demo-key").count() == 0
+                    and "https://maudesignal-api.vercel.app/mcp" in txt,
+                )
                 page.close()
             stub.connect_mode = "ok"
             page = page_for(browser, 1440, 900, "light")
@@ -321,7 +598,12 @@ def main() -> int:
             page.get_by_test_id("connect-button").click()
             page.wait_for_selector("[data-testid=connect-view]")
             txt = page.get_by_test_id("connect-view").inner_text()
-            check("connect (no API in this build): fixed text with the MCP URL, the OpenAPI URL and 'ask Charan for a key'", "https://maudesignal-api.vercel.app/mcp" in txt and "https://maudesignal-api.vercel.app/openapi.json" in txt and "Ask Charan for a key" in txt)
+            check(
+                "connect (no API in this build): fixed text with the MCP URL, the OpenAPI URL and 'ask Charan for a key'",
+                "https://maudesignal-api.vercel.app/mcp" in txt
+                and "https://maudesignal-api.vercel.app/openapi.json" in txt
+                and "Ask Charan for a key" in txt,
+            )
             page.close()
 
             # ---- 5. header at 390 and 1440 -----------------------------------------------------------------------------
@@ -330,13 +612,25 @@ def main() -> int:
                     page = page_for(browser, w, h, scheme)
                     open_site(page, e.LIVE_URL)
                     hdr = page.locator("header > div").first
-                    kids = hdr.evaluate("el => [...el.children].filter(c => c.offsetParent !== null).map(c => c.getBoundingClientRect().right)")
-                    check(f"header {w} {scheme}: every control fits inside the viewport", max(kids) <= w + 0.5 and e.overflow(page) == 0, [max(kids), w])
-                    tall = page.evaluate("[...document.querySelectorAll('header > div:first-child button')].filter(b => b.offsetParent !== null).every(b => b.getBoundingClientRect().height >= 40 && b.getBoundingClientRect().width >= 40)")
+                    kids = hdr.evaluate(
+                        "el => [...el.children].filter(c => c.offsetParent !== null).map(c => c.getBoundingClientRect().right)"
+                    )
+                    check(
+                        f"header {w} {scheme}: every control fits inside the viewport",
+                        max(kids) <= w + 0.5 and e.overflow(page) == 0,
+                        [max(kids), w],
+                    )
+                    tall = page.evaluate(
+                        "[...document.querySelectorAll('header > div:first-child button')].filter(b => b.offsetParent !== null).every(b => b.getBoundingClientRect().height >= 40 && b.getBoundingClientRect().width >= 40)"
+                    )
                     check(f"header {w} {scheme}: every header button is at least 40 px", tall)
                     if w == 390:
                         more = ratio(page, "[data-testid=more-menu-button]")
-                        check(f"header {w} {scheme}: the ... menu button is at least 3:1 against the bar", more >= 3.0, more)
+                        check(
+                            f"header {w} {scheme}: the ... menu button is at least 3:1 against the bar",
+                            more >= 3.0,
+                            more,
+                        )
                     if scheme == "dark" or w == 1440:
                         snap(page, "header", w, scheme, report)
                     page.close()
@@ -352,10 +646,16 @@ def main() -> int:
             for scheme, w, h in (("light", 1440, 900), ("dark", 390, 844)):
                 page = page_for(browser, w, h, scheme)
                 open_site(page, e.LIVE_URL)
-                page.get_by_role("button", name=re.compile("Our devices")).first.click() if w == 1440 else None
+                (
+                    page.get_by_role("button", name=re.compile("Our devices")).first.click()
+                    if w == 1440
+                    else None
+                )
                 if w == 390:
                     page.get_by_test_id("alert-bell").click()
-                    page.locator("#alert-list [data-testid=alert-group]").nth(1).locator("ul button").first.click()
+                    page.locator("#alert-list [data-testid=alert-group]").nth(1).locator(
+                        "ul button"
+                    ).first.click()
                 else:
                     page.get_by_test_id("device-alert-details").first.click()
                 page.wait_for_selector("[data-testid=alert-panel]")

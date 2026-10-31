@@ -743,7 +743,10 @@ def _clean_mentions(doc: dict[str, Any]) -> dict[str, Any] | None:
             continue
         if not (isinstance(quote, str) and quote.strip()):
             continue
-        if any(has_personal_details(str(m.get(k) or "")) for k in ("quote", "why_matched", "source_name")):
+        if any(
+            has_personal_details(str(m.get(k) or ""))
+            for k in ("quote", "why_matched", "source_name")
+        ):
             personal += 1
             continue
         kept.append({**m, "badge": MENTION_BADGE})

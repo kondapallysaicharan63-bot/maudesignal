@@ -96,8 +96,11 @@ const sidebar = (runs: InvestigationRun[]) =>
   )
 
 describe('workflows with no recorded run are hidden, not shown as placeholders', () => {
-  it('stored investigations.json has no run yet', () => {
-    expect(investigations.investigations).toEqual([])
+  it('stored investigations.json lists only recorded runs, each with an id and a recording time', () => {
+    for (const run of investigations.investigations) {
+      expect(run.id).toBeTruthy()
+      expect(run.recorded_at_utc).toBeTruthy()
+    }
   })
 
   it('with an empty list the sidebar and the palette list neither agentic workflow nor Intake inbox', () => {

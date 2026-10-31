@@ -480,32 +480,117 @@ class Stub:
                 },
             ]
         )
-        if empty:  # the real recorded LLZ zero result: failed rows and a MassDevice row the page must not show
+        if (
+            empty
+        ):  # the real recorded LLZ zero result: failed rows and a MassDevice row the page must not show
             tried = [
-                {"name": "GDELT DOC 2.0 (news index)", "url": "https://api.gdeltproject.org/api/v2/doc/doc", "status": "failed: ConnectTimeout", "n": 0},
-                {"name": "FDA press releases (RSS)", "url": "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/press-releases/rss.xml", "status": "ok", "n": 0},
-                {"name": "FDA recalls (RSS)", "url": "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/recalls/rss.xml", "status": "ok", "n": 0},
-                {"name": "FDA warning letters (RSS)", "url": "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/warning-letters/rss.xml", "status": "failed: http 404", "n": 0},
-                {"name": "MedTech Dive (RSS)", "url": "https://www.medtechdive.com/feeds/news/", "status": "ok", "n": 0},
-                {"name": "MassDevice (RSS)", "url": "https://www.massdevice.com/feed/", "status": "failed: http 403", "n": 0},
-                {"name": "Example Wire (RSS)", "url": "https://example.com/feed/", "status": "skipped: time", "n": 0},
+                {
+                    "name": "GDELT DOC 2.0 (news index)",
+                    "url": "https://api.gdeltproject.org/api/v2/doc/doc",
+                    "status": "failed: ConnectTimeout",
+                    "n": 0,
+                },
+                {
+                    "name": "FDA press releases (RSS)",
+                    "url": "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/press-releases/rss.xml",
+                    "status": "ok",
+                    "n": 0,
+                },
+                {
+                    "name": "FDA recalls (RSS)",
+                    "url": "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/recalls/rss.xml",
+                    "status": "ok",
+                    "n": 0,
+                },
+                {
+                    "name": "FDA warning letters (RSS)",
+                    "url": "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/warning-letters/rss.xml",
+                    "status": "failed: http 404",
+                    "n": 0,
+                },
+                {
+                    "name": "MedTech Dive (RSS)",
+                    "url": "https://www.medtechdive.com/feeds/news/",
+                    "status": "ok",
+                    "n": 0,
+                },
+                {
+                    "name": "MassDevice (RSS)",
+                    "url": "https://www.massdevice.com/feed/",
+                    "status": "failed: http 403",
+                    "n": 0,
+                },
+                {
+                    "name": "Example Wire (RSS)",
+                    "url": "https://example.com/feed/",
+                    "status": "skipped: time",
+                    "n": 0,
+                },
             ]
             trace = [
-                {"step": "Search: GDELT DOC 2.0 (news index)", "model": None, "ms": 6031, "status": "failed: ConnectTimeout"},
-                {"step": "Search: FDA press releases (RSS)", "model": None, "ms": 277, "status": "ok"},
+                {
+                    "step": "Search: GDELT DOC 2.0 (news index)",
+                    "model": None,
+                    "ms": 6031,
+                    "status": "failed: ConnectTimeout",
+                },
+                {
+                    "step": "Search: FDA press releases (RSS)",
+                    "model": None,
+                    "ms": 277,
+                    "status": "ok",
+                },
                 {"step": "Search: FDA recalls (RSS)", "model": None, "ms": 352, "status": "ok"},
-                {"step": "Search: FDA warning letters (RSS)", "model": None, "ms": 431, "status": "failed: http 404"},
+                {
+                    "step": "Search: FDA warning letters (RSS)",
+                    "model": None,
+                    "ms": 431,
+                    "status": "failed: http 404",
+                },
                 {"step": "Search: MedTech Dive (RSS)", "model": None, "ms": 228, "status": "ok"},
-                {"step": "Search: MassDevice (RSS)", "model": None, "ms": 173, "status": "failed: http 403"},
-                {"step": "Search: Example Wire (RSS)", "model": None, "ms": 0, "status": "skipped: time"},
-                {"step": "Fetch pages and check each quote against the page text", "model": None, "ms": 0, "status": "0 page(s) tried"},
+                {
+                    "step": "Search: MassDevice (RSS)",
+                    "model": None,
+                    "ms": 173,
+                    "status": "failed: http 403",
+                },
+                {
+                    "step": "Search: Example Wire (RSS)",
+                    "model": None,
+                    "ms": 0,
+                    "status": "skipped: time",
+                },
+                {
+                    "step": "Fetch pages and check each quote against the page text",
+                    "model": None,
+                    "ms": 0,
+                    "status": "0 page(s) tried",
+                },
             ]
         else:
             tried = [
-                {"name": "GDELT news search", "url": "https://api.gdeltproject.org/api/v2/doc/doc", "status": "ok", "n": 5},
-                {"name": "FDA press releases", "url": "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/press-releases/rss.xml", "status": "ok", "n": 2},
+                {
+                    "name": "GDELT news search",
+                    "url": "https://api.gdeltproject.org/api/v2/doc/doc",
+                    "status": "ok",
+                    "n": 5,
+                },
+                {
+                    "name": "FDA press releases",
+                    "url": "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/press-releases/rss.xml",
+                    "status": "ok",
+                    "n": 2,
+                },
             ]
-            trace = [{"step": "Fetch and check pages", "model": None, "ms": 220, "status": "ok", "note": f"terms: {', '.join(terms) or 'none'}"}]
+            trace = [
+                {
+                    "step": "Fetch and check pages",
+                    "model": None,
+                    "ms": 220,
+                    "status": "ok",
+                    "note": f"terms: {', '.join(terms) or 'none'}",
+                }
+            ]
         return {
             "product_code": code,
             "searched_utc": "2026-10-31T12:00:00Z",

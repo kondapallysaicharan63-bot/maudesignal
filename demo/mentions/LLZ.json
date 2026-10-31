@@ -39,12 +39,6 @@
       "name": "MedTech Dive (RSS)",
       "status": "ok",
       "url": "https://www.medtechdive.com/feeds/news/"
-    },
-    {
-      "n": 0,
-      "name": "MassDevice (RSS)",
-      "status": "failed: http 403",
-      "url": "https://www.massdevice.com/feed/"
     }
   ],
   "trace": [
@@ -72,11 +66,6 @@
       "ms": 228,
       "status": "ok",
       "step": "Search: MedTech Dive (RSS)"
-    },
-    {
-      "ms": 173,
-      "status": "failed: http 403",
-      "step": "Search: MassDevice (RSS)"
     },
     {
       "ms": 0,

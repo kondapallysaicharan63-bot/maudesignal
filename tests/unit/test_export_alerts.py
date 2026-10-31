@@ -378,13 +378,23 @@ def test_mentions_file_copies_stored_searches_and_never_invents(tmp_path: Path) 
     doc = {"product_code": "llz", "mode": "recorded", "mentions": []}
     (tmp_path / "demo/mentions/LLZ.json").write_text(json.dumps(doc))
     got = ea.build_mentions(tmp_path)
-    assert list(got["codes"]) == ["LLZ"] and got["codes"]["LLZ"]["mentions"] == [] and got["notes"] == []
+    assert (
+        list(got["codes"]) == ["LLZ"]
+        and got["codes"]["LLZ"]["mentions"] == []
+        and got["notes"] == []
+    )
 
 
 def test_mentions_are_checked_before_they_are_copied(tmp_path: Path) -> None:
     folder = tmp_path / "demo/mentions"
     folder.mkdir(parents=True)
-    good = {"source_name": "FDA", "url": "https://www.fda.gov/x", "quote": "The firm sent a letter to customers.", "why_matched": "matched: LLZ", "badge": "Verified!"}
+    good = {
+        "source_name": "FDA",
+        "url": "https://www.fda.gov/x",
+        "quote": "The firm sent a letter to customers.",
+        "why_matched": "matched: LLZ",
+        "badge": "Verified!",
+    }
     docs = {
         "LLZ": {
             "product_code": "LLZ",
@@ -409,7 +419,11 @@ def test_mentions_are_checked_before_they_are_copied(tmp_path: Path) -> None:
     m = got["codes"]["LLZ"]["mentions"]
     assert len(m) == 1 and m[0]["quote"] == good["quote"]
     assert m[0]["badge"] == "Unverified — not checked against FDA records"
-    assert got["codes"]["LLZ"]["dropped"] == {"quote_not_found": 2, "personal_details": 2, "off_topic": 0}
+    assert got["codes"]["LLZ"]["dropped"] == {
+        "quote_not_found": 2,
+        "personal_details": 2,
+        "off_topic": 0,
+    }
 
 
 def test_real_stored_data_builds_and_matches_the_committed_file() -> None:

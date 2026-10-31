@@ -161,7 +161,8 @@ def test_sources_come_from_the_demo_database(out: Path) -> None:
 def test_schedules_read_workflow_files_and_newest_outputs(out: Path) -> None:
     sched = {s["id"]: s for s in load(out, "schedules.json")["schedules"]}
     assert sched["daily-monitor"]["cron"] == "17 11 * * *"
-    assert sched["ai-sweep"]["cron"] == "23 12 * * 1"
+    # The Monday sweep is paused until Nov 5 (schedule commented out in ai-sweep.yml).
+    assert sched["ai-sweep"]["cron"] is None
     newest = sorted(p.stem for p in (ROOT / "digests").glob("*.json"))[-1]
     assert sched["daily-monitor"]["last_result"]["date"] == newest
     sweep = load(out, "sweep.json")
