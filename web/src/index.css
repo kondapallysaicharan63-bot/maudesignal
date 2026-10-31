@@ -173,7 +173,8 @@ button {
 }
 
 /* The alert buddy's speech bubble is hidden while the message box is in use (focus, menu, camera, recording). */
-body[data-composer-active] .ms-buddy-bubble {
+body[data-composer-active] .ms-buddy-bubble,
+body[data-composer-menu] .ms-buddy-bubble[data-auto] {
   display: none;
 }
 

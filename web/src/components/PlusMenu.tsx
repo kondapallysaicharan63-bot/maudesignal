@@ -104,7 +104,7 @@ export function PlusMenu({ items, disabled = false }: { items: MenuItem[]; disab
           aria-label="Add to your message"
           aria-orientation="vertical"
           data-testid="composer-menu"
-          className="absolute bottom-full left-0 z-50 mb-2 w-[min(20rem,calc(100vw-2rem))] rounded-md border border-rule-strong bg-surface p-1 shadow-[var(--shadow-pop)]"
+          className="absolute bottom-full left-0 z-50 mb-2 w-[min(20rem,calc(100vw-2rem))] rounded-lg border border-rule bg-surface p-[6px] shadow-[var(--shadow-pop)]"
           onKeyDown={(e) => {
             const next = menuMove(e.key, active, items.length)
             if (next !== null) {
@@ -136,9 +136,9 @@ export function PlusMenu({ items, disabled = false }: { items: MenuItem[]; disab
                 onClick={() => !it.disabled && choose(it)}
                 onMouseMove={() => i !== active && setActive(i)}
                 className={[
-                  'flex min-h-11 w-full items-center gap-3 rounded-sm px-3 py-2 text-left leading-snug text-ink focus-visible:!-outline-offset-2',
+                  'flex min-h-11 w-full items-center gap-3 rounded-row px-3 py-2 text-left leading-snug text-ink focus-visible:!-outline-offset-2',
                   it.disabled ? 'cursor-not-allowed opacity-60' : '',
-                  i === active ? 'bg-accent-soft shadow-[inset_4px_0_0_var(--accent)]' : 'hover:bg-sunk',
+                  i === active ? 'bg-sunk' : 'hover:bg-sunk',
                 ].join(' ')}
               >
                 <span className="shrink-0 text-ink-2">
