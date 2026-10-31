@@ -10,8 +10,9 @@ name: Release check
 # exists; the app's own cap (MAUDESIGNAL_LIVE_DAILY_USD) is set to $0.60 there. That cap is a
 # per-run ledger on a fresh directory of the local API in the job: it is separate from the
 # deployed API's global ledger, which this job never touches. So the day's total is limited by the
-# number of live runs, and gate-live stops the live job when 3 live release runs already
-# happened today (UTC), counted through the GitHub API with GITHUB_TOKEN.
+# number of live attempts: the first step of the live job itself counts today's (UTC) live
+# attempts through the GitHub API with GITHUB_TOKEN and fails before any paid step when this
+# attempt would be the fourth. A re-run of the job or of failed jobs checks again.
 
 on:
   push:
@@ -171,20 +172,21 @@ jobs:
           path: release-out/
           retention-days: 14
 
-  gate-live:
-    name: Decide whether the live job runs
+  live:
+    name: Live (real Muse calls, total cost at most $0.60)
+    # runs only on a branch whose name contains "live"; the secret cannot be read in an `if`, so
+    # the first step checks it. One live job at a time across all branches (no overlap).
+    if: contains(github.ref_name, 'live')
     runs-on: ubuntu-latest
-    # one gate at a time across all branches, so two live runs cannot both pass the count
+    timeout-minutes: 20
     concurrency:
-      group: release-live-gate
+      group: release-live
       cancel-in-progress: false
     permissions:
       contents: read
       actions: read
-    outputs:
-      run_live: ${{ steps.decide.outputs.run_live }}
     steps:
-      - id: decide
+      - name: Daily guard (first step, before any paid step)
         env:
           HAS_KEY: ${{ secrets.META_MODEL_API_KEY != '' }}
           BRANCH: ${{ github.ref_name }}
@@ -194,16 +196,15 @@ jobs:
           RUN_ATTEMPT: ${{ github.run_attempt }}
           MAX_LIVE_RUNS_PER_DAY: "3"
         run: |
-          if [ "$HAS_KEY" != "true" ] || [[ "$BRANCH" != *live* ]]; then
-            echo "run_live=false" >> "$GITHUB_OUTPUT"
-            echo "live job: will not run (needs the secret and a branch name containing 'live')"
-            exit 0
+          if [ "$HAS_KEY" != "true" ]; then
+            echo "::error::live job: the Meta key secret is not set, so nothing is run (never a pass)"
+            exit 1
           fi
-          # Daily guard: this workflow's live job has its own $0.60 ledger per ATTEMPT (every
-          # attempt, including "Re-run all jobs", gets a fresh runner), so the number of live
-          # attempts per day is what limits the total. Sum run_attempt over today's (UTC) runs
-          # of this workflow on branches containing 'live', over every page of results, and add
-          # this run's attempts before the current one.
+          # Every attempt (including "Re-run all jobs" and "Re-run failed jobs") gets a fresh
+          # runner and a fresh $0.60 ledger, so the number of live attempts per day limits the
+          # total. Sum run_attempt over today's (UTC) runs of this workflow on branches containing
+          # 'live', over every page of results; for this run only the attempts before this one
+          # count, and this attempt is the one being checked. A re-run checks again.
           today=$(date -u +%Y-%m-%d)
           total=0
           page=1
@@ -211,18 +212,20 @@ jobs:
             runs=$(curl -sS --fail-with-body \
               -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
               "https://api.github.com/repos/$REPO/actions/workflows/release-check.yml/runs?created=%3E%3D$today&per_page=100&page=$page") || {
-                echo "run_live=false" >> "$GITHUB_OUTPUT"
                 echo "::error::live job: stopped, today's runs could not be listed (no guess is made)"
-                exit 0
+                exit 1
               }
             n=$(echo "$runs" | python3 -c "
           import json, os, sys
           me = int(os.environ['RUN_ID'])
           runs = json.load(sys.stdin).get('workflow_runs', [])
-          live = [r for r in runs if 'live' in (r.get('head_branch') or '')]
+          live = [r for r in runs if 'live' in (r.get('head_branch') or '').lower()]
           # other runs: all their attempts; this run: only the attempts before this one
           print(len(runs), sum((int(os.environ['RUN_ATTEMPT']) - 1) if r.get('id') == me else int(r.get('run_attempt') or 1) for r in live))
-          ")
+          ") || {
+                echo "::error::live job: stopped, the run list could not be read (no guess is made)"
+                exit 1
+              }
             count=${n% *}
             attempts=${n#* }
             total=$((total + attempts))
@@ -230,22 +233,12 @@ jobs:
             page=$((page + 1))
             [ "$page" -gt 20 ] && break
           done
-          earlier=$total
-          if [ "$earlier" -ge "$MAX_LIVE_RUNS_PER_DAY" ]; then
-            echo "run_live=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::live job: stopped, $earlier live release attempts already today (limit $MAX_LIVE_RUNS_PER_DAY)"
-          else
-            echo "run_live=true" >> "$GITHUB_OUTPUT"
-            echo "live job: will run (secret present, branch contains 'live', $earlier earlier live attempt(s) today, limit $MAX_LIVE_RUNS_PER_DAY)"
+          this_attempt=$((total + 1))
+          if [ "$this_attempt" -gt "$MAX_LIVE_RUNS_PER_DAY" ]; then
+            echo "::error::live job: stopped before any paid step, this would be live attempt $this_attempt today (limit $MAX_LIVE_RUNS_PER_DAY)"
+            exit 1
           fi
-
-  live:
-    name: Live (real Muse calls, total cost at most $0.60)
-    needs: gate-live
-    if: needs.gate-live.outputs.run_live == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
+          echo "live job: will run (attempt $this_attempt of at most $MAX_LIVE_RUNS_PER_DAY today, UTC)"
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
@@ -286,7 +279,7 @@ jobs:
 
   report:
     name: Release report
-    needs: [python, web, api-contract, e2e, gate-live, live]
+    needs: [python, web, api-contract, e2e, live]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -316,7 +309,7 @@ jobs:
           from report import NOT_PRESENT, Report
           rep = Report("live job")
           rep.add("live job", NOT_PRESENT,
-                  "not run: it needs the Meta key secret, a branch name containing 'live' and fewer than 3 live release runs today",
+                  "not run: it needs a branch name containing 'live' (and, inside the job, the Meta key secret and at most 3 live attempts today)",
                   group="live", required=False)
           rep.write(Path("parts"), "live-check")
           PYEOF
@@ -330,7 +323,7 @@ jobs:
           import json, os, sys
           needs = json.loads(os.environ["NEEDS"])
           bad = {k: v["result"] for k, v in needs.items()
-                 if k not in ("live", "gate-live") and v["result"] != "success"}
+                 if k != "live" and v["result"] != "success"}
           live = needs["live"]["result"]
           if live not in ("success", "skipped"):
               bad["live"] = live

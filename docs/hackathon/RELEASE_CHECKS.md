@@ -129,7 +129,7 @@ Screenshots are in the `e2e-report` artifact (`screenshots/`, failures prefixed 
 ### `live` (`scripts/release/live_check.py`)
 
 Runs only when the pushed branch name contains `live` and the repository secret
-`META_MODEL_API_KEY` exists (the small `gate-live` job decides; the key is never echoed). The
+`META_MODEL_API_KEY` exists (the first step of the `live` job checks both; the key is never echoed; a branch with `live` in its name and no key fails that step, it is never a pass). The
 API runs locally with `MAUDESIGNAL_LIVE_DAILY_USD=0.60` (the app's own cap), per-request caps of
 $0.12 / $0.12 / $0.15 and a fresh ledger directory (an in-memory ledger capped at the $0.60 above). Calls: a chat question and a second one with history, one voice clip
 (`demo/voice/question-a.wav`, resampled to 16 kHz), one label photo
@@ -145,14 +145,14 @@ budget no longer allows (including the injection question) is a FAIL line `skipp
 directory of the local API started inside the job. It is separate from the global ledger of the
 deployed API (which the job never calls), so neither counts against the other. The total per day
 is therefore limited by the number of live **attempts** (every "Re-run" gets a fresh runner and
-so a fresh ledger), and `gate-live` stops the live job when 3 live release attempts already
-happened today (UTC): it lists today's runs of `release-check.yml` through the REST API with
+so a fresh ledger), and the **first step of the `live` job itself** (not a separate gate job)
+exits non-zero before any paid step when this attempt would be the fourth live attempt today
+(UTC); a re-run of the job or of failed jobs runs the step again. It lists today's runs of `release-check.yml` through the REST API with
 `GITHUB_TOKEN` (`actions: read`), over every page of results, on branches whose name contains
 `live`, and sums each run's `run_attempt` (for the current run only the attempts before this one,
-from `github.run_attempt`). It sets `run_live=false` at 3 or more. If the list cannot be fetched
-the job also stops (an error line, no guess). The gate job has a concurrency group
-(`release-live-gate`) shared by all branches, so two live runs started together cannot both pass
-the count.
+from `github.run_attempt`). If the list cannot be fetched the step also fails (an error line, no guess). The job has a
+concurrency group (`release-live`) shared by all branches with `cancel-in-progress: false`, so two
+live runs cannot overlap.
 
 ## Smoke test (`smoke/**`)
 
@@ -225,8 +225,8 @@ quotes the last `remaining_today`. It confirms nothing by itself.
 
 | Name | Where | Used by | If missing |
 |---|---|---|---|
-| `META_MODEL_API_KEY` | repository secret | `gate-live` (presence only) and `live` | the live job does not run |
-| `GITHUB_TOKEN` | provided by Actions | `gate-live` (counts today's live runs, `actions: read`) | the live job does not run |
+| `META_MODEL_API_KEY` | repository secret | `live` (presence only, in its first step; then the calls) | the live job does not run |
+| `GITHUB_TOKEN` | provided by Actions | `live` first step (counts today's live attempts, `actions: read`) | the live job does not run |
 | `MAUDESIGNAL_SMOKE_KEYS` | repository secret (optional) | smoke | keyed checks BLOCKED |
 | `MAUDESIGNAL_ADMIN_KEY_SMOKE` | repository secret (optional) | smoke | TEST entries remain; reported |
 
@@ -237,7 +237,7 @@ limited by the app's own cap.
 ## Limits of these checks
 
 * The API contract job has no fake model, so prompt injection against a real model is checked
-  only in the `live` job (one question) and in the smoke run; the other injection checks prove
+  only in the release `live` job (one question), not in the smoke run; the other injection checks prove
   that the server never returns keys, prompt text or ungated sentences, not how a model
   behaves.
 * `smoke.yml` and the `e2e` job of `release-check.yml` install the same pinned `playwright==1.63.0`
@@ -249,9 +249,9 @@ limited by the app's own cap.
   a direct GET of the local API's public check that gives no answer, 502, 503 or 504; any other
   status (404, 401, 500) is a FAIL.
 * The smoke default `WEB_URL` is the `track-b-ui` deployment, whose camera posts to `/v1/label`
-  (its chat makes no API call). The browser pass counts `/v1/label` and `/v1/voice` in the budget
-  as well as `/v1/live/*`; point `web_url` at a build whose client uses `/v1/live/*` to exercise
-  the live chat.
+  (its chat makes no API call). The smoke browser pass mocks `/v1/live/*`, `/v1/label` and `/v1/voice`
+  (recorded-mode bodies) and spends $0; it does not exercise the live model whichever build
+  `web_url` names.
 * The e2e job runs on GitHub's Ubuntu runners; Safari on a device is not tested, only WebKit.
 * Coverage is measured on `tests/unit` (the browser tests are a separate job).
 * The Playwright scenarios use the app's visible labels and test ids; a renamed control makes a

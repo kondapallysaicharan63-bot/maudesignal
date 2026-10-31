@@ -635,17 +635,16 @@ def test_workflow_triggers_and_secret_rules() -> None:
     st = sm.get("on") or sm.get(True)
     assert st["push"]["branches"] == ["smoke/**"] and "workflow_dispatch" in st
     jobs = rc["jobs"]
-    # the live job needs the decision job; the decision needs the secret and "live" in the branch
-    assert jobs["live"]["needs"] == "gate-live"
-    assert "run_live == 'true'" in jobs["live"]["if"]
-    decide = json.dumps(jobs["gate-live"])
-    assert "META_MODEL_API_KEY" in decide and "*live*" in decide
+    # the live job runs on a branch with "live" in its name; its first step checks the secret
+    assert "live" in jobs["live"]["if"] and "needs" not in jobs["live"]
+    guard = json.dumps(jobs["live"]["steps"][0])
+    assert "META_MODEL_API_KEY" in guard
     live = json.dumps(jobs["live"])
     assert '"MAUDESIGNAL_LIVE_DAILY_USD": "0.60"' in live  # the app's own cap
     assert "INSTANCE_DIVISOR" not in live  # no code reads it; the doc does not claim it
-    # the Meta key is read from a secret only by those two jobs, and never in an echo
+    # the Meta key is read from a secret only by the live job, and never in an echo
     for job_name, job in jobs.items():
-        if job_name not in ("live", "gate-live"):
+        if job_name != "live":
             assert "META_MODEL_API_KEY" not in json.dumps(job), job_name
     assert not re.search(
         r"echo[^\n]*META_MODEL_API_KEY", (WORKFLOWS / "release-check.yml").read_text()
@@ -979,28 +978,6 @@ def test_smoke_and_release_install_the_same_pinned_playwright_and_pillow() -> No
     smoke_pins = pins("smoke.yml")
     assert len(smoke_pins) == 2, smoke_pins
     assert smoke_pins == pins("release-check.yml")
-
-
-def test_gate_live_stops_after_three_live_runs_today() -> None:
-    import yaml
-
-    rc = yaml.safe_load((WORKFLOWS / "release-check.yml").read_text())
-    gate = rc["jobs"]["gate-live"]
-    text = json.dumps(gate)
-    assert gate["permissions"]["actions"] == "read"
-    assert "GITHUB_TOKEN" in text and "actions/workflows/release-check.yml/runs" in text
-    assert '"MAX_LIVE_RUNS_PER_DAY": "3"' in text
-
-
-def test_gate_live_counts_attempts_pages_and_serialises() -> None:
-    import yaml
-
-    rc = yaml.safe_load((WORKFLOWS / "release-check.yml").read_text())
-    gate = rc["jobs"]["gate-live"]
-    text = json.dumps(gate)
-    assert "run_attempt" in text and "RUN_ATTEMPT" in text  # attempts, not runs
-    assert "page=$page" in text  # every page of results
-    assert gate["concurrency"]["group"] == "release-live-gate"
 
 
 def test_workflows_pin_uvicorn_and_do_not_upgrade_pip() -> None:

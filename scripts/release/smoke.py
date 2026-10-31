@@ -244,7 +244,16 @@ class Smoke:
                 required=False,
                 cost_usd=cost,
             )
-        self.clean(f"{name}: no key in the response", r)
+        if r.status == 0:
+            # no answer at all: nothing was checked, so this is never a pass
+            self.rep.add(
+                f"{name}: no key in the response",
+                FAIL,
+                f"no answer (HTTP 0), nothing to check: {r.error[:120]}",
+                group="security",
+            )
+        else:
+            self.clean(f"{name}: no key in the response", r)
 
     def skipped_budget(self, name: str) -> None:
         """A live call the budget refused: a FAIL line, never silent."""
@@ -473,6 +482,14 @@ class Smoke:
         allowed = min(
             max_live, self.budget.remaining_counts()["ask"], self.budget.max_asks_by_dollars()
         )
+        if allowed < max_live:
+            # the request was lowered because of the budget: never silent
+            self.rep.add(
+                "load: live asks requested",
+                FAIL,
+                f"{SKIPPED_BUDGET} ({max_live - allowed} asks)",
+                group="load",
+            )
         if allowed <= 0:
             self.rep.add(
                 "load: live asks",

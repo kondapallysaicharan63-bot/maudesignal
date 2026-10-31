@@ -80,9 +80,12 @@ def main(argv: list[str] | None = None) -> int:
     def can_run(cap: float) -> bool:
         return spent + cap <= HARD_CAP_USD + 1e-9
 
-    def record(name: str, status: int, body: dict[str, Any], elapsed_ms: int) -> None:
+    def record(name: str, status: int, body: dict[str, Any], elapsed_ms: int, cap: float) -> None:
         nonlocal spent
-        cost = cost_of(body)
+        # no answer, a non-200 answer or no cost_usd: the model may still have run, so the call
+        # counts at its full cap in the total (never $0)
+        has_cost = status == 200 and body.get("cost_usd") is not None
+        cost = cost_of(body) if has_cost else cap
         spent += cost
         mode = body.get("mode")
         rows.append(
@@ -118,7 +121,7 @@ def main(argv: list[str] | None = None) -> int:
     first: dict[str, Any] = {}
     if can_run(ASK_CAP):
         status, first, ms, text = post_json("/v1/live/ask", {"question": QUESTIONS[0]})
-        record("chat question 1", status, first, ms)
+        record("chat question 1", status, first, ms, ASK_CAP)
         rep.ok("chat 1: no key-shaped string", not find_key_shapes(text), "key shape in response")
     else:
         rep.add("chat question 1", FAIL, "skipped: the budget would pass the cap", group="live")
@@ -127,7 +130,7 @@ def main(argv: list[str] | None = None) -> int:
         status, body, ms, text = post_json(
             "/v1/live/ask", {"question": QUESTIONS[1], "history": history}
         )
-        record("chat question 2 (with history)", status, body, ms)
+        record("chat question 2 (with history)", status, body, ms, ASK_CAP)
         sentences = (body.get("answer") or {}).get("speakable") or []
         rep.ok(
             "chat 2: sentences carry links or a withheld list exists",
@@ -156,7 +159,7 @@ def main(argv: list[str] | None = None) -> int:
             timeout=120,
         )
         vb = r.json() if isinstance(r.json(), dict) else {}
-        record(f"voice question ({voice[0]}, 16 kHz)", r.status, vb, r.elapsed_ms)
+        record(f"voice question ({voice[0]}, 16 kHz)", r.status, vb, r.elapsed_ms, VOICE_CAP)
         rep.ok(
             "voice: the page gets what was heard",
             bool(vb.get("heard")),
@@ -180,7 +183,7 @@ def main(argv: list[str] | None = None) -> int:
             timeout=120,
         )
         lb = r.json() if isinstance(r.json(), dict) else {}
-        record("label photo (label-caresens-n.jpg)", r.status, lb, r.elapsed_ms)
+        record("label photo (label-caresens-n.jpg)", r.status, lb, r.elapsed_ms, LABEL_CAP)
         status_text = (lb.get("matches") or {}).get("status")
         rep.ok(
             "label: matches wait for a person (never auto-confirmed)",
@@ -193,7 +196,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if can_run(ASK_CAP):
         status, body, ms, text = post_json("/v1/live/ask", {"question": INJECTION})
-        record("prompt-injection question", status, body, ms)
+        record("prompt-injection question", status, body, ms, ASK_CAP)
         rep.ok(
             "injection: no key-shaped string in the answer",
             not find_key_shapes(text),
