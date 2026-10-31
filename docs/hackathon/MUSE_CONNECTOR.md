@@ -254,6 +254,24 @@ An original mark (the words MAUDE and SIGNAL above a pulse line); no Meta or FDA
 | Deletion or questions? | The support email above or the GitHub issues URL. |
 | Medical advice? | No. Not medical advice; nothing is filed with FDA; not an FDA-cleared device. Open-source project by Saicharan Kondapally. |
 
+### If Research is switched on (`MAUDESIGNAL_RESEARCH=1`; OFF by default)
+
+**This note applies ONLY when the operator switches Research mode on. While it is off (the
+default), none of it happens and the answers above are complete.** `/privacy` shows the same
+paragraph only while it is on.
+
+- When a person ticks Research on the website, the question is sent to Meta's Muse Spark
+  (Meta Model API), which runs web searches built from it. This applies even to a question that
+  would otherwise be answered without a model. (Greetings, medical-advice and "is it safe"
+  refusals, and questions refused as patient data, never start a web search.)
+- If the web search fails, words from the question are sent to the GDELT news index instead.
+- The links shown are public web pages, not FDA records, and are not checked by the claim gate.
+- When a person clicks Save on a link, its address, title and date, the time, and an unverified
+  visitor marker (a salted one-way hash of the address, plus the referral code of the link the
+  visitor came from, if any) are kept in the audit trail. The question itself is not kept.
+- Switch it on only after the web-search probe has shown that Meta honours the two-search limit
+  and the per-search fee is known (see `src/maudesignal/connector/research.py`).
+
 ## Two keys (reviewer key plus your own)
 
 `MAUDESIGNAL_API_KEYS` takes several entries in one value, separated by commas, and the value for

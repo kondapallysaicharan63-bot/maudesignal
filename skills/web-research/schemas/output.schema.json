@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "maudesignal/skills/web-research/output.schema.json",
-  "title": "Research block (web-research 1.0.0)",
+  "title": "Research block (web-research 1.1.0)",
   "type": "object",
   "additionalProperties": false,
   "required": ["status", "label", "items", "summary_text", "cost_usd", "note"],
@@ -23,7 +23,7 @@
         }
       }
     },
-    "summary_text": {"type": ["string", "null"], "maxLength": 1500},
+    "summary_text": {"type": "null"},
     "cost_usd": {"type": "number", "minimum": 0},
     "note": {"type": ["string", "null"]}
   }

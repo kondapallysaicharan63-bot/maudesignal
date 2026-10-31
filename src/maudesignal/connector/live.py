@@ -11,9 +11,12 @@ Routes (hidden from the public OpenAPI document, keyless, browser origin must be
     POST /v1/live/research/save  JSON {url, title?, date?, person_action: true, ref?}
                                  (only when MAUDESIGNAL_RESEARCH is on; 404 otherwise)
 
-``POST /v1/live/ask`` also takes ``research: true``: when ``MAUDESIGNAL_RESEARCH`` is on, the
-response gets a ``research`` block (``connector.research``) BESIDE the gated answer, never in
-it, with its own per-visitor limit (5 a day) and its own spend reservation.
+When ``MAUDESIGNAL_RESEARCH`` is on (default off), ``POST /v1/live/ask`` also takes
+``research: true`` and the response gets a ``research`` block (``connector.research``) BESIDE
+the gated answer, never in it, with its own per-visitor limit (5 a day) and its own spend
+reservation. Not for canned replies (greetings, medical-advice or "is it safe" refusals) or
+a question refused as patient data. When the flag is off the ``research`` field is refused
+(422, unknown field) and the save route answers exactly like a route that does not exist.
 
 What this module adds on top of the existing pieces (it reuses, and does not copy, them):
 
@@ -62,12 +65,14 @@ from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
+from urllib.parse import unquote, urlsplit
 
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from PIL import Image, ImageOps
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 from starlette.concurrency import run_in_threadpool
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.requests import ClientDisconnect
 
 from maudesignal.common.logging import get_logger
@@ -489,13 +494,21 @@ class AskIn(_CommonIn):
 
     question: str = Field(min_length=MIN_MESSAGE_CHARS, max_length=MAX_QUESTION_CHARS)
     ref: str | None = Field(default=None, max_length=200)
-    #: Research mode (web links next to the answer); ignored unless MAUDESIGNAL_RESEARCH is on.
-    research: bool = Field(default=False, strict=True)
 
     @field_validator("ref", mode="before")
     @classmethod
     def _ref(cls, value: Any) -> Any:
         return clean_ref(value)  # never kept or logged; only accepted
+
+
+class AskResearchIn(AskIn):
+    """``POST /v1/live/ask`` body while ``MAUDESIGNAL_RESEARCH`` is on (adds ``research``)."""
+
+    research: bool = Field(default=False, strict=True)
+
+
+_SAVE_DATE = re.compile(r"^\d{4}-\d{2}(?:-\d{2})?$")
+MAX_SAVE_QUERY_CHARS = 200
 
 
 class ResearchSaveIn(BaseModel):
@@ -513,8 +526,20 @@ class ResearchSaveIn(BaseModel):
     @field_validator("url", mode="after")
     @classmethod
     def _url(cls, value: str) -> str:
-        if research.clean_url(value) is None:
+        url = value.split("#", 1)[0]  # fragments are never kept
+        if research.clean_url(url) is None:
             raise ValueError("url must be an http(s) link")
+        if len(urlsplit(url).query) > MAX_SAVE_QUERY_CHARS:
+            raise ValueError("url query is too long")
+        return url
+
+    @field_validator("date", mode="after")
+    @classmethod
+    def _date(cls, value: str | None) -> str | None:
+        if value is None or value == "":
+            return None
+        if not _SAVE_DATE.fullmatch(value):
+            raise ValueError("date must be YYYY-MM-DD or YYYY-MM")
         return value
 
     @field_validator("ref", mode="before")
@@ -1052,6 +1077,9 @@ def mount_live(
         request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
         """CORS for the live routes: exact origins from the environment, no credentials."""
+        if request.url.path == RESEARCH_SAVE_PATH and not research_on():
+            # Research off: every method gets exactly what a route that does not exist gets.
+            return JSONResponse(status_code=404, content={"detail": "Not Found"})
         if request.url.path not in LIVE_PATHS:
             return await call_next(request)
         origin = request.headers.get("origin", "").rstrip("/")
@@ -1185,11 +1213,21 @@ def mount_live(
             ledger=call_ledger,
             fee_per_search=research.search_fee_usd(env),
             news_fetcher=be.research_fetcher,
+            hold_cap=research.hold_cap_usd(env),
         )
 
     async def research_for(request: Request, body: AskIn) -> dict[str, Any] | None:
-        """``None`` unless research was asked for and the flag is on; the limit is per visitor."""
-        if not body.research or not research_on():
+        """``None`` unless research was asked for, the flag is on and the reply is not canned.
+
+        Canned replies (greetings, medical-advice and "is it safe" refusals) never trigger a
+        web search; a patient-data question was already refused before this point.
+        """
+        if not research_on() or not getattr(body, "research", False):
+            return None
+        route = chat.route_for(
+            data, body.question, body.product_code, has_history=bool(body.history)
+        )
+        if route.tier == "canned":
             return None
         ok, _left = counters["research"].hit(who(request))
         if not ok:
@@ -1206,7 +1244,8 @@ def mount_live(
             return raw
         try:
             payload = json.loads(raw)
-            body = AskIn.model_validate(payload)
+            model = AskResearchIn if research_on() else AskIn
+            body = model.model_validate(payload)
         except ValueError as exc:
             if isinstance(exc, ValidationError):
                 return invalid(exc)
@@ -1250,8 +1289,8 @@ def mount_live(
     @app.post(RESEARCH_SAVE_PATH, include_in_schema=False)
     async def live_research_save(request: Request) -> Response:
         """Keep one research link in the audit trail: url, title, date, who, when. No question."""
-        if not research_on():
-            return _err(404, "not_found", "Not found.")
+        if not research_on():  # exactly what a route that does not exist answers
+            raise StarletteHTTPException(status_code=404)
         if (blocked := burst_refusal(request)) is not None:
             return blocked
         raw = await read_capped(request, MAX_JSON_BYTES)
@@ -1265,7 +1304,7 @@ def mount_live(
             return _err(422, "invalid_input", "Body must be a JSON object.")
         if not body.person_action:
             return _err(422, "invalid_input", "A person must choose to save this link.")
-        if phi_in([body.title]):
+        if phi_in([body.title, unquote(body.url), body.date or ""]):
             return _err(422, "patient_data", PHI_MESSAGE)
         refused, remaining = daily_refusal(request, "research-save")
         if refused is not None:
@@ -1275,8 +1314,9 @@ def mount_live(
             body.url,
             research.safe_title(body.title, body.url),
             body.date,
-            body.ref or "anonymous",
             saved_at,
+            visitor=who(request),
+            ref=body.ref,
         )
         try:
             entry = await run_in_threadpool(

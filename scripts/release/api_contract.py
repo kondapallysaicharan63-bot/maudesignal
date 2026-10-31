@@ -805,7 +805,7 @@ class Contract:
         return buf.getvalue()
 
     def check_research(self) -> None:
-        """Research mode: off by default (no block, save 404); when on, the block sits beside."""
+        """Research mode: off by default (field refused, save 404); when on, block sits beside."""
         on = (self.get("/v1/health").json() or {}).get("features", {}).get("research") is True
         q = {"question": "Recalls for QIH", "research": True}
         r = self.post("/v1/live/ask", self.fresh(), json_body=q)
@@ -817,8 +817,8 @@ class Contract:
         )
         if not on:
             self.rep.ok(
-                "research off: ask has no research block, save is 404",
-                r.status == 200 and "research" not in b and save.status == 404,
+                "research off: the research field is refused (422) and save is 404 (no route)",
+                r.status == 422 and "research" not in b and save.status == 404,
                 f"HTTP {r.status} research={'research' in b} save={save.status}",
                 group="live",
             )

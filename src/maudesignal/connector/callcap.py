@@ -48,6 +48,9 @@ from maudesignal.vision.sam import SAM_USD_PER_IMAGE
 logger = get_logger(__name__)
 
 LEDGER_PREFIX = "ledger"
+#: Day-level flags (for example "research is switched off for today"). Kept OUTSIDE the ledger
+#: prefix so a flag is never read as a ledger object.
+FLAG_PREFIX = "ledger-flags"
 #: The largest worst-case hold one call may place. A call above it is not made.
 MAX_CALL_HOLD_USD = 0.10
 #: Output cap used when a caller did not set ``max_tokens`` (every call must have one).
@@ -239,21 +242,65 @@ class CallLedger:
         except StoreError:
             logger.error("call_refused_hold_kept")
 
-    def reserve(self, hold_usd: float) -> Reservation:
+    # -- day-level flags (research kill switch) ---------------------------------------------
+
+    def _flag_path(self, name: str, day: str) -> str:
+        return f"{FLAG_PREFIX}/{day}/{name}.json"
+
+    def set_flag(self, name: str, reason: str = "") -> bool:
+        """Raise the day-level flag ``name`` (for example ``research``). True when written."""
+        day = self._today().isoformat()
+        try:
+            self._store.put_json(self._flag_path(name, day), {"flag": name, "reason": reason[:80]})
+        except StoreError:
+            logger.error("ledger_flag_write_failed", flag=name)
+            return False
+        logger.warning("ledger_flag_set", flag=name, reason=reason[:80])
+        return True
+
+    def flag_set(self, name: str) -> bool:
+        """True when today's flag ``name`` is raised, or when it cannot be read (fail closed)."""
+        path = self._flag_path(name, self._today().isoformat())
+        try:
+            return any(r.pathname == path for r in self._store.list_prefix(path, strict=True))
+        except StoreError:
+            return True
+
+    def reserve(
+        self,
+        hold_usd: float,
+        *,
+        max_hold_usd: float = MAX_CALL_HOLD_USD,
+        cap_usd: float | None = None,
+        kind: str | None = None,
+        exclusive: bool = False,
+        blocked_by: str | None = None,
+    ) -> Reservation:
         """Hold ``hold_usd`` before a call, or raise :class:`CallRefusedError`.
 
         Writes our object, lists the day, sums the counted values and compares the sum
         (ours included) with the cap. Nothing is called on any failure.
+
+        The keyword arguments are used only by Research mode; their defaults keep the rule
+        above unchanged for every other call. ``max_hold_usd`` is the largest hold allowed for
+        this call; ``cap_usd`` a lower cap for it; ``kind`` names the object
+        (``<kind>-<uuid>.json``); ``exclusive`` refuses the call while another unsettled object
+        of the same kind is listed (one such call in flight per day); ``blocked_by`` refuses
+        it while that day-level flag is raised.
         """
         hold = round(float(hold_usd), 6)
         if not math.isfinite(hold) or hold < 0:
             raise CallRefusedError("size", "The call's worst-case cost is not valid.")
-        if hold > MAX_CALL_HOLD_USD + 1e-9:
+        if hold > max_hold_usd + 1e-9:
             raise CallRefusedError(
                 "size", "The call's worst-case cost is above the per-call limit."
             )
+        if blocked_by is not None and self.flag_set(blocked_by):
+            raise CallRefusedError("flag", "This kind of call is switched off for today.")
+        cap = self.cap_usd if cap_usd is None else min(cap_usd, self.cap_usd)
         day = self._today().isoformat()
-        path = f"{self._prefix(day)}{uuid.uuid4().hex}.json"
+        name = f"{kind}-{uuid.uuid4().hex}" if kind else uuid.uuid4().hex
+        path = f"{self._prefix(day)}{name}.json"
         try:
             self._store.put_json(path, {"hold_usd": hold})
         except StoreError:
@@ -265,9 +312,25 @@ class CallLedger:
             raise
         if path not in listed:
             total = round(total + hold, 6)  # our write is not listed yet: count it anyway
-        if total > self.cap_usd + 1e-9:
+        if total > cap + 1e-9:
             self._take_back(path)
             raise CallRefusedError("cap", "Today's live-call budget is used up.")
+        if exclusive and kind:
+            marker = f"{self._prefix(day)}{kind}-"
+            with self._lock:
+                busy = [
+                    p
+                    for p in listed
+                    if p != path and p.startswith(marker) and p not in self._settled
+                ]
+            if busy:
+                self._take_back(path)
+                raise CallRefusedError("busy", "Another call of this kind is in flight.")
+        if blocked_by is not None and self.flag_set(blocked_by):
+            # Checked again AFTER our object is listed: a call of this kind that finished in
+            # between raised the flag before it settled, so we see the flag here.
+            self._take_back(path)
+            raise CallRefusedError("flag", "This kind of call is switched off for today.")
         return Reservation(self._store, path, hold)
 
     def metered(
@@ -275,19 +338,37 @@ class CallLedger:
         hold_usd: float,
         call: Callable[[], Any],
         actual_usd: Callable[[Any], float | None],
+        *,
+        kill_flag: str | None = None,
+        **reserve_options: Any,
     ) -> Any:
         """Reserve ``hold_usd``, run ``call`` and settle after a successful reply with usage.
 
         ``actual_usd(result)`` returns the real cost, or ``None`` when the reply has no usage
         (the hold then stays). An exception from ``call`` propagates with the hold in place.
+
+        Research mode only: ``reserve_options`` go to :meth:`reserve`, and with ``kill_flag``
+        a real cost above the hold is still recorded but also raises that day-level flag, so
+        no further call of that kind is reserved today. Other callers pass neither.
         """
-        reservation = self.reserve(hold_usd)
-        result = call()
+        reservation = self.reserve(hold_usd, **reserve_options)
+        try:
+            result = call()
+        except BaseException:
+            if reserve_options.get("exclusive"):
+                # An exclusive (research) call that failed is no longer in flight: mark its
+                # object settled AT ITS HOLD, so it counts exactly what an unsettled hold counts
+                # but no longer blocks the next call of its kind. Other calls are untouched.
+                reservation.settle(reservation.hold_usd)
+            raise
         try:
             actual = actual_usd(result)
         except Exception:  # noqa: BLE001 - unreadable usage: the hold stays
             actual = None
         if actual is not None:
+            if kill_flag is not None and actual > reservation.hold_usd + 1e-9:
+                # Raised BEFORE the settle, so no call of this kind can be reserved between.
+                self.set_flag(kill_flag, "real cost above the hold")
             reservation.settle(actual)
         return result
 

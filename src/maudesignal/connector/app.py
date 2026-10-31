@@ -266,10 +266,6 @@ class Health(BaseModel):
     limits_scope: str
     state_store: str
     feedback_store: str
-    features: dict[str, bool] | None = Field(
-        default=None,
-        description="Optional features that are switched on; absent when none is.",
-    )
 
 
 class DemoLimits(BaseModel):
@@ -770,6 +766,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 shared_store=state.backend == "upstash_redis",
                 live_on=live_mode_allowed()
                 and (state.has_call_ledger or os.environ.get(ALLOW_PER_INSTANCE_ENV) == "1"),
+                research_on=research_enabled(),
             )
         )
 
@@ -791,13 +788,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get(
         "/v1/health",
         response_model=Health,
-        response_model_exclude_none=True,
         operation_id="health",
         summary="Service status (no key needed)",
         tags=["service"],
     )
-    def health() -> Health:
-        return Health(
+    def health() -> Health | JSONResponse:
+        body = Health(
             status="ok",
             service="maudesignal-connector",
             version=API_VERSION,
@@ -806,8 +802,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             limits_scope="shared" if state.shared else "per_instance",
             state_store=state.backend,
             feedback_store=cfg.feedback_store.backend,
-            features={"research": True} if research_enabled() else None,
         )
+        if research_enabled():  # off: the body (and the OpenAPI schema) stay exactly as before
+            return JSONResponse(body.model_dump() | {"features": {"research": True}})
+        return body
 
     @app.get(
         "/v1/tools/what_changed_this_week",
