@@ -26,7 +26,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from starlette.concurrency import run_in_threadpool
 from starlette.requests import ClientDisconnect
 
-from maudesignal.common.exceptions import OpenFDAAPIError
+from maudesignal.common.exceptions import MaudeSignalError, OpenFDAAPIError
 from maudesignal.common.logging import get_logger
 from maudesignal.connector import tools
 from maudesignal.connector.asgi import RejectKeyInQuery
@@ -89,7 +89,7 @@ from maudesignal.connector.store import (
     UpstashError,
     verify_chain,
 )
-from maudesignal.connector.tools import Clock, LiveChecker, utc_now
+from maudesignal.connector.tools import Clock, CodeChecker, LiveChecker, utc_now
 from maudesignal.ingestion.openfda_client import OpenFDAClient
 from maudesignal.monitor.live_check import LiveCheck, check_product_code, normalize_code
 
@@ -212,6 +212,8 @@ class Settings:
     ask_runtime: AskRuntime | None = None
     live_checker: LiveChecker = _default_live_checker
     lookup_searcher: Searcher | None = None  # None: real openFDA (tests pass a fake)
+    #: Is the code in openFDA's device classification? None: ask openFDA through the searcher.
+    code_exists: CodeChecker | None = None
     now: Clock = utc_now
     state: ConnectorState = field(default_factory=ConnectorState.from_env)
     web_origins: tuple[str, ...] = field(default_factory=_origins_from_env)
@@ -486,6 +488,25 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         record_audit(audit_id, tool, inputs, answer, None, label)
         return answer
 
+    def code_exists(code: str) -> bool | None:
+        """One openFDA classification query: does FDA list this product code?
+
+        None when openFDA cannot be reached (the caller then does not call the code unknown).
+        """
+        if cfg.code_exists is not None:
+            return cfg.code_exists(code)
+        own = cfg.lookup_searcher is None
+        searcher: Searcher = cfg.lookup_searcher or OpenFdaSearcher(
+            os.environ.get("OPENFDA_API_KEY") or None
+        )
+        try:
+            return bool(searcher.query("classification", f"product_code:{code}", limit=1).results)
+        except MaudeSignalError:
+            return None
+        finally:
+            if own and isinstance(searcher, OpenFdaSearcher):
+                searcher.close()
+
     def dispatch(request: Request, name: str, args: dict[str, str]) -> ToolAnswer:
         """Run one tool with its audit entry; REST routes and ``/mcp`` both call this."""
         key_id = str(request.state.audit_id)
@@ -496,7 +517,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 name,
                 {"product_code": code or ""},
                 lambda: tools.what_changed_this_week(
-                    cfg.data, code, live_checker=cfg.live_checker, now=cfg.now
+                    cfg.data,
+                    code,
+                    live_checker=cfg.live_checker,
+                    now=cfg.now,
+                    code_exists=code_exists,
                 ),
             )
         if name == "check_device_type":
@@ -505,7 +530,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 name,
                 {"product_code": args["product_code"]},
                 lambda: tools.check_device_type(
-                    cfg.data, args["product_code"], live_checker=cfg.live_checker, now=cfg.now
+                    cfg.data,
+                    args["product_code"],
+                    live_checker=cfg.live_checker,
+                    now=cfg.now,
+                    code_exists=code_exists,
                 ),
             )
         if name == "ask":
@@ -929,7 +958,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return seen[-1]
 
         try:
-            base = tools.check_device_type(cfg.data, code, live_checker=live, now=cfg.now)
+            base = tools.check_device_type(
+                cfg.data, code, live_checker=live, now=cfg.now, code_exists=code_exists
+            )
         except ConnectorError as exc:
             record_audit(PUBLIC_ACTOR, "public_check_device_type", inputs, None, exc.code)
             raise

@@ -5,7 +5,8 @@ HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 Every message is fixed text (it never repeats a caller's value, except a three-letter product
 code that already passed the letters-only check). Suggestions are the closest product codes the
 connector knows by edit distance; they are shown to the person and never applied automatically,
-and a code that is known is never corrected.
+and a code that is known (stored data, openFDA reports or listed in the openFDA device
+classification) is never corrected.
 """
 
 from __future__ import annotations
@@ -57,7 +58,8 @@ def suggest_codes(code: str, known: Iterable[str]) -> list[str]:
     return [k for d, k in sorted(scored) if d == best][:MAX_SUGGESTIONS]
 
 
-def _either(items: list[str]) -> str:
+def either(items: list[str]) -> str:
+    """Join items for a sentence: "A", "A or B", "A, B or C"."""
     if len(items) == 1:
         return items[0]
     return ", ".join(items[:-1]) + " or " + items[-1]
@@ -67,9 +69,10 @@ def unknown_code_error(code: str, known: Iterable[str]) -> UnknownProductCodeErr
     """The error for a well-formed code with no stored data and no reports on openFDA."""
     close = suggest_codes(code, known)
     message = f"{code} isn't a product code we know"
-    message += f" - did you mean {_either(close)}?" if close else "."
+    message += f" - did you mean {either(close)}?" if close else "."
     message += (
-        " It is not in the stored data and openFDA returned no reports for it."
+        " It is not in the stored data, openFDA returned no reports for it and it is not in"
+        " the openFDA device classification list."
         " Check the code with the person, or use lookup_device with the device name."
     )
     return UnknownProductCodeError(message, close)

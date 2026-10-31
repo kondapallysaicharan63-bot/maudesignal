@@ -63,7 +63,13 @@ def small(tmp_path: Path) -> ConnectorData:
     return d
 
 
-def make_client(data: ConnectorData, tmp_path: Path, *, empty: bool = False) -> TestClient:
+def make_client(
+    data: ConnectorData,
+    tmp_path: Path,
+    *,
+    empty: bool = False,
+    exists: bool | None = False,
+) -> TestClient:
     settings = Settings(
         keys=KeyStore.from_env({"MAUDESIGNAL_API_KEYS": KEY}),
         limiter=RateLimiter(1000),
@@ -71,6 +77,7 @@ def make_client(data: ConnectorData, tmp_path: Path, *, empty: bool = False) -> 
         ask_runtime=AskRuntime(live_enabled=lambda: False, ledger_dir=tmp_path / "led"),
         live_checker=no_reports if empty else fake_check,
         lookup_searcher=FakeSearcher(k510=[ROW_802]),
+        code_exists=lambda _code: exists,
     )
     return TestClient(create_app(settings), raise_server_exceptions=False)
 
@@ -153,6 +160,72 @@ def test_existing_code_is_passed_through_unchanged(data: ConnectorData, tmp_path
     r = c.get("/v1/tools/check_device_type", params={"product_code": "llz"}, headers=H)
     assert r.status_code == 200 and "LLZ" in r.json()["speakable"]
     assert "LLZ" in data.known_product_codes() and "QIH" in data.known_product_codes()
+
+
+def test_real_fda_code_with_zero_reports_is_answered_not_corrected(
+    small: ConnectorData, tmp_path: Path
+) -> None:
+    # QAH is in openFDA's classification list but has no reports: 200, no suggestions.
+    c = make_client(small, tmp_path, empty=True, exists=True)
+    for path in ("check_device_type", "what_changed_this_week"):
+        r = c.get(f"/v1/tools/{path}", params={"product_code": "QAH"}, headers=H)
+        assert r.status_code == 200
+        body = r.json()
+        assert "openFDA returned no reports for QAH" in body["speakable"]
+        assert "did you mean" not in r.text and "suggestions" not in r.text
+        assert any("openFDA" in f["link_label"] for f in body["facts"])
+    text = rpc(
+        c, "tools/call", {"name": "check_device_type", "arguments": {"product_code": "QAH"}}
+    )["result"]["content"][0]["text"]
+    assert "no reports for QAH" in text
+    pub = c.get("/v1/public/check_device_type", params={"product_code": "QAH"})
+    assert pub.status_code == 200
+
+
+def test_unreachable_classification_list_does_not_call_a_code_unknown(
+    small: ConnectorData, tmp_path: Path
+) -> None:
+    c = make_client(small, tmp_path, empty=True, exists=None)
+    r = c.get("/v1/tools/check_device_type", params={"product_code": "QAH"}, headers=H)
+    assert r.status_code == 200 and "unknown" not in r.text
+    assert "did you mean" not in r.text
+
+
+def test_default_code_check_asks_the_classification_endpoint(
+    small: ConnectorData, tmp_path: Path
+) -> None:
+    searcher = FakeSearcher(k510=[ROW_802])
+    settings = Settings(
+        keys=KeyStore.from_env({"MAUDESIGNAL_API_KEYS": KEY}),
+        limiter=RateLimiter(1000),
+        data=small,
+        ask_runtime=AskRuntime(live_enabled=lambda: False, ledger_dir=tmp_path / "led2"),
+        live_checker=no_reports,
+        lookup_searcher=searcher,
+    )
+    c = TestClient(create_app(settings), raise_server_exceptions=False)
+    r = c.get("/v1/tools/check_device_type", params={"product_code": "QAH"}, headers=H)
+    assert r.status_code == 200  # the fake lists every code
+    assert ("classification", "product_code:QAH") in searcher.calls
+
+
+def test_recalls_offers_suggestions_without_failing(small: ConnectorData, tmp_path: Path) -> None:
+    c = make_client(small, tmp_path)
+    r = c.get("/v1/tools/recalls", params={"product_code": "QAH"}, headers=H)
+    assert r.status_code == 200
+    body = r.json()
+    assert "QAH isn't a product code we know - did you mean QIH?" in body["speakable"]
+    assert "QIH" in body["provenance"]["note"] and "not applied" in body["provenance"]["note"]
+    known = c.get("/v1/tools/recalls", params={"product_code": "QIH"}, headers=H).json()
+    assert "did you mean" not in known["speakable"]
+
+
+def test_known_set_without_the_sweep_file_still_suggests(tmp_path: Path) -> None:
+    # The deployed bundle may lack demo/sweep: suggestions then come from the other sources.
+    d = ConnectorData(work_dir=tmp_path / "nosweep")
+    d._sweep = tmp_path / "missing.json"
+    codes = d.known_product_codes()
+    assert codes and suggest_codes("QAH", codes) in (["QIH"], [])
 
 
 def test_live_code_with_reports_is_not_rejected(data: ConnectorData, tmp_path: Path) -> None:

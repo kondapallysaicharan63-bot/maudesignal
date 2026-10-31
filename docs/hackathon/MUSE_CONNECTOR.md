@@ -154,7 +154,7 @@ text of an `isError: true` tool result. Messages are fixed text and never repeat
 | Case | Message |
 |---|---|
 | Product code not three letters | A product code is three letters, for example LLZ or QIH. |
-| Three-letter code with no stored data and no openFDA reports (`unknown_product_code`) | QAH isn't a product code we know - did you mean QIH? ... (up to 3 closest known codes, by edit distance, also in `suggestions`) |
+| Three-letter code with no stored data, no openFDA reports and no openFDA classification entry (`unknown_product_code`) | QAH isn't a product code we know - did you mean QIH? ... (up to 3 closest known codes, by edit distance, also in `suggestions`) |
 | Malformed K-number | K-numbers look like K123456 (the letter K and six digits). |
 | UDI / GTIN fails the GS1 check digit | The GTIN ... does not pass the GS1 check digit test ... Re-read the digits from the label. |
 | Report id not letters, digits, dashes | A report id is letters, digits and dashes, up to 24 characters. |
@@ -163,11 +163,16 @@ text of an `isError: true` tool result. Messages are fixed text and never repeat
 | Input longer than its limit | `<name> is too long: the limit is N characters.` |
 
 "Known" codes are those in the stored reports, the device catalog, the stored digest and the stored
-AI-device sweep (`ConnectorData.known_product_codes`); this repository holds no offline copy of the
-full openFDA classification list. A suggestion is only shown, never applied, and a code that is
-known is never corrected. The unknown-code error is raised only when the code is not known and
-openFDA also has no report for it; `recalls` (stored data only) keeps its "no recalls on file"
-answer for such a code.
+AI-device sweep (`ConnectorData.known_product_codes`; `demo/sweep` is in the Vercel
+`includeFiles`, so the deployed set matches the tests); this repository holds no offline copy of the
+full openFDA classification list. A suggestion is only shown, never applied. When a live check finds
+no report for a code that is not known, the connector makes one more openFDA query on
+`device/classification.json` (`product_code:XXX`). If FDA lists the code, the answer is the normal
+200 "openFDA returned no reports for XXX" with its link and no suggestions. Only a code that is
+also absent from the classification list gets `unknown_product_code` (422). If the classification
+query fails, the 200 answer stands and the code is not called unknown. `recalls` (stored data only)
+never fails on such a code: it keeps its "no recalls on file" answer and adds the "did you mean"
+sentence and a provenance note when close known codes exist.
 
 ## Example prompts
 
@@ -790,6 +795,10 @@ sentences the gate blocks, and scans the whole raw response body (text content a
 any 20-character piece of them. The REST twin of that test is in `test_connector_safety.py`.
 
 ### Real local transcript (MCP client over HTTP)
+
+> This transcript was recorded before MCP prompts and the new server instructions were added: its
+> `initialize` reply shows the older instructions string and no `prompts` capability, and its
+> tool list has five tools. The current `initialize` reply is described in the sections above.
 
 Captured with a short Python client using `httpx` against `uvicorn api.index:app --no-access-log
 --no-proxy-headers` on 127.0.0.1:8766, with a throw-away key made in the client process and passed

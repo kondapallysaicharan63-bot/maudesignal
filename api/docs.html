@@ -64,7 +64,7 @@
   <p>A refused input gets HTTP 422 (REST) or <code>isError: true</code> (MCP) with a short message that says what to fix. The JSON body is always <code>{"error": {"code": "...", "message": "..."}}</code>, plus <code>"suggestions": [...]</code> when there is something to offer.</p>
   <ul>
     <li>A product code that is not three letters: "A product code is three letters, for example LLZ or QIH."</li>
-    <li>A three-letter code with no stored data and no reports on openFDA (<code>unknown_product_code</code>): "QAH isn't a product code we know - did you mean QIH?", with up to 3 closest known codes in <code>suggestions</code>. Suggestions are never applied automatically, and a code that exists is never corrected.</li>
+    <li>A three-letter code with no stored data, no reports on openFDA and no entry in the openFDA device classification list (<code>unknown_product_code</code>): "QAH isn't a product code we know - did you mean QIH?", with up to 3 closest known codes in <code>suggestions</code>. Suggestions are never applied automatically, and a code with stored data, openFDA reports or a classification entry is never corrected (one with only a classification entry is answered "openFDA returned no reports"). If the classification list cannot be reached, the code is not called unknown. <code>recalls</code> is stored-only, so it never fails on an unknown code: it adds the suggestions to its answer.</li>
     <li>A malformed K-number: "K-numbers look like K123456 (the letter K and six digits)."</li>
     <li>A UDI or GTIN whose last digit fails the GS1 check: the message says so.</li>
     <li>A missing input is named ("product_code is required."); a question outside 3 to 500 characters gets the limit.</li>
