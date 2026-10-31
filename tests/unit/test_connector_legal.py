@@ -208,7 +208,108 @@ def test_removing_one_key_revokes_only_that_key() -> None:
     assert KeyStore.from_env({"MAUDESIGNAL_API_KEYS": f"{K1},,"}).verify(K1)
 
 
+def test_with_a_pepper_the_remaining_key_keeps_its_id() -> None:
+    pepper = {"MAUDESIGNAL_KEY_PEPPER": "p" * 32}
+    both = KeyStore.from_env({"MAUDESIGNAL_API_KEYS": f"{K1},{K2}"} | pepper)
+    only_first = KeyStore.from_env({"MAUDESIGNAL_API_KEYS": K1} | pepper)
+    assert both.verify(K1) == only_first.verify(K1) is not None
+    # without a pepper the ids come from all digests: removing a key changes the other's id
+    bare_both = KeyStore.from_env({"MAUDESIGNAL_API_KEYS": f"{K1},{K2}"})
+    bare_first = KeyStore.from_env({"MAUDESIGNAL_API_KEYS": K1})
+    assert bare_both.verify(K1) != bare_first.verify(K1)
+
+
 def test_two_keys_over_http(tmp_path: Path) -> None:
     c = _client(tmp_path, f"{K1}, {K2}")
     for key, code in ((K1, 200), (K2, 200), ("z" * 40, 401)):
         assert c.get("/v1/audit/recent", headers={"X-API-Key": key}).status_code == code
+
+
+# --- no raw address anywhere, and one cap over all keys -----------------------------------------
+
+
+def test_no_raw_address_reaches_any_limiter_or_redis(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from tests.unit.test_connector import fake_check
+    from tests.unit.test_connector_store import FakeRedis, make_state
+
+    ip = "203.0.113.7"
+    monkeypatch.setenv("MAUDESIGNAL_TRUST_FORWARDED", "1")
+    fake = FakeRedis()
+    state = make_state(fake)
+    settings = Settings(
+        keys=KeyStore.from_env({"MAUDESIGNAL_API_KEYS": K1}),
+        data=ConnectorData(work_dir=tmp_path / "d"),
+        now=lambda: NOW,
+        state=state,
+        live_checker=fake_check,
+    )
+    c = TestClient(create_app(settings), raise_server_exceptions=False)
+    h = {"X-Forwarded-For": ip}
+    assert c.get("/v1/audit/recent", headers=h | {"X-API-Key": "z" * 40}).status_code == 401
+    assert c.get("/v1/public/check_device_type?product_code=LLZ", headers=h).status_code == 200
+    seen = [str(cmd) for cmd in fake.calls] + list(fake.kv) + list(fake.lists)
+    assert any("failed-auth" in x for x in seen) and any("public-check" in x for x in seen)
+    assert not any(ip in x for x in seen)
+
+
+def test_total_cap_over_all_keys_falls_back_to_recorded(tmp_path: Path) -> None:
+    from maudesignal.connector.ask import AskRuntime, ask
+    from maudesignal.copilot.spend import SpendCaps
+
+    def boom(*_: object) -> object:
+        raise AssertionError("no live call once the total cap is reached")
+
+    rt = AskRuntime(
+        agent_factory=boom,  # type: ignore[arg-type]
+        live_enabled=lambda: True,
+        caps=SpendCaps(session_usd=0.25, session_calls=20, daily_usd=2.0),
+        total_daily_usd=3.0,
+        ledger_dir=tmp_path / "led",
+    )
+    rt.ledger_for("key-a").add(1.9, 1)  # each key is under its own $2.00 cap ...
+    rt.ledger_for("key-b").add(1.2, 1)  # ... but together they are over $3.00
+    assert rt.ledger_for("key-a").key.spent_today() < 2.0
+    assert rt.ledger_for("key-b").key.spent_today() < 2.0
+    d = ConnectorData(work_dir=tmp_path / "w")
+    a = ask(d, "What changed this week for LLZ?", key_id="key-b", runtime=rt, now=lambda: NOW)
+    assert a.provenance.kind == "recorded_answer"
+    # a third key starts at zero of its own, but the total still blocks it
+    b = ask(d, "What changed this week for LLZ?", key_id="key-c", runtime=rt, now=lambda: NOW)
+    assert b.provenance.kind == "recorded_answer"
+
+
+def test_total_cap_holds_in_the_shared_store(tmp_path: Path) -> None:
+    from maudesignal.connector.ask import AskRuntime
+    from maudesignal.copilot.spend import SpendCaps
+    from tests.unit.test_connector_store import FakeRedis, make_state
+
+    fake = FakeRedis()
+    rt = AskRuntime(
+        caps=SpendCaps(session_usd=0.25, session_calls=20, daily_usd=2.0),
+        total_daily_usd=0.40,
+        state=make_state(fake),
+        ledger_dir=tmp_path / "led",
+    )
+    first = rt.ledger_for("key-a")
+    assert first.shared and first.reserve(0.25)
+    other = rt.ledger_for("key-b")
+    assert other.reserve(0.25) is False  # the $0.40 total would be passed; nothing stays held
+    first.release(0.25)
+    assert other.reserve(0.25) is True
+    assert any(":spend:ALL:" in k for k in fake.kv)
+
+
+def test_terms_show_the_total_cap(tmp_path: Path) -> None:
+    text = _client(tmp_path).get("/terms").text
+    assert "$3.00 over all keys together" in text and "$2.00 per key" in text
+
+
+def test_privacy_statements_match_the_code(tmp_path: Path) -> None:
+    text = " ".join(_client(tmp_path).get("/privacy").text.split())
+    assert "does not call GOV.UK when you use it" in text
+    assert "queried live with a product code only" in text
+    assert "Spend on <code>ask</code> is kept as a daily total per key id" in text
+    assert "replaced by its SHA-256" in text
+    assert "salted one-way hash" in text

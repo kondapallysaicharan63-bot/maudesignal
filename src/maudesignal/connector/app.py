@@ -8,9 +8,11 @@ endpoints need an ``X-API-Key`` header, count against a per-key rate limit and, 
 """
 
 import hashlib
+import hmac
 import json
 import os
 import re
+import secrets
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -67,7 +69,7 @@ from maudesignal.connector.registry import (
     REPORT_ID_PATTERN,
     WHAT_CHANGED_DESCRIPTION,
 )
-from maudesignal.connector.security import KeyStore, RateLimiter
+from maudesignal.connector.security import PEPPER_ENV, KeyStore, RateLimiter
 from maudesignal.connector.store import (
     ConnectorState,
     UpstashError,
@@ -278,6 +280,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     ask_runtime = cfg.ask_runtime or AskRuntime(state=state)
     web_origins = frozenset(cfg.web_origins)
+    address_salt = (os.environ.get(PEPPER_ENV) or secrets.token_hex(16)).encode("utf-8")
+
+    def limiter_who(request: Request) -> str:
+        """Salted hash of the caller address: all the limiters (and Redis) ever see of it."""
+        mac = hmac.new(address_salt, _client_address(request).encode("utf-8"), hashlib.sha256)
+        return "ip:" + mac.hexdigest()[:24]
+
     app = FastAPI(
         title="MaudeSignal connector API",
         version=API_VERSION,
@@ -301,7 +310,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     ) -> str:
         if not cfg.keys.configured:
             raise ApiError(503, "not_configured", "This server has no API keys configured.")
-        client = _client_address(request)
+        client = limiter_who(request)
         blocked, wait = failed_auth.blocked(client)
         if blocked:  # too many bad keys from this address: do not even check this one
             raise ApiError(
@@ -521,6 +530,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 rate_per_min=limiter.limit,
                 public_per_hour=public_limiter.limit,
                 daily_usd=ask_runtime.caps.daily_usd,
+                total_daily_usd=ask_runtime.total_daily_usd,
                 request_usd=ask_runtime.caps.session_usd,
                 failed_auth_per_min=failed_auth.limit,
             )
@@ -654,7 +664,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def public_check_device_type(
         request: Request, response: Response, product_code: code_param
     ) -> PublicCheckAnswer:
-        client = _client_address(request)
+        client = limiter_who(request)
         allowed, remaining, retry = public_limiter.check(client)
         if not allowed:
             raise ApiError(

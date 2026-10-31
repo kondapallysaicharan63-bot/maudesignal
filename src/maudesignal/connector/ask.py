@@ -55,6 +55,8 @@ MIN_QUESTION_CHARS = 3
 MAX_QUESTION_CHARS = 500
 DEFAULT_REQUEST_USD = 0.25
 DEFAULT_DAILY_USD = 2.00
+DEFAULT_TOTAL_DAILY_USD = 3.00
+TOTAL_LEDGER_ID = "ALL"  # key id of the ledger shared by every key (not a hex key id)
 DEFAULT_REQUEST_CALLS = 20
 MAX_SPEAKABLE_SENTENCES = 3
 
@@ -172,6 +174,51 @@ def _env_float(name: str, default: float) -> float:
     return value if value >= 0 else default
 
 
+class CombinedLedger(DailyLedger):
+    """A key's ledger plus the ledger shared by all keys: the tighter of the two limits wins."""
+
+    def __init__(
+        self, key: DailyLedger, total: DailyLedger, key_cap: float, total_cap: float
+    ) -> None:
+        """Create the view over one key's ledger and the all-keys ledger."""
+        super().__init__(Path(os.devnull))
+        self.key, self.total = key, total
+        self._key_cap, self._total_cap = key_cap, total_cap
+
+    def spent_today(self) -> float:
+        """Spend as seen against the per-key cap: raised when the all-keys total is the limit."""
+        shared_left = self._total_cap - self.total.spent_today()
+        return max(self.key.spent_today(), self._key_cap - shared_left)
+
+    def add(self, usd: float, calls: int) -> float:
+        """Record spend on the key and on the all-keys total."""
+        self.total.add(usd, calls)
+        return self.key.add(usd, calls)
+
+    @property
+    def shared(self) -> bool:
+        """True when both ledgers are in the shared store (so holds can be reserved)."""
+        return isinstance(self.key, UpstashLedger) and isinstance(self.total, UpstashLedger)
+
+    def reserve(self, usd: float) -> bool:
+        """Hold ``usd`` on the key and on the total; False (nothing held) if either is full."""
+        key, total = self.key, self.total
+        if not (isinstance(key, UpstashLedger) and isinstance(total, UpstashLedger)):
+            return False
+        if not key.reserve(usd, self._key_cap):
+            return False
+        if not total.reserve(usd, self._total_cap):
+            key.release(usd)
+            return False
+        return True
+
+    def release(self, usd: float) -> None:
+        """Give back a hold from :meth:`reserve` on both ledgers."""
+        if isinstance(self.key, UpstashLedger) and isinstance(self.total, UpstashLedger):
+            self.key.release(usd)
+            self.total.release(usd)
+
+
 @dataclass
 class AskRuntime:
     """Everything ``ask`` needs besides the stored data."""
@@ -185,6 +232,11 @@ class AskRuntime:
             daily_usd=_env_float("MAUDESIGNAL_API_DAILY_USD", DEFAULT_DAILY_USD),
         )
     )
+    total_daily_usd: float = field(
+        default_factory=lambda: _env_float(
+            "MAUDESIGNAL_API_TOTAL_DAILY_USD", DEFAULT_TOTAL_DAILY_USD
+        )
+    )
     ledger_dir: Path = field(
         default_factory=lambda: Path(
             os.environ.get("MAUDESIGNAL_API_LEDGER_DIR")
@@ -193,15 +245,25 @@ class AskRuntime:
     )
     state: ConnectorState | None = None
 
-    def ledger_for(self, key_id: str) -> DailyLedger:
-        """The UTC-day spend ledger of one API key (kept apart per key).
+    def ledger_for(self, key_id: str) -> CombinedLedger:
+        """The UTC-day spend ledger of one API key plus the ledger shared by all keys.
+
+        The all-keys total (``total_daily_usd``) caps live spend however many keys exist.
 
         With a shared store the ledger is in Redis. Otherwise it is a file on the server
         instance, so on serverless hosting it is per instance and resets on a cold start;
         see docs/hackathon/MUSE_CONNECTOR.md.
         """
-        shared = self.state.ledger(key_id) if self.state else None
-        return shared or DailyLedger(self.ledger_dir / f"{key_id}.json")
+        return CombinedLedger(
+            self._one_ledger(key_id),
+            self._one_ledger(TOTAL_LEDGER_ID),
+            self.caps.daily_usd,
+            self.total_daily_usd,
+        )
+
+    def _one_ledger(self, ledger_id: str) -> DailyLedger:
+        shared = self.state.ledger(ledger_id) if self.state else None
+        return shared or DailyLedger(self.ledger_dir / f"{ledger_id}.json")
 
 
 def _words(text: str) -> set[str]:
@@ -468,10 +530,11 @@ def ask(
         ledger = guard.ledger
         try:
             guard.check("connector.ask")
-            if isinstance(ledger, UpstashLedger):
-                # Shared ledger: reserve the per-call cap first so instances running at the
-                # same moment cannot all pass a read-only check; released in `finally`.
-                if not ledger.reserve(runtime.caps.session_usd, runtime.caps.daily_usd):
+            if isinstance(ledger, CombinedLedger) and ledger.shared:
+                # Shared ledgers: reserve the per-call cap first (on the key and on the
+                # all-keys total) so instances running at the same moment cannot all pass a
+                # read-only check; released in `finally`.
+                if not ledger.reserve(runtime.caps.session_usd):
                     raise SpendLimitError("daily_usd", "Today's live-call budget is used up.")
                 hold = runtime.caps.session_usd
             # One live ask at a time per instance: the copilot appends to the audit chain on
@@ -494,7 +557,7 @@ def ask(
             logger.warning("connector_ask_live_failed", error_type=type(exc).__name__)
             reason = "model_error"
         finally:
-            if hold and isinstance(ledger, UpstashLedger):
+            if hold and isinstance(ledger, CombinedLedger):
                 ledger.release(hold)
     transcripts = data.transcripts()
     if not transcripts:

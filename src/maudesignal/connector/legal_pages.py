@@ -131,22 +131,26 @@ server-side model key. {live_ask_line()}</li>
 <li>Resend: only if an email notifier is configured. {html.escape(resend)}</li>
 </ul>
 
-<h2>Public data sources queried</h2>
-<p>openFDA (api.fda.gov) and the GOV.UK search API (for MHRA alerts). Live checks send only a
-product code or a report number to openFDA.</p>
+<h2>Public data sources</h2>
+<p>openFDA (api.fda.gov) is queried live with a product code only. MHRA (UK) alerts come from a
+stored copy previously fetched from the GOV.UK search API; this service does not call GOV.UK when
+you use it.</p>
 
 <h2>What is logged</h2>
 <ul>
 <li>For each tool call: a key id (a peppered one-way hash, never the key), the tool name, the time,
-the status and, for <code>ask</code>, the cost.</li>
-<li>The text of a question is <strong>not</strong> logged: only its SHA-256 and its length.</li>
+and the status. Spend on <code>ask</code> is kept as a daily total per key id (not per call).</li>
+<li>The text of a question is <strong>not</strong> logged: only its SHA-256 and its length.
+During a live <code>ask</code> the question is held briefly in the server instance's temporary
+working database and replaced by its SHA-256 when the answer is done.</li>
 <li>Feedback stores: rating, comments, role, quote consent, referral code, page and time. No names
 and no email addresses.</li>
 <li>Visits store: referral code, page and time.</li>
-<li>IP addresses are never stored by this code. An address is used in memory (as a salted hash) only
-to apply rate limits, for the length of the limit window. Vercel, as host, keeps its own request
-logs (method, path, status, time and address) under its own retention rules; this code does not
-copy them.</li>
+<li>IP addresses are never stored by this code. Before any rate limit sees an address it is turned
+into a salted one-way hash (HMAC-SHA256); only that hash is used as the limit key, in memory or, if
+a Redis store is configured, in that store, for at most twice the limit window. Vercel, as host,
+keeps its own request logs (method, path, status, time and address) under its own retention rules;
+this code does not copy them.</li>
 </ul>
 
 <h2>Retention</h2>
@@ -173,6 +177,7 @@ def render_terms(
     daily_usd: float,
     request_usd: float,
     failed_auth_per_min: int,
+    total_daily_usd: float,
 ) -> str:
     """The terms page, with the limits in force.
 
@@ -182,6 +187,7 @@ def render_terms(
         daily_usd: Daily cost cap of ``ask`` per key.
         request_usd: Cost cap of one ``ask`` call.
         failed_auth_per_min: Wrong keys per address per minute before a 429.
+        total_daily_usd: Daily cost cap of ``ask`` over all keys together.
     """
     body = f"""
 <h1>Terms</h1>
@@ -207,7 +213,9 @@ person to review. Nothing is filed with FDA, and the project is not an FDA-clear
 <li>{failed_auth_per_min} wrong or missing keys per address per minute, then HTTP 429.</li>
 <li>{public_per_hour} keyless device-type checks per address per hour.</li>
 <li>For <code>ask</code>: a question of {MIN_QUESTION_CHARS} to {MAX_QUESTION_CHARS} characters,
-at most ${request_usd:.2f} per call and ${daily_usd:.2f} per key per UTC day.</li>
+at most ${request_usd:.2f} per call, ${daily_usd:.2f} per key per UTC day and
+${total_daily_usd:.2f} over all keys together per UTC day. When a cap is reached, <code>ask</code>
+returns a recorded answer instead of a live one.</li>
 </ul>
 
 <h2>Acceptable use</h2>

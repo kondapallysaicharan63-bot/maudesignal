@@ -330,8 +330,8 @@ def test_live_ask_gate_blocks_wrong_number_and_it_is_not_speakable(tmp_path: Pat
     assert a.withheld[0].claim_kinds == ["count"]
     assert a.facts and "device/event.json" in a.facts[0].link
     # the spend was recorded against this key's ledger
-    assert rt.ledger_for("abc").spent_today() > 0
-    assert rt.ledger_for("other").spent_today() == 0
+    assert rt.ledger_for("abc").key.spent_today() > 0
+    assert rt.ledger_for("other").key.spent_today() == 0
 
 
 def test_live_ask_daily_cost_cap_falls_back_to_recorded(tmp_path: Path) -> None:

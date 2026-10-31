@@ -80,8 +80,11 @@ Defaults in the code (each can be changed by the operator with an environment va
   counts once.
 * 10 wrong or missing keys per address per minute, then 429 (`MAUDESIGNAL_FAILED_AUTH_PER_MIN`).
 * 10 keyless device-type checks per address per hour (`MAUDESIGNAL_PUBLIC_CHECK_PER_HOUR`).
-* `ask`: at most $0.25 per call and $2.00 per key per UTC day (`MAUDESIGNAL_API_REQUEST_USD`,
-  `MAUDESIGNAL_API_DAILY_USD`); past the cap the closest recorded answer is returned.
+* `ask`: at most $0.25 per call, $2.00 per key per UTC day and $3.00 over all keys together per
+  UTC day (`MAUDESIGNAL_API_REQUEST_USD`, `MAUDESIGNAL_API_DAILY_USD`,
+  `MAUDESIGNAL_API_TOTAL_DAILY_USD`); past a cap the closest recorded answer is returned. With two
+  keys, set `MAUDESIGNAL_API_DAILY_USD=1.50` (or less) as well, and keep `MAUDESIGNAL_KEY_PEPPER`
+  set (see "Two keys").
 * Feedback form: 5 per hour per address; visits 60 per hour per address.
 
 The live pages `/terms` and `/privacy` show the numbers actually in force.
@@ -90,8 +93,9 @@ The live pages `/terms` and `/privacy` show the numbers actually in force.
 
 Public openFDA data only (and MHRA (UK) alerts, labelled). No personal or patient data is collected
 or wanted. Hosted on Vercel, United States (function region iad1). Question text is not logged
-(only its SHA-256 and length). IP addresses are never stored by this code (in-memory salted hash
-for rate limits only). Feedback and visit records (no names, no emails) are kept until 2026-11-30.
+(only its SHA-256 and length). IP addresses are never stored by this code: before any rate limit
+sees one it is turned into a salted one-way hash, and only that hash is the limit key (in memory,
+or in the operator's Redis store for at most twice the limit window). Feedback and visit records (no names, no emails) are kept until 2026-11-30.
 Meta receives an `ask` question only when live ask is on. Details: `/privacy`.
 
 ## Privacy URL
@@ -122,10 +126,10 @@ An original mark (a signal pulse through a magnifier ring); no Meta or FDA logo.
 | Where is data processed and stored? | Vercel, United States (function region iad1, Washington DC). Vercel Blob (private) holds only website feedback and visit records. |
 | Subprocessors? | Vercel Inc. (hosting, logs, Blob). Meta Platforms (Meta Model API) only when `ask` runs live with a server-side model key. Upstash (Redis) and Resend (email) only if the operator configures them. |
 | Does Meta receive user input? | Only the text of an `ask` question, only when live ask is on. When off, `ask` returns recorded answers and nothing is sent to Meta. `/privacy` states which applies at request time. |
-| Which public sources are queried? | openFDA (api.fda.gov) and the GOV.UK search API. |
-| What is logged? | Key id (a peppered one-way hash, never the key), tool name, time, status, cost. Question text is not logged. |
+| Which public sources are queried? | openFDA (api.fda.gov) is queried live with a product code only. MHRA (UK) alerts come from a stored copy previously fetched from the GOV.UK search API; this service does not call GOV.UK when you use it. |
+| What is logged? | Key id (a peppered one-way hash, never the key), tool name, time, status. Spend on `ask` is kept as a daily total per key id (not per call). Question text is not logged; during a live `ask` it is held briefly in the server instance's temporary working database and replaced by its SHA-256 when the answer is done. |
 | What do feedback and visits store? | Feedback: rating, comments, role, consent, referral code, page, time. Visits: referral code, page, time. No names, no emails. |
-| Are IP addresses stored? | No. Used in memory only, as a salted hash, for rate limits. (Vercel, as host, keeps its own request logs.) |
+| Are IP addresses stored? | No. Before any rate limit sees an address it is turned into a salted one-way hash (HMAC-SHA256); only that hash is the limit key, in memory or, if a Redis store is configured, in that store for at most twice the limit window. (Vercel, as host, keeps its own request logs.) |
 | Retention? | Request logs follow Vercel's runtime-log retention for this plan. Feedback and visit records are kept until 2026-11-30 and then deleted, earlier on request. |
 | Sale, advertising, cookies? | No sale of data, no advertising, no tracking cookies. |
 | Deletion or questions? | The support email above or the GitHub issues URL. |
@@ -142,6 +146,18 @@ it **replaces** the whole value. Paste `<key1>,<key2>` as the value in Vercel > 
 Environment Variables > Production and redeploy. To revoke one key, delete its entry from the list
 and redeploy; the other keeps working (a unit test checks this). Audit and spend records are kept
 per key id, so the two keys are counted apart.
+
+**Before the second key goes in (cost and key ids):**
+
+1. Set `MAUDESIGNAL_KEY_PEPPER` (any long random value) **before** adding or removing a key. Without
+   it the key ids are derived from all key digests, so adding or removing a key changes every key
+   id and starts a fresh per-key ledger and audit trail for each key (a test checks that with a
+   pepper the remaining key keeps its id).
+2. Set `MAUDESIGNAL_API_DAILY_USD=1.50` (or less). The per-key cap is `2.00` by default.
+3. A cap over all keys together applies on top: `MAUDESIGNAL_API_TOTAL_DAILY_USD`, default `3.00`
+   per UTC day, however many keys exist. `/terms` shows it. When either cap is reached, `ask`
+   returns a recorded answer. Live `ask` is also still off unless `META_MODEL_API_KEY` is set and a
+   shared store (or the per-instance override) is configured.
 
 ---
 
@@ -161,7 +177,7 @@ Vercel > Add New > Project > import the GitHub repository
 | Setting | Value |
 |---|---|
 | Project name | anything, e.g. `maudesignal-api` |
-| Production branch | the branch you want live (`track-c-muse` until it is merged) |
+| Production branch | the branch now in production (`track-c-next`; this change is `track-c-submit`) |
 | Root Directory | `./` (the repository root; **not** `web/`) |
 | Framework Preset | Other |
 | Build Command | leave empty |
@@ -200,6 +216,7 @@ installed the root manifest, tell the owner before going on: the fix is a projec
 | `MAUDESIGNAL_FAILED_AUTH_PER_MIN` | default `10` | Wrong or missing keys per address per minute before 429. |
 | `MAUDESIGNAL_PUBLIC_CHECK_PER_HOUR` | default `10` | Keyless checks per address per hour. |
 | `MAUDESIGNAL_API_DAILY_USD` / `MAUDESIGNAL_API_REQUEST_USD` | defaults `2.00` / `0.25` | Cost cap of `ask` per key per UTC day, and per call. |
+| `MAUDESIGNAL_API_TOTAL_DAILY_USD` | default `3.00` | Cost cap of `ask` over all keys together per UTC day (a ledger shared by every key). |
 | `OPENFDA_API_KEY` | optional | Used only on the server for live openFDA checks (higher quota). Never in a response. |
 | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | optional | Add an Upstash Redis database (Vercel Marketplace, or upstash.com) and copy its REST URL and token. When both are set, the rate limits, the daily cost ledger, the six-hour cache and the audit log are shared by every instance. If the integration names them differently, add these two names by hand. |
 | `META_MODEL_API_KEY` | optional | Leave **unset** until you accept the cost: `ask` then answers from recorded runs. |
@@ -563,7 +580,7 @@ and window number exactly what the gate recomputed.
 
 ---
 
-# Part 2. MCP server, submission answers, privacy, terms
+# Part 2. MCP server
 
 Submission status: see the top of this page (Not submitted until Charan changes it).
 
