@@ -149,6 +149,10 @@ def render_privacy(
         else "<li>Per-client call counts are switched off here: none are kept.</li>"
     )
     clients_kept = " and per-client call counts" if clients_on else ""
+    # With Upstash configured the counts live in Redis, not in Blob.
+    clients_in_blob = clients_kept if not shared_store else ""
+    if clients_on and shared_store:
+        redis += " Per-client call counts are held there too."
     body = f"""
 <h1>Privacy</h1>
 <p class="meta">MaudeSignal connector API. Last updated {LAST_UPDATED}.</p>
@@ -168,7 +172,7 @@ of birth, which is a guard and not a guarantee.</p>
 
 <h2>Where data is processed and stored</h2>
 <p>On Vercel in the United States (function region iad1, Washington DC). Vercel Blob (private)
-holds website feedback and visit records{clients_kept} and the live-call spend ledger: one
+holds website feedback and visit records{clients_in_blob} and the live-call spend ledger: one
 small object per Meta call with its dollar amounts (its worst-case hold and, once the call
 succeeded, its real cost) and no text, no address and no key. {html.escape(redis)}</p>
 

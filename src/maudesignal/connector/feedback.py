@@ -297,10 +297,23 @@ th,td{border-bottom:1px solid GrayText;padding:.3rem .5rem;text-align:left}
 .scroll{overflow-x:auto}
 .code{border:1px solid GrayText;border-radius:.4rem;padding:.5rem .8rem;margin:.8rem 0}
 .code h3{margin:.2rem 0}
+/* Connected clients panel only */
+#clients th{font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;color:GrayText;
+font-weight:600;white-space:nowrap}
+#clients .num{text-align:right;font-variant-numeric:tabular-nums}
+#clients td.today{font-weight:600}
+#clients .zero,#clients .sub,#clients .none{color:GrayText;font-weight:400}
+#clients .sub{display:none;font-size:.85rem}
+#clients td.seen{white-space:nowrap;font-variant-numeric:tabular-nums}
+#clientsnote{color:GrayText}
+.hint{display:none;color:GrayText;font-size:.9rem;margin:.2rem 0}
+@media (max-width:600px){#clients .cid{display:none}#clients .sub{display:block}
+.hint{display:block}}
 </style></head><body>
 <h1>MaudeSignal admin</h1>
 <p>Private. Visits and feedback by referral code, and call counts per connected client.
-No names are shown here; no emails or IP addresses are stored.
+API key labels are shown here; no questions, keys or IP addresses are stored, and no
+feedback names are shown.
 No data is in this page until you unlock it; the key stays in this tab (session storage) only.</p>
 <form id="f"><label>Admin key <input id="k" type="password" autocomplete="off"></label>
 <button type="submit">Load summary</button>
@@ -316,7 +329,10 @@ No data is in this page until you unlock it; the key stays in this tab (session 
 <h2>Connected clients</h2>
 <p>One row per API key that called a tool: its label, or a short one-way id (never the key).
 No questions, answers, addresses or user agents are kept.</p>
-<p id="clientsmsg"></p><div class="scroll"><table id="clients"></table></div>
+<p id="clientsnote"></p>
+<div class="code" id="clientscard" hidden></div>
+<div id="clientswrap" hidden><p class="hint" aria-hidden="true">Swipe for more &rarr;</p>
+<div class="scroll"><table id="clients"></table></div></div>
 <h2>By code</h2><div id="codes"></div>
 <h2>By referral code</h2><div class="scroll"><table id="refs"></table></div>
 <h2>By page</h2><div class="scroll"><table id="pages"></table></div>
@@ -375,18 +391,44 @@ async function load(){
   render();
   await loadClients();
 }
+function el(tag,cls,text){const e=document.createElement(tag);
+  if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e;}
+function stamp(iso){const m=/^([0-9]{4}-[0-9]{2}-[0-9]{2})T([0-9]{2}:[0-9]{2})/.exec(iso||"");
+  return m?m[1]+" "+m[2]+"Z":"–";}
+function clientsCard(text){$("clientswrap").hidden=true;
+  const c=$("clientscard");c.textContent=text;c.hidden=false;}
 async function loadClients(){
-  const m=$("clientsmsg"),t=$("clients");t.replaceChildren();
+  const t=$("clients");t.replaceChildren();$("clientsnote").textContent="";
   const r=await fetch("/v1/admin/clients",{headers:hdr(),cache:"no-store"});
-  if(!r.ok){m.textContent="Clients not available ("+r.status+").";return;}
+  if(!r.ok){clientsCard("Client counts are not available right now (error "+r.status+").");
+    return;}
   const d=await r.json();
-  if(!d.enabled){m.textContent="Off";return;}
-  if(!d.clients.length){m.textContent="No calls counted yet.";return;}
-  m.textContent="Today (UTC): "+d.today_utc;
-  table(t,["client","id","kind","calls today","calls total","last seen (UTC)"],
-    d.clients.map(c=>({client:c.label||c.client_id,id:c.client_id,kind:c.kind||"-",
-      "calls today":c.calls_today,"calls total":c.calls_total,
-      "last seen (UTC)":c.last_seen_utc||"-"})));
+  if(!d.enabled){clientsCard("Client tracking is off: set MAUDESIGNAL_CLIENTS_PANEL=1 "+
+    "to turn it on.");return;}
+  if(!d.clients.length){clientsCard("No client has called a tool yet.");return;}
+  $("clientscard").hidden=true;$("clientswrap").hidden=false;
+  $("clientsnote").textContent="Today is "+d.today_utc+" (UTC). Last "+d.window_days+
+    " days shown."+(d.complete?"":" Counts incomplete: some days could not be read.");
+  const head=el("tr");
+  [["client",""],["id","cid"],["kind",""],["calls today","num"],
+   ["calls ("+d.window_days+" days)","num"],["last seen (UTC)",""]]
+    .forEach(([n,c])=>{const th=el("th",c,n);th.scope="col";head.appendChild(th);});
+  const thead=el("thead");thead.appendChild(head);t.appendChild(thead);
+  const body=el("tbody");
+  for(const c of d.clients){
+    const tr=el("tr");
+    const who=el("td");
+    if(c.label){who.appendChild(el("span","",c.label));who.appendChild(el("span","sub",c.client_id));}
+    else{who.textContent=c.client_id;}
+    tr.appendChild(who);
+    tr.appendChild(el("td","cid"+(c.label?"":" none"),c.label?c.client_id:"–"));
+    tr.appendChild(el("td","",c.kind||"–"));
+    tr.appendChild(el("td","num today"+(c.calls_today?"":" zero"),String(c.calls_today)));
+    tr.appendChild(el("td","num"+(c.calls_window?"":" zero"),String(c.calls_window)));
+    tr.appendChild(el("td","seen",stamp(c.last_seen_utc)));
+    body.appendChild(tr);
+  }
+  t.appendChild(body);
 }
 $("hide").addEventListener("change",render);
 $("deltest").addEventListener("click",async()=>{

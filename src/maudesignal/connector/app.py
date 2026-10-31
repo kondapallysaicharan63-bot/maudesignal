@@ -388,7 +388,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     demo_daily = state.daily_counter("demo-key-day", DEMO_PER_DAY, today=lambda: cfg.now().date())
     web_origins = frozenset(cfg.web_origins)
-    clients = ClientCounter(cfg.feedback_store, enabled=cfg.clients_panel, now=cfg.now)
+    clients = ClientCounter(
+        cfg.feedback_store, enabled=cfg.clients_panel, now=cfg.now, redis=state.redis_client
+    )
 
     app = FastAPI(
         title="MaudeSignal connector API",
@@ -538,7 +540,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         """Run one tool with its audit entry; REST routes and ``/mcp`` both call this."""
         key_id = str(request.state.audit_id)
         demo = bool(getattr(request.state, "key_demo", False))
-        # One count per call for the private /admin panel; never fails or holds the call long.
+        # One count per call for the private /admin panel: queued, written in the background;
+        # it never waits for the store and never fails the call.
         clients.record(
             key_id,
             "demo" if demo else ("MCP" if request.url.path == MCP_PATH else "REST"),
