@@ -148,7 +148,7 @@ def test_nested_reservations_on_one_ledger_both_settle() -> None:
     led.release(0.30)  # then the outer
     recs = sorted(json.loads(v)["actual_usd"] for v in store.items.values())
     assert recs == [0.01, 0.05]
-    assert store.ledger_usd() == pytest.approx(0.06)
+    assert store.ledger_usd() == pytest.approx(0.59)  # max(hold, actual) per request: 0.30 + 0.29
     assert all(json.loads(v)["settled"] is True for v in store.items.values())
 
 
@@ -159,7 +159,8 @@ def test_voice_route_ledger_total_is_transcribe_plus_ask(tmp_path: Path) -> None
     assert body["mode"] == "live"
     objs = [json.loads(v) for v in store.items.values()]
     assert all(o.get("settled") is True for o in objs)  # nothing left counting its hold
-    assert store.ledger_usd() == pytest.approx(body["cost_usd"], abs=1e-4)
+    assert body["cost_usd"] > 0
+    assert store.ledger_usd() >= body["cost_usd"]  # holds stay: only ever too high
 
 
 def test_settled_objects_are_read_once_and_a_day_of_objects_is_fast() -> None:
@@ -177,8 +178,8 @@ def test_settled_objects_are_read_once_and_a_day_of_objects_is_fast() -> None:
 
     store.get = counting_get  # type: ignore[method-assign]
     led = _ledger(store)
-    assert led.spent_today() == pytest.approx(2.0)
-    assert led.spent_today() == pytest.approx(2.0)
+    assert led.spent_today() == pytest.approx(4.0)  # max(hold, actual) per object
+    assert led.spent_today() == pytest.approx(4.0)  # max(hold, actual) per object
     assert len(reads) == 40  # the second sum came from the cache of settled objects
     assert isinstance(led, DailyLedger)
 
@@ -219,3 +220,180 @@ def test_questionnaire_matches_the_privacy_page_on_the_live_routes() -> None:
         assert phrase in section, f"questionnaire is missing: {phrase}"
         assert phrase in page, f"/privacy is missing: {phrase}"
     assert "holds only website feedback" not in section
+
+
+# --- fix round: a call that is sent but never recorded still keeps its hold ---------------
+
+
+class _RaisingCompletions:
+    """A model client whose call is billed upstream but raises here (timeout, 5xx, reset)."""
+
+    def __init__(self) -> None:
+        self.sent = 0
+
+    def create(self, **kwargs: Any) -> Any:
+        self.sent += 1
+        raise TimeoutError("cut off after the request was sent")
+
+
+def _raising_client() -> Any:
+    completions = _RaisingCompletions()
+    client = type("C", (), {})()
+    client.chat = type("Chat", (), {"completions": completions})()
+    client.completions = completions
+    return client
+
+
+def _failed_request(led: BlobLedger) -> bool:
+    """One request whose model call is sent and then raises; the `finally` still settles."""
+    if not led.reserve(HOLD, blob_enforced_cap({})):
+        return False
+    guard = SpendGuard(
+        session_id="t",
+        caps=SpendCaps(
+            session_usd=HOLD,
+            session_calls=20,
+            daily_usd=DAILY,
+            call_reserve_usd=worst_case_call_usd(),
+        ),
+        ledger=led,
+    )
+    client = _raising_client()
+    try:
+        guard.wrap(client).chat.completions.create(model="muse-spark", messages=[])
+    except TimeoutError:
+        pass
+    finally:
+        led.release(HOLD)
+    assert client.completions.sent == 1
+    return True
+
+
+def test_a_call_that_raises_after_it_was_sent_keeps_its_hold_in_the_day_total() -> None:
+    store = FakeBlobStore()
+    led = _ledger(store)
+    assert _failed_request(led)
+    assert store.ledger_usd() == pytest.approx(HOLD)  # recorded cost 0, but the hold stays
+    assert _ledger(store).spent_today() == pytest.approx(HOLD)  # a fresh instance sees it too
+
+
+def test_unrecorded_billed_calls_cannot_pass_the_daily_cap() -> None:
+    """200 requests that each bill $0.10 with nothing recorded: the total stays under $3."""
+    store = FakeBlobStore()
+    admitted = sum(_failed_request(_ledger(store)) for _ in range(200))
+    billed = admitted * 0.10
+    assert 0 < admitted < 200
+    assert billed <= DAILY
+    assert store.ledger_usd() <= DAILY and store.ledger_usd() >= billed
+
+
+def test_a_hold_is_never_lowered_by_settling_with_a_smaller_cost() -> None:
+    store = FakeBlobStore()
+    led = _ledger(store)
+    assert led.reserve(HOLD, 2.7)
+    led.add(0.01, 1)
+    led.release(HOLD)
+    assert store.ledger_usd() == pytest.approx(HOLD)
+    assert led.spent_today() == pytest.approx(HOLD)
+
+
+# --- keyed ask: the global ledger gets the cost even if the per-key write fails ------------
+
+
+def test_tee_ledger_adds_to_the_global_ledger_even_when_the_key_ledger_raises() -> None:
+    from maudesignal.connector.ask import _TeeLedger
+    from maudesignal.connector.store import UpstashError
+
+    class Boom(DailyLedger):
+        def __init__(self) -> None:
+            super().__init__(Path("/dev/null"))
+
+        def add(self, usd: float, calls: int) -> float:
+            raise UpstashError("per-key store down")
+
+    store = FakeBlobStore()
+    glob = _ledger(store)
+    assert glob.reserve(HOLD, 2.7)
+    tee = _TeeLedger(Boom(), glob)
+    with pytest.raises(UpstashError):
+        tee.add(0.2, 1)
+    glob.release(HOLD)
+    assert store.ledger_usd() >= 0.2  # the paid call is in the global total
+
+
+# --- Redis as the global ledger: a failed write cannot lower the day's total ---------------
+
+
+def _redis_global(fake: Any) -> Any:
+    from tests.unit.test_connector_store import make_state
+
+    return make_state(fake).global_ledger("live-global", today=lambda: DAY)
+
+
+def _global_usd(fake: Any) -> float:
+    return sum(float(v) for k, v in fake.kv.items() if k.endswith(":usd") and ":live-global:" in k)
+
+
+def test_redis_global_ledger_keeps_the_hold_when_redis_fails_after_the_paid_call() -> None:
+    from tests.unit.test_connector_store import FakeRedis
+
+    fake = FakeRedis()
+    led = _redis_global(fake)
+    assert led.reserve(HOLD, 2.7)
+    fake.fail = True  # Redis goes down after the paid call
+    led.add(0.2, 1)  # inside the hold: kept in memory, no network
+    led.release(HOLD)  # nothing is given back
+    fake.fail = False
+    assert _global_usd(fake) >= HOLD - 1e-9
+
+
+def test_redis_global_ledger_never_gives_a_hold_back_and_adds_only_the_excess() -> None:
+    from tests.unit.test_connector_store import FakeRedis
+
+    fake = FakeRedis()
+    led = _redis_global(fake)
+    assert led.reserve(HOLD, 2.7)
+    led.add(0.10, 1)
+    led.release(HOLD)
+    assert _global_usd(fake) == pytest.approx(HOLD)
+    assert led.reserve(HOLD, 2.7)
+    led.add(0.33, 1)  # over its hold
+    led.release(HOLD)
+    assert _global_usd(fake) == pytest.approx(2 * HOLD + 0.08)
+
+
+def test_redis_global_ledger_refuses_after_an_unrecordable_excess() -> None:
+    from tests.unit.test_connector_store import FakeRedis, UpstashError
+
+    fake = FakeRedis()
+    led = _redis_global(fake)
+    assert led.reserve(HOLD, 2.7)
+    led.add(0.33, 1)
+    fake.fail = True
+    led.release(HOLD)
+    fake.fail = False
+    with pytest.raises(UpstashError):
+        led.reserve(0.01, 2.7)
+
+
+# --- one global ledger per state: the "broken" flag outlives a request ---------------------
+
+
+def test_the_global_ledger_is_one_object_per_state_so_a_broken_flag_is_seen_by_every_ask() -> None:
+    from maudesignal.connector.store import ConnectorState
+
+    store = FakeBlobStore()
+    state = ConnectorState()
+    state.attach_blob(store)
+    first = state.global_ledger("live-global")
+    assert first is state.global_ledger("live-global")  # what each keyed ask now receives
+    assert isinstance(first, BlobLedger)
+    assert first.reserve(0.25, 2.7)
+    first.add(0.33, 1)
+    store.fail_overwrite = store.fail_put = True
+    first.release(0.25)  # an excess that cannot be recorded
+    store.fail_overwrite = store.fail_put = False
+    again = state.global_ledger("live-global")
+    assert isinstance(again, BlobLedger)
+    with pytest.raises(BlobLedgerError):
+        again.reserve(0.10, 2.7)

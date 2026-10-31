@@ -280,15 +280,34 @@ class MemoryLedger(DailyLedger):
             return self._mem[day]
 
 
+_UP_HOLDS: ContextVar[tuple[tuple[int, float, float], ...]] = ContextVar(
+    "maudesignal_upstash_holds", default=()
+)
+
+
 class UpstashLedger(DailyLedger):
     """Daily spend of one API key in Redis (shared by every instance)."""
 
     def __init__(
-        self, client: UpstashClient, key_id: str, *, today: Callable[[], date] | None = None
+        self,
+        client: UpstashClient,
+        key_id: str,
+        *,
+        today: Callable[[], date] | None = None,
+        keep_holds: bool = False,
     ) -> None:
-        """Create the ledger of ``key_id`` (a non-secret id)."""
+        """Create the ledger of ``key_id`` (a non-secret id).
+
+        With ``keep_holds`` (the global ledger) a hold is never given back: the day's total
+        is the sum of ``max(hold, actual)`` per request, so a paid call whose cost was never
+        recorded (timeout, Redis error after the call) still counts its hold. Only the part
+        of a real cost above its hold is added. Without it (a per-key ledger) a hold is
+        released and the real cost added, as before.
+        """
         super().__init__(Path(os.devnull), today=today)
         self._client, self._key_id = client, key_id
+        self._keep_holds = keep_holds
+        self._broken = False  # an excess over a hold could not be recorded: no more holds
 
     def _key(self, field: str) -> str:
         return f"{NAMESPACE}:spend:{self._key_id}:{self._today().isoformat()}:{field}"
@@ -304,6 +323,19 @@ class UpstashLedger(DailyLedger):
         except UpstashError:
             return float(self._client.command("INCRBYFLOAT", self._key("usd"), repr(float(usd))))
 
+    def _push_hold(self, hold: float) -> None:
+        if self._keep_holds:
+            _UP_HOLDS.set((*_UP_HOLDS.get(), (id(self), hold, 0.0)))
+
+    def _pop_hold(self) -> tuple[float, float] | None:
+        items = list(_UP_HOLDS.get())
+        for i in range(len(items) - 1, -1, -1):
+            if items[i][0] == id(self):
+                _, hold, actual = items.pop(i)
+                _UP_HOLDS.set(tuple(items))
+                return hold, actual
+        return None
+
     def reserve(self, usd: float, daily_cap: float) -> bool:
         """Hold ``usd`` of today's budget before a model call (atomic INCRBYFLOAT).
 
@@ -311,15 +343,35 @@ class UpstashLedger(DailyLedger):
         ``daily_cap``. Concurrent instances therefore cannot all pass a read-only check.
         Raises ``UpstashError`` if Redis is unreachable.
         """
+        if self._broken:
+            raise UpstashError("an earlier cost could not be recorded")
         total = float(self._client.command("INCRBYFLOAT", self._key("usd"), repr(float(usd))))
         self._client.command("EXPIRE", self._key("usd"), 3 * 86_400)
         if total > daily_cap + 1e-9:
             self._client.command("INCRBYFLOAT", self._key("usd"), repr(-float(usd)))
             return False
+        self._push_hold(float(usd))
         return True
 
     def release(self, usd: float) -> None:
-        """Give back a hold from :meth:`reserve` (the real cost is added by ``add``)."""
+        """Close a hold from :meth:`reserve`.
+
+        Per-key ledger: give the hold back (the real cost was added by ``add``). Global
+        ledger (``keep_holds``): keep the hold and add only the cost above it, if any.
+        """
+        if self._keep_holds:
+            closed = self._pop_hold()
+            if closed is None:
+                return
+            hold, actual = closed
+            excess = round(actual - hold, 6)
+            if excess > 0:
+                try:
+                    self._add_usd(excess)
+                except UpstashError:
+                    self._broken = True
+                    logger.critical("connector_spend_excess_not_recorded", excess_usd=excess)
+            return
         try:
             self._add_usd(-float(usd))
         except UpstashError as exc:
@@ -332,6 +384,15 @@ class UpstashLedger(DailyLedger):
 
     def add(self, usd: float, calls: int) -> float:
         """Add spend for today and return today's new total."""
+        if self._keep_holds:
+            items = list(_UP_HOLDS.get())
+            for i in range(len(items) - 1, -1, -1):
+                if items[i][0] == id(self):  # inside a held request: settled in ``release``
+                    _, hold, actual = items[i]
+                    actual = round(actual + float(usd), 6)
+                    items[i] = (id(self), hold, actual)
+                    _UP_HOLDS.set(tuple(items))
+                    return actual
         try:
             total = self._add_usd(usd)
         except UpstashError as exc:
@@ -387,22 +448,24 @@ class BlobLedger(DailyLedger):
     one object, ``ledger/<UTC-day>/<uuid>.json``:
 
     1. **Reserve** (before the model call): write the object ``{"hold_usd": h}``, then list the
-       day's prefix and sum every object, ours included: ``max(hold_usd, actual_usd)`` for a
-       request still in flight, ``actual_usd`` for one that has settled.
+       day's prefix and sum every object, ours included: ``max(hold_usd, actual_usd)`` for
+       every object, settled or not.
        If the sum is over the cap, delete our own object and refuse (a recorded answer is
        shown instead). Two requests that reserve at the same moment each write before they
        list, so the later listing sees both. If the list, a read or the write fails, the
        reserve fails closed (:class:`BlobLedgerError`) and no model call is made.
     2. **Settle** (after the call, in :meth:`release`): overwrite only our own object with
-       ``{"hold_usd": h, "actual_usd": a, "settled": true}``. The spend guard keeps ``a <= h``
-       (it refuses a call unless the worst case of one call still fits in the request cap),
-       so if that write fails the object keeps its hold and still counts at least ``a``. If
-       ``a > h`` ever happens, the excess goes into a new append-only object; if that write
-       fails too, the ledger refuses every later hold.
+       ``{"hold_usd": h, "actual_usd": a, "settled": true}``. The object still counts
+       ``max(h, a)``, so settling never lowers it: a request whose cost was never recorded
+       (the call errored or timed out after it was sent) keeps its whole hold in the total.
+       The spend guard keeps ``a <= h``; if ``a > h`` ever happens and the settle write fails,
+       the excess goes into a new append-only object; if that write fails too, the ledger
+       refuses every later hold.
 
-    A request that dies mid-call leaves its hold in place for the rest of the day, which also
-    only over-counts. The cap passed to :meth:`reserve` is the daily total minus the largest
-    single-request cap (see ``globalcap``), so requests that reserve concurrently, and a final
+    So the day's total is the sum of ``max(hold, actual)`` over all requests: it can only be
+    too high, never too low, and a request that dies mid-call keeps its hold for the day.
+    The cap passed to :meth:`reserve` is the daily total minus the largest single-request cap
+    (see ``globalcap``), so requests that reserve concurrently, and a final
     call that costs a little more than its hold, still end at or under the daily total.
 
     One instance can serve many requests: each request's object is tracked per execution
@@ -467,12 +530,13 @@ class BlobLedger(DailyLedger):
             raise BlobLedgerError("ledger object unreadable") from None
         if not (math.isfinite(hold) and math.isfinite(actual)) or hold < 0 or actual < 0:
             raise BlobLedgerError("ledger object unreadable")
-        # A settled request counts what it really cost; an unsettled one (still running,
-        # died, or its settle write failed) counts at least its hold.
+        # Every object counts max(hold, actual), settled or not. A call that was sent but
+        # died before its cost was recorded (timeout, 5xx, dropped connection) is billed
+        # anyway, so its hold must stay in the day's total.
+        counted = max(hold, actual)
         if settled:
-            self._settled[ref.pathname] = actual  # a settled object never changes again
-            return actual
-        return max(hold, actual)
+            self._settled[ref.pathname] = counted  # a settled object never changes again
+        return counted
 
     def _sum(self, day: str) -> tuple[float, list[BlobRef]]:
         """The day's total and its objects: ``max(hold, actual)`` summed. Fails closed."""
@@ -675,6 +739,7 @@ class ConnectorState:
         self._lock = threading.Lock()
         self._cache: dict[str, tuple[float, str]] = {}
         self._audit: list[dict[str, Any]] = []
+        self._global_ledgers: dict[tuple[str, int], DailyLedger] = {}
 
     @classmethod
     def from_env(
@@ -716,6 +781,7 @@ class ConnectorState:
     def attach_blob(self, store: RecordStore) -> None:
         """Offer the private Blob store as the durable global ledger (ignored for memory)."""
         self._blob = store if store.backend == "blob_private" else None
+        self._global_ledgers.clear()
 
     @property
     def global_mode(self) -> Literal["upstash", "blob", "none"]:
@@ -728,11 +794,21 @@ class ConnectorState:
         self, name: str, *, today: Callable[[], date] | None = None
     ) -> DailyLedger | None:
         """The durable shared ledger ``name`` (Redis, else Blob), or ``None`` when neither."""
+        # One ledger object per (name, clock): its "an unrecordable cost was seen" flag must
+        # outlive a single request, and its reservations are tracked per execution context.
+        cache_key = (name, id(today) if today is not None else 0)
+        cached = self._global_ledgers.get(cache_key)
+        if cached is not None:
+            return cached
+        ledger: DailyLedger
         if self._client:
-            return UpstashLedger(self._client, name, today=today)
-        if self._blob is not None:
-            return BlobLedger(self._blob, name, today=today)
-        return None
+            ledger = UpstashLedger(self._client, name, today=today, keep_holds=True)
+        elif self._blob is not None:
+            ledger = BlobLedger(self._blob, name, today=today)
+        else:
+            return None
+        self._global_ledgers[cache_key] = ledger
+        return ledger
 
     # -- cache ----------------------------------------------------------------------------
 

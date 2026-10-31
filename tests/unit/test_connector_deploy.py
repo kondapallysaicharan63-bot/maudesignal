@@ -367,8 +367,14 @@ def test_shared_ledger_is_used_by_ask_and_a_redis_outage_falls_back_to_recorded(
     ok = c.post("/v1/tools/ask", json={"question": "How many LLZ reports this week?"}, headers=H)
     assert ok.json()["provenance"]["kind"] == "live_model"
     assert any(k.startswith("maudesignal:connector:spend:") for k in fake.kv)
-    usd = [float(v) for k, v in fake.kv.items() if k.endswith(":usd") and ":spend:" in k]
-    assert usd and all(u < rt.caps.session_usd for u in usd)  # the hold was released
+    per_key = [
+        float(v)
+        for k, v in fake.kv.items()
+        if k.endswith(":usd") and ":spend:" in k and ":live-global:" not in k
+    ]
+    glob = [float(v) for k, v in fake.kv.items() if k.endswith(":usd") and ":live-global:" in k]
+    assert per_key and all(u < rt.caps.session_usd for u in per_key)  # the key's hold was released
+    assert glob and all(u >= rt.caps.session_usd - 1e-9 for u in glob)  # the global hold stays
     fake.fail = True  # cap cannot be read: no live spend, the recorded answer is returned
     down = c.post("/v1/tools/ask", json={"question": "What changed this week for LLZ?"}, headers=H)
     assert down.status_code == 200 and down.json()["provenance"]["kind"] == "recorded_answer"

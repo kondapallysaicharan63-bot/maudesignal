@@ -244,6 +244,15 @@ def render_terms(
         total_daily_usd = global_daily_usd()
     live_ask, live_voice, live_label, live_mentions, live_burst = _live_limits()
     largest = largest_request_usd()
+    per_instance_item = ""
+    if os.environ.get("MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP", "").strip() == "1":
+        per_instance_item = (
+            "<li><strong>This deployment runs with the per-instance override on.</strong> With no "
+            "shared ledger configured, the cost cap above is kept in memory on each server "
+            "instance and starts again on a cold start, and the keyed <code>ask</code> tool has "
+            "no cap across keys. The total over all instances can therefore pass "
+            f"${total_daily_usd:.2f} per UTC day.</li>"
+        )
     body = f"""
 <h1>Terms</h1>
 <p class="meta">MaudeSignal connector API. Last updated {LAST_UPDATED}.</p>
@@ -289,11 +298,13 @@ ${largest:.2f} for one request), then adds up every entry of the day. If the tot
 ${total_daily_usd:.2f} minus the largest single-request cap (${largest:.2f}), the entry is
 removed and a recorded answer is shown, so requests that start together still end at or under
 ${total_daily_usd:.2f}. After the call the request overwrites only its own entry with the real
-cost. A model call only starts if the worst case of one call still fits inside the request's
-hold, so a request cannot cost more than its hold. If the write that records the real cost
-fails the hold stays, so the count can only be too high, never too low; should a cost ever be
-above its hold, the difference is written as its own entry, and if that fails no later live call
-is made.</li>
+cost, and every entry counts as the larger of its hold and its real cost. A model call only
+starts if the worst case of one call still fits inside the request's hold. A call that fails or
+times out after it was sent is not recorded as costing anything, so its entry keeps its whole
+hold in the count (it may have been billed). The count can only be too high, never too low;
+should a cost ever be above its hold, the difference is written as its own entry, and if that
+fails no later live call is made.</li>
+{per_instance_item}
 <li>If the ledger cannot be read or written, no live call is made and a recorded answer is
 shown.</li>
 <li>Per address per UTC day: {live_ask} live questions, {live_voice} voice questions,

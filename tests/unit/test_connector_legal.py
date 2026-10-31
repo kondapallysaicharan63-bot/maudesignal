@@ -261,7 +261,18 @@ def test_terms_show_the_total_cap(tmp_path: Path) -> None:
     assert "$2.00 per key per UTC day" in flat
     assert "ONE cost cap of $3.00 per UTC day" in flat
     assert "minus the largest single-request cap" in flat
-    assert "the count can only be too high, never too low" in flat
+    assert "The count can only be too high, never too low" in flat
+    assert "keeps its whole hold in the count" in flat
+    assert "per-instance override" not in flat  # only shown when the override is set
+
+
+def test_terms_say_so_when_the_per_instance_override_is_on(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP", "1")
+    flat = " ".join(_client(tmp_path).get("/terms").text.split())
+    assert "per-instance override on" in flat
+    assert "can therefore pass $3.00 per UTC day" in flat
 
 
 def test_privacy_statements_match_the_code(tmp_path: Path) -> None:

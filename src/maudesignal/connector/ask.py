@@ -205,8 +205,12 @@ class _TeeLedger(DailyLedger):
         return self._primary.spent_today()
 
     def add(self, usd: float, calls: int) -> float:
-        total = self._primary.add(usd, calls)
-        self._shared.add(usd, calls)
+        # The global ledger first, and always: if the per-key write raises, the paid call must
+        # still reach the global total.
+        try:
+            self._shared.add(usd, calls)
+        finally:
+            total = self._primary.add(usd, calls)
         return total
 
 
@@ -233,7 +237,10 @@ class AskRuntime:
     state: ConnectorState | None = None
 
     def global_ledger(self) -> DailyLedger | None:
-        """The global live ledger (Redis or Blob) every live call is also counted against."""
+        """The global live ledger (Redis or Blob) every live call is also counted against.
+
+        One object per state, so its "a cost could not be recorded" flag outlives a request.
+        """
         return self.state.global_ledger(GLOBAL_LEDGER_ID) if self.state else None
 
     def global_cap(self) -> float:

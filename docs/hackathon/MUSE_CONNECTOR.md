@@ -739,14 +739,16 @@ or `invalid_input`, 429 `rate_limited` with `retry_after_s` and a `Retry-After` 
   cold start and is not a hard cap; **the live website routes and the outside-mentions search do
   not run in this third case** (recorded answers only) unless the operator sets
   `MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP=1`, so a model key with neither Upstash nor a Blob store never
-  spends. With Upstash the enforced cap is also the daily total minus the largest per-request cap
+  spends. **With that override set there is no hard $3 cap**: each instance counts in memory,
+  resets on a cold start, and the keyed `ask` has no cap across keys; the terms page says so
+  whenever the override is set. It is not set in `vercel.json`. With Upstash the enforced cap is also the daily total minus the largest per-request cap
   (kept for the same reason as below).
   **Blob ledger design (append-only, one object per request):** there is no shared counter.
   Each paid request owns exactly one object, `ledger/<UTC-day>/<uuid>.json`.
   1. *Reserve, before the model call:* the request writes its object `{"hold_usd": h}` (h is the
      request's cap: ask 0.25, voice 0.30, label 0.30, keyed ask 0.25), then lists the day's
-     prefix and sums every object, its own included: `max(hold_usd, actual_usd)` for a request
-     still in flight, `actual_usd` for one that has settled. If the sum is over the enforced
+     prefix and sums every object, its own included: `max(hold_usd, actual_usd)` for EVERY
+     object, settled or not. If the sum is over the enforced
      cap, the request deletes its own object (failing that, overwrites it with zeros; failing
      that, the hold stays, which only over-counts) and a recorded answer is shown. Two requests
      that reserve at the same moment each write before they list, so the later listing sees both.
@@ -755,15 +757,27 @@ or `invalid_input`, 429 `rate_limited` with `retry_after_s` and a `Retry-After` 
      Spark list prices, about $0.08) still fits in what is left of the request's cap. So a
      request's real cost `a` is at most its hold `h`. Voice reserves twice on the same ledger
      (once for the clip, once for the answer); the ledger keeps a stack of reservations per
-     instance and settles both.
+     execution context and settles both.
      *Settle, after the call:* the request overwrites only its own object with
-     `{"hold_usd": h, "actual_usd": a, "settled": true}`. If that write fails the object keeps
-     `{"hold_usd": h}` and stays unsettled, so it keeps counting at least h, which is at least a
+     `{"hold_usd": h, "actual_usd": a, "settled": true}`. The object still counts `max(h, a)`,
+     so settling never lowers it and a failed settle write changes nothing in the total
      (a CRITICAL log line `connector_spend_settle_failed` carries the amounts, no key and no
      address). Should a ever be above h, the excess is written as a new append-only object; if
      that write fails too, the ledger refuses every later hold (fails closed) until the instance
-     restarts, and logs `connector_spend_excess_not_recorded`. A request that dies mid-call also
-     leaves its hold in place for the day.
+     restarts (one ledger object per app state, so this holds for the keyed `ask` too), and logs
+     `connector_spend_excess_not_recorded`. A request whose call was sent but raised or timed
+     out before its cost was recorded (timeout, 5xx, dropped connection) settles at actual 0 and
+     still counts its whole hold, because the count is `max(hold, actual)`; so does a request
+     that dies mid-call. The count can only be too high, never too low. The price of this: every
+     paid request uses up its full hold for the day (voice uses two, 0.30 + 0.29), so about ten
+     live requests fit under the 2.70 threshold whatever they really cost. Tested:
+     `tests/unit/test_connector_ledger_cap.py` (a call that raises after it was sent keeps its
+     hold; 200 requests that each bill $0.10 with nothing recorded are cut off under $3).
+     **With Redis as the global ledger** the same rule holds: a hold is never given back and
+     only the part of a real cost above the hold is added, so a failed Redis write after a paid
+     call cannot lower the day's total. For the keyed `ask`, the global ledger is written
+     before the per-key ledger, so a per-key failure cannot hide a paid call from the global
+     total.
   3. *Enforced threshold:* `MAUDESIGNAL_LIVE_DAILY_USD` minus the largest single-request cap
      (default 3.00 - 0.30 = 2.70). Two requests that both pass the check have each counted the
      other's hold, so together they end at or under the threshold; because a never passes h, the
@@ -775,7 +789,7 @@ or `invalid_input`, 429 `rate_limited` with `retry_after_s` and a `Retry-After` 
      the call, no model call starts and the answer is a recorded one (the keyed `ask` tool
      reports reason `cap`). Without Blob or Upstash configured, live calls stay off.
   5. *Known limit:* this relies on a completed write showing up in the next listing of the store.
-     Not measured against a real store: measure one day's listing and reads once before turning
+     **Required before live is turned on, and not yet done:** measure put-then-list consistency (a write is listed at once) against the real private store and record the result here. Not measured against a real store: measure one day's listing and reads once before turning
      live on. Settled objects never change, so each instance reads them once and keeps the amount
      in memory; objects not yet settled are read every time, eight at a time. A deleted object can disappear between a listing and its
      read; that object is a refused request's own hold and is skipped.
@@ -876,6 +890,11 @@ file `demo/mentions/<CODE>.json` answers with `mode: "recorded"` and a `recorded
 file the lists are empty and the note says so. `.github/workflows/mentions-record.yml` writes
 `LLZ.json` (and any codes in the request) when `demo/mentions/REQUEST` changes on `track-c-live`;
 the file holds `0`, so nothing runs yet and **no stored mentions file exists yet**.
+**Unconfirmed feed addresses.** The `medwatch` and `medical-devices` FDA RSS addresses in
+`mentions.py` were not reachable from the build sandbox and are **not confirmed**. During the free
+recording, check that each returns HTTP 200 with RSS; any that does not is removed from `SOURCES`
+and from this page and the privacy page before the live route is turned on. Until then a wrong
+address shows as "failed: http 404" in the per-source status, never as a mention.
 
 ## Demo key, labelled keys and `GET /v1/connect`
 

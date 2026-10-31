@@ -150,14 +150,14 @@ class FakeBlobStore:
         ).encode()
 
     def ledger_usd(self, day: date = DAY, name: str = LEDGER_ID) -> float:
-        """What the ledger counts for the day: actual if settled, else at least the hold."""
+        """What the ledger counts for the day: max(hold, actual) for every object."""
         prefix = f"ledger/{day.isoformat()}/"
         total = 0.0
         for p, raw in self.items.items():
             if p.startswith(prefix):
                 rec = json.loads(raw)
                 hold, actual = rec.get("hold_usd", 0.0), rec.get("actual_usd", 0.0)
-                total += actual if rec.get("settled") else max(hold, actual)
+                total += max(hold, actual)
         return total
 
 
@@ -183,7 +183,7 @@ def test_blob_ledger_reserves_then_settles_with_the_real_cost() -> None:
     assert list(store.items) == [path]
     assert json.loads(store.items[path]) == {"hold_usd": 0.25, "actual_usd": 0.04, "settled": True}
     assert store.overwrites == 1 and store.puts == 1
-    assert led.spent_today() == pytest.approx(0.04)
+    assert led.spent_today() == pytest.approx(0.25)  # max(hold, actual): the hold stays
 
 
 def test_blob_ledger_refuses_a_hold_over_the_cap_and_removes_its_own_object() -> None:
@@ -432,8 +432,8 @@ def test_live_ask_reserves_before_the_call_and_settles_on_the_shared_ledger(tmp_
     assert body["mode"] == "live"
     assert seen_during_call and seen_during_call[0] >= 0.25
     after = store.ledger_usd()
-    assert 0 < after < 0.25  # settled: the real (small) cost, not the hold, now counts
-    assert body["cost_usd"] == pytest.approx(after, abs=1e-5)
+    assert after == pytest.approx(0.25)  # max(hold, actual): the hold stays after settling
+    assert 0 < body["cost_usd"] <= after + 1e-5  # the real cost never passes the hold
     assert len(store.items) == 1  # one object for the one request
 
 
@@ -496,7 +496,9 @@ def test_keyed_ask_counts_against_the_same_global_ledger(tmp_path: Path) -> None
     a = ask(d, "How many LLZ reports this week?", key_id="abc", runtime=rt)
     assert a.provenance.kind == "live_model"
     spent = store.ledger_usd(today)
-    assert spent > 0 and spent == pytest.approx(rt.ledger_for("abc").spent_today())
+    key_spent = rt.ledger_for("abc").spent_today()
+    assert 0 < key_spent <= spent  # the global ledger counts max(hold, actual) >= the real cost
+    assert spent == pytest.approx(rt.caps.session_usd)
     # the global cap is shared with the live routes: at the cap the keyed tool answers recorded
     store.seed_ledger(2.69, today)
     calls = client.n
@@ -1306,7 +1308,7 @@ def test_blob_ledger_add_writes_once_and_does_not_list_again() -> None:
     assert lists == 0 and store.puts == 1 and total == pytest.approx(0.1)
     assert store.ledger_usd() == pytest.approx(0.25)  # in flight: still counted at the hold
     led.release(0.25)
-    assert store.ledger_usd() == pytest.approx(0.1)
+    assert store.ledger_usd() == pytest.approx(0.25)  # settled: max(hold, actual) = the hold
 
 
 def test_upstash_mode_also_keeps_the_margin_for_the_keyed_ask() -> None:
