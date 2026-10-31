@@ -2,9 +2,10 @@ name: Smoke test (live URLs)
 
 # Post-deploy check of the deployed API and web app. Push to a branch named smoke/** (any
 # commit), or run it by hand. It makes a few real model calls through the live API, so it
-# spends from the app's own daily cap; one shared budget limits a run to $1.50 (every call held at the
-# deployed API's per-request cap), 10 live asks, 2 photos and 1 spoken question in total (live
-# checks, browser pass and load test together), and it writes TEST entries that it deletes only when
+# spends from the app's own daily cap; one shared budget limits a run to $0.60 (every call held at the
+# deployed API's per-request cap): one chat question ($0.25) and one spoken question ($0.30).
+# The browser pass answers /v1/live/* from route mocks (recorded mode, $0) and the load test makes
+# no live asks, only public check_device_type calls. The run writes TEST entries that it deletes only when
 # the secret MAUDESIGNAL_ADMIN_KEY_SMOKE exists. Keys never appear in the log or the report.
 # How to read the report: docs/hackathon/RELEASE_CHECKS.md.
 #
@@ -60,7 +61,7 @@ jobs:
           MAUDESIGNAL_ADMIN_KEY_SMOKE: ${{ secrets.MAUDESIGNAL_ADMIN_KEY_SMOKE }}
         run: |
           python scripts/release/smoke.py --api "$API_URL" --web "$WEB_URL" \
-            --vus 20 --seconds "$LOAD_SECONDS" --max-live-asks 10 --out-dir release-out
+            --vus 20 --seconds "$LOAD_SECONDS" --max-live-asks 0 --out-dir release-out
       - name: Copy the report to the job summary
         if: always()
         run: |

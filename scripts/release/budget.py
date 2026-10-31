@@ -19,8 +19,8 @@ caps on the deployment, raise these too.
 A call that gets no usable answer (timeout, non-200, no ``cost_usd``) may still have run the
 model, so it is settled at its full hold (``settle(kind, None)``), never at $0.
 
-The dollar ceiling is sized so the smoke plan below fits with every call at its full hold:
-``SMOKE_PLAN`` is what a smoke run does (``tests/unit/test_release_tools.py`` simulates it).
+The ceiling is $0.60 per run. ``SMOKE_PLAN`` is what a smoke run does and it fits with every
+call at its full hold (``tests/unit/test_release_tools.py`` simulates it).
 """
 
 from __future__ import annotations
@@ -28,15 +28,16 @@ from __future__ import annotations
 import threading
 from dataclasses import dataclass, field
 
-MAX_USD = 1.50
+MAX_USD = 0.60
 MAX_ASKS, MAX_PHOTOS, MAX_VOICE = 10, 2, 1
 HOLD_USD = {"ask": 0.25, "photo": 0.30, "voice": 0.30}
-# The calls one smoke run plans, in order. The photo is made by the browser pass (camera upload
-# at the first width only); ``live()`` makes its own photo call only when no browser pass runs.
-# The chat scenario makes two turns (two asks), also at the first width only.
+# The live calls one smoke run plans, in order: one direct question and one spoken question,
+# $0.25 + $0.30 = $0.55 at the holds. The browser pass runs in recorded mode through route mocking
+# (``e2e_web.py --mock-live``) and spends $0; the load test makes no live asks, only public
+# ``check_device_type`` and health calls. ``live()`` makes a photo call only when asked to.
 SMOKE_PLAN = {
     "direct": ("ask", "voice"),
-    "web": ("ask", "ask", "photo"),
+    "web": (),
 }
 LIMITS = {"ask": MAX_ASKS, "photo": MAX_PHOTOS, "voice": MAX_VOICE}
 SKIPPED_BUDGET = "skipped: budget"

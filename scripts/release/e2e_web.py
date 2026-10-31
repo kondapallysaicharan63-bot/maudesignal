@@ -87,6 +87,63 @@ def live_kind(url: str) -> str:
     return ""
 
 
+RECORDED_NOTE = (
+    "Recorded sample used by the smoke test: no live model call was made. "
+    "It is not an answer about any real device."
+)
+_MOCK_LINK = {
+    "label": "openFDA device event search",
+    "url": "https://api.fda.gov/device/event.json",
+}
+_MOCK_TRACE = [
+    {
+        "step": "Closest recorded answer",
+        "model": None,
+        "ms": 0,
+        "status": "ok",
+        "note": "smoke-test route mock",
+    }
+]
+
+
+def recorded_body(kind: str) -> dict[str, Any]:
+    """A recorded-mode body for a mocked /v1/live/<kind> call (no figures, no live model)."""
+    base: dict[str, Any] = {
+        "mode": "recorded",
+        "not_medical_advice": "Not medical advice. A signal for human regulatory review.",
+        "recorded_note": RECORDED_NOTE,
+        "trace": _MOCK_TRACE,
+        "cost_usd": None,
+        "limits": {"remaining_today": None},
+    }
+    speakable = [{"text": "This is a recorded sample answer.", "links": [_MOCK_LINK]}]
+    answer = {
+        "speakable": speakable,
+        "withheld": [],
+        "spoken_text": "This is a recorded sample answer.",
+    }
+    if kind == "photo":
+        cand = {
+            "source": "510k",
+            "k_number": None,
+            "record_id": "sample",
+            "owner": "Sample applicant",
+            "device_name": "Smoke-test sample device",
+            "product_code": None,
+            "why_matched": ["recorded sample for the smoke test"],
+            "why_not_matched": [],
+            "links": [_MOCK_LINK],
+        }
+        return base | {
+            "reading": {},
+            "matches": {"status": "needs_person_to_confirm", "candidates": [cand]},
+            "confirmed": None,
+        }
+    if kind == "voice":
+        return base | {"transcript": "recorded sample", "answer": answer}
+    return base | {"answer": answer}
+
+
 def visit_ref(post_data: str | None) -> str | None:
     """The ``ref`` field of a /v1/visit request body, or None when absent or not JSON."""
     try:
@@ -189,6 +246,31 @@ class Env:
                     {"path": kind, "status": 0, "cost_usd": 0.0, "refused": True}
                 )
                 route.abort("blockedbyclient")
+
+        for pattern in LIVE_ROUTES:
+            self.page.context.route(pattern, handler)
+
+    def mock_live(self) -> None:
+        """Smoke: answer every /v1/live/* call from the browser with a recorded body, no spend.
+
+        The browser pass runs in recorded mode through route mocking, so it makes no model call
+        and costs $0; the real live routes are checked once by ``live_check.py`` through the
+        shared budget. Each call is logged with ``mocked: true`` so a report shows it.
+        """
+
+        def handler(route: Any) -> None:
+            kind = live_kind(route.request.url)
+            if kind == "":
+                route.continue_()
+                return
+            self.live_calls.append(
+                {"path": kind, "status": 200, "mode": "recorded", "cost_usd": 0.0, "mocked": True}
+            )
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps(recorded_body(kind)),
+            )
 
         for pattern in LIVE_ROUTES:
             self.page.context.route(pattern, handler)
@@ -655,7 +737,7 @@ SMOKE = (
     "alert bell, alert panel",
 )
 # Scenarios that call a live model: in the smoke suite they run at the first width only, so the
-# planned calls (two chat turns, one photo) fit the shared budget (see budget.SMOKE_PLAN).
+# browser pass is mocked in the smoke suite (``--mock-live``), so these cost $0.
 SMOKE_LIVE = ("chat (recorded mode, two turns)", "camera upload, matches, confirm")
 
 
@@ -885,6 +967,12 @@ def main(argv: list[str] | None = None) -> int:
         help="smoke suite: 'usd,asks,photos,voice' left in the run's shared budget; every "
         "/v1/live/* call the browser makes is counted in it and refused when it does not fit",
     )
+    ap.add_argument(
+        "--mock-live",
+        action="store_true",
+        help="smoke suite: answer every /v1/live/* call with a recorded body through route "
+        "mocking, so the browser pass spends $0 and uses none of the live budget",
+    )
     args = ap.parse_args(argv)
     args.budget = None
     if args.live_budget:
@@ -928,7 +1016,9 @@ def main(argv: list[str] | None = None) -> int:
                         env = Env(engine, width, scheme, page, args, rep)
                         if smoke:  # a smoke run must not write visits to the real server
                             env.block_visits()
-                            if args.budget is not None:
+                            if args.mock_live:
+                                env.mock_live()
+                            elif args.budget is not None:
                                 env.guard_live()
                         try:
                             if group == "scenario":
@@ -956,7 +1046,10 @@ def main(argv: list[str] | None = None) -> int:
         if c.get("refused"):
             rep.add(f"live {c['path']} call from the browser", FAIL, SKIPPED_BUDGET, group="live")
     rep.metrics["live_calls"] = live_calls
-    if args.budget is not None:
+    if args.mock_live:  # nothing reserved, nothing spent: the ledger smoke.py absorbs is empty
+        rep.metrics["budget"] = Budget(max_usd=0.0).snapshot()
+        rep.metrics["mock_live"] = True
+    elif args.budget is not None:
         rep.metrics["budget"] = args.budget.snapshot()  # smoke.py absorbs this, not live_calls
     rep.metrics["live_cost_usd"] = round(sum(c.get("cost_usd", 0.0) for c in live_calls), 6)
     if args.suite == "full":

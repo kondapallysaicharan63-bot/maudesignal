@@ -11,7 +11,7 @@ Runs against the deployed URLs (never prints a key):
 Groups: service pages, connect (a demo key is handed out), authentication (no key is 401),
 keyed tool calls (the demo key from /v1/connect always; the keys in MAUDESIGNAL_SMOKE_KEYS
 when given, otherwise BLOCKED: "keys not provided", never PASS), the figures the API shares
-with the submission, one live chat question, one photo and one spoken question on /v1/live/*
+with the submission, one live chat question and one spoken question on /v1/live/* (the browser pass is mocked)
 (mode and cost_usd of each are logged), a TEST visit and TEST feedback entry (deleted when
 MAUDESIGNAL_ADMIN_KEY_SMOKE is set, otherwise left and reported so a person can delete them),
 the web app (page loads, bundle file names and hash, a Playwright quick pass at 1440 and 390),
@@ -251,10 +251,11 @@ class Smoke:
         self.rep.add(name, FAIL, SKIPPED_BUDGET, group="live")
 
     def live(self, with_photo: bool = True) -> None:
-        """One chat question, one spoken question and (without a browser pass) one photo.
+        """One chat question and one spoken question; a photo only when ``with_photo``.
 
-        Every call is budget-checked. When the browser pass runs, its camera upload covers
-        /v1/live/label, so ``with_photo`` is False and no direct photo call is made.
+        Every call is budget-checked. A photo is held at $0.30, so with the $0.60 run budget it
+        does not fit beside the question and the spoken question ($0.55); by default no photo is
+        sent and the report says so. The browser pass runs in recorded mode (route mocks).
         """
         if self.budget.reserve("ask"):
             r = request(
@@ -264,7 +265,15 @@ class Smoke:
         else:
             self.skipped_budget("live chat question")
         if not with_photo:
-            pass
+            self.rep.add(
+                "live photo",
+                KNOWN_GAP,
+                "not called in the smoke run: a photo is held at $0.30 and does not fit the "
+                "$0.60 run budget beside the chat and spoken questions; the browser pass uses "
+                "a recorded mock; the release live job checks /v1/live/label",
+                group="live",
+                required=False,
+            )
         elif not LABEL_PHOTO.is_file():
             self.rep.add("live photo", FAIL, f"{LABEL_PHOTO.name} not found", group="live")
         elif self.budget.reserve("photo"):
@@ -416,12 +425,8 @@ class Smoke:
             str(out_dir),
             "--stem",
             "smoke-web",
-            # the browser pass spends from the same budget: what is left after the live checks
-            "--live-budget",
-            ",".join(
-                [f"{self.budget.remaining_usd():.6f}"]
-                + [str(self.budget.remaining_counts()[k]) for k in ("ask", "photo", "voice")]
-            ),
+            # recorded mode through route mocking: the browser pass spends $0 of the budget
+            "--mock-live",
         ]
         proc = subprocess.run(cmd, capture_output=True, text=True, check=False)  # noqa: S603
         path = out_dir / "smoke-web.json"
@@ -472,7 +477,7 @@ class Smoke:
             self.rep.add(
                 "load: live asks",
                 KNOWN_GAP,
-                "none planned: the budget left after the live checks and the browser pass cannot "
+                "none planned: the budget left after the live checks cannot "
                 "carry one more ask at its full hold; the load test used public checks only",
                 group="load",
                 required=False,
@@ -562,7 +567,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--no-load", action="store_true")
     ap.add_argument("--vus", type=int, default=20)
     ap.add_argument("--seconds", type=float, default=120.0)
-    ap.add_argument("--max-live-asks", type=int, default=10)
+    ap.add_argument("--max-live-asks", type=int, default=0)
     args = ap.parse_args(argv)
     keys = [k.strip() for k in os.environ.get("MAUDESIGNAL_SMOKE_KEYS", "").split(",") if k.strip()]
     admin = os.environ.get("MAUDESIGNAL_ADMIN_KEY_SMOKE", "").strip()
@@ -584,7 +589,7 @@ def main(argv: list[str] | None = None) -> int:
     s.service()
     s.keyed(keys)
     browser_pass = not (args.no_web or not args.web)
-    s.live(with_photo=not browser_pass)  # the browser pass's camera upload covers /v1/live/label
+    s.live(with_photo=False)  # budget $0.60: ask + voice only (browser pass is mocked)
     s.test_entries(admin)
     if not browser_pass:
         rep.add("web checks", SKIPPED, "no web URL given, or --no-web", group="web", required=False)

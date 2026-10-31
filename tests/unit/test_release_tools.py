@@ -749,6 +749,12 @@ def test_budget_absorb_adds_browser_calls() -> None:
     assert b.spent == pytest.approx(0.2)
 
 
+def test_budget_ceiling_is_sixty_cents() -> None:
+    import budget
+
+    assert budget.MAX_USD == pytest.approx(0.60)
+
+
 def test_the_full_smoke_plan_fits_the_budget_with_every_call_at_its_full_hold() -> None:
     import budget
 
@@ -758,19 +764,37 @@ def test_the_full_smoke_plan_fits_the_budget_with_every_call_at_its_full_hold() 
             assert b.reserve(kind), f"{part} {kind} refused: {b.snapshot()}"
             b.settle(kind, None)  # worst case: no cost came back for any call
     assert b.refused == []
-    assert b.spent <= b.max_usd
+    assert b.spent == pytest.approx(0.55) and b.spent <= b.max_usd
     # what is left cannot carry another live ask, so the load test uses public checks only
     assert b.max_asks_by_dollars() == 0
+    assert budget.SMOKE_PLAN["web"] == ()
 
 
-def test_the_plan_with_a_direct_photo_when_there_is_no_browser_pass_fits_too() -> None:
+def test_a_photo_does_not_fit_beside_the_planned_calls() -> None:
     import budget
 
     b = budget.Budget()
-    for kind in (*budget.SMOKE_PLAN["direct"], "photo"):
-        assert b.reserve(kind)
-        b.settle(kind, None)
-    assert b.refused == [] and b.max_asks_by_dollars() >= 1
+    assert b.reserve("ask") and b.reserve("voice")
+    assert not b.reserve("photo") and b.refused == ["photo"]
+
+
+def test_mocked_live_bodies_are_recorded_mode_with_no_cost() -> None:
+    import e2e_web
+
+    for kind in ("ask", "photo", "voice"):
+        body = e2e_web.recorded_body(kind)
+        assert body["mode"] == "recorded" and body["cost_usd"] is None
+        assert body["recorded_note"]
+    cands = e2e_web.recorded_body("photo")["matches"]["candidates"]
+    assert len(cands) == 1
+
+
+def test_standalone_load_test_defaults_to_no_live_asks() -> None:
+    import load_test
+
+    src = Path(load_test.__file__).read_text("utf-8")
+    assert '"--max-live-asks", type=int, default=0' in src
+    assert "Budget(max_usd=MAX_USD)" in src
 
 
 def test_web_pass_ledger_is_absorbed_with_unanswered_calls_at_full_hold() -> None:

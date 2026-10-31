@@ -7,7 +7,7 @@ Each virtual user loops until the time is up, with a pause between calls, and mi
 * ``GET /v1/public/check_device_type`` (no key; the server limits it per address, so many
   answers are 429, counted as "limited" and not as errors),
 * ``GET /v1/health`` (a cheap baseline),
-* ``POST /v1/live/ask`` (a real question; at most ``--max-live-asks`` in the whole run, so the
+* ``POST /v1/live/ask`` (a real question; at most ``--max-live-asks`` (default 0) in the whole run, so the
   daily cap is not burned; each answer's ``cost_usd`` is added up).
 
 Reported: calls, p50 / p95 / max latency in ms per kind, error rate (no answer or HTTP 5xx), the
@@ -16,7 +16,7 @@ gave. Fails when the error rate is over ``--max-error-rate`` or the live cost is
 ``--max-cost``.
 
     python3 scripts/release/load_test.py --base https://maudesignal-api.vercel.app \
-        --vus 20 --seconds 120 --max-live-asks 10 --out-dir release-out
+        --vus 20 --seconds 120 --max-live-asks 0 --out-dir release-out
 """
 
 # ruff: noqa: E501
@@ -34,7 +34,7 @@ from typing import Any
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
-from budget import Budget  # noqa: E402
+from budget import MAX_USD, Budget  # noqa: E402
 from netutil import Response, percentile, request  # noqa: E402
 from report import FAIL, PASS, Report  # noqa: E402
 
@@ -208,23 +208,26 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--base", required=True)
     ap.add_argument("--vus", type=int, default=20)
     ap.add_argument("--seconds", type=float, default=120.0)
-    ap.add_argument("--max-live-asks", type=int, default=10)
+    ap.add_argument("--max-live-asks", type=int, default=0)
     ap.add_argument("--max-error-rate", type=float, default=0.02)
-    ap.add_argument("--max-cost", type=float, default=1.0)
+    ap.add_argument("--max-cost", type=float, default=0.60)
     ap.add_argument("--think", type=float, default=1.0)
     ap.add_argument("--out-dir", type=Path, default=Path("release-out"))
     args = ap.parse_args(argv)
     rep = Report("load test")
+    budget = Budget(max_usd=MAX_USD)  # standalone runs obey the same $0.60 ledger
+    allowed = min(args.max_live_asks, budget.max_asks_by_dollars())
     samples = run_load(
         args.base.rstrip("/"),
         vus=args.vus,
         seconds=args.seconds,
-        max_live_asks=args.max_live_asks,
+        max_live_asks=allowed,
         think_s=args.think,
+        budget=budget,
     )
     stats = summarize(samples)
     stats.update(vus=args.vus, seconds=args.seconds)
-    evaluate(rep, stats, args.max_error_rate, args.max_cost, args.max_live_asks)
+    evaluate(rep, stats, args.max_error_rate, min(args.max_cost, MAX_USD), allowed)
     rep.write(args.out_dir, "load-test")
     return rep.exit_code()
 

@@ -166,10 +166,10 @@ in the manual run). Artifact: **`smoke-report`** (`smoke.json`, `smoke.md`, `smo
 | service | `/v1/health` 200; `/privacy` and `/terms` 200; `/v1/connect` hands out a demo key; a call without a key is 401 |
 | keyed calls | the demo key from `/v1/connect` always (`what_changed_this_week` LLZ, recalls, audit 403); each key in the secret `MAUDESIGNAL_SMOKE_KEYS` (what changed LLZ, audit chain verified, MCP `tools/list`). If the secret is empty the keyed checks are **BLOCKED: keys not provided**, never PASS |
 | numbers | when the LLZ answer is the stored demo snapshot, it must still say "33 reports" and "8.75" (`EXPECTED_LLZ_SNAPSHOT` in `compare.py`); live openFDA answers are a KNOWN_GAP (their numbers move daily) |
-| live | one chat question, one photo, one spoken question on `/v1/live/*`; mode, `cost_usd` and time of each are in the report. An answer shown as `recorded` is a KNOWN_GAP (live model off or the daily cap reached), with the note the API gave. Every call is first reserved in the run's budget (see below); a call it refuses is a FAIL line `skipped: budget` |
+| live | one chat question and one spoken question on `/v1/live/*` ($0.55 at the holds; a photo is a KNOWN_GAP line because $0.30 more does not fit $0.60); mode, `cost_usd` and time of each are in the report. An answer shown as `recorded` is a KNOWN_GAP (live model off or the daily cap reached), with the note the API gave. Every call is first reserved in the run's budget (see below); a call it refuses is a FAIL line `skipped: budget` |
 | feedback | a `?r=TEST-0` visit ping and a TEST feedback entry ("TEST smoke entry"). The server treats a code as TEST only if it matches `^test[0-9._~-]*$` (case-insensitive), so the refs are `TEST-0` (smoke) and `TEST-1` (release check); `TEST-smoke` would not be deleted. If the secret `MAUDESIGNAL_ADMIN_KEY_SMOKE` exists they are deleted through `/v1/admin/delete-test`, and the effect is checked: the answer's `deleted` counts (`visits`, `feedback`) must be at least the entries this run wrote (1 and 1), and `/v1/admin/summary` must no longer list `TEST-0`. Without the secret the report says **BLOCKED: TEST entries remain** for Charan to delete |
-| web | the page and `?r=TEST-0` load; script and style file names and a short hash of each (the bundle hash); no key in the bundle; a Playwright pass in chromium at 1440 and 390 (chat, camera upload, alert panel), opened with `?r=TEST-0`; every `/v1/visit` ping is blocked in the browser and its body checked to carry `TEST-0`, so the pass writes no visit to production. Its `/v1/live/*` calls go through the same budget (a route handler reserves each one and aborts what does not fit, which is reported as `skipped: budget`); their `cost_usd` is added to the cost total |
-| load | 20 virtual users for 120 s (`load_test.py`): `GET /v1/public/check_device_type`, `GET /v1/health` and live asks only within what is left of the run's budget (never more than 10 in total across the whole run); every other slot is a public `check_device_type` call. Reported: p50 / p95 / max per kind, the error rate (no answer or HTTP 5xx; 429 is counted separately because the server limits the public check per address), live asks, total live cost and the last `remaining_today` the API reported. The run fails above 2% errors |
+| web | the page and `?r=TEST-0` load; script and style file names and a short hash of each (the bundle hash); no key in the bundle; a Playwright pass in chromium at 1440 and 390 (chat, camera upload, alert panel), opened with `?r=TEST-0`; every `/v1/visit` ping is blocked in the browser and its body checked to carry `TEST-0`, so the pass writes no visit to production. Its `/v1/live/*` calls are answered by route mocks in recorded mode, so it spends $0 of the budget |
+| load | 20 virtual users for 120 s (`load_test.py`): `GET /v1/public/check_device_type`, `GET /v1/health` and no live asks (`--max-live-asks 0`; the $0.60 budget is used by the live checks); every slot is a public `check_device_type` or health call. Reported: p50 / p95 / max per kind, the error rate (no answer or HTTP 5xx; 429 is counted separately because the server limits the public check per address), live asks, total live cost and the last `remaining_today` the API reported. The run fails above 2% errors |
 
 The run never prints a key. On GitHub Actions it prints `::add-mask::` for each key and the
 admin key separately (GitHub masks the secret only as the whole comma-joined string). With any
@@ -179,37 +179,32 @@ Responses and the web bundle are scanned for the secrets given to the run and fo
 strings.
 
 **Spend budget per smoke run** (`scripts/release/budget.py`): one `Budget` object is shared by the
-live checks, the web quick pass and the load test. In total at most **$1.50**, **10** live asks,
-**2** photos and **1** spoken question. Before each live call the budget checks the cost already
-spent, plus the holds of calls in flight, plus this call's maximum hold: **$0.25 ask, $0.30 voice,
-$0.30 photo**. These are the *deployed* API's default per-request caps (`globalcap.py` on
-`track-c-live`), the most one call can cost there; they are not the lower caps ($0.12 / $0.12 /
-$0.15) that the release `live` job sets on its own local API. `/v1/health` does not report the
-deployed caps, so the numbers are copied into `budget.py` (a unit test pins them); raise them if
-the deployment's caps are raised. A call that gets no usable answer (timeout, non-200, no
-`cost_usd`) may still have run the model, so its full hold is recorded as spent, never $0. If
-the check would pass $1.50, or the count of its kind is used up, the call is not made and the
-report gets a FAIL line `skipped: budget` (never silent).
+live checks and the load test, and the web quick pass is kept out of live spending. In total at
+most **$0.60**, **10** live asks, **2** photos and **1** spoken question. Before each live call
+the budget checks the cost already spent, plus the holds of calls in flight, plus this call's
+maximum hold: **$0.25 ask, $0.30 voice, $0.30 photo**. These are the *deployed* API's default
+per-request caps (`globalcap.py` on `track-c-live`), the most one call can cost there; they are
+not the lower caps ($0.12 / $0.12 / $0.15) that the release `live` job sets on its own local API.
+`/v1/health` does not report the deployed caps, so the numbers are copied into `budget.py` (a
+unit test pins them); raise them if the deployment's caps are raised. A call that gets no usable
+answer (timeout, non-200, no `cost_usd`) may still have run the model, so its full hold is
+recorded as spent, never $0. If the check would pass $0.60, or the count of its kind is used up,
+the call is not made and the report gets a FAIL line `skipped: budget` (never silent).
 
-The dollar ceiling is $1.50 and not $0.60 because two worst-case holds already use $0.55 of
-$0.60; the smoke plan (`SMOKE_PLAN`, simulated in a unit test with every call at its full hold)
-is: direct chat question ($0.25) and spoken question ($0.30); in the browser pass at the first
-width only, two chat turns ($0.50) and one camera upload ($0.30), which also covers
-`/v1/live/label` (the direct photo call is made only when no browser pass runs). That is $1.35
-at the holds; the real total is the sum of the reported `cost_usd`. The load test then gets live
-asks only for what the dollars left can carry at $0.25 each, which after this plan is none: its
-other slots are public `check_device_type` and health calls. The 390 px pass runs only the
-alert-bell scenario.
-
-The browser pass receives what is left as `--live-budget` and counts every live call the page
-starts (routes `/v1/live/*`, and the older `/v1/label` and `/v1/voice`) in its own copy of the
-budget. A call reserved but not answered before the page closed (for example a chat turn still
-streaming) is settled at its full hold. The pass writes its ledger (`budget`: spent, held, used)
-to its report and `smoke.py` absorbs that, not the answered responses. The total-cost check
-and the `budget` metrics are written on every smoke run, also with `--no-load`.
+The smoke plan (`SMOKE_PLAN`, simulated in a unit test with every call at its full hold) is:
+one direct chat question ($0.25) and one spoken question ($0.30), $0.55 of $0.60. The browser
+pass runs in **recorded mode through route mocking** (`e2e_web.py --mock-live`): every
+`/v1/live/*` request the page makes (and the older `/v1/label`, `/v1/voice`) is fulfilled by a
+route handler with a recorded-mode body, so it reaches no model and costs $0; each mocked call
+is listed in the pass's report with `mocked: true`. The load test makes **no live asks**
+(`--max-live-asks 0`); all of its slots are public `check_device_type` and health calls. Run on
+its own, `load_test.py` builds the same $0.60 budget and defaults to 0 live asks. The real
+`/v1/live/label` route is not called by the smoke run (a photo does not fit beside the other two
+calls); the report carries a KNOWN_GAP line "live photo" saying so, and the release `live` job
+checks it on its own local API. The 390 px pass runs only the alert-bell scenario.
 
 The cost line "cap ledger: cost reported by the responses" is informational (KNOWN_GAP, not
-required): it sums `cost_usd` from the live checks, the load test and the browser pass, and
+required): it sums `cost_usd` from the live checks and the load test (the browser pass is mocked, $0), and
 quotes the last `remaining_today`. It confirms nothing by itself.
 
 ## Reading a report
