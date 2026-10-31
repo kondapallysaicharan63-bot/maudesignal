@@ -104,7 +104,12 @@ def produce(
     recording = None
     if live_client is not None:
         recording = draft_narrative(live_client, build.data, build.excerpts, model=spark_model)
-        build.data.narrative = gate_narrative(recording, build.store, source="live")
+        build.data.narrative = gate_narrative(
+            recording,
+            build.store,
+            source="live",
+            cited_report_ids=[r.report_id for r in build.data.evidence],
+        )
         if save_live_narrative:
             save_recording(recording, ndir / f"{build.data.doc_id}-narrative.json")
     html = render_html(build.data)

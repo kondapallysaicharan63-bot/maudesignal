@@ -14,7 +14,7 @@ Wire format, as documented (read 2026-10-27):
 
 The behaviour contract (system prompt + schema) comes from a Skill folder, never
 from Python strings. The client is any OpenAI-compatible object, injected, so
-tests use a scripted fake and spend no credits. The output is still validated
+tests use a scripted fake and spend no credits. The output is still schema-checked
 locally against the Skill schema: constrained decoding is the API's promise,
 the local check is ours.
 """
@@ -102,7 +102,7 @@ def text_part(text: str) -> dict[str, Any]:
 
 @dataclass(frozen=True)
 class SparkJson:
-    """A validated structured answer plus its usage."""
+    """A schema-checked structured answer plus its usage."""
 
     data: dict[str, Any]
     model: str

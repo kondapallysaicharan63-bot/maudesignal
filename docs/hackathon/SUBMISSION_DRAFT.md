@@ -24,7 +24,7 @@ recorded run or a test in this repository (sources in brackets).
   `HACKATHON.md`).
 - **Live demo:** https://maudesignal-4vniqswm9ptaxqtf2iawox.streamlit.app/ (keyless: recorded
   Muse runs, no live model calls unless a key is set).
-- **Video:** _[link — to be recorded Nov 1]_
+- **Video:** _[link — Charan records the voiceover over the 2:52 walkthrough. Deadline: Nov 4, about 5 PM PT (Charan's date; confirm the exact time on the official page).]_
 
 ## Meta models used
 
@@ -34,57 +34,123 @@ recorded run or a test in this repository (sources in brackets).
 | Muse Wonder 1.0 | Independent review of the evidence-pack PDF before a person accepts it | `demo/dossier/*-review.json` |
 | Voice Transcribe | Spoken questions → the same gated copilot | `demo/transcripts/*00-voice-*.json` |
 | SAM 3.1 | Finds the label in a device photo before Muse Spark reads it | `demo/vision/label-*.json`: 7 photos read, thermometer → product code FLL |
+| Muse connector | Submitted to Meta's Muse Connector Program — pending review. | `docs/hackathon/MUSE_CONNECTOR.md` |
 
 ## Results (real runs, 2026-10-28)
 
 - Gate on live answers: 63 of 65 sentences matched the FDA records on the first
-  try (96.9%), 64 of 65 after one repair turn, across 28 answers including 6
-  spoken (run 40764365995) [`docs/hackathon/HAND_CHECK.md`]. The one withheld
+  try (96.9%), 64 of 65 after one repair turn, across 28 answers (fifth recording, run 40764365995) [`docs/hackathon/HAND_CHECK.md`]. The one withheld
   sentence was true (a year read as a count) and the gate was fixed.
-- Every answer checked by hand against the database: 27 of 28 fully correct,
-  none wrong; spoken questions 6 of 6 [same]. _(Checked by Claude; Charan
-  to re-check before quoting this as a person's check.)_
+- Every answer of the fifth recording (run 40764365995) checked by hand against the
+  database: 27 of 28 fully correct, none wrong. _(Checked by Claude; Charan to
+  re-check before quoting this as a person's check.)_
+- Spoken questions: Charan's own three recordings (Oct-29 run 40965201781; public with
+  his consent): gate 8 of 8 sentences, first pass and final; hand-checked 8 of 8
+  correct by Claude, Charan's check pending [`docs/hackathon/HAND_CHECK.md`].
+  Voice Transcribe misheard the product code (LLG, LLC for LLZ); the screen says
+  so and states the one-letter correction.
 - Adversarial gate set: 112 made-up or tricky sentences, 0 let through wrongly, 0
   blocked wrongly [`tests/unit/test_gate.py`].
 - 510(k) summaries: 5 of 5 read; two reads agree on 80–100% of fields (100% on 4 of
   5), the rest are flagged for a person [`demo/vision/`].
 - Report sources vs openFDA: 0 mismatches [`docs/hackathon/SOURCE_COUNTS.md`].
-- Tests: 701 unit tests, 77% coverage; Playwright on every page and theme; all 21
+- Tests: 1147 unit tests, 78% coverage; Playwright on every page and theme; all 21
   test types reported, with the external ones marked PENDING
   [`docs/hackathon/TESTING.md`].
 - Spend so far: about $8.35 of the $150 credit (estimates) [`docs/hackathon/BUDGET.md`].
+- AI device sweep (GitHub Actions run 40836844281, 2026-10-29): FDA's AI-Enabled
+  Medical Device List has 1,614 devices across 181 product codes; all 181 checked on
+  openFDA for 2026-09-24 – 09-30 (the latest week) against the 4 weeks before; 6
+  flagged: 3 reports suddenly increased, 2 more serious than usual, 1 new kind of
+  problem; 0 errors [`docs/hackathon/AI_SWEEP.md`, `demo/sweep/ai-device-sweep.json`].
+- Any device type can be checked live on the Signals page (openFDA counts, the same
+  four rules; a 300-case test checks it agrees with the stored-records detector).
 
-## Video script v3 (from Charan's v2, updated to the build) — 2:45 target, 3:00 cap
+## Why it matters (impact)
 
-Changes from v2: "Overnight" → "What changed" and plain words throughout; the
-"reports we didn't file" beat uses MYN/QIH (all 121 stored LLZ reports were filed
-by the manufacturer); the gate line uses the real recorded numbers; the voice
-line says "hears the question" (the clip is text-to-speech, not a practitioner).
-Charan's v2 wording is kept everywhere else.
+Public figures, with their source type; dollar market sizes are left out because
+published estimates disagree by almost three times.
 
-| Time | Screen | Voiceover (Charan) |
+- FDA receives over two million medical device reports a year
+  ([openFDA](https://open.fda.gov/apis/device/event), FDA).
+- FDA's AI-Enabled Medical Device List has 1,614 devices across 181 product codes (read
+  by our sweep on 2026-10-29), and grows by about 300 a year (third-party counts:
+  [ai2.work](https://ai2.work/blog/fda-ai-device-list-hits-1-524-as-radiology-dominates-but-evidence-lags),
+  [IntuitionLabs](https://intuitionlabs.ai/articles/fda-ai-medical-device-tracker)).
+- MAUDE has no field for an AI-specific failure such as drift; MaudeSignal adds an
+  AI-failure taxonomy (peer-reviewed and industry sources say the current system is
+  insufficient for AI/ML devices).
+- For one AI product code (LLZ), 19,970 reports on openFDA, 99.3% filed by a manufacturer
+  [`docs/hackathon/SOURCE_COUNTS.md`, our run]. The demo's stored sample is smaller (121 LLZ
+  reports); figures in recorded answers name that scope.
+- Who uses it: regulatory and quality (postmarket / complaint-handling) leads at makers
+  of FDA-cleared AI devices, many of them small teams. MDR, CAPA and complaint-handling
+  procedures are long-standing top FDA inspection findings; QMSR (in force 2 Feb 2026)
+  brings ISO 13485 into Part 820.
+
+## How it differs from existing tools
+
+AI tools over MAUDE already exist: Basil Systems (Safety Signaling, Oct 2025), Redica
+Systems (Post-Market Intelligence), DeviceWatch (MAUDE AI summaries). They describe
+their output as grounded; none of their public pages shows a check per sentence.
+MaudeSignal:
+
+1. **Shows what it refused to say.** Every sentence goes through a deterministic gate
+   that recomputes counts and shares, matches quotes to the cited report, and checks
+   510(k) numbers and CFR sections. Blocked sentences stay visible, struck out, with the
+   reason; Muse Spark gets one repair turn.
+2. **Names AI failures** that MAUDE cannot.
+3. **Starts from the device in hand:** SAM 3.1 + Muse Spark read a device label and open
+   that device's signals.
+4. **Free and open source**, runs on a laptop; every step is in a tamper-evident audit
+   trail.
+
+## Bonus prizes it fits
+
+- **Best Agentic Use-Case:** Muse Spark plans and calls 13 deterministic tools, answers
+  as structured claims, is gated, and repairs its own withheld sentences; evidence-pack
+  drafting and Muse Wonder review follow, with a named person deciding.
+- **Best Creative Build (Muse Wonder / Muse Image):** Muse Wonder reviews the
+  evidence-pack PDF as an independent second reader.
+- Most Viral / Community Vote: need Charan's post and gallery link (draft below).
+
+## Video script v4 — 2:53, recorded by `scripts/record_walkthrough.py`
+
+The video shows only what was built during the event: the app runs in demo mode
+(`?tools=demo`: Signals, Copilot, Vision, Audit). `walkthrough-script.md` from the
+recorder has the exact start times; read along with `walkthrough.mp4`.
+
+| Starts | Screen | Voiceover (Charan) |
 |---|---|---|
-| 0:00–0:12 | Title → the app's header line ("triage aid · not medical advice") | "I'm Charan. MaudeSignal helps medical-device safety teams watch FDA data. It's a B2B tool — not medical advice — and people make every decision." |
-| 0:12–0:30 | Stat card: "LLZ (imaging software): 19,970 FDA reports — 99.3% filed by manufacturers about their own devices" | "Device makers already know their own complaints — they're the ones who report them to FDA. What they can't easily see is what's happening to other companies' devices of the same type, and the few reports about their device filed by hospitals or users. That's buried in tens of thousands of reports." |
-| 0:30–0:50 | **Signals** workspace: the device-type list on the left, LLZ selected → "Reports suddenly increased 3.77×: 33 this week · 8.75 weekly mean before"; then select MYN or QIH → **Reports** tab → "Not filed by a manufacturer" (3 voluntary reports each) | "Monday morning. For the device types I chose, it compared this week with the last four. Reports suddenly increased for one type: 33 against a normal 9. And here are reports that weren't filed by the manufacturer." |
-| 0:50–1:15 | **Copilot**: voice question (Heard: …) → answer with Verified pills + FDA links | "I just ask. Meta's Voice Transcribe hears the question, Muse Spark looks through FDA reports, recalls, 510(k)s and papers — and every number and quote comes back tied to the exact FDA record." |
-| 1:15–1:50 | **Gate playground**: "LLZ had 50 injury reports" and "21 CFR 820.100" → Withheld with reasons | "If anything — the model or a colleague — states something the records don't support, it's withheld, with the reason: the records show 2 LLZ injury reports, and 820.100 was replaced this February. In our latest recording, 63 of 65 sentences matched the FDA records on the first try, and every answer was checked by hand against the records." |
-| 1:50–2:10 | **Vision**: 510(k) summary fields Verified / Conflict; label photo → SAM box → device found | "It also reads scanned FDA documents and device labels — Muse Spark reads, SAM finds the label — and anything unclear is flagged for a person, never guessed." |
-| 2:10–2:35 | Signals → LLZ → **Evidence pack** tab: PDF (Signal Evaluation & CAPA-need Evidence) and the Muse Wonder review side by side, then type name → Accept → **Audit**: "Hash chain intact" | "For the jump it prepares a CAPA-need evidence pack in a quality-record layout; Muse Wonder reviews it first. Whether a CAPA is needed is our decision, on our own form — I accept, and every step is logged." |
-| 2:35–2:55 | Architecture, 2 lines | "Built this week on four Meta models — Muse Spark, Muse Wonder, Voice Transcribe and SAM — on my open-source MaudeSignal pipeline. Live demo and code below." |
+| 0:00 | Title card | "I'm Charan. MaudeSignal helps medical-device safety teams watch FDA data. Not medical advice: a person makes every decision." |
+| 0:09 | Problem card (2M+ reports a year; 1,614 AI devices on FDA's list; 19,970 LLZ reports) | "FDA gets over two million device reports a year, and its list of AI devices has 1,614 entries. MAUDE has no field for an AI failure." |
+| 0:21 | Signals: "Across FDA's AI device list" (6 of 181 flagged), LLZ increase, then MYN → "Not filed by a manufacturer" | "Monday morning. Across all 181 AI device types on FDA's list, 6 were flagged in openFDA's latest week. For the types I chose, LLZ reports suddenly increased: 33 against a normal 9. And here are the reports the manufacturer didn't file." |
+| 0:43 | Copilot: spoken question "my colleague says LLZ had 50 injury reports…" → "No, that is not correct for LLZ this week." | "I can just ask. Meta's Voice Transcribe hears the question; Muse Spark calls tools over the stored FDA records. A colleague's claim of 50 injuries? The records say otherwise." |
+| 1:04 | Copilot: typed trap answer, "after a repair turn", first-pass expander with the withheld sentence | "Every sentence passes a gate that recomputes each number from the records. Here Spark itself said something the records didn't support. The gate withheld it and showed why; Spark got one repair turn, and anything still unmatched stays struck out." |
+| 1:27 | Try to fool the gate: CFR 820.100 → superseded by QMSR | "You can try to fool it yourself: cite 21 CFR 820.100, and it's blocked, because QMSR replaced it this February." |
+| 1:46 | Vision: two-read agreement; label camera → thermometer → product code FLL | "Muse Spark reads scanned 510(k) summaries twice and compares the reads. Point a camera at a device label: SAM finds it, Spark reads it, and you land on that device's signals. Anything unclear goes to a person." |
+| 2:10 | Evidence pack + Muse Wonder review → Audit "Hash chain intact" | "It drafts a CAPA-need evidence pack, Muse Wonder reviews it independently, and every step goes into an audit trail that shows if anything was changed." |
+| 2:40 | Close card + links | "AI tools that summarize MAUDE already exist. MaudeSignal shows you which of its own sentences it refused to say, and why." |
 
-**Before recording:** (1) voice beat: use `demo/voice/question-c.wav` ("What
-changed this week? Did reports suddenly increase for any device?"), recorded as
-`00-voice-c`, answered correctly; do not use `question.wav` ("What came in
-overnight? Is anything worsening?" — both words are on the drop list). The
-clips are ElevenLabs text-to-speech, so say "Voice Transcribe hears the
-question", not that a practitioner asked it. (2) Vision beat: use `label-thermometer-1.jpg` (SAM box → HoMedics TIE-240 →
-FDA product code FLL); (3) open the deployed link once before recording (Streamlit Cloud sleeps when idle). Check the "2 LLZ injury reports" line against the
-gate playground on the day.
+Optional: replace the first sentence with one line on why you know this problem
+firsthand (the problem statement is "Build for Your World").
+
+## X post draft (not posted — Charan posts)
+
+> I built MaudeSignal for the Meta Global AI Developer Hackathon: a safety copilot for
+> medical-device teams on public FDA data. Muse Spark answers with tools, and a gate
+> recomputes every number from the FDA records. What it can't match, it refuses to
+> say, and shows you why. Voice Transcribe, SAM 3.1 and Muse Wonder too.
+> It checked all 181 AI device types on FDA's list against openFDA: 6 were flagged in
+> the latest week. Try any device type yourself:
+> Demo: https://maudesignal-4vniqswm9ptaxqtf2iawox.streamlit.app/
+> Code: https://github.com/kondapallysaicharan63-bot/maudesignal
+> [attach the 2:53 video]
 
 ## Not done / still needed from Charan
 
 - External beta and expert sign-off (Harish / PSM QA).
 - Making `hackathon-day2` the default branch (or an OK to merge) so the daily
   monitor cron can run.
+- FDA Elsa 4.0 and MAUDE: any sentence about it needs a check against an FDA source by Charan first (fda.gov was not reachable from the build environment); it is not used anywhere in the project until then.
 - The final submit click.

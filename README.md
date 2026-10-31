@@ -45,33 +45,40 @@ what a manufacturer would still do): [docs/VALIDATION_EVIDENCE.md](docs/VALIDATI
    week vs a weekly mean of 8.75 (3.77x)"*
    ([digests/2026-08-31.md](digests/2026-08-31.md)), with the reason it is
    ranked first.
-2. **Who filed the reports.** Counts per device type by openFDA report source
+2. **Any device type, live.** Type any FDA product code on the Signals page:
+   MaudeSignal asks openFDA for counts (about 5 requests, no report text,
+   nothing stored, no model) and applies the same four rules, with a link to
+   the openFDA query behind every figure. A weekly GitHub Actions job runs the
+   same check for every product code on FDA's AI-Enabled Medical Device List
+   ([docs/hackathon/AI_SWEEP.md](docs/hackathon/AI_SWEEP.md)).
+3. **Who filed the reports.** Counts per device type by openFDA report source
    (manufacturer, user facility, voluntary, distributor) and a filterable list
    of the reports **not filed by a manufacturer**. On the demo data all 33 LLZ
-   reports this week, and all 121 stored, were filed by manufacturers; the
+   reports this week, and all 121 LLZ reports in the stored demo sample, were filed by
+   manufacturers (openFDA as a whole: 19,970 LLZ reports, 99.3% manufacturer-filed); the
    non-manufacturer reports on file are 3 MYN, 3 QIH and 1 POK (all voluntary).
-3. **Ask the copilot,** typed or by voice. Muse Spark calls 13 tools over
+4. **Ask the copilot,** typed or by voice. Muse Spark calls 13 tools over
    stored MAUDE reports, FDA recalls, 510(k) records and PubMed abstracts and
    answers in a strict JSON schema: sentences, each tagged with the claims it
    makes.
-4. **The gate checks every claim.** A made-up quote or count is withheld with
+5. **The gate checks every claim.** A made-up quote or count is withheld with
    the reason (*"claimed 500, records show 121"*); a reply that does not parse
    is withheld too. The model gets one repair turn with the gate's values.
-5. **CAPA-need evidence pack.** The copilot can prepare the evidence (the
+6. **CAPA-need evidence pack.** The copilot can prepare the evidence (the
    supporting reports and a problem statement); a named person accepts or
-   rejects it on the Actions page. The model cannot.
-6. **Evidence pack (PDF).** *Signal Evaluation & CAPA-need Evidence*, laid out
+   rejects it in the Signals workspace (Evidence pack tab); the Audit page keeps the trail. The model cannot.
+7. **Evidence pack (PDF).** *Signal Evaluation & CAPA-need Evidence*, laid out
    like a controlled quality record: document control, signal evaluation,
    evidence table, the ISO 13485:2016 §8.5.2 sections left blank for the CAPA
    owner, an MDR worksheet mapped to FDA Form 3500A (stamped *not for
    submission*) and the audit trail. Every printed number is re-verified by the
    gate. **Muse Wonder 1.0** reviews the whole PDF before a person accepts it.
-7. **Vision.** Muse Spark reads FDA 510(k) summary PDFs (many are scanned)
+8. **Vision.** Muse Spark reads FDA 510(k) summary PDFs (many are scanned)
    twice, independently; a field is *verified* only if both reads agree and
    openFDA / the PDF text layer agree, otherwise it is flagged for a person.
    A photo of a device label → **SAM 3.1** finds the label → Muse Spark reads
    it → the K-number is checked against FDA.
-8. **Audit trail.** Every answer, spoken question, live-call cost and decision
+9. **Audit trail.** Every answer, spoken question, live-call cost and decision
    is appended to a SHA-256 hash-chained log; the dashboard re-verifies it.
 
 ## How it's different
@@ -91,7 +98,28 @@ guidance, 510(k) history and MAUDE). MaudeSignal differs in three ways:
 - **It reads scanned 510(k) documents with a two-read accuracy check.**
 - **It is open source and self-hostable** (MIT), on public FDA data only.
 
-## Real-run numbers (2026-10-28, third recording)
+[BEUDAMED](https://beudamed.com/psur-reports) is also worth knowing: it describes
+itself as a free tool with no AI, where you enter a product code and get charts
+plus a methodology. MaudeSignal differs plainly: an agent can run the
+investigation for a device type the weekly check flagged, or for a given recall
+(run on request; recordings pending). Every fact it writes is matched to the
+stored source record (FDA, MHRA or literature) or withheld, and the search
+protocol behind each answer (dataset, filters, dates, counts) is written down
+so a person can repeat it.
+
+### Three agentic workflows (status)
+
+| Workflow | Command | Status |
+|---|---|---|
+| Weekly investigator: for a device type the weekly check flagged, Muse Spark pulls the new reports, groups them by kind of problem, checks recalls, 510(k)s and non-manufacturer reports, and writes the digest entry through the gate | `maudesignal investigate` | Built and tested with mocked model calls (`tests/unit/test_weekly_investigator.py`). One real recording is stored: `demo/investigations/20261030T010942Z-weekly-llz.json` (LLZ; 7 of 7 sentences and 9 of 9 claims passed the gate on the first pass; $0.224989). |
+| Recall-triggered sweep: Muse Spark reads a recall's reason and searches stored narratives for the same problem; quotes matched word for word, counts recomputed by the gate | `maudesignal recall-sweep` | Built and tested with mocked model calls (`tests/unit/test_recall_sweep.py`). Real recordings pending. |
+| Search protocol: every tool call's dataset, filters, dates and counts, listed as a search-methodology appendix in the evidence-pack PDF | part of the dossier build | Built and tested (`tests/unit/test_search_protocol.py`). |
+
+Recordings of the first two run in GitHub Actions
+(`.github/workflows/investigator-record.yml`) with the repository's model key;
+until a recording is committed, nothing here is shown as a real run.
+
+## Real-run numbers (2026-10-28, fifth recording)
 
 From [`demo/transcripts/`](demo/transcripts/), [`demo/vision/`](demo/vision/),
 [`demo/dossier/`](demo/dossier/) and the hand-check
@@ -99,26 +127,40 @@ From [`demo/transcripts/`](demo/transcripts/), [`demo/vision/`](demo/vision/),
 
 | | |
 |---|---|
-| Recording run | GitHub Actions run 40764365995 (fifth recording, 2026-10-28): 28 copilot answers (22 typed, 6 spoken) |
+| Recording run | GitHub Actions run 40764365995 (fifth recording, 2026-10-28): 28 copilot answers (22 typed, 6 text-to-speech clips, mostly not shown in the app any more) |
 | Gate, first pass | 63/65 sentences passed (96.9%); after one repair turn: 64/65 (one true sentence wrongly withheld — a year read as a count; fixed in the gate since) |
 | Replies that never parsed | 0 of 28; 0 answers stopped by the token cap |
-| Hand-check | **27 of 28 answers fully correct (96.4%)**; typed 21 of 22, spoken 6 of 6. Of 65 sentences: 64 correct, 1 incomplete (the wrongly withheld one); none wrong. Checked against the demo database by Claude; an independent check by Charan is pending. Earlier recordings: 24/24, 21/24, 19/21, 6/21 |
+| Hand-check | **27 of 28 answers fully correct (96.4%)**; typed 21 of 22, text-to-speech clips 6 of 6. Of 65 sentences: 64 correct, 1 incomplete (the wrongly withheld one); none wrong. Checked against the demo database by Claude; an independent check by Charan is pending. Earlier recordings: 24/24, 21/24, 19/21, 6/21 |
 | Cost per answer | $0.0454 (28 answers, $1.2717) |
 | 510(k) reading | **5 of 5 summaries read**: the two reads agree on 100% of fields for K031779, 90% for K190442, K210666 and K261677, and 80% for K043333; the 6 conflicting fields are flagged for a person, never guessed |
 | Label camera (SAM 3.1 + Muse Spark) | **7 of 7 photos read**: 4 devices read correctly (CareSens N, HoMedics thermometer ×2, Welch Allyn 802 LTR), thermometers matched to FDA product code FLL; 1 left for a person to pick; 1 returned nothing (rotated label); 1 misread (Welch module: wrong text, every field marked only partly legible, no product code); no lot/serial stored |
-| Evidence pack (PDF) | Muse Spark summary: 5 sentences shown, 0 withheld, in plain words (no "spike"); Muse Wonder review: 0 findings |
+| Evidence pack (PDF) | Muse Spark summary: 5 sentences shown, 0 withheld, in plain words (no "spike"); Muse Wonder review: 0 findings (the previous recording had 2, a high one on section 4.1 and a medium one on the section 4 title; both fixed by the reword). Recorded 2026-10-31 for the current pack (SER-LLZ-20260831-001) |
 | Report sources vs openFDA | 0 mismatches |
 
-Spoken questions: Charan's four text-to-speech clips were transcribed word for
-word by Voice Transcribe and answered correctly (what changed, why ranked first,
-and the "50 injury reports" trap, which the copilot rejects: 33 reports, 0
-injuries). One clip asks "What came in overnight? Is anything worsening?" — the
-answer is correct, but the wording is not used in the video. The one incomplete
+Oct-29 voice run (GitHub Actions run 40965201781, 3 answers, stored in the repo
+alongside the fifth recording; the table above stays the fifth recording's): the gate passed
+8 of 8 sentences, first pass and final. All 8 sentences were hand-checked against the demo
+database by Claude (8 correct, 0 wrong); an independent check by Charan is pending.
+
+Spoken questions: the spoken questions the app and the walkthrough show are Charan's own
+recordings, public with his consent (`demo/voice/question-take1.wav`, `-take4.wav`,
+`-take6.wav`). They were not heard word for word: Voice Transcribe wrote "LLG" and "LLC"
+for LLZ and added stray words ("devices? devices?", "week. week."). The product code is
+corrected by a fixed one-letter rule (`src/maudesignal/copilot/product_code.py`), and the
+screen states it ("Heard LLG -> did you mean LLZ? The answer used LLZ (one letter
+different; the only close code on file)."); the heard text is kept next to the question.
+The correction is never silent: in live mode the analyst confirms it before anything is sent,
+and the stored demo shows both codes and says which one the recorded answer used. Take 4 is the "50 injury reports" trap
+the copilot rejects: 33 reports, 0 injuries (in the stored demo sample). Take 6's answer, "all 121 stored LLZ
+reports were filed by a manufacturer", is about the stored demo sample of 121 LLZ reports,
+not openFDA as a whole (19,970 LLZ reports, 99.3% manufacturer-filed). The earlier
+text-to-speech clips (ElevenLabs, not a person) are kept only in the audit trail, except
+one question (`question-d`) that no recording of Charan's covers. The one incomplete
 answer (06-trap) lost a true sentence because the gate read "August 31, 2026,
 all malfunction" as a count of 2026; the gate now treats a year after a month
 as a date (adversarial cases dt03–dt05).
 
-## Tomorrow
+## Pilot and pricing
 
 - **Buyer:** PMS / RA teams at small and mid-size device makers.
 - **Open source, self-hosted:** free.
@@ -127,11 +169,19 @@ as a date (adversarial cases dt03–dt05).
 - **Pilot metric:** time to prepare the signal-evidence section for the device types you choose
   in a PMS report, with and without MaudeSignal.
 
+## Tomorrow
+
+- Team accounts / SSO (not built: today it is a public demo key plus personal keys, no logins)
+- A shared Upstash store, so rate limits, caches and the audit log are shared by every API
+  instance (supported by the code, not turned on for the public copy)
+- More regulators: only after a scope review (today FDA / openFDA, plus MHRA (UK) alerts shown as
+  labelled context)
+
 ## How Meta AI is used
 
 | Step | Meta model / API | Why |
 |---|---|---|
-| Answering a question | **Muse Spark 1.3** (`muse-spark-1.3`) via the **Meta Model API** (OpenAI-compatible, `https://api.meta.ai/v1`) | Tool calling over 10 deterministic tools; **strict `json_schema` structured output** (sentences + typed claims, [`skills/safety-copilot`](skills/safety-copilot/SKILL.md)); a **repair turn** after a gate block, fed the gate's reasons and recomputed values |
+| Answering a question | **Muse Spark 1.3** (`muse-spark-1.3`) via the **Meta Model API** (OpenAI-compatible, `https://api.meta.ai/v1`) | Tool calling over 13 deterministic tools; **strict `json_schema` structured output** (sentences + typed claims, [`skills/safety-copilot`](skills/safety-copilot/SKILL.md)); a **repair turn** after a gate block, fed the gate's reasons and recomputed values |
 | Reading scanned FDA documents | **Muse Spark 1.3 image understanding** ([`skills/fda-document-reader`](skills/fda-document-reader/SKILL.md)) | 510(k) summary pages → structured fields with per-field legibility; two independent reads + openFDA + text layer decide VERIFIED / CONFLICT / UNVERIFIABLE |
 | Device-label camera | **SAM 3.1** (`sam-3.1`) + **Muse Spark 1.3 vision** | SAM locates the label in the photo, Spark reads the crop, the K-number / GTIN is checked against FDA |
 | Dossier narrative | **Muse Spark 1.3** ([`skills/dossier-narrative`](skills/dossier-narrative/SKILL.md)) | One-page summary drafted as claims and passed through the gate |
@@ -139,6 +189,8 @@ as a date (adversarial cases dt03–dt05).
 | Cover illustration (optional, off by default) | **Muse Image 1.0** | Non-evidentiary cover art, captioned "AI-generated illustration — not evidence"; never inside evidence sections |
 | Spoken questions | **Meta Voice Transcribe** (`muse-voice-transcribe-1.0`) | Ask by voice; only the transcript text reaches Muse Spark, and it goes through the same copilot and gate |
 | Recording the public demo | All of the above in GitHub Actions ([`copilot-record.yml`](.github/workflows/copilot-record.yml)), key from repository secrets | The public, keyless app replays real runs instead of mocked ones |
+
+**Muse connector** (read-only MCP + REST at `https://maudesignal-api.vercel.app/mcp`): Submitted to Meta's Muse Connector Program — pending review. Form answers: [docs/hackathon/MUSE_CONNECTOR.md](docs/hackathon/MUSE_CONNECTOR.md).
 
 **Standard tier only.** Never the Contributor tier, which trains on your data.
 The key is read from `META_MODEL_API_KEY`, never committed or logged.
@@ -248,6 +300,30 @@ questions.
 **Deploy (Streamlit Community Cloud):** entry point `streamlit_app.py`,
 dependencies from `requirements.txt`, no secrets required.
 
+## Deploy your own copy
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/kondapallysaicharan63-bot/maudesignal&project-name=maudesignal-web&root-directory=web&env=VITE_MAUDESIGNAL_API_BASE&envDescription=Base%20URL%20of%20your%20own%20MaudeSignal%20API%20project)
+
+Two Vercel projects from the same repository: the website (`web/`) and the read-only API
+(repository root, `api/index.py`). Nothing is deployed for you and no key is in the repository.
+
+1. **Website.** Click the button above (root directory `web`, framework Vite). Set
+   `VITE_MAUDESIGNAL_API_BASE` to your API project's URL once step 2 exists. Left empty, the
+   website still shows the stored data; live chat, voice, camera and outside mentions then use
+   recorded runs.
+2. **API.** Import the same repository a second time with the root directory left at the
+   repository root. Add these environment variables in Project > Settings > Environment Variables:
+   `MAUDESIGNAL_API_KEYS` (a key you generate, as `label=KEY`), `MAUDESIGNAL_KEY_PEPPER` (a long
+   random string), `MAUDESIGNAL_WEB_ORIGINS` (your website URL), `OPENFDA_API_KEY` (optional, higher
+   openFDA quota). Leave `META_MODEL_API_KEY` unset to answer from recorded runs; set it, together
+   with a private Blob store (`BLOB_READ_WRITE_TOKEN`), only when you accept the cost: every Meta
+   call is held to a daily ceiling (`MAUDESIGNAL_LIVE_DAILY_USD`, default $3.00).
+3. **Check it.** Open `<your API URL>/v1/health`, then `<your API URL>/docs-page`; add
+   `<your API URL>/mcp` to your MCP client with your key (the website's Connect page shows config
+   snippets). Turn Vercel Authentication off for production so visitors do not meet a login page.
+
+Full variable list and limits: [`docs/hackathon/MUSE_CONNECTOR.md`](docs/hackathon/MUSE_CONNECTOR.md).
+
 ## Built during the hackathon vs pre-existing
 
 Built during the Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026):
@@ -259,7 +335,7 @@ openFDA pipeline below predates the event. The file-by-file list is in
 
 ## Tests
 
-**701 unit tests pass, 77% line + branch coverage** (2026-10-28); all 21 test types
+**1147 unit tests pass, 78% line + branch coverage** (2026-10-30); all 21 test types
 are reported in [docs/hackathon/TESTING.md](docs/hackathon/TESTING.md)
 (`pytest tests/unit`; CI also runs ruff, black and `mypy --strict` on Python
 3.11 and 3.12).

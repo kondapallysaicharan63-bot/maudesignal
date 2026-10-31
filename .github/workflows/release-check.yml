@@ -1,0 +1,230 @@
+name: Release check
+
+# Runs on a release branch (release/**) that combines the API branch and the web branch, and on
+# demand. It decides whether the branch may be deployed: every job must pass. A required step
+# that did not run counts as a failure. The merged report is uploaded as "release-report"
+# (JSON + Markdown, real numbers from the run). How to read it: docs/hackathon/RELEASE_CHECKS.md.
+#
+# Costs: no job calls a model and none needs a secret, in particular no Meta key: the release
+# check spends $0. Real-model checks happen only in smoke.yml, after a deploy (one live ask and
+# one spoken question, $0.55 at the holds, inside the deployed app's own daily cap). The merged
+# report carries one informational line, "live model: checked after deploy by smoke.yml".
+
+on:
+  push:
+    branches: ["release/**"]
+  workflow_dispatch:
+
+concurrency:
+  group: release-check-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    name: Python (lint, types, tests, gate, numbers)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - name: Install package
+        run: |
+          pip install -e ".[dev]"
+          pip install -r api/requirements.txt
+      - name: ruff, black, mypy --strict, unit tests with a coverage floor, gate adversarial set, secret scan, quoted numbers, review findings
+        run: python scripts/release/python_job.py --out-dir release-out --cov-floor 70
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: python-report
+          path: release-out/
+          retention-days: 14
+
+  web:
+    name: Web (build, tests, audit, bundle scan)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
+      - name: npm ci, build, test, audit (fails on high or critical), scan web/dist for keys
+        run: python scripts/release/web_job.py --out-dir release-out
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: web-report
+          path: release-out/
+          retention-days: 14
+
+  api-contract:
+    name: API contract, security and injection
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - name: Install package and the API's own requirements
+        run: |
+          pip install -e ".[dev]"
+          pip install -r api/requirements.txt "uvicorn==0.54.0"
+      - name: Make test keys (random, in this job only) and start the API
+        run: |
+          python scripts/release/serve_api.py prepare --profile contract \
+            --keys-file "$RUNNER_TEMP/keys.json" --env-file "$RUNNER_TEMP/api.env"
+          set -a; . "$RUNNER_TEMP/api.env"; set +a
+          nohup python -m uvicorn api.index:app --host 127.0.0.1 --port 8000 \
+            > "$RUNNER_TEMP/api.log" 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:8000/v1/health > /dev/null && break
+            sleep 1
+          done
+          curl -sf http://127.0.0.1:8000/v1/health
+      - name: Contract, auth, rate limits, validation, CORS, uploads, feedback, injection (REST and MCP)
+        run: |
+          python scripts/release/api_contract.py --base http://127.0.0.1:8000 \
+            --keys-file "$RUNNER_TEMP/keys.json" --api-log "$RUNNER_TEMP/api.log" \
+            --origin http://127.0.0.1:4173 --out-dir release-out
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: api-contract-report
+          path: release-out/
+          retention-days: 14
+
+  e2e:
+    name: Browser e2e (chromium, firefox, webkit; 1440 and 390; light and dark)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
+      - name: Install Python packages and the three browsers
+        run: |
+          pip install -e ".[dev]"
+          pip install -r api/requirements.txt "uvicorn==0.54.0" "playwright==1.63.0" "pillow==12.3.0"
+          python -m playwright install --with-deps chromium firefox webkit
+      - name: Install web packages and axe-core (accessibility scan)
+        working-directory: web
+        run: |
+          npm ci --no-audit --no-fund
+          npm install --no-save --no-audit --no-fund axe-core@4.10.2
+      - name: "Start the API (real code, no Meta key - live questions answer from recordings)"
+        run: |
+          python scripts/release/serve_api.py prepare --profile e2e \
+            --origin http://127.0.0.1:4173 \
+            --keys-file "$RUNNER_TEMP/keys.json" --env-file "$RUNNER_TEMP/api.env"
+          set -a; . "$RUNNER_TEMP/api.env"; set +a
+          nohup python -m uvicorn api.index:app --host 127.0.0.1 --port 8001 \
+            > "$RUNNER_TEMP/api.log" 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:8001/v1/health > /dev/null && break
+            sleep 1
+          done
+          curl -sf http://127.0.0.1:8001/v1/health
+      - name: Build the web app against that API and serve it
+        working-directory: web
+        env:
+          VITE_MAUDESIGNAL_API_BASE: http://127.0.0.1:8001
+        run: |
+          npm run build
+          nohup npx vite preview --host 127.0.0.1 --port 4173 --strictPort \
+            > "$RUNNER_TEMP/web.log" 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:4173/ > /dev/null && break
+            sleep 1
+          done
+      - name: Browser checks (scenarios, error states, axe-core)
+        run: |
+          python scripts/release/e2e_web.py --url http://127.0.0.1:4173 \
+            --api http://127.0.0.1:8001 --axe web/node_modules/axe-core/axe.min.js \
+            --out-dir release-out
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-report
+          path: release-out/
+          retention-days: 14
+
+  report:
+    name: Release report
+    needs: [python, web, api-contract, e2e]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/download-artifact@v4
+        with:
+          path: parts
+          pattern: "*-report"
+          merge-multiple: true
+      - name: Merge the job reports
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          mkdir -p release-out
+          cp -r parts/screenshots release-out/ 2>/dev/null || true
+          # one informational part: the real model is not called here. Its verdict is INFO,
+          # never PASS (it holds only a KNOWN_GAP line).
+          python - <<'PYEOF'
+          import sys
+          sys.path.insert(0, "scripts/release")
+          from pathlib import Path
+          from report import KNOWN_GAP, Report
+          rep = Report("live model (not called)")
+          rep.add("live model", KNOWN_GAP, "checked after deploy by smoke.yml", group="live", required=False)
+          rep.write(Path("parts"), "live-model-note")
+          PYEOF
+          python scripts/release/report.py merge parts/python-job.json parts/web-job.json \
+            parts/api-contract.json parts/e2e.json parts/live-model-note.json \
+            --json release-out/release-report.json --md release-out/release-report.md \
+            --title "release-report ${GITHUB_REF_NAME}@${GITHUB_SHA::7}" || echo "MERGED_FAIL=1" >> "$GITHUB_ENV"
+          cat release-out/release-report.md >> "$GITHUB_STEP_SUMMARY"
+          python - <<'EOF'
+          import json, os
+          needs = json.loads(os.environ["NEEDS"])
+          bad = {k: v["result"] for k, v in needs.items() if v["result"] != "success"}
+          if bad:
+              print("jobs that did not succeed:", bad)
+              open(os.environ["GITHUB_ENV"], "a").write("JOB_FAIL=1\n")
+          EOF
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-report
+          path: |
+            release-out/release-report.json
+            release-out/release-report.md
+          retention-days: 30
+      - name: Fail unless every required job passed and the merged verdict is not FAIL
+        run: |
+          if [ "${MERGED_FAIL:-0}" = "1" ] || [ "${JOB_FAIL:-0}" = "1" ]; then
+            echo "release check FAILED (see release-report.md)"; exit 1
+          fi
+          echo "release check: no failure (a BLOCKED verdict, if any, is listed in the report)"

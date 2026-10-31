@@ -3,6 +3,7 @@
 **Event:** Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026)
 **Track:** Indie Developer, solo
 **Problem statement:** Build for Your World
+**Muse connector:** Submitted to Meta's Muse Connector Program — pending review. Read-only MCP + REST at `https://maudesignal-api.vercel.app/mcp`; form answers in `docs/hackathon/MUSE_CONNECTOR.md`.
 
 ## What was built DURING the hackathon (new work — this is the submission)
 
@@ -12,10 +13,9 @@ Everything under `src/maudesignal/copilot/`, `src/maudesignal/gate/` and
 | File | What it is |
 |---|---|
 | `copilot/meta_provider.py` | Meta Model API provider (OpenAI-compatible client, streaming) implementing the existing `LLMProvider` interface |
-| `copilot/copilot.py` | Conversational safety copilot: plain-English questions → streamed, grounded answers |
 | `copilot/__init__.py` | Package exports |
 | `copilot/agent.py` | Muse Spark tool-use loop → structured answer (sentences + claims) → claim-level gate → one repair turn with the gate's recomputed values → unrepaired sentences withheld; every answer written to the audit trail |
-| `copilot/tools.py` | 6 deterministic tools the model calls: what changed this week, product summary, report search, report fetch, MDR deadline clock (21 CFR 803.50 / 803.53, advisory), CAPA-need evidence pack |
+| `copilot/tools.py` | 13 deterministic tools (first six listed here) the model calls: what changed this week, product summary, report search, report fetch, MDR deadline clock (21 CFR 803.50 / 803.53, advisory), CAPA-need evidence pack |
 | `copilot/actions.py` | CAPA-need evidence packs: audit-first, forward-only (`draft → approved / rejected`), only a named human can decide. Whether a CAPA is required is decided by the company's own CAPA-need form |
 | `copilot/transcript.py` | Records real Muse Spark runs so the keyless public demo replays them honestly |
 | `skills/safety-copilot/` | Versioned behavior contract (prompt, output schema, examples) for the copilot |
@@ -35,12 +35,15 @@ Everything under `src/maudesignal/copilot/`, `src/maudesignal/gate/` and
 | `monitor/deterioration.py` | Deterministic per-product-code detector: last 7 days vs trailing 4-week baseline → `new_signal` / `spike` / `severity_escalation` / `stable`, returning every count, share and report id used |
 | `monitor/digest.py` | What-changed digest ("New kind of problem: N · More serious than usual: M · Reports suddenly increased: K") rendered to Markdown + JSON with a fixed advisory footer; no LLM |
 | `monitor/fetch.py` | Capped, whole-day incremental openFDA fetch (reuses the existing ingestion pipeline) |
+| `monitor/live_check.py`, `dashboard/live_check_ui.py` | **Check any device type**: any FDA product code, live from openFDA counts (about 5 requests, no report text, nothing stored, no model), the same four detector rules (a 300-case test checks both agree), and the openFDA query behind every figure. Cached 6 h per code; 10 checks per browser session |
+| `scripts/ai_device_sweep.py`, `.github/workflows/ai-sweep.yml`, `demo/sweep/`, `docs/hackathon/AI_SWEEP.md` | **AI device sweep**: every product code on FDA's AI-Enabled Medical Device List, checked on openFDA for the same week with the live check; results committed by the workflow (weekly and on demand) |
 | `monitor/__init__.py` | Package exports |
 | `cli.py` → `maudesignal monitor` | New CLI command: optional capped fetch → detect → `digests/YYYY-MM-DD.{md,json}` |
 | `scripts/seed_demo_data.py` | Keyless seeding of the demo DB from live openFDA via the existing ingestion + catalog code |
 | `data/demo/maudesignal_demo.db`, `data/demo/SEED_MANIFEST.json` | 137 real MAUDE reports (LLZ Jul–Aug 2026 complete window; all QIH, MYN, POK reports) + manifest of the exact queries |
 | `digests/2026-08-24.*`, `digests/2026-08-31.*` | Two digests generated from the seeded data |
-| `.github/workflows/monitor.yml` | Daily cron + manual dispatch running the monitor; commits the digest back (`chore(monitor):`) |
+| `.github/workflows/monitor.yml` | Daily cron + manual dispatch running the monitor on its own database (`data/monitor/maudesignal_monitor.db`, seeded from the demo DB; the 137-report `data/demo/maudesignal_demo.db` is frozen and never written); commits the digest back (`chore(monitor):`) |
+| `.github/workflows/dossier-record.yml` | Dossier-only re-record (Muse Spark narrative + Muse Wonder review for the current pack); runs only on branch `record-dossier` when `demo/DOSSIER_REQUEST` changes; commits `demo/dossier/` there only |
 | `tests/unit/test_monitor.py` | Tests for detector, digest, fetch and CLI |
 | `streamlit_app.py`, `requirements.txt` | Streamlit Community Cloud entry point and dependency file for the keyless public demo (installs this repo; dependencies stay in `pyproject.toml`) |
 | `tests/unit/test_dashboard_default_db.py` | Tests that the dashboard falls back to the demo DB only when nothing else is configured |
@@ -48,7 +51,7 @@ Everything under `src/maudesignal/copilot/`, `src/maudesignal/gate/` and
 
 Small changes to pre-existing modules made during the event (to support the
 monitor, or bugs it exposed): `Database.list_event_facts` / `max_date_received`
-/ `list_product_codes`; `OpenFDAClient.count_by_date_received`;
+/ `list_product_codes`; `OpenFDAClient.count_by_date_received`, `count_field`, `total` (and the public `build_query` alias);
 `config.openfda_api_key_from_env`; fix — openFDA date-range queries were sent
 with `+` encoded as `%2B` (HTTP 500); fix — live openFDA `event_type` is a
 string, so ingestion had been storing single letters (`"m"`, `"i"`); fix —
@@ -91,13 +94,13 @@ Small pre-existing changes: `Database.delete_external_sources`, `Database.list_r
 
 | File | What it is |
 |---|---|
-| `monitor/digest.py` (schema 1.1), `catalog/names.py` | Flagged codes ranked by a fixed, documented key; each rank carries a "why" sentence built from the detector's numbers; digest names the FDA device type and the brands on this window's reports. What changed page shows "Why it is ranked first"; the `overnight_signals` tool returns the ranking |
+| `monitor/digest.py` (schema 1.2), `catalog/names.py` | Flagged codes ranked by a fixed, documented key; each rank carries a "why" sentence built from the detector's numbers; digest names the FDA device type and the brands on this window's reports. The Signals workspace shows why each device type is flagged; the `overnight_signals` tool returns the ranking |
 | `copilot/voice.py`, `copilot/audit_export.py` | Each spoken question appends a hash-chained `voice.transcribed` entry (model, audio SHA-256, duration, text heard) linked to its `copilot.answer`; silence appends `voice.rejected`. Recording runs export their trail; the Actions page re-verifies and shows it |
-| `scripts/hand_check.py`, `docs/hackathon/HAND_CHECK.md` | 20-answer hand-check worksheet: gate pass rates computed from the recorded transcripts, every cited id looked up in stored records, a hand-verdict column per sentence |
+| `scripts/hand_check.py`, `docs/hackathon/HAND_CHECK.md` | Hand-check worksheet for every recorded answer: gate pass rates computed from the recorded transcripts, every cited id looked up in stored records, a hand-verdict column per sentence |
 | `vision/browser_fetch.py` | Headless-Chromium fallback for 510(k) PDFs that FDA refuses to plain HTTP clients; the recorder skips (not fails) a K-number whose PDF cannot be obtained |
 | `scripts/record_demo_transcripts.py`, `.github/workflows/copilot-record.yml` | 20 typed demo questions; one failed question no longer stops a run; commit step hardened |
 | `copilot/spend.py`, `dashboard/spend_ui.py` | Live-call caps per browser session ($1 and 20 Meta calls, whichever first) and per day ($10), configurable by env vars; a cap hit makes no call and shows the recorded answer; usage in the audit trail; quota in the sidebar |
-| `tests/e2e/test_08_hackathon_pages.py` | Playwright tests for the five new pages, expected values computed from the demo DB |
+| `tests/e2e/test_08_hackathon_pages.py` | Playwright tests for the product pages (Signals, Copilot, Vision, Audit), expected values computed from the demo DB |
 | `docs/hackathon/BUDGET.md`, `docs/hackathon/PRD.md` | $150 budget (prices from code, measured ledger) and feature status with evidence |
 
 Small pre-existing changes: `catalog/fetcher.py` no longer writes made-up names for
@@ -134,7 +137,7 @@ Plus this manifest, the demo video, and the submission write-up.
 | `copilot/tools.py`, `skills/safety-copilot` 1.3.0 | Tools `my_device_types`, `compare_signals`, `mhra_alerts` (13 tools) |
 | `copilot/agent.py` | `ask(on_event=…)` progress events for streaming |
 | `demo/voice/question-a.wav`, `question-b.wav` | Charan's two ElevenLabs text-to-speech samples (greetings; not a real practitioner) |
-| `demo/voice/question.wav`, `question-c.wav`, `question-d.wav`, `question-e.wav` | Charan's ElevenLabs text-to-speech product questions (voice "Adam"; not a real practitioner), recorded as `00-voice-main`, `-c`, `-d`, `-e` |
+| `demo/voice/question-c.wav`, `question-d.wav`, `question-e.wav` | Charan's ElevenLabs text-to-speech product questions (voice "Adam"; not a real practitioner), recorded as `00-voice-c`, `-d`, `-e`; the `00-voice-main` recording's audio (`question.wav`) is no longer in the repo; its transcript stays. The monitor rule text changed on Oct 30 (the "more serious than usual" flag now also needs >= 3 reports); stored digests keep the old wording and no stored flag changed |
 | `tests/unit/test_theme.py`, `test_memory_compare.py`, `test_mhra.py` | Contrast for every theme, memory/compare/tools/streaming, MHRA parsing/storage/gate |
 | `tests/unit/test_compliance_journey.py` | Offline end-to-end: openFDA (mock transport, real records) → ingestion → three Skills (real schemas) → SQLite → dashboard → PSUR Markdown + PDF |
 | `scripts/scale_test.py`, `scripts/load_test.py` | Seeded scalability/stress (breaking point ~100k records) and concurrent-session load (no Meta calls) |

@@ -1,0 +1,9 @@
+node_modules
+dist
+*.tsbuildinfo
+.vite
+!public/data/dossier/*.pdf
+qa/tmp
+dist-live
+dist-stored
+dist-m2

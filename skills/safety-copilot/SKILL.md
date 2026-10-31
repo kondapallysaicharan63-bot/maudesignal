@@ -1,6 +1,6 @@
 # Skill: safety-copilot
 
-**Version:** 1.2.0 (HACKATHON-BUILT — Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026)
+**Version:** 1.3.1 (HACKATHON-BUILT — Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026)
 **Model:** Meta Muse Spark (`muse-spark-1.3`, Standard tier) via the Meta Model API
 **Consumers:** `maudesignal.copilot.agent.CopilotAgent`
 **Output schema:** `schemas/output.schema.json` — sent as the strict `json_schema`

@@ -7,6 +7,8 @@ HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 * :mod:`maudesignal.vision.verify` — two-read agreement + openFDA + text-layer checks
 * :mod:`maudesignal.vision.sam` — SAM 3.1 segmentation client and output parser
 * :mod:`maudesignal.vision.label` — label photo → SAM crop → Spark read → openFDA
+* :mod:`maudesignal.vision.label_match` — label reading → up to 3 possible openFDA matches →
+  device-type view (a person confirms; every fact gated)
 """
 
 from __future__ import annotations
@@ -22,4 +24,7 @@ DEMO_K_NUMBERS: tuple[tuple[str, str], ...] = (
     ("K190442", "POK"),  # Koios DS for Breast, Koios Medical (2019)
 )
 
-__all__ = ["DEMO_K_NUMBERS"]
+__all__ = ["DEMO_K_NUMBERS", "LABEL_MATCH_SCHEMA_VERSION"]
+
+#: Schema of ``demo/vision/label-match-*.json`` (see ``vision/label_match.py``).
+LABEL_MATCH_SCHEMA_VERSION = "1.0"

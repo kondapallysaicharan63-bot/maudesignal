@@ -1,10 +1,19 @@
 name: CI
 
+# Runs on every push to main and to hackathon-day2 (the branch the live demo is
+# deployed from), on pull requests into main or hackathon-day2 (track PRs), and on demand. The test types it
+# covers are mapped in docs/hackathon/TESTING.md.
+
 on:
   push:
-    branches: [main]
+    branches: [main, hackathon-day2]
   pull_request:
-    branches: [main]
+    branches: [main, hackathon-day2]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
@@ -28,7 +37,7 @@ jobs:
       - name: Install package
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[dev]"
+          pip install -e ".[dev,connector]"
 
       - name: Lint with ruff
         run: ruff check src/ tests/
@@ -49,3 +58,66 @@ jobs:
           name: coverage-report
           path: coverage.xml
           retention-days: 7
+
+  security:
+    name: Security (keys, bandit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: No API key in any tracked file
+        run: python scripts/scan_secrets.py
+      - name: Bandit (fails on high severity; medium and low are listed)
+        run: |
+          pip install bandit
+          bandit -r src scripts -q -f txt || true
+          bandit -r src scripts -q -lll
+
+  e2e:
+    name: Browser tests (product pages)
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      # The live "Check any device type" panel calls openFDA; the public site uses a key too.
+      OPENFDA_API_KEY: ${{ secrets.OPENFDA_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - name: Install package and Chromium
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,connector]"
+          python -m playwright install --with-deps chromium
+      - name: openFDA without a key from this runner (reported, not blocking)
+        continue-on-error: true
+        run: >
+          curl -sS -A "MaudeSignal (open-source)" -w "\nHTTP %{http_code}\n"
+          "https://api.fda.gov/device/event.json?search=device.device_report_product_code:LLZ&limit=1"
+          | tail -c 400
+      - name: Start the keyless demo app
+        run: |
+          nohup streamlit run streamlit_app.py --server.headless true --server.port 8501 \
+            > streamlit.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:8501/ > /dev/null && break
+            sleep 2
+          done
+      - name: Product pages (Signals, Copilot, Vision, Audit; themes, sizes, a11y)
+        run: pytest tests/e2e/test_08_hackathon_pages.py -p no:cacheprovider --no-cov -o addopts="" -rs
+      - name: Classic pages (reported, not blocking — they need LLM extraction rows the keyless demo database does not hold)
+        continue-on-error: true
+        # Own limit so this non-blocking step can never use up the job's time and cancel it.
+        timeout-minutes: 10
+        run: >
+          pytest tests/e2e/test_01_dashboard.py tests/e2e/test_02_signal_explorer.py
+          tests/e2e/test_03_ingestion.py tests/e2e/test_04_extraction.py
+          tests/e2e/test_05_psur.py tests/e2e/test_06_alerts.py tests/e2e/test_07_settings.py
+          -p no:cacheprovider --no-cov -o addopts="" -rf
+      - name: App log
+        if: always()
+        run: tail -50 streamlit.log

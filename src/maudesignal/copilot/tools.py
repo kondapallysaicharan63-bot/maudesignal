@@ -139,14 +139,24 @@ def search_reports(
     keyword: str | None = None,
     event_type: str | None = None,
     limit: int = 5,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    offset: int = 0,
 ) -> dict[str, Any]:
-    """Find reports; returns narrative excerpts that can be quoted verbatim."""
-    rows = ctx.store.select(product_code=product_code, event_type=event_type)
+    """Find reports; returns narrative excerpts that can be quoted verbatim.
+
+    ``date_from`` / ``date_to`` (YYYYMMDD, date received) narrow the search; ``offset``
+    skips that many of the newest-first matches so a caller can read past the first page.
+    """
+    rows = ctx.store.select(
+        product_code=product_code, event_type=event_type, date_from=date_from, date_to=date_to
+    )
     if keyword:
         kw = keyword.lower()
         rows = [r for r in rows if kw in r.text.lower()]
     rows = sorted(rows, key=lambda r: r.date_received or "", reverse=True)
     limit = max(1, min(int(limit), 10))
+    start = max(0, int(offset))
     return {
         "matched": len(rows),
         "reports": [
@@ -158,7 +168,7 @@ def search_reports(
                 "brand_name": r.brand_name,
                 "narrative_excerpt": r.text[:EXCERPT_CHARS],
             }
-            for r in rows[:limit]
+            for r in rows[start : start + limit]
         ],
     }
 
@@ -552,6 +562,9 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
                     "keyword": _STR,
                     "event_type": {"type": "string", "enum": ["Malfunction", "Injury", "Death"]},
                     "limit": {"type": "integer", "minimum": 1, "maximum": 10},
+                    "date_from": _YMD,
+                    "date_to": _YMD,
+                    "offset": {"type": "integer", "minimum": 0},
                 },
             },
         },

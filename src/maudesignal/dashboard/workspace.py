@@ -18,15 +18,15 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 
-from maudesignal.copilot.transcript import load_transcripts
 from maudesignal.dashboard.copilot_pages import (
     MAUDE_URL,
     SOURCE_FILTERS,
-    TRANSCRIPT_DIR,
+    displayable_transcripts,
     render_approvals,
     render_transcript,
     short,
 )
+from maudesignal.dashboard.live_check_ui import render_live_check, render_sweep
 from maudesignal.monitor.compare import CompareRow, compare_signals
 from maudesignal.monitor.deterioration import detect_from_database
 from maudesignal.monitor.digest import digest_from_database
@@ -76,6 +76,8 @@ def page_signals(db: Database) -> None:
     if st.session_state.get("sig_code") not in by_code:
         st.session_state["sig_code"] = rows[0].product_code
 
+    render_live_check()
+    render_sweep()
     left, right = st.columns([1, 2.7], gap="large")
     with left:
         w = result.window
@@ -247,7 +249,7 @@ def _mentions(t: dict[str, Any], code: str) -> bool:
 
 
 def _answers(code: str) -> None:
-    found = [t for t in load_transcripts(TRANSCRIPT_DIR) if _mentions(t, code)]
+    found = [t for t in displayable_transcripts() if _mentions(t, code)]
     if not found:
         st.caption(f"No recorded copilot answer mentions {code}. Ask about it on the Copilot page.")
         return
@@ -259,6 +261,10 @@ def _answers(code: str) -> None:
         format_func=lambda k: ("🎙 " if k.startswith("00-voice") else "")
         + short(str(labels[k]["question"]), 110),
         key=f"ans_{code}",
+    )
+    st.caption(
+        "Counts in these answers come from the stored demo sample, not from every report "
+        "openFDA holds for the device type."
     )
     with st.container(border=True):
         render_transcript(labels[pick])

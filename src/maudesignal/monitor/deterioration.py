@@ -14,7 +14,7 @@ classification:
 ``severity_escalation``
     The share of Injury/Death reports in the current window exceeds the
     baseline share by at least 15 percentage points (baseline must be
-    non-empty).
+    non-empty, and the current window needs at least 3 reports).
 ``spike``
     Current-window count is at least 2x the baseline weekly mean **and** at
     least 3 reports.
@@ -59,6 +59,8 @@ CURRENT_WINDOW_DAYS = 7
 BASELINE_WEEKS = 4
 SPIKE_MULTIPLIER = 2
 SPIKE_MIN_REPORTS = 3
+# Same floor for the severity rule (Charan, Oct 30): a share built on 1 or 2 reports is noise.
+SEVERITY_MIN_REPORTS = SPIKE_MIN_REPORTS
 SEVERITY_ESCALATION_PP = 15
 SEVERE_EVENT_TYPES: frozenset[str] = frozenset({"injury", "death"})
 UNKNOWN_EVENT_TYPE = "unknown"
@@ -322,13 +324,14 @@ def _classify_product_code(
     if current and (not prior or new_types):
         triggers.append("new_signal")
 
-    # severity_escalation: >= 15 pp rise in Injury/Death share (exact arithmetic).
+    # severity_escalation: >= 15 pp rise in Injury/Death share (exact arithmetic), and
+    # at least SEVERITY_MIN_REPORTS reports this window.
     cur_share = _share(len(current_severe), len(current))
     base_share = _share(len(baseline_severe), len(baseline))
     delta: Fraction | None = None
     if cur_share is not None and base_share is not None:
         delta = (cur_share - base_share) * 100
-        if delta >= SEVERITY_ESCALATION_PP:
+        if delta >= SEVERITY_ESCALATION_PP and len(current) >= SEVERITY_MIN_REPORTS:
             triggers.append("severity_escalation")
 
     # spike: current >= 2 x (baseline / 4) and current >= 3.

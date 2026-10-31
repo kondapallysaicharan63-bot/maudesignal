@@ -1,6 +1,6 @@
 # Skill: dossier-narrative
 
-**Version:** 1.1.0 (HACKATHON-BUILT — Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026)
+**Version:** 1.2.0 (HACKATHON-BUILT — Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026)
 **Model:** Meta Muse Spark (`muse-spark-1.3`, Standard tier) via the Meta Model API
 **Consumers:** `maudesignal.dossier.narrative.draft_narrative`
 

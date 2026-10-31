@@ -1,0 +1,62 @@
+# HACKATHON-BUILT — re-record ONLY the evidence-pack narrative (Muse Spark) and the
+# independent review (Muse Wonder) for the current pack SER-LLZ-20260831-001, so the
+# "recorded before pack binding; re-record pending" note goes away. One paid run.
+#
+# Triggers: a push that changes demo/DOSSIER_REQUEST on branch `record-dossier`, or a
+# manual dispatch (which refuses to run on any other branch). It does NOT re-record
+# transcripts, voice or vision, and it commits demo/dossier/ to `record-dossier` only,
+# never to hackathon-day2 or main.
+name: Record evidence-pack narrative and review (dossier only)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [record-dossier]
+    paths: ["demo/DOSSIER_REQUEST"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dossier-record
+  cancel-in-progress: false
+
+jobs:
+  record:
+    if: github.ref_name == 'record-dossier'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install poppler (PDF rasterizing for the Muse Wonder review)
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+      - run: pip install -e .
+      - name: Numbers before (gate 63/65, hand-check 27/28, LLZ 19,970 / 99.3%)
+        run: python scripts/print_quoted_numbers.py | tee /tmp/quoted-before.txt
+      - name: Build the pack, draft the narrative (Muse Spark) and review the PDF (Muse Wonder)
+        env:
+          META_MODEL_API_KEY: ${{ secrets.META_MODEL_API_KEY }}
+          META_MODEL_API_BASE_URL: https://api.meta.ai/v1
+        run: |
+          test -n "$META_MODEL_API_KEY" || { echo "META_MODEL_API_KEY is not set"; exit 1; }
+          python scripts/build_demo_dossier.py --out demo/dossier
+      - name: Numbers after (must equal the numbers before)
+        run: |
+          python scripts/print_quoted_numbers.py | tee /tmp/quoted-after.txt
+          diff /tmp/quoted-before.txt /tmp/quoted-after.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dossier-record
+          path: demo/dossier/
+      - name: Commit demo/dossier to record-dossier only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A demo/dossier
+          git add -f demo/dossier/*.pdf 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "chore(demo): re-record evidence-pack narrative and Muse Wonder review (pack-bound)"
+          git pull --rebase origin record-dossier
+          git push origin HEAD:record-dossier

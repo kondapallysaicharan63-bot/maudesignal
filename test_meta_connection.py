@@ -17,7 +17,8 @@ import sys
 
 sys.path.insert(0, "src")
 
-from maudesignal.copilot import MetaProvider, SafetyCopilot
+from maudesignal.copilot import MetaProvider
+from maudesignal.extraction.llm_providers.base import LLMMessage
 
 
 def main() -> int:
@@ -54,12 +55,12 @@ def main() -> int:
         print(f"  {needed}: {'listed' if needed in ids else 'NOT LISTED'}")
 
     provider = MetaProvider(api_key=api_key, model=model, base_url=base_url)
-    copilot = SafetyCopilot(provider)
     print(f"Model: {provider.model} | Provider: {provider.provider_name}")
     print("Streaming test answer:")
-    for delta in copilot.ask_stream(
-        "In one sentence, what is postmarket surveillance for medical devices?"
-    ):
+    # Connection check only (no product behaviour): the copilot's real contract is
+    # skills/safety-copilot/SKILL.md, loaded by copilot/agent.py.
+    ping = [LLMMessage(role="user", content="Reply with the single word OK.")]
+    for delta in provider.complete_stream(system_prompt="", messages=ping, max_tokens=16):
         print(delta, end="", flush=True)
     print("\nSTREAM OK")
     return 0

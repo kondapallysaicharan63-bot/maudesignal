@@ -22,6 +22,12 @@ data/*
 # Hackathon keyless demo dataset (public openFDA records, no PHI) is committed.
 !data/demo/
 !data/demo/maudesignal_demo.db
+# Daily monitor's own database and digests (never the frozen demo DB).
+!data/monitor/
+data/monitor/*
+!data/monitor/digests/
+!data/monitor/parked-digests/
+!data/monitor/maudesignal_monitor.db
 *.sqlite3
 *.sqlite-journal
 
@@ -113,3 +119,6 @@ tmp/
 temp/
 *.tmp
 *.bak
+
+# Agent worktrees (temporary)
+.claude/worktrees/

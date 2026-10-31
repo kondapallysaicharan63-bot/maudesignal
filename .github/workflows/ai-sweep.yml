@@ -1,0 +1,64 @@
+# HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
+# Checks every product code on FDA's AI-Enabled Medical Device List against openFDA
+# (scripts/ai_device_sweep.py): counts only, the detector's four rules, no model.
+# Commits demo/sweep/ai-device-sweep.json and docs/hackathon/AI_SWEEP.md back to
+# the branch it ran on. OPENFDA_API_KEY is optional (without it the run is capped).
+name: AI device sweep (openFDA)
+
+on:
+  workflow_dispatch:
+  # PAUSED until 2026-11-05 (Charan, Oct 30) so "6 of 181" stays true. On Nov 5
+  # restore BOTH of these:
+  #   schedule:
+  #     - cron: '23 12 * * 1'
+  #   push:
+  #     branches: [hackathon-day2]
+  #     paths:
+  #       - scripts/ai_device_sweep.py
+  #       - src/maudesignal/monitor/live_check.py
+  #       - .github/workflows/ai-sweep.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ai-sweep-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - name: Install package
+        run: pip install -e . lxml
+      - name: Sweep the FDA AI device list
+        env:
+          OPENFDA_API_KEY: ${{ secrets.OPENFDA_API_KEY }}
+        run: python scripts/ai_device_sweep.py --run-id "${{ github.run_id }}"
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-sweep-${{ github.run_id }}
+          path: |
+            demo/sweep/
+            docs/hackathon/AI_SWEEP.md
+          retention-days: 30
+      - name: Commit results back to the branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add demo/sweep/ai-device-sweep.json docs/hackathon/AI_SWEEP.md
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "chore(sweep): AI device types on openFDA $(date -u +%Y-%m-%d)"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

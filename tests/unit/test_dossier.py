@@ -37,9 +37,11 @@ from maudesignal.dossier.illustration import (
 from maudesignal.dossier.model import MDR_STAMP, Illustration
 from maudesignal.dossier.narrative import (
     NarrativeRecording,
+    data_pack_hash,
     draft_narrative,
     gate_narrative,
     load_recording,
+    pack_hash,
     save_recording,
 )
 from maudesignal.dossier.render import pdf_page_png, template_context
@@ -433,6 +435,7 @@ def test_recorded_narrative_is_regated_and_missing_is_omitted(tmp_path: Path) ->
         raw_output=_narrative_json(),
         input_tokens=10,
         output_tokens=5,
+        pack_hash=data_pack_hash(first.data),
     )
     rdir = tmp_path / "rec"
     save_recording(rec, rdir / f"{first.data.doc_id}-narrative.json")
@@ -440,7 +443,39 @@ def test_recorded_narrative_is_regated_and_missing_is_omitted(tmp_path: Path) ->
     assert loaded is not None and loaded.raw_output == rec.raw_output
     again = build_dossier(db, capa_id=capa_id, recorded_dir=rdir)
     assert again.data.narrative.source == "recorded" and again.data.narrative.withheld == 2
+    assert again.data.narrative.binding_note == ""
+    # a recording that carries a hash for another pack is discarded
+    rec.pack_hash = pack_hash("CAPA-DRAFT-OTHER", ["1"], "other problem")
+    save_recording(rec, rdir / f"{first.data.doc_id}-narrative.json")
+    stale = build_dossier(db, capa_id=capa_id, recorded_dir=rdir)
+    assert not stale.data.narrative.available
+    assert "different evidence pack" in stale.data.narrative.note
+    # a recording made before the binding existed (no hash) is still shown, with a visible note
+    rec.pack_hash = ""
+    save_recording(rec, rdir / f"{first.data.doc_id}-narrative.json")
+    old = build_dossier(db, capa_id=capa_id, recorded_dir=rdir)
+    assert old.data.narrative.available and old.data.narrative.withheld == 2
+    assert "recorded before pack binding; a re-record is pending" in render_html(old.data)
     assert load_recording(tmp_path / "nope.json") is None
+
+
+def test_quote_must_cite_a_report_of_the_pack(tmp_path: Path) -> None:
+    db = _db(tmp_path)
+    b = build_dossier(db, capa_id=_capa(db))
+    cited = [r.report_id for r in b.data.evidence]
+    quote = {
+        "kind": "quote",
+        "quote": "Triage alert was not sent after a server update",
+        "report_id": "9000011",
+    }
+    raw = json.dumps({"sentences": [{"text": "A cited report said it.", "claims": [quote]}]})
+    rec = NarrativeRecording(b.data.doc_id, "m", "1.0.0", "t", raw)
+    assert gate_narrative(rec, b.store, source="live").passed == 1  # whole-store check passes
+    assert "9000011" in cited
+    section = gate_narrative(rec, b.store, source="live", cited_report_ids=["1", "2"])
+    assert section.withheld == 1
+    assert "not one of the reports this evidence pack cites" in section.sentences[0].reasons[0]
+    assert gate_narrative(rec, b.store, source="live", cited_report_ids=cited).passed == 1
 
 
 def test_unparseable_narrative_is_gated_as_prose(tmp_path: Path) -> None:
@@ -547,6 +582,13 @@ def test_reviewer_sends_pdf_parses_findings_and_records(tmp_path: Path) -> None:
     plain = load_review(path)
     assert plain is not None and plain.findings[0].evidence_ids == ("1234",)
     assert load_review(tmp_path / "missing.json") is None
+    # the review is bound to the exact PDF it saw
+    assert again.reviewed_sha256 and again.reviewed(pdf) and not again.reviewed(pdf + b"x")
+    assert not again.reviewed(None) and not again.reviewed(b"")
+    assert not again.predates_binding
+    # a PDF-mode recording without a hash predates the binding (shown with a note, not matched)
+    again.reviewed_sha256 = ""
+    assert again.predates_binding and not again.reviewed(pdf)
 
     record_review(db, r)
     entries = [a for a in db.list_audit() if a.action == "dossier.review"]
@@ -704,8 +746,13 @@ def test_dossier_page_renders_keyless(tmp_path: Path, monkeypatch: pytest.Monkey
     assert any(capa_id in o for o in labels) and any("Top flagged change" in o for o in labels)
     stats = " ".join(e.proto.body for e in at.get("html"))
     assert out.doc_id in stats and "Figures re-verified" in stats
-    assert len(at.dataframe) == 1  # recorded reviewer findings
-    assert any("Recorded run" in c.value for c in at.caption)
+    # the search-methodology table (the stale recorded review shows no findings table)
+    assert len(at.dataframe) == 1
+    assert any("Search methodology" in e.label for e in at.expander)
+    # this recording reviewed no PDF, so it is not shown as the review of this document
+    assert not any("Recorded run" in c.value for c in at.caption)
+    assert any("reviewed an earlier revision" in w.value for w in at.warning)
+    assert not any("no findings" in s.value for s in at.success)
 
 
 def test_empty_narrative_is_withheld_not_shown() -> None:
@@ -725,3 +772,30 @@ def test_empty_narrative_is_withheld_not_shown() -> None:
     section = gate_narrative(rec, EvidenceStore.from_iterables([], []), source="live")
     assert [s.status for s in section.sentences] == ["block"]
     assert "did not return a structured narrative" in section.sentences[0].reasons[0]
+
+
+def test_dossier_page_without_weasyprint_still_renders(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Streamlit Cloud without Pango: the pack is shown as HTML, the recorded PDF offered."""
+    from streamlit.testing.v1 import AppTest
+
+    import maudesignal.dossier.service as service
+
+    db = _db(tmp_path)
+    capa_id = _capa(db)
+    out = produce(db, capa_id=capa_id, narrative_dir=tmp_path, pdf=False)
+    (tmp_path / f"{out.doc_id}-draft.pdf").write_bytes(b"%PDF-1.7 recorded")
+
+    def no_weasyprint(html: str) -> bytes:
+        raise RuntimeError("WeasyPrint unavailable: cannot load library 'libpango-1.0-0'")
+
+    monkeypatch.setattr(service, "render_pdf", no_weasyprint)
+    monkeypatch.delenv("META_MODEL_API_KEY", raising=False)
+    monkeypatch.setenv("DOSSIER_TEST_DB", str(tmp_path / "d.db"))
+    monkeypatch.setenv("MAUDESIGNAL_DOSSIER_DIR", str(tmp_path))
+    at = AppTest.from_function(_page_script, default_timeout=60).run()
+    assert not at.exception
+    stats = " ".join(e.proto.body for e in at.get("html"))
+    assert out.doc_id in stats
+    assert any("could not be rendered here" in c.value for c in at.caption)

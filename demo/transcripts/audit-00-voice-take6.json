@@ -1,0 +1,27 @@
+{
+  "run_label": "00-voice-take6",
+  "chain_ok_at_export": true,
+  "first_bad_seq_at_export": null,
+  "entries": [
+    {
+      "seq": 1,
+      "ts": "2026-10-29T22:34:10.008017",
+      "actor": "voice:muse-voice-transcribe-1.0",
+      "action": "voice.transcribed",
+      "entity_id": "V-cd4ecf9fb5509c01",
+      "payload_json": "{\"audio_seconds\": 6.48, \"audio_sha256\": \"cd4ecf9fb5509c017bf30031460bf46ddc018fecca8ec24e4061f6276197196c\", \"estimated_cost_usd\": 0.0003, \"heard_code\": \"LLZ\", \"language\": \"English\", \"model\": \"muse-voice-transcribe-1.0\", \"product_code_status\": \"known\", \"question_entity_id\": \"Q-24dd14ad5920c2b2\", \"suggested_code\": null, \"transcript_text\": \"which report about LLZ device were not filled by manufacturer?\", \"used_code\": \"LLZ\"}",
+      "prev_hash": "GENESIS",
+      "entry_hash": "c02559f6efa1e46abf2f027a0c9f0b6776f49f71c7f380b7f8790adbe666766c"
+    },
+    {
+      "seq": 2,
+      "ts": "2026-10-29T22:34:21.637609",
+      "actor": "copilot:muse-spark",
+      "action": "copilot.answer",
+      "entity_id": "Q-24dd14ad5920c2b2",
+      "payload_json": "{\"capa_ids\": [], \"gate_final\": {\"blocked\": 0, \"passed\": 1}, \"gate_first_pass\": {\"blocked\": 0, \"passed\": 1}, \"input_tokens\": 12094, \"model\": \"muse-spark-1.3\", \"output_tokens\": 2084, \"question\": \"which report about LLZ device were not filled by manufacturer?\", \"reasoning_effort\": null, \"repaired\": false, \"skill_version\": \"1.3.1\", \"structured_output\": true, \"tools\": [\"report_sources\"]}",
+      "prev_hash": "c02559f6efa1e46abf2f027a0c9f0b6776f49f71c7f380b7f8790adbe666766c",
+      "entry_hash": "d7189bee2435b023500b71c156d4082d29f7ca3617ca5eee91b10ddaee4f4d81"
+    }
+  ]
+}

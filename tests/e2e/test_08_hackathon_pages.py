@@ -84,15 +84,28 @@ class TestHackathonNav:
         expect(sidebar).to_contain_text("More tools")
         expect(sidebar.get_by_role("button", name="PSUR Reports", exact=False)).to_be_visible()
 
-    def test_public_demo_has_no_sidebar(self, browser: Any) -> None:
-        """Without ?tools=all (and without a key) only the five product pages show."""
+    def test_demo_mode_has_no_sidebar(self, browser: Any) -> None:
+        """With ?tools=demo (and without a key) only the product pages show."""
+        ctx = browser.new_context()
+        page = ctx.new_page()
+        page.goto(f"{BASE_URL}/?tools=demo", wait_until="networkidle")
+        page.wait_for_selector(TOPBAR_SELECTOR, timeout=30_000)
+        page.wait_for_timeout(2_000)
+        expect(page.locator(SIDEBAR_SELECTOR)).to_have_count(0)
+        expect(page.get_by_text("More tools", exact=False)).to_have_count(0)
+        ctx.close()
+
+    def test_full_website_by_default(self, browser: Any) -> None:
+        """Without a link choice the sidebar follows SHOW_ALL_PAGES_BY_DEFAULT (product only)."""
+        from maudesignal.dashboard.app import SHOW_ALL_PAGES_BY_DEFAULT
+
         ctx = browser.new_context()
         page = ctx.new_page()
         page.goto(BASE_URL, wait_until="networkidle")
         page.wait_for_selector(TOPBAR_SELECTOR, timeout=30_000)
         page.wait_for_timeout(2_000)
-        expect(page.locator(SIDEBAR_SELECTOR)).to_have_count(0)
-        expect(page.get_by_text("More tools", exact=False)).to_have_count(0)
+        want = 1 if SHOW_ALL_PAGES_BY_DEFAULT else 0
+        expect(page.locator(SIDEBAR_SELECTOR)).to_have_count(want)
         ctx.close()
 
     @pytest.mark.parametrize("nav", ["Signals", "Copilot", "Vision", "Audit"])
@@ -183,6 +196,37 @@ class TestSignals:
 # ---------------------------------------------------------------------------
 
 
+class TestLiveCheck:
+    """Check any device type: input validation here; the openFDA call where the network allows."""
+
+    def _check(self, page: Page, code: str) -> Locator:
+        main = _open(page, "Signals")
+        panel = main.locator(".st-key-ms_livecheck")
+        panel.get_by_label("Any FDA product code").fill(code)
+        panel.get_by_role("button", name="Check on openFDA").click()
+        return panel
+
+    def test_a_bad_code_is_explained_and_nothing_is_called(self, ms_page: Page) -> None:
+        panel = self._check(ms_page, "L1")
+        expect(panel).to_contain_text("A product code is three letters")
+
+    def test_a_real_code_shows_a_result_with_its_openfda_queries(self, ms_page: Page) -> None:
+        panel = self._check(ms_page, "LLZ")
+        outcome = panel.locator(".ms-sig-head, [data-testid='stAlert']").first
+        expect(outcome).to_be_visible(timeout=60_000)
+        text = outcome.inner_text()
+        if "HTTP error contacting openFDA" in text:  # no network to openFDA (sandboxes)
+            pytest.skip(f"openFDA not reachable from this runner: {text}")
+        if "refused the request (403)" in text and not os.environ.get("OPENFDA_API_KEY"):
+            pytest.skip(f"keyless openFDA call refused from this network: {text}")
+        assert "could not be reached" not in text, text  # any other openFDA error is a bug
+        expect(panel).to_contain_text("Live from openFDA · LLZ", ignore_case=True)
+        expect(panel).to_contain_text("This week")
+        panel.get_by_text("Where each number comes from").click()
+        links = panel.locator("a[href^='https://api.fda.gov/device/event.json']")
+        expect(links).to_have_count(5)
+
+
 def _select(page: Page, label: str, option: str) -> None:
     box = page.locator("[data-testid='stSelectbox']").filter(has_text=label).first
     box.scroll_into_view_if_needed()
@@ -199,7 +243,13 @@ class TestCopilot:
 
     def test_recorded_runs_match_transcripts(self, ms_page: Page) -> None:
         main = _open(ms_page, "Copilot")
-        transcripts = load_transcripts(TRANSCRIPT_DIR)
+        from maudesignal.dashboard.copilot_pages import DISPLAY_EXCLUDED_LABELS
+
+        transcripts = [
+            t
+            for t in load_transcripts(TRANSCRIPT_DIR)
+            if str(t.get("label", "")) not in DISPLAY_EXCLUDED_LABELS
+        ]
         if not transcripts:
             expect(main).to_contain_text("No recorded runs yet.")
             return
@@ -237,6 +287,21 @@ class TestCopilot:
         )
         expect(panel).to_contain_text("Verified")
         expect(panel).to_contain_text(f"{code} has {true_count} reports.")
+
+    def test_gate_injury_count_shows_the_recomputed_number(
+        self, ms_page: Page, db: Database
+    ) -> None:
+        store = store_from_database(db)
+        code = sorted({r.product_code for r in store.records})[0]
+        _open(ms_page, "Copilot")
+        ms_page.get_by_role("tab", name="Try to fool the gate").click()
+        ms_page.wait_for_timeout(1_500)
+        _select(ms_page, "Event type", "Injury")
+        panel = ms_page.get_by_role("tabpanel").filter(has_text="Claim type").first
+        sentence = f"{code} has 50 Injury reports."
+        verdict = verify_sentence(sentence, [CountClaim(code, 50, "Injury")], store)
+        expect(panel).to_contain_text(sentence)
+        expect(panel).to_contain_text("Verified" if verdict.status == "pass" else "Withheld")
 
     def test_gate_cfr_section_matches_gate_verdict(self, ms_page: Page, db: Database) -> None:
         store = store_from_database(db)

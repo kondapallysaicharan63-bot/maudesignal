@@ -282,7 +282,9 @@ MaudeSignal does not handle PHI under any circumstances.
 | `ai-failure-mode-classifier` | ✅ v1.0.0 | Assigns the AI taxonomy MAUDE cannot |
 | `drift-analysis-interpreter` | ✅ v1.0.0 (skeleton) | Translates KS/PSI stats into regulator language; not wired into pipeline yet |
 | `fda-guidance-retriever` | 📋 planned | Grounded retrieval over FDA guidance corpus |
-| `psur-report-drafter` | 📋 planned | Final composer; consumes everything |
+| `psur-report-drafter` | ✅ v1.1.0 | Final composer; consumes everything |
+| `root-cause-analyzer` | ✅ v1.0.0 | Root-cause hypotheses for a signal (pre-existing pipeline) |
+| `trend-interpreter` | ✅ v1.0.0 | Plain-language reading of trend statistics (pre-existing pipeline) |
 | `safety-copilot` | ✅ v1.3.1 (hackathon, Oct 2026) | Copilot contract: tool use + structured claims checked by `gate/`; advisory only |
 | `fda-document-reader` | ✅ v1.0.0 (hackathon, Oct 2026) | Muse Spark reads 510(k) summary page images; checked by `vision/verify.py` (two reads + openFDA + text layer) |
 | `dossier-narrative` | ✅ v1.2.0 (hackathon, Oct 2026) | Muse Spark one-page dossier summary as gated claims |
@@ -291,7 +293,7 @@ MaudeSignal does not handle PHI under any circumstances.
 | `device-label-reader` | ✅ v1.0.0 (hackathon, Oct 2026) | Muse Spark reads a SAM-cropped device label; K-number / GTIN checked by `vision/label.py` |
 
 If you need to add a new Skill, follow the structure of the existing
-five Skills and update the table above.
+Skills and update the table above.
 
 ---
 

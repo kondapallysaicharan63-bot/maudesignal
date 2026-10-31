@@ -74,7 +74,7 @@ This is the intended behavior: rotation continues until every slot is exhausted,
 4. `maudesignal ingest --product-code DQA --limit 10` → 10 fetched, 10 new
 5. `maudesignal extract --product-code DQA --limit 10` → 5 Skill #1 + pool exhaustion mid-run
 
-All Skill outputs validated against versioned JSON Schemas; every API call audit-logged with masked keys.
+All Skill outputs schema-checked against versioned JSON Schemas; every API call audit-logged with masked keys.
 
 ## What This Demonstrates
 

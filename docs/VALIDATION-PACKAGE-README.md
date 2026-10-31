@@ -1,5 +1,9 @@
 # Tool Validation Package
 
+> **Pre-existing planning draft (May 2026), not implemented.** MaudeSignal has no accounts,
+> login, tenants or hosted API: it is an open-source CLI and dashboard that runs on a laptop
+> ([CLAUDE.md §3](../CLAUDE.md)). Kept for history only; not part of the hackathon submission.
+
 This directory (`validation_package/`) contains everything a MedTech company needs to
 formally validate MaudeSignal within their Quality Management System (QMS).
 
@@ -41,8 +45,8 @@ This validation package is designed to support compliance with:
 
 ## Important Notes
 
-- The validation package covers **MaudeSignal as a decision-support tool**.
-- Validated outputs (PSURs, PMS Plans) are **drafts** that require human expert review
+- The validation package covers **MaudeSignal as a signal-review aid**.
+- Outputs (PSUR drafts, PMS plan drafts) are **drafts** that require human expert review
   before use in regulatory submissions.
 - Re-validation is required after: major version upgrades, configuration changes,
   or changes to the underlying LLM model.

@@ -44,13 +44,14 @@ def guard(db: Database | None = None) -> SpendGuard:
 
 def guarded_client(db: Database | None = None) -> GuardedClient:
     """OpenAI-compatible Meta client whose chat calls count against the caps."""
-    from openai import OpenAI
+    from maudesignal.copilot.meta_provider import MetaProvider
 
-    client = OpenAI(
+    provider = MetaProvider(
         api_key=os.environ["META_MODEL_API_KEY"],
+        model=os.environ.get("META_MODEL_API_MODEL", ""),
         base_url=os.environ.get("META_MODEL_API_BASE_URL", _BASE_URL_DEFAULT),
     )
-    return guard(db).wrap(client)
+    return guard(db).wrap(provider.client)
 
 
 def sidebar_quota(db: Database | None = None) -> None:

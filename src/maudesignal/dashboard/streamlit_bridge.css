@@ -188,4 +188,12 @@ section[data-testid="stSidebar"] .stButton > button [data-testid="stMarkdownCont
   font: 500 11px/1.4 var(--font-sans); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
 .ms-stats .ms-num { display: block; font: 500 26px/1.15 var(--font-serif); letter-spacing: -0.5px;
   text-transform: none; color: var(--ink); margin-bottom: 2px; }
-.ms-stats--text .ms-num { font: 600 15px/1.4 var(--font-sans); letter-spacing: 0; word-break: break-all; }
+.ms-stats--text { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.ms-stats--text .ms-num { font: 600 14px/1.4 var(--font-sans); letter-spacing: 0; overflow-wrap: anywhere; }
+
+/* Signals: "Check any device type" panel (live openFDA). */
+.st-key-ms_livecheck {
+  border: 1px solid var(--rule); border-radius: var(--radius-md); background: var(--surface);
+  padding: var(--space-4) var(--space-5); margin-bottom: var(--space-5); gap: var(--space-3);
+}
+.st-key-ms_livecheck p.ms-small { margin: 0; }

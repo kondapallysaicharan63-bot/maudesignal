@@ -1,6 +1,6 @@
 """HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
-Unit tests for the overnight deterioration monitor (detector, digest, fetch, CLI).
+Unit tests for the weekly deterioration monitor (detector, digest, fetch, CLI).
 """
 
 from __future__ import annotations
@@ -176,9 +176,10 @@ def test_new_signal_first_reports_for_product_code() -> None:
 
 
 def test_new_signal_never_seen_event_type_outranks_escalation() -> None:
-    facts = _many("b", "20260801", 4) + [
+    facts = _many("b", "20260801", 8) + [
         _f("c1", "20260826", "death"),
         _f("c2", "20260827"),
+        _f("c3", "20260828"),
     ]
     sig = detect_deterioration(facts, AS_OF).signals[0]
     assert sig.classification == "new_signal"
@@ -317,10 +318,14 @@ def test_render_markdown_no_signals_and_new_event_type_line() -> None:
     )
     assert "No product code crossed a rule threshold." in md
 
-    facts = _many("b", "20260801", 4) + [_f("c1", "20260826", "death"), _f("c2", "20260827")]
+    facts = _many("b", "20260801", 8) + [
+        _f("c1", "20260826", "death"),
+        _f("c2", "20260827"),
+        _f("c3", "20260828"),
+    ]
     md = render_markdown(build_digest(detect_deterioration(facts, AS_OF)))
     assert "Rules fired: new kind of problem, more serious than usual" in md
-    assert "never seen before for this code: death (4 earlier reports on file)" in md
+    assert "never seen before for this code: death (8 earlier reports on file)" in md
 
 
 def test_render_json_contains_every_number() -> None:

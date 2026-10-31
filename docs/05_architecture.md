@@ -470,7 +470,7 @@ maude_report_id   TEXT (FK)
 extraction_ts     TEXT
 skill_name        TEXT
 skill_version     TEXT
-output_json       TEXT (validated against schema)
+output_json       TEXT (schema-checked)
 confidence_score  REAL
 model_used        TEXT
 requires_review   INTEGER (0 or 1)
@@ -588,7 +588,7 @@ cost_estimate_usd     REAL
 
 - ❌ God-objects — every module has a single responsibility
 - ❌ Inline LLM prompts — all behavior in Skills
-- ❌ Unstructured LLM outputs — every output validated against JSON schema
+- ❌ Unstructured LLM outputs — every output schema-checked against JSON schema
 - ❌ Silent failure — all errors logged; citation failures bubble up
 - ❌ Non-idempotent operations — re-running produces same state
 - ❌ Shared mutable state across modules — only storage is shared, and read-only for most

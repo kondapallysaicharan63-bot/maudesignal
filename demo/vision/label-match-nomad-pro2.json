@@ -1,0 +1,689 @@
+{
+  "kind": "device_label_match",
+  "schema_version": "1.0",
+  "image_file": "label-nomad-pro2.jpg",
+  "generated_utc": "2026-10-30T02:52:56Z",
+  "label": {
+    "fields": {
+      "device_name": {
+        "value": "Tube Assembly",
+        "legibility": "partly_legible"
+      },
+      "manufacturer": {
+        "value": "Aribex, Inc.",
+        "legibility": "partly_legible"
+      },
+      "model_number": {
+        "value": "NOMAD Pro 2",
+        "legibility": "partly_legible"
+      },
+      "k_number": {
+        "value": "",
+        "legibility": "not_present"
+      },
+      "udi": {
+        "value": "",
+        "legibility": "not_present"
+      },
+      "gtin": {
+        "value": "",
+        "legibility": "not_present"
+      }
+    },
+    "session_fields_omitted": true,
+    "overall_legibility": "partly_legible",
+    "legibility_banner": "Partly legible label: check every field against the photo",
+    "values_withheld": false
+  },
+  "search_basis": "model_name_manufacturer",
+  "search_inputs": {
+    "k_number": null,
+    "gtin": null,
+    "model_number": "NOMAD Pro 2",
+    "device_name": "Tube Assembly",
+    "manufacturer": "Aribex, Inc."
+  },
+  "queries": [
+    {
+      "id": "510k-maker-model",
+      "label": "510(k): maker + model number",
+      "url": "https://api.fda.gov/device/510k.json?search=applicant:\"aribex\"+AND+device_name:\"NOMAD+Pro+2\"&limit=25",
+      "count": 1,
+      "ok": true
+    },
+    {
+      "id": "510k-maker-name",
+      "label": "510(k): maker + device name word",
+      "url": "https://api.fda.gov/device/510k.json?search=applicant:\"aribex\"+AND+device_name:\"assembly\"&limit=25",
+      "count": 0,
+      "ok": true
+    },
+    {
+      "id": "510k-name",
+      "label": "510(k): device name",
+      "url": "https://api.fda.gov/device/510k.json?search=device_name:\"Tube+Assembly\"&limit=25",
+      "count": 2,
+      "ok": true
+    },
+    {
+      "id": "rl-maker-model",
+      "label": "Registration & listing: maker + model number",
+      "url": "https://api.fda.gov/device/registrationlisting.json?search=registration.owner_operator.firm_name:\"aribex\"+AND+proprietary_name:\"NOMAD+Pro+2\"&limit=25",
+      "count": 0,
+      "ok": true
+    },
+    {
+      "id": "rl-maker-name",
+      "label": "Registration & listing: maker + device name word",
+      "url": "https://api.fda.gov/device/registrationlisting.json?search=registration.owner_operator.firm_name:\"aribex\"+AND+products.openfda.device_name:\"assembly\"&limit=25",
+      "count": 0,
+      "ok": true
+    },
+    {
+      "id": "class-codes",
+      "label": "Classification: device type of the matched product codes",
+      "url": "https://api.fda.gov/device/classification.json?search=product_code:EHD+OR+product_code:ITY&limit=6",
+      "count": 2,
+      "ok": true
+    },
+    {
+      "id": "510k-EHD",
+      "label": "510(k) records for EHD",
+      "url": "https://api.fda.gov/device/510k.json?search=product_code:EHD&limit=3&sort=decision_date:desc",
+      "count": 191,
+      "ok": true
+    },
+    {
+      "id": "recall-EHD",
+      "label": "Recalls for EHD",
+      "url": "https://api.fda.gov/device/recall.json?search=product_code:EHD&limit=100&sort=event_date_initiated:desc",
+      "count": 18,
+      "ok": true
+    },
+    {
+      "id": "maude-all-EHD",
+      "label": "MAUDE reports for EHD, all dates",
+      "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AEHD&limit=1",
+      "count": 521,
+      "ok": true
+    },
+    {
+      "id": "maude-2y-EHD",
+      "label": "MAUDE reports for EHD, last two years",
+      "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AEHD+AND+date_received%3A%5B20241030+TO+20261030%5D&limit=1",
+      "count": 0,
+      "ok": true
+    },
+    {
+      "id": "510k-ITY",
+      "label": "510(k) records for ITY",
+      "url": "https://api.fda.gov/device/510k.json?search=product_code:ITY&limit=3&sort=decision_date:desc",
+      "count": 40,
+      "ok": true
+    },
+    {
+      "id": "recall-ITY",
+      "label": "Recalls for ITY",
+      "url": "https://api.fda.gov/device/recall.json?search=product_code:ITY&limit=100&sort=event_date_initiated:desc",
+      "count": 4,
+      "ok": true
+    },
+    {
+      "id": "maude-all-ITY",
+      "label": "MAUDE reports for ITY, all dates",
+      "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AITY&limit=1",
+      "count": 55,
+      "ok": true
+    },
+    {
+      "id": "maude-2y-ITY",
+      "label": "MAUDE reports for ITY, last two years",
+      "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AITY+AND+date_received%3A%5B20241030+TO+20261030%5D&limit=1",
+      "count": 0,
+      "ok": true
+    }
+  ],
+  "matches": [
+    {
+      "source": "510k",
+      "record_id": "K173319",
+      "owner": "Aribex",
+      "device_name": "KaVo NOMAD Pro 2 Handheld X-ray System",
+      "product_code": "EHD",
+      "device_type_name": "Unit, X-Ray, Extraoral With Timer",
+      "decision_date": "2017-11-16",
+      "query_url": "https://api.fda.gov/device/510k.json?search=applicant:\"aribex\"+AND+device_name:\"NOMAD+Pro+2\"&limit=25",
+      "score": 65,
+      "manufacturer_match": true,
+      "why_matched": [
+        "manufacturer name matches 'Aribex, Inc.'",
+        "model NOMAD Pro 2 appears in the 510(k) device name"
+      ],
+      "why_not_matched": [
+        "device name words not in the record: tube, assembly"
+      ],
+      "k_number": "K173319"
+    },
+    {
+      "source": "510k",
+      "record_id": "K920731",
+      "owner": "Shimadzu Medical Systems",
+      "device_name": "X-RAY TUBE ASSEMBLY CIRCLEX1.2UG",
+      "product_code": "ITY",
+      "device_type_name": "Assembly, Tube Housing, X-Ray, Diagnostic",
+      "decision_date": "1992-05-29",
+      "query_url": "https://api.fda.gov/device/510k.json?search=device_name:\"Tube+Assembly\"&limit=25",
+      "score": 25,
+      "manufacturer_match": false,
+      "why_matched": [
+        "device name shares 2 of 2 words"
+      ],
+      "why_not_matched": [
+        "applicant differs: Shimadzu Medical Systems vs Aribex, Inc. on the label",
+        "model NOMAD Pro 2 does not appear in the 510(k) device name"
+      ],
+      "k_number": "K920731"
+    },
+    {
+      "source": "510k",
+      "record_id": "K920387",
+      "owner": "Shimadzu Medical Systems",
+      "device_name": "CIRCLEXO.3T X-RAY TUBE ASSEMBLY",
+      "product_code": "ITY",
+      "device_type_name": "Assembly, Tube Housing, X-Ray, Diagnostic",
+      "decision_date": "1992-04-14",
+      "query_url": "https://api.fda.gov/device/510k.json?search=device_name:\"Tube+Assembly\"&limit=25",
+      "score": 25,
+      "manufacturer_match": false,
+      "why_matched": [
+        "device name shares 2 of 2 words"
+      ],
+      "why_not_matched": [
+        "applicant differs: Shimadzu Medical Systems vs Aribex, Inc. on the label",
+        "model NOMAD Pro 2 does not appear in the 510(k) device name"
+      ],
+      "k_number": "K920387"
+    }
+  ],
+  "manufacturer_match_found": true,
+  "note": "These are possible matches. A person must confirm one, or none.",
+  "status": "needs_person_to_confirm",
+  "confirmed": null,
+  "device_type_views": {
+    "EHD": {
+      "product_code": "EHD",
+      "device_type_name": "Unit, X-Ray, Extraoral With Timer",
+      "facts": [
+        {
+          "id": "EHD:device_type",
+          "topic": "device_type",
+          "status": "pass",
+          "check": "direct",
+          "text": "Product code EHD is the device type 'Unit, X-Ray, Extraoral With Timer' in the FDA classification database.",
+          "data": {
+            "device_type_name": "Unit, X-Ray, Extraoral With Timer",
+            "device_class": "2",
+            "regulation_number": "872.1800"
+          },
+          "query_url": "https://api.fda.gov/device/classification.json?search=product_code:EHD+OR+product_code:ITY&limit=6"
+        },
+        {
+          "id": "EHD:clearances_total",
+          "topic": "clearances_total",
+          "status": "pass",
+          "check": "direct",
+          "text": "openFDA lists 191 510(k) records under product code EHD.",
+          "data": {
+            "total": 191
+          },
+          "query_url": "https://api.fda.gov/device/510k.json?search=product_code:EHD&limit=3&sort=decision_date:desc"
+        },
+        {
+          "id": "EHD:clearances_latest",
+          "topic": "clearances_latest",
+          "status": "pass",
+          "check": "gate",
+          "text": "Most recent 510(k) under EHD on openFDA: K260795 (Changzhou Sifary Medical Technology Co., Ltd., decided 2026-09-14).",
+          "data": {
+            "k_number": "K260795",
+            "applicant": "Changzhou Sifary Medical Technology Co., Ltd.",
+            "decision_date": "2026-09-14"
+          },
+          "query_url": "https://api.fda.gov/device/510k.json?search=product_code:EHD&limit=3&sort=decision_date:desc"
+        },
+        {
+          "id": "EHD:recalls_total",
+          "topic": "recalls_total",
+          "status": "pass",
+          "check": "gate",
+          "text": "openFDA lists 18 recalls under product code EHD.",
+          "data": {
+            "total": 18
+          },
+          "query_url": "https://api.fda.gov/device/recall.json?search=product_code:EHD&limit=100&sort=event_date_initiated:desc"
+        },
+        {
+          "id": "EHD:recalls_latest",
+          "topic": "recalls_latest",
+          "status": "pass",
+          "check": "gate",
+          "text": "Most recent recall under EHD on openFDA: Z-2117-2025 (DIGIMED CO., LTD, started 2025-06-19).",
+          "data": {
+            "recall_number": "Z-2117-2025",
+            "firm": "DIGIMED CO., LTD",
+            "date_initiated": "2025-06-19"
+          },
+          "query_url": "https://api.fda.gov/device/recall.json?search=product_code:EHD&limit=100&sort=event_date_initiated:desc"
+        },
+        {
+          "id": "EHD:reports_total",
+          "topic": "reports_total",
+          "status": "pass",
+          "check": "direct",
+          "text": "openFDA has no MAUDE reports for EHD in the last two years; 521 reports exist before that.",
+          "data": {
+            "total": 521,
+            "as_of": null
+          },
+          "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AEHD&limit=1"
+        },
+        {
+          "id": "EHD:this_week_change",
+          "topic": "this_week_change",
+          "status": "pass",
+          "check": "recomputed",
+          "text": "No MAUDE reports for EHD in the last two years; this week's change: no change.",
+          "data": {
+            "change": "no change",
+            "classification": "stable",
+            "triggers": [],
+            "as_of": null,
+            "rules": [
+              "new kind of problem: reports this week and none before, or an event type not seen before",
+              "more serious than usual: Injury/Death share up 15 points or more vs the 4 weeks before",
+              "reports suddenly increased: at least 3 reports and 2 times the 4-week weekly average"
+            ]
+          },
+          "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AEHD+AND+date_received%3A%5B20241030+TO+20261030%5D&limit=1"
+        }
+      ],
+      "summary": {
+        "device_type": {
+          "device_type_name": "Unit, X-Ray, Extraoral With Timer",
+          "device_class": "2",
+          "regulation_number": "872.1800"
+        },
+        "clearances_total": {
+          "total": 191
+        },
+        "clearances_latest": {
+          "k_number": "K260795",
+          "applicant": "Changzhou Sifary Medical Technology Co., Ltd.",
+          "decision_date": "2026-09-14"
+        },
+        "recalls_total": {
+          "total": 18
+        },
+        "recalls_latest": {
+          "recall_number": "Z-2117-2025",
+          "firm": "DIGIMED CO., LTD",
+          "date_initiated": "2025-06-19"
+        },
+        "reports_total": {
+          "total": 521,
+          "as_of": null
+        },
+        "this_week_change": {
+          "change": "no change",
+          "classification": "stable",
+          "triggers": [],
+          "as_of": null,
+          "rules": [
+            "new kind of problem: reports this week and none before, or an event type not seen before",
+            "more serious than usual: Injury/Death share up 15 points or more vs the 4 weeks before",
+            "reports suddenly increased: at least 3 reports and 2 times the 4-week weekly average"
+          ]
+        }
+      }
+    },
+    "ITY": {
+      "product_code": "ITY",
+      "device_type_name": "Assembly, Tube Housing, X-Ray, Diagnostic",
+      "facts": [
+        {
+          "id": "ITY:device_type",
+          "topic": "device_type",
+          "status": "pass",
+          "check": "direct",
+          "text": "Product code ITY is the device type 'Assembly, Tube Housing, X-Ray, Diagnostic' in the FDA classification database.",
+          "data": {
+            "device_type_name": "Assembly, Tube Housing, X-Ray, Diagnostic",
+            "device_class": "1",
+            "regulation_number": "892.1760"
+          },
+          "query_url": "https://api.fda.gov/device/classification.json?search=product_code:EHD+OR+product_code:ITY&limit=6"
+        },
+        {
+          "id": "ITY:clearances_total",
+          "topic": "clearances_total",
+          "status": "pass",
+          "check": "direct",
+          "text": "openFDA lists 40 510(k) records under product code ITY.",
+          "data": {
+            "total": 40
+          },
+          "query_url": "https://api.fda.gov/device/510k.json?search=product_code:ITY&limit=3&sort=decision_date:desc"
+        },
+        {
+          "id": "ITY:clearances_latest",
+          "topic": "clearances_latest",
+          "status": "pass",
+          "check": "gate",
+          "text": "Most recent 510(k) under ITY on openFDA: K000052 (Dynarad Corp., decided 2000-02-10).",
+          "data": {
+            "k_number": "K000052",
+            "applicant": "Dynarad Corp.",
+            "decision_date": "2000-02-10"
+          },
+          "query_url": "https://api.fda.gov/device/510k.json?search=product_code:ITY&limit=3&sort=decision_date:desc"
+        },
+        {
+          "id": "ITY:recalls_total",
+          "topic": "recalls_total",
+          "status": "pass",
+          "check": "gate",
+          "text": "openFDA lists 4 recalls under product code ITY.",
+          "data": {
+            "total": 4
+          },
+          "query_url": "https://api.fda.gov/device/recall.json?search=product_code:ITY&limit=100&sort=event_date_initiated:desc"
+        },
+        {
+          "id": "ITY:recalls_latest",
+          "topic": "recalls_latest",
+          "status": "pass",
+          "check": "gate",
+          "text": "Most recent recall under ITY on openFDA: Z-0838-05 (Dunlee, started 2005-04-07).",
+          "data": {
+            "recall_number": "Z-0838-05",
+            "firm": "Dunlee",
+            "date_initiated": "2005-04-07"
+          },
+          "query_url": "https://api.fda.gov/device/recall.json?search=product_code:ITY&limit=100&sort=event_date_initiated:desc"
+        },
+        {
+          "id": "ITY:reports_total",
+          "topic": "reports_total",
+          "status": "pass",
+          "check": "direct",
+          "text": "openFDA has no MAUDE reports for ITY in the last two years; 55 reports exist before that.",
+          "data": {
+            "total": 55,
+            "as_of": null
+          },
+          "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AITY&limit=1"
+        },
+        {
+          "id": "ITY:this_week_change",
+          "topic": "this_week_change",
+          "status": "pass",
+          "check": "recomputed",
+          "text": "No MAUDE reports for ITY in the last two years; this week's change: no change.",
+          "data": {
+            "change": "no change",
+            "classification": "stable",
+            "triggers": [],
+            "as_of": null,
+            "rules": [
+              "new kind of problem: reports this week and none before, or an event type not seen before",
+              "more serious than usual: Injury/Death share up 15 points or more vs the 4 weeks before",
+              "reports suddenly increased: at least 3 reports and 2 times the 4-week weekly average"
+            ]
+          },
+          "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AITY+AND+date_received%3A%5B20241030+TO+20261030%5D&limit=1"
+        }
+      ],
+      "summary": {
+        "device_type": {
+          "device_type_name": "Assembly, Tube Housing, X-Ray, Diagnostic",
+          "device_class": "1",
+          "regulation_number": "892.1760"
+        },
+        "clearances_total": {
+          "total": 40
+        },
+        "clearances_latest": {
+          "k_number": "K000052",
+          "applicant": "Dynarad Corp.",
+          "decision_date": "2000-02-10"
+        },
+        "recalls_total": {
+          "total": 4
+        },
+        "recalls_latest": {
+          "recall_number": "Z-0838-05",
+          "firm": "Dunlee",
+          "date_initiated": "2005-04-07"
+        },
+        "reports_total": {
+          "total": 55,
+          "as_of": null
+        },
+        "this_week_change": {
+          "change": "no change",
+          "classification": "stable",
+          "triggers": [],
+          "as_of": null,
+          "rules": [
+            "new kind of problem: reports this week and none before, or an event type not seen before",
+            "more serious than usual: Injury/Death share up 15 points or more vs the 4 weeks before",
+            "reports suddenly increased: at least 3 reports and 2 times the 4-week weekly average"
+          ]
+        }
+      }
+    }
+  },
+  "trace": [
+    {
+      "step": "SAM 3.1 crop",
+      "model": "SAM 3.1",
+      "started_utc": "2026-10-30T01:32:39Z",
+      "elapsed_ms": 1278.9,
+      "timing": "recorded 2026-10-30",
+      "note": "prompts tried: label; crop used; timing and cost recorded 2026-10-30, not re-run in this process",
+      "cost_usd": 0.0025
+    },
+    {
+      "step": "Muse Spark read",
+      "model": "Muse Spark",
+      "started_utc": "2026-10-30T01:32:40Z",
+      "elapsed_ms": 14923.0,
+      "timing": "recorded 2026-10-30",
+      "input_tokens": 1314,
+      "output_tokens": 1912,
+      "cost_usd": 0.009768,
+      "note": "timing and cost recorded 2026-10-30, not re-run in this process"
+    },
+    {
+      "step": "openFDA search: 510(k): maker + model number",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T02:52:54Z",
+      "elapsed_ms": 128.7,
+      "timing": "measured",
+      "count": 1,
+      "url": "https://api.fda.gov/device/510k.json?search=applicant:\"aribex\"+AND+device_name:\"NOMAD+Pro+2\"&limit=25"
+    },
+    {
+      "step": "openFDA search: 510(k): maker + device name word",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T02:52:54Z",
+      "elapsed_ms": 131.1,
+      "timing": "measured",
+      "count": 0,
+      "url": "https://api.fda.gov/device/510k.json?search=applicant:\"aribex\"+AND+device_name:\"assembly\"&limit=25"
+    },
+    {
+      "step": "openFDA search: 510(k): device name",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T02:52:54Z",
+      "elapsed_ms": 128.6,
+      "timing": "measured",
+      "count": 2,
+      "url": "https://api.fda.gov/device/510k.json?search=device_name:\"Tube+Assembly\"&limit=25"
+    },
+    {
+      "step": "openFDA search: Registration & listing: maker + model number",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T02:52:54Z",
+      "elapsed_ms": 130.9,
+      "timing": "measured",
+      "count": 0,
+      "url": "https://api.fda.gov/device/registrationlisting.json?search=registration.owner_operator.firm_name:\"aribex\"+AND+proprietary_name:\"NOMAD+Pro+2\"&limit=25"
+    },
+    {
+      "step": "openFDA search: Registration & listing: maker + device name word",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T02:52:54Z",
+      "elapsed_ms": 127.8,
+      "timing": "measured",
+      "count": 0,
+      "url": "https://api.fda.gov/device/registrationlisting.json?search=registration.owner_operator.firm_name:\"aribex\"+AND+products.openfda.device_name:\"assembly\"&limit=25"
+    },
+    {
+      "step": "openFDA search: Classification: device type of the matched product codes",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T02:52:54Z",
+      "elapsed_ms": 128.3,
+      "timing": "measured",
+      "count": 2,
+      "url": "https://api.fda.gov/device/classification.json?search=product_code:EHD+OR+product_code:ITY&limit=6"
+    },
+    {
+      "step": "openFDA search: 510(k) records for EHD",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T02:52:54Z",
+      "elapsed_ms": 131.2,
+      "timing": "measured",
+      "count": 191,
+      "url": "https://api.fda.gov/device/510k.json?search=product_code:EHD&limit=3&sort=decision_date:desc"
+    },
+    {
+      "step": "openFDA search: Recalls for EHD",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T02:52:55Z",
+      "elapsed_ms": 144.0,
+      "timing": "measured",
+      "count": 18,
+      "url": "https://api.fda.gov/device/recall.json?search=product_code:EHD&limit=100&sort=event_date_initiated:desc"
+    },
+    {
+      "step": "openFDA search: MAUDE counts and this week's change for EHD",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T02:52:55Z",
+      "elapsed_ms": 448.5,
+      "timing": "measured",
+      "count": null,
+      "url": null,
+      "urls": [
+        "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AEHD&limit=1",
+        "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AEHD+AND+date_received%3A%5B20241030+TO+20261030%5D&limit=1"
+      ],
+      "note": "covers 2 openFDA queries; elapsed_ms is the combined time of the whole check; each count is shown with its own query below",
+      "queries": [
+        {
+          "query": "Reports, all dates",
+          "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AEHD&limit=1",
+          "count": 521
+        },
+        {
+          "query": "Reports, last two years",
+          "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AEHD+AND+date_received%3A%5B20241030+TO+20261030%5D&limit=1",
+          "count": 0
+        }
+      ]
+    },
+    {
+      "step": "openFDA search: 510(k) records for ITY",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T02:52:55Z",
+      "elapsed_ms": 154.5,
+      "timing": "measured",
+      "count": 40,
+      "url": "https://api.fda.gov/device/510k.json?search=product_code:ITY&limit=3&sort=decision_date:desc"
+    },
+    {
+      "step": "openFDA search: Recalls for ITY",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T02:52:55Z",
+      "elapsed_ms": 209.9,
+      "timing": "measured",
+      "count": 4,
+      "url": "https://api.fda.gov/device/recall.json?search=product_code:ITY&limit=100&sort=event_date_initiated:desc"
+    },
+    {
+      "step": "openFDA search: MAUDE counts and this week's change for ITY",
+      "model": "openFDA",
+      "started_utc": "2026-10-30T02:52:56Z",
+      "elapsed_ms": 443.0,
+      "timing": "measured",
+      "count": null,
+      "url": null,
+      "urls": [
+        "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AITY&limit=1",
+        "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AITY+AND+date_received%3A%5B20241030+TO+20261030%5D&limit=1"
+      ],
+      "note": "covers 2 openFDA queries; elapsed_ms is the combined time of the whole check; each count is shown with its own query below",
+      "queries": [
+        {
+          "query": "Reports, all dates",
+          "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AITY&limit=1",
+          "count": 55
+        },
+        {
+          "query": "Reports, last two years",
+          "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AITY+AND+date_received%3A%5B20241030+TO+20261030%5D&limit=1",
+          "count": 0
+        }
+      ]
+    },
+    {
+      "step": "Gate check",
+      "model": "gate",
+      "started_utc": "2026-10-30T02:52:56Z",
+      "elapsed_ms": 0.4,
+      "timing": "measured",
+      "count": 14,
+      "note": "14 facts passed, 0 withheld"
+    },
+    {
+      "step": "Done",
+      "model": "gate",
+      "started_utc": "2026-10-30T02:52:56Z",
+      "elapsed_ms": 2306.9,
+      "timing": "measured",
+      "note": "elapsed_ms is the sum of the measured steps above; recorded SAM / Spark timings are not included"
+    }
+  ],
+  "scoring_rules": [
+    "Exact K-number or GTIN printed on the label equals the record: 100 points.",
+    "Manufacturer: up to 40 points, in proportion to the label's maker words found in the record's applicant / owner. A maker match needs all of them.",
+    "Model number found in the record's device name or model field: 25 points.",
+    "Device name: up to 25 points, in proportion to the label's name words found in the record.",
+    "A record is kept only if it has an exact id, a maker match, a model match, or at least 50% of the label's name words.",
+    "Order: exact id first, then maker match, then score, then newest decision date, then id.",
+    "At most 3 are shown. None is chosen for the person."
+  ],
+  "reading": {
+    "model": "muse-spark-1.3",
+    "skill_version": "1.0.0",
+    "input_tokens": 1314,
+    "output_tokens": 1912,
+    "cost_usd": {
+      "spark": 0.009768,
+      "sam": 0.0025,
+      "total": 0.012268
+    },
+    "recorded": "recorded 2026-10-30"
+  },
+  "disclaimer": "Possible matches for a person to confirm. This is a search of public openFDA records, not an identification of the device, and not medical advice."
+}

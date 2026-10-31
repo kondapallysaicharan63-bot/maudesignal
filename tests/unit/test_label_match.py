@@ -1,0 +1,944 @@
+"""Label reading -> possible openFDA matches -> device-type view (no network)."""
+
+from __future__ import annotations
+
+import json
+from collections.abc import Callable
+from datetime import date
+from pathlib import Path
+from typing import Any
+
+import httpx
+import pytest
+
+from maudesignal.common.exceptions import OpenFDAAPIError, OpenFDAForbiddenError
+from maudesignal.gate import EvidenceStore
+from maudesignal.monitor.deterioration import build_window
+from maudesignal.monitor.live_check import LiveCheck, WindowCounts, classify_counts
+from maudesignal.vision import label_match as lm
+
+Row = dict[str, Any]
+Responder = Callable[[str, str], list[Row]]
+
+HOMEDICS_LABEL: dict[str, Any] = {
+    "fields": {
+        "device_name": {"value": "Non-contact Infrared Body Thermometer", "legibility": "clear"},
+        "manufacturer": {"value": "HoMedics USA, LLC.", "legibility": "clear"},
+        "model_number": {"value": "TIE-240", "legibility": "clear"},
+        "k_number": {"value": "", "legibility": "not_present"},
+        "udi": {"value": "", "legibility": "not_present"},
+        "gtin": {"value": "", "legibility": "not_present"},
+        "lot": {"value": "LOT-SECRET-1", "legibility": "clear"},
+        "serial": {"value": "SN-SECRET-9", "legibility": "clear"},
+    },
+    "overall_legibility": "clear",
+}
+
+
+def hetaida(k: str, date_: str, name: str = "Non-contact Infrared Body Thermometer") -> Row:
+    return {
+        "k_number": k,
+        "applicant": "Hetaida Technology Co., Ltd.",
+        "device_name": name,
+        "product_code": "FLL",
+        "decision_date": date_,
+    }
+
+
+HETAIDA_ROWS = [
+    hetaida("K203332", "2021-02-25", "Non-contact Infrared Body Thermometer, Model HTD8808C"),
+    hetaida("K200159", "2021-01-05"),
+    hetaida("K171888", "2018-07-23"),
+]
+
+
+class FakeSearcher:
+    """Answers from a function; records every call."""
+
+    def __init__(self, responder: Responder, fail: set[str] | None = None) -> None:
+        self.responder = responder
+        self.fail = fail or set()
+        self.calls: list[tuple[str, str]] = []
+
+    def query(
+        self, endpoint: str, search: str, *, limit: int = 25, sort: str | None = None
+    ) -> lm.Answer:
+        self.calls.append((endpoint, search))
+        if endpoint in self.fail:
+            raise OpenFDAAPIError("boom")
+        rows = self.responder(endpoint, search)
+        return lm.Answer(
+            lm.public_url(endpoint, search, limit, sort), len(rows), tuple(rows), lm.utc_now(), 1.5
+        )
+
+
+def default_responder(endpoint: str, search: str) -> list[Row]:
+    if endpoint == "510k" and "applicant:" not in search and "product_code:" not in search:
+        return HETAIDA_ROWS
+    if endpoint == "510k" and "product_code:FLL" in search:
+        return [HETAIDA_ROWS[0]]
+    if endpoint == "classification" and "product_code:FLL" in search:
+        return [
+            {
+                "product_code": "FLL",
+                "device_name": "Thermometer, Electronic, Clinical",
+                "device_class": "2",
+                "regulation_number": "880.2910",
+            }
+        ]
+    if endpoint == "recall" and "product_code:FLL" in search:
+        return [
+            {
+                "product_res_number": "Z-0001-2026",
+                "res_event_number": "99001",
+                "product_code": "FLL",
+                "recalling_firm": "Acme Thermo",
+                "product_description": "thermometer",
+                "reason_for_recall": "label error",
+                "event_date_initiated": "2026-03-02",
+            }
+        ]
+    return []
+
+
+def fake_check(code: str) -> LiveCheck:
+    w = build_window(date(2026, 10, 20))
+    counts = WindowCounts(
+        current_total=5,
+        baseline_total=8,
+        prior_total=120,
+        current_types=(("injury", 1), ("malfunction", 4)),
+        baseline_types=(("injury", 1), ("malfunction", 7)),
+        prior_types=(("injury", 10), ("malfunction", 100), ("death", 10)),
+    )
+    lc = classify_counts(code, counts, w)
+    from dataclasses import replace
+
+    return replace(
+        lc,
+        queries=(
+            (
+                "per day",
+                f"https://api.fda.gov/device/event.json?search=a{code}&count=date_received",
+            ),
+            ("this week", f"https://api.fda.gov/device/event.json?search=b{code}&count=x"),
+            ("baseline", f"https://api.fda.gov/device/event.json?search=c{code}&count=x"),
+            ("before", f"https://api.fda.gov/device/event.json?search=d{code}&limit=1"),
+            ("before types", f"https://api.fda.gov/device/event.json?search=e{code}&count=x"),
+        ),
+    )
+
+
+# --- ranking and reasons -----------------------------------------------------------------
+
+
+def test_homedics_label_does_not_show_hetaida_as_maker_match() -> None:
+    res = lm.match_label(HOMEDICS_LABEL, searcher=FakeSearcher(default_responder))
+    assert res["matches"], "name search still returns candidates"
+    for m in res["matches"]:
+        assert m["owner"].startswith("Hetaida")
+        assert m["manufacturer_match"] is False
+        assert not any("manufacturer name matches" in w for w in m["why_matched"])
+        assert (
+            "applicant differs: Hetaida Technology Co., Ltd. vs HoMedics USA, LLC. on the label"
+            in m["why_not_matched"]
+        )
+    assert res["manufacturer_match_found"] is False
+    assert "No record from 'HoMedics USA, LLC.'" in res["note"]
+    assert res["status"] == "needs_person_to_confirm"
+    assert res["confirmed"] is None
+
+
+def test_maker_matches_rank_first_even_with_fewer_name_words() -> None:
+    homedics = {
+        "k_number": "K990001",
+        "applicant": "HoMedics, Inc.",
+        "device_name": "Infrared Thermometer TIE-240",
+        "product_code": "FLL",
+        "decision_date": "2019-05-01",
+    }
+
+    def responder(endpoint: str, search: str) -> list[Row]:
+        if endpoint == "510k" and "applicant:" in search and "TIE-240" in search:
+            return [homedics]
+        return default_responder(endpoint, search)
+
+    res = lm.match_label(HOMEDICS_LABEL, searcher=FakeSearcher(responder))
+    top = res["matches"][0]
+    assert top["record_id"] == "K990001"
+    assert top["manufacturer_match"] is True
+    assert "manufacturer name matches 'HoMedics USA, LLC.'" in top["why_matched"]
+    assert "model TIE-240 appears in the 510(k) device name" in top["why_matched"]
+    assert any(w.startswith("device name shares ") for w in top["why_matched"])
+    assert res["manufacturer_match_found"] is True
+    assert [m["manufacturer_match"] for m in res["matches"]] == [True, False, False]
+
+
+def test_at_most_three_matches() -> None:
+    rows = [hetaida(f"K10000{i}", f"2020-01-0{i}") for i in range(1, 9)]
+    res = lm.match_label(
+        HOMEDICS_LABEL, searcher=FakeSearcher(lambda e, s: rows if e == "510k" else [])
+    )
+    assert len(res["matches"]) == lm.MAX_MATCHES == 3
+
+
+def test_k_number_is_looked_up_first_and_flagged_exact() -> None:
+    label = {
+        "fields": {
+            "k_number": {"value": "k 203332", "legibility": "clear"},
+            "manufacturer": {"value": "Hetaida Technology Co., Ltd.", "legibility": "clear"},
+            "device_name": {
+                "value": "Non-contact Infrared Body Thermometer",
+                "legibility": "clear",
+            },
+        }
+    }
+    s = FakeSearcher(
+        lambda e, q: [HETAIDA_ROWS[0]] if e == "510k" and "k_number:K203332" in q else []
+    )
+    res = lm.match_label(label, searcher=s)
+    assert res["search_basis"] == "k_number"
+    assert s.calls[0] == ("510k", "k_number:K203332")
+    m = res["matches"][0]
+    assert m["record_id"] == "K203332" and m["manufacturer_match"] is True
+    assert "K-number K203332 printed on the label equals this record" in m["why_matched"]
+    assert res["status"] == "needs_person_to_confirm" and res["confirmed"] is None
+
+
+def test_gtin_goes_to_udi_endpoint() -> None:
+    label = {
+        "fields": {
+            "gtin": {"value": "00614141999996", "legibility": "clear"},
+            "manufacturer": {"value": "Acme Devices", "legibility": "clear"},
+        }
+    }
+    udi = {
+        "public_device_record_key": "key-1",
+        "brand_name": "Acme Probe",
+        "company_name": "Acme Devices, Inc.",
+        "version_or_model_number": "AP-1",
+        "identifiers": [{"id": "00614141999996", "type": "Primary"}],
+        "product_codes": [{"code": "ABC", "name": "Probe, Thing"}],
+    }
+    s = FakeSearcher(lambda e, q: [udi] if e == "udi" else [])
+    res = lm.match_label(label, searcher=s)
+    assert res["search_basis"] == "gtin"
+    assert s.calls[0][0] == "udi"
+    m = res["matches"][0]
+    assert m["source"] == "udi" and m["product_code"] == "ABC"
+    assert any(w.startswith("GTIN 614141999996") or "GTIN" in w for w in m["why_matched"])
+
+
+def test_invalid_gtin_is_not_searched() -> None:
+    label = {"fields": {"gtin": {"value": "00614141999990", "legibility": "clear"}}}
+    s = FakeSearcher(lambda e, q: [])
+    res = lm.match_label(label, searcher=s)
+    assert s.calls == []
+    assert res["matches"] == [] and res["status"] == "no_match_found"
+
+
+def test_registration_listing_is_searched_and_scored() -> None:
+    listing = {
+        "proprietary_name": ["TIE-240 thermometer"],
+        "registration": {
+            "registration_number": "3001234567",
+            "owner_operator": {"firm_name": "HoMedics, LLC"},
+        },
+        "products": [
+            {"product_code": "FLL", "openfda": {"device_name": "Thermometer, Electronic, Clinical"}}
+        ],
+    }
+    s = FakeSearcher(lambda e, q: [listing] if e == "registrationlisting" else [])
+    res = lm.match_label(HOMEDICS_LABEL, searcher=s)
+    m = res["matches"][0]
+    assert m["source"] == "registrationlisting" and m["record_id"] == "3001234567"
+    assert m["manufacturer_match"] is True
+    assert {e for e, _ in s.calls} >= {"510k", "registrationlisting", "classification"}
+
+
+def test_nothing_matches_says_so_plainly() -> None:
+    res = lm.match_label(HOMEDICS_LABEL, searcher=FakeSearcher(lambda e, q: []))
+    assert res["matches"] == []
+    assert res["note"] == "No openFDA record matched what was read from this label."
+    assert res["status"] == "no_match_found" and res["confirmed"] is None
+    assert res["device_type_views"] == {}
+
+
+def test_empty_reading_has_nothing_to_search() -> None:
+    s = FakeSearcher(lambda e, q: [])
+    res = lm.match_label({"fields": {}}, searcher=s)
+    assert s.calls == []
+    assert "nothing to search" in res["note"]
+
+
+def test_unrelated_records_are_dropped() -> None:
+    other = {
+        "k_number": "K555555",
+        "applicant": "Other Co",
+        "device_name": "Hip Implant Stem",
+        "product_code": "XYZ",
+        "decision_date": "2020-01-01",
+    }
+    res = lm.match_label(
+        HOMEDICS_LABEL, searcher=FakeSearcher(lambda e, q: [other] if e == "510k" else [])
+    )
+    assert res["matches"] == []
+
+
+def test_openfda_failure_is_reported_not_raised() -> None:
+    res = lm.match_label(HOMEDICS_LABEL, searcher=FakeSearcher(default_responder, fail={"510k"}))
+    assert res["matches"] == []
+    assert any(q["ok"] is False and q["error"] == "OpenFDAAPIError" for q in res["queries"])
+    assert all(
+        s["elapsed_ms"] is None for s in res["trace"] if s.get("error") and s["model"] == "openFDA"
+    )
+
+
+# --- confirm ------------------------------------------------------------------------------
+
+
+def test_confirm_records_the_person_and_choice() -> None:
+    res = lm.match_label(
+        HOMEDICS_LABEL, searcher=FakeSearcher(default_responder), check_fn=fake_check
+    )
+    assert lm.confirmed_view(res) is None
+    done = lm.confirm(res, 1, "  Dana  Reviewer ", when_utc="2026-10-30T10:00:00Z")
+    assert res["confirmed"] is None, "the input is not modified"
+    assert done["status"] == "confirmed_by_person"
+    c = done["confirmed"]
+    assert c["person"] == "Dana Reviewer" and c["index"] == 1
+    assert c["record_id"] == res["matches"][1]["record_id"]
+    assert c["confirmed_utc"] == "2026-10-30T10:00:00Z"
+    view = lm.confirmed_view(done)
+    assert view is not None and view["product_code"] == "FLL"
+
+
+def test_confirm_none_of_these_and_validation() -> None:
+    res = lm.match_label(HOMEDICS_LABEL, searcher=FakeSearcher(default_responder))
+    none = lm.confirm(res, None, "Dana")
+    assert none["confirmed"]["none_of_these"] is True
+    assert lm.confirmed_view(none) is None
+    with pytest.raises(ValueError):
+        lm.confirm(res, 0, "   ")
+    with pytest.raises(ValueError):
+        lm.confirm(res, 7, "Dana")
+    with pytest.raises(ValueError):
+        lm.confirm(res, -1, "Dana")
+
+
+# --- device-type view, gate, withheld text ----------------------------------------------------
+
+
+def test_device_type_view_facts_are_gated_or_recomputed() -> None:
+    res = lm.match_label(
+        HOMEDICS_LABEL, searcher=FakeSearcher(default_responder), check_fn=fake_check
+    )
+    view = res["device_type_views"]["FLL"]
+    assert view["device_type_name"] == "Thermometer, Electronic, Clinical"
+    by = {f["topic"]: f for f in view["facts"]}
+    assert by["recalls_total"]["check"] == "gate" and by["recalls_total"]["status"] == "pass"
+    assert by["recalls_latest"]["check"] == "gate"
+    assert by["clearances_latest"]["check"] == "gate"
+    assert by["reports_window"]["check"] == "direct"
+    assert by["this_week_change"]["check"] == "recomputed"
+    assert by["this_week_change"]["status"] == "pass"
+    assert view["summary"]["recalls_total"]["total"] == 1
+    assert view["summary"]["reports_window"]["count"] == 5
+    for f in view["facts"]:
+        assert f["status"] == "pass" and f["query_url"].startswith("https://api.fda.gov/")
+
+
+def test_this_week_change_matches_detector_rules() -> None:
+    lc = fake_check("FLL")
+    assert lm.recompute_change(lc) == lc.classification
+    w = build_window(date(2026, 10, 20))
+    spike = classify_counts(
+        "FLL",
+        WindowCounts(
+            9, 4, 50, (("malfunction", 9),), (("malfunction", 4),), (("malfunction", 50),)
+        ),
+        w,
+    )
+    assert spike.classification == "spike" == lm.recompute_change(spike)
+
+
+def test_failed_fact_is_withheld_and_text_never_stored() -> None:
+    store = EvidenceStore.from_iterables([])
+    secret = (
+        "Most recent recall under FLL on openFDA: Z-9999-2099 (Phantom Corp, started 2099-01-01)."
+    )
+    from maudesignal.gate import RecallClaim
+
+    bad = lm.FactDraft(
+        "FLL:recalls_latest",
+        "recalls_latest",
+        secret,
+        "https://api.fda.gov/device/recall.json?search=product_code:FLL&limit=1",
+        {"recall_number": "Z-9999-2099", "firm": "Phantom Corp"},
+        claims=[RecallClaim(recall_number="Z-9999-2099", product_code="FLL")],
+    )
+    failing = lm.FactDraft(
+        "FLL:reports_total",
+        "reports_total",
+        "MAUDE holds 77777 reports.",
+        None,
+        {"total": 77777},
+        recheck=lambda: False,
+    )
+    out = lm.check_facts([bad, failing], store)
+    assert [f["status"] for f in out] == ["withheld", "withheld"]
+    blob = json.dumps(out)
+    for needle in ("Z-9999-2099", "Phantom", "77777", "2099", "MAUDE holds"):
+        assert needle not in blob
+    assert out[0]["text"] is None and out[0]["data"] is None
+    assert out[0]["reason"] == lm.WITHHELD_REASON
+
+
+def test_withheld_fact_inside_a_full_result_is_not_in_the_json() -> None:
+    def tampered(endpoint: str, search: str) -> list[Row]:
+        rows = default_responder(endpoint, search)
+        if endpoint == "510k" and "product_code:FLL" in search:
+            # a K-number that the stored 510(k) row contradicts (wrong product code)
+            return [{**rows[0], "k_number": "K424242", "product_code": "ZZZ"}]
+        return rows
+
+    res = lm.match_label(HOMEDICS_LABEL, searcher=FakeSearcher(tampered), check_fn=fake_check)
+    facts = {f["topic"]: f for f in res["device_type_views"]["FLL"]["facts"]}
+    assert facts["clearances_latest"]["status"] == "withheld"
+    assert "K424242" not in json.dumps(res["device_type_views"]["FLL"])
+
+
+def test_maude_check_failure_marks_reports_unavailable() -> None:
+    def broken(code: str) -> LiveCheck:
+        raise OpenFDAForbiddenError("403")
+
+    res = lm.match_label(HOMEDICS_LABEL, searcher=FakeSearcher(default_responder), check_fn=broken)
+    facts = {f["topic"]: f for f in res["device_type_views"]["FLL"]["facts"]}
+    assert facts["reports_total"]["status"] == "unavailable"
+    assert facts["reports_total"]["text"] is None
+
+
+# --- trace and timings ---------------------------------------------------------------------------
+
+
+def test_trace_has_steps_in_order_and_null_when_not_measured() -> None:
+    res = lm.match_label(
+        HOMEDICS_LABEL, searcher=FakeSearcher(default_responder), check_fn=fake_check
+    )
+    steps = res["trace"]
+    assert steps[0]["step"] == "SAM 3.1 crop" and steps[0]["model"] == "SAM 3.1"
+    assert steps[1]["step"] == "Muse Spark read" and steps[1]["model"] == "Muse Spark"
+    for s in steps[:2]:
+        assert s["elapsed_ms"] is None and s["started_utc"] is None
+        assert s["timing"] == "not recorded"
+    assert steps[-2]["step"] == "Gate check" and steps[-2]["model"] == "gate"
+    assert steps[-2]["elapsed_ms"] is not None and steps[-2]["elapsed_ms"] >= 0
+    assert steps[-1]["step"] == "Done"
+    searches = [s for s in steps if s["model"] == "openFDA"]
+    assert searches and all(s["step"].startswith("openFDA search") for s in searches)
+    singles = [s for s in searches if "MAUDE counts" not in s["step"]]
+    assert all(
+        s["count"] is not None and s["url"].startswith("https://api.fda.gov/") for s in singles
+    )
+    # the MAUDE step covers several queries: no single count / url is claimed for it
+    maude = next(s for s in searches if "MAUDE counts" in s["step"])
+    assert maude["count"] is None and maude["url"] is None
+    assert {s["model"] for s in steps} <= {"SAM 3.1", "Muse Spark", "openFDA", "gate"}
+
+
+def test_measured_read_steps_are_passed_through_untouched() -> None:
+    read = [
+        {
+            "step": "SAM 3.1 crop",
+            "model": "SAM 3.1",
+            "started_utc": "2026-10-30T10:00:00Z",
+            "elapsed_ms": 812.4,
+            "timing": "measured",
+        },
+        {
+            "step": "Muse Spark read",
+            "model": "Muse Spark",
+            "started_utc": "2026-10-30T10:00:01Z",
+            "elapsed_ms": 9100.0,
+            "timing": "measured",
+            "input_tokens": 100,
+            "output_tokens": 50,
+        },
+    ]
+    res = lm.match_label(HOMEDICS_LABEL, searcher=FakeSearcher(default_responder), read_steps=read)
+    assert res["trace"][0]["elapsed_ms"] == 812.4
+    assert res["trace"][1]["output_tokens"] == 50
+
+
+def test_all_query_urls_are_public_openfda_urls() -> None:
+    res = lm.match_label(
+        HOMEDICS_LABEL, searcher=FakeSearcher(default_responder), check_fn=fake_check
+    )
+    urls = [q["url"] for q in res["queries"]] + [m["query_url"] for m in res["matches"]]
+    assert urls and all(u.startswith("https://api.fda.gov/") for u in urls)
+    assert all("api_key" not in u for u in urls)
+
+
+def test_lot_and_serial_never_stored() -> None:
+    res = lm.match_label(
+        HOMEDICS_LABEL, searcher=FakeSearcher(default_responder), check_fn=fake_check
+    )
+    blob = json.dumps(res)
+    assert "LOT-SECRET" not in blob and "SN-SECRET" not in blob
+    assert "lot" not in res["label"]["fields"] and "serial" not in res["label"]["fields"]
+    assert res["label"]["session_fields_omitted"] is True
+
+
+def test_no_forbidden_words_in_generated_text() -> None:
+    res = lm.match_label(
+        HOMEDICS_LABEL, searcher=FakeSearcher(default_responder), check_fn=fake_check
+    )
+    blob = json.dumps(res).lower()
+    for word in (
+        "fda-approved",
+        "part 11",
+        "validated",
+        " safe",
+        "unsafe",
+        "compliant",
+        "overnight",
+        "worsening signals",
+        "citation-checked",
+        "complaint data",
+    ):
+        assert word not in blob, word
+
+
+# --- real searcher (mock transport) ----------------------------------------
+
+
+def test_openfda_searcher_sends_user_agent_and_hides_key() -> None:
+    seen: list[httpx.Request] = []
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        seen.append(req)
+        if "k_number" in str(req.url):
+            return httpx.Response(
+                200, json={"meta": {"results": {"total": 1}}, "results": [{"k_number": "K1"}]}
+            )
+        if "nothing" in str(req.url):
+            return httpx.Response(404, json={"error": {"code": "NOT_FOUND"}})
+        return httpx.Response(403, text="blocked body")
+
+    with lm.OpenFdaSearcher("SECRETKEY", transport=httpx.MockTransport(handler)) as s:
+        a = s.query("510k", "k_number:K123456", limit=1)
+        assert a.total == 1 and a.elapsed_ms is not None
+        assert a.url.startswith("https://api.fda.gov/device/510k.json?search=k_number:K123456")
+        assert "SECRETKEY" not in a.url
+        assert "api_key=SECRETKEY" in str(seen[0].url)
+        assert "MaudeSignal" in seen[0].headers["user-agent"]
+        assert s.query("510k", "device_name:nothing").results == ()
+        with pytest.raises(OpenFDAForbiddenError) as err:
+            s.query("510k", "device_name:blocked")
+        assert "blocked body" not in str(err.value)
+
+
+def test_plan_queries_put_maker_searches_first() -> None:
+    inp = lm.inputs_from_reading(HOMEDICS_LABEL)
+    plan = lm.plan_queries(inp)
+    assert plan[0].id == "510k-maker-model"
+    assert plan[0].search == 'applicant:"homedics"+AND+device_name:"TIE-240"'
+    ids = [q.id for q in plan]
+    assert ids.index("510k-maker-name") < ids.index("510k-name")
+    assert {q.endpoint for q in plan} == {"510k", "registrationlisting"}
+
+
+def test_read_label_timed_measures_sam_and_spark_separately() -> None:
+    from maudesignal.vision import sam
+    from tests.unit.test_vision import (
+        LABEL_BOX,
+        LABEL_PNG,
+        FakeClient,
+        label_payload,
+        sam_transport,
+    )
+
+    client = FakeClient([label_payload()])
+    with sam.SamClient("k", transport=sam_transport({"label": LABEL_BOX})) as s:
+        result, steps = lm.read_label_timed(LABEL_PNG.read_bytes(), client=client, sam=s)
+    sam_step, spark_step = steps
+    assert sam_step["step"] == "SAM 3.1 crop" and sam_step["timing"] == "measured"
+    assert isinstance(sam_step["elapsed_ms"], float) and sam_step["elapsed_ms"] >= 0
+    assert spark_step["step"] == "Muse Spark read" and spark_step["timing"] == "measured"
+    assert spark_step["elapsed_ms"] >= 0
+    assert spark_step["input_tokens"] == result.input_tokens
+    assert result.product_code is None, "openFDA is not called by the read step"
+
+
+def test_read_label_timed_without_sam_marks_it_not_recorded() -> None:
+    from tests.unit.test_vision import LABEL_PNG, FakeClient, label_payload
+
+    result, steps = lm.read_label_timed(
+        LABEL_PNG.read_bytes(), client=FakeClient([label_payload()]), sam=None
+    )
+    assert steps[0]["elapsed_ms"] is None and steps[0]["timing"] == "not recorded"
+    assert steps[1]["timing"] == "measured"
+    assert result.fields["device_name"].value
+
+
+# --- fix round: UDI lot/serial, report links, honest checks, partial maker, per-query trace ---
+
+
+def test_udi_lot_and_serial_never_stored() -> None:
+    reading = json.loads(json.dumps(HOMEDICS_LABEL))
+    reading["fields"]["udi"] = {
+        "value": "(01)00812345678901(17)270101(10)LOT77(21)SER99",
+        "legibility": "clear",
+    }
+    res = lm.match_label(reading, searcher=FakeSearcher(default_responder), check_fn=fake_check)
+    blob = json.dumps(res)
+    assert "LOT77" not in blob and "SER99" not in blob
+    assert res["label"]["fields"]["udi"]["value"] == "(01)00812345678901(17)270101"
+    assert lm.sanitize_udi("(10)A(21)B(240)C") == ""
+
+
+def test_reports_total_links_both_parts_and_states_the_sum() -> None:
+    res = lm.match_label(
+        HOMEDICS_LABEL, searcher=FakeSearcher(default_responder), check_fn=fake_check
+    )
+    fact = next(
+        f for f in res["device_type_views"]["FLL"]["facts"] if f["topic"] == "reports_total"
+    )
+    assert fact["data"]["total"] == 125
+    assert fact["data"]["before_this_week"] == 120 and fact["data"]["this_week"] == 5
+    assert "120" in fact["text"] and "plus 5" in fact["text"]
+    assert len(fact["query_urls"]) == 2 and fact["check"] == "direct"
+    assert fact["query_urls"][0] == fact["query_url"]
+
+
+def test_partial_maker_match_is_not_called_other_makers() -> None:
+    reading = {
+        "fields": {
+            "device_name": {"value": "Spot Vital Signs", "legibility": "clear"},
+            "manufacturer": {"value": "Welch Allyn Protocol, Inc.", "legibility": "clear"},
+        },
+        "overall_legibility": "clear",
+    }
+    row = {
+        "k_number": "K111111",
+        "applicant": "Welch Allyn, Inc.",
+        "device_name": "Spot Vital Signs Monitor",
+        "product_code": "MWI",
+        "decision_date": "2015-01-01",
+    }
+    s = FakeSearcher(lambda e, q: [row] if e == "510k" and "product_code:" not in q else [])
+    res = lm.match_label(reading, searcher=s)
+    assert res["manufacturer_match_found"] is False
+    assert "partly match" in res["note"] and "other makers" not in res["note"]
+    res2 = lm.match_label(HOMEDICS_LABEL, searcher=FakeSearcher(default_responder))
+    assert "other makers" in res2["note"]
+
+
+def test_live_check_trace_lists_each_query_with_url_and_count() -> None:
+    res = lm.match_label(
+        HOMEDICS_LABEL, searcher=FakeSearcher(default_responder), check_fn=fake_check
+    )
+    step = next(s for s in res["trace"] if "MAUDE counts" in s["step"])
+    assert "covers 5 openFDA queries" in step["note"]
+    assert [q["query"] for q in step["queries"]][:2] == ["per day", "this week"]
+    assert all(q["url"].startswith("https://api.fda.gov/") for q in step["queries"])
+    assert [q["count"] for q in step["queries"]] == [None, None, None, 120, None]
+    assert [q.get("groups_sum") for q in step["queries"]] == [None, 5, 8, None, 120]
+
+
+def test_label_reading_to_dict_drops_lot_and_serial_from_udi() -> None:
+    from maudesignal.vision.label import LabelField, LabelResult
+
+    udi = "(01)00812345678901(17)270101(10)LOT77(21)SER99"
+    r = LabelResult(
+        image_width=10,
+        image_height=10,
+        fields={"udi": LabelField(udi, "clear")},
+        overall_legibility="clear",
+    )
+    stored = json.dumps(r.to_dict())
+    assert "LOT77" not in stored and "SER99" not in stored
+    assert "(01)00812345678901(17)270101" in stored
+    assert "LOT77" in json.dumps(r.to_dict(include_session_fields=True))
+
+
+# --- A10b: label data fixes ----------------------------------------------------------------------
+
+ILLEGIBLE_READING: dict[str, Any] = {
+    "fields": {
+        "device_name": {
+            "value": "AORTIC VALVULAR AND CARDIAC IMPLANT",
+            "legibility": "partly_legible",
+        },
+        "manufacturer": {"value": "Invented Maker Inc", "legibility": "partly_legible"},
+        "model_number": {"value": "X-1234", "legibility": "partly_legible"},
+        "k_number": {"value": "K123456", "legibility": "partly_legible"},
+        "udi": {"value": "", "legibility": "not_present"},
+        "gtin": {"value": "", "legibility": "not_present"},
+    },
+    "overall_legibility": "illegible",
+}
+
+
+def test_illegible_reading_is_never_searched() -> None:
+    s = FakeSearcher(default_responder)
+    res = lm.match_label(ILLEGIBLE_READING, searcher=s, check_fn=fake_check)
+    assert s.calls == []
+    assert res["status"] == "no_match_found"
+    assert res["note"] == "Label not legible enough to read; nothing was searched."
+    assert res["matches"] == [] and res["queries"] == [] and res["device_type_views"] == {}
+    assert all(v is None for v in res["search_inputs"].values())
+    blob = json.dumps(res)
+    for guess in ("AORTIC", "Invented Maker", "X-1234", "K123456"):
+        assert guess not in blob
+    assert res["label"]["values_withheld"] is True
+    assert res["label"]["legibility_banner"] == "Illegible label: fields not shown"
+    assert all(f["value"] == "" for f in res["label"]["fields"].values())
+
+
+def test_partly_legible_gets_a_banner_and_clear_does_not() -> None:
+    assert lm.legibility_banner("clear") is None
+    assert lm.legibility_banner("illegible") == "Illegible label: fields not shown"
+    partly = lm.legibility_banner("partly_legible")
+    assert partly == "Partly legible label: check every field against the photo"
+    reading = {**HOMEDICS_LABEL, "overall_legibility": "partly_legible"}
+    res = lm.match_label(reading, searcher=FakeSearcher(default_responder))
+    assert res["label"]["legibility_banner"] == partly and res["label"]["values_withheld"] is False
+    res = lm.match_label(HOMEDICS_LABEL, searcher=FakeSearcher(default_responder))
+    assert res["label"]["legibility_banner"] is None
+
+
+def _query_log(res: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    return {q["id"]: q for q in res["queries"]}
+
+
+def test_maude_queries_logged_are_the_ones_the_total_is_built_from() -> None:
+    res = lm.match_label(
+        HOMEDICS_LABEL, searcher=FakeSearcher(default_responder), check_fn=fake_check
+    )
+    log = _query_log(res)
+    assert "maude-FLL" not in log  # the old per-day URL paired with the all-dates total
+    before, week = log["maude-before-FLL"], log["maude-week-FLL"]
+    assert before["count"] == 120 and before["url"].endswith("search=dFLL&limit=1")
+    assert week["count"] == 5 and "limit=1" in week["url"] and "count=" not in week["url"]
+    assert "2026-10-20" in week["label"] and "2026-10-20" in before["label"]
+    assert before["count"] + week["count"] == 125  # the all-dates total shown in the view
+    per_day = "search=aFLL&count=date_received"
+    assert not any(per_day in (q["url"] or "") for q in res["queries"])
+
+
+def test_maude_queries_without_recent_reports_have_their_own_counts() -> None:
+    base = "https://api.fda.gov/device/event.json?search="
+
+    def quiet(code: str) -> LiveCheck:
+        return LiveCheck(
+            product_code=code,
+            as_of=None,
+            window=None,
+            classification="stable",
+            triggers=(),
+            current_count=0,
+            current_severe_count=0,
+            current_severe_share=None,
+            baseline_count=0,
+            baseline_weekly_mean=0.0,
+            baseline_severe_count=0,
+            baseline_severe_share=None,
+            severe_share_delta_pp=None,
+            spike_ratio=None,
+            prior_report_count=7,
+            new_event_types=(),
+            current_event_type_counts=(),
+            queries=(
+                ("Reports, all dates", base + "all&limit=1"),
+                ("Reports, last two years", base + "2y&limit=1"),
+            ),
+        )
+
+    res = lm.match_label(HOMEDICS_LABEL, searcher=FakeSearcher(default_responder), check_fn=quiet)
+    log = _query_log(res)
+    assert log["maude-all-FLL"]["count"] == 7 and log["maude-all-FLL"]["url"].endswith(
+        "all&limit=1"
+    )
+    assert log["maude-2y-FLL"]["count"] == 0 and log["maude-2y-FLL"]["url"].endswith("2y&limit=1")
+    step = next(s for s in res["trace"] if "MAUDE counts" in s["step"])
+    assert [q["count"] for q in step["queries"]] == [7, 0]
+
+
+def test_done_step_timing_is_measured_and_says_it_is_a_sum() -> None:
+    res = lm.match_label(HOMEDICS_LABEL, searcher=FakeSearcher(default_responder))
+    done = res["trace"][-1]
+    assert done["step"] == "Done" and done["timing"] == "measured"
+    assert "sum of the measured steps" in done["note"]
+    parts = [s["elapsed_ms"] for s in res["trace"][:-1] if s["timing"] == "measured"]
+    assert done["elapsed_ms"] == round(sum(parts), 1)
+
+
+def test_done_step_invents_no_number_when_nothing_was_measured() -> None:
+    steps = [
+        {
+            "step": "SAM 3.1 crop",
+            "model": "SAM 3.1",
+            "started_utc": None,
+            "elapsed_ms": None,
+            "timing": "not recorded",
+        }
+    ]
+    reading = {"fields": {}, "overall_legibility": "clear"}
+    res = lm.match_label(reading, searcher=FakeSearcher(default_responder), read_steps=steps)
+    done = res["trace"][-1]
+    # the Gate check step is measured even with nothing to check, so the sum exists
+    assert done["timing"] == "measured"
+    assert done["elapsed_ms"] == round(
+        sum(s["elapsed_ms"] for s in res["trace"][:-1] if s["timing"] == "measured"), 1
+    )
+
+
+def test_this_week_change_text_carries_the_window_dates() -> None:
+    res = lm.match_label(
+        HOMEDICS_LABEL, searcher=FakeSearcher(default_responder), check_fn=fake_check
+    )
+    fact = next(
+        f for f in res["device_type_views"]["FLL"]["facts"] if f["topic"] == "this_week_change"
+    )
+    assert fact["text"].startswith("In the 7 days ending 2026-10-20: ")
+
+
+# --- reuse of stored readings --------------------------------------------------------------
+
+
+def _stored_match(started: str = "2026-10-30T01:34:02Z") -> dict[str, Any]:
+    read = [
+        {
+            "step": "SAM 3.1 crop",
+            "model": "SAM 3.1",
+            "started_utc": started,
+            "elapsed_ms": 732.9,
+            "timing": "measured",
+            "note": "prompts tried: label; crop used",
+            "cost_usd": 0.0025,
+        },
+        {
+            "step": "Muse Spark read",
+            "model": "Muse Spark",
+            "started_utc": started,
+            "elapsed_ms": 22405.2,
+            "timing": "measured",
+            "input_tokens": 1258,
+            "output_tokens": 2825,
+            "cost_usd": 0.013579,
+        },
+    ]
+    first = lm.match_label(
+        HOMEDICS_LABEL,
+        searcher=FakeSearcher(default_responder),
+        read_steps=read,
+        model_info={
+            "model": "muse-spark-1.3",
+            "skill_version": "1.0.0",
+            "input_tokens": 1258,
+            "output_tokens": 2825,
+            "cost_usd": {"spark": 0.013579, "sam": 0.0025, "total": 0.016079},
+        },
+    )
+    first["generated_utc"] = "2026-10-30T01:34:26Z"
+    return first
+
+
+def test_reuse_keeps_recorded_timings_and_costs_and_marks_the_date() -> None:
+    prev = _stored_match()
+    again = lm.match_label(
+        lm.reading_from_match(prev),
+        searcher=FakeSearcher(default_responder),
+        check_fn=fake_check,
+        read_steps=lm.recorded_read_steps(prev),
+        model_info=lm.recorded_model_info(prev),
+    )
+    sam, spark = again["trace"][0], again["trace"][1]
+    assert sam["elapsed_ms"] == 732.9 and spark["elapsed_ms"] == 22405.2
+    assert sam["timing"] == "recorded 2026-10-30" and spark["timing"] == "recorded 2026-10-30"
+    assert spark["cost_usd"] == 0.013579 and spark["input_tokens"] == 1258
+    assert again["reading"]["cost_usd"]["total"] == 0.016079
+    assert again["reading"]["recorded"] == "recorded 2026-10-30"
+    done = again["trace"][-1]
+    assert done["timing"] == "measured"
+    assert "recorded SAM / Spark timings are not included" in done["note"]
+    measured = [s["elapsed_ms"] for s in again["trace"][:-1] if s["timing"] == "measured"]
+    assert done["elapsed_ms"] == round(sum(measured), 1)
+    assert again["search_inputs"] == prev["search_inputs"]
+    assert "LOT-SECRET-1" not in json.dumps(again)
+    # reusing a reuse keeps the original date
+    assert lm.recorded_read_steps(again)[0]["timing"] == "recorded 2026-10-30"
+    assert lm.recorded_model_info(again)["recorded"] == "recorded 2026-10-30"
+
+
+def test_reuse_with_missing_steps_does_not_invent_timings() -> None:
+    steps = lm.recorded_read_steps({"trace": []})
+    assert [s["elapsed_ms"] for s in steps] == [None, None]
+    assert all(s["timing"] == "not recorded" for s in steps)
+
+
+class _CtxSearcher(FakeSearcher):
+    def __init__(self) -> None:
+        super().__init__(default_responder)
+
+    def __enter__(self) -> _CtxSearcher:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        return None
+
+
+def test_record_script_reuse_mode_needs_no_key_and_no_meta_call(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import importlib.util
+
+    script = Path(__file__).resolve().parents[2] / "scripts" / "record_label_matches.py"
+    spec = importlib.util.spec_from_file_location("record_label_matches", script)
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    labels = tmp_path / "labels"
+    labels.mkdir()
+    (labels / "label-homedics.jpg").write_bytes(b"not read in reuse mode")
+    (tmp_path / "label-match-homedics.json").write_text(json.dumps(_stored_match()))
+    out = tmp_path / "out"
+    monkeypatch.setenv("META_MODEL_API_KEY", "must-not-be-used")  # reuse mode ignores it
+
+    def boom(*a: Any, **k: Any) -> Any:
+        raise AssertionError("Meta must not be called in reuse mode")
+
+    monkeypatch.setattr(mod, "OpenFdaSearcher", lambda key: _CtxSearcher())
+    monkeypatch.setattr(mod, "default_check_fn", lambda key: fake_check)
+    monkeypatch.setattr(mod, "read_label_timed", boom)
+    monkeypatch.setattr(mod, "SamClient", boom)
+    argv = [
+        "x",
+        "--reuse-readings",
+        "--labels",
+        str(labels),
+        "--readings",
+        str(tmp_path),
+        "--out",
+        str(out),
+    ]
+    monkeypatch.setattr("sys.argv", argv)
+    assert mod.main() == 0
+    written = json.loads((out / "label-match-homedics.json").read_text())
+    assert written["trace"][0]["timing"] == "recorded 2026-10-30"
+    assert written["reading"]["recorded"] == "recorded 2026-10-30"
+    assert written["matches"] and written["status"] == "needs_person_to_confirm"
+    # a photo with no stored match is skipped, not invented
+    (labels / "label-other.jpg").write_bytes(b"x")
+    assert mod.main() == 0
+    assert not (out / "label-match-other.json").exists()
+
+
+def test_workflow_uses_reuse_mode_when_request_starts_with_reuse() -> None:
+    root = Path(__file__).resolve().parents[2]
+    wf = (root / ".github" / "workflows" / "vision-label-match.yml").read_text()
+    assert "--reuse-readings" in wf and "grep -q '^reuse'" in wf
+    reuse_step = wf.split("--reuse-readings")[0].rsplit("- name:", 1)[1]
+    assert "META_MODEL_API_KEY" not in reuse_step

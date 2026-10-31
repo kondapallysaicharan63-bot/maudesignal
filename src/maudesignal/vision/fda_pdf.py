@@ -29,6 +29,7 @@ from pathlib import Path
 
 import httpx
 
+from maudesignal.common.device_ids import normalize_k_number as normalize_k_number
 from maudesignal.common.exceptions import MaudeSignalError
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -53,18 +54,6 @@ class RasterizerUnavailableError(FdaPdfError):
 
 class PdfUnavailableError(FdaPdfError):
     """The PDF could not be obtained (blocked, missing or not a PDF); nothing was read."""
-
-
-def normalize_k_number(value: str) -> str:
-    """Return ``K`` + 6 digits, or raise.
-
-    Raises:
-        ValueError: Not a 510(k) number.
-    """
-    k = re.sub(r"[\s\-]", "", value or "").upper()
-    if not _K_RE.match(k):
-        raise ValueError(f"not a 510(k) number: {value!r}")
-    return k
 
 
 def is_k_number(value: str) -> bool:

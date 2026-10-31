@@ -1,0 +1,1001 @@
+{
+  "schema_version": "1.0",
+  "reports": {
+    "50426770": {
+      "product_code": "LLZ",
+      "date_received": "20260825",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that they have a case that needs to be corrected. The device was in clinical use at the time of the event, and no adverse event or patient harm was reported (PR (b)(4)).Philips has started an investigation of this complaint.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50426770"
+    },
+    "50426773": {
+      "product_code": "LLZ",
+      "date_received": "20260825",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that unable to finalize report on Echo Module and encounter an error 500. The device was in clinical use at the time of the event, and no adverse event or patient harm was reported (PR (b)(4)).Philips has started an investigation of this complaint.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50426773"
+    },
+    "50448213": {
+      "product_code": "LLZ",
+      "date_received": "20260826",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that an error 500 occurs for one study, preventing the doctor from processing the report. The device was in clinical use at the time of the event, and no adverse event or patient harm was reported (PR (b)(4)).Philips has started an investigation of this complaint.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50448213"
+    },
+    "50448215": {
+      "product_code": "LLZ",
+      "date_received": "20260826",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "Philips received a complaint on the IntelliSpace Cardiovascular (ISCV) indicating that customer reports intermittent HTTP 500 Internal Server Errors affecting all users and all study types. The device was in clinical use at the time of the event, and no adverse events or harm were reported in the complaint (PR (b)(4)).Philips has started an investigation of this complaint.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50448215"
+    },
+    "50448216": {
+      "product_code": "LLZ",
+      "date_received": "20260826",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that user experiencing connectivity error with the workstation. The device was in clinical use at the time of the event, and no adverse event or patient harm was reported (PR (b)(4)). Philips has started an investigation of this complaint.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50448216"
+    },
+    "50448217": {
+      "product_code": "LLZ",
+      "date_received": "20260826",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that failure to transfer the report to MedArchiver. The device was in clinical use at the time of the event, and no adverse event or patient harm was reported (PR (b)(4)).Philips has started an investigation of this complaint.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50448217"
+    },
+    "50451032": {
+      "product_code": "LLZ",
+      "date_received": "20260826",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50451032"
+    },
+    "50453041": {
+      "product_code": "LLZ",
+      "date_received": "20260826",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "Philips received a complaint on the IntelliSpace Cardiovascular (ISCV) indicating that customer facing issues with the Copy study feature. The device was in clinical use at the time of the event, and no adverse events or harm were reported in the complaint ((b)(4)).Philips has started an investigation of this complaint.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50453041"
+    },
+    "50502511": {
+      "product_code": "LLZ",
+      "date_received": "20260828",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50502511"
+    },
+    "50502514": {
+      "product_code": "LLZ",
+      "date_received": "20260828",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50502514"
+    },
+    "50502888": {
+      "product_code": "LLZ",
+      "date_received": "20260828",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50502888"
+    },
+    "50503657": {
+      "product_code": "LLZ",
+      "date_received": "20260828",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50503657"
+    },
+    "50503658": {
+      "product_code": "LLZ",
+      "date_received": "20260828",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50503658"
+    },
+    "50503662": {
+      "product_code": "LLZ",
+      "date_received": "20260828",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "Philips identified a software defect in ISCV (IntelliSpace Cardiovascular) system wherein the user was unable to finalize the report. The device was in clinical use at the time of event.Based on the new information that Philips became aware, this has been determined to be a reportable malfunction. Under specific circumstances, it could potentially lead to delayed diagnosis or misdiagnosis. Given t",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50503662"
+    },
+    "50504539": {
+      "product_code": "LLZ",
+      "date_received": "20260828",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50504539"
+    },
+    "50504540": {
+      "product_code": "LLZ",
+      "date_received": "20260828",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50504540"
+    },
+    "50504541": {
+      "product_code": "LLZ",
+      "date_received": "20260828",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50504541"
+    },
+    "50504545": {
+      "product_code": "LLZ",
+      "date_received": "20260828",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50504545"
+    },
+    "50513025": {
+      "product_code": "LLZ",
+      "date_received": "20260830",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50513025"
+    },
+    "50513122": {
+      "product_code": "LLZ",
+      "date_received": "20260830",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50513122"
+    },
+    "25702620": {
+      "product_code": "LLZ",
+      "date_received": "20260703",
+      "event_type": "Injury",
+      "report_source": "manufacturer",
+      "brand": "BRAINLAB ELEMENTS IMAGE FUSION, 5.0",
+      "excerpt": "A CRANIAL SURGERY FOR TWO DEPTH ELECTRODE PLACEMENTS IN THE BRAIN, TO THE LEFT AND RIGHT VENTRAL INTERMEDIATE NUCLEUS (VIM) INSIDE THE LEFT AND RIGHT THALAMUS, WITH NUCLEI SIZES OF CA. 17CCM (LEFT) AND 20CCM (RIGHT), TO TREAT ESSENTIAL TREMOR WITH DEEP BRAIN STIMULATION (DBS), HAS BEEN PLANNED WITH THE BRAINLAB ELEMENTS - IMAGE FUSION 5.0 AND TRAJECTORY PLANNING 2.6 FOR THE ELECTRODE POSITIONS, TO",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25702620"
+    },
+    "50083162": {
+      "product_code": "LLZ",
+      "date_received": "20260730",
+      "event_type": "Injury",
+      "report_source": "manufacturer",
+      "brand": "Vue PACS",
+      "excerpt": "The manufacturer received a complaint indicating that the user was unable to access site examinations. Consequently, the user was unable to interpret a scanner for a patient. The patient deteriorated and critically damaged his health status. The customer called an interpretation urgently with a 3rd party company.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50083162"
+    },
+    "19864749": {
+      "product_code": "QIH",
+      "date_received": "20240729",
+      "event_type": "Injury",
+      "report_source": "voluntary",
+      "brand": "BRAINLAB ELEMENTS 6.0;ELEMENTS IMAGE FUSION;ELEMENTS IMAGE FUSION ANGIO;ELEME",
+      "excerpt": "MALPOSITION OF THE LEAD RESULTING IN LEAD EDEMA WAS REPORTED. THE CAUSE IS BELIEVED TO BE DUE TO INCORRECT PLANNING OF THE SOFTWARE (BRAINLAB) OR THE FRAME SYSTEM (RM). THIS REPORT REFLECTS INFORMATION RECEIVED BY FDA IN THE FORM OF A NOTIFICATION PER 803.22 (B)(2).",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=19864749"
+    },
+    "21002079": {
+      "product_code": "QIH",
+      "date_received": "20241223",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "ORIGIN DATA MANAGEMENT (SOFTWARE COMPONENT)",
+      "excerpt": "A CUSTOMER AT A HOSPITAL IN AUSTRALIA DISCOVERED THE PATIENT PLAN FOR AN INDIVIDUAL WITH A SPECIFIC ID IN AN UNRELATED PATIENT RECORD, WITH A DIFFERENT ID. AN INVESTIGATION BY BRAINLAB UNCOVERED FIVE MORE RELATED CASES OF AUTOMATIC INCORRECT MERGES OF PATIENT RECORDS AT THE SAME SITE. ACCORDING TO THE HOSPITAL: THERE WAS NO NEGATIVE CLINICAL EFFECT ON PATIENT TREATMENT DUE TO THIS ISSUE FOR THE SI",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=21002079"
+    },
+    "21179265": {
+      "product_code": "QIH",
+      "date_received": "20250117",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "ORIGIN DATA MANAGEMENT (SOFTWARE COMPONENT)",
+      "excerpt": "A CUSTOMER USING BRAINLAB ORIGIN DATA MANAGEMENT 3.2 INFORMED BRAINLAB ABOUT AN ISSUE WHERE A PATIENT RECORD WAS FOUND TO BE COMBINED WITH ANOTHER UNRELATED PATIENT RECORD. ACCORDING TO THE HOSPITAL: - IT ONLY USES THE DEVICE TO PERFORM PRE-PLANNING FOR TREATMENTS. ONCE FUSIONS/CONTOURING ARE/IS COMPLETED, THE DATA IS EXPORTED TO A THIRD PARTY FOR TREATMENT PLANNING. - IN ALL THE KNOWN CASES, NO D",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=21179265"
+    },
+    "21949668": {
+      "product_code": "QIH",
+      "date_received": "20250502",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "ORIGIN DATA MANAGEMENT (VERSION 3.2, SOFTWARE COMPONENT)",
+      "excerpt": "AN INCORRECT MERGE OF PATIENT RECORDS FROM TWO DIFFERENT PATIENTS WAS DETECTED AT A HOSPITAL. ACCORDING TO THE HOSPITAL, THERE WAS NEITHER HARM NOR NEGATIVE EFFECT TO EITHER OF THE PATIENTS DUE TO THIS ISSUE.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=21949668"
+    },
+    "22131163": {
+      "product_code": "QIH",
+      "date_received": "20250602",
+      "event_type": "Malfunction",
+      "report_source": "voluntary",
+      "brand": "BRAIN LAB IMAGING SYSTEM",
+      "excerpt": "THE SITE HAVING ISSUES UPLOADING PATIENT EXAMS USING A DISK. THE IMAGES WOULD UPLOAD ONTO THE S8 BUT GIVE THE \"DATA NOT VALID FOR NAVIGATION\" ERROR. THE CS NOTED THE EXAMS WERE LIKELY NOT TAKEN FOLLOWING THE IMAGING PROTOCOL. THERE WERE TWO EXAM SETS ON THE DISK, BOTH USING THE BRAIN LAB IMAGING SYSTEM AND HAVING 384 SLICES, BUT WHEN UPLOADED ONTO THE STEALTH, THE SYSTEM WOULD REPORT AN ERROR STAT",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=22131163"
+    },
+    "22340256": {
+      "product_code": "QIH",
+      "date_received": "20250625",
+      "event_type": "Malfunction",
+      "report_source": "voluntary",
+      "brand": "SONIO DETECT",
+      "excerpt": "SONIO DETECT SOFTWARE AI ALGORITHM IS FAULTY AND WRONGLY LABELS FETAL STRUCTURES AND ASSOCIATES THEM WITH THE WRONG BODY PARTS. THE SYSTEM WILL FREQUENTLY DISPLAY AS VISUALIZED EVEN THOUGH IT HASN'T LEAVING PROVIDERS TO GIVE FALSE NORMALCY AND OPENING THEM UP TO LIABILITIES.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=22340256"
+    },
+    "22794883": {
+      "product_code": "QIH",
+      "date_received": "20250813",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "ORIGIN DATA MANAGEMENT (VERSION 3.2, SOFTWARE COMPONENT)",
+      "excerpt": "A CUSTOMER REPORTED THAT A PATIENT RECORD DID NOT APPEAR IN THE BRAINLAB PATIENT SELECTION APPLICATION WHEN THE PATIENT'S NAME WAS SEARCHED. THE CUSTOMER FOUND THE MISSING PATIENT DATA MERGED INTO A DIFFERENT PATIENT RECORD AND WAS ABLE TO RESTORE THE PATIENT RECORDS TO THEIR ORIGINAL STATES. NO PATIENT WAS AFFECTED DUE TO THIS ISSUE.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=22794883"
+    },
+    "24453186": {
+      "product_code": "QIH",
+      "date_received": "20260226",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "ORIGIN DATA MANAGEMENT (VERSION 3.2, SOFTWARE COMPONENT)",
+      "excerpt": "WHILE SEARCHING FOR A MISSING PATIENT RECORD IN THE BRAINLAB PATIENT SELECTION 6.1 APPLICATION, A CUSTOMER DISCOVERED THAT THE MISSING PATIENT RECORD HAD BEEN MERGED WITH AN UNRELATED PATIENT RECORD. THE CUSTOMER RESTORED THE MERGED PATIENT RECORD TO ITS ORIGINAL CONSTITUENT PATIENT RECORDS ON THE SAME DAY. AFTER THIS, THE MISSING PATIENT RECORD BECAME AVAILABLE IN THE PATIENT LIST. ACCORDING TO T",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=24453186"
+    },
+    "24827620": {
+      "product_code": "QIH",
+      "date_received": "20260409",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "ORIGIN DATA MANAGEMENT (VERSION 3.2, SOFTWARE COMPONENT)",
+      "excerpt": "A PATIENT RECORD REQUIRED FOR STEREOTACTIC PLANNING COULD NOT BE FOUND DURING A FRAME-BASED STEREOTACTIC BIOPSY FOR A SUSPECTED BRAIN TUMOR. AFTER BRIEF TROUBLESHOOTING, IT BECAME CLEAR THAT THE PATIENT RECORD WAS UNINTENTIONALLY MERGED WITH ANOTHER PATIENT RECORD. THE SURGEON RESOLVED THE MERGE WITH SUPPORT FROM BRAINLAB. FURTHER INVESTIGATION BY BRAINLAB UNCOVERED FOUR MORE CASES OF INCORRECT PA",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=24827620"
+    },
+    "25692853": {
+      "product_code": "QIH",
+      "date_received": "20260702",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "SYNAPSE PACS",
+      "excerpt": "ON 06/04/2026, FUJIFILM HEALTHCARE AMERICAS CORPORATION BECAME AWARE OF A BUG IN SYNAPSE PACS V7.4.310 THAT COULD POTENTIALLY LEAD TO A MISDIAGNOSIS IN THE CARDIOLOGY BASED STUDIES. IT WAS FOUND DURING REGRESSION TESTING OF THE PRODUCT THAT THE ANNOTATION TAKEN AND SAVED IN AN EARLIER VERSION OF THE PRODUCT CAN SHOW THE INCORRECT VALUE IN BOTH ZERO VIEWER (ZV) AND VX WHEN REOPENING THE STUDY IN TH",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25692853"
+    },
+    "21593974": {
+      "product_code": "MYN",
+      "date_received": "20250313",
+      "event_type": "Injury",
+      "report_source": "voluntary",
+      "brand": "SECOND OPINION",
+      "excerpt": "DEAR FDA MEDWATCH, I AM REPORTING A SERIOUS ISSUE REGARDING PLANET DDS'S INTEGRATION OF PEARL AI ASSIST IN DENTICON PMS AND XVWEB IMAGING SYSTEM, WHICH LED TO AN INACCURATE TREATMENT RECOMMENDATION AND INABILITY TO CORRECT AI FINDINGS. WHAT HAPPENED I RECENTLY VISITED A DENTAL CLINIC THAT USES DENTICON PMS WITH PEARL AI ASSIST. BEFORE REVIEWING MY DENTAL IMAGES, THE DENTIST RECOMMENDED AN ENDODONT",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=21593974"
+    },
+    "21395648": {
+      "product_code": "MYN",
+      "date_received": "20250218",
+      "event_type": "Malfunction",
+      "report_source": "voluntary",
+      "brand": "OVERJET CARIES ASSIST",
+      "excerpt": "THE 510(K) SUBSTANTIAL EQUIVALENCE REPORT FOR OVERJET CARIES ASSIST (K212519) SHOWS SENSITIVITY AND SPECIFICITY OF 72.0% AND 98.1%, RESPECTIVELY, FOR CARIES DETECTION. HOWEVER, CALCULATIONS BASED ON THE TABLE IN SECTION 10 REVEAL A POSITIVE PREDICTIVE VALUE OF ONLY 57.2%. THIS MEANS THAT 42.8% OF OBSERVED CARIES BY THE OVERJET PRODUCT WERE NOT ACTUALLY CARIES ACCORDING TO GROUND TRUTH. SUCH A HIGH",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=21395648"
+    },
+    "19116683": {
+      "product_code": "MYN",
+      "date_received": "20240415",
+      "event_type": "Malfunction",
+      "report_source": "voluntary",
+      "brand": "PEARL SECOND OPINION",
+      "excerpt": "HELLO, I AM WRITING TO EXPRESS SIGNIFICANT CONCERNS REGARDING THE COMPLIANCE AND MARKETING PRACTICES OF PEARL, PARTICULARLY RELATED TO THEIR DENTAL DIAGNOSTIC TOOLS. OUR EXPECTATIONS WERE THAT PEARL'S FDA CLEARED MEDICAL DEVICE ((B)(6)) WOULD ADHERE TO THE HIGHEST STANDARDS OF REGULATORY COMPLIANCE, ESPECIALLY GIVEN THE CRITICAL NATURE OF DENTAL HEALTH DIAGNOSTICS. HOWEVER, IT APPEARS THERE ARE CR",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=19116683"
+    },
+    "7183668": {
+      "product_code": "MYN",
+      "date_received": "20180111",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "POWERLOOK AMP WITH SECONDLOOK DIGITAL GE",
+      "excerpt": "A CUSTOMER SITE INDICATED THAT NO CAD MARKINGS WERE REPORTED FROM THE CAD AFTER PROCESSING PATIENT IMAGES. THE OEM MAMMOGRAPHY FIELD SERVICE ENGINEER (FSE) DID NOT APPLY THE CAD LICENSE AFTER INSTALLING THE CAD SOFTWARE. THIS RESULTED IN THE SITE NOT HAVING CAD MARKS ON CASES FOR SOME TIME. NO PATIENT INJURY OR ADVERSE EVENT WAS ASSOCIATED WITH THIS INCIDENT.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=7183668"
+    },
+    "716559": {
+      "product_code": "MYN",
+      "date_received": "20060518",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "RAPIDSCREEN RS-2000D AND RS-DIGITAL",
+      "excerpt": "ON APRIL 24, 2006, A CONTROL FILE ERROR WITH RESPECT TO THE RAPIDSCREEN RS-2000D AND RS-DIGITAL DEVICE WAS DISCOVERED DURING A CLINICAL STUDY BEING CONDUCTED FOR A PMA SUPPLEMENTAL SUBMISSION. THE CONTROL FILE ERROR RESULTS IN SENSITIVITY AND SPECIFICITY THAT DIFFER FROM THE PMA-APPROVED PRODUCT SPECIFICATIONS FOR THE DEVICE. SPECIFICALLY, THE PRODUCT THAT WAS PLACED INTO COMMERCIAL DISTRIBUTION H",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=716559"
+    },
+    "11195257": {
+      "product_code": "POK",
+      "date_received": "20210115",
+      "event_type": "Malfunction",
+      "report_source": "voluntary",
+      "brand": "QUANTX",
+      "excerpt": "QUANTX SOFTWARE MAY ENTER INTO AN ERROR STATE IN WHICH MEDICAL IMAGES DISPLAYED TO THE USER ARE FROZEN IN PLACE. QUANTX SOFTWARE VERSION (B)(4) ENTER INTO AN ERROR STATE IN WHICH ONE VIEWPORT IS FROZEN IN PLACE. WHEN THIS ERROR OCCURS, QUANTX STOPS RESPONDING TO USER INPUTS TO MODIFY THE DISPLAY OF THE FROZEN IMAGE. THIS ERROR STATE IS REACHED THROUGH A SPECIFIC SEQUENCE OF KEYSTROKES AND MOUSE AC",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=11195257"
+    },
+    "50050396": {
+      "product_code": "LLZ",
+      "date_received": "20260728",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50050396"
+    },
+    "50050501": {
+      "product_code": "LLZ",
+      "date_received": "20260728",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50050501"
+    },
+    "50050937": {
+      "product_code": "LLZ",
+      "date_received": "20260728",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "Philips received a complaint on the IntelliSpace Cardiovascular (ISCV) indicating that the ISCV application was unable to open studies due to a report error. The device was in clinical use at the time of the event, and no adverse events or harm were reported in the complaint: (b)(4).Philips has started an investigation of this complaint.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50050937"
+    },
+    "50059721": {
+      "product_code": "LLZ",
+      "date_received": "20260728",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50059721"
+    },
+    "50059725": {
+      "product_code": "LLZ",
+      "date_received": "20260728",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50059725"
+    },
+    "50067164": {
+      "product_code": "LLZ",
+      "date_received": "20260729",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50067164"
+    },
+    "50067165": {
+      "product_code": "LLZ",
+      "date_received": "20260729",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "Philips received a complaint on the IntelliSpace Cardiovascular (ISCV) indicating that the customer was experiencing problems with full client application, specifically that it regularly became unresponsive in the Web-Only mode. The device in clinical use at the time of the event was unknown, and no adverse events or harm were reported in the complaint (b)(4).The complaint contained no allegation ",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50067165"
+    },
+    "50067166": {
+      "product_code": "LLZ",
+      "date_received": "20260729",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50067166"
+    },
+    "50067167": {
+      "product_code": "LLZ",
+      "date_received": "20260729",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50067167"
+    },
+    "50067648": {
+      "product_code": "LLZ",
+      "date_received": "20260729",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "Philips identified a potential security concern internally in the IntelliSpace Cardiovascular (ISCV) product that related to limiting the number of concurrent sessions for a single user which is currently not implementing according to security best practices. This concern was identified internally and was not in clinical use at the time of the event.Philips investigation is on-going.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50067648"
+    },
+    "50067796": {
+      "product_code": "LLZ",
+      "date_received": "20260729",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "Philips received a complaint on the IntelliSpace Cardiovascular (ISCV) indicating that the customer's IT organization received the results of a vulnerability scan, including a list of identified vulnerabilities on the affected servers that require assessment and possible remediation. The customer has requested support and recommendations regarding the prioritization of mitigation measures, the pot",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50067796"
+    },
+    "50079370": {
+      "product_code": "LLZ",
+      "date_received": "20260730",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50079370"
+    },
+    "50080163": {
+      "product_code": "LLZ",
+      "date_received": "20260730",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50080163"
+    },
+    "50080535": {
+      "product_code": "LLZ",
+      "date_received": "20260730",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "Philips received a complaint on the IntelliSpace Cardiovascular (ISCV) indicating that the user was unable to connect to the server, preventing successful login to the application. The device was in clinical use at the time of the event, and no adverse events or harm were reported in the complaint (PR (b)(4)).The complaint contained no allegation of serious injury or death. Based on the results of",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50080535"
+    },
+    "50080536": {
+      "product_code": "LLZ",
+      "date_received": "20260730",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50080536"
+    },
+    "50083723": {
+      "product_code": "LLZ",
+      "date_received": "20260730",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50083723"
+    },
+    "50096283": {
+      "product_code": "LLZ",
+      "date_received": "20260731",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50096283"
+    },
+    "50100339": {
+      "product_code": "LLZ",
+      "date_received": "20260731",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50100339"
+    },
+    "50112689": {
+      "product_code": "LLZ",
+      "date_received": "20260803",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50112689"
+    },
+    "50112690": {
+      "product_code": "LLZ",
+      "date_received": "20260803",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that whenever previous findings are carried forward, the indication from the prior order is also carried forward and replaces the indication associated with the current order, resulting in inaccurate display of the current order information.Philips has started an investigation of this complaint.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50112690"
+    },
+    "50112691": {
+      "product_code": "LLZ",
+      "date_received": "20260803",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50112691"
+    },
+    "50126279": {
+      "product_code": "LLZ",
+      "date_received": "20260804",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50126279"
+    },
+    "50137132": {
+      "product_code": "LLZ",
+      "date_received": "20260805",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50137132"
+    },
+    "50137135": {
+      "product_code": "LLZ",
+      "date_received": "20260805",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "Philips received a complaint on the IntelliSpace Cardiovascular (ISCV) indicating that unable to burn Compact Disc (CD). The device was in clinical use at the time of the event, and no adverse events or harm were reported in the complaint (PR (b)(4).Philips has started an investigation of this complaint.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50137135"
+    },
+    "50137273": {
+      "product_code": "LLZ",
+      "date_received": "20260805",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "Philips received a complaint on the IntelliSpace Cardiovascular (ISCV) indicating that an error 500 occurred when the user right-clicked on \"/copystudyservice/send/servers\". The device was in clinical use at the time of the event, and no adverse events or harm were reported in the complaint (PR (b)(4)).Philips has started an investigation of this complaint.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50137273"
+    },
+    "50170848": {
+      "product_code": "LLZ",
+      "date_received": "20260807",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50170848"
+    },
+    "50171166": {
+      "product_code": "LLZ",
+      "date_received": "20260807",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50171166"
+    },
+    "50251919": {
+      "product_code": "LLZ",
+      "date_received": "20260814",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50251919"
+    },
+    "50340316": {
+      "product_code": "LLZ",
+      "date_received": "20260820",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "Philips received a complaint on the IntelliSpace Cardiovascular (ISCV) indicating that the user experienced Error 500 message when the user opened the study. The device was in clinical use at the time of the event, and no adverse events or harm were reported in the complaint (PR (b)(4)).Philips has started an investigation of this complaint.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50340316"
+    },
+    "50340565": {
+      "product_code": "LLZ",
+      "date_received": "20260820",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that Studies with a TTL can no longer be archived. The device was in clinical use at the time of the event, and no adverse event or patient harm was reported ((b)(4)). Philips has started an investigation of this complaint.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50340565"
+    },
+    "50340568": {
+      "product_code": "LLZ",
+      "date_received": "20260820",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that unable to import examination from the modalities into the ISCV system. The device was in clinical use at the time of the event, and no adverse event or patient harm was reported (PR (b)(4)).Philips has started an investigation of this complaint.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50340568"
+    },
+    "50340569": {
+      "product_code": "LLZ",
+      "date_received": "20260820",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "Philips received a complaint on the IntelliSpace Cardiovascular (ISCV) indicating that case has been created with incorrect patient data and assistance needed to correctly assign the case to the patient. The device was in clinical use at the time of the event, and no adverse events or harm were reported in the complaint ((b)(4)).Philips has started an investigation of this complaint.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50340569"
+    },
+    "50341198": {
+      "product_code": "LLZ",
+      "date_received": "20260820",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "Philips received a complaint on the IntelliSpace Cardiovascular (ISCV) indicating that an error 500 has occurred when download function in the thin Client is not working. The device was in clinical use at the time of the event, and no adverse events or harm were reported in the complaint (PR (b)(4)).Philips has started an investigation of this complaint.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50341198"
+    },
+    "50346085": {
+      "product_code": "LLZ",
+      "date_received": "20260820",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "IntelliSpace Cardiovascular",
+      "excerpt": "Philips identified a software defect in ISCV (Intelli Space Cardiovascular) system wherein Dr (b)(6) experienced another reported issue this afternoon. The device was in clinical use at the time of event. Based on the new information that Philips became aware, this has been determined to be a reportable malfunction. Under specific circumstances, it could potentially lead to delayed diagnosis. Give",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50346085"
+    },
+    "25675105": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLISPACE CARDIOVASCULAR) SYSTEM WHEREIN ISCV REPORT MANAGER NOT ALLOWING SAVE. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO DELAYED DIAGNOSIS. GIVEN THE DEFECT¿S NATURE A",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25675105"
+    },
+    "25675201": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHEREIN THE QIDO WADO INTEGRATION WITH EUNITY CONTAINS BLANK SPACES AFTER MRN. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO DELAYED DIAGN",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25675201"
+    },
+    "25675205": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHEREIN THE QIDO WADO IS MODIFYING TRANSFER SYNTAX WHEN IMAGES ARE PULLED BY THIRD PARTY CAUSING UNREADABLE IMAGES. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT CO",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25675205"
+    },
+    "25675206": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHEREIN FETCHING OF MIGRATED STUDIES FAILING. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO DELAYED DIAGNOSIS. GIVEN THE DEFECT¿S NATURE A",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25675206"
+    },
+    "25675207": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHEREIN ISSUE: GO NO WEB THUMBNAILS. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO DELAYED DIAGNOSIS. GIVEN THE DEFECT¿S NATURE AND ITS PO",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25675207"
+    },
+    "25675209": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLISPACE CARDIOVASCULAR) SYSTEM WHEREIN A STUDY COULDN¿T BE SAVED FROM ECHO MODULE. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO DELAYED DIAGNOSIS. GIVEN THE DEFECT¿S NAT",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25675209"
+    },
+    "25675210": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT INTERNALLY IN ISCV (INTELLISPACE CARDIOVASCULAR) WHEREIN THERE IS NOT A WAY TO HIGHLIGHT STAT PATIENTS. THE ISSUE WAS IDENTIFIED INTERNALLY AND WAS NOT IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO D",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25675210"
+    },
+    "25675211": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLISPACE CARDIOVASCULAR) SYSTEM WHEREIN SERVER STABILITY REPEATED INTERNAL 500 ERRORS ON WEB SERVER. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO DELAYED DIAGNOSIS. GIVEN",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25675211"
+    },
+    "25676049": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHEREIN THE DETERMINING CONVERTER SERVICE JOB RESTART NEED - WHY / HOW TO PREVENT. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO DELAYED D",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25676049"
+    },
+    "25676051": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHEREIN THE DICOM IMPORT ESTABLISHES MULTI-THREAD, STORES IMAGES IN TWO SEPARATE LOCATIONS. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO ",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25676051"
+    },
+    "25676052": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHERE IN THE SINGLE ISCV STUDY IS APPEARING IN TWO DIFFERENT REPOSITORY LOCATIONS. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO DELAYED D",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25676052"
+    },
+    "25676056": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHEREIN THE USERS REPORTING THAT SINCE THE UPGRADE TO ISCV 8.0 THE USERS HAVE ENCOUNTERED PERIODS OF TIME. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTEN",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25676056"
+    },
+    "25676163": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHEREIN NOT ABLE TO SEND STUDY IN WEB SERVER (IN THIN CLIENT), INTERNAL SERVER ERROR 500. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO DE",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25676163"
+    },
+    "25676164": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHEREIN THE TEST SYSTEM UPGRADED TO 8.0 BUT STILL FINDING COPY WEB IS NOT FUNCTIONING AS THICK CLIENT COPY STUDY. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COUL",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25676164"
+    },
+    "25676165": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLISPACE CARDIOVASCULAR) SYSTEM WHEREIN THE DATABASE DEADLOCKS CAUSING MAJOR ISSUES. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO DELAYED DIAGNOSIS. GIVEN THE DEFECT¿S NA",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25676165"
+    },
+    "25676169": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHEREIN THE COPY STUDY (WEB) IS NOT WORKING, IT IS SHOWING UNAUTHORIZED (401), NOT AUTHORIZED TO COMPLETE. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTEN",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25676169"
+    },
+    "25677353": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHEREIN CANNOT DOWNLOAD STUDY, INTERNAL ERROR 500. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO DELAYED DIAGNOSIS. GIVEN THE DEFECT¿S NAT",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25677353"
+    },
+    "25678841": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT INTERNALLY IN THE INTELLISPACE CARDIOVASCULAR (ISCV) WHEREBY THE ISCV SYSTEM DID NOT RELEASE THE LICENSE AFTER THE 'END SESSION' OPTION IS USED. THE ISSUE WAS IDENTIFIED INTERNALLY AND WAS NOT IN CLINICAL USE AT THE TIME OF EVENT. PHILIPS INVESTIGATION IS ON-GOING.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25678841"
+    },
+    "25688996": {
+      "product_code": "LLZ",
+      "date_received": "20260702",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS RECEIVED A COMPLAINT ON THE INTELLISPACE CARDIOVASCULAR (ISCV) INDICATING THAT ECHO PROCEDURES WERE FINALIZED IN ISCV; HOWEVER, HL7 MESSAGES WERE NOT TRANSMITTED TO EPIC, AND THE CORRESPONDING IMAGES WERE NOT AVAILABLE. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF THE EVENT, AND NO ADVERSE EVENTS OR HARM WERE REPORTED IN THE COMPLAINT (B)(4). PHILIPS HAS STARTED AN INVESTIGATION OF THIS C",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25688996"
+    },
+    "25689005": {
+      "product_code": "LLZ",
+      "date_received": "20260702",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS RECEIVED A COMPLAINT ON THE INTELLISPACE CARDIOVASCULAR (ISCV) INDICATING THAT THE USER WAS UNABLE TO VIEW EXAMINATIONS. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF THE EVENT, AND NO ADVERSE EVENTS OR HARM WERE REPORTED IN THE COMPLAINT (B)(4). PHILIPS HAS STARTED AN INVESTIGATION OF THIS COMPLAINT.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25689005"
+    }
+  },
+  "other": {
+    "Z-0012-2022": {
+      "kind": "recall",
+      "label": "Centricity Universal Viewer 7.0, Model 5829628-0XX.  Radiological image processing system",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=189064"
+    },
+    "Z-0023-2016": {
+      "kind": "recall",
+      "label": "Centricity PACS IW by GE Healthcare Dynamic Imaging Solutions is a device that receives medical images (including mammograms) and data from various imaging sources. Images and data can be stored, communicated, processed and displayed within the system or across computer networks at distributed locations.",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=140304"
+    },
+    "Z-0030-2026": {
+      "kind": "recall",
+      "label": "Change Healthcare Radiology Solutions software version 14.2.2",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=215906"
+    },
+    "Z-0032-2012": {
+      "kind": "recall",
+      "label": "MDC PACS -  release R2.3 SP1 .\nPhillips Healthcare\nAndover, Massachusetts\n\nA software application that is used for receiving, managing, archiving, distributing and recording medical images onto portable digital media (including but not limited to Compact Disk and DVD).",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=103870"
+    },
+    "Z-0033-2007": {
+      "kind": "recall",
+      "label": "IMPAX 5.2 Systems with CAD Capability (Computer Assisted Diagnosis)",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=48186"
+    },
+    "Z-0034-2014": {
+      "kind": "recall",
+      "label": "Centricity Cardio Imaging 5.0 is a software only Picture Archiving and Communication System (PACS). \n\n\nProduct Usage:  It will be sold as a software only device to operate on general purpose computing hardware. Centricity Cardio Imaging receives medical images and other information from various data sources. Information can be stored, communicated, processed and displayed within the system or across computer networks at distributed locations. Centricity Cardio Imaging is intended to assist trained professionals in the viewing, analysis and diagnostic interpretation of images and other information for the diagnosis and treatment of cardiac and vascular disease. These trained professionals include but are not limited to physicians, cardiologists, radiologists, nurses, medical technicians and assistants. Centricity Cardio Imaging is not intended for use in the patient vicinity.",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=117071"
+    },
+    "Z-0035-2014": {
+      "kind": "recall",
+      "label": "IMPAX 5.2 DB Server (running Oracle 10.1.0.4.0), medical imaging Picture Archiving and Communication System (PACS).",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=122368"
+    },
+    "Z-0039-2025": {
+      "kind": "recall",
+      "label": "GE Healthcare Centricity Universal Viewer Zero Footprint Client, Model/Catalog/Code Numbers:  \na) 2089507-120; \nb) 2089507-129; \nc) 2089507-131; \nd) 2089507-135; \ne) 2089507-136; \nf) 2089507-140; \ng) 2089507-144; \nh) 2089507-145; \ni) 2089507-149; \nj) 2089507-153; \nk) 2089507-154; \nl) 2089507-155; \nm) 2089507-156; \nn) 2089507-157; \no) K2037DAED; \np) K2037DBED; \nq) K2037DED; \nr) K2037DJED; \ns) K2037DNED; \nt) K2042TTED; \nu) K2049DC; \nv) K2049DD; \nw) K2049DF; \nx) P2037DAED; \ny) P2037DBED; \nz) P2037DED; \naa) To be provided",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=209957"
+    },
+    "Z-0048-2013": {
+      "kind": "recall",
+      "label": "Siemens syngo.plaza radiological image processing system.",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=112847"
+    },
+    "Z-0055-2025": {
+      "kind": "recall",
+      "label": "Enterprise Imaging XERO Viewer- software application used for reference and diagnostic viewing of multispecialty medical imaging and non-imaging data .\n\nEnterprise Imaging XERO Viewer 8.0.0, 8.0.1, 8.1, 8.1.1, 8.1.2, 8.1.3,8.1.4, 8.2.0.000, 8.2.1.000, 8.2.2.000, 8.3.0.000, 8.3.1.000, 8.3.2.000, 8.4.0.000, 8.4.1.000\n(including all SU s and HF s)",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=210151"
+    },
+    "Z-0068-2015": {
+      "kind": "recall",
+      "label": "eFilm Workstation 4.0 and 4.0.1.  eFilm Workstation is one of the components of a PACS (Picture Archiving and Communications System).  \n\nProduct Usage:\neFilm Workstation is a software application that is used for viewing medical images. eFilm Workstation receives digital images and data from various sources (including but not limited to CT,MR, US, RF units, computed and direct radiographic devices, secondary capture devices, scanners, imaging gateways or imaging sources). Images are stored, communicated, processed and displayed on the local disc of a workstation and/or across computer networks at distributed locations. Tasks that users may perform when viewing images include, but are not limited to: adjustment of window width and level; image stacking; annotation and measurement of regions of interest; and inversion, rotation, and flips of images. In addition, eFilm Workstation can be integrated with an institution s existing HIS or RIS for a fully integrated electronic patient record.",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=130185"
+    },
+    "Z-0068-2026": {
+      "kind": "recall",
+      "label": "AW Server 2.0, AW Server 3.0, AW Server 3.1, AW Server 3.2",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=216255"
+    },
+    "Z-0069-2007": {
+      "kind": "recall",
+      "label": "Sienet Cosmos V15C, picture archiving and communications system.  Model number 10018969",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=48854"
+    },
+    "Z-0070-2007": {
+      "kind": "recall",
+      "label": "syngo Imaging, picture archiving and communications system. Model number 7502029",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=48860"
+    },
+    "Z-0071-2007": {
+      "kind": "recall",
+      "label": "Sienet Sky, picture archiving and communications system. Model number 8463163",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=48861"
+    },
+    "Z-0072-2007": {
+      "kind": "recall",
+      "label": "Sienet Magic View 300, picture archiving and communications system. Model numbers 10014063 and 10014064",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=48862"
+    },
+    "Z-0072-2021": {
+      "kind": "recall",
+      "label": "Change Healthcare Radiology Solutions 14.0",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=183636"
+    },
+    "Z-0073-2017": {
+      "kind": "recall",
+      "label": "Fujifilm Synapse PACS, Software versions: 4.0.xxx,  4.1.xxx, version 4.2.xxx, version 4.3.xxx\n\nMedical imaging and information management system, SYNAPSE allows the archiving and distribution of image information from all modalities",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=149629"
+    },
+    "Z-0092-06": {
+      "kind": "recall",
+      "label": "Sienet Cosmos. Radiological Image Processing. Model number 10018971",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=42537"
+    },
+    "Z-0093-04": {
+      "kind": "recall",
+      "label": "Philips Odyssey VP Workstations, used with Axis, Irix, or Meridian Gamma Camera Systems.",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=29863"
+    },
+    "Z-0186-2027": {
+      "kind": "recall",
+      "label": "IntelePACS, InteleConnect Portal/Tech Portal Versions PACS-5-1-1-R102, PACS-5-2-1-R93, PACS-5-3-1-R83 through R128, PACS-5-4-1-R66 through R101, PACS-5-5-1-R50 through R89, PACS-5-6-1-R41 through R81, PACS-5-7-1-R21 through R61, PACS-5-8-1-R2 through R42, PACS-5-9-1-R8 through R19; System, Image Processing, Radiological",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222843"
+    },
+    "Z-3171-2026": {
+      "kind": "recall",
+      "label": "Core Services Hub V8, a set of backend services including Cross Enterprise (XE) and Workflow Core (WFC) services that enables enterprise imaging workflows, All versions",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222123"
+    },
+    "Z-3170-2026": {
+      "kind": "recall",
+      "label": "Workflow Core Services V8, intended to provide set of services for storage and retrieval of patient data, exams and performs system Administration, common configuration management for consuming applications, All versions",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222122"
+    },
+    "K261677": {
+      "kind": "510k",
+      "label": "Artificial Intelligence Renal Assessment (AIRA) Version 1",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfpmn/pmn.cfm?ID=K261677"
+    },
+    "PMID 35943350": {
+      "kind": "pubmed",
+      "label": "False-negative and false-positive outcomes of computer-aided detection on brain metastasis: Secondary analysis of a multicenter, multireader study.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/35943350/"
+    },
+    "PMID 32531273": {
+      "kind": "pubmed",
+      "label": "Artificial intelligence for breast cancer detection in mammography and digital breast tomosynthesis: State of the art.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/32531273/"
+    },
+    "PMID 31594798": {
+      "kind": "pubmed",
+      "label": "Artificial intelligence to diagnose ischemic stroke and identify large vessel occlusions: a systematic review.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/31594798/"
+    },
+    "PMID 37541274": {
+      "kind": "pubmed",
+      "label": "Artificial intelligence-supported screen reading versus standard double reading in the Mammography Screening with Artificial Intelligence trial (MASAI): a clinical safety analysis of a randomised, controlled, non-inferiority, single-blinded, screening accuracy study.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/37541274/"
+    },
+    "21 CFR 803.53": {
+      "kind": "regulation",
+      "label": "21 CFR 803.53",
+      "url": null
+    },
+    "21 CFR 803.50": {
+      "kind": "regulation",
+      "label": "21 CFR 803.50",
+      "url": null
+    },
+    "Z-2543-2025": {
+      "kind": "recall",
+      "label": "IntelliSpace Cardiovascular, Software 8.0.0.4.",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=215452"
+    },
+    "Z-1740-2025": {
+      "kind": "recall",
+      "label": "IntelliSpace Cardiovascular software versions 6.x, 7.x, and 8.x; Model Number: 830089.",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=212694"
+    },
+    "Z-1252-2025": {
+      "kind": "recall",
+      "label": "Philips IntelliSpace Cardiovascular software, Model 830089.",
+      "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=212082"
+    }
+  },
+  "notes": []
+}
