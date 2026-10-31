@@ -617,6 +617,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     now=cfg.now,
                     allow_live=not getattr(request.state, "key_demo", False),
                     tiers_on=cfg.chat_tiers,
+                    company_audit=audit_full_text,
                 ),
                 question,
             )

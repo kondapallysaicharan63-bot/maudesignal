@@ -397,3 +397,59 @@ def test_live_ask_with_company_mode_on_stores_no_text(
     assert env.store.list_prefix("") == []
     db_text = "".join(p.read_bytes().decode("latin-1") for p in (tmp_path / "work").glob("*.db"))
     assert "unique-marker-7731" not in db_text
+
+
+# --- the canned privacy reply follows the route --------------------------------------------
+
+PRIVACY_Q = "Do you store my question?"
+PUBLIC_PRIVACY = (
+    "MaudeSignal does not store the question text: only a hash of it is kept in the audit log."
+)
+COMPANY_PRIVACY = "In this self-hosted deployment the question text and the answer text are kept"
+
+
+def test_privacy_reply_off_is_byte_identical() -> None:
+    from maudesignal.connector.tiers import canned_sentences
+
+    public = canned_sentences("privacy")
+    assert canned_sentences("privacy", company_audit=False) == public
+    assert public[1] == PUBLIC_PRIVACY
+    company = canned_sentences("privacy", company_audit=True)
+    assert company[0] == public[0] and company[2] == public[2]
+    assert company[1].startswith(COMPANY_PRIVACY) and "patient details" in company[1]
+    for intent in ("greeting", "data_source", "medical_advice"):
+        assert canned_sentences(intent, company_audit=True) == canned_sentences(intent)
+
+
+@pytest.mark.parametrize("on", [False, True])
+def test_connector_ask_privacy_reply_follows_the_mode(
+    data: ConnectorData, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, on: bool
+) -> None:
+    if on:
+        set_env(monkeypatch, COMPANY_ON)
+    c, _ = make_client(data, tmp_path)
+    for answer in (ask(c, PRIVACY_Q), mcp_ask(c, PRIVACY_Q)):
+        assert answer["tier"] == "canned"
+        if on:
+            assert COMPANY_PRIVACY in answer["speakable"]
+            assert PUBLIC_PRIVACY not in answer["speakable"]
+        else:
+            assert PUBLIC_PRIVACY in answer["speakable"]
+            assert COMPANY_PRIVACY not in answer["speakable"]
+
+
+def test_live_ask_privacy_reply_stays_public_with_company_mode_on(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from tests.unit.test_connector_live import Env
+
+    monkeypatch.setenv("MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP", "1")
+    set_env(monkeypatch, COMPANY_ON)
+    env = Env(tmp_path, origins=(), tiers=True)
+    assert "Self-hosted company audit mode is <strong>on</strong>" in (
+        env.client.get("/privacy").text
+    )
+    r = env.ask(PRIVACY_Q)
+    assert r.status_code == 200, r.text
+    text = json.dumps(r.json())
+    assert PUBLIC_PRIVACY in text and COMPANY_PRIVACY not in text
