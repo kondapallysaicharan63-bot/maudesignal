@@ -44,7 +44,7 @@ from starlette.requests import ClientDisconnect
 
 from maudesignal.common.logging import get_logger
 from maudesignal.connector.blob_store import BlobRef, RecordStore, StoreError
-from maudesignal.connector.errors import field_name
+from maudesignal.connector.errors import NOT_OBJECT_MESSAGE, field_name
 from maudesignal.connector.notify import Notifier
 from maudesignal.connector.security import RateLimiter
 
@@ -528,7 +528,9 @@ def mount_feedback(
 
     def bad_fields(exc: ValidationError) -> Response:
         where = ", ".join(sorted({n for x in exc.errors() if (n := field_name(x.get("loc")))}))
-        return _err(422, "invalid_input", f"Invalid input: {where or 'request'}.")
+        if not where:
+            return _err(422, "invalid_input", NOT_OBJECT_MESSAGE)
+        return _err(422, "invalid_input", f"Invalid input: {where}.")
 
     def day_and_id(received: datetime) -> tuple[str, str]:
         return received.strftime("%Y-%m-%d"), str(uuid.uuid4())

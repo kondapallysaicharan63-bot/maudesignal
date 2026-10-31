@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -59,6 +60,12 @@ def test_recalls_is_open_world_everywhere() -> None:
 
 
 def test_recalls_returns_structured_suggestions(small: ConnectorData, tmp_path: Path) -> None:
+    """QAH is probed with the live classification check faked as absent.
+
+    Not yet confirmed against live openFDA (no network in the build sandbox). Before
+    submission run: curl 'https://api.fda.gov/device/classification.json?search=product_code:QAH&limit=1'
+    (and the same for ZZZ). Both should return NOT_FOUND; if either exists, change the example.
+    """
     c = make_client(small, tmp_path)
     body = c.get("/v1/tools/recalls", params={"product_code": "QAH"}, headers=H).json()
     assert body["suggestions"] == ["QIH"]
@@ -77,8 +84,22 @@ def test_malformed_json_never_shows_a_position(data: ConnectorData, tmp_path: Pa
     )
     assert r.status_code == 422
     assert r.json()["error"]["message"] == "The request body is not valid JSON."
-    r = c.post("/v1/tools/ask", json=["x"], headers=H)  # valid JSON, wrong shape
-    assert r.status_code == 422 and not any(ch.isdigit() for ch in r.json()["error"]["message"])
+    not_json = "The request body is not valid JSON."
+    not_obj = "The request body must be a JSON object."
+    json_h = H | {"Content-Type": "application/json"}
+    for path in ("/v1/tools/ask", "/v1/feedback"):
+        cases: list[tuple[dict[str, Any], str]] = [
+            ({"content": b"", "headers": json_h}, not_json),
+            ({"content": b"hello", "headers": H | {"Content-Type": "text/plain"}}, not_json),
+            ({"content": b"hello", "headers": H}, not_json),
+            ({"json": [1, 2], "headers": H}, not_obj),
+            ({"json": "x", "headers": H}, not_obj),
+            ({"content": b"{not json", "headers": json_h}, not_json),
+        ]
+        for kwargs, expected in cases:
+            r = make_client(data, tmp_path).post(path, **kwargs)  # fresh limiter per case
+            assert r.status_code == 422, (path, kwargs)
+            assert r.json()["error"]["message"] == expected, (path, kwargs)
     r = c.post("/v1/tools/ask", json={"question": 5}, headers=H)
     assert "question" in r.json()["error"]["message"]
 

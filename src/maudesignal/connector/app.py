@@ -43,6 +43,7 @@ from maudesignal.connector.errors import (
     ConnectorError,
     InvalidInputError,
     NotFoundError,
+    body_shape_message,
     field_name,
 )
 from maudesignal.connector.feedback import mount_feedback
@@ -613,6 +614,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         errs = exc.errors()
         if any(str(e.get("type")) == "json_invalid" for e in errs):
             return _error(422, "invalid_input", "The request body is not valid JSON.")
+        if any(
+            tuple(e.get("loc") or ()) == ("body",)
+            and str(e.get("type")) in ("missing", "model_attributes_type")
+            for e in errs
+        ):
+            return _error(422, "invalid_input", body_shape_message(exc.body))
         for err in errs:
             name = field_name(err.get("loc"))
             helpful = explain_error(name, str(err.get("type", "")))
@@ -622,9 +629,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 names.append(name)
         if messages:
             return _error(422, "invalid_input", " ".join(messages))
-        return _error(
-            422, "invalid_input", f"Invalid input: {', '.join(sorted(names)) or 'request'}."
-        )
+        if not names:
+            return _error(422, "invalid_input", "The request could not be read.")
+        return _error(422, "invalid_input", f"Invalid input: {', '.join(sorted(names))}.")
 
     @app.exception_handler(Exception)
     async def _unexpected(_: Request, exc: Exception) -> Response:

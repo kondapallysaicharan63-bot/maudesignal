@@ -58,3 +58,32 @@ def field_name(loc: object) -> str:
         return ""
     names = [x for x in loc if isinstance(x, str) and x not in ("body", "query", "path")]
     return names[-1] if names else ""
+
+
+NOT_JSON_MESSAGE = "The request body is not valid JSON."
+NOT_OBJECT_MESSAGE = "The request body must be a JSON object."
+
+
+def body_shape_message(body: object) -> str:
+    """Say what is wrong with a request body that is missing or is not a JSON object.
+
+    Args:
+        body: What the framework saw: ``None`` or raw bytes when the body was empty or sent
+            with a content type that is not JSON, or an already parsed JSON value.
+
+    Returns:
+        ``NOT_JSON_MESSAGE`` when the body is empty or cannot be parsed as JSON, otherwise
+        ``NOT_OBJECT_MESSAGE`` (valid JSON that is not an object, such as ``[1, 2]``).
+    """
+    import json
+
+    if body is None:
+        return NOT_JSON_MESSAGE
+    if isinstance(body, bytes | bytearray):  # raw: empty or sent without a JSON content type
+        try:
+            parsed = json.loads(bytes(body))
+        except ValueError:
+            return NOT_JSON_MESSAGE
+        if isinstance(parsed, dict):  # an object sent without a JSON content type
+            return NOT_JSON_MESSAGE
+    return NOT_OBJECT_MESSAGE  # already parsed JSON that is not an object (a str is parsed too)

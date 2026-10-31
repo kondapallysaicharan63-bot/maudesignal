@@ -149,7 +149,7 @@ fact; a person confirms every device match.
 
 Same JSON on every route: `{"error": {"code": "...", "message": "..."}}`, with
 `"suggestions": ["..."]` added only when there is something to offer. Over MCP the message is the
-text of an `isError: true` tool result. Messages are fixed text. The one value a message repeats is a three-letter product code that already passed the letters-only check (the unknown-code message). A request body that is not JSON gets `The request body is not valid JSON.`; a wrong field is named, never an index.
+text of an `isError: true` tool result. Messages are fixed text. The one value a message repeats is a three-letter product code that already passed the letters-only check (the unknown-code message). An empty body, a body that cannot be parsed as JSON or one sent without a JSON content type gets `The request body is not valid JSON.`; valid JSON that is not an object (such as `[1, 2]`) gets `The request body must be a JSON object.`; a wrong field is named, never an index.
 
 | Case | Message |
 |---|---|
