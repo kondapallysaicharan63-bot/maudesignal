@@ -34,6 +34,7 @@ recorded run or a test in this repository (sources in brackets).
 | Muse Wonder 1.0 | Independent review of the evidence-pack PDF before a person accepts it | `demo/dossier/*-review.json` |
 | Voice Transcribe | Spoken questions → the same gated copilot | `demo/transcripts/*00-voice-*.json` |
 | SAM 3.1 | Finds the label in a device photo before Muse Spark reads it | `demo/vision/label-*.json`: 7 photos read, thermometer → product code FLL |
+| Muse connector | Submitted to Meta's Muse Connector Program — pending review (submitted Oct 30). Not approved or listed. | `docs/hackathon/MUSE_CONNECTOR.md` |
 
 ## Results (real runs, 2026-10-28)
 

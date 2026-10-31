@@ -6,7 +6,7 @@ Meta, Muse or anyone else has reviewed or endorsed the connector.
 
 # Form answers
 
-**Status: Not submitted.** (Charan changes this line after he submits the form himself.)
+**Status: Submitted to Meta's Muse Connector Program — pending review (submitted Oct 30). Not approved or listed.**
 
 Field names and limits on the live form may differ from the headings below; read the form first
 and paste from here.
@@ -640,7 +640,7 @@ and window number exactly what the gate recomputed.
 
 # Part 2. MCP server
 
-Submission status: see the top of this page (Not submitted until Charan changes it).
+Submission status: Submitted to Meta's Muse Connector Program — pending review (submitted Oct 30). Not approved or listed.
 
 ## Feedback and visits (private)
 

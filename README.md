@@ -146,6 +146,8 @@ as a date (adversarial cases dt03–dt05).
 | Spoken questions | **Meta Voice Transcribe** (`muse-voice-transcribe-1.0`) | Ask by voice; only the transcript text reaches Muse Spark, and it goes through the same copilot and gate |
 | Recording the public demo | All of the above in GitHub Actions ([`copilot-record.yml`](.github/workflows/copilot-record.yml)), key from repository secrets | The public, keyless app replays real runs instead of mocked ones |
 
+**Muse connector** (read-only MCP + REST at `https://maudesignal-api.vercel.app/mcp`): Submitted to Meta's Muse Connector Program — pending review (submitted Oct 30). Not approved or listed. Form answers: [docs/hackathon/MUSE_CONNECTOR.md](docs/hackathon/MUSE_CONNECTOR.md).
+
 **Standard tier only.** Never the Contributor tier, which trains on your data.
 The key is read from `META_MODEL_API_KEY`, never committed or logged.
 
