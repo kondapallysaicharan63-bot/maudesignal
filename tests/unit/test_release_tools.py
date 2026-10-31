@@ -994,3 +994,33 @@ def test_smoke_default_budget_allows_one_ask_one_voice_and_no_photo() -> None:
     assert s.budget.reserve("ask") and not s.budget.reserve("ask")
     assert s.budget.reserve("voice") and not s.budget.reserve("voice")
     assert not s.budget.reserve("photo")
+
+
+def test_vitest_numbers_strips_ansi_colour() -> None:
+    out = (
+        " \x1b[2m Test Files \x1b[22m \x1b[1m\x1b[32m12 passed\x1b[39m (12)\n"
+        " \x1b[2m Tests \x1b[22m \x1b[31m2 failed\x1b[39m | \x1b[32m55 passed\x1b[39m (57)\n"
+    )
+    nums = web_job.vitest_numbers(out)
+    assert nums["files_passed"] == 12 and nums["tests_passed"] == 55
+    assert nums["tests_failed"] == 2
+    assert web_job.vitest_numbers("no summary here") == {}
+    assert web_job.NO_COLOUR == {"NO_COLOR": "1", "FORCE_COLOR": "0"}
+
+
+def test_api_contract_sample_args_are_valid() -> None:
+    import api_contract
+
+    schema = {"properties": {"device_name": {}, "manufacturer": {}, "k_number": {}}}
+    lookup = api_contract.Contract.sample_args("lookup_device", schema)
+    assert lookup == {"device_name": "Welch Allyn 802 LTR", "manufacturer": "Welch Allyn"}
+    assert api_contract.Contract.sample_args("x", {"properties": {"k_number": {}}}) == {
+        "k_number": "K123456"
+    }
+    assert re.fullmatch(r"K\d{6}", api_contract.SAMPLE_VALUES["k_number"])
+    ok = api_contract.Contract.lookup_result_ok
+    for status in ("needs_person_to_confirm", "no_match_found", "search_failed"):
+        assert ok({"isError": False, "structuredContent": {"status": status}})
+    assert not ok({"isError": True, "structuredContent": {"status": "no_match_found"}})
+    assert not ok({"isError": False, "structuredContent": {}})
+    assert not ok({})

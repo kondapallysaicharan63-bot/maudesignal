@@ -13,6 +13,7 @@ failure (the release branch must carry the web app), never a skip.
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import subprocess
 import sys
@@ -29,9 +30,15 @@ from report import FAIL, PASS, Report  # noqa: E402
 TAIL = 400
 
 
-def run(cmd: list[str], cwd: Path) -> tuple[int, str]:
+ANSI = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
+NO_COLOUR = {"NO_COLOR": "1", "FORCE_COLOR": "0"}
+
+
+def run(cmd: list[str], cwd: Path, env: dict[str, str] | None = None) -> tuple[int, str]:
     """Run ``cmd`` in ``cwd``; returns ``(exit code, combined output)``."""
-    p = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, check=False)  # noqa: S603
+    p = subprocess.run(  # noqa: S603
+        cmd, cwd=cwd, capture_output=True, text=True, check=False, env={**os.environ, **(env or {})}
+    )
     return p.returncode, (p.stdout or "") + (p.stderr or "")
 
 
@@ -42,6 +49,7 @@ def tail(text: str) -> str:
 
 def vitest_numbers(text: str) -> dict[str, int]:
     """Test and file counts from vitest's summary (``Tests  57 passed (57)``)."""
+    text = ANSI.sub("", text)
     out: dict[str, int] = {}
     for label, key in (("Test Files", "files"), ("Tests", "tests")):
         m = re.search(rf"{label}\s+(?:(\d+) failed \|\s*)?(\d+) passed", text)
@@ -67,7 +75,7 @@ def main(argv: list[str] | None = None) -> int:
     rep.add("npm ci", PASS if code == 0 else FAIL, f"exit {code}: {tail(out)}", group="web")
     code, out = run(["npm", "run", "build"], web)
     rep.add("npm run build", PASS if code == 0 else FAIL, f"exit {code}: {tail(out)}", group="web")
-    code, out = run(["npm", "test"], web)
+    code, out = run(["npm", "test"], web, NO_COLOUR)
     nums = vitest_numbers(out)
     rep.metrics["vitest"] = nums
     good = code == 0 and nums.get("tests_passed", 0) > 0 and nums.get("tests_failed", 1) == 0

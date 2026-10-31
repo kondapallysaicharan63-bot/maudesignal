@@ -46,6 +46,14 @@ from report import FAIL, KNOWN_GAP, NOT_PRESENT, Report  # noqa: E402
 CORE_TOOLS = ("what_changed_this_week", "check_device_type", "ask", "get_report", "recalls")
 OPTIONAL_TOOLS = ("lookup_device",)
 TEST_REF = "TEST-1"  # matches the server rule ^test[0-9._~-]*$ (case-insensitive)
+
+SAMPLE_VALUES = {
+    "k_number": "K123456",
+    "device_name": "Welch Allyn 802 LTR",
+    "manufacturer": "Welch Allyn",
+}
+LOOKUP_SAMPLE = {"device_name": "Welch Allyn 802 LTR", "manufacturer": "Welch Allyn"}
+LOOKUP_STATUSES = ("needs_person_to_confirm", "no_match_found", "search_failed")
 KEEP_REF = "release-keep"  # not a TEST code: delete-test must leave it alone
 
 PROMPT_SKILLS = (
@@ -354,11 +362,14 @@ class Contract:
             r = self.rpc("tools/call", {"name": name, "arguments": args}, i)
             res = (r.json() or {}).get("result") or {}
             tool_error_ok = name == "get_report" and res.get("isError") is True  # report not stored
-            good = (
-                r.status == 200
-                and ("structuredContent" in res or tool_error_ok)
-                and (res.get("isError") is False or tool_error_ok)
-            )
+            if name == "lookup_device":
+                good = r.status == 200 and self.lookup_result_ok(res)
+            else:
+                good = (
+                    r.status == 200
+                    and ("structuredContent" in res or tool_error_ok)
+                    and (res.get("isError") is False or tool_error_ok)
+                )
             self.rep.ok(
                 f"MCP tools/call {name}",
                 bool(good),
@@ -437,21 +448,38 @@ class Contract:
 
     @staticmethod
     def sample_args(name: str, schema: dict[str, Any]) -> dict[str, str]:
-        """Valid arguments for a tool from its input schema."""
+        """Valid arguments for a tool from its input schema (every value passes its checks)."""
+        props = schema.get("properties", {})
         out: dict[str, str] = {}
-        for prop in schema.get("properties", {}):
-            out[prop] = (
-                "What changed this week for LLZ?"
-                if prop == "question"
-                else (
-                    "0000000"
-                    if prop == "report_id"
-                    else "LLZ" if "code" in prop else "glucose monitor"
-                )
-            )
+        for prop in props:
+            if prop == "question":
+                out[prop] = "What changed this week for LLZ?"
+            elif prop == "report_id":
+                out[prop] = "0000000"
+            elif prop in SAMPLE_VALUES:
+                out[prop] = SAMPLE_VALUES[prop]
+            elif "code" in prop:
+                out[prop] = "LLZ"
+            else:
+                out[prop] = "glucose monitor"
         if name == "what_changed_this_week":
             out.setdefault("product_code", "LLZ")
-        return {k: v for k, v in out.items() if k in schema.get("properties", {}) or not schema}
+        if name == "lookup_device":
+            # A name and a maker only: no identifier to get wrong, so a clean answer is expected.
+            return {k: v for k, v in LOOKUP_SAMPLE.items() if k in props or not props}
+        return {k: v for k, v in out.items() if k in props or not schema}
+
+    @staticmethod
+    def lookup_result_ok(res: dict[str, Any]) -> bool:
+        """A lookup_device answer for a valid input: a clean result, never ``isError``.
+
+        openFDA is unreachable in CI, so ``search_failed`` is as good as a match; the point is
+        that a well-formed question is not rejected as malformed.
+        """
+        if res.get("isError") is not False:
+            return False
+        status = (res.get("structuredContent") or {}).get("status")
+        return status in LOOKUP_STATUSES
 
     # --- authentication and limits ---------------------------------------------------------
 
@@ -1201,11 +1229,14 @@ def check_mentions_injection(rep: Report, windows: set[str], secrets_: list[str]
         import os
 
         os.environ.setdefault("MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP", "1")
+        # isort: off  (first-party vs third-party depends on whether src/ has the connector)
         from fastapi.testclient import TestClient
         from maudesignal.connector.app import Settings, create_app
         from maudesignal.connector.live import LiveBackends
         from maudesignal.connector.mentions import BADGE
         from maudesignal.connector.store import ConnectorState
+
+        # isort: on
     except Exception as exc:  # the connector is not in this checkout
         rep.add(
             "outside-mentions injection",
