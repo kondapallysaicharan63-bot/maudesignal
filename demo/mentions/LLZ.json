@@ -8,12 +8,12 @@
   "mentions": [],
   "mode": "recorded",
   "product_code": "LLZ",
-  "searched_utc": "2026-10-31T03:09:41Z",
+  "searched_utc": "2026-10-31T17:38:36Z",
   "sources_tried": [
     {
       "n": 0,
       "name": "GDELT DOC 2.0 (news index)",
-      "status": "failed: ConnectTimeout",
+      "status": "failed: TimeoutError (after 3 tries)",
       "url": "https://api.gdeltproject.org/api/v2/doc/doc"
     },
     {
@@ -30,53 +30,54 @@
     },
     {
       "n": 0,
-      "name": "FDA warning letters (RSS)",
+      "name": "FDA MedWatch safety alerts (RSS)",
+      "status": "ok",
+      "url": "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/medwatch/rss.xml"
+    },
+    {
+      "n": 0,
+      "name": "FDA medical devices feed (RSS)",
       "status": "failed: http 404",
-      "url": "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/warning-letters/rss.xml"
+      "url": "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/medical-devices/rss.xml"
     },
     {
       "n": 0,
       "name": "MedTech Dive (RSS)",
       "status": "ok",
       "url": "https://www.medtechdive.com/feeds/news/"
-    },
-    {
-      "n": 0,
-      "name": "MassDevice (RSS)",
-      "status": "failed: http 403",
-      "url": "https://www.massdevice.com/feed/"
     }
   ],
+  "summary": "0 found in these sources (2026-10-31 UTC): GDELT DOC 2.0 (news index) (failed: TimeoutError (after 3 tries)); FDA press releases (RSS) (ok); FDA recalls (RSS) (ok); FDA MedWatch safety alerts (RSS) (ok); FDA medical devices feed (RSS) (failed: http 404); MedTech Dive (RSS) (ok).",
   "trace": [
     {
-      "ms": 6031,
-      "status": "failed: ConnectTimeout",
+      "ms": 33489,
+      "status": "failed: TimeoutError (after 3 tries)",
       "step": "Search: GDELT DOC 2.0 (news index)"
     },
     {
-      "ms": 277,
+      "ms": 139,
       "status": "ok",
       "step": "Search: FDA press releases (RSS)"
     },
     {
-      "ms": 352,
+      "ms": 135,
       "status": "ok",
       "step": "Search: FDA recalls (RSS)"
     },
     {
-      "ms": 431,
-      "status": "failed: http 404",
-      "step": "Search: FDA warning letters (RSS)"
+      "ms": 137,
+      "status": "ok",
+      "step": "Search: FDA MedWatch safety alerts (RSS)"
     },
     {
-      "ms": 228,
+      "ms": 192,
+      "status": "failed: http 404",
+      "step": "Search: FDA medical devices feed (RSS)"
+    },
+    {
+      "ms": 157,
       "status": "ok",
       "step": "Search: MedTech Dive (RSS)"
-    },
-    {
-      "ms": 173,
-      "status": "failed: http 403",
-      "step": "Search: MassDevice (RSS)"
     },
     {
       "ms": 0,
