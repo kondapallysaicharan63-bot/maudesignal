@@ -305,8 +305,10 @@ font-weight:600;white-space:nowrap}
 #clients .zero,#clients .sub,#clients .none{color:GrayText;font-weight:400}
 #clients .sub{display:none;font-size:.85rem}
 #clients td.seen{white-space:nowrap;font-variant-numeric:tabular-nums}
-#clientsnote{color:GrayText}
-.hint{display:none;color:GrayText;font-size:.9rem;margin:.2rem 0}
+#clients td.who,#clients td.kind{white-space:nowrap}
+#clientsnote,.hint{color:#555}
+@media (prefers-color-scheme:dark){#clientsnote,.hint{color:#bbb}}
+.hint{display:none;font-size:.9rem;margin:.2rem 0}
 @media (max-width:600px){#clients .cid{display:none}#clients .sub{display:block}
 .hint{display:block}}
 </style></head><body>
@@ -417,12 +419,12 @@ async function loadClients(){
   const body=el("tbody");
   for(const c of d.clients){
     const tr=el("tr");
-    const who=el("td");
+    const who=el("td","who");
     if(c.label){who.appendChild(el("span","",c.label));who.appendChild(el("span","sub",c.client_id));}
     else{who.textContent=c.client_id;}
     tr.appendChild(who);
     tr.appendChild(el("td","cid"+(c.label?"":" none"),c.label?c.client_id:"–"));
-    tr.appendChild(el("td","",c.kind||"–"));
+    tr.appendChild(el("td","kind",c.kind||"–"));
     tr.appendChild(el("td","num today"+(c.calls_today?"":" zero"),String(c.calls_today)));
     tr.appendChild(el("td","num"+(c.calls_window?"":" zero"),String(c.calls_window)));
     tr.appendChild(el("td","seen",stamp(c.last_seen_utc)));
