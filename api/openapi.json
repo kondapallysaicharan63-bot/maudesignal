@@ -539,6 +539,384 @@
         "title": "LiveCheckData",
         "type": "object"
       },
+      "LookupAnswer": {
+        "additionalProperties": false,
+        "description": "``lookup_device``: possible FDA records for a described device. A person confirms.",
+        "properties": {
+          "advisory": {
+            "default": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+            "title": "Advisory",
+            "type": "string"
+          },
+          "confirmed": {
+            "description": "Always null. This tool never picks a record; a person confirms one or none.",
+            "title": "Confirmed",
+            "type": "null"
+          },
+          "device_types": {
+            "items": {
+              "$ref": "#/components/schemas/LookupDeviceType"
+            },
+            "title": "Device Types",
+            "type": "array"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/Fact"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "matches": {
+            "description": "At most 3.",
+            "items": {
+              "$ref": "#/components/schemas/LookupMatch"
+            },
+            "title": "Matches",
+            "type": "array"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "searched_with": {
+            "description": "Which of your inputs were used for the search.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Searched With",
+            "type": "array"
+          },
+          "speakable": {
+            "description": "1 to 3 plain sentences, no markdown, written to be read aloud.",
+            "title": "Speakable",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "needs_person_to_confirm",
+              "no_match_found",
+              "search_failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "withheld": {
+            "description": "Only ask() uses this; gate-withheld sentences.",
+            "items": {
+              "$ref": "#/components/schemas/WithheldSentence"
+            },
+            "title": "Withheld",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tool",
+          "speakable",
+          "provenance",
+          "status"
+        ],
+        "title": "LookupAnswer",
+        "type": "object"
+      },
+      "LookupDeviceType": {
+        "additionalProperties": false,
+        "description": "What openFDA shows for a product code of the top possible matches.",
+        "properties": {
+          "check_link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "openFDA link for this week's report count.",
+            "title": "Check Link"
+          },
+          "device_type_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Type Name"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "product_code": {
+            "title": "Product Code",
+            "type": "string"
+          },
+          "recent_recalls_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Recall records started in the window below (null if openFDA failed).",
+            "title": "Recent Recalls Count"
+          },
+          "recent_recalls_link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recent Recalls Link"
+          },
+          "recent_recalls_window": {
+            "title": "Recent Recalls Window",
+            "type": "string"
+          },
+          "report_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "All adverse-event reports for the code.",
+            "title": "Report Count"
+          },
+          "report_count_link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Count Link"
+          },
+          "this_week_change": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Same deterministic check as check_device_type, in plain words.",
+            "title": "This Week Change"
+          },
+          "this_week_reports": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "This Week Reports"
+          }
+        },
+        "required": [
+          "product_code",
+          "device_type_name",
+          "this_week_change",
+          "this_week_reports",
+          "recent_recalls_count",
+          "recent_recalls_window",
+          "recent_recalls_link",
+          "report_count",
+          "report_count_link",
+          "check_link"
+        ],
+        "title": "LookupDeviceType",
+        "type": "object"
+      },
+      "LookupLink": {
+        "additionalProperties": false,
+        "description": "A public openFDA link behind a lookup result.",
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "url"
+        ],
+        "title": "LookupLink",
+        "type": "object"
+      },
+      "LookupMatch": {
+        "additionalProperties": false,
+        "description": "One possible FDA record for the device that was described. Never chosen for the person.",
+        "properties": {
+          "applicant": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Applicant, owner or maker named on the record.",
+            "title": "Applicant"
+          },
+          "decision_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "510(k) decision date as openFDA gives it.",
+            "title": "Decision Date"
+          },
+          "device_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Name"
+          },
+          "exact_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "k_number or gtin when an id you gave equals the record, else null.",
+            "title": "Exact Id"
+          },
+          "k_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "510(k) number when the record is a 510(k).",
+            "title": "K Number"
+          },
+          "links": {
+            "items": {
+              "$ref": "#/components/schemas/LookupLink"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "product_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Code"
+          },
+          "rank": {
+            "description": "1 is the best-scoring possible match; it is not a decision.",
+            "title": "Rank",
+            "type": "integer"
+          },
+          "record_id": {
+            "description": "K-number, UDI record key or registration number.",
+            "title": "Record Id",
+            "type": "string"
+          },
+          "score": {
+            "title": "Score",
+            "type": "integer"
+          },
+          "source": {
+            "description": "510k, udi or registrationlisting.",
+            "title": "Source",
+            "type": "string"
+          },
+          "why_matched": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Why Matched",
+            "type": "array"
+          },
+          "why_not_matched": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Why Not Matched",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rank",
+          "source",
+          "record_id",
+          "k_number",
+          "device_name",
+          "applicant",
+          "product_code",
+          "decision_date",
+          "exact_id",
+          "score",
+          "why_matched",
+          "why_not_matched",
+          "links"
+        ],
+        "title": "LookupMatch",
+        "type": "object"
+      },
       "Provenance": {
         "additionalProperties": false,
         "description": "Where the data came from and how fresh it is.",
@@ -1196,6 +1574,200 @@
           }
         ],
         "summary": "One stored MAUDE report",
+        "tags": [
+          "tools"
+        ],
+        "x-maudesignal-read-only": true,
+        "x-maudesignal-scope": "read"
+      }
+    },
+    "/v1/tools/lookup_device": {
+      "get": {
+        "description": "Read-only; no model call. Give what you read from a device photo or label (device_name, model, manufacturer, k_number, udi or gtin, product_code; at least one) and get up to 3 possible FDA records from openFDA (510(k), registration & listing, UDI), each with why_matched and why_not_matched, plus this week's change, recent recalls and the report count for the top product code, each with its openFDA link. status is needs_person_to_confirm, no_match_found or search_failed. `confirmed` is always null: a person confirms one record, or none.",
+        "operationId": "lookup_device",
+        "parameters": [
+          {
+            "description": "Device name as read from the label.",
+            "in": "query",
+            "name": "device_name",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Device name as read from the label.",
+              "title": "Device Name"
+            }
+          },
+          {
+            "description": "Model, catalog or reference number.",
+            "in": "query",
+            "name": "model",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Model, catalog or reference number.",
+              "title": "Model"
+            }
+          },
+          {
+            "description": "Maker named on the label.",
+            "in": "query",
+            "name": "manufacturer",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maker named on the label.",
+              "title": "Manufacturer"
+            }
+          },
+          {
+            "description": "510(k) number printed on the label: K plus six digits.",
+            "in": "query",
+            "name": "k_number",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^\\s*[Kk][\\s-]?[0-9]{6}\\s*$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "510(k) number printed on the label: K plus six digits.",
+              "title": "K Number"
+            }
+          },
+          {
+            "description": "Printed UDI, e.g. (01)0038074...(17)261231.",
+            "in": "query",
+            "name": "udi",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Printed UDI, e.g. (01)0038074...(17)261231.",
+              "title": "Udi"
+            }
+          },
+          {
+            "description": "GTIN (8, 12, 13 or 14 digits).",
+            "in": "query",
+            "name": "gtin",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 20,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "GTIN (8, 12, 13 or 14 digits).",
+              "title": "Gtin"
+            }
+          },
+          {
+            "description": "Three-letter FDA product code.",
+            "in": "query",
+            "name": "product_code",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^[A-Za-z]{3}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Three-letter FDA product code.",
+              "title": "Product Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LookupAnswer"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Missing or invalid X-API-Key."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Input not usable."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Rate limit reached; see Retry-After."
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Look up possible FDA records for a device",
         "tags": [
           "tools"
         ],

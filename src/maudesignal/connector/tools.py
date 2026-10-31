@@ -36,6 +36,7 @@ TOOL_NAMES = (
     "ask",
     "get_report",
     "recalls",
+    "lookup_device",
 )
 
 _REPORT_ID = re.compile(r"^[A-Za-z0-9-]{1,24}$")

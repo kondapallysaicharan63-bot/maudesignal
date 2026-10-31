@@ -2,7 +2,7 @@
 
 HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
-Every endpoint is read-only. ``GET /v1/health`` needs no key; the five tool
+Every endpoint is read-only. ``GET /v1/health`` needs no key; the six tool
 endpoints need an ``X-API-Key`` header, count against a per-key rate limit and, for
 ``ask``, a per-key daily cost cap. Error bodies never contain the key.
 """
@@ -42,6 +42,7 @@ from maudesignal.connector.docs_page import render_docs_page
 from maudesignal.connector.errors import ConnectorError, InvalidInputError, NotFoundError
 from maudesignal.connector.feedback import mount_feedback
 from maudesignal.connector.legal_pages import render_privacy, render_terms
+from maudesignal.connector.lookup import OpenFdaSearcher, Searcher, lookup_device
 from maudesignal.connector.manifest import build_manifest
 from maudesignal.connector.mcp_server import (
     PARSE_ERROR,
@@ -56,6 +57,7 @@ from maudesignal.connector.models import (
     ErrorBody,
     ErrorResponse,
     LiveCheckData,
+    LookupAnswer,
     PublicCheckAnswer,
     ToolAnswer,
 )
@@ -63,6 +65,8 @@ from maudesignal.connector.notify import Notifier, notifier_from_env
 from maudesignal.connector.registry import (
     ASK_DESCRIPTION,
     CHECK_DESCRIPTION,
+    LOOKUP_DESCRIPTION,
+    LOOKUP_PATTERN_K,
     PRODUCT_CODE_PATTERN,
     RECALLS_DESCRIPTION,
     REPORT_DESCRIPTION,
@@ -202,6 +206,7 @@ class Settings:
     data: ConnectorData = field(default_factory=ConnectorData)
     ask_runtime: AskRuntime | None = None
     live_checker: LiveChecker = _default_live_checker
+    lookup_searcher: Searcher | None = None  # None: real openFDA (tests pass a fake)
     now: Clock = utc_now
     state: ConnectorState = field(default_factory=ConnectorState.from_env)
     web_origins: tuple[str, ...] = field(default_factory=_origins_from_env)
@@ -282,6 +287,10 @@ def _client_address(request: Request) -> str:
         if first:
             return str(first[:64])
     return str(request.client.host) if request.client else "unknown"
+
+
+LOOKUP_FIELDS = ("device_name", "model", "manufacturer", "k_number", "udi", "gtin", "product_code")
+LOOKUP_AUDIT_CHARS = 100
 
 
 def _error(status: int, code: str, message: str, headers: dict[str, str] | None = None) -> Response:
@@ -503,6 +512,24 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 {"product_code": args["product_code"]},
                 lambda: tools.recalls(cfg.data, args["product_code"]),
             )
+        if name == "lookup_device":
+            given = {k: args[k] for k in LOOKUP_FIELDS if args.get(k)}
+            audit_inputs = {k: v[:LOOKUP_AUDIT_CHARS] for k, v in given.items()}
+
+            def run_lookup() -> ToolAnswer:
+                own = cfg.lookup_searcher is None
+                searcher: Searcher = cfg.lookup_searcher or OpenFdaSearcher(
+                    os.environ.get("OPENFDA_API_KEY") or None
+                )
+                try:
+                    return lookup_device(
+                        **given, searcher=searcher, live_checker=cfg.live_checker, now=cfg.now
+                    )
+                finally:
+                    if own and isinstance(searcher, OpenFdaSearcher):
+                        searcher.close()
+
+            return audited(request, name, audit_inputs, run_lookup)
         raise InvalidInputError("Unknown tool.")
 
     @app.exception_handler(ApiError)
@@ -748,6 +775,58 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     def recalls(request: Request, key_id: key_dep, product_code: code_param) -> ToolAnswer:
         return dispatch(request, "recalls", {"product_code": product_code})
+
+    @app.get(
+        "/v1/tools/lookup_device",
+        response_model=LookupAnswer,
+        operation_id="lookup_device",
+        summary="Look up possible FDA records for a device",
+        description=LOOKUP_DESCRIPTION,
+        tags=["tools"],
+        responses=_ERRORS,
+        openapi_extra=READ_ONLY,
+    )
+    def lookup_device_route(
+        request: Request,
+        key_id: key_dep,
+        device_name: Annotated[
+            str | None, Query(max_length=200, description="Device name as read from the label.")
+        ] = None,
+        model: Annotated[
+            str | None, Query(max_length=100, description="Model, catalog or reference number.")
+        ] = None,
+        manufacturer: Annotated[
+            str | None, Query(max_length=200, description="Maker named on the label.")
+        ] = None,
+        k_number: Annotated[
+            str | None,
+            Query(
+                pattern=LOOKUP_PATTERN_K,
+                description="510(k) number printed on the label: K plus six digits.",
+            ),
+        ] = None,
+        udi: Annotated[
+            str | None,
+            Query(max_length=200, description="Printed UDI, e.g. (01)0038074...(17)261231."),
+        ] = None,
+        gtin: Annotated[
+            str | None, Query(max_length=20, description="GTIN (8, 12, 13 or 14 digits).")
+        ] = None,
+        product_code: Annotated[
+            str | None,
+            Query(pattern=PRODUCT_CODE_PATTERN, description="Three-letter FDA product code."),
+        ] = None,
+    ) -> ToolAnswer:
+        values = {
+            "device_name": device_name,
+            "model": model,
+            "manufacturer": manufacturer,
+            "k_number": k_number,
+            "udi": udi,
+            "gtin": gtin,
+            "product_code": product_code,
+        }
+        return dispatch(request, "lookup_device", {k: v for k, v in values.items() if v})
 
     @app.get(
         "/v1/public/check_device_type",

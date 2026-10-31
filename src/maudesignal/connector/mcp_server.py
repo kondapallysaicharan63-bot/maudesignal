@@ -19,7 +19,7 @@ from typing import Any
 
 from maudesignal.common.logging import get_logger
 from maudesignal.connector.errors import ConnectorError
-from maudesignal.connector.models import ToolAnswer
+from maudesignal.connector.models import LookupAnswer, ToolAnswer
 from maudesignal.connector.registry import SPECS_BY_NAME, mcp_tools
 
 logger = get_logger(__name__)
@@ -52,7 +52,8 @@ def output_schema() -> dict[str, Any]:
 
 def tool_list() -> list[dict[str, Any]]:
     """The ``tools/list`` entries."""
-    return mcp_tools(output_schema())
+    lookup: dict[str, Any] = LookupAnswer.model_json_schema()
+    return mcp_tools(output_schema(), {"lookup_device": lookup})
 
 
 def rpc_error(request_id: Any, code: int, message: str) -> dict[str, Any]:

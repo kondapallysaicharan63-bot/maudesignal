@@ -147,6 +147,7 @@ def test_openapi_route_serves_the_committed_spec(data: ConnectorData, tmp_path: 
         "/v1/tools/ask",
         "/v1/tools/get_report",
         "/v1/tools/recalls",
+        "/v1/tools/lookup_device",
         "/v1/public/check_device_type",
         "/v1/audit/recent",
     }

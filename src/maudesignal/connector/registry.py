@@ -1,4 +1,4 @@
-"""One registry of the five connector tools, shared by REST, MCP and the manifest.
+"""One registry of the six connector tools, shared by REST, MCP and the manifest.
 
 HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
@@ -36,6 +36,16 @@ ASK_DESCRIPTION = (
 )
 REPORT_DESCRIPTION = "Read-only. Key fields and the start of the narrative of one stored report."
 RECALLS_DESCRIPTION = "Read-only. Stored openFDA recalls for a product code, newest first."
+LOOKUP_DESCRIPTION = (
+    "Read-only; no model call. Give what you read from a device photo or label (device_name, "
+    "model, manufacturer, k_number, udi or gtin, product_code; at least one) and get up to "
+    "3 possible FDA records from openFDA (510(k), registration & listing, UDI), each with "
+    "why_matched and why_not_matched, plus this week's change, recent recalls and the report "
+    "count for the top product code, each with its openFDA link. status is "
+    "needs_person_to_confirm, no_match_found or search_failed. `confirmed` is always null: "
+    "a person confirms one record, or none."
+)
+LOOKUP_PATTERN_K = r"^\s*[Kk][\s-]?[0-9]{6}\s*$"
 
 
 @dataclass(frozen=True)
@@ -184,20 +194,81 @@ TOOL_SPECS: tuple[ToolSpec, ...] = (
         (Param("product_code", _CODE, pattern=PRODUCT_CODE_PATTERN),),
         open_world=False,
     ),
+    ToolSpec(
+        "lookup_device",
+        "Look up possible FDA records for a device",
+        LOOKUP_DESCRIPTION,
+        (
+            Param(
+                "device_name",
+                "Device name as read from the photo or label.",
+                required=False,
+                max_length=200,
+                example="Welch Allyn 802 LTR",
+            ),
+            Param(
+                "model",
+                "Model, catalog or reference number.",
+                required=False,
+                max_length=100,
+                example="802",
+            ),
+            Param(
+                "manufacturer",
+                "Maker named on the label.",
+                required=False,
+                max_length=200,
+                example="Welch Allyn",
+            ),
+            Param(
+                "k_number",
+                "510(k) number printed on the label: K plus six digits.",
+                required=False,
+                pattern=LOOKUP_PATTERN_K,
+                example="K123456",
+            ),
+            Param(
+                "udi",
+                "Printed UDI, for example (01)00380740000000(17)261231.",
+                required=False,
+                max_length=200,
+            ),
+            Param(
+                "gtin",
+                "GTIN (8, 12, 13 or 14 digits), if printed without a full UDI.",
+                required=False,
+                max_length=20,
+            ),
+            Param(
+                "product_code",
+                "Three-letter FDA product code, if known.",
+                required=False,
+                pattern=PRODUCT_CODE_PATTERN,
+            ),
+        ),
+        open_world=True,
+    ),
 )
 
 SPECS_BY_NAME: dict[str, ToolSpec] = {s.name: s for s in TOOL_SPECS}
 
 
-def mcp_tools(output_schema: dict[str, Any]) -> list[dict[str, Any]]:
-    """The ``tools/list`` entries (also the manifest's ``tools``)."""
+def mcp_tools(
+    output_schema: dict[str, Any], overrides: dict[str, dict[str, Any]] | None = None
+) -> list[dict[str, Any]]:
+    """The ``tools/list`` entries (also the manifest's ``tools``).
+
+    ``overrides`` maps a tool name to its own output schema (``lookup_device`` returns more
+    fields than the common answer).
+    """
+    overrides = overrides or {}
     return [
         {
             "name": s.name,
             "title": s.title,
             "description": s.description,
             "inputSchema": s.input_schema(),
-            "outputSchema": output_schema,
+            "outputSchema": overrides.get(s.name, output_schema),
             "annotations": {"title": s.title, **s.annotations()},
         }
         for s in TOOL_SPECS
