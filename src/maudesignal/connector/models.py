@@ -20,7 +20,10 @@ ProvenanceKind = Literal[
     "live_openfda",
     "recorded_answer",
     "live_model",
+    "canned_reply",
 ]
+#: Which chat tier answered: fixed reply, direct lookup, earlier answer reused, or Muse Spark.
+AnswerTier = Literal["canned", "direct", "cache", "live"]
 
 
 class Fact(BaseModel):
@@ -46,7 +49,9 @@ class Provenance(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     kind: ProvenanceKind = Field(
-        description="stored_demo_snapshot, live_openfda, recorded_answer or live_model."
+        description=(
+            "stored_demo_snapshot, live_openfda, recorded_answer, live_model or canned_reply."
+        )
     )
     source: str = Field(description="Plain description of the source.")
     data_dates: str | None = Field(
@@ -85,6 +90,34 @@ class ToolAnswer(BaseModel):
     provenance: Provenance
     withheld: list[WithheldSentence] = Field(
         default_factory=list, description="Only ask() uses this; gate-withheld sentences."
+    )
+
+
+class AskAnswer(ToolAnswer):
+    """What ``ask`` returns: the common answer plus which chat tier answered and its cost."""
+
+    tier: AnswerTier = Field(
+        description=(
+            "canned (fixed reply, no FDA facts, no model), direct (deterministic lookup through "
+            "the claim gate, no model), cache (the same question's live answer from the last "
+            "six hours) or live (Muse Spark, or a labelled recorded run when no live call can "
+            "be made)."
+        )
+    )
+    cost_usd: float | None = Field(
+        default=None,
+        description="Model cost of this answer in USD: 0 for canned, direct and cache; the "
+        "estimated Muse Spark cost for a live answer; null for a recorded run.",
+    )
+    badge: str | None = Field(
+        default=None, description="Short label to show with the answer (tiers 1 to 3)."
+    )
+    suggestions: list[str] = Field(
+        default_factory=list, description="Follow-up questions to offer (never sent by itself)."
+    )
+    did_you_mean: list[str] = Field(
+        default_factory=list,
+        description="Known product codes one letter away from an unknown one; never applied.",
     )
 
 

@@ -199,6 +199,14 @@ class ConnectorData:
         self._known_codes = frozenset(c.upper() for c in codes if len(c) == 3)
         return self._known_codes
 
+    def sweep(self) -> dict[str, Any]:
+        """The stored AI-device sweep (``demo/sweep/ai-device-sweep.json``); empty when absent."""
+        try:
+            data = json.loads(self._sweep.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return {}
+        return data if isinstance(data, dict) else {}
+
     def transcripts(self) -> list[dict[str, Any]]:
         """Recorded copilot runs (real Muse Spark runs, gate verdicts included)."""
         if self._transcripts is None:

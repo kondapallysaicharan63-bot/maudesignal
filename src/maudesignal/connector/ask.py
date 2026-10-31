@@ -212,6 +212,8 @@ class AskRuntime:
     state: ConnectorState | None = None
     #: An explicit per-call reservation (tests, and the live website routes).
     meter: CallMeter | None = None
+    #: Cheaper tier-4 settings (compact prompt, low reasoning effort, two tool rounds).
+    lean: bool = True
 
     def call_meter(self) -> CallMeter | None:
         """The per-call reservation every Meta call goes through (``None``: live is off)."""
@@ -232,6 +234,34 @@ class AskRuntime:
         """
         shared = self.state.ledger(key_id) if self.state else None
         return shared or DailyLedger(self.ledger_dir / f"{key_id}.json")
+
+
+#: Tier-4 limits (see ``apply_lean``). Output tokens include reasoning tokens.
+LEAN_MAX_TOOL_ROUNDS = 2
+LEAN_MAX_TOKENS = 3000
+LEAN_MAX_TOKENS_COMPARE = 5000
+LEAN_TOOL_RESULT_CHARS = 6000
+_COMPARE = re.compile(
+    r"\bcompare\b|\bcomparison\b|\bversus\b|\bvs\.?\b|\bdifference\b|\bside by side\b"
+    r"|\bwhich (?:one|of)\b|\bbetween\b",
+    re.IGNORECASE,
+)
+
+
+def is_comparison(question: str) -> bool:
+    """True when the question compares things (then reasoning effort ``medium``)."""
+    return _COMPARE.search(question) is not None
+
+
+def apply_lean(agent: CopilotAgent, question: str) -> None:
+    """Cheaper tier-4 settings: compact prompt, ``low`` effort (``medium`` to compare)."""
+    compare = is_comparison(question)
+    agent.configure_lean(
+        reasoning_effort="medium" if compare else "low",
+        max_tool_rounds=LEAN_MAX_TOOL_ROUNDS,
+        max_tokens=LEAN_MAX_TOKENS_COMPARE if compare else LEAN_MAX_TOKENS,
+        max_tool_result_chars=LEAN_TOOL_RESULT_CHARS,
+    )
 
 
 def _words(text: str) -> set[str]:
@@ -285,11 +315,51 @@ def _quoted(question: str) -> str:
     return q.replace('"', "'")
 
 
-def _speakable(lead: str | None, passed: list[str], withheld: int) -> str:
+_CONNECTIVE_START = re.compile(
+    r"^(?:here(?:'s| is| are)|below|sure|certainly|of course|okay|ok|hi|hello|hey|thanks"
+    r"|thank you|let me|i (?:checked|looked|searched|found|reviewed|used|can help)"
+    r"|based on (?:the |my )?(?:stored |available )?(?:records|data|tools?|results?)"
+    r"|in summary|to summari[sz]e|overall|in short|please note|note that|happy to help"
+    r"|(?:good|great) question)\b",
+    re.IGNORECASE,
+)
+_ADVISORY = re.compile(
+    r"\b(?:a (?:named )?(?:human|person)|qualified (?:person|reviewer)|your team)\b.*\breview"
+    r"|\bnot medical advice\b|\bnothing (?:is|was) filed\b",
+    re.IGNORECASE,
+)
+MAX_CONNECTIVE_WORDS = 14
+NO_FACTS_LINE = (
+    "I have nothing checked to add to that. Ask about a product code, a report, a recall or "
+    "what changed this week."
+)
+
+
+def is_connective(text: str) -> bool:
+    """True for a sentence that states no fact: a greeting, a transition, an advisory line.
+
+    Used only for sentences that carry no claim and passed the gate. Such a sentence is
+    neither shown as a fact nor listed as held back. Anything with a digit, or longer than
+    a short transition, is not connective.
+    """
+    t = " ".join(text.split())
+    if not t or any(c.isdigit() for c in t):
+        return False
+    if _ADVISORY.search(t):
+        return True
+    return len(t.split()) <= MAX_CONNECTIVE_WORDS and _CONNECTIVE_START.search(t) is not None
+
+
+def _speakable(lead: str | None, passed: list[str], withheld: int, *, factual: bool = True) -> str:
     room = MAX_SPEAKABLE_SENTENCES - (1 if lead else 0) - (1 if withheld else 0)
     parts: list[str] = [lead] if lead else []
     chosen = passed[: max(room, 1)] if passed else []
-    parts += chosen or ["I could not verify an answer to that, so I am not stating one."]
+    empty = (
+        "I could not verify an answer to that, so I am not stating one."
+        if factual or withheld
+        else NO_FACTS_LINE
+    )
+    parts += chosen or [empty]
     if withheld:
         parts.append(
             "One sentence was left out because it could not be verified or tied to a source."
@@ -327,6 +397,8 @@ def _split(
     facts: list[Fact] = []
     withheld: list[WithheldSentence] = []
     for text, found, reason, kinds in items:
+        if reason is None and not found and not kinds and is_clean(text) and is_connective(text):
+            continue  # a transition or greeting: not a fact, and not "held back" either
         if reason is None and not is_clean(text):
             reason = _FORBIDDEN_REASON
         if reason is None and not found:
@@ -370,9 +442,12 @@ def _from_live(res: CopilotResult, data: ConnectorData, now: datetime) -> ToolAn
         items.append((s.text, found, None, [str(cv.claim.kind) for cv in s.claim_verdicts]))
     passed, facts, withheld = _split(items, hide_withheld_text=True)
     latest = str(data.manifest().get("max_date_received") or "")
+    factual = any(kinds for _t, _l, _r, kinds in items) or any(
+        not is_connective(t) for t, _l, _r, _k in items
+    )
     return ToolAnswer(
         tool="ask",
-        speakable=_speakable(None, passed, len(withheld)),
+        speakable=_speakable(None, passed, len(withheld), factual=factual),
         facts=facts,
         provenance=Provenance(
             kind="live_model",
@@ -663,6 +738,8 @@ def ask_detailed(
             with data.live_ask_lock:
                 agent = runtime.agent_factory(data, guard)
                 make_read_only(agent)  # whatever the factory built: no tool that writes
+                if runtime.lean:
+                    apply_lean(agent, q)
                 timed = _TimedClient(agent._client)
                 agent._client = timed
                 if history:

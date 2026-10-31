@@ -29,16 +29,17 @@ from starlette.requests import ClientDisconnect
 from maudesignal.common.exceptions import MaudeSignalError, OpenFDAAPIError
 from maudesignal.common.logging import get_logger
 from maudesignal.connector import tools
+from maudesignal.connector.answer_cache import AnswerCache
 from maudesignal.connector.asgi import RejectKeyInQuery
 from maudesignal.connector.ask import (
     ALLOW_PER_INSTANCE_ENV,
     MAX_QUESTION_CHARS,
     MIN_QUESTION_CHARS,
     AskRuntime,
-    ask_detailed,
     live_mode_allowed,
 )
 from maudesignal.connector.blob_store import RecordStore, store_from_env
+from maudesignal.connector.chat import ask_with_tiers
 from maudesignal.connector.data import ConnectorData
 from maudesignal.connector.docs_page import render_docs_page
 from maudesignal.connector.errors import (
@@ -61,6 +62,7 @@ from maudesignal.connector.mcp_server import (
     rpc_error,
 )
 from maudesignal.connector.models import (
+    AskAnswer,
     AuditEntry,
     AuditRecent,
     ChainStatus,
@@ -206,6 +208,9 @@ def _origins_from_env() -> tuple[str, ...]:
     return tuple(o for o in items if o.startswith(("https://", "http://")) and "*" not in o)
 
 
+CHAT_TIERS_ENV = "MAUDESIGNAL_CHAT_TIERS"
+
+
 @dataclass
 class Settings:
     """Everything the app depends on (tests pass their own).
@@ -232,6 +237,8 @@ class Settings:
     notifier: Notifier = field(default_factory=notifier_from_env)
     live: LiveBackends | None = None
     live_config: LiveConfig | None = None
+    #: Chat tiers for ``ask`` (canned, direct, cache before Muse Spark); see ``tiers.py``.
+    chat_tiers: bool = field(default_factory=lambda: os.environ.get(CHAT_TIERS_ENV, "1") != "0")
 
 
 class AskRequest(BaseModel):
@@ -371,6 +378,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     state.attach_blob(cfg.feedback_store)  # the private Blob store also holds the spend ledger
     ask_runtime = cfg.ask_runtime or AskRuntime(state=state)
+    ask_cache = AnswerCache(state, "tool", now=cfg.now)
     demo_limiter = cfg.demo_limiter or state.rate_limiter(
         "demo-key",
         RateLimiter.from_env(name=DEMO_RATE_ENV, default=DEFAULT_DEMO_RATE_PER_MIN).limit,
@@ -558,14 +566,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 request,
                 name,
                 _question_audit_inputs(question),
-                lambda: ask_detailed(
+                lambda: ask_with_tiers(
                     cfg.data,
                     question,
                     key_id=key_id,
                     runtime=ask_runtime,
+                    cache=ask_cache,
                     now=cfg.now,
                     allow_live=not getattr(request.state, "key_demo", False),
-                ).answer,
+                    tiers_on=cfg.chat_tiers,
+                ),
             )
         if name == "get_report":
             return audited(
@@ -833,7 +843,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.post(
         "/v1/tools/ask",
-        response_model=ToolAnswer,
+        response_model=AskAnswer,
         operation_id="ask",
         summary="Ask the Muse Spark copilot",
         description=ASK_DESCRIPTION,
@@ -843,7 +853,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         openapi_extra=READ_ONLY,
     )
     def ask_tool(request: Request, key_id: key_dep, body: AskRequest) -> ToolAnswer:
-        return dispatch(request, "ask", {"question": body.question})
+        return dispatch(request, "ask", {"question": body.question})  # an AskAnswer
 
     @app.get(
         "/v1/tools/get_report",
@@ -1098,6 +1108,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     mount_live(
         app,
+        tiers=cfg.chat_tiers,
         data=cfg.data,
         state=state,
         web_origins=web_origins,

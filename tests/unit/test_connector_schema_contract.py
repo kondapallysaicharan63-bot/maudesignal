@@ -83,7 +83,16 @@ def test_recalls_advertises_suggestions_and_others_do_not() -> None:
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     for t in manifest["tools"]:
         has = "suggestions" in t["outputSchema"].get("properties", {})
-        assert has is (t["name"] == "recalls"), t["name"]
+        # ask offers follow-up questions too (chat tiers); its own test is below
+        assert has is (t["name"] in ("recalls", "ask")), t["name"]
+
+
+def test_ask_advertises_its_tier_and_cost() -> None:
+    manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+    ask = next(t for t in manifest["tools"] if t["name"] == "ask")
+    props = ask["outputSchema"]["properties"]
+    assert {"tier", "cost_usd", "badge", "suggestions", "did_you_mean"} <= set(props)
+    assert props["tier"]["enum"] == ["canned", "direct", "cache", "live"]
 
 
 def test_recalls_with_filled_suggestions_matches_both_schemas(tmp_path: Path) -> None:

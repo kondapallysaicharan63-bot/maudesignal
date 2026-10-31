@@ -167,9 +167,9 @@ describe('a live conversation', () => {
   })
 
   it('refuses a question that is too short or too long, before sending', async () => {
-    await type('hi')
+    await type('x')
     await key('Enter')
-    expect(q('ask-error')?.textContent).toMatch(/at least 3/)
+    expect(q('ask-error')?.textContent).toMatch(/at least 2/)
     await type('x'.repeat(501))
     await key('Enter')
     expect(q('ask-error')?.textContent).toMatch(/500/)

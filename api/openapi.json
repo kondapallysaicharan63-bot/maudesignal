@@ -1,6 +1,103 @@
 {
   "components": {
     "schemas": {
+      "AskAnswer": {
+        "additionalProperties": false,
+        "description": "What ``ask`` returns: the common answer plus which chat tier answered and its cost.",
+        "properties": {
+          "advisory": {
+            "default": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+            "title": "Advisory",
+            "type": "string"
+          },
+          "badge": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Short label to show with the answer (tiers 1 to 3).",
+            "title": "Badge"
+          },
+          "cost_usd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Model cost of this answer in USD: 0 for canned, direct and cache; the estimated Muse Spark cost for a live answer; null for a recorded run.",
+            "title": "Cost Usd"
+          },
+          "did_you_mean": {
+            "description": "Known product codes one letter away from an unknown one; never applied.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Did You Mean",
+            "type": "array"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/Fact"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "speakable": {
+            "description": "1 to 3 plain sentences, no markdown, written to be read aloud.",
+            "title": "Speakable",
+            "type": "string"
+          },
+          "suggestions": {
+            "description": "Follow-up questions to offer (never sent by itself).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Suggestions",
+            "type": "array"
+          },
+          "tier": {
+            "description": "canned (fixed reply, no FDA facts, no model), direct (deterministic lookup through the claim gate, no model), cache (the same question's live answer from the last six hours) or live (Muse Spark, or a labelled recorded run when no live call can be made).",
+            "enum": [
+              "canned",
+              "direct",
+              "cache",
+              "live"
+            ],
+            "title": "Tier",
+            "type": "string"
+          },
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "withheld": {
+            "description": "Only ask() uses this; gate-withheld sentences.",
+            "items": {
+              "$ref": "#/components/schemas/WithheldSentence"
+            },
+            "title": "Withheld",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tool",
+          "speakable",
+          "provenance",
+          "tier"
+        ],
+        "title": "AskAnswer",
+        "type": "object"
+      },
       "AskRequest": {
         "additionalProperties": false,
         "description": "Body of ``ask``.",
@@ -988,12 +1085,13 @@
             "title": "Data Dates"
           },
           "kind": {
-            "description": "stored_demo_snapshot, live_openfda, recorded_answer or live_model.",
+            "description": "stored_demo_snapshot, live_openfda, recorded_answer, live_model or canned_reply.",
             "enum": [
               "stored_demo_snapshot",
               "live_openfda",
               "recorded_answer",
-              "live_model"
+              "live_model",
+              "canned_reply"
             ],
             "title": "Kind",
             "type": "string"
@@ -1462,7 +1560,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ToolAnswer"
+                  "$ref": "#/components/schemas/AskAnswer"
                 }
               }
             },

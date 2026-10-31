@@ -281,11 +281,14 @@ def test_live_sentence_without_a_link_is_left_out_of_speakable(tmp_path: Path) -
         [
             {"text": "LLZ had 33 reports from August 25 to August 31, 2026.", "claims": [LLZ_33]},
             {"text": "A named human must review this.", "claims": []},
+            {"text": "The LLZ device had a software problem that week.", "claims": []},
         ]
     )
     a = ask(d, "How many LLZ reports this week?", key_id="abc", runtime=live_rt(tmp_path, client))
     assert_every_spoken_sentence_has_a_fact(a)
-    assert "named human" not in a.speakable
+    assert "named human" not in a.speakable and "software problem" not in a.speakable
+    # The advisory line states no fact: it is neither spoken nor listed as held back (chat
+    # tiers, gate presentation). The unlinked factual sentence is still held back.
     assert [w.text for w in a.withheld] == ["Sentence left out by the claim gate."]
     assert "no openFDA or record link" in a.withheld[0].reason
 
@@ -462,6 +465,7 @@ def test_rest_raw_body_never_holds_a_withheld_sentence(tmp_path: Path) -> None:
         limiter=RateLimiter(100),
         data=ConnectorData(work_dir=tmp_path / "w"),
         ask_runtime=live_rt(tmp_path, OneAnswerClient(BLOCKED_SCRIPT)),
+        chat_tiers=False,  # pins the Muse Spark path (tier 4)
         live_checker=fake_check,
     )
     c = TestClient(create_app(settings), raise_server_exceptions=False)
@@ -561,6 +565,7 @@ def test_rest_raw_body_never_holds_text_the_model_put_in_a_claim_field(tmp_path:
         limiter=RateLimiter(100),
         data=ConnectorData(work_dir=tmp_path / "w"),
         ask_runtime=live_rt(tmp_path, OneAnswerClient(INJECT_SCRIPT)),
+        chat_tiers=False,  # pins the Muse Spark path (tier 4)
         live_checker=fake_check,
     )
     c = TestClient(create_app(settings), raise_server_exceptions=False)

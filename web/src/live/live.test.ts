@@ -172,7 +172,8 @@ describe('history trimming and question checks', () => {
 
   it('checks the question length the way the server does', () => {
     expect(checkQuestion('  hi?  ')).toBe('hi?')
-    expect(() => checkQuestion('hi')).toThrow(/at least 3/)
+    expect(checkQuestion('hi')).toBe('hi') // a greeting is answered by the server's fixed reply
+    expect(() => checkQuestion(' x ')).toThrow(/at least 2/)
     expect(() => checkQuestion('   ')).toThrow(LiveError)
     expect(() => checkQuestion('x'.repeat(501))).toThrow(/500/)
     expect(checkQuestion('x'.repeat(500))).toHaveLength(500)
@@ -191,7 +192,7 @@ describe('payload builders', () => {
     expect((body.history as { answer: string }[])[0].answer).toHaveLength(600)
     expect(body.product_code).toBe('QIH')
     expect(body.ref).toBe('dr-x')
-    expect(() => buildAskBody('no')).toThrow(LiveError)
+    expect(() => buildAskBody('n')).toThrow(LiveError)
   })
 
   it('voice form: part "audio" is the WAV; part "meta" only when there is something to say', async () => {
@@ -329,7 +330,7 @@ describe('network layer with a fake fetch', () => {
   it('sends nothing without an API address, and refuses a bad question or image before sending', async () => {
     const f = vi.fn()
     expect(await postAsk('What changed?', {}, { apiBase: null, fetcher: f }).catch((e: LiveError) => e)).toMatchObject({ kind: 'not_configured' })
-    expect(await postAsk('no', {}, { apiBase: 'https://x.example', fetcher: f }).catch((e: LiveError) => e)).toMatchObject({ kind: 'invalid_input' })
+    expect(await postAsk('n', {}, { apiBase: 'https://x.example', fetcher: f }).catch((e: LiveError) => e)).toMatchObject({ kind: 'invalid_input' })
     expect(await postLabel(new Blob([], { type: 'image/jpeg' }), { apiBase: 'https://x.example', fetcher: f }).catch((e: LiveError) => e)).toMatchObject({ kind: 'invalid_input' })
     expect(await postLabel(new Blob([new Uint8Array(4 * 1024 * 1024 + 1)], { type: 'image/jpeg' }), { apiBase: 'https://x.example', fetcher: f }).catch((e: LiveError) => e)).toMatchObject({ kind: 'too_large' })
     expect(f).not.toHaveBeenCalled()
