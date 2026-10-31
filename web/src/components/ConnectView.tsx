@@ -135,7 +135,7 @@ export function ConnectView({ apiBase, fetcher }: { apiBase: string | null; fetc
         <ul className="m-0 mt-2 list-none space-y-2 p-0">
           {EXAMPLE_QUESTIONS.map((p) => (
             <li key={p.id} data-testid={`example-${p.id}`} className="text-[17px]">
-              <span className="font-semibold">{p.title}.</span> <span className="text-ink-2">{p.line}</span>
+              <span className="font-semibold">{p.title}</span> <span className="text-ink-2">{p.line}</span>
             </li>
           ))}
         </ul>
