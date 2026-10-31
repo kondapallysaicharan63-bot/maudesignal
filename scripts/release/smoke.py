@@ -37,7 +37,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 
-from budget import KIND_OF_PATH, SKIPPED_BUDGET, Budget  # noqa: E402
+from budget import SKIPPED_BUDGET, Budget  # noqa: E402
 from compare import llz_snapshot_diffs  # noqa: E402
 from leaks import contains_any, find_key_shapes  # noqa: E402
 from load_test import evaluate, run_load, summarize  # noqa: E402
@@ -66,6 +66,7 @@ class Smoke:
         self.api, self.web, self.rep, self.secrets = api.rstrip("/"), web.rstrip("/"), rep, secrets
         self.budget = budget if budget is not None else Budget()
         self.live_cost = 0.0
+        self.load_cost = 0.0
         self.web_live_cost = 0.0  # cost_usd of the live calls the browser pass made
         self.remaining: list[int] = []
         self.demo_key = ""
@@ -217,7 +218,10 @@ class Smoke:
         b = r.json() if isinstance(r.json(), dict) else {}
         cost = float(b.get("cost_usd") or 0.0)
         self.live_cost += cost
-        self.budget.settle(kind, cost)
+        # no answer, a non-200 answer or no cost_usd: the server may still have spent up to the
+        # cap, so the full hold stays as spent
+        got_cost = r.status == 200 and b.get("cost_usd") is not None
+        self.budget.settle(kind, cost if got_cost else None)
         left = (b.get("limits") or {}).get("remaining_today")
         if isinstance(left, int):
             self.remaining.append(left)
@@ -246,8 +250,12 @@ class Smoke:
         """A live call the budget refused: a FAIL line, never silent."""
         self.rep.add(name, FAIL, SKIPPED_BUDGET, group="live")
 
-    def live(self) -> None:
-        """One chat question, one photo, one spoken question on /v1/live/* (budget-checked)."""
+    def live(self, with_photo: bool = True) -> None:
+        """One chat question, one spoken question and (without a browser pass) one photo.
+
+        Every call is budget-checked. When the browser pass runs, its camera upload covers
+        /v1/live/label, so ``with_photo`` is False and no direct photo call is made.
+        """
         if self.budget.reserve("ask"):
             r = request(
                 "POST", self.api + "/v1/live/ask", json_body={"question": QUESTION}, timeout=90
@@ -255,7 +263,9 @@ class Smoke:
             self.note_live("live chat question", r, "ask")
         else:
             self.skipped_budget("live chat question")
-        if not LABEL_PHOTO.is_file():
+        if not with_photo:
+            pass
+        elif not LABEL_PHOTO.is_file():
             self.rep.add("live photo", FAIL, f"{LABEL_PHOTO.name} not found", group="live")
         elif self.budget.reserve("photo"):
             body, ctype = multipart(
@@ -422,17 +432,25 @@ class Smoke:
                 f"no report; exit {proc.returncode}: {(proc.stderr or proc.stdout)[-300:]}",
                 group="web",
             )
+            # the browser may have made calls before it stopped: assume it spent all it was given
+            self.web_live_cost = self.budget.remaining_usd()
+            self.budget.absorb(self.web_live_cost, self.budget.remaining_counts())
             return
         import json
 
         doc = json.loads(path.read_text("utf-8"))
-        self.web_live_cost = float(doc.get("metrics", {}).get("live_cost_usd") or 0.0)
-        web_counts = {"ask": 0, "photo": 0, "voice": 0}
-        for call in doc.get("metrics", {}).get("live_calls", []):
-            kind = KIND_OF_PATH.get(str(call.get("path", "")).split("?")[0].strip("/"))
-            if kind and not call.get("refused"):
-                web_counts[kind] += 1
-        self.budget.absorb(self.web_live_cost, web_counts)
+        snap = doc.get("metrics", {}).get("budget")
+        if isinstance(snap, dict):
+            # the browser pass's own ledger: every reserved call, answered or not
+            used = snap.get("used") or {}
+            counts = {k: int(used.get(k, 0)) for k in ("ask", "photo", "voice")}
+            self.web_live_cost = float(snap.get("spent_usd") or 0.0) + float(
+                snap.get("held_usd") or 0.0
+            )
+        else:  # no ledger in the report: assume the whole remaining budget was spent
+            counts = self.budget.remaining_counts()
+            self.web_live_cost = self.budget.remaining_usd()
+        self.budget.absorb(self.web_live_cost, counts)
         self.rep.metrics["web_pass_live_calls"] = doc.get("metrics", {}).get("live_calls", [])
         for c in doc["checks"]:
             self.rep.add(
@@ -444,9 +462,21 @@ class Smoke:
             )
 
     def load(self, vus: int, seconds: float, max_live: int) -> None:
-        """The light load test; the cap total comes from the cost of every live ask."""
-        # live asks only within what is left of the shared budget; the rest are public checks
-        allowed = min(max_live, self.budget.remaining_counts()["ask"])
+        """The light load test: live asks only within what is left of the shared budget."""
+        # Each live ask is held at its full cap, so the number allowed is what the dollars left
+        # can carry; everything else in the load test is a public check or a health call.
+        allowed = min(
+            max_live, self.budget.remaining_counts()["ask"], self.budget.max_asks_by_dollars()
+        )
+        if allowed <= 0:
+            self.rep.add(
+                "load: live asks",
+                KNOWN_GAP,
+                "none planned: the budget left after the live checks and the browser pass cannot "
+                "carry one more ask at its full hold; the load test used public checks only",
+                group="load",
+                required=False,
+            )
         refused_before = len(self.budget.refused)
         samples = run_load(
             self.api, vus=vus, seconds=seconds, max_live_asks=allowed, budget=self.budget
@@ -466,27 +496,38 @@ class Smoke:
         for c in sub.checks:
             self.rep.add(f"load: {c.name}", c.status, c.detail, group="load", required=c.required)
         self.rep.metrics["load"] = stats
-        total = self.live_cost + float(stats["live_cost_usd"]) + self.web_live_cost
-        self.rep.metrics["budget"] = self.budget.snapshot()
+        self.load_cost = float(stats["live_cost_usd"])
+        if stats.get("last_remaining_today") is not None:
+            self.remaining.append(stats["last_remaining_today"])
+
+    def finish(self) -> None:
+        """Total cost and budget numbers; runs on every smoke run, also with --no-load."""
+        snap = self.budget.snapshot()
+        self.rep.metrics["budget"] = snap
+        used: dict[str, int] = snap["used"]  # type: ignore[assignment]
+        limits: dict[str, int] = snap["limits"]  # type: ignore[assignment]
+        counts_ok = all(used[k] <= limits[k] for k in limits)
+        # spent_usd holds every settled call: its reported cost_usd, or its full hold when no
+        # cost came back; held_usd is what is still reserved (zero when the run is over)
+        total = float(snap["spent_usd"]) + float(snap["held_usd"])  # type: ignore[arg-type]
         self.rep.add(
             "total live cost stayed within the per-run budget",
-            PASS if total <= self.budget.max_usd + 1e-9 else FAIL,
-            f"${total:.4f} of ${self.budget.max_usd:.2f}",
+            PASS if total <= self.budget.max_usd + 1e-9 and counts_ok else FAIL,
+            f"${total:.4f} of ${self.budget.max_usd:.2f} (calls without a reported cost counted at "
+            f"their full hold); calls used {used} of {limits}",
             group="load",
         )
         self.rep.metrics["live_cost_usd_total"] = round(total, 6)
         self.rep.metrics["live_cost_parts"] = {
             "live_checks": round(self.live_cost, 6),
-            "load_test": round(float(stats["live_cost_usd"]), 6),
-            "web_quick_pass": round(self.web_live_cost, 6),
+            "load_test": round(self.load_cost, 6),
+            "web_quick_pass_incl_holds": round(self.web_live_cost, 6),
         }
         seen = [*self.remaining]
-        if stats.get("last_remaining_today") is not None:
-            seen.append(stats["last_remaining_today"])
         self.rep.add(
             "cap ledger: cost reported by the responses (informational)",
             KNOWN_GAP,
-            f"${total:.4f} summed from cost_usd of live checks, load test and web pass; "
+            f"${total:.4f} counted by this run's budget; "
             f"last remaining_today: {seen[-1] if seen else 'not reported'}",
             group="load",
             required=False,
@@ -542,9 +583,10 @@ def main(argv: list[str] | None = None) -> int:
     s = Smoke(args.api, args.web, rep, [*keys, admin])
     s.service()
     s.keyed(keys)
-    s.live()
+    browser_pass = not (args.no_web or not args.web)
+    s.live(with_photo=not browser_pass)  # the browser pass's camera upload covers /v1/live/label
     s.test_entries(admin)
-    if args.no_web or not args.web:
+    if not browser_pass:
         rep.add("web checks", SKIPPED, "no web URL given, or --no-web", group="web", required=False)
     else:
         s.web_pages()
@@ -553,6 +595,7 @@ def main(argv: list[str] | None = None) -> int:
         rep.add("load test", SKIPPED, "--no-load", group="load", required=False)
     else:
         s.load(args.vus, args.seconds, args.max_live_asks)
+    s.finish()
     rep.write(args.out_dir, "smoke")
     return rep.exit_code()
 

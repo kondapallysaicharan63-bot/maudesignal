@@ -38,7 +38,6 @@ jobs:
           cache: "pip"
       - name: Install package
         run: |
-          python -m pip install --upgrade pip
           pip install -e ".[dev]"
       - name: ruff, black, mypy --strict, unit tests with a coverage floor, gate adversarial set, secret scan, quoted numbers, review findings
         run: python scripts/release/python_job.py --out-dir release-out --cov-floor 70
@@ -84,9 +83,8 @@ jobs:
           cache: "pip"
       - name: Install package and the API's own requirements
         run: |
-          python -m pip install --upgrade pip
           pip install -e ".[dev]"
-          pip install -r api/requirements.txt "uvicorn>=0.30"
+          pip install -r api/requirements.txt "uvicorn==0.54.0"
       - name: Make test keys (random, in this job only) and start the API
         run: |
           python scripts/release/serve_api.py prepare --profile contract \
@@ -128,9 +126,8 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - name: Install Python packages and the three browsers
         run: |
-          python -m pip install --upgrade pip
           pip install -e ".[dev]"
-          pip install -r api/requirements.txt "uvicorn>=0.30" "playwright==1.63.0" "pillow==12.3.0"
+          pip install -r api/requirements.txt "uvicorn==0.54.0" "playwright==1.63.0" "pillow==12.3.0"
           python -m playwright install --with-deps chromium firefox webkit
       - name: Install web packages and axe-core (accessibility scan)
         working-directory: web
@@ -177,6 +174,10 @@ jobs:
   gate-live:
     name: Decide whether the live job runs
     runs-on: ubuntu-latest
+    # one gate at a time across all branches, so two live runs cannot both pass the count
+    concurrency:
+      group: release-live-gate
+      cancel-in-progress: false
     permissions:
       contents: read
       actions: read
@@ -190,6 +191,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
           RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
           MAX_LIVE_RUNS_PER_DAY: "3"
         run: |
           if [ "$HAS_KEY" != "true" ] || [[ "$BRANCH" != *live* ]]; then
@@ -197,29 +199,44 @@ jobs:
             echo "live job: will not run (needs the secret and a branch name containing 'live')"
             exit 0
           fi
-          # Daily guard: this workflow's live job has its own $0.60 ledger per run, so the number
-          # of live runs per day is what limits the total. Count today's (UTC) runs of this
-          # workflow on branches containing 'live', not counting this run.
+          # Daily guard: this workflow's live job has its own $0.60 ledger per ATTEMPT (every
+          # attempt, including "Re-run all jobs", gets a fresh runner), so the number of live
+          # attempts per day is what limits the total. Sum run_attempt over today's (UTC) runs
+          # of this workflow on branches containing 'live', over every page of results, and add
+          # this run's attempts before the current one.
           today=$(date -u +%Y-%m-%d)
-          runs=$(curl -sS --fail-with-body \
-            -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/$REPO/actions/workflows/release-check.yml/runs?created=%3E%3D$today&per_page=100") || {
-              echo "run_live=false" >> "$GITHUB_OUTPUT"
-              echo "::error::live job: stopped, today's runs could not be listed (no guess is made)"
-              exit 0
-            }
-          earlier=$(echo "$runs" | python3 -c "
+          total=0
+          page=1
+          while :; do
+            runs=$(curl -sS --fail-with-body \
+              -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/$REPO/actions/workflows/release-check.yml/runs?created=%3E%3D$today&per_page=100&page=$page") || {
+                echo "run_live=false" >> "$GITHUB_OUTPUT"
+                echo "::error::live job: stopped, today's runs could not be listed (no guess is made)"
+                exit 0
+              }
+            n=$(echo "$runs" | python3 -c "
           import json, os, sys
           me = int(os.environ['RUN_ID'])
           runs = json.load(sys.stdin).get('workflow_runs', [])
-          print(sum(1 for r in runs if 'live' in (r.get('head_branch') or '') and r.get('id') != me))
+          live = [r for r in runs if 'live' in (r.get('head_branch') or '')]
+          # other runs: all their attempts; this run: only the attempts before this one
+          print(len(runs), sum((int(os.environ['RUN_ATTEMPT']) - 1) if r.get('id') == me else int(r.get('run_attempt') or 1) for r in live))
           ")
+            count=${n% *}
+            attempts=${n#* }
+            total=$((total + attempts))
+            [ "$count" -lt 100 ] && break
+            page=$((page + 1))
+            [ "$page" -gt 20 ] && break
+          done
+          earlier=$total
           if [ "$earlier" -ge "$MAX_LIVE_RUNS_PER_DAY" ]; then
             echo "run_live=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::live job: stopped, $earlier live release runs already today (limit $MAX_LIVE_RUNS_PER_DAY)"
+            echo "::warning::live job: stopped, $earlier live release attempts already today (limit $MAX_LIVE_RUNS_PER_DAY)"
           else
             echo "run_live=true" >> "$GITHUB_OUTPUT"
-            echo "live job: will run (secret present, branch contains 'live', $earlier earlier live run(s) today, limit $MAX_LIVE_RUNS_PER_DAY)"
+            echo "live job: will run (secret present, branch contains 'live', $earlier earlier live attempt(s) today, limit $MAX_LIVE_RUNS_PER_DAY)"
           fi
 
   live:
@@ -236,9 +253,8 @@ jobs:
           cache: "pip"
       - name: Install package and the API's own requirements
         run: |
-          python -m pip install --upgrade pip
           pip install -e ".[dev]"
-          pip install -r api/requirements.txt "uvicorn>=0.30"
+          pip install -r api/requirements.txt "uvicorn==0.54.0"
       - name: Start the API with the real Meta key and the app's own $0.60 cap, on a fresh ledger
         env:
           META_MODEL_API_KEY: ${{ secrets.META_MODEL_API_KEY }}

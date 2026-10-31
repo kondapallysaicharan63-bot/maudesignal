@@ -7,7 +7,7 @@ nothing in a report is typed in. Scripts: `scripts/release/`. Unit tests of the 
 
 | Pipeline | Workflow | Runs on | Spends |
 |---|---|---|---|
-| Release check | `.github/workflows/release-check.yml` | push to `release/**`, or by hand | nothing, except the optional live job (at most $0.60) |
+| Release check | `.github/workflows/release-check.yml` | push to `release/**`, or by hand | nothing, except the optional live job (at most $0.60 per attempt, at most 3 attempts a day) |
 | Smoke test | `.github/workflows/smoke.yml` | push to `smoke/**`, or by hand | a few live model calls against the deployed API, inside its own daily cap |
 
 ## Status words
@@ -144,11 +144,15 @@ budget no longer allows (including the injection question) is a FAIL line `skipp
 **Ledger and daily guard.** The live job's $0.60 is its own per-run ledger: a fresh ledger
 directory of the local API started inside the job. It is separate from the global ledger of the
 deployed API (which the job never calls), so neither counts against the other. The total per day
-is therefore limited by the number of live runs, and `gate-live` stops the live job when 3 live
-release runs already happened today (UTC): it lists today's runs of `release-check.yml` through
-the REST API with `GITHUB_TOKEN` (`actions: read`), counts those on branches whose name contains
-`live` (not counting the current run) and sets `run_live=false` at 3 or more. If the list cannot
-be fetched the job also stops (an error line, no guess).
+is therefore limited by the number of live **attempts** (every "Re-run" gets a fresh runner and
+so a fresh ledger), and `gate-live` stops the live job when 3 live release attempts already
+happened today (UTC): it lists today's runs of `release-check.yml` through the REST API with
+`GITHUB_TOKEN` (`actions: read`), over every page of results, on branches whose name contains
+`live`, and sums each run's `run_attempt` (for the current run only the attempts before this one,
+from `github.run_attempt`). It sets `run_live=false` at 3 or more. If the list cannot be fetched
+the job also stops (an error line, no guess). The gate job has a concurrency group
+(`release-live-gate`) shared by all branches, so two live runs started together cannot both pass
+the count.
 
 ## Smoke test (`smoke/**`)
 
@@ -175,13 +179,34 @@ Responses and the web bundle are scanned for the secrets given to the run and fo
 strings.
 
 **Spend budget per smoke run** (`scripts/release/budget.py`): one `Budget` object is shared by the
-live checks, the web quick pass and the load test. In total at most **$0.60**, **10** live asks,
+live checks, the web quick pass and the load test. In total at most **$1.50**, **10** live asks,
 **2** photos and **1** spoken question. Before each live call the budget checks the cost already
-summed from `cost_usd`, plus the holds of calls in flight, plus this call's maximum hold ($0.12
-ask, $0.12 voice, $0.15 photo, the per-request caps of the app); if that passes $0.60, or the
-count of its kind is used up, the call is not made and the report gets a FAIL line
-`skipped: budget` (never silent). The browser pass receives what is left as `--live-budget`.
-The numbers (spent, used, refused) are in the report metrics under `budget`.
+spent, plus the holds of calls in flight, plus this call's maximum hold: **$0.25 ask, $0.30 voice,
+$0.30 photo**. These are the *deployed* API's default per-request caps (`globalcap.py` on
+`track-c-live`), the most one call can cost there; they are not the lower caps ($0.12 / $0.12 /
+$0.15) that the release `live` job sets on its own local API. `/v1/health` does not report the
+deployed caps, so the numbers are copied into `budget.py` (a unit test pins them); raise them if
+the deployment's caps are raised. A call that gets no usable answer (timeout, non-200, no
+`cost_usd`) may still have run the model, so its full hold is recorded as spent, never $0. If
+the check would pass $1.50, or the count of its kind is used up, the call is not made and the
+report gets a FAIL line `skipped: budget` (never silent).
+
+The dollar ceiling is $1.50 and not $0.60 because two worst-case holds already use $0.55 of
+$0.60; the smoke plan (`SMOKE_PLAN`, simulated in a unit test with every call at its full hold)
+is: direct chat question ($0.25) and spoken question ($0.30); in the browser pass at the first
+width only, two chat turns ($0.50) and one camera upload ($0.30), which also covers
+`/v1/live/label` (the direct photo call is made only when no browser pass runs). That is $1.35
+at the holds; the real total is the sum of the reported `cost_usd`. The load test then gets live
+asks only for what the dollars left can carry at $0.25 each, which after this plan is none: its
+other slots are public `check_device_type` and health calls. The 390 px pass runs only the
+alert-bell scenario.
+
+The browser pass receives what is left as `--live-budget` and counts every live call the page
+starts (routes `/v1/live/*`, and the older `/v1/label` and `/v1/voice`) in its own copy of the
+budget. A call reserved but not answered before the page closed (for example a chat turn still
+streaming) is settled at its full hold. The pass writes its ledger (`budget`: spent, held, used)
+to its report and `smoke.py` absorbs that, not the answered responses. The total-cost check
+and the `budget` metrics are written on every smoke run, also with `--no-load`.
 
 The cost line "cap ledger: cost reported by the responses" is informational (KNOWN_GAP, not
 required): it sums `cost_usd` from the live checks, the load test and the browser pass, and
@@ -222,6 +247,16 @@ limited by the app's own cap.
   behaves.
 * `smoke.yml` and the `e2e` job of `release-check.yml` install the same pinned `playwright==1.63.0`
   and `pillow==12.3.0` (a unit test compares the two files); change both together.
+* `release-check.yml` pins `uvicorn==0.54.0` and does not upgrade pip.
+* `api_contract.py` writes permanent non-TEST entries (it checks that `delete-test` leaves them),
+  so it refuses to run unless `--base` is `127.0.0.1` or `localhost`.
+* In the e2e "Check any device type" scenario the known gap needs the page's honest failure and
+  a direct GET of the local API's public check that gives no answer, 502, 503 or 504; any other
+  status (404, 401, 500) is a FAIL.
+* The smoke default `WEB_URL` is the `track-b-ui` deployment, whose camera posts to `/v1/label`
+  (its chat makes no API call). The browser pass counts `/v1/label` and `/v1/voice` in the budget
+  as well as `/v1/live/*`; point `web_url` at a build whose client uses `/v1/live/*` to exercise
+  the live chat.
 * The e2e job runs on GitHub's Ubuntu runners; Safari on a device is not tested, only WebKit.
 * Coverage is measured on `tests/unit` (the browser tests are a separate job).
 * The Playwright scenarios use the app's visible labels and test ids; a renamed control makes a

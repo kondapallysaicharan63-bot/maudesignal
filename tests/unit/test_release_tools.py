@@ -695,28 +695,49 @@ def test_visits_all_test_uses_the_matching_ref() -> None:
 def test_budget_holds_counts_and_dollars() -> None:
     import budget
 
-    b = budget.Budget()
+    b = budget.Budget(max_usd=1.0)
     assert b.reserve("voice") and not b.reserve("voice")  # one voice question per run
     assert b.refused == ["voice"]
     b.settle("voice", 0.10)
     assert b.reserve("photo") and b.reserve("photo") and not b.reserve("photo")  # 2 photos
     b.settle("photo", 0.14)
     b.settle("photo", 0.14)
-    # spent 0.38; an ask holds 0.12 -> 0.50 fits; once it settled at 0.12 a second ask would
-    # reach 0.62 (> 0.60) and is refused
+    # spent 0.38; an ask holds 0.25 -> 0.63 fits; once settled at 0.25 a second ask would
+    # reach 0.88 + hold 0.25 > 1.0 and is refused
     assert b.reserve("ask")
-    b.settle("ask", 0.12)
+    b.settle("ask", 0.25)
+    assert b.reserve("ask")
+    b.settle("ask", 0.25)
     assert not b.reserve("ask")
-    assert b.snapshot()["spent_usd"] == pytest.approx(0.50)
+    assert b.snapshot()["spent_usd"] == pytest.approx(0.88)
+
+
+def test_budget_holds_are_the_deployed_caps() -> None:
+    # copied from connector/globalcap.py on track-c-live (DEFAULT_ASK/VOICE/LABEL_USD); the local
+    # release live job uses lower caps (0.12/0.12/0.15) but the smoke run talks to the deployment
+    import budget
+
+    assert budget.HOLD_USD == {"ask": 0.25, "voice": 0.30, "photo": 0.30}
 
 
 def test_budget_counts_holds_of_calls_in_flight() -> None:
     import budget
 
-    b = budget.Budget()
+    b = budget.Budget(max_usd=0.60)
     taken = sum(1 for _ in range(10) if b.reserve("ask"))  # nothing settled yet: holds add up
-    assert taken == 5  # 5 x 0.12 = 0.60
-    assert b.remaining_usd() == pytest.approx(0.0)
+    assert taken == 2  # 2 x 0.25 = 0.50; a third hold would pass 0.60
+    assert b.remaining_usd() == pytest.approx(0.10)
+
+
+def test_budget_settles_a_call_without_a_cost_at_its_full_hold() -> None:
+    import budget
+
+    b = budget.Budget()
+    assert b.reserve("ask") and b.reserve("photo")
+    b.settle("ask", None)  # timeout / non-200 / no cost_usd: the server may have spent the cap
+    b.settle("photo", 0.01)
+    assert b.spent == pytest.approx(0.25 + 0.01)
+    assert b.held == pytest.approx(0.0)
 
 
 def test_budget_absorb_adds_browser_calls() -> None:
@@ -726,6 +747,108 @@ def test_budget_absorb_adds_browser_calls() -> None:
     b.absorb(0.2, {"ask": 2, "photo": 1})
     assert b.remaining_counts() == {"ask": 8, "photo": 1, "voice": 1}
     assert b.spent == pytest.approx(0.2)
+
+
+def test_the_full_smoke_plan_fits_the_budget_with_every_call_at_its_full_hold() -> None:
+    import budget
+
+    b = budget.Budget()
+    for part in ("direct", "web"):
+        for kind in budget.SMOKE_PLAN[part]:
+            assert b.reserve(kind), f"{part} {kind} refused: {b.snapshot()}"
+            b.settle(kind, None)  # worst case: no cost came back for any call
+    assert b.refused == []
+    assert b.spent <= b.max_usd
+    # what is left cannot carry another live ask, so the load test uses public checks only
+    assert b.max_asks_by_dollars() == 0
+
+
+def test_the_plan_with_a_direct_photo_when_there_is_no_browser_pass_fits_too() -> None:
+    import budget
+
+    b = budget.Budget()
+    for kind in (*budget.SMOKE_PLAN["direct"], "photo"):
+        assert b.reserve(kind)
+        b.settle(kind, None)
+    assert b.refused == [] and b.max_asks_by_dollars() >= 1
+
+
+def test_web_pass_ledger_is_absorbed_with_unanswered_calls_at_full_hold() -> None:
+    import budget
+
+    web = budget.Budget(max_usd=1.0, limits={"ask": 5, "photo": 1, "voice": 0})
+    assert web.reserve("ask") and web.reserve("ask")
+    web.settle("ask", 0.01)  # answered
+    web.settle("ask", None)  # reserved, never answered before the page closed
+    snap = web.snapshot()
+    parent = budget.Budget()
+    parent.absorb(float(snap["spent_usd"]) + float(snap["held_usd"]), snap["used"])  # type: ignore[arg-type]
+    assert parent.used["ask"] == 2
+    assert parent.spent == pytest.approx(0.26)
+
+
+def test_live_kind_covers_live_and_older_paths() -> None:
+    import e2e_web
+
+    assert e2e_web.live_kind("https://a/v1/live/ask") == "ask"
+    assert e2e_web.live_kind("https://a/v1/live/label?x=1") == "photo"
+    assert e2e_web.live_kind("https://a/v1/live/voice") == "voice"
+    assert e2e_web.live_kind("https://a/v1/label") == "photo"
+    assert e2e_web.live_kind("https://a/v1/voice") == "voice"
+    assert e2e_web.live_kind("https://a/v1/health") == ""
+
+
+def test_check_device_known_gap_only_for_upstream_down_statuses() -> None:
+    import e2e_web
+
+    assert e2e_web.UPSTREAM_DOWN == {0, 502, 503, 504}
+    for status in (401, 404, 500):
+        assert status not in e2e_web.UPSTREAM_DOWN
+
+
+def test_api_contract_runs_only_against_a_local_api() -> None:
+    import api_contract
+
+    assert api_contract.is_local_base("http://127.0.0.1:8000")
+    assert api_contract.is_local_base("http://localhost:8002")
+    for bad in (
+        "https://maudesignal-api.vercel.app",
+        "http://127.0.0.1.evil.example",
+        "http://example.com/127.0.0.1",
+        "ftp://127.0.0.1",
+    ):
+        assert not api_contract.is_local_base(bad)
+    assert (
+        api_contract.main(["--base", "https://maudesignal-api.vercel.app", "--keys-file", "x"]) == 2
+    )
+
+
+def test_smoke_finish_writes_the_total_cost_check_without_a_load_test() -> None:
+    import smoke
+
+    rep = rpt.Report("t")
+    s = smoke.Smoke("https://a", "", rep, [])
+    s.budget.reserve("ask")
+    s.budget.settle("ask", None)
+    s.finish()
+    line = next(c for c in rep.checks if c.name.startswith("total live cost"))
+    assert line.status == rpt.PASS and "$0.2500" in line.detail
+    assert rep.metrics["budget"]["spent_usd"] == pytest.approx(0.25)  # type: ignore[index]
+
+
+def test_smoke_note_live_keeps_the_hold_when_the_answer_has_no_cost(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import smoke
+
+    rep = rpt.Report("t")
+    s = smoke.Smoke("https://a", "", rep, [])
+    assert s.budget.reserve("ask")
+    s.note_live("x", netutil.Response(504, {}, b"", 90_000), "ask")  # timeout / error
+    assert s.budget.spent == pytest.approx(0.25)
+    assert s.budget.reserve("ask")
+    s.note_live("y", netutil.Response(200, {}, b'{"cost_usd": 0.02}', 5), "ask")
+    assert s.budget.spent == pytest.approx(0.27)
 
 
 def test_run_load_uses_public_checks_when_the_budget_is_short() -> None:
@@ -747,7 +870,7 @@ def test_run_load_uses_public_checks_when_the_budget_is_short() -> None:
             publics.append(url)
         return netutil.Response(200, {}, b"{}", 5)
 
-    b = budget.Budget()
+    b = budget.Budget(max_usd=0.60)
     load_test.run_load(
         "http://x",
         vus=1,
@@ -759,7 +882,7 @@ def test_run_load_uses_public_checks_when_the_budget_is_short() -> None:
         sleep=sleep,
         budget=b,
     )
-    # each ask really cost 0.25: two fit; a third (0.50 + a 0.12 hold = 0.62) is refused
+    # each ask really cost 0.25: two fit; a third (0.50 + a 0.25 hold = 0.75) is refused
     assert len(asks) == 2
     assert b.refused  # recorded, so the smoke run can write 'skipped: budget'
     assert len(publics) > 20
@@ -843,3 +966,22 @@ def test_gate_live_stops_after_three_live_runs_today() -> None:
     assert gate["permissions"]["actions"] == "read"
     assert "GITHUB_TOKEN" in text and "actions/workflows/release-check.yml/runs" in text
     assert '"MAX_LIVE_RUNS_PER_DAY": "3"' in text
+
+
+def test_gate_live_counts_attempts_pages_and_serialises() -> None:
+    import yaml
+
+    rc = yaml.safe_load((WORKFLOWS / "release-check.yml").read_text())
+    gate = rc["jobs"]["gate-live"]
+    text = json.dumps(gate)
+    assert "run_attempt" in text and "RUN_ATTEMPT" in text  # attempts, not runs
+    assert "page=$page" in text  # every page of results
+    assert gate["concurrency"]["group"] == "release-live-gate"
+
+
+def test_workflows_pin_uvicorn_and_do_not_upgrade_pip() -> None:
+    for name in ("release-check.yml", "smoke.yml"):
+        text = (WORKFLOWS / name).read_text()
+        assert "--upgrade pip" not in text
+        assert "uvicorn>=" not in text
+    assert "uvicorn==" in (WORKFLOWS / "release-check.yml").read_text()

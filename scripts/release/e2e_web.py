@@ -68,10 +68,23 @@ AXE_VIEWS = (
 TEST_REF = "TEST-0"
 
 
+LIVE_ROUTES = ("**/v1/live/**", "**/v1/label*", "**/v1/voice*")  # older clients post /v1/label
+
+
 def live_kind(url: str) -> str:
-    """Budget kind (ask, photo, voice) of a /v1/live/<path> URL; empty when it is none of them."""
-    tail = url.split("/v1/live/")[-1].split("?")[0].strip("/") if "/v1/live/" in url else ""
-    return KIND_OF_PATH.get(tail, "")
+    """Budget kind (ask, photo, voice) of a live-call URL; empty when it is none of them.
+
+    Covers ``/v1/live/<ask|label|voice>`` and the older ``/v1/label`` and ``/v1/voice`` paths,
+    so a deployment whose client uses them is counted in the budget too.
+    """
+    path = url.split("?")[0].rstrip("/")
+    if "/v1/live/" in path:
+        return KIND_OF_PATH.get(path.split("/v1/live/")[-1], "")
+    if path.endswith("/v1/label"):
+        return "photo"
+    if path.endswith("/v1/voice"):
+        return "voice"
+    return ""
 
 
 def visit_ref(post_data: str | None) -> str | None:
@@ -138,18 +151,28 @@ class Env:
 
     def _note_live(self, resp: Any) -> None:
         """Record mode and cost_usd of every /v1/live/* answer the page receives."""
-        if "/v1/live/" not in resp.url:
+        kind = live_kind(resp.url)
+        if not kind:
             return
-        entry: dict[str, Any] = {"path": resp.url.split("/v1/live/")[1][:20], "status": resp.status}
+        entry: dict[str, Any] = {"path": kind, "status": resp.status}
+        known: float | None = None  # None: no cost came back, so the hold stays as spent
         with contextlib.suppress(Exception):
             doc = resp.json()
             entry["mode"] = doc.get("mode")
             entry["cost_usd"] = float(doc.get("cost_usd") or 0.0)
+            if resp.status == 200 and doc.get("cost_usd") is not None:
+                known = entry["cost_usd"]
         self.live_calls.append(entry)
-        kind = live_kind(resp.url)
         if self.budget is not None and kind in self.budget_held:
             self.budget_held.remove(kind)
-            self.budget.settle(kind, float(entry.get("cost_usd", 0.0)))
+            self.budget.settle(kind, known)
+
+    def settle_unanswered(self) -> None:
+        """Calls reserved but never answered (page closed first): the full hold stays as spent."""
+        if self.budget is None:
+            return
+        while self.budget_held:
+            self.budget.settle(self.budget_held.pop(), None)
 
     def guard_live(self) -> None:
         """Smoke only: count every /v1/live/* call in the shared budget; abort what does not fit."""
@@ -167,7 +190,8 @@ class Env:
                 )
                 route.abort("blockedbyclient")
 
-        self.page.context.route("**/v1/live/**", handler)
+        for pattern in LIVE_ROUTES:
+            self.page.context.route(pattern, handler)
 
     def block_visits(self) -> None:
         """Stop /v1/visit pings reaching the server; keep their bodies to check the ref."""
@@ -280,6 +304,9 @@ def s_ai_sweep(env: Env) -> str:
     return "sweep view shows flagged count"
 
 
+UPSTREAM_DOWN = frozenset({0, 502, 503, 504})  # no answer, bad gateway, unavailable, timeout
+
+
 def direct_check(env: Env) -> int | None:
     """HTTP status of a direct GET of the local API's public check for LLZ (0 = no answer).
 
@@ -315,6 +342,12 @@ def s_check_device(env: Env) -> str:
         if direct is None:
             raise AssertionError(
                 "the page said the API did not answer and no --api was given to test it directly"
+            )
+        if direct not in UPSTREAM_DOWN:
+            raise AssertionError(
+                f"the page said the API did not answer and a direct GET of the public check "
+                f"answered HTTP {direct}, which is not an 'openFDA unreachable' status "
+                f"{sorted(UPSTREAM_DOWN)}: a missing or broken route, not a known gap"
             )
         raise SkipError(
             KNOWN_GAP,
@@ -621,6 +654,9 @@ SMOKE = (
     "camera upload, matches, confirm",
     "alert bell, alert panel",
 )
+# Scenarios that call a live model: in the smoke suite they run at the first width only, so the
+# planned calls (two chat turns, one photo) fit the shared budget (see budget.SMOKE_PLAN).
+SMOKE_LIVE = ("chat (recorded mode, two turns)", "camera upload, matches, confirm")
 
 
 # --- error states (route mocking) --------------------------------------------------------------
@@ -864,6 +900,7 @@ def main(argv: list[str] | None = None) -> int:
 
     axe_totals: dict[str, int] = {}
     smoke = args.suite == "smoke"
+    first_width = int(args.widths.split(",")[0])
     visit_bodies: list[str | None] = []
     live_calls: list[dict[str, Any]] = []
     with sync_playwright() as pw:
@@ -879,6 +916,8 @@ def main(argv: list[str] | None = None) -> int:
             for width in (int(w) for w in args.widths.split(",")):
                 for scheme in args.schemes.split(","):
                     scenarios = [s for s in SCENARIOS if args.suite == "full" or s[0] in SMOKE]
+                    if smoke and width != first_width:  # live-spending scenarios: one width only
+                        scenarios = [s for s in scenarios if s[0] not in SMOKE_LIVE]
                     todo = [("scenario", n, f) for n, f in scenarios]
                     if args.suite == "full":
                         todo += [("error state", n, f) for n, f in ERROR_SCENARIOS]
@@ -907,6 +946,7 @@ def main(argv: list[str] | None = None) -> int:
                                 axe_totals[k] = axe_totals.get(k, 0) + v
                             visit_bodies += env.visit_bodies
                             live_calls += env.live_calls
+                            env.settle_unanswered()  # reserved, never answered: full hold spent
                             ctx.close()
             browser.close()
     if smoke:
@@ -916,6 +956,8 @@ def main(argv: list[str] | None = None) -> int:
         if c.get("refused"):
             rep.add(f"live {c['path']} call from the browser", FAIL, SKIPPED_BUDGET, group="live")
     rep.metrics["live_calls"] = live_calls
+    if args.budget is not None:
+        rep.metrics["budget"] = args.budget.snapshot()  # smoke.py absorbs this, not live_calls
     rep.metrics["live_cost_usd"] = round(sum(c.get("cost_usd", 0.0) for c in live_calls), 6)
     if args.suite == "full":
         rep.metrics["axe_violations_all_views_all_combinations"] = axe_totals

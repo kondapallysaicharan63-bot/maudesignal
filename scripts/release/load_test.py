@@ -117,13 +117,15 @@ def run_load(
     def one(kind: str, call: Callable[[], Response]) -> None:
         r = call()
         cost, remaining = 0.0, None
+        known: float | None = None  # None: no cost came back, so the hold stays as spent
         if kind == "live_ask" and r.status == 200:
             body = r.json()
             if isinstance(body, dict):
-                cost = float(body.get("cost_usd") or 0.0)
+                if body.get("cost_usd") is not None:
+                    known = cost = float(body["cost_usd"])
                 remaining = (body.get("limits") or {}).get("remaining_today")
         if kind == "live_ask" and budget is not None:
-            budget.settle("ask", cost)
+            budget.settle("ask", known)
         with lock:
             samples.append((kind, r.status, r.elapsed_ms, cost, remaining))
 

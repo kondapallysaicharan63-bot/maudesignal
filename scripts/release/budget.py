@@ -10,8 +10,17 @@ dollar limit, and the count for its kind is not used up. After the call, ``settl
 real ``cost_usd``. A refused call is never silent: the caller records a FAIL line
 ``skipped: budget`` (see ``SKIPPED_BUDGET``).
 
-The holds equal the per-request caps the app is started with in the release live job
-(0.12 ask, 0.12 voice, 0.15 photo), so they are the most one call can cost.
+The holds are the DEPLOYED API's default per-request caps (``connector/globalcap.py`` on
+track-c-live: ask 0.25, voice 0.30, label 0.30), the most one call can cost there. They are NOT
+the lower caps the release live job sets on its own local API. Nothing in the deployed API
+reports its caps (``/v1/health`` does not), so they are copied here; if an operator raises the
+caps on the deployment, raise these too.
+
+A call that gets no usable answer (timeout, non-200, no ``cost_usd``) may still have run the
+model, so it is settled at its full hold (``settle(kind, None)``), never at $0.
+
+The dollar ceiling is sized so the smoke plan below fits with every call at its full hold:
+``SMOKE_PLAN`` is what a smoke run does (``tests/unit/test_release_tools.py`` simulates it).
 """
 
 from __future__ import annotations
@@ -19,9 +28,16 @@ from __future__ import annotations
 import threading
 from dataclasses import dataclass, field
 
-MAX_USD = 0.60
+MAX_USD = 1.50
 MAX_ASKS, MAX_PHOTOS, MAX_VOICE = 10, 2, 1
-HOLD_USD = {"ask": 0.12, "photo": 0.15, "voice": 0.12}
+HOLD_USD = {"ask": 0.25, "photo": 0.30, "voice": 0.30}
+# The calls one smoke run plans, in order. The photo is made by the browser pass (camera upload
+# at the first width only); ``live()`` makes its own photo call only when no browser pass runs.
+# The chat scenario makes two turns (two asks), also at the first width only.
+SMOKE_PLAN = {
+    "direct": ("ask", "voice"),
+    "web": ("ask", "ask", "photo"),
+}
 LIMITS = {"ask": MAX_ASKS, "photo": MAX_PHOTOS, "voice": MAX_VOICE}
 SKIPPED_BUDGET = "skipped: budget"
 KIND_OF_PATH = {"ask": "ask", "label": "photo", "voice": "voice"}  # /v1/live/<path>
@@ -52,14 +68,18 @@ class Budget:
             self.held += hold
             return True
 
-    def settle(self, kind: str, cost_usd: float) -> None:
-        """Release the hold of a reserved call and add what it really cost."""
+    def settle(self, kind: str, cost_usd: float | None) -> None:
+        """Release the hold of a reserved call and add what it cost.
+
+        ``cost_usd`` is None when no cost came back (timeout, non-200, missing field): the
+        server may still have spent up to the cap, so the full hold is recorded as spent.
+        """
         with self._lock:
             self.held = max(0.0, self.held - HOLD_USD[kind])
-            self.spent += max(0.0, cost_usd)
+            self.spent += HOLD_USD[kind] if cost_usd is None else max(0.0, cost_usd)
 
     def absorb(self, cost_usd: float, counts: dict[str, int]) -> None:
-        """Add calls made elsewhere (the browser pass): their counts and real cost."""
+        """Add calls made elsewhere (the browser pass): their counts and cost (incl. holds)."""
         with self._lock:
             self.spent += max(0.0, cost_usd)
             for kind, n in counts.items():
@@ -75,12 +95,17 @@ class Budget:
         with self._lock:
             return max(0.0, self.max_usd - self.spent - self.held)
 
+    def max_asks_by_dollars(self) -> int:
+        """How many more asks fit in the dollars left, each at its full hold."""
+        return int((self.remaining_usd() + 1e-9) // HOLD_USD["ask"])
+
     def snapshot(self) -> dict[str, object]:
         """Numbers for the report."""
         with self._lock:
             return {
                 "max_usd": self.max_usd,
                 "spent_usd": round(self.spent, 6),
+                "held_usd": round(self.held, 6),
                 "used": dict(self.used),
                 "limits": dict(self.limits),
                 "refused": list(self.refused),

@@ -1302,6 +1302,14 @@ def load_keys(path: Path) -> dict[str, str]:
     return {k: str(v) for k, v in data.items()}
 
 
+def is_local_base(base: str) -> bool:
+    """True only for an http(s) URL whose host is exactly 127.0.0.1 or localhost."""
+    from urllib.parse import urlsplit
+
+    parts = urlsplit(base)
+    return parts.scheme in ("http", "https") and parts.hostname in ("127.0.0.1", "localhost")
+
+
 def main(argv: list[str] | None = None) -> int:
     """Run every group and write ``api-contract.json`` and ``.md``; exit 1 on any failure."""
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0] if __doc__ else "")
@@ -1320,6 +1328,14 @@ def main(argv: list[str] | None = None) -> int:
         "--api-log", type=Path, default=None, help="the API's log file, scanned for keys"
     )
     args = ap.parse_args(argv)
+    if not is_local_base(args.base):
+        print(
+            f"refusing to run against {args.base!r}: the contract run writes permanent non-TEST "
+            "entries (and the generated admin key could not remove them); the target must be a "
+            "local API on 127.0.0.1 or localhost",
+            file=sys.stderr,
+        )
+        return 2
     rep = Report("api-contract")
     c = Contract(args.base, load_keys(args.keys_file), args.origin, rep)
     health = c.get("/v1/health")
