@@ -23,6 +23,10 @@ from maudesignal.connector.manifest import MANIFEST_PATH  # noqa: E402
 from maudesignal.connector.openapi import OPENAPI_PATH, build_spec  # noqa: E402
 from maudesignal.connector.registry import TOOL_SPECS  # noqa: E402
 from tests.unit.test_connector_api import TOOL_CALLS, H, call, make_client  # noqa: E402
+from tests.unit.test_connector_guidance import KNOWN  # noqa: E402
+from tests.unit.test_connector_guidance import H as GUIDANCE_H  # noqa: E402
+from tests.unit.test_connector_guidance import make_client as guidance_client  # noqa: E402
+from tests.unit.test_connector_guidance import rpc as guidance_rpc  # noqa: E402
 from tests.unit.test_connector_mcp import rpc  # noqa: E402
 
 __all__ = ["data"]
@@ -80,3 +84,22 @@ def test_recalls_advertises_suggestions_and_others_do_not() -> None:
     for t in manifest["tools"]:
         has = "suggestions" in t["outputSchema"].get("properties", {})
         assert has is (t["name"] == "recalls"), t["name"]
+
+
+def test_recalls_with_filled_suggestions_matches_both_schemas(tmp_path: Path) -> None:
+    """QAH is absent on the faked code check, so ``suggestions`` is a non-empty list."""
+    d = ConnectorData(work_dir=tmp_path / "small")
+    d._known_codes = frozenset(KNOWN)
+    c = guidance_client(d, tmp_path)  # code_exists answers False
+    manifest = {
+        t["name"]: t for t in json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))["tools"]
+    }
+    res = guidance_rpc(c, "tools/call", {"name": "recalls", "arguments": {"product_code": "QAH"}})
+    assert res["result"]["isError"] is False
+    structured = res["result"]["structuredContent"]
+    assert structured["suggestions"] == ["QIH"]
+    jsonschema.validate(structured, manifest["recalls"]["outputSchema"])
+    r = c.get("/v1/tools/recalls", params={"product_code": "QAH"}, headers=GUIDANCE_H)
+    assert r.status_code == 200 and r.json()["suggestions"] == ["QIH"]
+    committed = json.loads(OPENAPI_PATH.read_text(encoding="utf-8"))
+    jsonschema.validate(r.json(), _response_schema(committed, "recalls"))
