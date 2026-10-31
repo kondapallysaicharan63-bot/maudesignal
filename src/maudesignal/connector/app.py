@@ -89,6 +89,7 @@ from maudesignal.connector.registry import (
     WHAT_CHANGED_DESCRIPTION,
     explain_error,
 )
+from maudesignal.connector.research import research_enabled
 from maudesignal.connector.security import (
     DEFAULT_DEMO_RATE_PER_MIN,
     DEMO_PER_DAY,
@@ -265,6 +266,10 @@ class Health(BaseModel):
     limits_scope: str
     state_store: str
     feedback_store: str
+    features: dict[str, bool] | None = Field(
+        default=None,
+        description="Optional features that are switched on; absent when none is.",
+    )
 
 
 class DemoLimits(BaseModel):
@@ -786,6 +791,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get(
         "/v1/health",
         response_model=Health,
+        response_model_exclude_none=True,
         operation_id="health",
         summary="Service status (no key needed)",
         tags=["service"],
@@ -800,6 +806,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             limits_scope="shared" if state.shared else "per_instance",
             state_store=state.backend,
             feedback_store=cfg.feedback_store.backend,
+            features={"research": True} if research_enabled() else None,
         )
 
     @app.get(
