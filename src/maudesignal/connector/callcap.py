@@ -175,7 +175,7 @@ class CallLedger:
         return f"{LEDGER_PREFIX}/{day}/"
 
     def _counted(self, ref: BlobRef) -> float | None:
-        """One object's counted USD (``None`` when it vanished: a refused call took it back)."""
+        """One object's counted USD (an unreadable listed object counts the max hold)."""
         with self._lock:
             cached = self._settled.get(ref.pathname)
         if cached is not None:
@@ -183,7 +183,11 @@ class CallLedger:
         try:
             raw = json.loads(self._store.get(ref))
         except ObjectGoneError:
-            return None
+            # A listed object that cannot be read is never counted as 0 (a 404 can come from an
+            # auth or URL mismatch). It is counted at the largest possible hold; the one
+            # legitimate case, a refused call's own deleted object, then over-counts briefly.
+            logger.warning("ledger_object_unreadable_counted_at_max")
+            return MAX_CALL_HOLD_USD
         except (StoreError, ValueError):
             raise CallRefusedError("ledger", "The spend ledger could not be read.") from None
         try:

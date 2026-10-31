@@ -8,6 +8,9 @@ Meta, Muse or anyone else has reviewed or endorsed the connector.
 
 **Status: Submitted to Meta's Muse Connector Program — pending review.**
 
+Detail: submitted Oct 31, 2026; business verification, data questionnaire and technical details
+complete; Meta shows "In review".
+
 Field names and limits on the live form may differ from the headings below; read the form first
 and paste from here.
 
@@ -761,7 +764,8 @@ or `invalid_input`, 429 `rate_limited` with `retry_after_s` and a `Retry-After` 
      did exceed the hold, the real cost is stored and a warning `call_cost_above_hold` is logged.
   5. *Enforced cap.* Two calls that reserve at the same moment can each pass, so the cap the ledger
      enforces is **$3.00 minus the largest possible single hold ($0.10) = $2.90**. Two such calls
-     together end at or under $3.00.
+     together end at or under $3.00. Three or more instances whose listings lag can overshoot, by up
+     to (k-1) x $0.10 for k lagging instances (a probe with three lagging instances reached $3.10).
   6. *Per-key totals.* The per-key daily total of the keyed `ask` tool (`MAUDESIGNAL_API_DAILY_USD`)
      is a separate, smaller limit that counts real cost after a call. It holds nothing and
      releases nothing in the global ledger.
@@ -775,8 +779,9 @@ or `invalid_input`, 429 `rate_limited` with `retry_after_s` and a `Retry-After` 
   **Known limit, not yet measured:** the rule relies on a completed write showing up in the next
   listing of the store. Before turning live on, measure put-then-list consistency against the real
   private store once and record the result here. A listing longer than 20 pages (20,000 objects)
-  fails closed. A deleted object can disappear between a listing and its read; that object is a
-  refused call's own hold and is skipped.
+  fails closed. A listed object that cannot be read (for example a 404) is never counted as 0: it
+  counts at the largest hold, $0.10, so a store that cannot be read refuses calls rather than
+  letting them through; a refused call's own deleted object can therefore over-count briefly.
   **Blob operations.** Each Meta call costs one put, one list, one read per object not yet settled,
   one overwrite to settle and (if refused) one list and one delete. These count as "advanced
   operations" on Vercel; the monthly allowance depends on the plan and was not checked here: look it

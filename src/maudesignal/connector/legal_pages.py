@@ -71,9 +71,9 @@ def _live_limits() -> tuple[int, int, int, int, int]:
     )
 
 
-def live_routes_line() -> str:
+def live_routes_line(live_on: bool | None = None) -> str:
     """What the live website routes send to Meta, stated for the running configuration."""
-    if live_mode_allowed():
+    if live_mode_allowed() if live_on is None else live_on:
         return (
             "<strong>Live routes are ON in this deployment.</strong> The website's live ask, "
             "voice and label routes send what you give them to Meta (Meta Model API: Muse "
@@ -89,9 +89,9 @@ def live_routes_line() -> str:
     )
 
 
-def live_ask_line() -> str:
+def live_ask_line(live_on: bool | None = None) -> str:
     """One sentence saying whether this deployment sends ``ask`` questions to Meta."""
-    if live_mode_allowed():
+    if live_mode_allowed() if live_on is None else live_on:
         return (
             "<strong>Live ask is ON in this deployment.</strong> The text of an <code>ask</code> "
             "question is sent to Meta (Meta Model API, Muse Spark) with the server-side model key."
@@ -117,6 +117,7 @@ def render_privacy(
     rate_per_min: int,
     public_per_hour: int,
     shared_store: bool,
+    live_on: bool | None = None,
 ) -> str:
     """The privacy page (it answers a connector data questionnaire).
 
@@ -124,6 +125,7 @@ def render_privacy(
         rate_per_min: Requests per key per minute in force.
         public_per_hour: Keyless checks per address per hour in force.
         shared_store: True when an Upstash Redis store is configured.
+        live_on: Whether live Meta calls are on here; ``None`` reads the environment.
     """
     redis = (
         "Upstash Redis is configured here: rate-limit counters, the per-key daily totals, a "
@@ -164,7 +166,7 @@ cost) and no text, no address and no key. {html.escape(redis)}</p>
 <li>Vercel Inc.: hosting, runtime logs and Blob storage.</li>
 <li>Meta Platforms: Meta Model API, only when a model key is set on the server: for the
 <code>ask</code> tool (full keys only) and for the website's live ask, voice and label routes.
-{live_ask_line()} {live_routes_line()}</li>
+{live_ask_line(live_on)} {live_routes_line(live_on)}</li>
 <li>Upstash: only if a Redis store is configured (see above).</li>
 <li>Resend: only if an email notifier is configured. {html.escape(resend)}</li>
 </ul>
@@ -182,7 +184,9 @@ for it.</p>
 <h2>What is logged</h2>
 <ul>
 <li>For each tool call: a key id (a peppered one-way hash, never the key), the tool name, the time,
-and the status. Spend on <code>ask</code> is kept as a daily total per key id (not per call).
+and the status. Spend on <code>ask</code> is kept as a daily total per key id (not per call),
+and the spend ledger keeps one small object per Meta call with its dollar amounts only (see Where
+data is processed and stored).
 If the key has a label (for example a reviewer's name) the label is logged next to the key id.
 Calls made with the public demo key are logged the same way, with the label <code>demo</code>.</li>
 <li>The text of a question is <strong>not</strong> logged: only its SHA-256 and its length.
@@ -306,7 +310,8 @@ the day, even if it was never billed. The count can therefore be too high, never
 <li>Calls that start at the same moment can each pass the check, so the limit enforced is
 ${total_daily_usd:.2f} minus the largest worst case one call may have (${hold:.2f}; a call whose
 worst case is higher is not made): ${cap:.2f}. Live calls normally stop at about ${cap:.2f}, and
-the total can never pass ${total_daily_usd:.2f}.</li>
+the total is designed to stay at or under ${total_daily_usd:.2f}; this relies on the ledger
+store showing each completed write in the next listing.</li>
 <li>If the ledger cannot be read, listed or written, no call is made and a recorded answer is
 shown. With no private ledger store, live calls are off.</li>
 {per_instance_item}

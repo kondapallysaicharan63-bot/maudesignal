@@ -31,10 +31,12 @@ from maudesignal.common.logging import get_logger
 from maudesignal.connector import tools
 from maudesignal.connector.asgi import RejectKeyInQuery
 from maudesignal.connector.ask import (
+    ALLOW_PER_INSTANCE_ENV,
     MAX_QUESTION_CHARS,
     MIN_QUESTION_CHARS,
     AskRuntime,
     ask_detailed,
+    live_mode_allowed,
 )
 from maudesignal.connector.blob_store import RecordStore, store_from_env
 from maudesignal.connector.data import ConnectorData
@@ -633,6 +635,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 rate_per_min=limiter.limit,
                 public_per_hour=public_limiter.limit,
                 shared_store=state.backend == "upstash_redis",
+                live_on=live_mode_allowed()
+                and (state.has_call_ledger or os.environ.get(ALLOW_PER_INSTANCE_ENV) == "1"),
             )
         )
 

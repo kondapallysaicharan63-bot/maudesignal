@@ -264,7 +264,7 @@ def test_a_refusal_that_cannot_delete_keeps_its_hold_and_only_over_counts() -> N
     assert store.ledger_usd() == pytest.approx(2.93)
 
 
-def test_a_vanished_object_is_skipped_not_an_error() -> None:
+def test_a_listed_object_that_cannot_be_read_counts_at_the_max_hold_not_zero() -> None:
     store = FakeBlobStore()
     real_list = store.list_prefix
 
@@ -274,7 +274,28 @@ def test_a_vanished_object_is_skipped_not_an_error() -> None:
         return out
 
     store.list_prefix = listing  # type: ignore[method-assign]
-    assert led(store).total() == 0.0
+    assert led(store).total() == MAX_CALL_HOLD_USD
+
+
+def test_a_store_whose_reads_always_404_refuses_instead_of_letting_calls_through() -> None:
+    from maudesignal.connector.blob_store import ObjectGoneError
+
+    store = FakeBlobStore()
+
+    def gone(ref: BlobRef) -> bytes:
+        raise ObjectGoneError("object not found")
+
+    store.get = gone  # type: ignore[method-assign]
+    ledger = led(store)
+    passed, refused = 0, 0
+    for _ in range(100):
+        try:
+            ledger.reserve(0.10)
+            passed += 1
+        except CallRefusedError:
+            refused += 1
+    assert passed * MAX_CALL_HOLD_USD <= CAP + 1e-9
+    assert refused > 0
 
 
 # --- two instances, no process lock ------------------------------------------------------------
