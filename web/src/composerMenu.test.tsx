@@ -502,6 +502,8 @@ describe('voice', () => {
     expect(JSON.parse(meta)).toEqual({ transcribe_only: true })
     expect(q('voice-bar')).toBeNull()
     expect(box().value).toBe('What changed this week for LLC?')
+    expect(document.activeElement).toBe(box())
+    expect(host.querySelector('[role="listbox"]')).toBeNull() // focus moved by the page does not open the type-ahead
     expect(calls('/v1/live/ask')).toHaveLength(0)
     expect(q('voice-left')?.textContent).toBe('7 voice questions left today')
     // "Did you mean LLZ?" swaps the heard code only when clicked

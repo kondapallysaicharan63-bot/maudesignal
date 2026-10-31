@@ -86,6 +86,17 @@ export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera
 
   const researchOn = !!live?.features.research && research
 
+  // Focus moved here by the page (after a transcript, a photo, Cancel) does not open the list of recorded questions;
+  // only the person's own focus or typing does.
+  const quiet = useRef(false)
+  const focusBox = (toEnd = false) => {
+    const el = inputRef.current
+    if (!el) return
+    if (document.activeElement !== el) quiet.current = true
+    el.focus()
+    if (toEnd) el.setSelectionRange(el.value.length, el.value.length)
+  }
+
   // The recording: Stop -> WAV -> words in the box (or, on an older API, the one-call voice answer as before).
   const rec = useRecorder({
     onResult: (r) => {
@@ -107,15 +118,14 @@ export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera
           window.setTimeout(() => {
             const el = inputRef.current
             if (!el) return
-            el.focus()
-            el.setSelectionRange(el.value.length, el.value.length)
+            focusBox(true)
             el.style.height = 'auto'
             el.style.height = `${Math.min(el.scrollHeight, 112)}px`
           }, 0)
         })
         .catch((e: unknown) => {
           setVoiceNote(transcribeErrorText(e))
-          window.setTimeout(() => inputRef.current?.focus(), 0)
+          window.setTimeout(() => focusBox(), 0)
         })
         .finally(() => setTranscribing(false))
     },
@@ -125,7 +135,7 @@ export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera
   // After Cancel the box comes back with focus in it.
   const wasRecording = useRef(false)
   useEffect(() => {
-    if (wasRecording.current && !recording) inputRef.current?.focus()
+    if (wasRecording.current && !recording) focusBox(true)
     wasRecording.current = recording
   }, [recording])
 
@@ -165,12 +175,12 @@ export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera
       return setPhotoNote({ text: 'That image could not be read in this browser. Choose a JPEG or PNG photo.', pick: false })
     }
     setPhoto({ blob: jpeg, url: URL.createObjectURL(jpeg) })
-    window.setTimeout(() => inputRef.current?.focus(), 0)
+    window.setTimeout(() => focusBox(), 0)
   }
 
   const removePhoto = () => {
     setPhoto(null)
-    inputRef.current?.focus()
+    focusBox()
   }
 
   const takePhoto = () => {
@@ -311,7 +321,7 @@ export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera
           }}
           onClose={() => {
             setCamera(false)
-            inputRef.current?.focus()
+            focusBox()
           }}
           onFail={(reason) => {
             setCamera(false)
@@ -480,7 +490,10 @@ export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera
                 e.target.style.height = 'auto'
                 e.target.style.height = `${Math.min(e.target.scrollHeight, 112)}px`
               }}
-              onFocus={() => setFocus(true)}
+              onFocus={() => {
+                if (quiet.current) quiet.current = false
+                else setFocus(true)
+              }}
               onBlur={() => setFocus(false)}
               onKeyDown={(e) => {
                 if (e.key === 'ArrowDown' && open) {
@@ -530,7 +543,8 @@ export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera
             {didYouMean.length > 0 && (
               <span className="flex flex-wrap items-center gap-2" data-testid="did-you-mean">
                 <span>
-                  Heard <span className="ms-code !text-ink">{heardCodeFor(text, didYouMean[0]) ?? 'a code'}</span>, not a product code on file. Did you mean
+                  Heard <span className="ms-code !text-ink">{heardCodeFor(text, didYouMean[0]) ?? 'a code'}</span>, not a product code on file. Did you mean{' '}
+                  {didYouMean.join(' or ')}?
                 </span>
                 {didYouMean.map((c) => (
                   <button
@@ -540,12 +554,12 @@ export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera
                     onClick={() => {
                       setText((t) => applyCodeSuggestion(t, c))
                       setDidYouMean([])
-                      inputRef.current?.focus()
+                      focusBox(true)
                     }}
-                    aria-label={`Use ${c} instead`}
+                    aria-label={`Use ${c} instead of the heard code`}
                     data-testid="did-you-mean-code"
                   >
-                    <span className="ms-code !text-ink">{c}</span>?
+                    Use <span className="ms-code !text-ink">{c}</span>
                   </button>
                 ))}
               </span>
