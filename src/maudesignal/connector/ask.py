@@ -323,17 +323,55 @@ _CONNECTIVE_START = re.compile(
     r"|(?:good|great) question)\b",
     re.IGNORECASE,
 )
+#: The whole sentence must be one of these short advisory lines (anchored).
 _ADVISORY = re.compile(
-    r"\b(?:a (?:named )?(?:human|person)|qualified (?:person|reviewer)|your team)\b.*\breview"
-    r"|\bnot medical advice\b|\bnothing (?:is|was) filed\b",
+    r"^(?:a |the )?(?:named |qualified )?(?:human|person|reviewer|team|your team)"
+    r" (?:must|should|needs to|will) (?:review|check|confirm) (?:this|these|it|them|the "
+    r"(?:answer|evidence|findings|results))(?: before (?:any |a )?(?:decision|action))?[.!]?$"
+    r"|^(?:this is )?not medical advice[.!]?$|^nothing (?:is|was) filed with (?:the )?fda[.!]?$",
     re.IGNORECASE,
+)
+#: Verbs that state what happened (past tense / passive): a sentence with one is factual.
+_EVENT_VERB = re.compile(
+    r"\b(?:was|were|had|has been|have been|is being|got|did|caused|showed|shows|reported)\b"
+    r"|\b\w{3,}(?:ed|en)\b",
+    re.IGNORECASE,
+)
+#: Past-tense words that are fine in a transition ("I checked ...", "Based on ...").
+_TRANSITION_PAST = frozenset(
+    {
+        "checked",
+        "stored",
+        "found",
+        "linked",
+        "verified",
+        "looked",
+        "searched",
+        "reviewed",
+        "used",
+        "based",
+        "listed",
+        "asked",
+        "when",
+        "then",
+        "often",
+        "even",
+        "seven",
+        "given",
+        "open",
+        "seen",
+        "taken",
+    }
 )
 #: A word that makes a sentence a statement about FDA data (then it is never filler).
 _FACT_WORD = re.compile(
     r"\b(?:devices?|recall\w*|report\w*|fda|maude|510|k\d{6}|clearances?|cleared|injur\w*"
     r"|deaths?|died|malfunction\w*|software|failures?|failed|errors?|signals?|capa|"
     r"manufacturers?|firms?|complaints?|adverse|events?|problems?|increase\w*|decrease\w*"
-    r"|spike\w*|product codes?|brands?|models?|labels?|narratives?|patients?)\b",
+    r"|spike\w*|product codes?|brands?|models?|labels?|narratives?|patients?|scanners?"
+    r"|tools?|systems?|algorithms?|apps?|implants?|pumps?|monitors?|images?|readings?"
+    r"|withdraw\w*|misread\w*|outage\w*|defect\w*|hazards?|risks?|harm\w*|safety"
+    r"|unsafe|dangerous|surgery|diagnos\w*|treatment|stop|immediately|class)\b",
     re.IGNORECASE,
 )
 _CODE_IN_SENTENCE = re.compile(r"\b[A-Z]{3}\b")  # a product code such as LLZ (case-sensitive)
@@ -357,10 +395,13 @@ def is_connective(text: str) -> bool:
     t = " ".join(text.split())
     if not t or any(c.isdigit() for c in t):
         return False
+    if _FACT_WORD.search(t) or _CODE_IN_SENTENCE.search(t):
+        return False  # facts first: an advisory wrapper never hides a fact
     if _ADVISORY.search(t):
         return True
-    if _FACT_WORD.search(t) or _CODE_IN_SENTENCE.search(t):
-        return False
+    verbs = [m.group(0).lower() for m in _EVENT_VERB.finditer(t)]
+    if any(v not in _TRANSITION_PAST for v in verbs):
+        return False  # something happened: factual; when unsure, held back is the safe default
     return len(t.split()) <= MAX_CONNECTIVE_WORDS and _CONNECTIVE_START.search(t) is not None
 
 

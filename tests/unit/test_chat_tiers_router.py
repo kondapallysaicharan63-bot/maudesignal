@@ -199,7 +199,8 @@ def test_chosen_product_code_fills_in_a_question_without_one() -> None:
 
 def test_follow_ups_without_a_subject_go_to_muse_spark() -> None:
     q = "Which were not filed by the manufacturer?"
-    assert route(q, KNOWN).tier == "direct"  # a first question: "which product code?"
+    # "which", "not", "manufacturer" are words the who-filed template does not answer
+    assert route(q, KNOWN).tier == "live"
     assert route(q, KNOWN, has_history=True).tier == "live"
     assert route("recalls for those", KNOWN).tier == "live"
     assert route("Recalls for QIH", KNOWN, has_history=True).tier == "direct"

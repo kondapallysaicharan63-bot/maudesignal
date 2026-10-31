@@ -30,7 +30,11 @@ message asks something clinical (should I take or stop, diagnose, dose, safe or 
 about a body or a patient (I, me, my, kids, pacemaker, MRI, rash, ...) and names no product code
 and no regulatory word (CAPA, recall, report, MAUDE, MDR, signal, complaint, spike, 510(k), ...).
 "Should we start a CAPA for LLZ?" or "Should I worry about the LLZ spike?" go to Muse Spark;
-"Is it safe for me to get an MRI with my pacemaker?" gets the medical reply. "Is X safe" with a
+"Is it safe for me to get an MRI with my pacemaker?" gets the medical reply. Strong first-person
+clinical patterns win even when a recall or a code is named: "should I get surgery", "stop using
+my …", "I have <symptom>", "safe for me", "what should I do" with a symptom ("My pacemaker was
+recalled, should I get surgery?", "Should I stop using my CGM?"). Team and regulatory questions
+("Should we start a CAPA for LLZ?", "What should I do about the LLZ spike?") stay at tier 4. "Is X safe" with a
 regulatory word ("is it safe to close the CAPA") also goes to Muse Spark.
 
 The privacy reply says that greetings and simple lookups use no model, that when live answers
@@ -50,12 +54,18 @@ together with the baseline count it comes from ("8.75 ... (35 reports)"), so the
 checked too. The quoted LLZ figures (33 reports, weekly average 8.75) are the stored ones,
 unchanged.
 
-A question with a qualifier the templates do not apply goes to Muse Spark instead of getting
-a template that answers something else: a year or month, since / before / after / between /
-from, last or past year / quarter / month / week / N days, class I / II / III, per or by
-manufacturer / firm / year / status, a break-down, open or terminated recalls, most / top /
-only / except, compare / vs, and "how many ... are / were ...". "How many LLZ recalls are class
-I?", "LLZ recalls in 2019" and "what changed for LLZ last year" are tier 4.
+**Allow-list.** A question gets a tier-2 template only if nothing is left after removing the
+intent's own words (for example "recall, recalls" for recalls; "what, changed, this, week, new,
+latest" for what changed), the product code / report id / K-number, and a small fixed set of
+filler words (articles, please, show / give / tell me, for, of, about, what, is, any, can you,
+"ji", "garu", "kripya", "dayachesi" and similar; `tiers._FILLER`). Any leftover word sends the
+question to Muse Spark: a year, a number other than the id, "first", "newest", "this year", "this
+month", a firm name ("by Abbott"), "older", "from user facilities", or any word in another script
+that is not a known filler ("ఈ సంవత్సరం"). "this week" is allowed only for what changed and
+alerts, whose template is exactly that week. The earlier block-list (`_QUALIFIER`: dates,
+periods, class I-III, by manufacturer, open recalls, most / top, compare) stays as an extra
+guard. "Who filed the LLZ reports from user facilities?" goes to tier 4 (the template has no
+split by source).
 
 What tier 2 never does: state live openFDA numbers (they cannot be recomputed from stored
 records). A product code outside the stored snapshot gets "not in the stored snapshot" and a
@@ -101,11 +111,19 @@ ledger entry is written).
 
 ## Gate presentation
 
-A sentence that passed the gate with no claims and states no fact (a greeting, "Here is what I
-found.", "A named human must review this.") is no longer listed as "held back"; it is simply not
-shown (`ask.is_connective`). Anything with a digit, longer than a short transition, or naming FDA data
-(a device, recall, report, problem, failure, product code ...) is not connective, so "Based on
-the records, the device was recalled for software failure." is still listed as held back. When the model wrote no factual
+A sentence that passed the gate with no claims and states no fact is not listed as "held back";
+it is simply not shown (`ask.is_connective`). The test is narrow and, when unsure, a sentence
+is held back. It is filler only when: it has no digit; it names nothing from the gate's
+vocabulary (device, scanner, tool, system, recall, report, death, failure, product code, a
+capitalised three-letter code ...), checked first; it has no verb saying something happened
+("was", "were", "had", a past participle such as "withdrawn" or "misread", except transition
+words like "checked", "found", "stored"); and it is either a short transition ("Here is what I
+found.") or one whole, anchored advisory line ("A named human must review this.", "Not medical
+advice."). "A named human must review the deaths reported for this scanner.", "This is not
+medical advice; stop using the device immediately.", "The scanner was withdrawn." and "The tool
+misread images." are listed as held back. The recorded demo's "A named human must review the
+supporting reports before any regulatory decision." names reports, so it is now listed as held
+back too. When the model wrote no factual
 sentence at all, the answer says "I have nothing checked to add to that …" instead of "I could
 not verify an answer". Numbers and FDA facts go through the claim gate unchanged.
 
@@ -116,8 +134,9 @@ the real router over the stored demo data (no model, no network). Before: every 
 priced at the recorded average typed-ask cost, **$0.048**. After: tiers 1 to 3 are $0, and each
 tier-4 question is still priced at $0.048, which is an upper bound because the cheaper tier-4
 settings above were not measured (that needs paid calls). No other cost number is used. The
-sample is not measured traffic, and it has no qualified ("in 2019", "class I") or regulatory
-"should we" questions, which now go to tier 4; with a different mix the after-average is
+sample is not measured traffic, and it has no qualified ("in 2019", "first recall", "this
+year") or regulatory "should we" questions, which go to tier 4; every plain lookup in it still
+hits tier 2 under the allow-list (tested in `test_chat_tiers_review.py`); with a different mix the after-average is
 $0.048 × (share of questions that reach tier 4).
 
 <!-- cost-table:start -->

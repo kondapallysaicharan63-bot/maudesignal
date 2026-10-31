@@ -466,12 +466,31 @@ def _strip_greeting(norm: str) -> str:
     return " ".join(words[i:]) if 0 < i < len(words) else norm
 
 
+_SYMPTOM = (
+    r"(?:chest pain|pain|fever|rash|bleeding|headache|dizzy|dizziness|nausea|swelling|"
+    r"infection|lump|shortness of breath|palpitations|burn|bruise|numbness|symptoms?)"
+)
+#: Unmistakable first-person clinical questions: they get the medical reply even when they
+#: name a recall or a code ("My pacemaker was recalled, should I get surgery?").
+_STRONG_MEDICAL = re.compile(
+    r"\bshould i (?:get|have|undergo|need) (?:a |an )?(?:surgery|operation|it removed|it "
+    r"replaced|it taken out|a new one)\b"
+    r"|\b(?:stop|keep|start) (?:using|taking|wearing) my\b|\bsafe for (?:me|my \w+)\b"
+    r"|\bi (?:have|feel|got|am having|m having|ve got) (?:a |an |some )?" + _SYMPTOM + r"\b"
+    r"|\bwhat should i do\b.*\b" + _SYMPTOM + r"\b|\b" + _SYMPTOM + r"\b.*\bwhat should i do\b"
+    r"|\bshould i (?:be worried|go to (?:the )?(?:doctor|hospital|er))\b"
+)
+
+
 def is_medical(norm: str, *, has_code: bool = False) -> bool:
     """A request for medical advice: a clinical ask about a body or a patient, not regulatory.
 
     "Should we start a CAPA for LLZ?" or "Should I worry about the LLZ spike?" are regulatory
-    questions (a product code or a regulatory word), so they are never refused as medical.
+    questions (a product code or a regulatory word), so they are never refused as medical,
+    unless a strong first-person clinical pattern matches (``_STRONG_MEDICAL``).
     """
+    if _STRONG_MEDICAL.search(norm):
+        return True
     if has_code or _REGULATORY.search(norm):
         return False
     asks = _MEDICAL.search(norm) or _CLINICAL_ASK.search(norm)
@@ -511,10 +530,65 @@ def canned_intent(norm: str, *, has_code: bool = False) -> str | None:
     return None
 
 
+#: Words that may surround any lookup without changing what it asks.
+_FILLER = _wordset("""
+    a an the please pls plz kindly show give tell me us can could would will you u i want to
+    see list get find look up lookup check for of about on in what whats is are any there do
+    does have has all just quick ok okay hi hello hey namaste ji garu sir madam and info
+    information details product code codes device devices type fda openfda stored data
+    maudesignal let know kripya kripaya dayachesi
+    """)
+#: The words each intent's own template answers; anything else is a qualifier it ignores.
+_INTENT_WORDS: dict[str, frozenset[str]] = {
+    "what_changed": _wordset(
+        "what changed change changes has have this week weeks new whats latest update "
+        "updates happened news anything"
+    ),
+    "alerts": _wordset(
+        "alerts alert my notifications notification flagged warnings warning anything should "
+        "know watch this week"
+    ),
+    "check_code": _wordset("check status summary overview tell about show how is hows doing look"),
+    "recalls": _wordset("recall recalls recalled"),
+    "report": _wordset("report mdr record event id number no key open"),
+    "k510": _wordset("510 k 510k clearance number"),
+    "who_filed": _wordset(
+        "who filed reported submitted sent files filing reports report reporters reporter "
+        "sources source"
+    ),
+    "my_devices": _wordset("my type types products watchlist watch follow track our"),
+    "ai_sweep": _wordset("ai sweep enabled across"),
+}
+
+
+def leftover(
+    norm: str, intent: str, codes: list[str], report: str | None, k: str | None
+) -> list[str]:
+    """Words a template would ignore: anything but the intent's words, the ids and filler.
+
+    Tier 2 answers only when nothing is left. A year, a number other than the id, "first",
+    "this year", a firm name, any word in another script that is not a known filler: each is
+    left over, so the question goes to Muse Spark.
+    """
+    ids = {c.lower() for c in codes} | {(report or "").lower(), (k or "").lower()}
+    allowed = _FILLER | _INTENT_WORDS.get(intent, frozenset()) | ids
+    return [w for w in _words(norm) if w and w not in allowed]
+
+
 def _direct_intent(
     norm: str, codes: list[str], unclear: list[str], report: str | None, k: str | None
 ) -> str | None:
     """The tier-2 intent of a normalised question (None: not a simple lookup)."""
+    intent = _direct_intent_raw(norm, codes, unclear, report, k)
+    if intent is None or leftover(norm, intent, codes + unclear, report, k):
+        return None
+    return intent
+
+
+def _direct_intent_raw(
+    norm: str, codes: list[str], unclear: list[str], report: str | None, k: str | None
+) -> str | None:
+    """The intent a question's words point to, before the allow-list check."""
     words = _words(norm)
     if len(words) > 14 or _OPEN.search(norm) or len(codes) + len(unclear) > 1:
         return None

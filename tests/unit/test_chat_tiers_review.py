@@ -67,7 +67,9 @@ def test_first_person_medical_questions_get_the_fixed_reply(q: str) -> None:
 def test_medical_rule_needs_a_body_word_and_no_regulatory_word() -> None:
     assert is_medical(normalise("can you diagnose this rash"))
     assert not is_medical(normalise("can you diagnose this signal"))
-    assert not is_medical(normalise("is it safe for me"), has_code=True)
+    assert not is_medical(normalise("is it dangerous for my team"), has_code=True)
+    # a strong first-person clinical pattern wins over a code or a regulatory word
+    assert is_medical(normalise("is it safe for me"), has_code=True)
 
 
 QUALIFIED = [
@@ -173,3 +175,140 @@ def test_privacy_reply_says_what_goes_to_meta_and_what_is_kept() -> None:
     assert "Muse Spark" in text and "Meta" in text
     assert "does not store the question text" in text
     assert "When live answers are on" in text  # never claims a call when live is off
+
+
+# --- round 3: allow-list for tier 2 ------------------------------------------------------------
+
+LEFTOVER = [
+    "First recall for LLZ",
+    "Recalls by Abbott for LLZ",
+    "Recalls for LLZ this year",
+    "LLZ recalls this week",
+    "Newest LLZ recalls",
+    "LLZ recalls older than a year",
+    "Show the 3 recalls for LLZ",
+    "LLZ recalls ఈ సంవత్సరం",
+    "Who filed LLZ reports this year",
+    "What changed for LLZ this month",
+    # decided: tier 4 (the who-filed template has no split by source)
+    "Who filed the LLZ reports from user facilities?",
+    "LLZ recalls by year",
+    "latest 5 recalls for QIH",
+    "QIH recalls कृपया 2020",
+]
+
+
+@pytest.mark.parametrize("q", LEFTOVER)
+def test_any_word_the_template_ignores_sends_the_question_to_muse_spark(q: str) -> None:
+    assert route(q, KNOWN).tier == "live", q
+
+
+#: Every plain lookup from the cost sample and the router tests: still answered directly.
+TIER_TWO = [
+    "What changed this week?",
+    "What changed this week for LLZ?",
+    "what changed for llz",
+    "what's new",
+    "hi, what changed for LLZ?",
+    "Any alerts?",
+    "show my alerts",
+    "Check product code QIH",
+    "Check product code LLZ",
+    "LLZ",
+    "tell me about QIH",
+    "Recalls for LLZ",
+    "Recalls for QIH",
+    "any recalls for LLZ?",
+    "FDA recalls for QIH",
+    "Who filed MYN reports?",
+    "who reported MYN",
+    "show report 19864749",
+    "Open report 19864749",
+    "510(k) for K261677",
+    "K212067",
+    "Show the AI device sweep",
+    "AI sweep",
+    "my devices",
+    "show my watchlist",
+    "recalls",
+    "what changed for LLX",
+    "QAH",
+    "Recalls for QIH please",
+    "LLZ recalls ji",
+]
+
+
+@pytest.mark.parametrize("q", TIER_TWO)
+def test_plain_lookups_still_hit_tier_two(q: str) -> None:
+    assert route(q, KNOWN | {"MAX"}).tier == "direct", q
+
+
+def test_leftover_lists_what_a_template_would_ignore() -> None:
+    from maudesignal.connector.tiers import leftover
+
+    assert leftover(normalise("first recall for llz"), "recalls", ["LLZ"], None, None) == ["first"]
+    assert leftover(normalise("recalls for llz"), "recalls", ["LLZ"], None, None) == []
+    assert leftover(normalise("llz recalls this week"), "recalls", ["LLZ"], None, None) == [
+        "this",
+        "week",
+    ]
+
+
+# --- round 3: strong first-person medical patterns ----------------------------------------------
+
+STRONG_MEDICAL = [
+    "My pacemaker was recalled, should I get surgery?",
+    "Is my insulin pump that was recalled safe for me?",
+    "Should I stop using my CGM?",
+    "I have chest pain after my MRI, what should I do?",
+    "I have a fever since the LLZ scan, should I go to the hospital?",
+]
+
+
+@pytest.mark.parametrize("q", STRONG_MEDICAL)
+def test_strong_first_person_medical_wins(q: str) -> None:
+    r = route(q, KNOWN)
+    assert (r.tier, r.intent) == ("canned", "medical_advice"), q
+
+
+@pytest.mark.parametrize(
+    "q",
+    [
+        "Should we start a CAPA for LLZ?",
+        "What should I do about the LLZ spike?",
+        "Should we stop shipping QIH until the recall closes?",
+    ],
+)
+def test_team_and_regulatory_questions_stay_tier_four(q: str) -> None:
+    assert route(q, KNOWN).tier == "live", q
+
+
+# --- round 3: filler is narrow, facts first ---------------------------------------------------
+
+HELD_BACK = [
+    "A named human must review the deaths reported for this scanner.",
+    "This is not medical advice; stop using the device immediately.",
+    "The scanner was withdrawn.",
+    "The tool misread images.",
+    "Overall, the system failed twice.",
+    "Here is what happened to the pump.",
+]
+
+
+@pytest.mark.parametrize("t", HELD_BACK)
+def test_factual_sentences_are_never_filler(t: str) -> None:
+    assert not is_connective(t), t
+
+
+@pytest.mark.parametrize(
+    "t",
+    [
+        "Here is what I found.",
+        "A named human must review this.",
+        "Not medical advice.",
+        "I checked the stored records.",
+        "Overall, a good question.",
+    ],
+)
+def test_short_transitions_and_advisory_lines_are_filler(t: str) -> None:
+    assert is_connective(t), t
