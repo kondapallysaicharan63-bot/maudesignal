@@ -1,5 +1,10 @@
 # Future Roadmap & Competitive Parity
 
+> **Pre-existing planning draft (May 2026), kept for history.** It describes plans, not what
+> MaudeSignal does today. Today: U.S. FDA data (MAUDE, recalls, 510(k)). UK MHRA alerts
+> appear as labelled regulator context only, not counted. EU data is not included yet.
+> Current scope: [README](../README.md#today--tomorrow).
+
 ## Strategic Goal (2026–2027)
 Match or exceed Smarteeva/Greenlight Guru in AI depth while maintaining the self-hosted
 privacy advantage. Become the best open/self-hosted PMS option with predictive analytics,

@@ -44,9 +44,9 @@ records and papers, each tied to the stored FDA record.
 
 | Check | Result | Source |
 |---|---|---|
-| Unit tests | 1147 pass; 78% line + branch coverage (run 2026-10-30) | `pytest tests/unit --cov=src/maudesignal --cov-branch` |
+| Unit tests | 2227 pass; 83.31% line + branch coverage (run 2026-10-31) | `pytest tests/unit --cov=src/maudesignal --cov-branch` |
 | CI | ruff, black, `mypy --strict`, tests on Python 3.11 and 3.12 | `.github/workflows/ci.yml` |
-| Adversarial gate set | 112 cases (70 must be withheld, 42 must pass): 0 false passes, 0 false blocks | `tests/fixtures/gate/adversarial.jsonl`, `tests/unit/test_gate.py` |
+| Adversarial gate set | 130 cases (84 must be withheld, 46 must pass): 0 false passes, 0 false blocks | `tests/fixtures/gate/adversarial.jsonl`, `tests/unit/test_gate.py` |
 | Gate on real model output | fifth 2026-10-28 recording (run 40764365995), 28 answers (22 typed, 6 text-to-speech): 63/65 sentences passed first time (96.9%), 64/65 after repair; the one withheld sentence was true (a false block: a year read as a count, fixed with cases dt03–dt05); 0 unparsed, 0 token-cap stops. Earlier runs that day: 49/50 (fourth), 52/53 (third, 1 unparsed), 45/48 (second), and the first exposed unparsed replies counted as passed (fixed) | `docs/hackathon/HAND_CHECK.md` |
 | Hand-check of the recorded answers | 27 of 28 answers fully correct (typed 21 of 22, text-to-speech 6 of 6; Oct-29 voice run 40965201781, Charan's takes 1/4/6: 3 of 3 answers, 8 of 8 sentences correct and gate 8/8); of 65 sentences 64 correct, 1 incomplete (wrongly withheld), 0 wrong; checked against the demo database by Claude; independent check by Charan pending. Fourth run: 24 of 24; third: 21 of 24; second: 19 of 21; first: 6 of 21 | `docs/hackathon/HAND_CHECK.md` |
 | Independent review of the evidence PDF | Muse Wonder 1.0: 0 findings on the current pack's PDF (SER-LLZ-20260831-001, recorded 2026-10-31; Muse Spark summary 5 sentences shown, 0 withheld). The previous recording had 2 findings (a high one on section 4.1 citing a report that does not mention error 500, a medium one on the section 4 title), both fixed by the reword. Earlier: 0 findings on the third, fourth and fifth recordings' PDFs (the second recording's 4 findings were fixed in code first) | `demo/dossier/*-review.json` |
