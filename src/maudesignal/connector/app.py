@@ -38,6 +38,11 @@ from maudesignal.connector.ask import (
     AskRuntime,
     live_mode_allowed,
 )
+from maudesignal.connector.audit_mode import (
+    WITHHELD_PHI,
+    full_text_requested,
+    resolve_full_text,
+)
 from maudesignal.connector.blob_store import RecordStore, store_from_env
 from maudesignal.connector.chat import ask_with_tiers
 from maudesignal.connector.data import ConnectorData
@@ -52,7 +57,7 @@ from maudesignal.connector.errors import (
 from maudesignal.connector.feedback import mount_feedback
 from maudesignal.connector.globalcap import global_daily_usd
 from maudesignal.connector.legal_pages import render_privacy, render_terms
-from maudesignal.connector.live import LiveBackends, LiveConfig, mount_live
+from maudesignal.connector.live import LiveBackends, LiveConfig, mount_live, phi_in
 from maudesignal.connector.lookup import OpenFdaSearcher, Searcher, lookup_device
 from maudesignal.connector.manifest import build_manifest
 from maudesignal.connector.mcp_server import (
@@ -239,6 +244,9 @@ class Settings:
     live_config: LiveConfig | None = None
     #: Chat tiers for ``ask`` (canned, direct, cache before Muse Spark); see ``tiers.py``.
     chat_tiers: bool = field(default_factory=lambda: os.environ.get(CHAT_TIERS_ENV, "1") != "0")
+    #: Self-hosted company audit mode (``audit_mode.py``): keep ``ask`` question and answer text
+    #: in the audit chain. None reads ``MAUDESIGNAL_AUDIT_FULL_TEXT``. Refused on a public demo.
+    audit_full_text: bool | None = None
 
 
 class AskRequest(BaseModel):
@@ -378,6 +386,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     state.attach_blob(cfg.feedback_store)  # the private Blob store also holds the spend ledger
     ask_runtime = cfg.ask_runtime or AskRuntime(state=state)
+    audit_full_text = resolve_full_text(
+        full_text_requested() if cfg.audit_full_text is None else cfg.audit_full_text,
+        demo_keys=cfg.keys.demo_configured,
+    )
     ask_cache = AnswerCache(state, "tool", now=cfg.now, version=cfg.data.version)
     demo_limiter = cfg.demo_limiter or state.rate_limiter(
         "demo-key",
@@ -475,9 +487,25 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         answer: ToolAnswer | None,
         error: str | None = None,
         label: str | None = None,
+        question: str | None = None,
     ) -> None:
-        """Append one chained audit entry; a failing store never fails the request."""
+        """Append one chained audit entry; a failing store never fails the request.
+
+        ``question`` is passed for ``ask`` only. Its text (and the answer's spoken text) is
+        added to the entry, and so to the hashed record, only in self-hosted full-text mode
+        and only when the patient-data guard passes both.
+        """
         payload: dict[str, Any] = {"tool": tool, "inputs": inputs, "error": error}
+        if audit_full_text and question is not None:
+            asked = " ".join(question.split())
+            spoken = answer.speakable if answer is not None else None
+            if phi_in([asked] + ([spoken] if spoken is not None else [])):
+                payload["full_text"] = WITHHELD_PHI  # the hash above is all that is kept
+            else:
+                payload["full_text"] = "stored"
+                payload["question_text"] = asked
+                if spoken is not None:
+                    payload["answer_text"] = spoken
         if answer is not None:
             canonical = json.dumps(answer.model_dump(mode="json"), sort_keys=True)
             payload |= {
@@ -498,7 +526,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             logger.error("connector_audit_append_failed", error=str(exc))
 
     def audited(
-        request: Request, tool: str, inputs: dict[str, str], run: Callable[[], ToolAnswer]
+        request: Request,
+        tool: str,
+        inputs: dict[str, str],
+        run: Callable[[], ToolAnswer],
+        question: str | None = None,
     ) -> ToolAnswer:
         """Run a tool and append its audit entry (also when it fails with a tool error)."""
         audit_id = str(request.state.audit_id)
@@ -506,9 +538,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             answer = run()
         except ConnectorError as exc:
-            record_audit(audit_id, tool, inputs, None, exc.code, label)
+            record_audit(audit_id, tool, inputs, None, exc.code, label, question)
             raise
-        record_audit(audit_id, tool, inputs, answer, None, label)
+        record_audit(audit_id, tool, inputs, answer, None, label, question)
         return answer
 
     def code_exists(code: str) -> bool | None:
@@ -576,6 +608,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     allow_live=not getattr(request.state, "key_demo", False),
                     tiers_on=cfg.chat_tiers,
                 ),
+                question,
             )
         if name == "get_report":
             return audited(

@@ -324,6 +324,26 @@ Two Vercel projects from the same repository: the website (`web/`) and the read-
 
 Full variable list and limits: [`docs/hackathon/MUSE_CONNECTOR.md`](docs/hackathon/MUSE_CONNECTOR.md).
 
+### Self-hosted company mode (audit full text)
+
+For a company's own deployment only. By default, and always on the public demo, the audit chain
+keeps an `ask` question as its SHA-256 and length, never its text; the public privacy page and the
+connector questionnaire describe that default. A company running its own copy for its own staff
+can set `MAUDESIGNAL_AUDIT_FULL_TEXT=1` (`1`, `true`, `yes` or `on`; anything else, or unset,
+is off) so each `ask` entry also keeps the question text and the answer's spoken text
+(`question_text`, `answer_text`, `full_text: "stored"`). The text is inside the hashed record,
+so `/v1/audit/recent` still re-verifies the chain, and that list (full keys only) shows the text
+only for entries where it was stored.
+
+- **Refused on a public deployment.** When `MAUDESIGNAL_DEMO_KEYS` is set (or a demo key is
+  configured) or `MAUDESIGNAL_PUBLIC_DEMO=1`, the flag is ignored at startup with the warning
+  `audit_full_text_refused_public_demo`, and only hashes are stored.
+- **Patient-data guard first.** A question or answer that looks like patient details (email,
+  phone, ID or record number, date of birth, a titled name, an age) is never stored: the entry
+  keeps the hash and `full_text: "withheld_possible_patient_details"`.
+- MaudeSignal is still not a PHI system; this mode is for questions about public MAUDE data.
+  Code: [`src/maudesignal/connector/audit_mode.py`](src/maudesignal/connector/audit_mode.py).
+
 ## Built during the hackathon vs pre-existing
 
 Built during the Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026):
