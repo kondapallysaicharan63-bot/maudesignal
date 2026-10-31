@@ -30,7 +30,8 @@ _FALLBACK = (
     "<!doctype html><html lang='en'><head><meta charset='utf-8'><title>MaudeSignal API</title>"
     "</head><body><h1>MaudeSignal connector API</h1><p>Read-only tools. "
     "The OpenAPI spec is at <a href='/openapi.json'>/openapi.json</a>.</p><p>{advisory}</p>"
-    "<p><a href='{support}'>Support</a></p></body></html>"
+    "<p><a href='{support}'>Support</a> | <a href='/privacy'>Privacy</a> | "
+    "<a href='/terms'>Terms</a></p></body></html>"
 )
 
 

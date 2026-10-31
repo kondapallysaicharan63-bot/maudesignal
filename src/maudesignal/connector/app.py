@@ -39,6 +39,7 @@ from maudesignal.connector.data import ConnectorData
 from maudesignal.connector.docs_page import render_docs_page
 from maudesignal.connector.errors import ConnectorError, InvalidInputError, NotFoundError
 from maudesignal.connector.feedback import mount_feedback
+from maudesignal.connector.legal_pages import render_privacy, render_terms
 from maudesignal.connector.manifest import build_manifest
 from maudesignal.connector.mcp_server import (
     PARSE_ERROR,
@@ -106,6 +107,7 @@ def _question_audit_inputs(question: str) -> dict[str, str]:
 REPO_URL = "https://github.com/kondapallysaicharan63-bot/maudesignal"
 READ_ONLY = {"x-maudesignal-read-only": True, "x-maudesignal-scope": "read"}
 MCP_PATH = "/mcp"
+TERMS_URL = "https://maudesignal-api.vercel.app/terms"
 MAX_MCP_BODY_BYTES = 64 * 1024
 
 DESCRIPTION = (
@@ -280,7 +282,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         title="MaudeSignal connector API",
         version=API_VERSION,
         description=DESCRIPTION,
-        contact={"name": "MaudeSignal (open source)", "url": REPO_URL},
+        contact={"name": "MaudeSignal (open source)", "url": REPO_URL + "/issues"},
+        terms_of_service=TERMS_URL,
         docs_url=None,
         redoc_url=None,
     )
@@ -498,6 +501,28 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 public_per_hour=public_limiter.limit,
                 daily_usd=ask_runtime.caps.daily_usd,
                 request_usd=ask_runtime.caps.session_usd,
+            )
+        )
+
+    @app.get("/privacy", response_class=HTMLResponse, include_in_schema=False)
+    def privacy_page() -> HTMLResponse:
+        return HTMLResponse(
+            render_privacy(
+                rate_per_min=limiter.limit,
+                public_per_hour=public_limiter.limit,
+                shared_store=state.backend == "upstash_redis",
+            )
+        )
+
+    @app.get("/terms", response_class=HTMLResponse, include_in_schema=False)
+    def terms_page() -> HTMLResponse:
+        return HTMLResponse(
+            render_terms(
+                rate_per_min=limiter.limit,
+                public_per_hour=public_limiter.limit,
+                daily_usd=ask_runtime.caps.daily_usd,
+                request_usd=ask_runtime.caps.session_usd,
+                failed_auth_per_min=failed_auth.limit,
             )
         )
 

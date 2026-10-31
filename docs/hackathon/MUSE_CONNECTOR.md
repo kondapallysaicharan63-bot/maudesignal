@@ -1,10 +1,151 @@
 # MaudeSignal connector for Meta Muse (read-only REST API and MCP server)
 
-Status: **built and tested locally; not deployed from this environment; not submitted.** Part 1
-is the REST API, how to deploy it, how to make a key, and how to check it. Part 2 (at the end of
-this page) is the MCP transport at `/mcp`, the draft answers for the connector submission form,
-privacy and terms text, and a real local MCP client transcript. Nothing on this page says anyone
-has reviewed or endorsed the connector.
+This page is the single source for every answer on the Meta connector form (the first part,
+"Form answers"), followed by how the API is deployed and what it does. Nothing on this page says
+Meta, Muse or anyone else has reviewed or endorsed the connector.
+
+# Form answers
+
+**Status: Not submitted.** (Charan changes this line after he submits the form himself.)
+
+Field names and limits on the live form may differ from the headings below; read the form first
+and paste from here.
+
+## Name
+
+MaudeSignal
+
+## Short description
+
+Read-only triage of public FDA device adverse-event data, with links. (66 characters; limit 80.)
+
+## Long description
+
+MaudeSignal is a read-only connector to public FDA adverse-event data (MAUDE, recalls and 510(k)
+records from openFDA). It answers questions for quality and regulatory professionals at
+medical-device companies: what changed this week for a device type, a live count check for any
+three-letter product code, one stored report, recalls, and a free-text question answered through
+deterministic tools. Every sentence of an `ask` answer passes a claim check, and a sentence that
+cannot be linked to an openFDA or stored record is listed as withheld and is never spoken as fact.
+Every answer carries its source and date, and a fixed line: advisory triage aid; not medical
+advice; nothing is filed with FDA. MHRA (UK) alerts appear only as labelled regulator context.
+
+## Category suggestion
+
+Regulatory and quality (B2B) or Research. Audience: quality, regulatory and post-market
+surveillance staff. Not for patients; not clinical decision support.
+
+## Endpoints
+
+| What | URL |
+|---|---|
+| MCP (streamable HTTP, stateless, protocol 2025-06-18) | `https://maudesignal-api.vercel.app/mcp` |
+| REST base | `https://maudesignal-api.vercel.app` |
+| OpenAPI 3.1 | `https://maudesignal-api.vercel.app/openapi.json` |
+| Docs page | `https://maudesignal-api.vercel.app/` |
+| Health (no key) | `https://maudesignal-api.vercel.app/v1/health` |
+
+## Authentication
+
+Header `X-API-Key: <key>` (the form `Authorization: Bearer <key>` also works). A reviewer key,
+named "meta-review", is sent privately by Charan; it is never written in this repository. Keys are
+personal, read-only and can be revoked at any time. A key in a URL is refused. No OAuth.
+
+## Tools (all read-only; none writes anything)
+
+| Tool | What it does | Source |
+|---|---|---|
+| `what_changed_this_week` | Latest stored week for a product code, labelled with its dates; a code outside the stored set is checked live on openFDA. | stored snapshot, or live openFDA |
+| `check_device_type` | Live openFDA report counts for any product code, using the weekly detector's four rules, windows and thresholds. | live openFDA |
+| `ask` | A free-text question (3 to 500 characters) answered through deterministic tools; every sentence passes the claim gate; withheld sentences are listed apart. | **Live Muse Spark only when live ask is on; with it off, a recorded answer, labelled `recorded_answer`.** |
+| `get_report` | Key fields and the start of the narrative of one stored report. | stored snapshot |
+| `recalls` | Stored openFDA recalls for a product code, newest first. | stored snapshot |
+
+`check_device_type` has a keyless twin, `GET /v1/public/check_device_type`, limited per address and
+never calling a model.
+
+## Example prompts
+
+1. What changed this week for LLZ?
+2. Check product code QAS on openFDA.
+3. Show recalls for LLZ.
+4. Get report 50426770.
+5. Ask: what changed this week for LLZ? (with live ask off this returns the closest recorded answer)
+
+## Rate limits and cost caps
+
+Defaults in the code (each can be changed by the operator with an environment variable):
+
+* 30 requests per key per minute (`MAUDESIGNAL_RATE_LIMIT_PER_MIN`); every HTTP request to `/mcp`
+  counts once.
+* 10 wrong or missing keys per address per minute, then 429 (`MAUDESIGNAL_FAILED_AUTH_PER_MIN`).
+* 10 keyless device-type checks per address per hour (`MAUDESIGNAL_PUBLIC_CHECK_PER_HOUR`).
+* `ask`: at most $0.25 per call and $2.00 per key per UTC day (`MAUDESIGNAL_API_REQUEST_USD`,
+  `MAUDESIGNAL_API_DAILY_USD`); past the cap the closest recorded answer is returned.
+* Feedback form: 5 per hour per address; visits 60 per hour per address.
+
+The live pages `/terms` and `/privacy` show the numbers actually in force.
+
+## Data handling summary
+
+Public openFDA data only (and MHRA (UK) alerts, labelled). No personal or patient data is collected
+or wanted. Hosted on Vercel, United States (function region iad1). Question text is not logged
+(only its SHA-256 and length). IP addresses are never stored by this code (in-memory salted hash
+for rate limits only). Feedback and visit records (no names, no emails) are kept until 2026-11-30.
+Meta receives an `ask` question only when live ask is on. Details: `/privacy`.
+
+## Privacy URL
+
+`https://maudesignal-api.vercel.app/privacy`
+
+## Terms URL
+
+`https://maudesignal-api.vercel.app/terms`
+
+## Support / work email
+
+`<Charan's SJSU email - Charan fills in>` (the same address goes in the Vercel variable
+`MAUDESIGNAL_CONTACT_EMAIL`, so `/privacy` and `/terms` show it; it is never written in git).
+GitHub issues: `https://github.com/kondapallysaicharan63-bot/maudesignal/issues`
+
+## Icon
+
+`docs/hackathon/maudesignal-icon.png` (512x512 PNG), source `docs/hackathon/maudesignal-icon.svg`.
+An original mark (a signal pulse through a magnifier ring); no Meta or FDA logo.
+
+## Data questionnaire
+
+| Question | Answer |
+|---|---|
+| What is the service? | A read-only connector to public FDA adverse-event data (openFDA). MHRA (UK) alerts are shown only as labelled regulator context. |
+| Does it collect personal or patient data? | No, none is collected or wanted. No accounts, names or emails. |
+| Where is data processed and stored? | Vercel, United States (function region iad1, Washington DC). Vercel Blob (private) holds only website feedback and visit records. |
+| Subprocessors? | Vercel Inc. (hosting, logs, Blob). Meta Platforms (Meta Model API) only when `ask` runs live with a server-side model key. Upstash (Redis) and Resend (email) only if the operator configures them. |
+| Does Meta receive user input? | Only the text of an `ask` question, only when live ask is on. When off, `ask` returns recorded answers and nothing is sent to Meta. `/privacy` states which applies at request time. |
+| Which public sources are queried? | openFDA (api.fda.gov) and the GOV.UK search API. |
+| What is logged? | Key id (a peppered one-way hash, never the key), tool name, time, status, cost. Question text is not logged. |
+| What do feedback and visits store? | Feedback: rating, comments, role, consent, referral code, page, time. Visits: referral code, page, time. No names, no emails. |
+| Are IP addresses stored? | No. Used in memory only, as a salted hash, for rate limits. (Vercel, as host, keeps its own request logs.) |
+| Retention? | Request logs follow Vercel's runtime-log retention for this plan. Feedback and visit records are kept until 2026-11-30 and then deleted, earlier on request. |
+| Sale, advertising, cookies? | No sale of data, no advertising, no tracking cookies. |
+| Deletion or questions? | The support email above or the GitHub issues URL. |
+| Medical advice? | No. Not medical advice; nothing is filed with FDA; not an FDA-cleared device. Open-source project by Saicharan Kondapally. |
+
+## Two keys (reviewer key plus your own)
+
+`MAUDESIGNAL_API_KEYS` takes several keys in one value, separated by commas. Format:
+`<key1>,<key2>` (spaces around the comma are fine; empty entries are ignored; each plain key must be
+at least 32 characters, or an entry can be `sha256:<64 hex>`). Run `python3.12 -m
+maudesignal.connector.keygen` **without** `VERCEL_TOKEN` to get a key in a mode-600 file, once per
+key (one for "meta-review", one of your own). Do not use the Vercel-API mode for the second key:
+it **replaces** the whole value. Paste `<key1>,<key2>` as the value in Vercel > Settings >
+Environment Variables > Production and redeploy. To revoke one key, delete its entry from the list
+and redeploy; the other keeps working (a unit test checks this). Audit and spend records are kept
+per key id, so the two keys are counted apart.
+
+---
+
+# Deploy and behaviour
 
 ## Part 1. Deploy the REST API (a second Vercel project)
 
@@ -33,7 +174,8 @@ What the repository gives Vercel (all in git, nothing to paste):
 * `vercel.json`: one function `api/index.py` (`maxDuration` 60 s), `includeFiles` for the demo
   database and the files it reads (`src`, `skills`, `demo/transcripts`, `digests`, `data/demo`,
   `design-system`, `api`), `excludeFiles` for `web`, `docs`, `tests`, `screenshots`, and rewrites
-  that send `/`, `/docs-page`, `/openapi.json` and `/v1/*` to the function.
+  that send `/`, `/docs-page`, `/privacy`, `/terms`, `/openapi.json` and `/v1/*` to the
+  function, and `regions: ["iad1"]`.
 * `api/requirements.txt`: fastapi, pydantic, sqlalchemy, httpx, tenacity, structlog, jsonschema,
   jinja2, python-dotenv, rich, openai. No streamlit, weasyprint, playwright, pandas or scipy.
   (A test fails if a heavy package is added.)
@@ -49,7 +191,8 @@ installed the root manifest, tell the owner before going on: the fix is a projec
 
 | Name | Value | Notes |
 |---|---|---|
-| `MAUDESIGNAL_API_KEYS` | the key | Made by the script in step 3; never typed into git or chat. Comma-separated for several keys. |
+| `MAUDESIGNAL_API_KEYS` | the key | Made by the script in step 3; never typed into git or chat. `<key1>,<key2>` for several keys (see "Two keys" above). |
+| `MAUDESIGNAL_CONTACT_EMAIL` | the support email | Shown (HTML-escaped) on `/privacy` and `/terms`; unset shows the GitHub issues URL. Never in git. |
 | `MAUDESIGNAL_TRUST_FORWARDED` | `1` | Vercel's edge sets `X-Forwarded-For`; without this the limiter would see one address. |
 | `MAUDESIGNAL_KEY_PEPPER` | a long random string | Server-side secret for key ids in ledger file names and audit session ids. |
 | `MAUDESIGNAL_WEB_ORIGINS` | e.g. `https://<web-project>.vercel.app` | Comma-separated exact origins that may call the keyless route from a browser. No wildcard (a `*` entry is ignored). Empty means no browser origin is allowed. |
@@ -90,7 +233,7 @@ subprocess and scan both streams for the key. Redeploy after changing an environ
 ### 4. Verify with harmless reads
 
 ```bash
-BASE=https://<your-api-project>.vercel.app
+BASE=https://maudesignal-api.vercel.app
 KEY=$(cat /path/printed/by/the/script)   # option b; for option a, reveal it in the dashboard
 
 curl -i "$BASE/v1/health"                                   # no key: 200 JSON, read_only true
@@ -422,9 +565,7 @@ and window number exactly what the gate recomputed.
 
 # Part 2. MCP server, submission answers, privacy, terms
 
-**Submission status: Not submitted.** The owner changes this line only after he submits the form
-himself. Nothing here says Meta, Muse or anyone else has reviewed, accepted or endorsed this
-connector, and no such review has happened.
+Submission status: see the top of this page (Not submitted until Charan changes it).
 
 ## Feedback and visits (private)
 
@@ -475,7 +616,7 @@ entry and the cost cap are shared.
 
 | Item | Value |
 |---|---|
-| Endpoint | `https://<your-api-project>.vercel.app/mcp` (HTTPS on Vercel; the host is whatever the API project gets) |
+| Endpoint | `https://maudesignal-api.vercel.app/mcp` |
 | Transport | Streamable HTTP, **stateless**: one JSON-RPC message per `POST`, a JSON reply, no session id, no event stream. `GET`, `DELETE`, `PUT`, `PATCH` on `/mcp` return 405. |
 | Protocol version | `2025-06-18` (header `MCP-Protocol-Version` may be `2025-06-18` or `2025-03-26`; anything else is 400) |
 | Methods | `initialize`, `ping`, `tools/list`, `tools/call`; notifications and client replies get 202 with no body. Batches are refused (protocol 2025-06-18 removed them). |
@@ -567,99 +708,9 @@ ping number 11: HTTP 429
 Not done: no call from Muse or from any third-party MCP client, no deploy to Vercel, no live
 openFDA call, no live Muse Spark call.
 
-## 2.2 Draft answers for the Muse connector submission form
+## 2.2 Privacy, terms and what is still open
 
-Third-party guides describe a submission form that asks for an HTTPS MCP endpoint or API URL, a
-privacy policy, terms and a support contact. **No Meta page confirming this was found, and no
-address for the form is given here**, so **every field below is marked "confirm against the live form"**: field names, limits,
-whether MCP or REST is asked for, and whether more fields exist. Do not paste anything here
-without reading the live form first.
-
-| Field (as described by third parties) | Draft answer | Confirm against the live form |
-|---|---|---|
-| Connector name | MaudeSignal | confirm against the live form |
-| Short description | Read-only triage aid for FDA device adverse-event reports (MAUDE), recalls and device-type checks. Spoken summaries, each fact with its openFDA link. Advisory only; not medical advice; nothing is filed with FDA. | confirm against the live form |
-| Long description | Five read-only tools over openFDA device data: what changed this week (stored demo snapshot, with its dates), a live openFDA check of any three-letter product code using the weekly detector's rules, a question tool answered by Muse Spark through deterministic tools where every sentence passes a claim gate and unverified sentences are marked and never spoken as fact, one stored report, and recalls for a product code. Every answer carries a fixed advisory line and its data source (stored snapshot with dates, or live openFDA with the query time). | confirm against the live form |
-| Endpoint type | MCP over streamable HTTP (stateless, protocol 2025-06-18). REST with an OpenAPI 3.1 file is also available at `/openapi.json`. | confirm against the live form |
-| Endpoint URL | `https://<your-api-project>.vercel.app/mcp` (fill in after deploy; none exists yet) | confirm against the live form |
-| Authentication | API key in `X-API-Key` or `Authorization: Bearer`. A read-only key is created by the owner (`maudesignal.connector.keygen`) and given to the reviewer through the form's secure field, never in a chat or a repository. No OAuth. | confirm against the live form |
-| Tool list | `what_changed_this_week`, `check_device_type`, `ask`, `get_report`, `recalls` (all read-only; see `api/mcp-manifest.json`) | confirm against the live form |
-| Data accessed | Public openFDA device adverse-event reports (de-identified), recalls and 510(k) records; a stored demo snapshot in the deployment; live openFDA counts on request. No customer data. | confirm against the live form |
-| Writes / side effects | None. No tool writes anywhere; nothing is filed with FDA. | confirm against the live form |
-| Privacy policy URL | Text in 2.3 below; **no public URL exists yet**. The owner hosts it (for example on the web project) and pastes the URL. | confirm against the live form |
-| Terms URL | Text in 2.4 below; **no public URL exists yet**. Same. | confirm against the live form |
-| Support contact | Owner to fill in (an email address he chooses to publish) and the repository issue tracker: `https://github.com/kondapallysaicharan63-bot/maudesignal/issues` | confirm against the live form |
-| Rate limits | Per-key requests per minute (default 30) and a per-key daily cost cap on `ask`. | confirm against the live form |
-| Test credentials / how to try it | Owner supplies a separate read-only reviewer key. Suggested calls: `tools/list`; `what_changed_this_week` with `product_code` LLZ; `recalls` with LLZ; `get_report` with `50426770`; `ask` with "What changed this week for LLZ?". | confirm against the live form |
-| Category / audience | Quality and regulatory professionals at medical-device companies (B2B). Not for patients; not clinical decision support. | confirm against the live form |
-| Anything else the form asks | Not known. Leave blank or ask the owner; do not invent. | confirm against the live form |
-
-## 2.3 Privacy statement (draft; the owner publishes it and fixes the contact)
-
-**What this service is.** A read-only API and MCP server that returns summaries of public openFDA
-device data. It is an advisory triage aid for quality and regulatory review. It is not medical
-advice and it files nothing with FDA.
-
-**No PHI and no personal data stored.** The data served is public openFDA data, already
-de-identified by FDA. The service has no accounts, no sign-up and asks for no name, email or
-patient information. It does not keep the text of questions
-(see "What else is held" for the one short-lived step).
-
-**What a request puts in the audit log.** One entry per tool call, in an append-only, hash-chained
-log: the tool name; its inputs (a product code or report id; for `ask`, only a SHA-256 of the
-question and its length, never the text); a SHA-256 of the answer; counts of facts with links and
-withheld sentences; the data source and dates; the time; and a keyed hash that identifies the API
-key (never the key). The log is held in the operator's Redis store when one is configured, and
-otherwise in the memory of one server instance, where it is lost on a cold start.
-
-**What else is held.** When live answers are on, the Muse Spark copilot writes its own audit
-entry into the server instance's temporary working copy of the demo database. After each live
-`ask` the connector replaces the question text in that entry with its SHA-256 and recomputes the
-entry's hash chain (the chain in that temporary copy is rewritten, so it shows no tampering of those rows; live asks run one at a time per instance so the rewrite cannot race an append), so the text is not left in that database (a test searches every table and the
-raw file for the question after a live ask). That database copy is lost on a cold start. For
-rate limiting, a counter per key id and, for wrong keys and the keyless
-web route, per client network address, in memory or in the operator's Redis store, for at most
-the length of the limit window. The hosting platform keeps its own request logs (method, path,
-status, address, time); send keys only in headers, never in a URL.
-
-**Who receives the question.** When live answers are switched on, the text of an `ask` question is
-sent to the Muse Spark model through the Meta Model API to produce the answer, under the
-operator's API key. With no model key, or when live answers are off, nothing is sent to a model
-and a recorded answer is returned. Live checks send only a three-letter product code to openFDA.
-
-**Do not send** patient or personal information in a question. Questions are for device and
-report-level topics.
-
-**Retention and deletion.** Audit entries and counters are not kept on a schedule beyond what is
-stated above; ask the operator at the contact address to remove entries tied to a key.
-
-**Contact.** Owner to fill in.
-
-## 2.4 Terms (draft; the owner publishes them)
-
-1. **Advisory only.** Everything returned is an advisory triage aid for quality and regulatory
-   review. It is not medical advice, not clinical decision support and not a regulatory
-   determination. A qualified person must review any signal before acting on it.
-2. **Nothing is filed with FDA.** The service does not submit, draft for submission, or file
-   anything with FDA or any other regulator. Actions a person takes on an answer are their own.
-3. **Sources and freshness.** Each answer states its source: a stored demo snapshot with its
-   dates, or live openFDA with the query time, or a recorded answer, or a live model answer.
-   Stored data can be out of date. Sentences marked as withheld could not be verified and must not
-   be stated as fact.
-4. **Read-only use.** Keys are read-only. Do not try to bypass rate limits, the cost cap or
-   authentication, do not share keys, and do not send personal or patient information.
-5. **No warranty.** The service is provided as is, without warranty of any kind, including
-   accuracy, completeness, availability or fitness for a purpose. To the extent the law allows,
-   the operator is not liable for decisions made from its output.
-6. **Changes and access.** The operator may change, limit or stop the service or revoke a key at
-   any time.
-7. **Scope.** U.S. FDA (openFDA) data only, plus labelled MHRA (UK) context where an answer says
-   so. No other regulator is covered.
-
-## 2.5 What the owner must still do (nothing below has been done)
-
-* Deploy the API project and note its URL; create a read-only reviewer key with the key script.
-* Host the privacy and terms text and choose a support email.
-* Read the live submission form, correct every field marked "confirm against the live form", and
-  submit it himself.
-* Only then change the status line at the top of part 2 from "Not submitted".
+The privacy and terms texts are served by the API itself at `/privacy` and `/terms`
+(`connector/legal_pages.py`); the form answers above repeat them. Still open, and done by Charan:
+set `MAUDESIGNAL_CONTACT_EMAIL` in Vercel, add the two keys, redeploy, read the live form and
+correct any field that differs, submit it himself, then change the status line at the top.

@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["iad1"],
   "functions": {
     "api/index.py": {
       "maxDuration": 60,
@@ -10,6 +11,8 @@
   "rewrites": [
     { "source": "/", "destination": "/api/index" },
     { "source": "/docs-page", "destination": "/api/index" },
+    { "source": "/privacy", "destination": "/api/index" },
+    { "source": "/terms", "destination": "/api/index" },
     { "source": "/openapi.json", "destination": "/api/index" },
     { "source": "/mcp", "destination": "/api/index" },
     { "source": "/admin", "destination": "/api/index" },
