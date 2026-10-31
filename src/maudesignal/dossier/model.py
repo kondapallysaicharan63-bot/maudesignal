@@ -109,6 +109,13 @@ class CapaInfo:
     restored_from: str | None = None
     #: UTC time the transcript recorded the original drafting (``...Z``), when restored.
     recorded_at_utc: str | None = None
+    #: Title as printed (reworded so a count claim stays about the whole product code).
+    #: Empty means "print ``title``".
+    display_title: str = ""
+    #: Phrases the problem statement quotes (e.g. "error 500") and which cited reports hold them.
+    problem_terms: tuple[str, ...] = ()
+    problem_supporting_ids: tuple[str, ...] = ()
+    problem_unsupported_ids: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
