@@ -224,7 +224,7 @@ export function normalizeCode(text: string): string | null {
 export const API_TIMEOUT_MS = 8000
 export const API_PATH = '/v1/public/check_device_type'
 
-export type FailureKind = 'unconfigured' | 'network' | 'rate' | 'server' | 'bad-response'
+export type FailureKind = 'unconfigured' | 'network' | 'rate' | 'server' | 'bad-response' | 'unknown-code'
 
 type Fetcher = (url: string, init?: { signal?: AbortSignal }) => Promise<Response>
 
@@ -260,9 +260,46 @@ export function parseCheck(body: unknown, code: string): LiveCheckResult | null 
   return ok ? (c as unknown as LiveCheckResult) : null
 }
 
+/**
+ * The answer the API gives when openFDA cannot be reached but the code is in the stored demo snapshot:
+ * HTTP 200, "check": null, provenance.kind "stored_demo_snapshot". Shown as a stored answer, never as live.
+ */
+export interface StoredCheck {
+  product_code: string
+  speakable: string
+  facts: { text: string; link: string; link_label: string }[]
+  note: string
+  data_dates: string
+}
+
 export interface ApiAnswer {
-  result: LiveCheckResult
+  result: LiveCheckResult | null
+  stored: StoredCheck | null
   advisory: string | null
+}
+
+const str = (v: unknown): string => (typeof v === 'string' ? v : '')
+
+/** Reads a stored-snapshot answer (check is null); null when the body is not that shape. */
+export function parseStored(body: unknown, code: string): StoredCheck | null {
+  const b = body as { speakable?: unknown; facts?: unknown; provenance?: Record<string, unknown> } | null
+  const prov = b?.provenance
+  if (!b || !prov || typeof prov !== 'object' || prov.kind !== 'stored_demo_snapshot') return null
+  if (typeof b.speakable !== 'string' || !b.speakable || !Array.isArray(b.facts)) return null
+  const facts: StoredCheck['facts'] = []
+  for (const f of b.facts as Record<string, unknown>[]) {
+    if (!f || typeof f.text !== 'string') return null
+    // a link that is not an openFDA address is dropped, the sentence stays
+    const link = typeof f.link === 'string' && f.link.startsWith(OPENFDA_ORIGIN) ? f.link : ''
+    facts.push({ text: f.text, link, link_label: str(f.link_label) || 'openFDA' })
+  }
+  return { product_code: code, speakable: b.speakable, facts, note: str(prov.note), data_dates: str(prov.data_dates) }
+}
+
+/** The message of an API error envelope ({"error": {"code", "message", "suggestions"}}), or null. */
+export function errorMessage(body: unknown): string | null {
+  const e = (body as { error?: { message?: unknown } } | null)?.error
+  return e && typeof e.message === 'string' && e.message.trim() ? e.message.trim().slice(0, 600) : null
 }
 
 /** One GET to our API. Every failure is a typed error, never a made-up result. */
@@ -282,17 +319,30 @@ export async function fetchCheck(
     clearTimeout(timer)
   }
   if (res.status === 429) throw new LiveCheckFailure('rate', 'The live check is rate limited right now (429). Try again later.')
-  if (!res.ok) throw new LiveCheckFailure('server', `The MaudeSignal API returned HTTP ${res.status}.`)
+  if (!res.ok) {
+    let err: string | null = null
+    try {
+      err = errorMessage(await res.json())
+    } catch {
+      /* no readable error body */
+    }
+    // 422: the code is well formed but unknown; the API's own message carries the "did you mean" codes
+    if (res.status === 422 && err) throw new LiveCheckFailure('unknown-code', err)
+    throw new LiveCheckFailure('server', err ? `The MaudeSignal API returned HTTP ${res.status}: ${err}` : `The MaudeSignal API returned HTTP ${res.status}.`)
+  }
   let body: unknown
   try {
     body = await res.json()
   } catch {
     throw new LiveCheckFailure('bad-response', 'The MaudeSignal API sent an answer that could not be read.')
   }
+  const adv = (body as { advisory?: unknown } | null)?.advisory
+  const advisory = typeof adv === 'string' ? adv : null
   const result = parseCheck(body, code)
-  if (!result) throw new LiveCheckFailure('bad-response', 'The MaudeSignal API answer did not contain a readable check.')
-  const adv = (body as { advisory?: unknown }).advisory
-  return { result, advisory: typeof adv === 'string' ? adv : null }
+  if (result) return { result, stored: null, advisory }
+  const stored = parseStored(body, code)
+  if (stored) return { result: null, stored, advisory }
+  throw new LiveCheckFailure('bad-response', 'The MaudeSignal API answer did not contain a readable check.')
 }
 
 export class LiveCheckFailure extends Error {
@@ -398,7 +448,8 @@ export function browserStore(kind: 'session' | 'local'): KeyStore | null {
 }
 
 export type CheckOutcome =
-  | { ok: true; result: LiveCheckResult; advisory: string | null; cached: boolean; used: number }
+  | { ok: true; result: LiveCheckResult; stored?: undefined; advisory: string | null; cached: boolean; used: number }
+  | { ok: true; result?: undefined; stored: StoredCheck; advisory: string | null; cached: false; used: number }
   | { ok: false; kind: 'limit' | 'invalid' | FailureKind; message: string; used: number }
 
 /** Limit, 6-hour cache, then our API. A failure is returned, never replaced by a made-up result. */
@@ -421,8 +472,11 @@ export async function checkDevice(
     }
   try {
     const a = await fetchCheck(code, deps)
+    const used = recordCheck(deps.session)
+    // a stored answer is never cached: the next check should try openFDA again
+    if (!a.result) return { ok: true, stored: a.stored as StoredCheck, advisory: a.advisory, cached: false, used }
     writeCache(deps.local, code, now, a.result)
-    return { ok: true, result: a.result, advisory: a.advisory, cached: false, used: recordCheck(deps.session) }
+    return { ok: true, result: a.result, advisory: a.advisory, cached: false, used }
   } catch (e) {
     if (e instanceof LiveCheckFailure) return { ok: false, kind: e.kind, message: e.message, used }
     return { ok: false, kind: 'bad-response', message: e instanceof Error ? e.message : String(e), used }

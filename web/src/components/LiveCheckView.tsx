@@ -12,6 +12,7 @@ import {
   SESSION_CHECKS,
   type CheckOutcome,
   type LiveCheckResult,
+  type StoredCheck,
 } from '../liveCheck'
 
 function Result({ r, cached, advisory }: { r: LiveCheckResult; cached: boolean; advisory: string | null }) {
@@ -71,14 +72,49 @@ function Result({ r, cached, advisory }: { r: LiveCheckResult; cached: boolean; 
   )
 }
 
+/** openFDA could not be reached: the API's stored demo snapshot, labelled as stored and never as live. */
+function Stored({ s, advisory }: { s: StoredCheck; advisory: string | null }) {
+  return (
+    <div className="mt-4" aria-live="polite" data-testid="check-stored">
+      <article className="rounded-md border border-rule-strong bg-sunk p-4">
+        <p className="ms-kicker m-0">Stored snapshot, not live · {s.product_code}</p>
+        <p className="ws-wrap mt-2">{s.speakable}</p>
+        {s.data_dates && <p className="ws-wrap m-0 text-[15px] text-ink-2">{s.data_dates}.</p>}
+        {s.note && <p className="ws-wrap m-0 mt-1 text-[15px] text-ink-2">{s.note}</p>}
+      </article>
+      <ul className="m-0 mt-3 list-none p-0">
+        {s.facts
+          .filter((f) => f.link)
+          .map((f) => (
+            <li key={f.link} className="py-1">
+              <a className="ws-wrap text-[15px] text-accent underline" href={f.link} target="_blank" rel="noreferrer">
+                {f.link_label}
+              </a>
+            </li>
+          ))}
+      </ul>
+      <p className="mt-2 text-[15px] leading-snug text-ink-2">
+        A triage signal for a person to review, not a finding.
+        {advisory ? ` ${advisory}` : ''}
+      </p>
+    </div>
+  )
+}
+
 /** The answer to one check: the result card, or the honest fallback (never a made-up result). */
 export function OutcomeView({ out }: { out: CheckOutcome }) {
-  if (out.ok) return <Result r={out.result} cached={out.cached} advisory={out.advisory} />
+  if (out.ok) {
+    return out.stored ? (
+      <Stored s={out.stored} advisory={out.advisory} />
+    ) : (
+      <Result r={out.result} cached={out.cached} advisory={out.advisory} />
+    )
+  }
   return (
     <div role="alert" className="ms-banner ms-banner--err mt-4">
         <div>
           <p className="ws-wrap m-0">{out.message}</p>
-          {out.kind !== 'invalid' && out.kind !== 'limit' && (
+          {out.kind !== 'invalid' && out.kind !== 'limit' && out.kind !== 'unknown-code' && (
             <p className="ws-wrap m-0 mt-1">
               No result is shown, because none was read. The Streamlit app runs the same live check from its own server:{' '}
               <a className="font-semibold underline" href={STREAMLIT_URL} target="_blank" rel="noreferrer">
@@ -168,7 +204,7 @@ export function LiveCheckView({ initialCode = '' }: { initialCode?: string }) {
       {out && <OutcomeView out={out} />}
       {out?.ok && (
         <div className="mt-4">
-          <OutsideMentions code={out.result.product_code} />
+          <OutsideMentions code={out.result ? out.result.product_code : out.stored.product_code} />
         </div>
       )}
     </div>

@@ -1,0 +1,195 @@
+{
+ "_note": "Exact JSON of GET /v1/public/check_device_type captured from the merged API (tests/unit/test_connector_public_check_shapes.py builds the same shapes).",
+ "down": {
+  "body": {
+   "error": {
+    "code": "source_unavailable",
+    "message": "openFDA could not be reached just now; try again shortly."
+   }
+  },
+  "status": 502
+ },
+ "live": {
+  "body": {
+   "advisory": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+   "check": {
+    "as_of": "20260907",
+    "baseline_count": 4,
+    "baseline_severe_count": 0,
+    "baseline_severe_share": 0.0,
+    "baseline_weekly_mean": 1.0,
+    "change": "more serious than usual",
+    "classification": "severity_escalation",
+    "current_count": 5,
+    "current_event_type_counts": [
+     [
+      "injury",
+      1
+     ],
+     [
+      "malfunction",
+      4
+     ]
+    ],
+    "current_severe_count": 1,
+    "current_severe_share": 0.2,
+    "new_event_types": [],
+    "prior_report_count": 100,
+    "product_code": "QAS",
+    "queries": [
+     [
+      "Reports per day (latest date, both windows)",
+      "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQAS+AND+date_received%3A%5B20240101+TO+20261029%5D&count=date_received"
+     ],
+     [
+      "This week, by event type",
+      "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQAS+AND+date_received%3A%5B20260901+TO+20260907%5D&count=event_type.exact"
+     ],
+     [
+      "4 weeks before, by event type",
+      "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQAS+AND+date_received%3A%5B20260804+TO+20260831%5D&count=event_type.exact"
+     ],
+     [
+      "Everything before this week",
+      "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQAS+AND+date_received%3A%5B19900101+TO+20260831%5D&limit=1"
+     ],
+     [
+      "Everything before this week, by event type",
+      "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQAS+AND+date_received%3A%5B19900101+TO+20260831%5D&count=event_type.exact"
+     ]
+    ],
+    "severe_share_delta_pp": 20.0,
+    "spike_ratio": 5.0,
+    "triggers": [
+     "severity_escalation",
+     "spike"
+    ],
+    "window": {
+     "as_of": "20260907",
+     "baseline_end": "20260831",
+     "baseline_start": "20260804",
+     "current_end": "20260907",
+     "current_start": "20260901"
+    }
+   },
+   "facts": [
+    {
+     "link": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQAS+AND+date_received%3A%5B20260901+TO+20260907%5D&limit=1",
+     "link_label": "openFDA: reports in this week",
+     "text": "5 reports received September 1, 2026 to September 7, 2026."
+    },
+    {
+     "link": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQAS+AND+date_received%3A%5B20260804+TO+20260831%5D&limit=1",
+     "link_label": "openFDA: reports in the baseline",
+     "text": "4 reports received August 4, 2026 to August 31, 2026, a weekly average of 1."
+    },
+    {
+     "link": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQAS+AND+date_received%3A%5B19900101+TO+20260831%5D&limit=1",
+     "link_label": "openFDA: reports before this week",
+     "text": "100 reports received before September 1, 2026."
+    },
+    {
+     "link": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQAS+AND+date_received%3A%5B20260901+TO+20260907%5D&count=event_type.exact",
+     "link_label": "openFDA: this week by event type",
+     "text": "1 of this week's 5 reports was injury or death."
+    }
+   ],
+   "provenance": {
+    "data_dates": "week September 1, 2026 to September 7, 2026; baseline August 4, 2026 to August 31, 2026",
+    "kind": "live_openfda",
+    "note": "Same four rules, windows and thresholds as the weekly detector.",
+    "queried_at_utc": "2026-10-29T12:00:00Z",
+    "source": "openFDA device/event.json (counts only; no report text downloaded)"
+   },
+   "speakable": "Live from openFDA as of September 7, 2026, QAS shows more serious than usual and reports suddenly increased. There were 5 reports in the 7 days ending that day, against a weekly average of 1 in the four weeks before. One of them was an injury or death report.",
+   "tool": "check_device_type",
+   "withheld": []
+  },
+  "status": 200
+ },
+ "stored": {
+  "body": {
+   "advisory": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+   "check": null,
+   "facts": [
+    {
+     "link": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260825+TO+20260831%5D&limit=1",
+     "link_label": "openFDA: reports in this week",
+     "text": "LLZ (System, Image Processing, Radiological): reports suddenly increased. 33 reports received August 25, 2026 to August 31, 2026, against a weekly average of 8.75 in the four weeks before."
+    }
+   ],
+   "provenance": {
+    "data_dates": "week August 25, 2026 to August 31, 2026; snapshot fetched 2026-10-27; latest stored report received August 31, 2026",
+    "kind": "stored_demo_snapshot",
+    "note": "Live openFDA could not be reached, so this is the stored demo snapshot instead.",
+    "queried_at_utc": null,
+    "source": "Stored demo snapshot of openFDA device adverse-event reports"
+   },
+   "speakable": "Live openFDA could not be reached, so this is the stored demo snapshot. In the stored demo snapshot for August 25, 2026 to August 31, 2026, LLZ shows reports suddenly increased: 33 reports against a weekly average of 8.75 in the four weeks before.",
+   "tool": "check_device_type",
+   "withheld": []
+  },
+  "status": 200
+ },
+ "unknown": {
+  "body": {
+   "error": {
+    "code": "unknown_product_code",
+    "message": "QAH isn't a product code we know - did you mean QIH? It is not in the stored data, openFDA returned no reports for it and it is not in the openFDA device classification list. Check the code with the person, or use lookup_device with the device name.",
+    "suggestions": [
+     "QIH"
+    ]
+   }
+  },
+  "status": 422
+ },
+ "zero": {
+  "body": {
+   "advisory": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+   "check": {
+    "as_of": null,
+    "baseline_count": 0,
+    "baseline_severe_count": 0,
+    "baseline_severe_share": null,
+    "baseline_weekly_mean": 0.0,
+    "change": "no change",
+    "classification": "stable",
+    "current_count": 0,
+    "current_event_type_counts": [],
+    "current_severe_count": 0,
+    "current_severe_share": null,
+    "new_event_types": [],
+    "prior_report_count": 0,
+    "product_code": "QAS",
+    "queries": [
+     [
+      "Everything",
+      "https://api.fda.gov/device/event.json?search=x&limit=1"
+     ]
+    ],
+    "severe_share_delta_pp": null,
+    "spike_ratio": null,
+    "triggers": [],
+    "window": null
+   },
+   "facts": [
+    {
+     "link": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQAS&limit=1",
+     "link_label": "openFDA: reports, all dates",
+     "text": "0 reports on openFDA for QAS, all dates."
+    }
+   ],
+   "provenance": {
+    "data_dates": "no report in the last two years",
+    "kind": "live_openfda",
+    "note": "Same four rules, windows and thresholds as the weekly detector.",
+    "queried_at_utc": "2026-10-29T12:00:00Z",
+    "source": "openFDA device/event.json (counts only; no report text downloaded)"
+   },
+   "speakable": "openFDA returned no reports for QAS.",
+   "tool": "check_device_type",
+   "withheld": []
+  },
+  "status": 200
+ }
+}
