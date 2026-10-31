@@ -212,6 +212,8 @@ class AskRuntime:
     state: ConnectorState | None = None
     #: An explicit per-call reservation (tests, and the live website routes).
     meter: CallMeter | None = None
+    #: Cheaper tier-4 settings (compact prompt, low reasoning effort, two tool rounds).
+    lean: bool = True
 
     def call_meter(self) -> CallMeter | None:
         """The per-call reservation every Meta call goes through (``None``: live is off)."""
@@ -232,6 +234,34 @@ class AskRuntime:
         """
         shared = self.state.ledger(key_id) if self.state else None
         return shared or DailyLedger(self.ledger_dir / f"{key_id}.json")
+
+
+#: Tier-4 limits (see ``apply_lean``). Output tokens include reasoning tokens.
+LEAN_MAX_TOOL_ROUNDS = 2
+LEAN_MAX_TOKENS = 3000
+LEAN_MAX_TOKENS_COMPARE = 5000
+LEAN_TOOL_RESULT_CHARS = 6000
+_COMPARE = re.compile(
+    r"\bcompare\b|\bcomparison\b|\bversus\b|\bvs\.?\b|\bdifference\b|\bside by side\b"
+    r"|\bwhich (?:one|of)\b|\bbetween\b",
+    re.IGNORECASE,
+)
+
+
+def is_comparison(question: str) -> bool:
+    """True when the question compares things (then reasoning effort ``medium``)."""
+    return _COMPARE.search(question) is not None
+
+
+def apply_lean(agent: CopilotAgent, question: str) -> None:
+    """Cheaper tier-4 settings: compact prompt, ``low`` effort (``medium`` to compare)."""
+    compare = is_comparison(question)
+    agent.configure_lean(
+        reasoning_effort="medium" if compare else "low",
+        max_tool_rounds=LEAN_MAX_TOOL_ROUNDS,
+        max_tokens=LEAN_MAX_TOKENS_COMPARE if compare else LEAN_MAX_TOKENS,
+        max_tool_result_chars=LEAN_TOOL_RESULT_CHARS,
+    )
 
 
 def _words(text: str) -> set[str]:
@@ -285,11 +315,106 @@ def _quoted(question: str) -> str:
     return q.replace('"', "'")
 
 
-def _speakable(lead: str | None, passed: list[str], withheld: int) -> str:
+_CONNECTIVE_START = re.compile(
+    r"^(?:here(?:'s| is| are)|below|sure|certainly|of course|okay|ok|hi|hello|hey|thanks"
+    r"|thank you|let me|i (?:checked|looked|searched|found|reviewed|used|can help)"
+    r"|based on (?:the |my )?(?:stored |available )?(?:records|data|tools?|results?)"
+    r"|in summary|to summari[sz]e|overall|in short|please note|note that|happy to help"
+    r"|(?:good|great) question)\b",
+    re.IGNORECASE,
+)
+#: The whole sentence must be one of these short advisory lines (anchored).
+_ADVISORY = re.compile(
+    r"^(?:a |the )?(?:named |qualified )?(?:human|person|reviewer|team|your team)"
+    r" (?:must|should|needs to|will) (?:review|check|confirm) (?:this|these|it|them|the "
+    r"(?:answer|evidence|findings|results))(?: before (?:any |a )?(?:decision|action))?[.!]?$"
+    r"|^(?:this is )?not medical advice[.!]?$|^nothing (?:is|was) filed with (?:the )?fda[.!]?$",
+    re.IGNORECASE,
+)
+#: Verbs that state what happened (past tense / passive): a sentence with one is factual.
+_EVENT_VERB = re.compile(
+    r"\b(?:was|were|had|has been|have been|is being|got|did|became|caused|showed|shows|reported)\b"
+    r"|\b\w{3,}(?:ed|en)\b",
+    re.IGNORECASE,
+)
+#: Past-tense words that are fine in a transition ("I checked ...", "Based on ...").
+_TRANSITION_PAST = frozenset(
+    {
+        "checked",
+        "stored",
+        "found",
+        "linked",
+        "verified",
+        "looked",
+        "searched",
+        "reviewed",
+        "used",
+        "based",
+        "listed",
+        "asked",
+        "when",
+        "then",
+        "often",
+        "even",
+        "seven",
+        "given",
+        "open",
+        "seen",
+        "taken",
+    }
+)
+#: A word that makes a sentence a statement about FDA data (then it is never filler).
+_FACT_WORD = re.compile(
+    r"\b(?:devices?|recall\w*|report\w*|fda|maude|510|k\d{6}|clearances?|cleared|injur\w*"
+    r"|deaths?|died|malfunction\w*|software|failures?|failed|errors?|signals?|capa|"
+    r"manufacturers?|firms?|complaints?|adverse|events?|problems?|increase\w*|decrease\w*"
+    r"|spike\w*|product codes?|brands?|models?|labels?|narratives?|patients?|scanners?"
+    r"|tools?|systems?|algorithms?|apps?|implants?|pumps?|monitors?|images?|readings?"
+    r"|withdraw\w*|misread\w*|outage\w*|defect\w*|hazards?|risks?|harm\w*|safety"
+    r"|unsafe|dangerous|surgery|diagnos\w*|treatment|stop|immediately|class)\b",
+    re.IGNORECASE,
+)
+_CODE_IN_SENTENCE = re.compile(r"\b[A-Z]{3}\b")  # a product code such as LLZ (case-sensitive)
+MAX_CONNECTIVE_WORDS = 14
+NO_FACTS_LINE = (
+    "I have nothing checked to add to that. Ask about a product code, a report, a recall or "
+    "what changed this week."
+)
+
+
+def is_connective(text: str) -> bool:
+    """True for a sentence that states no fact: a greeting, a transition, an advisory line.
+
+    Used only for sentences that carry no claim and passed the gate. Such a sentence is
+    neither shown as a fact nor listed as held back. Anything with a digit, longer than a
+    short transition, or naming FDA data (a device, recall, report, problem, product code ...)
+    is not connective, so "Based on the records, the device was recalled for software failure."
+    is still listed as held back. The narrow advisory lines ("a named human must review ...",
+    "not medical advice") state no fact and stay filler.
+    """
+    t = " ".join(text.split())
+    if not t or any(c.isdigit() for c in t):
+        return False
+    if _ADVISORY.search(t):
+        return True  # one whole, anchored advisory line ("Nothing is filed with FDA.")
+    if _FACT_WORD.search(t) or _CODE_IN_SENTENCE.search(t):
+        return False
+    verbs = [m.group(0).lower() for m in _EVENT_VERB.finditer(t)]
+    if any(v not in _TRANSITION_PAST for v in verbs):
+        return False  # something happened: factual; when unsure, held back is the safe default
+    return len(t.split()) <= MAX_CONNECTIVE_WORDS and _CONNECTIVE_START.search(t) is not None
+
+
+def _speakable(lead: str | None, passed: list[str], withheld: int, *, factual: bool = True) -> str:
     room = MAX_SPEAKABLE_SENTENCES - (1 if lead else 0) - (1 if withheld else 0)
     parts: list[str] = [lead] if lead else []
     chosen = passed[: max(room, 1)] if passed else []
-    parts += chosen or ["I could not verify an answer to that, so I am not stating one."]
+    empty = (
+        "I could not verify an answer to that, so I am not stating one."
+        if factual or withheld
+        else NO_FACTS_LINE
+    )
+    parts += chosen or [empty]
     if withheld:
         parts.append(
             "One sentence was left out because it could not be verified or tied to a source."
@@ -327,6 +452,8 @@ def _split(
     facts: list[Fact] = []
     withheld: list[WithheldSentence] = []
     for text, found, reason, kinds in items:
+        if reason is None and not found and not kinds and is_clean(text) and is_connective(text):
+            continue  # a transition or greeting: not a fact, and not "held back" either
         if reason is None and not is_clean(text):
             reason = _FORBIDDEN_REASON
         if reason is None and not found:
@@ -370,9 +497,12 @@ def _from_live(res: CopilotResult, data: ConnectorData, now: datetime) -> ToolAn
         items.append((s.text, found, None, [str(cv.claim.kind) for cv in s.claim_verdicts]))
     passed, facts, withheld = _split(items, hide_withheld_text=True)
     latest = str(data.manifest().get("max_date_received") or "")
+    factual = any(kinds for _t, _l, _r, kinds in items) or any(
+        not is_connective(t) for t, _l, _r, _k in items
+    )
     return ToolAnswer(
         tool="ask",
-        speakable=_speakable(None, passed, len(withheld)),
+        speakable=_speakable(None, passed, len(withheld), factual=factual),
         facts=facts,
         provenance=Provenance(
             kind="live_model",
@@ -663,6 +793,8 @@ def ask_detailed(
             with data.live_ask_lock:
                 agent = runtime.agent_factory(data, guard)
                 make_read_only(agent)  # whatever the factory built: no tool that writes
+                if runtime.lean:
+                    apply_lean(agent, q)
                 timed = _TimedClient(agent._client)
                 agent._client = timed
                 if history:

@@ -70,6 +70,7 @@ def make(
         public_limiter=RateLimiter(public_limit, window_seconds=3600),
         data=data,
         ask_runtime=runtime or offline_runtime(tmp_path),
+        chat_tiers=False,  # pins the Muse Spark path (tier 4)
         live_checker=checker,
         now=lambda: NOW,
         state=state or ConnectorState(),
@@ -317,6 +318,7 @@ def test_shared_state_is_used_for_limits_audit_and_health(
             keys=KeyStore.from_env({"MAUDESIGNAL_API_KEYS": KEY}),
             data=data,
             ask_runtime=offline_runtime(tmp_path),
+            chat_tiers=False,  # pins the Muse Spark path (tier 4)
             live_checker=fake_check,
             now=lambda: NOW,
             state=shared,

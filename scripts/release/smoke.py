@@ -48,7 +48,12 @@ from report import BLOCKED, FAIL, KNOWN_GAP, PASS, SKIPPED, Report  # noqa: E402
 
 VOICE_FILES = ("question-a.wav", "question.wav", "question-c.wav")
 LABEL_PHOTO = ROOT / "demo" / "vision" / "labels" / "label-caresens-n.jpg"
-QUESTION = "What changed this week for LLZ?"
+#: An open question, so the chat tiers send it to Muse Spark (tier 4): the smoke checks the
+#: live model. "What changed this week for LLZ?" is now a free direct lookup (tier 2).
+QUESTION = "Which kinds of problems do the LLZ reports from this week describe?"
+#: Tier 1: a fixed reply with no model call and $0 ("hi" is refused, 422, by a server
+#: without the chat tiers, so it can never start a paid call there either).
+GREETING = "hi"
 TEST_REF = "TEST-0"
 
 
@@ -306,6 +311,18 @@ class Smoke:
                 "POST", self.api + "/v1/live/ask", json_body={"question": QUESTION}, timeout=90
             )
             self.note_live("live chat question", r, "ask")
+            # Only after the paid question was allowed: a short budget sends nothing at all.
+            g = request(
+                "POST", self.api + "/v1/live/ask", json_body={"question": GREETING}, timeout=30
+            )
+            gb = g.json() if g.status == 200 and isinstance(g.json(), dict) else {}
+            self.rep.ok(
+                "live chat greeting: fixed reply, no model, $0 (chat tier 1)",
+                g.status == 200 and gb.get("tier") == "canned" and gb.get("cost_usd") == 0,
+                f"HTTP {g.status} tier={gb.get('tier')} cost={gb.get('cost_usd')}",
+                group="live",
+                required=False,
+            )
         else:
             self.skipped_budget("live chat question")
         if not with_photo:

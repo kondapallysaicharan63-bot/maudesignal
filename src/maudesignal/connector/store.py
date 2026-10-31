@@ -224,6 +224,16 @@ class DailyCounter:
         """Count one use for ``who``; returns ``(allowed, remaining_today)``."""
         return self._memory_hit(who)
 
+    def _memory_peek(self, who: str) -> int:
+        with self._lock:
+            if self._today() != self._day:
+                return self.limit
+            return max(0, self.limit - self._hits.get(who, 0))
+
+    def peek(self, who: str) -> int:
+        """Uses left today for ``who``, without counting one (answers that cost nothing)."""
+        return self._memory_peek(who)
+
 
 class SharedDailyCounter(DailyCounter):
     """Daily counter kept in Redis (every instance sees it); memory when Redis fails."""
@@ -253,6 +263,17 @@ class SharedDailyCounter(DailyCounter):
         if n > self.limit:
             return False, 0
         return True, self.limit - n
+
+    def peek(self, who: str) -> int:
+        """Uses left today for ``who``, without counting one; memory when Redis fails."""
+        key = f"{NAMESPACE}:daily:{self._name}:{self._today().isoformat()}:{who}"
+        try:
+            value = self._client.command("GET", key)
+            n = int(value) if value is not None else 0
+        except (UpstashError, ValueError) as exc:
+            logger.warning("connector_redis_fallback", op="daily_peek", error=str(exc))
+            return self._memory_peek(who)
+        return max(0, self.limit - n)
 
 
 class MemoryLedger(DailyLedger):

@@ -167,9 +167,9 @@ describe('a live conversation', () => {
   })
 
   it('refuses a question that is too short or too long, before sending', async () => {
-    await type('hi')
+    await type('x')
     await key('Enter')
-    expect(q('ask-error')?.textContent).toMatch(/at least 3/)
+    expect(q('ask-error')?.textContent).toMatch(/at least 2/)
     await type('x'.repeat(501))
     await key('Enter')
     expect(q('ask-error')?.textContent).toMatch(/500/)
@@ -253,5 +253,91 @@ describe('a spoken question', () => {
     await act(async () => (host.querySelector('[data-testid="send-voice"]') as HTMLButtonElement).click())
     await flush()
     expect(q('turn-error')?.textContent).toContain('Open the recorded voice run')
+  })
+})
+
+describe('chat tiers', () => {
+  const tierBody = (tier: string, extra: Record<string, unknown> = {}) => ({
+    mode: tier === 'cache' ? 'live' : tier,
+    tier,
+    not_medical_advice: true,
+    trace: [{ step: 'Fixed reply, no model call', model: null, ms: 0, status: 'ok' }],
+    cost_usd: 0,
+    limits: { remaining_today: 30, resets_utc: '2026-11-01T00:00:00Z' },
+    answer: { speakable: [{ text: 'Hello!', links: [] }], withheld: [], spoken_text: 'Hello!' },
+    ...extra,
+  })
+
+  it('a greeting shows its badge, $0 and four chips; a chip asks its question', async () => {
+    const chips = ['What changed this week?', 'Check product code LLZ', 'Recalls for QIH', 'Show the AI device sweep']
+    fetcher.mockResolvedValueOnce(res(200, tierBody('canned', { badge: 'No FDA facts in this message', suggestions: chips })))
+    await type('namaste')
+    await key('Enter')
+    await flush()
+    expect(q('mode-badge')?.textContent).toBe('No FDA facts in this message')
+    expect(q('live-answer')?.getAttribute('data-tier')).toBe('canned')
+    expect(q('answer-cost')?.textContent).toContain('$0.0000')
+    expect(q('answer-cost')?.textContent).toContain('no model call')
+    const buttons = Array.from(host.querySelectorAll('[data-testid="suggestion-chip"]')) as HTMLButtonElement[]
+    expect(buttons.map((b) => b.textContent)).toEqual(chips)
+    expect(q('held-back')).toBeNull()
+    fetcher.mockResolvedValueOnce(res(200, liveBody(2)))
+    await act(async () => buttons[2].click())
+    await flush()
+    const sent = JSON.parse((fetcher.mock.calls[1][1] as RequestInit).body as string)
+    expect(sent.question).toBe('Recalls for QIH')
+  })
+
+  it('a direct lookup shows its badge, its links and the page it points to', async () => {
+    const opened: unknown[] = []
+    await act(async () => root.unmount())
+    root = createRoot(host)
+    function WithOpen() {
+      const live = useLiveChat({ apiBase: 'https://api.example', ref: null, threads: T, evidence: EV, fetcher: (u, i) => fetcher(u, i) })
+      return (
+        <>
+          <LiveChatView chat={live} threads={T} onStarter={(x) => void live.ask(x)} onRecordedVoice={() => undefined} onOpen={(o) => opened.push(o)} />
+          <Composer threads={T} onThread={() => undefined} viewKey="live" codes={[]} onCode={() => undefined} onCamera={() => undefined} onMic={() => undefined} live={{ busy: live.busy, recorder: idle, onAsk: live.ask }} />
+        </>
+      )
+    }
+    await act(async () => root.render(<WithOpen />))
+    const body = tierBody('direct', {
+      badge: 'Direct FDA lookup — no AI',
+      answer: {
+        speakable: [{ text: 'The stored snapshot holds 2 recalls for product code QIH (one per recalled product).', links: [{ label: 'openFDA recalls', url: 'https://api.fda.gov/device/recall.json?search=product_code%3AQIH&limit=1' }] }],
+        withheld: [],
+        spoken_text: 'x',
+      },
+      open: { view: 'check-device', code: 'QIH' },
+    })
+    fetcher.mockResolvedValueOnce(res(200, body))
+    await type('Check QIH')
+    await key('Enter')
+    await flush()
+    expect(q('mode-badge')?.textContent).toBe('Direct FDA lookup — no AI')
+    expect(q('sentence-links')?.querySelector('a')?.getAttribute('href')).toContain('api.fda.gov')
+    const open = q('open-view') as HTMLButtonElement
+    expect(open.textContent).toBe('Open Check any device type for QIH')
+    await act(async () => open.click())
+    expect(opened).toEqual([{ view: 'check-device', code: 'QIH' }])
+  })
+
+  it('a reused answer says when it was first answered', async () => {
+    fetcher.mockResolvedValueOnce(res(200, tierBody('cache', { badge: 'Answered earlier today', answered_at: '2026-10-31T09:05:00Z' })))
+    await type('Why did LLZ increase?')
+    await key('Enter')
+    await flush()
+    expect(q('mode-badge')?.textContent).toBe('Answered earlier today')
+    expect(q('answered-at')?.textContent).toBe('First answered 09:05 UTC')
+  })
+
+  it('a live answer from an older server (no tier) keeps the live badge and no chips', async () => {
+    fetcher.mockResolvedValueOnce(res(200, liveBody(1)))
+    await type('Why did LLZ increase?')
+    await key('Enter')
+    await flush()
+    expect(q('mode-badge')?.textContent).toBe('Live answer')
+    expect(q('suggestions')).toBeNull()
   })
 })

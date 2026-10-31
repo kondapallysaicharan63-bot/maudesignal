@@ -10,7 +10,9 @@ live questions are answered from recordings), serves the build, and runs:
         --axe web/node_modules/axe-core/axe.min.js --out-dir release-out
 
 For each engine (chromium, firefox, webkit) x width (1440, 390) x colour scheme (light, dark):
-AI sweep, Check any device type, chat (recorded mode, two turns with history), camera upload
+AI sweep, Check any device type, chat (recorded mode, two turns with history), the chat tiers
+(greeting -> canned reply and badge; direct lookup -> badge and openFDA links; an open question
+reaches the live route, mocked), camera upload
 to possible matches to confirm, microphone (fake audio device; webkit has none, which is
 reported as KNOWN_GAP, never as a pass), alert bell to alert panel, Our devices ("Make it
 yours" when present), the CAPA-need evidence PDF link, the feedback form (submitted to the
@@ -496,6 +498,130 @@ def chat_counts(env: Env) -> tuple[int, int, bool]:
     return last[0], last[0] - last[1], held
 
 
+# --- chat tiers (docs/hackathon/CHAT_TIERS.md) -----------------------------------------------
+
+BADGE_CANNED = "No FDA facts in this message"
+BADGE_DIRECT = "Direct FDA lookup — no AI"
+OPEN_QUESTION = "Which kinds of problems do the LLZ reports describe?"
+MOCK_LIVE_TEXT = "This is a mocked live answer for the browser test, not about any device."
+
+
+def mocked_live_body() -> dict[str, Any]:
+    """A tier-4 answer for a mocked /v1/live/ask (no figures; cost unknown, so null)."""
+    return {
+        "mode": "live",
+        "tier": "live",
+        "not_medical_advice": True,
+        "trace": [
+            {
+                "step": "Muse Spark answers from stored records",
+                "model": "muse-spark-1.3",
+                "ms": 0,
+                "status": "ok",
+                "note": "e2e route mock",
+            },
+        ],
+        "cost_usd": None,
+        "limits": {"remaining_today": 29, "resets_utc": "2026-11-01T00:00:00Z"},
+        "answer": {
+            "speakable": [{"text": MOCK_LIVE_TEXT, "links": [_MOCK_LINK]}],
+            "withheld": [],
+            "spoken_text": MOCK_LIVE_TEXT,
+        },
+    }
+
+
+def tier_answer(env: Env, tier: str) -> dict[str, Any]:
+    """Wait for the first answer of ``tier`` to be written out; its badge, chips, cost, links."""
+    page = env.page
+    sel = f"[data-testid=live-answer][data-tier={tier}]"
+    page.wait_for_selector(sel, timeout=45_000)
+    # the cost line and the chips appear once every sentence is written out; a mocked live
+    # answer has no cost (null), so its advice line is the last thing to wait for
+    done = (
+        f"{sel} [data-testid=answer-cost]" if tier != "live" else f"{sel} [data-testid=not-advice]"
+    )
+    page.wait_for_selector(done, timeout=45_000)
+    page.wait_for_timeout(1500)  # sentences are written word by word
+    ans = page.locator(sel).first
+    links = [
+        ans.locator("[data-testid=sentence-links] a").nth(i).get_attribute("href") or ""
+        for i in range(ans.locator("[data-testid=sentence-links] a").count())
+    ]
+    cost = ans.locator("[data-testid=answer-cost]")
+    return {
+        "badge": ans.locator("[data-testid=mode-badge]").inner_text().strip(),
+        "sentences": ans.locator("[data-testid=answer-sentences] li").count(),
+        "chips": ans.locator("[data-testid=suggestion-chip]").count(),
+        "cost": cost.first.inner_text().strip() if cost.count() else "",
+        "links": links,
+    }
+
+
+def s_chat_greeting(env: Env) -> str:
+    """Tier 1: a greeting reaches the API and comes back as a fixed reply, its badge, chips, $0."""
+    asked: list[str] = []
+    env.page.on(
+        "request", lambda r: asked.append(r.post_data or "") if "/v1/live/ask" in r.url else None
+    )
+    env.open()
+    env.ask("namaste")
+    st = tier_answer(env, "canned")
+    if st["badge"] != BADGE_CANNED:
+        raise AssertionError(f"badge is {st['badge']!r}, not {BADGE_CANNED!r}")
+    if st["chips"] != 4:
+        raise AssertionError(f"{st['chips']} suggestion chips, expected 4")
+    if "$0.0000" not in st["cost"]:
+        raise AssertionError(f"cost line is {st['cost']!r}")
+    if not any("namaste" in a for a in asked):
+        raise AssertionError("the greeting was not sent to /v1/live/ask")
+    env.shot("chat-greeting")
+    return f"canned reply, badge shown, {st['chips']} chips, {st['cost']}"
+
+
+def s_chat_direct(env: Env) -> str:
+    """Tier 2: a simple lookup is answered directly, every sentence linked to openFDA, $0."""
+    env.open()
+    env.ask("Recalls for QIH")
+    st = tier_answer(env, "direct")
+    if st["badge"] != BADGE_DIRECT:
+        raise AssertionError(f"badge is {st['badge']!r}, not {BADGE_DIRECT!r}")
+    sentences, unlinked, _held = chat_counts(env)
+    if sentences == 0 or unlinked:
+        raise AssertionError(f"{sentences} sentence(s), {unlinked} without a link")
+    if not st["links"] or not all(h.startswith("https://api.fda.gov/") for h in st["links"]):
+        raise AssertionError(f"links are not openFDA links: {st['links'][:3]}")
+    if "$0.0000" not in st["cost"]:
+        raise AssertionError(f"cost line is {st['cost']!r}")
+    env.shot("chat-direct")
+    return f"direct lookup, {sentences} linked sentence(s), {len(st['links'])} openFDA link(s)"
+
+
+def s_chat_live_mocked(env: Env) -> str:
+    """Tier 4: an open question reaches /v1/live/ask (mocked here, no model call, $0 spent)."""
+    captured: list[dict[str, Any]] = []
+
+    def handler(route: Any) -> None:
+        with contextlib.suppress(ValueError):
+            captured.append(json.loads(route.request.post_data or "{}"))
+        route.fulfill(
+            status=200, content_type="application/json", body=json.dumps(mocked_live_body())
+        )
+
+    env.page.route(ASK_PATH, handler)
+    env.open()
+    env.ask(OPEN_QUESTION)
+    st = tier_answer(env, "live")
+    if not captured or captured[0].get("question") != OPEN_QUESTION:
+        raise AssertionError("the open question did not reach /v1/live/ask")
+    if st["badge"] != "Live answer":
+        raise AssertionError(f"badge is {st['badge']!r}, not 'Live answer'")
+    if st["chips"]:
+        raise AssertionError("a live answer shows suggestion chips it was not sent")
+    env.shot("chat-live-mocked")
+    return "open question sent to the live route; live badge shown (route mocked)"
+
+
 def s_camera_upload(env: Env) -> str:
     """Upload a photo: possible matches appear, a person confirms one (never automatic)."""
     env.open()
@@ -723,6 +849,9 @@ SCENARIOS: tuple[tuple[str, Callable[[Env], str]], ...] = (
     ("AI sweep", s_ai_sweep),
     ("check device type", s_check_device),
     ("chat (recorded mode, two turns)", s_chat),
+    ("chat tier 1: greeting, canned reply and badge", s_chat_greeting),
+    ("chat tier 2: direct lookup, badge and openFDA links", s_chat_direct),
+    ("chat tier 4: open question reaches the live route (mocked)", s_chat_live_mocked),
     ("camera upload, matches, confirm", s_camera_upload),
     ("mic (fake audio)", s_mic),
     ("alert bell, alert panel", s_alert_bell),

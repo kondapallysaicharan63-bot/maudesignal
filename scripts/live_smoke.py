@@ -138,7 +138,8 @@ def main(argv: list[str] | None = None) -> int:
         voice_usd=VOICE_CAP,
         label_usd=LABEL_CAP,
     )
-    app = create_app(Settings(live_config=cfg, state=ConnectorState()))
+    # Chat tiers off: this smoke exists to exercise the Muse Spark path (tier 4) itself.
+    app = create_app(Settings(live_config=cfg, state=ConnectorState(), chat_tiers=False))
     client = TestClient(app, raise_server_exceptions=False)
     steps: list[dict[str, Any]] = []
     spent = 0.0

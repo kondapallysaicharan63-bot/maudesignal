@@ -69,6 +69,7 @@ def client(
         demo_limiter=RateLimiter(demo_limit),
         data=data,
         ask_runtime=runtime,
+        chat_tiers=False,  # pins the Muse Spark path (tier 4)
         live_checker=fake_check,
         now=clock or Clock(),
     )
@@ -322,6 +323,7 @@ def test_connect_cors_only_for_listed_origins(data: ConnectorData, tmp_path: Pat
         limiter=RateLimiter(100),
         data=data,
         ask_runtime=AskRuntime(live_enabled=lambda: False, ledger_dir=tmp_path / "led"),
+        chat_tiers=False,  # pins the Muse Spark path (tier 4)
         live_checker=fake_check,
         web_origins=("https://web.example.org",),
     )

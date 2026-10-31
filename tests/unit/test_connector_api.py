@@ -77,7 +77,15 @@ def test_contract_per_tool(
     extra = (
         {"status", "confirmed", "note", "searched_with", "matches", "device_types"}
         if tool == "lookup_device"
-        else {"suggestions"} if tool == "recalls" else set()
+        else (
+            {"suggestions"}
+            if tool == "recalls"
+            else (
+                {"tier", "cost_usd", "badge", "suggestions", "did_you_mean"}
+                if tool == "ask"
+                else set()
+            )
+        )
     )
     assert set(body) == common | extra
     assert body["tool"] == tool
@@ -86,7 +94,13 @@ def test_contract_per_tool(
     for fact in body["facts"]:
         assert set(fact) == {"text", "link", "link_label"} and fact["link"].startswith("https://")
     prov = body["provenance"]
-    assert prov["kind"] in {"stored_demo_snapshot", "live_openfda", "recorded_answer", "live_model"}
+    assert prov["kind"] in {
+        "stored_demo_snapshot",
+        "live_openfda",
+        "recorded_answer",
+        "live_model",
+        "canned_reply",
+    }
     if prov["kind"] == "live_openfda":
         assert prov["queried_at_utc"]
     elif prov["kind"] == "stored_demo_snapshot":
@@ -148,6 +162,7 @@ def test_cost_cap_falls_back_to_recorded_answer_over_http(
                 limiter=RateLimiter(10),
                 data=data,
                 ask_runtime=rt,
+                chat_tiers=False,  # pins the Muse Spark path (tier 4)
                 live_checker=fake_check,
             )
         )

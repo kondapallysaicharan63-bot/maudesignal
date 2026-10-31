@@ -31,6 +31,7 @@ export function threadToResponse(t: Thread, ev: Evidence, note: string): AskResp
     trace: [],
     cost_usd: null,
     limits: null,
+    suggestions: [],
     answer: { speakable, withheld, spoken_text: speakable.map((s) => s.text).join(' ') },
   }
 }
@@ -50,6 +51,7 @@ export function recordedFor(question: string, threads: Thread[], ev: Evidence, w
     trace: [],
     cost_usd: null,
     limits: null,
+    suggestions: [],
     answer: { speakable: [], withheld: [], spoken_text: '' },
   }
 }

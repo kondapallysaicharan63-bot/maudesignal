@@ -51,6 +51,7 @@ def make_client(
         limiter=RateLimiter(limit),
         data=data,
         ask_runtime=runtime or AskRuntime(live_enabled=lambda: False, ledger_dir=tmp_path / "led"),
+        chat_tiers=False,  # pins the Muse Spark path (tier 4)
         live_checker=fake_check,
         lookup_searcher=FakeSearcher(k510=[ROW_802]),
     )
