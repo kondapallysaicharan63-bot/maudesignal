@@ -64,6 +64,12 @@ describe('AlertPanel', () => {
     expect(q('alert-owner')).toBeNull()
     expect(q('alert-simulated-banner')).toBeNull()
   })
+  it('hides the empty 0 and 0 window when the owner marked Needs review and no weekly rule fired', () => {
+    const w = company.window ?? { this_week: { from: '2026-09-24', to: '2026-09-30', count: 0 }, baseline_4wk: { from: '2026-08-27', to: '2026-09-23', count: 0, weekly_mean: 0 } }
+    panel({ ...company, rule: null, window: { this_week: { ...w.this_week, count: 0 }, baseline_4wk: { ...w.baseline_4wk, count: 0 } } })
+    expect(q('alert-window')).toBeNull()
+    expect(q('alert-rule-words')).not.toBeNull()
+  })
   it('no stored detail says so and still offers Open in chat for the code', () => {
     const { onOpenInChat } = panel(null)
     expect(q('alert-no-detail')?.textContent).toContain('No stored detail')

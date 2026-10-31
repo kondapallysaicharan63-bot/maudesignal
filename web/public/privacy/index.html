@@ -35,93 +35,38 @@
       <nav aria-label="Back"><a href="../">Back to the MaudeSignal workspace</a></nav>
       <p class="kicker">Privacy</p>
       <h1>What MaudeSignal does with data</h1>
-      <p>
-        MaudeSignal is an advisory triage aid for quality and regulatory review of public FDA device data. It is not medical advice,
-        it is not clinical decision support, and it files nothing with FDA.
-      </p>
       <p class="note">There is no personal data and no patient data in this service by design. Please do not type patient details anywhere.</p>
-
-      <h2>The short answers</h2>
       <dl>
-        <dt>Does it collect personal data?</dt>
-        <dd>
-          No. There are no accounts and no sign-up, and nothing asks for a name or an e-mail address. Feedback is free text without a
-          name. Free text is checked for e-mail addresses, phone numbers, "MRN" with digits and dates of birth before it is stored (a guard,
-          not a guarantee).
-        </dd>
-
-        <dt>Does it handle patient or health data?</dt>
-        <dd>
-          No. The data it serves is public openFDA data (adverse-event reports, recalls, 510(k) records) that FDA has already de-identified.
-        </dd>
-
+        <dt>What does this service do with data?</dt>
+        <dd>It gives read-only access to public FDA device data (openFDA: adverse-event reports, recalls, 510(k) records) and, where a result says so, to device alerts from the UK MHRA, always labelled as UK. It is an advisory triage aid for quality and regulatory review.</dd>
+        <dt>Is any personal or patient data collected?</dt>
+        <dd>No. The data served is public and already de-identified by FDA. There are no accounts and no sign-up. Do not type patient or personal details into a question: the live routes refuse text that looks like a name with a title, an age, an email address or a phone number, and nothing is kept when they do.</dd>
         <dt>Where is data processed and stored?</dt>
-        <dd>
-          On Vercel, in the United States: serverless functions in region iad1 (Washington, D.C.). The workspace you are reading is static
-          files served by Vercel. Feedback notes and visit counts are kept in a private Vercel Blob store. Snapshots of public data are
-          part of the deployment itself.
-        </dd>
-
-        <dt>Who else handles data?</dt>
-        <dd>
-          <ul>
-            <li><strong>Vercel</strong>: hosting, serverless functions, private Blob storage, and Web Analytics on this website.</li>
-            <li>
-              <strong>Meta Platforms, through the Meta Model API</strong>: only for the "ask" tool, and only when live answers are switched
-              on. It receives the question text (and the earlier turns the page sends with it) plus the checked facts needed to answer. With
-              live answers off, or when the daily cost limit is reached, a recorded answer is shown and nothing is sent to Meta. What Meta does
-              with API requests is governed by Meta's own terms for the Meta Model API.
-            </li>
-            <li>
-              <strong>openFDA (api.fda.gov, run by FDA)</strong>: the public data source. It receives only a three-letter product code or a
-              report number, never a question.
-            </li>
-            <li>
-              <strong>Public news and web sources</strong>, only when you press "Search outside sources": the server asks GDELT, FDA feeds and
-              other public feeds for pages that match a product code and a few short device terms, then fetches those public pages.
-            </li>
-            <li><strong>Resend</strong>, only if the owner turns on e-mail notifications of new feedback; it is off unless configured.</li>
-          </ul>
-        </dd>
-
-        <dt>What is logged?</dt>
-        <dd>
-          For each tool call: the key id (a keyed hash; never the key itself), the tool name and the time, plus the public identifiers used
-          (a product code or a report number), a hash of the answer and counts of facts and withheld sentences. <strong>The text of a question
-          is not kept</strong>: only a hash of it and its length. Feedback entries hold a rating, your free text, the page and an optional
-          personal link code, <strong>with no name, no e-mail, no IP address and no browser identifier</strong>. Visit entries hold the page,
-          the time and the link code. For rate limiting, a counter keyed by a salted hash of the network address exists only for the length of
-          the limit window. Vercel also keeps its own request logs (method, path, status, address, time) under its own retention period.
-        </dd>
-
-        <dt>How long is it kept?</dt>
-        <dd>
-          No automatic deletion period is set yet for audit, feedback or visit entries. Rate-limit counters last only for their window, and
-          anything held in a server's memory disappears when the instance stops. Entries are deleted when you ask (below). Vercel's own
-          request logs follow Vercel's retention, which MaudeSignal does not control.
-        </dd>
-
+        <dd>The service's functions run on Vercel in region iad1 (Washington, D.C., United States), as set in the project's vercel.json. Feedback entries, page-visit entries and the daily spend records are stored in a private Vercel Blob store. The region of that store is chosen when the store is created in the Vercel dashboard; the code does not check it, so this page does not state it. The other services named below (Meta Model API, Resend, GDELT, and Upstash if the operator sets it up) process what they receive in their own locations, which this service does not control.</dd>
+        <dt>Who else handles data (subprocessors)?</dt>
+        <dd>Vercel (hosting, runtime logs and Blob storage). Meta Model API: only when live answers are switched on, for the live ask, voice and label routes; the question text, the voice clip or the label photo is sent once to produce the answer when live answers are on, and is not stored by this service. Resend (email): only if the operator turns on email for new feedback; the email carries the feedback fields, no name and no address. Upstash (Redis): optional, only if the operator sets it up; it then holds the audit log, the rate-limit hashes and the daily cost ledger (no question text, no address, no name). Public data sources that this service reads: openFDA, GOV.UK (MHRA alerts), GDELT and FDA public feeds (for the outside-mentions search). These send us public data; we send them a product code or a search term, never a person's details.</dd>
+        <dt>What is logged, and for how long?</dt>
+        <dd>Per tool call: a key id (a keyed hash of the key, never the key), the tool name, the time, the status and the cost. Never the text of a question: for ask, only a hash and a length are recorded. Feedback is stored without names (role and quote consent only). A page visit stores the referral code, the page and the time. This service never stores an IP address: before any rate limit or counter sees it, the address is replaced by a keyed hash, which is held in memory (or in the operator's Redis store, if one is set up) only to apply limits, for at most twice the limit window (two days for daily counters). Vercel's own request logs may include the address; they are kept by Vercel for Vercel's runtime-log retention for this plan. Feedback and visits are kept until the hackathon review ends, then deleted on request or by 30 November 2026.</dd>
+        <dt>Cookies, tracking, sale of data, advertising?</dt>
+        <dd>No tracking cookies. No sale of data. No advertising and no use of data for ads. The separate web app may use Vercel Web Analytics for page-view counts, which sets no cookies.</dd>
+        <dt>Not medical advice, nothing filed</dt>
+        <dd>Nothing here is medical advice or clinical decision support. Nothing is filed with FDA or any other regulator. This is not an FDA-cleared device. It is an open-source project by Saicharan Kondapally.</dd>
         <dt>How do I ask for deletion?</dt>
-        <dd>
-          E-mail <a href="mailto:kondapallysaicharan63@gmail.com">kondapallysaicharan63@gmail.com</a> with the key id or the personal link
-          code your entries are tied to. Because no name or e-mail is stored, entries can only be found by that code or key id. They are
-          deleted and you get a reply when it is done.
-        </dd>
-
-        <dt>Is it sold, used for advertising, or shared for marketing?</dt>
-        <dd>
-          No. It is not sold, not used for advertising or profiling, and not shared with anyone except the services listed above, which handle
-          it only to run MaudeSignal. MaudeSignal does not use it to train models.
-        </dd>
+        <dd>Write to the contact address (shown on <code>/privacy</code>, read from <code>MAUDESIGNAL_CONTACT_EMAIL</code> at runtime; if it is not set, the GitHub issues URL is shown) and give the referral code you were sent. Feedback and visits carry no name, so the code is how an entry is found. Entries are deleted on request.</dd>
       </dl>
-
+      <h2>Contact for deletion and questions</h2>
+      <p>
+        The contact address is shown on the service's own privacy page, <a href="https://maudesignal-api.vercel.app/privacy">https://maudesignal-api.vercel.app/privacy</a>
+        (it is read from a setting at run time and is not published in this repository). You can also open an issue at
+        <a href="https://github.com/kondapallysaicharan63-bot/maudesignal/issues">GitHub issues</a>; do not put personal details in an issue.
+      </p>
       <h2>Scope</h2>
       <p>
         U.S. FDA (openFDA) data only. UK MHRA alerts appear only where an answer labels them "MHRA (UK)". Mentions found on news sites and the
         public web are shown in a separate box, marked "Unverified — not checked against FDA records", and are never mixed with the checked FDA
         facts.
       </p>
-      <p class="muted">The same answers are given on the Meta Muse connector form (docs/hackathon/MUSE_CONNECTOR.md in the repository).</p>
+      <p class="muted">These answers are copied word for word from the Data questionnaire in docs/hackathon/MUSE_CONNECTOR.md, which is also what the Meta Muse connector form uses.</p>
     </main>
   </body>
 </html>

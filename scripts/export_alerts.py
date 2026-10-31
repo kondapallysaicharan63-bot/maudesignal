@@ -670,10 +670,10 @@ def specs(root: Path, company: dict[str, Any]) -> list[dict[str, Any]]:
         if (dev.get("status") or {}).get("label") != "Needs review":
             continue
         code = dev["product_code"]
-        r = sweep_rows.get(code)
-        base = (
-            from_sweep(r)
-            if r
+        row = sweep_rows.get(code)
+        base: dict[str, Any] = (
+            from_sweep(row)
+            if row is not None
             else {
                 "window": None,
                 "counts": None,
@@ -686,7 +686,7 @@ def specs(root: Path, company: dict[str, Any]) -> list[dict[str, Any]]:
                 "id": f"company:{dev['id']}",
                 "product_code": code,
                 "device_type": (dev.get("device_type") or {}).get("name") or names.get(code),
-                "rule": RULE_BY_CLASS.get(r["classification"]) if r else None,
+                "rule": RULE_BY_CLASS.get(row["classification"]) if row is not None else None,
                 "source": {
                     "kind": "company",
                     "label": "Our devices (simulated)",

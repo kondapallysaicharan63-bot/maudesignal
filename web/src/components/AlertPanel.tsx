@@ -127,7 +127,7 @@ export function AlertPanel({
 
               <H id="ap-changed">What changed</H>
               <p className="ws-wrap m-0 mt-2 text-[17px]" data-testid="alert-rule-words">{d.rule_words}</p>
-              {d.window ? (
+              {d.window && !(d.window.this_week.count === 0 && d.window.baseline_4wk.count === 0 && d.rule === null) ? (
                 <>
                   <dl className="m-0 mt-3 grid grid-cols-2 gap-2" data-testid="alert-window">
                     <div className="rounded-md border border-rule bg-paper p-2">
