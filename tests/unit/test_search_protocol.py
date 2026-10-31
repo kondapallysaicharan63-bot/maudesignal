@@ -283,7 +283,8 @@ def test_keyless_demo_shows_recorded_narrative_review_and_linked_searches(
         transcripts=TRANSCRIPTS,
     )
     assert b.data.narrative.available and b.data.narrative.source == "recorded"
-    assert b.data.narrative.binding_note == "recorded before pack binding; a re-record is pending"
+    # The 2026-10-30 recording is bound to its pack (hash), so no "unbound" note is shown.
+    assert b.data.narrative.binding_note == ""
     assert [r.label for r in b.data.protocol][-4:] == [
         "weekly_signals",
         "get_report",
@@ -291,4 +292,4 @@ def test_keyless_demo_shows_recorded_narrative_review_and_linked_searches(
         "get_report",
     ]
     review = load_review(recorded_dir() / f"{b.data.doc_id}-review.json", b.store)
-    assert review is not None and review.predates_binding
+    assert review is not None and not review.predates_binding

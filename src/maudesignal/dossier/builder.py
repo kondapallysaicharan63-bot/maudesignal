@@ -25,6 +25,7 @@ from maudesignal.copilot.protocol import (
     load_transcripts,
     protocol_for_capa,
 )
+from maudesignal.dossier.capa_text import cite_for_problem, display_title
 from maudesignal.dossier.chart import weekly_chart_svg
 from maudesignal.dossier.figures import (
     Figure,
@@ -64,6 +65,7 @@ from maudesignal.monitor.deterioration import (
     build_window,
     detect_from_database,
 )
+from maudesignal.monitor.digest import CHANGE_LABELS
 from maudesignal.storage.database import Database
 from maudesignal.storage.models import CapaDraftRecord
 
@@ -375,6 +377,33 @@ def _capa_info(db: Database, row: CapaDraftRecord, store: EvidenceStore) -> Capa
     )
 
 
+def _with_checked_wording(
+    capa: CapaInfo, store: EvidenceStore, report_ids: Sequence[str], classification: str
+) -> CapaInfo:
+    """Add the printed title and the per-phrase citations (stored record text, no model).
+
+    The stored title, statement and cited ids are left as recorded (the narrative recording is
+    bound to them); only what the dossier prints about them is checked.
+    """
+    recs = {rid: r for rid in report_ids if (r := store.record(rid)) is not None}
+    texts = {rid: r.text or "" for rid, r in recs.items()}
+    cites = cite_for_problem(capa.problem_statement, list(texts), texts, capa.title)
+    title = display_title(
+        capa.title,
+        product_code=next(iter(recs.values())).product_code if recs else "",
+        change_label=CHANGE_LABELS.get(classification, ""),
+        texts=texts,
+        brands=[r.brand_name for r in recs.values() if r.brand_name],
+    )
+    return replace(
+        capa,
+        display_title=title,
+        problem_terms=cites.terms,
+        problem_supporting_ids=cites.supporting,
+        problem_unsupported_ids=cites.not_supporting,
+    )
+
+
 def _audit_rows(db: Database, entity_ids: set[str], capa_id: str | None) -> tuple[AuditRow, ...]:
     out: list[AuditRow] = []
     for a in db.list_audit():
@@ -473,6 +502,8 @@ def build_dossier(
             )
         )
     rows.sort(key=lambda r: (r.date_received or "", r.report_id))
+    if capa is not None:
+        capa = _with_checked_wording(capa, store, report_ids, signal.classification)
     device = device_info(db, pc, report_ids)
 
     dates = sorted(r.date_received for r in rows if r.date_received)

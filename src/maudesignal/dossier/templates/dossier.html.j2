@@ -94,7 +94,7 @@ a { color: #1a5fb4; }
 {# ======================= 1. COVER / APPROVAL ======================= #}
 <section class="cover" id="sec-cover">
   <h1>Signal Evaluation &amp; CAPA-need Evidence</h1>
-  <div class="sub">Product code <b>{{ d.device.product_code }}</b>{% if d.device.classification_name %} — {{ d.device.classification_name }}{% endif %}{% if d.capa %} · {{ d.capa.title }}{% endif %}</div>
+  <div class="sub">Product code <b>{{ d.device.product_code }}</b>{% if d.device.classification_name %} — {{ d.device.classification_name }}{% endif %}{% if d.capa %} · {{ d.capa.display_title or d.capa.title }}{% endif %}</div>
 
   {% if d.status == "approved" %}
   <div class="stamp ok">EVIDENCE ACCEPTED by {{ d.capa.decided_by }} — the CAPA-need decision is made on the company's own form; open items in §4 remain with the CAPA owner</div>
@@ -211,7 +211,7 @@ a { color: #1a5fb4; }
   {% if d.capa %}
   <table class="kv">
     <tr><th>Evidence record ID</th><td>{{ d.capa.capa_id }}</td><th>Status</th><td>{{ d.capa.status|upper }}</td></tr>
-    <tr><th>Title</th><td colspan="3">{{ d.capa.title }}</td></tr>
+    <tr><th>Title</th><td colspan="3">{{ d.capa.display_title or d.capa.title }}</td></tr>
     <tr><th>Opened (UTC)</th><td>{{ d.capa.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td><th>Opened by</th><td class="mono">{{ d.capa.created_by }}</td></tr>
     <tr><th>Source</th><td colspan="3">Postmarket surveillance signal {{ d.doc_id }} (§2) · complaint/MDR data (§3) · MDR worksheet (§5)</td></tr>
   </table>
@@ -224,6 +224,7 @@ a { color: #1a5fb4; }
   {% if d.capa %}
   <p><b>Problem statement as prepared</b> <span class="small">({{ d.capa.created_by }}, recorded verbatim from the CAPA-need evidence pack)</span>:</p>
   <div class="note">{{ d.capa.problem_statement }}</div>
+  {% if d.capa.problem_terms %}<p class="small"><b>Reports that contain {% for t in d.capa.problem_terms %}&ldquo;{{ t }}&rdquo;{% if not loop.last %}, {% endif %}{% endfor %} in their stored text:</b> {{ d.capa.problem_supporting_ids|join(", ") or "none" }} ({{ d.capa.problem_supporting_ids|length }} of {{ d.capa.problem_supporting_ids|length + d.capa.problem_unsupported_ids|length }} cited reports).{% if d.capa.problem_unsupported_ids %} Cited in this pack but not for that phrase: {{ d.capa.problem_unsupported_ids|join(", ") }}. The weekly counts in §2 cover every report of product code {{ d.device.product_code }}, not only those that contain the phrase.{% endif %}</p>{% endif %}
   {% if d.capa.problem_statement_flags %}<div class="gap"><b>Gate:</b> the drafted text contains figures or identifiers without a structured claim — treat as unverified: {{ d.capa.problem_statement_flags|join("; ") }}</div>{% endif %}
   {% endif %}
   <p>Complaint/MDR input reviewed: {{ fig(d.evidence_count) }} MAUDE reports (§3); signal result <b>{{ change_labels[d.signal.classification] }}</b> (§2).</p>

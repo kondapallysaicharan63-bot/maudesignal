@@ -167,7 +167,11 @@ def narrative_input(data: DossierData, excerpts: dict[str, str]) -> dict[str, An
             for e in data.evidence[:40]
         ],
         "capa": (
-            {"capa_id": data.capa.capa_id, "title": data.capa.title, "status": data.capa.status}
+            {
+                "capa_id": data.capa.capa_id,
+                "title": data.capa.display_title or data.capa.title,
+                "status": data.capa.status,
+            }
             if data.capa
             else None
         ),
