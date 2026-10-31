@@ -95,7 +95,7 @@ Public openFDA data only (and MHRA (UK) alerts, labelled). No personal or patien
 or wanted. Hosted on Vercel, United States (function region iad1). Question text is not logged
 (only its SHA-256 and length). IP addresses are never stored by this code: before any rate limit
 sees one it is turned into a salted one-way hash, and only that hash is the limit key (in memory,
-or in the operator's Redis store for at most twice the limit window). Feedback and visit records (no names, no emails) are kept until 2026-11-30.
+or in the operator's Redis store for at most twice the limit window). Feedback records (no email addresses; no names except where the person chose to be quoted by name and role, see the Data questionnaire) and visit records are kept until 2026-11-30.
 Meta receives an `ask` question only when live ask is on. Details: `/privacy`.
 
 ## Privacy URL
@@ -593,20 +593,20 @@ record. The tool is an advisory triage aid, not medical advice; do not type pati
 |---|---|---|
 | `POST /v1/feedback` | none; browser origin must be in `MAUDESIGNAL_WEB_ORIGINS` | rating 1-5 ("Does this match real PMS/RA work?"), comment, blocker, one_thing, optional role, consent (`quote_name_role`, `quote_anonymous`, `no_quote`), optional `ref` (see code rule below), page, client_ts. An optional `name` from an old client is accepted and dropped before storage. 201 on success. 5 per hour per address (`MAUDESIGNAL_FEEDBACK_PER_HOUR`), 16 KB body cap (413). Free text that looks like an email, phone, SSN, "MRN" + digits or a date of birth gets 422 and is not stored (a guard, not a guarantee). |
 | `POST /v1/visit` | same | `{ref?, page, client_ts}`, 204. 60 per hour per address. |
-| `GET /admin` | page holds no data | asks for the admin key (password field, kept in `sessionStorage` only), loads the summary, shows a "By code" section (one block per code: code, label, visits, pages opened, first and last seen, and a feedback table with time, page, rating, comment, blocker, one thing, role and quote consent in plain words), a "Hide TEST codes" checkbox, a "Delete TEST entries" button (asks to confirm), and two CSV downloads. States "No names, emails or IP addresses are stored." |
+| `GET /admin` | page holds no data | asks for the admin key (password field, kept in `sessionStorage` only), loads the summary, shows a "By code" section (one block per code: code, label, visits, pages opened, first and last seen, and a feedback table with time, page, rating, comment, blocker, one thing, role and quote consent in plain words), a "Hide TEST codes" checkbox, a "Delete TEST entries" button (asks to confirm), and two CSV downloads. States "No names are shown here; no emails or IP addresses are stored." |
 | `GET /v1/admin/summary` | `X-Admin-Key` | visits and feedback per ref code and per page, average rating per ref, and `codes`: one entry per code, newest activity first, with `code`, `label`, `visits`, `pages_opened`, `first_seen_utc`, `last_seen_utc` and its `feedback` rows (no names). |
 | `GET /v1/admin/export?kind=feedback\|visits&format=csv\|json` | `X-Admin-Key` | every record (no name column). CSV cells starting with `=`, `+`, `-` or `@` are prefixed with `'`. |
 | `POST /v1/admin/delete-test` | `X-Admin-Key` | deletes every stored visit and feedback entry whose code is `TEST` followed only by numbers or `. _ ~ -` (any case, for example `TEST1`, `test-2`) and returns `{"deleted": {"visits": n, "feedback": n}, "failed": n}`. Nothing else is deleted; `tester7` or `Testa.M` are ordinary codes. An object that fails to delete is counted in `failed` and the rest carry on. Both record stores (memory and Vercel Blob) can delete; Blob uses `POST /delete` with the object url. |
 | `POST /v1/admin/redact-names` | `X-Admin-Key` | body `{"dry_run": true\|false}`. Lists every stored feedback record; where a non-empty `name` is present and consent is not `quote_name_role`, the `name` key is removed and only that record is rewritten at the same blob path (Blob put with `x-allow-overwrite`). Visits and all other fields are untouched. Returns `{"checked": n, "names_removed": n, "names_kept_quote_by_name": n, "failed": n}`; `dry_run` changes nothing and returns the same counts. A store error on one record counts in `failed` and the rest carry on; a listing failure answers 503. The `/admin` button "Remove names (keep only 'quote me by name')" runs the dry run, asks to confirm, then runs it. |
 
-**Admin step after deploy.** Open `/admin`, enter the key, and press "Remove names (keep only 'quote me by name')" once; confirm the counts in the dialog, then read the result line. Records sent before 31 October 2026 may hold a typed name until this is done.
+**Admin step after deploy.** Open `/admin`, enter the key, and press "Remove names (keep only 'quote me by name')" once; confirm the counts in the dialog, then read the result line. Blank (whitespace-only) names are ignored. Blob storage can serve a cached copy for a short time, so wait about a minute before checking again. Records sent before 31 October 2026 may hold a typed name until this is done.
 
 **Code rule.** Personal links look like `https://<web>/?r=CODE`. A code is 1 to 64 characters from
 `A-Z a-z 0-9 . _ ~ -` (`^[A-Za-z0-9._~-]{1,64}$`). A code that does not match is not lost: the visit or
 feedback is stored with the code `invalid-code` (the bad value itself is never stored). Codes
 that are `TEST` plus only numbers or `. _ ~ -` (any case; not `tester7`) are labelled "test" in `/admin`; `email-batch-1` is labelled "email batch 1".
 
-**No names.** No names, emails or IP addresses are stored. Charan keeps the names-to-codes list
+**No names.** New feedback stores no names; older entries keep a typed name only where the person chose to be quoted by name and role (see /v1/admin/redact-names). No emails or IP addresses are stored. Charan keeps the names-to-codes list
 privately; the connector keeps no people list. Free text is still checked for patient details,
 including the optional `role`.
 

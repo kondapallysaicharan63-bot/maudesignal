@@ -814,7 +814,7 @@ def test_admin_page_by_code_section_and_safe_text(
 ) -> None:
     c, _, _ = make(data, monkeypatch)
     page = c.get("/admin").text
-    assert "No names, emails or IP addresses are stored." in page
+    assert "No names are shown here; no emails or IP addresses are stored." in page
     assert "By code" in page and 'id="hide"' in page and "Hide TEST codes" in page
     assert "Delete TEST entries" in page and "confirm(" in page
     for words in (

@@ -10,7 +10,8 @@ Routes (all hidden from the public OpenAPI document):
   (constant-time check against ``MAUDESIGNAL_ADMIN_KEY``). If that variable is unset
   the admin routes answer 503, never open.
 
-No names or email addresses are stored: an optional ``name`` sent by an old client is dropped
+No names or email addresses are stored (except names on pre-2026-10-31 records whose consent is
+quote_name_role, kept on purpose): an optional ``name`` sent by an old client is dropped
 before storage. Referral codes are the only link to a person, and the owner keeps that list
 privately.
 
@@ -295,7 +296,8 @@ th,td{border-bottom:1px solid GrayText;padding:.3rem .5rem;text-align:left}
 .code h3{margin:.2rem 0}
 </style></head><body>
 <h1>MaudeSignal admin</h1>
-<p>Private. Visits and feedback by referral code. No names, emails or IP addresses are stored.
+<p>Private. Visits and feedback by referral code.
+No names are shown here; no emails or IP addresses are stored.
 No data is in this page until you unlock it; the key stays in this tab (session storage) only.</p>
 <form id="f"><label>Admin key <input id="k" type="password" autocomplete="off"></label>
 <button type="submit">Load summary</button>
