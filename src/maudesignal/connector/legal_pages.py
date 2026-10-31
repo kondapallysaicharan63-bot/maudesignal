@@ -172,8 +172,10 @@ cost) and no text, no address and no key. {html.escape(redis)}</p>
 </ul>
 
 <h2>Public data sources</h2>
-<p>openFDA (api.fda.gov) is queried live with a product code only (and, to match a device label,
-with the device name, model and manufacturer read from the label). MHRA (UK) alerts come from a
+<p>openFDA (api.fda.gov) is queried live with a product code and, to match a device (the
+website's label reader or the lookup_device tool), with the device name, model, manufacturer,
+K-number or GTIN you give or that is read from the label (a UDI's lot and serial are never
+sent). MHRA (UK) alerts come from a
 stored copy previously fetched from the GOV.UK search API; this service does not call GOV.UK when
 you use it.
 The website's outside-mentions search sends a product code and device search terms (no personal

@@ -160,7 +160,7 @@ answer (06-trap) lost a true sentence because the gate read "August 31, 2026,
 all malfunction" as a count of 2026; the gate now treats a year after a month
 as a date (adversarial cases dt03–dt05).
 
-## Tomorrow
+## Pilot and pricing
 
 - **Buyer:** PMS / RA teams at small and mid-size device makers.
 - **Open source, self-hosted:** free.
@@ -169,7 +169,7 @@ as a date (adversarial cases dt03–dt05).
 - **Pilot metric:** time to prepare the signal-evidence section for the device types you choose
   in a PMS report, with and without MaudeSignal.
 
-### Next to build
+## Tomorrow
 
 - Team accounts / SSO (not built: today it is a public demo key plus personal keys, no logins)
 - A shared Upstash store, so rate limits, caches and the audit log are shared by every API

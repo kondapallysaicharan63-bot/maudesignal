@@ -642,7 +642,7 @@ def test_the_questionnaire_is_true_for_this_branch_and_matches_privacy() -> None
         "voice transcribe",
         "photo for live label",
         "sam 3.1",
-        "device name, model and manufacturer",
+        "device name, model, manufacturer, k-number or gtin",
         "public news and fda feeds",
     ):
         assert phrase in section, f"questionnaire is missing: {phrase}"
@@ -651,7 +651,7 @@ def test_the_questionnaire_is_true_for_this_branch_and_matches_privacy() -> None
         "vercel blob (private)",
         "spend ledger",
         "dollar amounts",
-        "device name, model and manufacturer",
+        "device name, model, manufacturer, k-number or gtin",
         "gdelt",
         "medwatch",
         "medtech dive",

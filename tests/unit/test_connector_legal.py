@@ -281,7 +281,7 @@ def test_terms_say_so_when_the_per_instance_override_is_on(
 def test_privacy_statements_match_the_code(tmp_path: Path) -> None:
     text = " ".join(_client(tmp_path).get("/privacy").text.split())
     assert "does not call GOV.UK when you use it" in text
-    assert "queried live with a product code only" in text
+    assert "queried live with a product code and, to match a device" in text
     assert "Spend on <code>ask</code> is kept as a daily total per key id" in text
     assert "replaced by its SHA-256" in text
     assert "salted one-way hash" in text
