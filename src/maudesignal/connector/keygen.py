@@ -83,6 +83,10 @@ def _team_query(env: Mapping[str, str]) -> str:
     return f"?teamId={team}" if team else ""
 
 
+#: ``set_vercel_env`` result when the variable exists but its value cannot be read back.
+EXISTING_VALUE_UNREADABLE = -1
+
+
 def entry_for(key: str, label: str | None) -> str:
     """The list entry for a key: ``KEY`` or ``LABEL=KEY``."""
     return f"{label}={key}" if label else key
@@ -119,7 +123,11 @@ def set_vercel_env(
         if status != 200 or not isinstance(one, dict):
             return status or 0
         old = str(one.get("value") or "").strip().strip(",")
-        value = f"{old},{entry}" if old else entry
+        if not old:
+            # A sensitive variable (or a failed decrypt) comes back empty. Writing only the new
+            # key would revoke every earlier key, so refuse and let the operator add it by hand.
+            return EXISTING_VALUE_UNREADABLE
+        value = f"{old},{entry}"
     body: dict[str, Any] = {"value": value, "type": "encrypted", "target": ["production"]}
     if existing and existing.get("id"):
         url = f"{VERCEL_API}/v9/projects/{project}/env/{existing['id']}{q}"
@@ -184,6 +192,17 @@ def main(
     key = new_key()
     if environ.get("VERCEL_TOKEN") and environ.get("VERCEL_PROJECT_ID"):
         failed = set_vercel_env(key, environ, http, label)
+        if failed == EXISTING_VALUE_UNREADABLE:
+            print(
+                f"{ENV_NAME} exists but its value could not be read back (a sensitive variable "
+                "cannot be read through the API). Nothing was changed, because writing only the "
+                "new key would revoke every earlier key. Add the new entry by hand: in Vercel > "
+                "Project > Settings > Environment Variables, edit the variable and append "
+                "',<entry>' to the end. Use --out-dir mode (unset VERCEL_TOKEN) to get a key "
+                "file for that.",
+                file=err,
+            )
+            return 1
         if failed is not None:
             print(
                 f"Vercel API call failed (HTTP {failed or 'no response'}). "

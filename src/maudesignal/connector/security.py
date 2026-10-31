@@ -56,6 +56,21 @@ _HEX64 = re.compile(r"^[0-9a-f]{64}$")
 _LABELLED = re.compile(r"^([A-Za-z0-9_-]{1,32})=(.+)$")
 
 
+def split_label(item: str) -> tuple[str | None, str]:
+    """Split ``label=KEY`` into ``(label, KEY)``; anything else is ``(None, item)``.
+
+    An entry counts as labelled only when the part after ``=`` is a ``sha256:`` digest or
+    at least ``MIN_KEY_CHARS`` long, so a plain key that happens to contain ``=`` (base64
+    padding, for example) is kept whole instead of being cut at the ``=``.
+    """
+    m = _LABELLED.match(item)
+    if m:
+        rest = m.group(2).strip()
+        if rest.lower().startswith("sha256:") or len(rest) >= MIN_KEY_CHARS:
+            return m.group(1), rest
+    return None, item
+
+
 @dataclass(frozen=True)
 class KeyMatch:
     """Who a presented key is: its non-secret id, optional label and whether it is a demo key."""
@@ -68,9 +83,7 @@ class KeyMatch:
 def first_plain_key(raw: str) -> str | None:
     """The first entry's plain key (label removed), or None if it is a digest or too short."""
     first = next((e.strip() for e in raw.split(",") if e.strip()), "")
-    m = _LABELLED.match(first)
-    if m:
-        first = m.group(2).strip()
+    first = split_label(first)[1]
     if not first or first.lower().startswith("sha256:") or len(first) < MIN_KEY_CHARS:
         return None
     return first
@@ -88,10 +101,7 @@ def parse_entries(raw: str) -> tuple[list[tuple[str, str | None]], int]:
         item = entry.strip()
         if not item:
             continue
-        label: str | None = None
-        m = _LABELLED.match(item)
-        if m:
-            label, item = m.group(1), m.group(2).strip()
+        label, item = split_label(item)
         if item.lower().startswith("sha256:"):
             out.append((item[7:].strip().lower(), label))
         elif len(item) < MIN_KEY_CHARS:

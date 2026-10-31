@@ -3,11 +3,12 @@
 HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
 ``MAUDESIGNAL_LIVE_DAILY_USD`` (default 3.00) is the most the live website routes and the keyed
-``ask`` tool may spend per UTC day together. When the ledger is a single small JSON object in
-the private Blob store (no Upstash), a read-modify-write is not atomic across server instances,
-so the cap enforced is ``daily - largest per-request cap``: two requests that reserve at the
-same moment can then overshoot the enforced cap by at most one request cap, and the total
-stays at or under the configured daily value.
+``ask`` tool may spend per UTC day together. Without Upstash the ledger is a set of small
+objects in the private Blob store, one per request (see ``store.BlobLedger``): nothing is
+read-modify-written, so no concurrent writer can erase another's hold or cost. A reserve writes
+its hold and then lists the day's objects, so two simultaneous requests cannot both miss each
+other. The cap enforced on that ledger is still ``daily - largest per-request cap``, which
+leaves room for one request cap if a completed write were ever slow to appear in a listing.
 """
 
 from __future__ import annotations

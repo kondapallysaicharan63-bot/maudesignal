@@ -124,13 +124,21 @@ class FakeBlobStore:
             self.items.pop(ref.pathname, None)
 
     def seed_ledger(self, usd: float, day: date = DAY, name: str = LEDGER_ID) -> None:
-        self.items[f"ledger/{name}/{day.isoformat()}.json"] = json.dumps(
-            {"day": day.isoformat(), "usd": usd, "calls": 1}
-        ).encode()
+        """Replace the day's ledger entries with one real-cost entry of ``usd``."""
+        prefix = f"ledger/{name}/{day.isoformat()}/"
+        for p in [p for p in self.items if p.startswith(prefix)]:
+            del self.items[p]
+        micros = int(round(usd * 1_000_000))
+        self.items[f"{prefix}a-{micros}-1-{'0' * 32}.json"] = b"{}"
 
     def ledger_usd(self, day: date = DAY, name: str = LEDGER_ID) -> float:
-        raw = self.items.get(f"ledger/{name}/{day.isoformat()}.json")
-        return float(json.loads(raw)["usd"]) if raw else 0.0
+        prefix = f"ledger/{name}/{day.isoformat()}/"
+        total = 0
+        for p in self.items:
+            if p.startswith(prefix):
+                kind, micros = p[len(prefix) :].split("-")[:2]
+                total += -int(micros) if kind == "r" else int(micros)
+        return total / 1_000_000
 
 
 def ledger(store: FakeBlobStore, **kw: Any) -> BlobLedger:
@@ -143,14 +151,16 @@ def ledger(store: FakeBlobStore, **kw: Any) -> BlobLedger:
 def test_blob_ledger_reserves_then_settles_with_the_real_cost() -> None:
     store = FakeBlobStore()
     led = ledger(store)
-    assert led.spent_today() == 0.0  # a missing object is a new day
+    assert led.spent_today() == 0.0  # no objects is a new day
     assert led.reserve(0.25, 2.7) is True
     assert store.ledger_usd() == 0.25
     led.add(0.04, 1)  # the real cost
     led.release(0.25)  # the hold goes back
     assert store.ledger_usd() == pytest.approx(0.04)
-    doc = json.loads(store.items[f"ledger/{LEDGER_ID}/2026-10-30.json"])
-    assert doc == {"calls": 1, "day": "2026-10-30", "usd": pytest.approx(0.04)}
+    assert led.spent_today() == pytest.approx(0.04)
+    # one object per event, none overwritten
+    assert len(store.items) == 3
+    assert all(p.startswith("ledger/live-global/2026-10-30/") for p in store.items)
 
 
 def test_blob_ledger_refuses_a_hold_over_the_cap_and_holds_nothing() -> None:
@@ -158,7 +168,22 @@ def test_blob_ledger_refuses_a_hold_over_the_cap_and_holds_nothing() -> None:
     store.seed_ledger(2.6)
     led = ledger(store)
     assert led.reserve(0.25, 2.7) is False
-    assert store.ledger_usd() == 2.6
+    assert store.ledger_usd() == 2.6 and len(store.items) == 1  # not even written
+
+
+def test_a_hold_that_loses_the_race_is_taken_back() -> None:
+    store = FakeBlobStore()
+    store.seed_ledger(2.5)
+    fired: list[int] = []
+
+    def other_writes(path: str) -> None:
+        if "/h-250000-" in path and not fired:  # another instance's hold lands after ours
+            fired.append(1)
+            store.items[f"ledger/{LEDGER_ID}/2026-10-30/h-250000-0-{'b' * 32}.json"] = b"{}"
+
+    store.after_put = other_writes
+    assert ledger(store).reserve(0.25, 2.8) is False  # 2.5 + 0.25 + 0.25 > 2.8
+    assert store.ledger_usd() == pytest.approx(2.75)  # only the other hold is left; ours is gone
 
 
 def test_cold_start_keeps_the_total() -> None:
@@ -184,24 +209,33 @@ def test_concurrent_reservations_never_pass_the_cap() -> None:
         t.start()
     for t in threads:
         t.join()
-    assert sum(results) == 10  # 10 x 0.25 = 2.50; an 11th would be 2.75 > 2.70
-    assert store.ledger_usd() == pytest.approx(2.5) and store.ledger_usd() <= 3.0
+    # no process lock exists: overlapping holds may refuse each other (fail closed), never pass
+    assert sum(results) <= 10
+    assert store.ledger_usd() == pytest.approx(0.25 * sum(results))
+    assert store.ledger_usd() <= 2.7
 
 
-def test_a_write_by_another_instance_is_noticed_and_nothing_is_lost() -> None:
+def test_two_instances_interleaved_lose_nothing() -> None:
+    """Instance A and B reserve the same amount; nothing is read-modify-written."""
     store = FakeBlobStore()
-    store.seed_ledger(0.5)
-    fired: list[int] = []
+    a, b = ledger(store), ledger(store)
+    assert a.reserve(0.25, 2.7) and b.reserve(0.25, 2.7)
+    assert store.ledger_usd() == pytest.approx(0.50)
+    a.add(0.04, 1)
+    b.add(0.05, 1)
+    a.release(0.25)
+    b.release(0.25)
+    assert store.ledger_usd() == pytest.approx(0.09)  # equals the real spend
+    assert a.spent_today() == pytest.approx(0.09)
+    assert b.spent_today() == pytest.approx(0.09) and b.spent_today() <= 3.0
 
-    def other_instance_overwrites(path: str) -> None:
-        if not fired:  # once: another instance writes 0.75 over what we just wrote
-            fired.append(1)
-            store.items[path] = json.dumps({"day": "2026-10-30", "usd": 1.0, "calls": 1}).encode()
 
-    store.after_put = other_instance_overwrites
-    assert ledger(store).reserve(0.25, 2.7)
-    # our write (0.75) was detected as overwritten, re-read (1.0) and redone on top of it
-    assert store.ledger_usd() == pytest.approx(1.25)
+def test_same_total_writes_from_two_instances_both_count() -> None:
+    store = FakeBlobStore()
+    a, b = ledger(store), ledger(store)
+    a.add(0.25, 1)
+    b.add(0.25, 1)  # same amount, same moment: two objects, total 0.50
+    assert a.spent_today() == pytest.approx(0.5)
 
 
 def test_unreadable_unwritable_or_corrupt_ledger_fails_closed() -> None:
@@ -216,25 +250,11 @@ def test_unreadable_unwritable_or_corrupt_ledger_fails_closed() -> None:
     with pytest.raises(BlobLedgerError):
         ledger(store).reserve(0.25, 2.7)
     store.fail_put = False
-    store.items[f"ledger/{LEDGER_ID}/2026-10-30.json"] = b"not json"
+    store.items[f"ledger/{LEDGER_ID}/2026-10-30/garbage.json"] = b"not json"
     with pytest.raises(BlobLedgerError):
-        ledger(store).reserve(0.25, 2.7)  # corrupt is an error, never zero
-    store.items[f"ledger/{LEDGER_ID}/2026-10-30.json"] = json.dumps(
-        {"day": "2026-10-29", "usd": 0.1, "calls": 0}
-    ).encode()
+        ledger(store).reserve(0.25, 2.7)  # an unparseable entry is an error, never zero
     with pytest.raises(BlobLedgerError):
-        ledger(store).spent_today()  # another day's object under today's name
-
-
-def test_unconfirmed_write_fails_closed() -> None:
-    store = FakeBlobStore()
-
-    def always_overwrites(path: str) -> None:
-        store.items[path] = json.dumps({"day": "2026-10-30", "usd": 9.0, "calls": 1}).encode()
-
-    store.after_put = always_overwrites
-    with pytest.raises(BlobLedgerError):
-        ledger(store).reserve(0.25, 20.0)
+        ledger(store).spent_today()
 
 
 def test_enforced_cap_is_the_daily_total_minus_the_largest_request() -> None:
@@ -338,8 +358,22 @@ def test_keyed_ask_counts_against_the_same_global_ledger(tmp_path: Path) -> None
     b = ask(d, "How many LLZ reports this week?", key_id="abc", runtime=rt)
     assert b.provenance.kind == "recorded_answer" and client.n == calls
     store.fail_list = True
-    c = ask(d, "How many LLZ reports this week?", key_id="abc", runtime=rt)
+    from maudesignal.connector import ask as ask_mod
+
+    reasons: list[str] = []
+    real = ask_mod._outcome_recorded
+
+    def spy(best: Any, reason: str, *a: Any, **kw: Any) -> Any:
+        reasons.append(reason)
+        return real(best, reason, *a, **kw)
+
+    ask_mod._outcome_recorded = spy  # type: ignore[assignment]
+    try:
+        c = ask(d, "How many LLZ reports this week?", key_id="abc", runtime=rt)
+    finally:
+        ask_mod._outcome_recorded = real  # type: ignore[assignment]
     assert c.provenance.kind == "recorded_answer" and client.n == calls  # fail closed
+    assert reasons == ["cap"]  # not "model_error": the ledger, not the model, was unavailable
 
 
 # --- 2. redact old names -------------------------------------------------------------------
@@ -754,14 +788,14 @@ def test_route_falls_back_to_the_stored_file_when_nothing_is_reachable(tmp_path:
 
 def test_mentions_are_inside_the_global_cost_cap_even_without_a_model(tmp_path: Path) -> None:
     store = FakeBlobStore()
-    store.seed_ledger(2.695)  # the enforced cap is 2.70; a 0.01 hold would pass it
+    store.seed_ledger(2.70)  # the enforced cap is 2.70
     make_recorded(tmp_path / "stored")
     http = standard_http()
     env = blob_env(tmp_path, store, fetcher=http, mentions_dir=tmp_path / "stored")
     b = env.client.post("/v1/live/mentions", json={"product_code": "LLZ"}).json()
     assert b["mode"] == "recorded" and "budget is used up" in b["recorded_note"]
     assert http.requested == [], "no fetch starts once the cap is reached"
-    assert store.ledger_usd() == 2.695
+    assert store.ledger_usd() == 2.70
     store.fail_list = True  # unreadable ledger: fail closed
     assert (
         env.client.post("/v1/live/mentions", json={"product_code": "LLZ"}).json()["mode"]
@@ -770,7 +804,8 @@ def test_mentions_are_inside_the_global_cost_cap_even_without_a_model(tmp_path: 
     store.fail_list = False
     store.seed_ledger(1.0)
     ok = env.client.post("/v1/live/mentions", json={"product_code": "LLZ"}).json()
-    assert ok["mode"] == "live" and store.ledger_usd() == 1.0  # the small hold was returned
+    assert ok["mode"] == "live" and store.ledger_usd() == 1.0
+    assert len(store.items) == 1  # a free route writes nothing to the ledger
 
 
 def test_mentions_per_ip_limit_is_ten_per_day(tmp_path: Path) -> None:
@@ -1098,13 +1133,23 @@ def test_privacy_answers_the_data_questionnaire() -> None:
         "30 November 2026",
         "No sale of data",
         "No tracking cookies",
-        "never stored",
+        "never stores an IP address",
+        "region of that store is chosen when the store is created",
+        "in their own locations",
         "not medical advice",
         "Saicharan Kondapally",
         "How do I ask for deletion?",
     ):
         assert needle.lower() in text.lower(), needle
     assert "@" not in text.replace("@media", "")  # no personal email in git or in the default page
+    assert "any other country" not in text  # a claim nothing in the code can support
+    from maudesignal.connector.legal_pages import STATIC_ANSWERS
+
+    doc = (
+        Path(__file__).resolve().parents[2] / "docs" / "hackathon" / "MUSE_CONNECTOR.md"
+    ).read_text(encoding="utf-8")
+    for question, answer in STATIC_ANSWERS:  # one text, two places
+        assert answer in doc, question
 
 
 def test_pages_contain_no_forbidden_words() -> None:
@@ -1193,4 +1238,93 @@ def test_no_address_key_or_query_text_in_logs_or_the_ledger(
     stored_text = b"".join(store.items.values()).decode()
     for needle in ("testclient", KEY, "secret device phrase", "unique-question-marker"):
         assert needle not in stored_text
-    assert set(json.loads(next(iter(store.items.values())))) == {"day", "usd", "calls"}
+    ledger_docs = [json.loads(v) for k, v in store.items.items() if k.startswith("ledger/")]
+    assert ledger_docs and all(set(d) == {"day", "kind", "usd", "calls"} for d in ledger_docs)
+
+
+def test_no_redis_key_or_limiter_key_contains_the_raw_address(tmp_path: Path) -> None:
+    """Failed-key counters and the public-check limiter see only a peppered hash."""
+    import httpx
+
+    from maudesignal.connector.store import UpstashClient
+    from tests.unit.test_connector_store import TOKEN, URL, FakeRedis
+
+    fake = FakeRedis()
+    http = httpx.Client(transport=httpx.MockTransport(fake.handler))
+    env = Env(tmp_path, state=ConnectorState(UpstashClient(URL, TOKEN, http=http)))
+    # a wrong key (failed-auth counter) and a public check (public limiter), from a known address
+    env.client.get("/v1/tools/recalls?product_code=LLZ", headers={"X-API-Key": "wrong-" + "x" * 40})
+    env.client.get("/v1/public/check_device_type?product_code=LLZ")
+    keys = [c[1] for c in fake.calls if len(c) > 1]
+    assert any(":rl:failed-auth:" in k for k in keys)
+    assert any(":rl:public-check:" in k for k in keys)
+    for k in keys:
+        assert "testclient" not in k and "127.0.0.1" not in k, k
+
+
+def test_key_containing_equals_is_not_mistaken_for_a_label() -> None:
+    padded = "A" * 32 + "=="  # base64-style padding: a plain key, not label "AAAA..."
+    ks = KeyStore.from_env({"MAUDESIGNAL_API_KEYS": f"{padded},charan={KEY_A}"})
+    assert ks.match(padded) is not None and ks.match(padded).label is None  # type: ignore[union-attr]
+    m = ks.match(KEY_A)
+    assert m is not None and m.label == "charan"
+    # a short remainder is not a label either: the whole entry is judged as a plain key
+    short = KeyStore.from_env({"MAUDESIGNAL_API_KEYS": "name=tooshort"})
+    assert short.match("tooshort") is None and short.match("name=tooshort") is None
+
+
+def test_http_fetcher_connects_to_the_address_it_checked(monkeypatch: pytest.MonkeyPatch) -> None:
+    import httpx
+
+    seen: list[httpx.Request] = []
+    lookups: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        if request.url.host == "93.184.216.34" and request.url.path == "/a":
+            return httpx.Response(302, headers={"location": "https://other.example/b"})
+        return httpx.Response(200, text="<p>ok</p>")
+
+    def resolve(host: str, timeout_s: float) -> str | None:
+        lookups.append(host)
+        return {"news.example": "93.184.216.34", "other.example": "93.184.216.35"}.get(host)
+
+    monkeypatch.setattr(mn, "_resolve_public", resolve)
+    f = mn.HttpFetcher(httpx.Client(transport=httpx.MockTransport(handler)))
+    status, text = f.get("https://news.example/a", 5.0)
+    assert status == 200 and "ok" in text
+    # each hop resolved once, then connected by address with the name kept for Host and TLS
+    assert lookups == ["news.example", "other.example"]
+    assert [r.url.host for r in seen] == ["93.184.216.34", "93.184.216.35"]
+    assert [r.headers["host"] for r in seen] == ["news.example", "other.example"]
+    assert all(r.extensions.get("sni_hostname") for r in seen)
+    # a redirect to a name that resolves to a private address is refused
+    monkeypatch.setattr(
+        mn, "_resolve_public", lambda h, t: None if h == "other.example" else "93.184.216.34"
+    )
+    with pytest.raises(ValueError):
+        f.get("https://news.example/a", 5.0)
+
+
+def test_http_fetcher_has_a_wall_clock_deadline_for_slow_pages(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import time
+
+    import httpx
+
+    class Drip(httpx.SyncByteStream):
+        def __iter__(self) -> Any:
+            for _ in range(100):
+                time.sleep(0.02)
+                yield b"x" * 10
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, stream=Drip())
+
+    monkeypatch.setattr(mn, "_resolve_public", lambda h, t: "93.184.216.34")
+    f = mn.HttpFetcher(httpx.Client(transport=httpx.MockTransport(handler)))
+    started = time.monotonic()
+    with pytest.raises(TimeoutError):
+        f.get("https://slow.example/", 0.15)
+    assert time.monotonic() - started < 1.0

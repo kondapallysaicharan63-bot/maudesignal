@@ -8,9 +8,11 @@ endpoints need an ``X-API-Key`` header, count against a per-key rate limit and, 
 """
 
 import hashlib
+import hmac
 import json
 import os
 import re
+import secrets
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -72,6 +74,7 @@ from maudesignal.connector.security import (
     DEFAULT_DEMO_RATE_PER_MIN,
     DEMO_PER_DAY,
     DEMO_RATE_ENV,
+    PEPPER_ENV,
     KeyStore,
     RateLimiter,
 )
@@ -301,6 +304,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     failed_auth = cfg.failed_auth or state.rate_limiter(
         "failed-auth", RateLimiter.failed_auth_from_env().limit
     )
+    pepper = (os.environ.get(PEPPER_ENV) or secrets.token_hex(16)).encode("utf-8")
+
+    def limiter_id(request: Request) -> str:
+        """Peppered HMAC of the caller address: all any limiter or counter ever sees of it."""
+        mac = hmac.new(pepper, _client_address(request).encode("utf-8"), hashlib.sha256)
+        return "ip:" + mac.hexdigest()[:24]
+
     public_limiter = cfg.public_limiter or state.rate_limiter(
         "public-check",
         RateLimiter.from_env(
@@ -341,7 +351,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     ) -> str:
         if not cfg.keys.configured:
             raise ApiError(503, "not_configured", "This server has no API keys configured.")
-        client = _client_address(request)
+        client = limiter_id(request)
         blocked, wait = failed_auth.blocked(client)
         if blocked:  # too many bad keys from this address: do not even check this one
             raise ApiError(
@@ -746,7 +756,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def public_check_device_type(
         request: Request, response: Response, product_code: code_param
     ) -> PublicCheckAnswer:
-        client = _client_address(request)
+        client = limiter_id(request)
         allowed, remaining, retry = public_limiter.check(client)
         if not allowed:
             raise ApiError(

@@ -149,6 +149,19 @@ def test_label_is_written_as_label_equals_key_and_the_key_is_appended() -> None:
     assert len(new_key) >= 32 and new_key not in out + err
 
 
+def test_existing_variable_with_unreadable_value_is_never_patched() -> None:
+    mod = load()
+    for hidden in ("", None):
+        http = FakeVercel(
+            [{"id": "env_9", "key": "MAUDESIGNAL_API_KEYS", "target": ["production"]}]
+        )
+        http.old_value = hidden  # type: ignore[assignment]
+        env = {"VERCEL_TOKEN": "vercel-token-NOT-REAL", "VERCEL_PROJECT_ID": "prj_123"}
+        code, out, err = run(mod, [], env, http)
+        assert code == 1 and out == "" and "by hand" in err and "revoke" in err
+        assert [m for m, _, _ in http.requests] == ["GET", "GET"]  # no PATCH, no POST
+
+
 def test_label_in_file_mode_prints_the_line_without_the_key(tmp_path: Path) -> None:
     mod = load()
     code, out, err = run(mod, ["--label", "charan", "--out-dir", str(tmp_path / "k")], {})

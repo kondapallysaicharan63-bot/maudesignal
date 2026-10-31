@@ -46,6 +46,7 @@ from maudesignal.connector.speech import compose, speak_date
 from maudesignal.connector.store import (
     RESERVING_LEDGERS,
     ConnectorState,
+    UpstashError,
     shared_store_configured,
 )
 from maudesignal.connector.tools import Clock, _stamp, utc_now
@@ -667,7 +668,13 @@ def ask_detailed(
             if glob is not None and isinstance(glob, RESERVING_LEDGERS):
                 # The global daily cap ($3 by default) covers the live website routes and this
                 # keyed tool together. Fails closed: an unreadable ledger is a recorded answer.
-                if not glob.reserve(runtime.caps.session_usd, runtime.global_cap()):
+                try:
+                    reserved = glob.reserve(runtime.caps.session_usd, runtime.global_cap())
+                except UpstashError:  # includes BlobLedgerError: unreadable ledger, no spend
+                    raise SpendLimitError(
+                        "global_usd", "The global live-call ledger is not available."
+                    ) from None
+                if not reserved:
                     raise SpendLimitError("global_usd", "The global live-call budget is used up.")
                 ghold = runtime.caps.session_usd
             # One live ask at a time per instance: the copilot appends to the audit chain on

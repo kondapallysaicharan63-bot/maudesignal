@@ -59,9 +59,13 @@ STATIC_ANSWERS: tuple[tuple[str, str], ...] = (
     ),
     (
         "Where is data processed and stored?",
-        "By Vercel in the United States (function region iad1, Washington, D.C.). Feedback "
-        "entries, page-visit entries and the daily spend total are stored in a private Vercel "
-        "Blob store. Nothing is sent to or stored in any other country by this service.",
+        "The service's functions run on Vercel in region iad1 (Washington, D.C., United "
+        "States), as set in the project's vercel.json. Feedback entries, page-visit entries "
+        "and the daily spend records are stored in a private Vercel Blob store. The region of"
+        " that store is chosen when the store is created in the Vercel dashboard; the code "
+        "does not check it, so this page does not state it. The other services named below "
+        "(Meta Model API, Resend, GDELT, and Upstash if the operator sets it up) process what"
+        " they receive in their own locations, which this service does not control.",
     ),
     (
         "Who else handles data (subprocessors)?",
@@ -76,15 +80,17 @@ STATIC_ANSWERS: tuple[tuple[str, str], ...] = (
     ),
     (
         "What is logged, and for how long?",
-        "Per tool call: a key id (a keyed hash of the key, never the key), the tool name, the "
-        "time, the status and the cost. Never the text of a question: for ask, only a hash and "
-        "a length are recorded. Feedback is stored without names (role and quote consent "
-        "only). A page visit stores the referral code, the page and the time. IP addresses are "
-        "never stored: a keyed hash of the address is held in memory (or in the operator's "
-        "Redis store, if one is set up) only to apply rate limits, for at most the length of "
-        "the limit window or one day. Hosting logs are kept by Vercel for Vercel's runtime-log "
-        "retention for this plan. Feedback and visits are kept until the hackathon review "
-        "ends, then deleted on request or by 30 November 2026.",
+        "Per tool call: a key id (a keyed hash of the key, never the key), the tool name, the"
+        " time, the status and the cost. Never the text of a question: for ask, only a hash "
+        "and a length are recorded. Feedback is stored without names (role and quote consent "
+        "only). A page visit stores the referral code, the page and the time. This service "
+        "never stores an IP address: before any rate limit or counter sees it, the address is"
+        " replaced by a keyed hash, which is held in memory (or in the operator's Redis "
+        "store, if one is set up) only to apply limits, for at most twice the limit window "
+        "(two days for daily counters). Vercel's own request logs may include the address; "
+        "they are kept by Vercel for Vercel's runtime-log retention for this plan. Feedback "
+        "and visits are kept until the hackathon review ends, then deleted on request or by "
+        "30 November 2026.",
     ),
     (
         "Cookies, tracking, sale of data, advertising?",

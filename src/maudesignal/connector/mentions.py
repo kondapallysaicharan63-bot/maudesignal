@@ -25,6 +25,7 @@ import time
 import xml.etree.ElementTree as ET  # noqa: S405 - feeds are fetched from fixed public hosts
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FuturesTimeout
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from html.parser import HTMLParser
@@ -105,20 +106,42 @@ class Fetcher(Protocol):
         """GET ``url``; raises on a network failure or a refused URL."""
 
 
-def _public_address(host: str) -> bool:
+DNS_TIMEOUT_S = 3.0
+
+
+def _resolve_public(host: str, timeout_s: float) -> str | None:
+    """One public IP address for ``host``, or None.
+
+    Every address the name resolves to must be public (global). The lookup runs in a helper
+    thread so a slow resolver cannot hold the request past ``timeout_s``.
+    """
     try:
-        infos = socket.getaddrinfo(host, None)
-    except OSError:
-        return False
-    for info in infos:
-        ip = ipaddress.ip_address(info[4][0])
-        if not ip.is_global:
-            return False
-    return bool(infos)
+        literal = ipaddress.ip_address(host)
+        return host if literal.is_global else None
+    except ValueError:
+        pass
+    pool = ThreadPoolExecutor(max_workers=1)
+    try:
+        infos = pool.submit(socket.getaddrinfo, host, None).result(timeout=timeout_s)
+    except (OSError, TimeoutError, FuturesTimeout):
+        return None
+    finally:
+        pool.shutdown(wait=False)
+    addresses = [str(i[4][0]) for i in infos]
+    if not addresses or not all(ipaddress.ip_address(a).is_global for a in addresses):
+        return None
+    return addresses[0]
 
 
 class HttpFetcher:
-    """Real fetcher: http(s) only, public addresses only, size-capped, short timeouts."""
+    """Real fetcher: http(s) only, public addresses only, size-capped, wall-clock bounded.
+
+    The name is resolved once per hop and the connection is made to THAT address (the host
+    name is kept for the ``Host`` header and for TLS server-name and certificate checks), so
+    the address that was checked is the address that is used: a name cannot resolve to a
+    public address for the check and to an internal one for the connection. The ``timeout_s``
+    passed to :meth:`get` is a deadline for the whole call (DNS, redirects, headers and body).
+    """
 
     def __init__(self, client: httpx.Client | None = None) -> None:
         """Create the fetcher (``client`` is for tests)."""
@@ -126,6 +149,14 @@ class HttpFetcher:
 
     def get(self, url: str, timeout_s: float) -> tuple[int, str]:
         """GET a page or feed (at most two redirects, each checked); the body is size-capped."""
+        deadline = time.monotonic() + timeout_s
+
+        def left() -> float:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError("deadline reached")
+            return remaining
+
         client = self._client or httpx.Client(
             timeout=timeout_s, follow_redirects=False, headers={"User-Agent": USER_AGENT}
         )
@@ -135,15 +166,24 @@ class HttpFetcher:
                 parts = urlparse(current)
                 if parts.scheme not in ("http", "https") or not parts.hostname:
                     raise ValueError("url refused")
-                if not _public_address(parts.hostname):
+                ip = _resolve_public(parts.hostname, min(DNS_TIMEOUT_S, left()))
+                if ip is None:
                     raise ValueError("address refused")
-                with client.stream("GET", current, timeout=timeout_s) as r:
+                target = httpx.URL(current).copy_with(host=ip)
+                extensions: dict[str, Any] = {}
+                if parts.scheme == "https":
+                    extensions["sni_hostname"] = parts.hostname
+                headers = {"Host": parts.netloc.rsplit("@", 1)[-1], "User-Agent": USER_AGENT}
+                with client.stream(
+                    "GET", target, headers=headers, extensions=extensions, timeout=left()
+                ) as r:
                     if 300 <= r.status_code < 400 and r.headers.get("location"):
                         current = str(httpx.URL(current).join(r.headers["location"]))
                         continue
                     data = b""
                     for chunk in r.iter_bytes():
                         data += chunk
+                        left()  # a page that drips slowly cannot run past the deadline
                         if len(data) >= MAX_PAGE_BYTES:
                             break
                     return r.status_code, data.decode(r.encoding or "utf-8", "replace")

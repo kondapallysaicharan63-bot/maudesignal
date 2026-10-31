@@ -25,7 +25,7 @@ differ: read the live form before pasting anything, and correct what differs her
 | Authentication | API key in the `X-API-Key` header (`Authorization: Bearer <key>` also works). No OAuth. Several keys can be listed in `MAUDESIGNAL_API_KEYS`, each revocable by deleting its entry; an entry may be labelled `label=KEY` so logs show the label (for example `charan=...,meta-review=...`). **How a reviewer gets a key:** Charan sends the `meta-review` key to the reviewer privately, never in the form, a chat transcript or the repository. For a first try without any key request, a public **demo key** is shown by `GET /v1/connect` when the operator sets `MAUDESIGNAL_DEMO_KEYS`. |
 | Tools (all read-only) | `what_changed_this_week`: this week's change for a product code, from the stored snapshot (dates shown). `check_device_type`: a live openFDA check of any three-letter product code. `ask`: a question answered by Muse Spark through read-only tools, every sentence checked by the claim gate, or the closest recorded answer, labelled. `get_report`: one stored report by id. `recalls`: recalls for a product code with their openFDA links. |
 | Example prompts | 1. "What changed this week for LLZ?" 2. "Check device type QIH against live openFDA." 3. "Show recalls for LLZ." 4. "Get report 50426770." 5. "How many LLZ reports were filed in the last stored week, and what is the link?" |
-| Rate limits | Keyed: 30 requests per key per minute (`MAUDESIGNAL_RATE_LIMIT_PER_MIN`) and a per-key daily cost cap on `ask` (`MAUDESIGNAL_API_DAILY_USD`, default $2.00; $0.25 per call). Demo key: 10 per minute (`MAUDESIGNAL_DEMO_RATE_PER_MIN`) and 200 per day, on every read tool, and it never starts a live model call (`ask` returns a recorded answer, labelled). Keyless public check: 10 per address per hour. Live website routes: ask 30, voice 10, label 5, mentions 10 per address per day. **Global cap:** all live model calls together, the website routes and the keyed `ask` tool, stop at **$3.00 per UTC day** (`MAUDESIGNAL_LIVE_DAILY_USD`); after that, answers come from recorded runs, labelled recorded. |
+| Rate limits | Keyed: 30 requests per key per minute (`MAUDESIGNAL_RATE_LIMIT_PER_MIN`) and a per-key daily cost cap on `ask` (`MAUDESIGNAL_API_DAILY_USD`, default $2.00; $0.25 per call). Demo key: 10 per minute (`MAUDESIGNAL_DEMO_RATE_PER_MIN`) and 200 per day, on every read tool, and it never starts a live model call (`ask` returns a recorded answer, labelled). Keyless public check: 10 per address per hour. Live website routes: ask 30, voice 10, label 5, mentions 10 per address per day. **Global cap:** all live model calls together, the website routes and the keyed `ask` tool, stop at **$3.00 per UTC day** (`MAUDESIGNAL_LIVE_DAILY_USD`); after that, answers come from recorded runs, labelled recorded. The shared ledger is one stored record per request, so concurrent requests cannot erase each other's entries; it was tested with a fake store only (limits and the one known assumption are in the cost section of Part 2). |
 | Data handling | Public openFDA data only (de-identified by FDA); no personal or patient data collected; no accounts. Question text is not logged (hash and length only). See the Data questionnaire below and `/privacy`. |
 | Privacy policy | `https://maudesignal-api.vercel.app/privacy` |
 | Terms | `https://maudesignal-api.vercel.app/terms` |
@@ -42,17 +42,17 @@ The same answers as `/privacy` (one text, two places).
 |---|---|
 | What does this service do with data? | It gives read-only access to public FDA device data (openFDA: adverse-event reports, recalls, 510(k) records) and, where a result says so, to device alerts from the UK MHRA, always labelled as UK. It is an advisory triage aid for quality and regulatory review. |
 | Is any personal or patient data collected? | No. The data served is public and already de-identified by FDA. There are no accounts and no sign-up. Do not type patient or personal details into a question: the live routes refuse text that looks like a name with a title, an age, an email address or a phone number, and nothing is kept when they do. |
-| Where is data processed and stored? | By Vercel in the United States (function region iad1, Washington, D.C.). Feedback entries, page-visit entries and the daily spend total are stored in a private Vercel Blob store. Nothing is sent to or stored in any other country by this service. |
+| Where is data processed and stored? | The service's functions run on Vercel in region iad1 (Washington, D.C., United States), as set in the project's vercel.json. Feedback entries, page-visit entries and the daily spend records are stored in a private Vercel Blob store. The region of that store is chosen when the store is created in the Vercel dashboard; the code does not check it, so this page does not state it. The other services named below (Meta Model API, Resend, GDELT, and Upstash if the operator sets it up) process what they receive in their own locations, which this service does not control. |
 | Who else handles data (subprocessors)? | Vercel (hosting, runtime logs and Blob storage). Meta Model API: only when live answers are switched on, for the live ask, voice and label routes; the question text, the audio clip or the image is sent once to produce the answer and is not stored by this service. Resend (email): only if the operator turns on email for new feedback; the email carries the feedback fields, no name and no address. Public data sources that this service reads: openFDA, GOV.UK (MHRA alerts), GDELT and FDA public feeds (for the outside-mentions search). These send us public data; we send them a product code or a search term, never a person's details. |
-| What is logged, and for how long? | Per tool call: a key id (a keyed hash of the key, never the key), the tool name, the time, the status and the cost. Never the text of a question: for ask, only a hash and a length are recorded. Feedback is stored without names (role and quote consent only). A page visit stores the referral code, the page and the time. IP addresses are never stored: a keyed hash of the address is held in memory (or in the operator's Redis store, if one is set up) only to apply rate limits, for at most the length of the limit window or one day. Hosting logs are kept by Vercel for Vercel's runtime-log retention for this plan. Feedback and visits are kept until the hackathon review ends, then deleted on request or by 30 November 2026. |
+| What is logged, and for how long? | Per tool call: a key id (a keyed hash of the key, never the key), the tool name, the time, the status and the cost. Never the text of a question: for ask, only a hash and a length are recorded. Feedback is stored without names (role and quote consent only). A page visit stores the referral code, the page and the time. This service never stores an IP address: before any rate limit or counter sees it, the address is replaced by a keyed hash, which is held in memory (or in the operator's Redis store, if one is set up) only to apply limits, for at most twice the limit window (two days for daily counters). Vercel's own request logs may include the address; they are kept by Vercel for Vercel's runtime-log retention for this plan. Feedback and visits are kept until the hackathon review ends, then deleted on request or by 30 November 2026. |
 | Cookies, tracking, sale of data, advertising? | No tracking cookies. No sale of data. No advertising and no use of data for ads. The separate web app may use Vercel Web Analytics for page-view counts, which sets no cookies. |
 | Not medical advice, nothing filed | Nothing here is medical advice or clinical decision support. Nothing is filed with FDA or any other regulator. This is not an FDA-cleared device. It is an open-source project by Saicharan Kondapally. |
 | How do I ask for deletion? | Write to the contact address (shown on `/privacy`, read from `MAUDESIGNAL_CONTACT_EMAIL` at runtime; if it is not set, the GitHub issues URL is shown) and give the referral code you were sent. Feedback and visits carry no name, so the code is how an entry is found. Entries are deleted on request. |
 
 Retention detail: logs live as long as Vercel keeps runtime logs on the plan in use; the number of
-days is not stated here because it depends on the plan and was not checked. The daily spend total
-is one small object per UTC day in the private Blob store (a dollar figure and a call count, no
-personal data).
+days is not stated here because it depends on the plan and was not checked. The daily spend record
+is a set of small objects, one per request, under one UTC day in the private Blob store (each name
+holds a dollar figure and a call count; no personal data).
 
 ## Part 1. Deploy the REST API (a second Vercel project)
 
@@ -134,8 +134,10 @@ python3.12 -m maudesignal.connector.keygen
 # prints only the file path and what to do with it
 ```
 
-Option a replaces the previous value of `MAUDESIGNAL_API_KEYS` (older keys stop working); to keep
-several keys, edit the comma-separated list in the dashboard. Option b: paste the file's one line
+Option a appends the new key to the existing `MAUDESIGNAL_API_KEYS` list (earlier keys keep
+working); to revoke a key, delete its entry in the dashboard. If the existing variable is a Vercel
+"sensitive" one, its value cannot be read back, so the script refuses and changes nothing; add the
+entry by hand instead. Option b: paste the file's one line
 as the value of `MAUDESIGNAL_API_KEYS` in the dashboard, then delete the file. Either way the key
 is never printed to stdout or stderr, never logged, never written inside the repository, and
 Vercel's reply is never printed (only an HTTP status on failure). Tests run the script as a
@@ -559,21 +561,31 @@ or `invalid_input`, 429 `rate_limited` with `retry_after_s` and a `Retry-After` 
 - *Cost:* one global cap for every live call, **$3.00 per UTC day** (`MAUDESIGNAL_LIVE_DAILY_USD`),
   shared by the website routes (ask, voice, label, mentions) and the keyed `ask` tool. Per-request
   caps: ask 0.25, voice 0.30, label 0.30 (`MAUDESIGNAL_LIVE_ASK_USD`, `_VOICE_USD`, `_LABEL_USD`);
-  mentions holds 0.01 and costs nothing (no model). The ledger is, in this order: (1) Upstash
-  Redis when configured (atomic, the whole value is enforced); (2) otherwise **one small JSON
-  object per UTC day in the private Blob store** (`BLOB_READ_WRITE_TOKEN`), shared by every
-  instance and kept across cold starts; (3) only without either, a per-instance memory ledger
-  with the cap divided by `MAUDESIGNAL_LIVE_INSTANCE_DIVISOR` (default 2), which resets on a cold
-  start and is not a hard cap. On the Blob ledger the request **reserves its cap before any
-  model call** (read, add the hold, write back, read again to confirm), and settles afterwards
-  (the hold is returned and the real cost is added). **It fails closed:** if the object cannot be
-  read, written or confirmed, the answer is a recorded one and no model call starts. **The small
-  race:** Blob has no atomic increment, so two instances reserving at the same moment can both
-  pass; the confirm step catches most of these and retries, and the cap enforced is the daily
-  total minus the largest per-request cap (default 3.00 - 0.30 = 2.70), so an undetected overlap
-  of two requests still ends at or under $3.00. More than two truly simultaneous undetected
-  overlaps could exceed it; the per-address limits make that unlikely and it is not measured. No
-  call starts once a cap is reached.
+  mentions costs nothing (no model) and
+  only checks that the cap is not yet reached. The ledger is, in this order: (1) Upstash
+  Redis when configured (atomic, the whole value is enforced); (2) otherwise **one small object
+  per request under each UTC day in the private Blob store** (`BLOB_READ_WRITE_TOKEN`), shared by
+  every instance and kept across cold starts; (3) only without either, a per-instance memory
+  ledger with the cap divided by `MAUDESIGNAL_LIVE_INSTANCE_DIVISOR` (default 2), which resets on a
+  cold start and is not a hard cap. **Blob ledger design:** nothing is read, changed and written
+  back, so no writer can overwrite another's entry. Each hold, each release and each real cost is
+  its own new object (`ledger/live-global/<day>/<kind>-<micro-USD>-<calls>-<uuid>.json`, kind h,
+  r or a); today's spend is the sum of the listing (holds + real costs - releases). A request
+  reserves before any model call: if the listed total plus its hold is already over the cap it is
+  refused without writing; otherwise it writes its hold, lists again, and removes its own hold and
+  is refused if the sum is over the cap. Two requests that reserve at the same moment each write
+  before they list, so the later listing sees both and at least one is refused (at worst both).
+  Settling adds a real-cost object and a release object; the hold is never edited. **It fails
+  closed:** if the listing cannot be read, a write fails or an object name cannot be parsed, the
+  answer is a recorded one and no model call starts (the keyed `ask` tool reports reason `cap`).
+  **Known limit:** this relies on a completed write showing up in the next listing of the store.
+  That was tested with a fake store only, not against a real Blob store. If the store ever lagged,
+  overlapping requests could pass by at most one request cap; the cap enforced is therefore the
+  daily total minus the largest per-request cap (default 3.00 - 0.30 = 2.70), which leaves room
+  for one such overlap, so total live spend is still meant to stay at or under $3.00. More than
+  one such overlap is not covered and is not measured. A model call that has been paid for but
+  whose cost object could not be written is logged as `connector_spend_not_recorded` (USD amount
+  and day only) for the operator to reconcile. No call starts once a cap is reached.
 - *Fallback:* with no `META_MODEL_API_KEY`, a cap reached, or any model error, the answer is a
   recorded run and says so (`mode: "recorded"`, with the recorded question or sample photo
   named). A recorded answer is never shown as live. Voice: if the clip cannot be transcribed, a
@@ -644,7 +656,7 @@ not on the page), `personal_details` (an email, phone, age, a title with a name,
 service never uses). Every mention has `badge` "Unverified — not checked against FDA records" and
 is never mixed with claim-gated FDA facts; `source_kind` is the fixed value for FDA-hosted pages (listed in
 `mentions.py`), otherwise `news` or `web`. At most 10 mentions; the whole search ends in under 50 s. Limits: 10 per address
-per UTC day, inside the global cost cap (a 0.01 hold, returned; refused when the cap is reached or
+per UTC day, inside the global cost cap (a read-only check, no hold; refused when the cap is reached or
 the ledger cannot be read). When the cap, the limit or the network stops a live search, the stored
 file `demo/mentions/<CODE>.json` answers with `mode: "recorded"` and a `recorded_note`; with no
 file the lists are empty and the note says so. `.github/workflows/mentions-record.yml` writes

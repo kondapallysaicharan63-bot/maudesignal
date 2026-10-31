@@ -139,7 +139,6 @@ ASK_PER_DAY_ENV = "MAUDESIGNAL_LIVE_ASK_PER_DAY"
 VOICE_PER_DAY_ENV = "MAUDESIGNAL_LIVE_VOICE_PER_DAY"
 LABEL_PER_DAY_ENV = "MAUDESIGNAL_LIVE_LABEL_PER_DAY"
 MENTIONS_PER_DAY_ENV = "MAUDESIGNAL_LIVE_MENTIONS_PER_DAY"
-MENTIONS_USD_ENV = "MAUDESIGNAL_LIVE_MENTIONS_USD"
 BURST_PER_MIN_ENV = "MAUDESIGNAL_LIVE_PER_MIN"
 DIVISOR_ENV = "MAUDESIGNAL_LIVE_INSTANCE_DIVISOR"
 PEPPER_ENV = "MAUDESIGNAL_KEY_PEPPER"
@@ -148,7 +147,6 @@ DEFAULT_ASK_PER_DAY = 30
 DEFAULT_VOICE_PER_DAY = 10
 DEFAULT_LABEL_PER_DAY = 5
 DEFAULT_MENTIONS_PER_DAY = 10
-DEFAULT_MENTIONS_USD = 0.01
 DEFAULT_BURST_PER_MIN = 10
 DEFAULT_DIVISOR = 2
 
@@ -233,7 +231,6 @@ class LiveConfig:
     voice_usd: float = DEFAULT_VOICE_USD
     label_usd: float = DEFAULT_LABEL_USD
     mentions_per_day: int = DEFAULT_MENTIONS_PER_DAY
-    mentions_usd: float = DEFAULT_MENTIONS_USD
 
     @classmethod
     def from_env(cls, env: dict[str, str] | None = None) -> LiveConfig:
@@ -250,7 +247,6 @@ class LiveConfig:
             voice_usd=_float_env(e, VOICE_USD_ENV, DEFAULT_VOICE_USD),
             label_usd=_float_env(e, LABEL_USD_ENV, DEFAULT_LABEL_USD),
             mentions_per_day=_int_env(e, MENTIONS_PER_DAY_ENV, DEFAULT_MENTIONS_PER_DAY),
-            mentions_usd=_float_env(e, MENTIONS_USD_ENV, DEFAULT_MENTIONS_USD),
         )
 
     def effective_daily_usd(self, *, shared: bool, race_margin: float = 0.0) -> float:
@@ -258,7 +254,7 @@ class LiveConfig:
 
         The whole value when the ledger is shared and atomic (Redis), a share of it when it is
         per instance, and the value minus ``race_margin`` (the largest per-request cap) when
-        the shared ledger is the Blob object, whose read-modify-write is not atomic.
+        the shared ledger is the Blob object set (one object per request, listed and summed).
         """
         if not shared:
             return round(self.daily_usd / self.instance_divisor, 6)
@@ -1151,20 +1147,18 @@ def mount_live(
         except UpstashError:
             reason = "cap"  # fails closed: an unreadable ledger is a stored result
         if reason is None:
-            with held(cfg.mentions_usd) as ok:
-                if not ok:
-                    reason = "cap"
-                else:
-                    found = search_mentions(
-                        body.product_code,
-                        body.device_terms,
-                        be.mentions_fetcher(),
-                        clock=be.clock,
-                        now=clock_now,
-                    )
-                    if found.network_ok:
-                        return found.as_dict() | {"label": LABEL, "mode": "live"}, None
-                    reason = "unreachable"
+            # No model is called and nothing costs money, so there is no hold (a hold would be
+            # two more ledger writes for a free route): the read-only check above is the gate.
+            found = search_mentions(
+                body.product_code,
+                body.device_terms,
+                be.mentions_fetcher(),
+                clock=be.clock,
+                now=clock_now,
+            )
+            if found.network_ok:
+                return found.as_dict() | {"label": LABEL, "mode": "live"}, None
+            reason = "unreachable"
         stored = load_recorded(be.mentions_dir, body.product_code) or empty_recorded(
             body.product_code, clock_now()
         )

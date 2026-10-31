@@ -24,9 +24,11 @@ import contextlib
 import json
 import math
 import os
+import re
 import secrets
 import threading
 import time
+import uuid
 from collections.abc import Callable
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -345,11 +347,12 @@ class UpstashLedger(DailyLedger):
         return round(total, 6)
 
 
-#: Serialises read-modify-write of the Blob ledger inside one process (all instances of the
-#: class share it, so two ``BlobLedger`` objects on the same store cannot interleave).
-_BLOB_LEDGER_LOCK = threading.Lock()
-BLOB_LEDGER_ATTEMPTS = 3
+BLOB_LEDGER_ATTEMPTS = 3  # kept for callers that pass ``attempts``; not used by the log design
 LEDGER_PREFIX = "ledger"
+_MICROS = 1_000_000
+_ENTRY_RE = re.compile(
+    r"^(?P<kind>[har])-(?P<micros>\d{1,12})-(?P<calls>\d{1,6})-[0-9a-f]{32}\.json$"
+)
 
 
 class BlobLedgerError(UpstashError):
@@ -360,25 +363,26 @@ class BlobLedgerError(UpstashError):
     """
 
 
-def _bust(url: str) -> str:
-    """Add a changing query value so a CDN cannot serve an older copy of the ledger."""
-    return f"{url}{'&' if '?' in url else '?'}t={secrets.token_hex(4)}"
-
-
 class BlobLedger(DailyLedger):
-    """Global daily spend kept as one small JSON object per UTC day in the private Blob store.
+    """Global daily spend kept as one small object per request in the private Blob store.
 
-    Object ``ledger/<name>/<YYYY-MM-DD>.json`` holds ``{"day", "usd", "calls"}``. A reservation
-    reads it, adds the hold, writes it back and reads it again to confirm that nobody else
-    overwrote it in between (up to three tries). If the object cannot be read, written or
-    confirmed, :class:`BlobLedgerError` is raised and the caller answers from a recording: the
-    ledger FAILS CLOSED. A missing object is a new day (zero); an object that cannot be parsed
-    is an error, never zero.
+    There is no shared counter to overwrite. Every hold, release and real cost is written as
+    its OWN new object ``ledger/<name>/<YYYY-MM-DD>/<kind>-<micro-USD>-<calls>-<uuid>.json``
+    (kind ``h`` hold, ``r`` release, ``a`` real cost), so no writer can overwrite another
+    writer's entry and an entry can never be lost by a concurrent instance. Today's spend is
+    the sum of the listing: holds + real costs - releases (the amount is in the object name,
+    so a sum needs one listing and no downloads).
 
-    Race: Blob has no atomic increment. Two server instances that read at the same moment may
-    both reserve; the confirm step catches most of these and retries, and the enforced cap is
-    the daily total minus the largest per-request cap (``globalcap``), so a rare undetected
-    overlap of two requests still ends at or under the daily total.
+    To reserve: if the listed total plus the hold is already over the cap, refuse without
+    writing; otherwise write our hold object, list again and sum; if the sum is over the cap,
+    remove our own hold (or, if that fails, record an equal release) and refuse. Two requests
+    that reserve at the same moment each write before they list, so the later listing sees
+    both and at least one is refused; at worst both are (fail closed). If the listing cannot
+    be read, a write fails, or an object name cannot be parsed, :class:`BlobLedgerError` is
+    raised and the caller answers from a recording. One assumption: a completed write is
+    visible in the next listing. If the store ever lagged, an overlap could pass by at most
+    one request cap, which the enforced cap (the daily total minus the largest request cap,
+    see ``globalcap``) leaves room for.
     """
 
     def __init__(
@@ -391,62 +395,88 @@ class BlobLedger(DailyLedger):
     ) -> None:
         """Create the ledger ``name`` on ``store``."""
         super().__init__(Path(os.devnull), today=today)
-        self._store, self._name, self._attempts = store, name, max(1, attempts)
+        self._store, self._name = store, name
 
-    def _object(self, day: str) -> str:
-        return f"{LEDGER_PREFIX}/{self._name}/{day}.json"
+    def _prefix(self, day: str) -> str:
+        return f"{LEDGER_PREFIX}/{self._name}/{day}/"
 
-    def _load(self, day: str) -> tuple[float, int]:
-        path = self._object(day)
+    def _entry(self, day: str, kind: str, usd: float, calls: int = 0) -> str:
+        micros = int(round(abs(usd) * _MICROS))
+        return f"{self._prefix(day)}{kind}-{micros}-{max(0, int(calls))}-{uuid.uuid4().hex}.json"
+
+    def _list(self, day: str) -> tuple[float, list[BlobRef]]:
+        """Today's total and the refs, from one listing. Fails closed on any surprise."""
+        prefix = self._prefix(day)
         try:
-            refs = [r for r in self._store.list_prefix(path) if r.pathname == path]
-            if not refs:
-                return 0.0, 0
-            raw = self._store.get(BlobRef(refs[0].pathname, _bust(refs[0].url)))
+            refs = self._store.list_prefix(prefix)
         except StoreError:
             raise BlobLedgerError("ledger store unreachable") from None
-        try:
-            doc = json.loads(raw)
-            usd, calls = float(doc["usd"]), int(doc.get("calls", 0))
-            if doc.get("day") != day or not math.isfinite(usd) or usd < 0 or calls < 0:
-                raise ValueError("bad ledger")
-        except (ValueError, KeyError, TypeError, AttributeError):
-            raise BlobLedgerError("ledger object unreadable") from None
-        return usd, calls
+        total = 0
+        for ref in refs:
+            m = (
+                _ENTRY_RE.match(ref.pathname[len(prefix) :])
+                if ref.pathname.startswith(prefix)
+                else None
+            )
+            if m is None:
+                raise BlobLedgerError("ledger object unreadable")
+            micros = int(m.group("micros"))
+            total += -micros if m.group("kind") == "r" else micros
+        return max(0.0, total / _MICROS), refs
 
-    def _change(
-        self, usd: float, calls: int = 0, *, cap: float | None = None
-    ) -> tuple[bool, float]:
-        """Add ``usd`` (may be negative) and confirm it. Returns ``(applied, total)``."""
-        day = self._today().isoformat()
-        with _BLOB_LEDGER_LOCK:
-            for _ in range(self._attempts):
-                have, n = self._load(day)
-                total = max(0.0, round(have + usd, 6))
-                if cap is not None and total > cap + 1e-9:
-                    return False, have
-                doc = {"day": day, "usd": total, "calls": n + calls}
-                try:
-                    self._store.put_json(self._object(day), doc, overwrite=True)
-                except StoreError:
-                    raise BlobLedgerError("ledger store unreachable") from None
-                confirmed, _ = self._load(day)
-                if abs(confirmed - total) < 1e-9:
-                    return True, total
-        raise BlobLedgerError("ledger write could not be confirmed")
+    def _write(self, day: str, kind: str, usd: float, calls: int = 0) -> str:
+        path = self._entry(day, kind, usd, calls)
+        try:
+            self._store.put_json(
+                path, {"day": day, "kind": kind, "usd": round(abs(usd), 6), "calls": int(calls)}
+            )
+        except StoreError:
+            raise BlobLedgerError("ledger store unreachable") from None
+        return path
 
     def spent_today(self) -> float:
         """USD recorded today (UTC). Raises ``BlobLedgerError`` when it cannot be read."""
-        return self._load(self._today().isoformat())[0]
+        return self._list(self._today().isoformat())[0]
 
     def reserve(self, usd: float, daily_cap: float) -> bool:
         """Hold ``usd`` before a model call. False (nothing held) if it would pass the cap."""
-        return self._change(float(usd), cap=float(daily_cap))[0]
+        day, usd = self._today().isoformat(), float(usd)
+        have, _ = self._list(day)
+        if have + usd > daily_cap + 1e-9:
+            return False
+        mine = self._write(day, "h", usd)
+        try:
+            total, refs = self._list(day)
+        except BlobLedgerError:
+            self._undo(day, mine, usd)
+            raise
+        if mine not in {r.pathname for r in refs}:
+            total += usd  # our own write is not yet listed: count it anyway
+        if total > daily_cap + 1e-9:
+            self._undo(day, mine, usd)
+            return False
+        return True
+
+    def _undo(self, day: str, mine: str, usd: float) -> None:
+        """Take back our own hold: delete it, or record an equal release if that fails."""
+        try:
+            ref = next((r for r in self._store.list_prefix(mine) if r.pathname == mine), None)
+            if ref is not None:
+                self._store.delete(ref)
+                return
+        except StoreError:
+            pass
+        try:
+            self._write(day, "r", usd)
+        except BlobLedgerError as exc:
+            logger.critical(
+                "connector_spend_hold_not_released", usd=round(usd, 6), day=day, error=str(exc)
+            )
 
     def release(self, usd: float) -> None:
         """Give back a hold from :meth:`reserve` (the real cost is added by ``add``)."""
         try:
-            self._change(-float(usd))
+            self._write(self._today().isoformat(), "r", float(usd))
         except BlobLedgerError as exc:
             logger.critical(
                 "connector_spend_hold_not_released",
@@ -456,15 +486,17 @@ class BlobLedger(DailyLedger):
             )
 
     def add(self, usd: float, calls: int) -> float:
-        """Add real spend for today and return today's new total."""
+        """Add real spend for today (a new object of its own) and return today's total."""
+        day = self._today().isoformat()
         try:
-            return self._change(float(usd), int(calls))[1]
+            self._write(day, "a", float(usd), int(calls))
+            return round(self._list(day)[0], 6)
         except BlobLedgerError as exc:
             logger.critical(
                 "connector_spend_not_recorded",
                 usd=round(float(usd), 6),
                 calls=int(calls),
-                day=self._today().isoformat(),
+                day=day,
                 error=str(exc),
             )
             raise
