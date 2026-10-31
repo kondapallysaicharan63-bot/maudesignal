@@ -147,10 +147,15 @@ deployed API (which the job never calls), so neither counts against the other. T
 is therefore limited by the number of live **attempts** (every "Re-run" gets a fresh runner and
 so a fresh ledger), and the **first step of the `live` job itself** (not a separate gate job)
 exits non-zero before any paid step when this attempt would be the fourth live attempt today
-(UTC); a re-run of the job or of failed jobs runs the step again. It lists today's runs of `release-check.yml` through the REST API with
-`GITHUB_TOKEN` (`actions: read`), over every page of results, on branches whose name contains
-`live`, and sums each run's `run_attempt` (for the current run only the attempts before this one,
-from `github.run_attempt`). If the list cannot be fetched the step also fails (an error line, no guess). The job has a
+(UTC); a re-run of the job or of failed jobs runs the step again. A re-run keeps the created date
+of its run, so the step does not filter runs by that date. With `GITHUB_TOKEN` (`actions: read`) it
+lists every run of `release-check.yml` from the last 31 days (every page), keeps branches whose
+name contains `live`, reads each attempt's jobs, and counts every attempt whose `Live` job started
+today (UTC) and was not skipped, whenever its run was created. The current run's own earlier
+attempts are counted; the attempt being checked is not. An attempt stopped by this guard also
+counts, so once the limit is reached it stays reached for the day. If a list cannot be read in full
+(HTTP error, bad JSON, more than 2,000 runs, an incomplete job list) the step fails with an error
+line and makes no guess. The job has a
 concurrency group (`release-live`) shared by all branches with `cancel-in-progress: false`, so two
 live runs cannot overlap.
 

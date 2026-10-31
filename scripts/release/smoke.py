@@ -76,7 +76,17 @@ class Smoke:
         return request("GET", self.api + path, headers={"X-API-Key": key} if key else None)
 
     def clean(self, name: str, *rs: Response) -> None:
-        """No secret value and no key-shaped string in the responses."""
+        """No secret value and no key-shaped string in the responses (FAIL when none answered)."""
+        silent = [r for r in rs if r.status == 0]
+        if silent:
+            # no answer at all: nothing was checked, so this is never a pass
+            self.rep.add(
+                name,
+                FAIL,
+                f"no answer (HTTP 0), nothing to check: {silent[0].error[:120]}",
+                group="security",
+            )
+            return
         bad = any(contains_any(r.text, self.secrets) or find_key_shapes(r.text) for r in rs)
         self.rep.ok(
             name, not bad, "a key or key-shaped string appears in a response", group="security"
@@ -244,16 +254,7 @@ class Smoke:
                 required=False,
                 cost_usd=cost,
             )
-        if r.status == 0:
-            # no answer at all: nothing was checked, so this is never a pass
-            self.rep.add(
-                f"{name}: no key in the response",
-                FAIL,
-                f"no answer (HTTP 0), nothing to check: {r.error[:120]}",
-                group="security",
-            )
-        else:
-            self.clean(f"{name}: no key in the response", r)
+        self.clean(f"{name}: no key in the response", r)
 
     def skipped_budget(self, name: str) -> None:
         """A live call the budget refused: a FAIL line, never silent."""

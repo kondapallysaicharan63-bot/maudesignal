@@ -10,9 +10,11 @@ name: Release check
 # exists; the app's own cap (MAUDESIGNAL_LIVE_DAILY_USD) is set to $0.60 there. That cap is a
 # per-run ledger on a fresh directory of the local API in the job: it is separate from the
 # deployed API's global ledger, which this job never touches. So the day's total is limited by the
-# number of live attempts: the first step of the live job itself counts today's (UTC) live
-# attempts through the GitHub API with GITHUB_TOKEN and fails before any paid step when this
-# attempt would be the fourth. A re-run of the job or of failed jobs checks again.
+# number of live attempts: the first step of the live job itself reads every run of this workflow
+# from the last 31 days on branches containing "live" (a re-run keeps its run's created date) and
+# counts every attempt whose Live job started today (UTC), whenever its run was created. It fails
+# before any paid step when this attempt would be the fourth, and when a list cannot be read in
+# full. A re-run of the job or of failed jobs checks again.
 
 on:
   push:
@@ -202,43 +204,86 @@ jobs:
           fi
           # Every attempt (including "Re-run all jobs" and "Re-run failed jobs") gets a fresh
           # runner and a fresh $0.60 ledger, so the number of live attempts per day limits the
-          # total. Sum run_attempt over today's (UTC) runs of this workflow on branches containing
-          # 'live', over every page of results; for this run only the attempts before this one
-          # count, and this attempt is the one being checked. A re-run checks again.
-          today=$(date -u +%Y-%m-%d)
-          total=0
-          page=1
-          while :; do
-            runs=$(curl -sS --fail-with-body \
-              -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
-              "https://api.github.com/repos/$REPO/actions/workflows/release-check.yml/runs?created=%3E%3D$today&per_page=100&page=$page") || {
-                echo "::error::live job: stopped, today's runs could not be listed (no guess is made)"
-                exit 1
-              }
-            n=$(echo "$runs" | python3 -c "
-          import json, os, sys
-          me = int(os.environ['RUN_ID'])
-          runs = json.load(sys.stdin).get('workflow_runs', [])
-          live = [r for r in runs if 'live' in (r.get('head_branch') or '').lower()]
-          # other runs: all their attempts; this run: only the attempts before this one
-          print(len(runs), sum((int(os.environ['RUN_ATTEMPT']) - 1) if r.get('id') == me else int(r.get('run_attempt') or 1) for r in live))
-          ") || {
-                echo "::error::live job: stopped, the run list could not be read (no guess is made)"
-                exit 1
-              }
-            count=${n% *}
-            attempts=${n#* }
-            total=$((total + attempts))
-            [ "$count" -lt 100 ] && break
-            page=$((page + 1))
-            [ "$page" -gt 20 ] && break
-          done
-          this_attempt=$((total + 1))
-          if [ "$this_attempt" -gt "$MAX_LIVE_RUNS_PER_DAY" ]; then
-            echo "::error::live job: stopped before any paid step, this would be live attempt $this_attempt today (limit $MAX_LIVE_RUNS_PER_DAY)"
-            exit 1
-          fi
-          echo "live job: will run (attempt $this_attempt of at most $MAX_LIVE_RUNS_PER_DAY today, UTC)"
+          # total. A re-run keeps the created date of its run, so runs are NOT filtered by that
+          # date: every run of this workflow from the last 31 days on a branch containing 'live'
+          # is read (all pages), and every attempt whose Live job started today (UTC) is counted,
+          # whenever its run was created. This run's own earlier attempts count; this attempt is
+          # the one being checked. Any list that cannot be read in full fails the step.
+          python3 - <<'PY'
+          import json, os, subprocess, sys
+          from datetime import datetime, timedelta, timezone
+
+          API = "https://api.github.com/repos/" + os.environ["REPO"]
+          ME = int(os.environ["RUN_ID"])
+          MY_ATTEMPT = int(os.environ["RUN_ATTEMPT"])
+          LIMIT = int(os.environ["MAX_LIVE_RUNS_PER_DAY"])
+          now = datetime.now(timezone.utc)
+          today = now.strftime("%Y-%m-%d")
+          since = (now - timedelta(days=31)).strftime("%Y-%m-%d")
+
+
+          def fail(msg):
+              print("::error::live job: " + msg)
+              sys.exit(1)
+
+
+          def get(path):
+              out = subprocess.run(
+                  ["curl", "-sS", "--fail-with-body", "-H", "Authorization: Bearer " + os.environ["GH_TOKEN"],
+                   "-H", "Accept: application/vnd.github+json", API + path],
+                  capture_output=True, text=True,
+              )
+              if out.returncode != 0:
+                  fail("stopped, " + path + " could not be read (no guess is made)")
+              try:
+                  data = json.loads(out.stdout)
+              except ValueError:
+                  fail("stopped, " + path + " did not return JSON (no guess is made)")
+              if not isinstance(data, dict):
+                  fail("stopped, " + path + " returned an unexpected shape (no guess is made)")
+              return data
+
+
+          # 1. every run of this workflow from the last 31 days (a re-run keeps its created_at, and a run
+          #    can be re-run for 30 days), on branches whose name contains 'live', over every page
+          runs = []
+          page = 1
+          while True:
+              rows = get("/actions/workflows/release-check.yml/runs?created=%3E%3D" + since
+                         + "&per_page=100&page=" + str(page)).get("workflow_runs")
+              if not isinstance(rows, list):
+                  fail("stopped, the run list could not be read (no guess is made)")
+              runs += [r for r in rows if "live" in (r.get("head_branch") or "").lower()]
+              if len(rows) < 100:
+                  break
+              page += 1
+              if page > 20:
+                  fail("stopped, more than 2000 runs in 31 days, the list is incomplete (no guess is made)")
+
+          # 2. count the attempts whose live job started today (UTC), whenever their run was created
+          used = 0
+          for r in runs:
+              rid = int(r["id"])
+              last = int(r.get("run_attempt") or 1)
+              if rid == ME:
+                  last = max(last, MY_ATTEMPT)
+              for n in range(1, last + 1):
+                  if rid == ME and n >= MY_ATTEMPT:
+                      continue  # the attempt being checked is not counted against itself
+                  data = get("/actions/runs/" + str(rid) + "/attempts/" + str(n) + "/jobs?per_page=100")
+                  jobs = data.get("jobs")
+                  if not isinstance(jobs, list) or int(data.get("total_count", len(jobs))) > len(jobs):
+                      fail("stopped, the job list of run " + str(rid) + " attempt " + str(n) + " is incomplete (no guess is made)")
+                  for j in jobs:
+                      started = (j.get("started_at") or "")[:10]
+                      if (j.get("name") or "").startswith("Live") and started == today and j.get("conclusion") != "skipped":
+                          used += 1
+
+          this_attempt = used + 1
+          if this_attempt > LIMIT:
+              fail("stopped before any paid step, this would be live attempt %d today (limit %d)" % (this_attempt, LIMIT))
+          print("live job: will run (attempt %d of at most %d today, UTC)" % (this_attempt, LIMIT))
+          PY
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
