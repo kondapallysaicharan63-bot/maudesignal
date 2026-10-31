@@ -835,6 +835,52 @@ class Contract:
             group="live",
         )
 
+    def check_outside_mentions(self) -> None:
+        """outside_mentions: absent while research is off; when on, labelled, full keys only."""
+        on = (self.get("/v1/health").json() or {}).get("features", {}).get("research") is True
+        path = "/v1/tools/outside_mentions"
+        listed = {
+            t["name"]: t
+            for t in ((self.rpc("tools/list", {}, 3).json() or {}).get("result") or {}).get(
+                "tools", []
+            )
+        }
+        r = self.post(path, self.k(), json_body={"product_code": "LLZ"})
+        if not on:
+            self.rep.ok(
+                "outside_mentions off: absent from tools/list, REST 404",
+                "outside_mentions" not in listed and r.status == 404,
+                f"listed={'outside_mentions' in listed} HTTP {r.status}",
+                group="tools",
+            )
+            return
+        hints = (listed.get("outside_mentions") or {}).get("annotations") or {}
+        b = r.json() or {}
+        self.rep.ok(
+            "outside_mentions on: listed read-only and open-world",
+            hints.get("readOnlyHint") is True and hints.get("openWorldHint") is True,
+            str(hints),
+            group="tools",
+        )
+        self.rep.ok(
+            "outside_mentions on: the block with the exact label, no facts or speakable",
+            r.status == 200
+            and b.get("label") == RESEARCH_LABEL
+            and isinstance(b.get("items"), list)
+            and "facts" not in b
+            and "speakable" not in b,
+            f"HTTP {r.status} status={b.get('status')}",
+            group="tools",
+        )
+        d = self.post(path, self.k("demo"), json_body={"product_code": "LLZ"})
+        self.rep.ok(
+            "outside_mentions on: the demo key is refused (403)",
+            d.status == 403 and "demo key" in d.text,
+            f"HTTP {d.status}",
+            group="tools",
+        )
+        self.clean("outside_mentions: no key, test key or prompt text", r, d)
+
     def check_live_routes(self) -> None:
         """Live ask, voice and label: validation, size limits, EXIF, recorded fallback."""
         a = self.fresh()
@@ -1436,6 +1482,7 @@ def main(argv: list[str] | None = None) -> int:
         c.check_cors,
         c.check_live_routes,
         c.check_research,
+        c.check_outside_mentions,
         c.check_feedback,
         c.check_injection,
     )

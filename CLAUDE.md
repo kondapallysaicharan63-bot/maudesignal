@@ -291,6 +291,7 @@ MaudeSignal does not handle PHI under any circumstances.
 | `dossier-reviewer` | ✅ v1.1.1 (hackathon, Oct 2026) | Muse Wonder independent review of the dossier PDF; findings only |
 | `dossier-cover-illustration` | ✅ v1.0.0 (hackathon, Oct 2026) | Optional Muse Image cover; non-evidentiary, off by default |
 | `device-label-reader` | ✅ v1.0.0 (hackathon, Oct 2026) | Muse Spark reads a SAM-cropped device label; K-number / GTIN checked by `vision/label.py` |
+| `web-research` | ✅ v1.2.0 (hackathon, Oct 2026) | Muse Spark + Responses API `web_search` for Research mode and the `outside_mentions` tool; results labelled "not FDA records, not verified by the gate"; off unless `MAUDESIGNAL_RESEARCH=1` |
 
 If you need to add a new Skill, follow the structure of the existing
 Skills and update the table above.

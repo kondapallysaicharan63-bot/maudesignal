@@ -313,3 +313,52 @@ class AuditRecent(BaseModel):
     store: str = Field(description="upstash_redis or in_memory_per_instance.")
     chain: ChainStatus
     entries: list[AuditEntry]
+
+
+#: The fixed label of every web research block (same text as ``connector.research.LABEL``).
+WEB_RESEARCH_LABEL = "Web research — not FDA records, not verified by the gate"
+
+
+class WebResearchItem(BaseModel):
+    """One public web page found by web research. Not an FDA record; not checked by the gate."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    title: str = Field(max_length=300)
+    url: str = Field(pattern=r"^https?://", max_length=2000)
+    date: str | None = Field(
+        max_length=40, description="Only from a date field the API returned; else null."
+    )
+    source: str = Field(max_length=200, description="The link's domain, or GDELT news index.")
+
+
+class OutsideMentionsAnswer(BaseModel):
+    """``outside_mentions``: the web research block, exactly as the website shows it.
+
+    Web results are not FDA records and are not verified by the claim gate. Nothing in this
+    block is ever part of a gated answer, a MAUDE count or a signal.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["ok", "news_only", "unavailable"]
+    label: Literal["Web research — not FDA records, not verified by the gate"]
+    items: list[WebResearchItem] = Field(max_length=8)
+    summary_text: None = Field(
+        description="Always null: only title, link, date and source are shown."
+    )
+    cost_usd: float = Field(ge=0, description="What the daily spend ledger counts for this call.")
+    note: str | None
+
+    @property
+    def speakable(self) -> str:
+        """Short text for MCP ``content``: the label first, then the links (no summary)."""
+        if not self.items:
+            return f"{self.label}. {self.note or 'No web pages found.'}"
+        lines = [f"{self.label}. {len(self.items)} public web pages (not FDA records):"]
+        for n, item in enumerate(self.items, start=1):
+            when = f", {item.date}" if item.date else ""
+            lines.append(f"{n}. {item.title} ({item.source}{when}) {item.url}")
+        if self.note:
+            lines.append(self.note)
+        return "\n".join(lines)

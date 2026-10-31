@@ -5,10 +5,10 @@ Routes (all hidden from the public OpenAPI document):
 * ``POST /v1/feedback`` and ``POST /v1/visit``: keyless, browser origin must be listed in
   ``MAUDESIGNAL_WEB_ORIGINS``, rate limited per address. No IP address and no user agent is ever
   stored; the limiter sees only a salted hash of the address for the length of its window.
-* ``GET /v1/admin/export``, ``GET /v1/admin/summary``, ``POST /v1/admin/delete-test``,
-  ``POST /v1/admin/redact-names`` and ``GET /admin``: need the ``X-Admin-Key`` header
-  (constant-time check against ``MAUDESIGNAL_ADMIN_KEY``). If that variable is unset
-  the admin routes answer 503, never open.
+* ``GET /v1/admin/export``, ``GET /v1/admin/summary``, ``GET /v1/admin/clients``,
+  ``POST /v1/admin/delete-test``, ``POST /v1/admin/redact-names`` and ``GET /admin``: need
+  the ``X-Admin-Key`` header (constant-time check against ``MAUDESIGNAL_ADMIN_KEY``). If that
+  variable is unset the admin routes answer 503, never open.
 
 No names or email addresses are stored (except names on pre-2026-10-31 records whose consent is
 quote_name_role, kept on purpose): an optional ``name`` sent by an old client is dropped
@@ -44,6 +44,7 @@ from starlette.requests import ClientDisconnect
 
 from maudesignal.common.logging import get_logger
 from maudesignal.connector.blob_store import BlobRef, RecordStore, StoreError
+from maudesignal.connector.clients import ClientCounter
 from maudesignal.connector.errors import NOT_OBJECT_MESSAGE, field_name
 from maudesignal.connector.notify import Notifier
 from maudesignal.connector.security import RateLimiter
@@ -67,6 +68,7 @@ DEFAULT_REF_ENV = "MAUDESIGNAL_DEFAULT_REF"
 DEFAULT_REF = "email-batch-1"
 DELETE_TEST_PATH = "/v1/admin/delete-test"
 REDACT_NAMES_PATH = "/v1/admin/redact-names"
+CLIENTS_PATH = "/v1/admin/clients"
 QUOTE_BY_NAME = "quote_name_role"
 FETCH_WORKERS = 8
 KINDS = ("feedback", "visits")
@@ -295,10 +297,25 @@ th,td{border-bottom:1px solid GrayText;padding:.3rem .5rem;text-align:left}
 .scroll{overflow-x:auto}
 .code{border:1px solid GrayText;border-radius:.4rem;padding:.5rem .8rem;margin:.8rem 0}
 .code h3{margin:.2rem 0}
+/* Connected clients panel only */
+#clients th{font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;color:GrayText;
+font-weight:600;white-space:nowrap}
+#clients .num{text-align:right;font-variant-numeric:tabular-nums}
+#clients td.today{font-weight:600}
+#clients .zero,#clients .sub,#clients .none{color:GrayText;font-weight:400}
+#clients .sub{display:none;font-size:.85rem}
+#clients td.seen{white-space:nowrap;font-variant-numeric:tabular-nums}
+#clients td.who,#clients td.kind{white-space:nowrap}
+#clientsnote,.hint{color:#555}
+@media (prefers-color-scheme:dark){#clientsnote,.hint{color:#bbb}}
+.hint{display:none;font-size:.9rem;margin:.2rem 0}
+@media (max-width:600px){#clients .cid{display:none}#clients .sub{display:block}
+.hint{display:block}}
 </style></head><body>
 <h1>MaudeSignal admin</h1>
-<p>Private. Visits and feedback by referral code.
-No names are shown here; no emails or IP addresses are stored.
+<p>Private. Visits and feedback by referral code, and call counts per connected client.
+API key labels are shown here; no questions, keys or IP addresses are stored, and no
+feedback names are shown.
 No data is in this page until you unlock it; the key stays in this tab (session storage) only.</p>
 <form id="f"><label>Admin key <input id="k" type="password" autocomplete="off"></label>
 <button type="submit">Load summary</button>
@@ -311,6 +328,13 @@ No data is in this page until you unlock it; the key stays in this tab (session 
 <button type="button" id="deltest">Delete TEST entries</button>
 <button type="button" id="redact">Remove names (keep only 'quote me by name')</button></p>
 <h2>Totals</h2><p id="tot"></p>
+<h2>Connected clients</h2>
+<p>One row per API key that called a tool: its label, or a short one-way id (never the key).
+No questions, answers, addresses or user agents are kept.</p>
+<p id="clientsnote"></p>
+<div class="code" id="clientscard" hidden></div>
+<div id="clientswrap" hidden><p class="hint" aria-hidden="true">Swipe for more &rarr;</p>
+<div class="scroll"><table id="clients"></table></div></div>
 <h2>By code</h2><div id="codes"></div>
 <h2>By referral code</h2><div class="scroll"><table id="refs"></table></div>
 <h2>By page</h2><div class="scroll"><table id="pages"></table></div>
@@ -367,6 +391,46 @@ async function load(){
   table($("refs"),["ref","visits","feedback","avg_rating"],d.by_ref);
   table($("pages"),["page","visits","feedback"],d.by_page);
   render();
+  await loadClients();
+}
+function el(tag,cls,text){const e=document.createElement(tag);
+  if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e;}
+function stamp(iso){const m=/^([0-9]{4}-[0-9]{2}-[0-9]{2})T([0-9]{2}:[0-9]{2})/.exec(iso||"");
+  return m?m[1]+" "+m[2]+"Z":"–";}
+function clientsCard(text){$("clientswrap").hidden=true;
+  const c=$("clientscard");c.textContent=text;c.hidden=false;}
+async function loadClients(){
+  const t=$("clients");t.replaceChildren();$("clientsnote").textContent="";
+  const r=await fetch("/v1/admin/clients",{headers:hdr(),cache:"no-store"});
+  if(!r.ok){clientsCard("Client counts are not available right now (error "+r.status+").");
+    return;}
+  const d=await r.json();
+  if(!d.enabled){clientsCard("Client tracking is off: set MAUDESIGNAL_CLIENTS_PANEL=1 "+
+    "to turn it on.");return;}
+  if(!d.clients.length){clientsCard("No client has called a tool yet.");return;}
+  $("clientscard").hidden=true;$("clientswrap").hidden=false;
+  $("clientsnote").textContent="Today is "+d.today_utc+" (UTC). Last "+d.window_days+
+    " days shown."+(d.complete?"":" Counts incomplete: some days could not be read.");
+  const head=el("tr");
+  [["client",""],["id","cid"],["kind",""],["calls today","num"],
+   ["calls ("+d.window_days+" days)","num"],["last seen (UTC)",""]]
+    .forEach(([n,c])=>{const th=el("th",c,n);th.scope="col";head.appendChild(th);});
+  const thead=el("thead");thead.appendChild(head);t.appendChild(thead);
+  const body=el("tbody");
+  for(const c of d.clients){
+    const tr=el("tr");
+    const who=el("td","who");
+    if(c.label){who.appendChild(el("span","",c.label));who.appendChild(el("span","sub",c.client_id));}
+    else{who.textContent=c.client_id;}
+    tr.appendChild(who);
+    tr.appendChild(el("td","cid"+(c.label?"":" none"),c.label?c.client_id:"–"));
+    tr.appendChild(el("td","kind",c.kind||"–"));
+    tr.appendChild(el("td","num today"+(c.calls_today?"":" zero"),String(c.calls_today)));
+    tr.appendChild(el("td","num"+(c.calls_window?"":" zero"),String(c.calls_window)));
+    tr.appendChild(el("td","seen",stamp(c.last_seen_utc)));
+    body.appendChild(tr);
+  }
+  t.appendChild(body);
 }
 $("hide").addEventListener("change",render);
 $("deltest").addEventListener("click",async()=>{
@@ -424,6 +488,7 @@ def mount_feedback(
     make_limiter: Callable[[str, int, float], RateLimiter],
     env: dict[str, str] | None = None,
     now: Callable[[], datetime] = _utc_now,
+    clients: ClientCounter | None = None,
 ) -> None:
     """Add the feedback, visit and admin routes to ``app``.
 
@@ -437,6 +502,7 @@ def mount_feedback(
         make_limiter: ``(name, limit, window_seconds)`` factory for the per-address limiters.
         env: Environment (tests); defaults to ``os.environ``.
         now: Clock (tests).
+        clients: Per-client call counter for ``GET /v1/admin/clients`` (None: panel off).
     """
     e = os.environ if env is None else env
 
@@ -673,6 +739,21 @@ def mount_feedback(
             return refusal
         try:
             result = summarize(load_records("feedback"), load_records("visits"))
+        except StoreError:
+            return _err(503, "store_unavailable", "The record store is not reachable.", no_store)
+        return JSONResponse(result, headers=no_store)
+
+    @app.get(CLIENTS_PATH, include_in_schema=False)
+    def admin_clients(request: Request) -> Response:
+        """Connected clients: id or label, kind, calls today and total, last seen (UTC)."""
+        if (refusal := admin_gate(request)) is not None:
+            return refusal
+        if clients is None:
+            day = now().strftime("%Y-%m-%d")
+            off = {"enabled": False, "status": "Off", "today_utc": day, "clients": []}
+            return JSONResponse(off, headers=no_store)
+        try:
+            result = clients.summary()
         except StoreError:
             return _err(503, "store_unavailable", "The record store is not reachable.", no_store)
         return JSONResponse(result, headers=no_store)

@@ -442,6 +442,11 @@ class ConnectorState:
         return "upstash_redis" if self._client else "in_memory_per_instance"
 
     @property
+    def redis_client(self) -> UpstashClient | None:
+        """The Upstash client when shared state is configured, else None."""
+        return self._client
+
+    @property
     def shared(self) -> bool:
         """True when every server instance sees the same state."""
         return self._client is not None

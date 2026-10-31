@@ -27,7 +27,7 @@ GUIDANCE = (
     "is filed with FDA. Confirm the product code with the person before guessing one: use "
     "lookup_device, or ask. When an answer is labelled recorded, say 'recorded' and give its "
     "date. Never present withheld sentences as fact; they were not verified. A person confirms "
-    "every device match."
+    "every device match. Web results are not FDA records."
 )
 
 WHAT_CHANGED_DESCRIPTION = (
@@ -82,6 +82,21 @@ LOOKUP_DESCRIPTION = (
     "(01)00380740000004(17)261231.'."
 )
 LOOKUP_PATTERN_K = r"^\s*[Kk][\s-]?[0-9]{6}\s*$"
+OUTSIDE_DESCRIPTION = (
+    "Use this to find public web pages (news, FDA web pages, manufacturer notices, journals) "
+    "about a device type, by three-letter product code and an optional short topic. Web "
+    "results are not FDA records and are not verified by the claim gate: every answer carries "
+    "the label 'Web research — not FDA records, not verified by the gate', and nothing from it "
+    "is ever part of a gated answer, a MAUDE count or a signal. Read-only. Muse Spark searches "
+    "the web (asks for at most two searches; spend is capped per call and per day); if that "
+    "fails, news links from the GDELT news index may be shown instead (status news_only). Each "
+    "item has a title, link, source and a date only when one was returned. Full keys only (not "
+    "the public demo key), a small daily limit per key (past it: HTTP 429 with Retry-After, or "
+    "an MCP error result), and only when the operator has switched web research on. POST "
+    "only because the topic is in the body. Example questions: 'Any news about LLZ software "
+    "problems?'; 'Outside mentions of QIH recalls'."
+)
+TOPIC_MAX_CHARS = 120
 
 
 @dataclass(frozen=True)
@@ -139,6 +154,7 @@ class ToolSpec:
     description: str
     params: tuple[Param, ...]
     open_world: bool  # True when the tool can reach live openFDA or the live model
+    idempotent: bool = True  # False when the same call can give different results (web search)
 
     def input_schema(self) -> dict[str, Any]:
         """JSON Schema of the arguments."""
@@ -154,7 +170,7 @@ class ToolSpec:
         return {
             "readOnlyHint": True,
             "destructiveHint": False,
-            "idempotentHint": True,
+            "idempotentHint": self.idempotent,
             "openWorldHint": self.open_world,
         }
 
@@ -316,9 +332,41 @@ TOOL_SPECS: tuple[ToolSpec, ...] = (
 
 SPECS_BY_NAME: dict[str, ToolSpec] = {s.name: s for s in TOOL_SPECS}
 
+#: Web research tool: listed and callable only when ``MAUDESIGNAL_RESEARCH`` is on.
+OUTSIDE_SPEC = ToolSpec(
+    "outside_mentions",
+    "Outside mentions on the web (not FDA records)",
+    OUTSIDE_DESCRIPTION,
+    (
+        Param("product_code", _CODE, pattern=PRODUCT_CODE_PATTERN, hint=CODE_HINT),
+        Param(
+            "topic",
+            "Optional short topic, e.g. software update or battery recall (no patient details).",
+            required=False,
+            min_length=2,
+            max_length=TOPIC_MAX_CHARS,
+            example="software update",
+        ),
+    ),
+    open_world=True,
+    idempotent=False,
+)
+
+
+def active_specs(research_on: bool) -> tuple[ToolSpec, ...]:
+    """The tools offered right now: the core six, plus ``outside_mentions`` when research is on."""
+    return TOOL_SPECS + (OUTSIDE_SPEC,) if research_on else TOOL_SPECS
+
+
+def spec_for(name: str, research_on: bool) -> ToolSpec | None:
+    """The spec of an offered tool, or None (``outside_mentions`` is unknown while off)."""
+    return {s.name: s for s in active_specs(research_on)}.get(name)
+
 
 def mcp_tools(
-    output_schema: dict[str, Any], overrides: dict[str, dict[str, Any]] | None = None
+    output_schema: dict[str, Any],
+    overrides: dict[str, dict[str, Any]] | None = None,
+    specs: tuple[ToolSpec, ...] = TOOL_SPECS,
 ) -> list[dict[str, Any]]:
     """The ``tools/list`` entries (also the manifest's ``tools``).
 
@@ -335,12 +383,12 @@ def mcp_tools(
             "outputSchema": overrides.get(s.name, output_schema),
             "annotations": {"title": s.title, **s.annotations()},
         }
-        for s in TOOL_SPECS
+        for s in specs
     ]
 
 
 PARAMS_BY_NAME: dict[str, Param] = {}
-for _spec in TOOL_SPECS:
+for _spec in (*TOOL_SPECS, OUTSIDE_SPEC):
     for _p in _spec.params:
         PARAMS_BY_NAME.setdefault(_p.name, _p)
 

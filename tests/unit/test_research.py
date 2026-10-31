@@ -187,8 +187,9 @@ def test_fee_and_hold() -> None:
 def test_instructions_come_from_the_skill() -> None:
     text = research.load_instructions()
     assert "web_search tool at most twice" in text and "## " not in text
+    assert "{topic}" not in text  # the connector question templates are never instructions
     root = Path(__file__).resolve().parents[2] / "skills/web-research"
-    assert (root / "VERSION").read_text(encoding="utf-8").strip() == "1.1.0"
+    assert (root / "VERSION").read_text(encoding="utf-8").strip() == "1.2.0"
     schema = json.loads((root / "schemas/output.schema.json").read_text(encoding="utf-8"))
     assert schema["properties"]["summary_text"] == {"type": "null"}
 
