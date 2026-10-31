@@ -16,10 +16,11 @@ from __future__ import annotations
 import json
 import re
 import sys
+import time
 
 import e2e_live as e
 from live_stub import Stub
-from playwright.sync_api import Browser, Page, sync_playwright
+from playwright.sync_api import Browser, Locator, Page, sync_playwright
 
 results = e.results
 check = e.check
@@ -75,11 +76,20 @@ def ratio(page: Page, selector: str) -> float:
     )
 
 
+def has_focus(el: Locator, timeout_ms: int = 2000) -> bool:
+    """True when the element is focused, polling briefly so focus restore after a close can settle."""
+    deadline = time.monotonic() + timeout_ms / 1000
+    while True:
+        if bool(el.evaluate("el => el === document.activeElement")):
+            return True
+        if time.monotonic() >= deadline:
+            return False
+        el.page.wait_for_timeout(50)
+
+
 def focus_is(page: Page, selector: str) -> bool:
-    """True when the first match has focus."""
-    return bool(
-        page.evaluate("(s) => document.activeElement === document.querySelector(s)", selector)
-    )
+    """True when the first match has focus (polls briefly for focus to settle)."""
+    return has_focus(page.locator(selector).first)
 
 
 def panel_checks(page: Page, label: str, *, company: bool, phone: bool) -> None:
@@ -220,7 +230,7 @@ def main() -> int:
             page.wait_for_selector("[data-testid=alert-panel]", state="detached")
             check(
                 "Esc closes the panel and focus returns to the alert that was clicked",
-                row.evaluate("el => el === document.activeElement"),
+                has_focus(row),
             )
 
             # 1b. bell
@@ -253,7 +263,7 @@ def main() -> int:
             page.wait_for_selector("[data-testid=alert-panel]", state="detached")
             check(
                 "Signals list: focus returns to the row's button",
-                sig.evaluate("el => el === document.activeElement"),
+                has_focus(sig),
             )
 
             # 1d. Our devices
@@ -276,7 +286,7 @@ def main() -> int:
             page.wait_for_selector("[data-testid=alert-panel]", state="detached")
             check(
                 "Our devices: focus returns to Alert details",
-                dev.evaluate("el => el === document.activeElement"),
+                has_focus(dev),
             )
             page.close()
 

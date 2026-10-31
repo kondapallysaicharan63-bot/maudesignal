@@ -990,8 +990,8 @@ entry and the cost cap are shared.
 
 Why not the `mcp` Python SDK: this server only needs request/response, and a serverless
 function cannot hold the sessions and streams the SDK's default server keeps. The hand-written
-version is about 130 lines (`connector/mcp_server.py`), has no extra dependency, and is covered by
-`tests/unit/test_connector_mcp.py` (19 tests). It was also checked with the `mcp` Python SDK client
+version is about 150 lines (`connector/mcp_server.py`), has no extra dependency, and is covered by
+`tests/unit/test_connector_mcp.py` (20 tests). It was also checked with the `mcp` Python SDK client
 (modelcontextprotocol, version 2.3.0, `streamable_http_client` and `ClientSession`) against the server running
 under uvicorn on local HTTP: `initialize` negotiated protocol 2025-06-18, `tools/list` returned the
 five tools all with `readOnlyHint` true, and `tools/call` succeeded for `recalls`, `get_report`,

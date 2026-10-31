@@ -34,6 +34,22 @@ PHOTO = WEB / "public" / "data" / "vision" / "label-caresens-n.jpg"
 results: list[dict[str, object]] = []
 
 
+def require_free_ports() -> None:
+    """Exit if a QA port is already served, so a run never tests another (stale) build."""
+    import socket
+
+    busy = []
+    for port in (STUB_PORT, LIVE_PORT):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(0.3)
+            if s.connect_ex(("127.0.0.1", port)) == 0:
+                busy.append(port)
+    if busy:
+        sys.exit(
+            f"QA ports already in use: {busy}. Set MAUDESIGNAL_QA_PORT_BASE to two free ports in a row."
+        )
+
+
 def check(name: str, ok: bool, detail: object = "") -> None:
     """Record one check."""
     results.append({"check": name, "ok": bool(ok), "detail": detail if not ok else ""})
@@ -601,6 +617,7 @@ def side_checks(browser: Browser, stub: Stub, report: dict[str, object]) -> None
 
 def main() -> int:
     """Run everything and print the report."""
+    require_free_ports()
     OUT.mkdir(parents=True, exist_ok=True)
     print("building...", flush=True)
     run(["node", "scripts/copy-design-system.mjs"])

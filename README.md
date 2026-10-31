@@ -168,6 +168,9 @@ as a date (adversarial cases dt03–dt05).
   about $200–300/month, against existing tools from $499/month.
 - **Pilot metric:** time to prepare the signal-evidence section for the device types you choose
   in a PMS report, with and without MaudeSignal.
+
+### Next to build
+
 - Team accounts / SSO (not built: today it is a public demo key plus personal keys, no logins)
 - A shared Upstash store, so rate limits, caches and the audit log are shared by every API
   instance (supported by the code, not turned on for the public copy)

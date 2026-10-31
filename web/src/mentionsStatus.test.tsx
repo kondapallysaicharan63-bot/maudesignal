@@ -43,8 +43,8 @@ describe('status mapping by prefix', () => {
 })
 
 describe('the real stored LLZ file', () => {
-  it('has no MassDevice anywhere in the stored file or the parsed result', () => {
-    expect(JSON.stringify(file).toLowerCase()).not.toContain('massdevice')
+  it('keeps the recorded MassDevice 403 in the stored file but never shows it in the parsed result', () => {
+    expect(JSON.stringify(file).toLowerCase()).toContain('massdevice')
     expect(JSON.stringify(llz).toLowerCase()).not.toContain('massdevice')
   })
   it('filters MassDevice out of a live answer in both the sources and the steps', () => {
