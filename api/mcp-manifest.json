@@ -991,7 +991,7 @@
           }
         },
         "additionalProperties": false,
-        "description": "What every tool returns.",
+        "description": "``recalls``: the normal answer plus the close known codes, when the code is unknown.",
         "properties": {
           "advisory": {
             "default": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
@@ -1013,6 +1013,14 @@
             "title": "Speakable",
             "type": "string"
           },
+          "suggestions": {
+            "description": "Close known product codes (\"did you mean\"), shown to the person and never applied; empty when there are none. Same values as the suggestions in an error.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Suggestions",
+            "type": "array"
+          },
           "tool": {
             "title": "Tool",
             "type": "string"
@@ -1031,7 +1039,7 @@
           "speakable",
           "provenance"
         ],
-        "title": "ToolAnswer",
+        "title": "RecallsAnswer",
         "type": "object"
       },
       "title": "FDA recalls for a product code"
