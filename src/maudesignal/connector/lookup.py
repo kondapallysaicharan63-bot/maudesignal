@@ -13,9 +13,16 @@ For the product code(s) of the top matches it adds this week's change (the same 
 check as ``check_device_type``), the count of recalls started in the last two years and the
 count of adverse-event reports, each with the openFDA link that shows the number.
 
-The query plan and the scoring weights follow ``vision/label_match.py`` (the label-photo
-matcher on the hackathon branch); they are restated here so this tool does not depend on the
-Streamlit/vision stack. Both use the same weights so a label and a typed lookup rank alike.
+The query plan and the scoring follow ``vision/label_match.py`` (the label-photo matcher on
+``track-a-label-match``, which is not in this branch), restated here so the tool needs only
+the packages in ``api/requirements.txt`` (identifier helpers: ``common/device_ids.py``).
+Differences from label_match: this tool adds ``W_PRODUCT_CODE`` (20) for a product code the
+caller gives and keeps a record found only by product code. TODO when the branches merge:
+move the shared scoring into one dependency-free module so the two rankers cannot drift.
+
+openFDA cost per call: up to 7 searches, plus per product code (at most 2) one classification
+query, the live check (several queries), one recall query and one event query, so roughly 20
+requests. Set ``OPENFDA_API_KEY`` in production (keyless limit: 240/min, 1,000/day per IP).
 """
 
 from __future__ import annotations
@@ -29,6 +36,13 @@ from urllib.parse import quote
 
 import httpx
 
+from maudesignal.common.device_ids import (
+    gtin_check_digit_ok,
+    norm_company,
+    norm_text,
+    normalize_k_number,
+    parse_udi,
+)
 from maudesignal.common.exceptions import (
     MaudeSignalError,
     OpenFDAAPIError,
@@ -53,9 +67,6 @@ from maudesignal.connector.tools import Clock, LiveChecker, screen, utc_now
 from maudesignal.ingestion.openfda_client import USER_AGENT
 from maudesignal.monitor.digest import CHANGE_LABELS
 from maudesignal.monitor.live_check import LiveCheck, normalize_code
-from maudesignal.vision.fda_pdf import normalize_k_number
-from maudesignal.vision.label import gtin_check_digit_ok, parse_udi
-from maudesignal.vision.verify import norm_company, norm_text
 
 MAX_MATCHES = 3
 MAX_DEVICE_TYPES = 2
@@ -71,7 +82,7 @@ ENDPOINTS = {
     "event": "https://api.fda.gov/device/event.json",
 }
 
-# Same weights as vision/label_match.py.
+# Same weights as vision/label_match.py, plus W_PRODUCT_CODE (not in label_match).
 W_EXACT_ID = 100
 W_MANUFACTURER = 40
 W_MODEL = 25
@@ -704,7 +715,7 @@ def lookup_device(
         for c in hits:
             c.exact_id = "k_number"
         cands += hits
-        if not hits:
+        if not hits and log and log[-1][1]:  # only when that search itself ran fine
             notes.append(f"No 510(k) record was found for K-number {inp.k_number}.")
     if inp.gtin:
         ids = {inp.gtin, inp.gtin.zfill(14)}

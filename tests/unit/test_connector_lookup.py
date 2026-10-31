@@ -218,6 +218,14 @@ def test_openfda_down_is_search_failed_with_a_note() -> None:
     assert a.provenance.kind == "live_openfda"
 
 
+def test_failed_k_number_search_does_not_claim_not_found() -> None:
+    a = run(
+        FakeSearcher(fail=OpenFDAUnavailableError("openFDA server error 503")), k_number="K183177"
+    )
+    assert a.status == "search_failed"
+    assert a.note and "was found" not in a.note and "No 510(k) record" not in a.note
+
+
 def test_partial_failure_still_returns_matches_and_says_so() -> None:
     s = FakeSearcher(k510=[ROW_802], fail_endpoints=("registrationlisting",))
     a = run(s, device_name="Welch Allyn 802 LTR", manufacturer="Welch Allyn")
