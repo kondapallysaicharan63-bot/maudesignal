@@ -160,7 +160,7 @@ answer (06-trap) lost a true sentence because the gate read "August 31, 2026,
 all malfunction" as a count of 2026; the gate now treats a year after a month
 as a date (adversarial cases dt03–dt05).
 
-## Tomorrow
+## Pilot and pricing
 
 - **Buyer:** PMS / RA teams at small and mid-size device makers.
 - **Open source, self-hosted:** free.
@@ -168,6 +168,14 @@ as a date (adversarial cases dt03–dt05).
   about $200–300/month, against existing tools from $499/month.
 - **Pilot metric:** time to prepare the signal-evidence section for the device types you choose
   in a PMS report, with and without MaudeSignal.
+
+## Tomorrow
+
+- Team accounts / SSO (not built: today it is a public demo key plus personal keys, no logins)
+- A shared Upstash store, so rate limits, caches and the audit log are shared by every API
+  instance (supported by the code, not turned on for the public copy)
+- More regulators: only after a scope review (today FDA / openFDA, plus MHRA (UK) alerts shown as
+  labelled context)
 
 ## How Meta AI is used
 
@@ -181,6 +189,8 @@ as a date (adversarial cases dt03–dt05).
 | Cover illustration (optional, off by default) | **Muse Image 1.0** | Non-evidentiary cover art, captioned "AI-generated illustration — not evidence"; never inside evidence sections |
 | Spoken questions | **Meta Voice Transcribe** (`muse-voice-transcribe-1.0`) | Ask by voice; only the transcript text reaches Muse Spark, and it goes through the same copilot and gate |
 | Recording the public demo | All of the above in GitHub Actions ([`copilot-record.yml`](.github/workflows/copilot-record.yml)), key from repository secrets | The public, keyless app replays real runs instead of mocked ones |
+
+**Muse connector** (read-only MCP + REST at `https://maudesignal-api.vercel.app/mcp`): Submitted to Meta's Muse Connector Program — pending review. Form answers: [docs/hackathon/MUSE_CONNECTOR.md](docs/hackathon/MUSE_CONNECTOR.md).
 
 **Standard tier only.** Never the Contributor tier, which trains on your data.
 The key is read from `META_MODEL_API_KEY`, never committed or logged.
@@ -289,6 +299,30 @@ questions.
 
 **Deploy (Streamlit Community Cloud):** entry point `streamlit_app.py`,
 dependencies from `requirements.txt`, no secrets required.
+
+## Deploy your own copy
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/kondapallysaicharan63-bot/maudesignal&project-name=maudesignal-web&root-directory=web&env=VITE_MAUDESIGNAL_API_BASE&envDescription=Base%20URL%20of%20your%20own%20MaudeSignal%20API%20project)
+
+Two Vercel projects from the same repository: the website (`web/`) and the read-only API
+(repository root, `api/index.py`). Nothing is deployed for you and no key is in the repository.
+
+1. **Website.** Click the button above (root directory `web`, framework Vite). Set
+   `VITE_MAUDESIGNAL_API_BASE` to your API project's URL once step 2 exists. Left empty, the
+   website still shows the stored data; live chat, voice, camera and outside mentions then use
+   recorded runs.
+2. **API.** Import the same repository a second time with the root directory left at the
+   repository root. Add these environment variables in Project > Settings > Environment Variables:
+   `MAUDESIGNAL_API_KEYS` (a key you generate, as `label=KEY`), `MAUDESIGNAL_KEY_PEPPER` (a long
+   random string), `MAUDESIGNAL_WEB_ORIGINS` (your website URL), `OPENFDA_API_KEY` (optional, higher
+   openFDA quota). Leave `META_MODEL_API_KEY` unset to answer from recorded runs; set it, together
+   with a private Blob store (`BLOB_READ_WRITE_TOKEN`), only when you accept the cost: every Meta
+   call is held to a daily ceiling (`MAUDESIGNAL_LIVE_DAILY_USD`, default $3.00).
+3. **Check it.** Open `<your API URL>/v1/health`, then `<your API URL>/docs-page`; add
+   `<your API URL>/mcp` to your MCP client with your key (the website's Connect page shows config
+   snippets). Turn Vercel Authentication off for production so visitors do not meet a login page.
+
+Full variable list and limits: [`docs/hackathon/MUSE_CONNECTOR.md`](docs/hackathon/MUSE_CONNECTOR.md).
 
 ## Built during the hackathon vs pre-existing
 

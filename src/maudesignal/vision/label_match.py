@@ -42,6 +42,7 @@ from urllib.parse import quote
 
 import httpx
 
+from maudesignal.common.device_ids import gtin_check_digit_ok, parse_udi
 from maudesignal.common.exceptions import (
     MaudeSignalError,
     OpenFDAAPIError,
@@ -73,8 +74,6 @@ from maudesignal.vision.fda_pdf import normalize_k_number
 from maudesignal.vision.label import (
     SESSION_ONLY_FIELDS,
     LabelResult,
-    gtin_check_digit_ok,
-    parse_udi,
     read_device_label,
 )
 from maudesignal.vision.sam import SamClient

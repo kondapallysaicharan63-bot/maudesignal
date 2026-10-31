@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MaudeSignal workspace</title>
+    <meta
+      name="description"
+      content="Stored, gate-verified answers about FDA device adverse-event reports. Signals for a person to review; not medical advice."
+    />
+    <script>
+      // Apply the saved theme before first paint. "system" leaves data-theme unset so the
+      // design-system tokens follow prefers-color-scheme.
+      try {
+        var t = localStorage.getItem('ms-theme')
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t)
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

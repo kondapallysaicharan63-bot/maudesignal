@@ -1,0 +1,1731 @@
+{
+ "schema_version": "1.0",
+ "product_code": "DQK",
+ "fetched_utc": "2026-10-30T03:06:58Z",
+ "window": {
+  "date_from": "20260904",
+  "date_to": "20261030",
+  "weeks": 8
+ },
+ "classification": {
+  "device_name": "Computer, Diagnostic, Programmable",
+  "device_class": "2",
+  "regulation_number": "870.1425",
+  "query_url": "https://api.fda.gov/device/classification.json?search=product_code:DQK&limit=1"
+ },
+ "reports": {
+  "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code:DQK+AND+date_received:[20260904+TO+20261030]&limit=100",
+  "matched_total": 57,
+  "stored": 57,
+  "records": [
+   {
+    "report_id": "50952342",
+    "event_type": "malfunction",
+    "date_received": "20260930",
+    "report_source": "Manufacturer report",
+    "brand_name": "QUANTIEN",
+    "manufacturer": "Abbott Medical",
+    "product_problems": [
+     "Communication or Transmission Problem"
+    ],
+    "text": "During a fractional flow reserve procedure with QUANTIEN, it was noted that the PA signals were not appearing on the monitor leading to the procedure being cancelled. There were no adverse patient consequences."
+   },
+   {
+    "report_id": "50933737",
+    "event_type": "malfunction",
+    "date_received": "20260929",
+    "report_source": "Manufacturer report",
+    "brand_name": "Smart Pressure Controller",
+    "manufacturer": "Edwards LifeSciences",
+    "product_problems": [
+     "Incorrect, Inadequate or Imprecise Result or Readings"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50933710",
+    "event_type": "malfunction",
+    "date_received": "20260929",
+    "report_source": "Manufacturer report",
+    "brand_name": "Smart Pressure Controller",
+    "manufacturer": "Edwards LifeSciences",
+    "product_problems": [
+     "Incorrect, Inadequate or Imprecise Result or Readings"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50933679",
+    "event_type": "malfunction",
+    "date_received": "20260929",
+    "report_source": "Manufacturer report",
+    "brand_name": "Smart Pressure Controller",
+    "manufacturer": "Edwards LifeSciences",
+    "product_problems": [
+     "Incorrect, Inadequate or Imprecise Result or Readings"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50933669",
+    "event_type": "malfunction",
+    "date_received": "20260929",
+    "report_source": "Manufacturer report",
+    "brand_name": "Smart Pressure Controller",
+    "manufacturer": "Edwards LifeSciences",
+    "product_problems": [
+     "Incorrect, Inadequate or Imprecise Result or Readings"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50926718",
+    "event_type": "malfunction",
+    "date_received": "20260929",
+    "report_source": "Manufacturer report",
+    "brand_name": "Smart Pressure Controller",
+    "manufacturer": "Edwards LifeSciences",
+    "product_problems": [
+     "Incorrect, Inadequate or Imprecise Result or Readings"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50926501",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "Smart Pressure Controller",
+    "manufacturer": "Edwards LifeSciences",
+    "product_problems": [
+     "Incorrect, Inadequate or Imprecise Result or Readings"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50926499",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "Smart Pressure Controller",
+    "manufacturer": "Edwards LifeSciences",
+    "product_problems": [
+     "Incorrect, Inadequate or Imprecise Result or Readings"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50926492",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "Smart Pressure Controller",
+    "manufacturer": "Edwards LifeSciences",
+    "product_problems": [
+     "Incorrect, Inadequate or Imprecise Result or Readings"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50926487",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "Smart Pressure Controller",
+    "manufacturer": "Edwards LifeSciences",
+    "product_problems": [
+     "Incorrect, Inadequate or Imprecise Result or Readings"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50926483",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "Smart Pressure Controller",
+    "manufacturer": "Edwards LifeSciences",
+    "product_problems": [
+     "Incorrect, Inadequate or Imprecise Result or Readings"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50926467",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "Smart Pressure Controller",
+    "manufacturer": "Edwards LifeSciences",
+    "product_problems": [
+     "Incorrect, Inadequate or Imprecise Result or Readings"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50926362",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "Smart Pressure Controller",
+    "manufacturer": "Edwards LifeSciences",
+    "product_problems": [
+     "Incorrect, Inadequate or Imprecise Result or Readings"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50924275",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "Smart Pressure Controller",
+    "manufacturer": "Edwards LifeSciences",
+    "product_problems": [
+     "Incorrect, Inadequate or Imprecise Result or Readings"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50924263",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "Smart Pressure Controller",
+    "manufacturer": "Edwards LifeSciences",
+    "product_problems": [
+     "Incorrect, Inadequate or Imprecise Result or Readings"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50923770",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "EnSite¿ X Field Frame",
+    "manufacturer": "Abbott Medical",
+    "product_problems": [
+     "Thermal Decomposition of Device"
+    ],
+    "text": "During a procedure, a cancellation was noted when the EnSite X field frame was not being recognized by the system after connecting it. Disconnecting and reconnecting the field frame as well as restarting the EnSite X amplifier resolved the issue. It was also noted that after connecting the catheters to the amplifier, there was an \"amplifier error, cannot communicate with amplifier\" message and the catheters were repeated shown connected and then disconnected. Trying the catheters on different ports and restarting the EnSite X system di not resolve the issue and the catheters would only show up for a few seconds on the EnSite. Mapping was not possible and when ending the study, an \"unexpected error\" popup was shown. Resuming the procedure after rebooting the EnSite X DWS was not possible, and the procedure could not be finished as planned. Further checking found that the field frame connections against the connector looked charred. There were no adverse patient consequences."
+   },
+   {
+    "report_id": "50903368",
+    "event_type": "malfunction",
+    "date_received": "20260925",
+    "report_source": "Manufacturer report",
+    "brand_name": "EnSite¿ X Amplifier",
+    "manufacturer": "Abbott Medical",
+    "product_problems": [
+     "Installation-Related Problem",
+     "Output Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50898631",
+    "event_type": "malfunction",
+    "date_received": "20260925",
+    "report_source": "Manufacturer report",
+    "brand_name": "EnSite¿ X SurfaceLink Module",
+    "manufacturer": "Abbott Medical",
+    "product_problems": [
+     "Communication or Transmission Problem"
+    ],
+    "text": "During a procedure with SurfaceLink, after placing patches on the patient, a \"cable disconnected / failure\" issue occurred, leading to the procedure being cancelled. Troubleshooting included reconnecting patches, exchanging patches, restarting the system, and beginning a new study. There were no patient consequences and the patient is in good condition. UDI information (D4) and 510k (G3) are not provided within this report as this product (model ENSITE-SRFLNK-I-01) is an OUS configuration not available in the US and is therefore not referenced in the GUDID database."
+   },
+   {
+    "report_id": "50854263",
+    "event_type": "malfunction",
+    "date_received": "20260922",
+    "report_source": "Manufacturer report",
+    "brand_name": "Avvigo+ Multi-modality Guidance System",
+    "manufacturer": "BOSTON SCIENTIFIC CORPORATION",
+    "product_problems": [
+     "Failure to Power Up"
+    ],
+    "text": "It was reported that the procedure could not be completed because the Acquisition PC failed to power on during the preparation phase.An Avvigo Plus Multi-modality Guidance System was selected for use during an intravascular ultrasound (IVUS) guided percutaneous coronary intervention. During preparation, the Acquisition PC was found to be non-functional and would not power on. As a result, the procedure was not completed. No patient complications were reported as a result of the event, and information regarding patient sedation was not provided. D2b Pro Code: DSK."
+   },
+   {
+    "report_id": "50848001",
+    "event_type": "malfunction",
+    "date_received": "20260921",
+    "report_source": "Manufacturer report",
+    "brand_name": "HemoSphere Advanced Monitor",
+    "manufacturer": "Edwards Lifesciences",
+    "product_problems": [
+     "Incorrect Measurement"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50847635",
+    "event_type": "malfunction",
+    "date_received": "20260921",
+    "report_source": "Manufacturer report",
+    "brand_name": "HemoSphere Advanced Monitor",
+    "manufacturer": "Edwards Lifesciences",
+    "product_problems": [
+     "Incorrect Measurement"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50841985",
+    "event_type": "malfunction",
+    "date_received": "20260921",
+    "report_source": "Manufacturer report",
+    "brand_name": "IntelliSpace ECG Management System",
+    "manufacturer": "Philips Medical Systems",
+    "product_problems": [
+     "Incorrect, Inadequate or Imprecise Result or Readings"
+    ],
+    "text": "It was reported that the results in SCM (Soft Computer Middleware) are incorrect. The device was in clinical use. There was no report of patient or user harm. Analysis was performed by remote service personnel which included review of the customer complaint, review of available service documentation, remote review of the IBE server, and efforts to reproduce the reported issue. The results of the analysis were that the reported issue of incorrect results being sent to SCM and EPIC could not be reproduced. No error messages were identified, and the relevant messages had already been purged from the system prior to the investigation, preventing further analysis. Based on the results of the analysis, the product was confirmed to be operating per specifications and the cause of the reported problem could not be determined because the reported issue was not reproducible and the relevant system messages had already been purged before the investigation was initiated. The issue was resolved by remotely reviewing the IBE server, confirming that no diagnostic data remained available for analysis, and communicating the findings to the customer, who acknowledged the information. A review of the service history for this device shows no subsequent reports of the same issue following this service event, indicating that the problem has not recurred. E1: Reporting Institution Phone#:(b)(6).E1: Reporter Phone#:(b)(6)."
+   },
+   {
+    "report_id": "50841533",
+    "event_type": "malfunction",
+    "date_received": "20260921",
+    "report_source": "Manufacturer report",
+    "brand_name": "ILAB ULTRASOUND IMAGING SYSTEM",
+    "manufacturer": "BOSTON SCIENTIFIC CORPORATION",
+    "product_problems": [
+     "Nonstandard Device"
+    ],
+    "text": "It was reported that a device issue occurred, resulting in an aborted procedure. The Polaris MMG System was selected for use. During the procedure, the motor could not operate. The procedure could not be completed due to this event. No patient complications reported. E1- Initial Reporter Phone - (b)(6).Good faith effort attempts are being made to try and retrieve additional details regarding the reported event, but further information has not been obtained."
+   },
+   {
+    "report_id": "50831635",
+    "event_type": "malfunction",
+    "date_received": "20260919",
+    "report_source": "Manufacturer report",
+    "brand_name": "RHYTHMIA HDx",
+    "manufacturer": "BOSTON SCIENTIFIC CORPORATION",
+    "product_problems": [
+     "Failure to Power Up",
+     "Application Program Version or Upgrade Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50820276",
+    "event_type": "malfunction",
+    "date_received": "20260918",
+    "report_source": "Manufacturer report",
+    "brand_name": "Smart Pressure Controller",
+    "manufacturer": "Edwards Lifesciences Irvine",
+    "product_problems": [
+     "Incorrect, Inadequate or Imprecise Result or Readings"
+    ],
+    "text": "It was reported that before use of the Pressure Controller the values were reported to be 20 points lower against the arterial line, changing the pressure controller corrected the issue. Device was being used with a Hemosphere stream at the time. There was no patient injury. Additional FDA Product Codes Include: DQE- Catheter, Oximeter, Fiber-Optic.QAQ- Adjunctive Predictive Cardiovascular Indicator.MUD- Oximeter, Tissue Saturation.DXN- System, Measurement, Blood-Pressure, Non-Invasive.DSB- Plethysmograph, Impedance.FLL- Continuous Measurement Thermometer.QMS- Adjunctive Open Loop Fluid Therapy Recommender.OLW- Index-Generating Electroencephalograph Software.The device evaluation is anticipated. A supplemental report will be forthcoming when the investigation is completed.Complaint histories for all reported events are reviewed against trending control limits on a monthly basis and any excursions above the control limits are assessed and documented as a part of the monthly review."
+   },
+   {
+    "report_id": "50819236",
+    "event_type": "malfunction",
+    "date_received": "20260918",
+    "report_source": "Manufacturer report",
+    "brand_name": "Avvigo+ Multi-modality Guidance System",
+    "manufacturer": "BOSTON SCIENTIFIC CORPORATION",
+    "product_problems": [
+     "Noise, Audible"
+    ],
+    "text": "It was reported that a device issue occurred, resulting in an aborted procedure.An Avvigo+ Multi-modality Guidance System was selected for use. During the procedure, the physician found abnormal motor sound. The procedure was not completed due to this event, and no patient complications were reported. Detailed product information was not provided to BSC. We completed a good faith effort to obtain the information. Because the product is unknown at this time, we are unable to provide the complete Unique Identifier (UDI) # and other product specific information. If additional details become available, a supplemental report will be submitted.D2b: Pro Code (Product Code) - DQK, DSK."
+   },
+   {
+    "report_id": "50819050",
+    "event_type": "malfunction",
+    "date_received": "20260918",
+    "report_source": "Manufacturer report",
+    "brand_name": "AVVIGO?+",
+    "manufacturer": "BOSTON SCIENTIFIC CORPORATION",
+    "product_problems": [
+     "Nonstandard Device",
+     "Connection Problem"
+    ],
+    "text": "It was reported that a power cord issue occurred.An Avvigo Plus Multi-modality Guidance System was installed. During third party update for video equipment with no Boston Scientific personnel present, the surgical table was moved. The power cord to the AVVIGO got disconnected and there were sparks coming out of the power cord. There were no injuries sustained and no patient was involved. D2b Pro Code (Product Code): DQK, DSK, ITX, IYO."
+   },
+   {
+    "report_id": "50818188",
+    "event_type": "malfunction",
+    "date_received": "20260918",
+    "report_source": "Manufacturer report",
+    "brand_name": "Avvigo+ Multi-modality Guidance System",
+    "manufacturer": "BOSTON SCIENTIFIC CORPORATION",
+    "product_problems": [
+     "Incorrect Measurement"
+    ],
+    "text": "It was reported that an inaccurate measurement occurred.An Avvigo Multi-modality Guidance System was selected for treatment. During the procedure, measurements obtained using the Avvigo Multi-modality Guidance System indicated that a 3.5 mm balloon should be used. However, the selected balloon did not adequately oppose the vessel, and a 4.0 mm balloon was required instead. The 3.5 mm balloon was removed and replaced with a 4.0 mm balloon. No patient complications were reported. D2b, Pro Code (Product Code), DSK.Detailed product information was not provided to BSC. We completed a good faith effort to obtain the information, but it was unable to be obtained. Because the product is unknown, we are unable to provide the Unique Identifier (UDI) # and other specific product information."
+   },
+   {
+    "report_id": "50818100",
+    "event_type": "malfunction",
+    "date_received": "20260918",
+    "report_source": "Manufacturer report",
+    "brand_name": "EnSite¿ X Amplifier",
+    "manufacturer": "Abbott Medical",
+    "product_problems": [
+     "Communication or Transmission Problem"
+    ],
+    "text": "During a supraventricular tachycardia procedure, the EnSite X amplifier was rebooted 3 times. An \"internal error: reconnect to amplifier\" message was observed when connecting the the EnSite X to the DWS with no transmission of ECG data. Surface and ECG patches were already placed on the patient when the error occurred. After rebooting the EnSite X amplifier and DWS, the error message \"an amplifier hardware error has been detected. Power down and restart the amplifier\" was displayed. Troubleshooting included restarting the EnSite X amplifier 3 times, the DWS two times, and reseating all cables. The ECG data was visible once the amplifier was restarted wit all peripheral connections disconnected from the front panel. The procedure was completed without device replacement and there were no adverse patient consequences."
+   },
+   {
+    "report_id": "50815345",
+    "event_type": "malfunction",
+    "date_received": "20260918",
+    "report_source": "Manufacturer report",
+    "brand_name": "HemoSphere Alta Advanced Monitoring Platform (ALTAALL1; ALTACR1; ALTASR1)",
+    "manufacturer": "Edwards Lifesciences",
+    "product_problems": [
+     "Incorrect Measurement"
+    ],
+    "text": "As reported, during a cardiac surgery using this HemoSphere Alta Monitor with the latest software version, connected to a Philips bedside monitor through the EC10/EC5 interface, incomplete transmission of physiological parameters was observed. Mixed venous oxygen saturation (SvO2) was transmitted correctly; however, other expected parameters were not displayed on the Philips bedside monitor (see attached picture). Subsequent testing reproduced the issue, during which inaccurate Cardiac Index (CI) values were displayed on the Philips bedside monitor (see attached picture). Delayed transmission was also observed for other parameters when comparing values displayed on the HemoSphere Alta Monitor with those displayed on the Philips bedside monitor. Troubleshooting activities included replacement of the Ethernet cable, EC10 module, and EC5 module, and verification of the configuration settings; however, the reported issue persisted. Additional testing was performed using both HemoSphere and HemoSphere Alta interface configurations. Following the configuration change, blood temperature was displayed on the Philips bedside monitor under a configuration in which this parameter was not expected to be displayed, whereas it had not been displayed under the previous configuration. Differences in the availability of Cardiac Output and other advanced parameters were also observed between the tested configurations. There is no allegation of patient injury. The device was not available for evaluation. Primary Unique Device Identification (UDI) Number: (b)(4).The manufacturing records were reviewed for the lot involved and there is no indication of a related nonconformance. All process parameters were met and inspections passed successfully. Follow up is on going to clarify whether the device is available for evaluation. An investigation has been initiated to consider any potential factors that may have contributed to this complaint. A supplemental report will be sent with the evaluation results. Complaint histories for all reported events are reviewed against trending control limits on a monthly basis, and any excursions above the control limits are assessed and documented as part of this monthly review."
+   },
+   {
+    "report_id": "50808698",
+    "event_type": "malfunction",
+    "date_received": "20260917",
+    "report_source": "Manufacturer report",
+    "brand_name": "EnSite X DWS v5.0.1",
+    "manufacturer": "Abbott Medical",
+    "product_problems": [
+     "Display or Visual Feedback Problem",
+     "Application Program Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50808656",
+    "event_type": "injury",
+    "date_received": "20260917",
+    "report_source": "Manufacturer report",
+    "brand_name": "Affera",
+    "manufacturer": "MEDTRONIC, INC.",
+    "product_problems": [
+     "Adverse Event Without Identified Device or Use Problem"
+    ],
+    "text": "It was reported that during a cardiac ablation procedure, radiofrequency generator (RFG) would not load beyond the Medtronic logo. It was noted to be a startup issue. Software issue was observed and ¿PF delivery error¿ message was received during the procedure. The procedure was aborted under general anesthesia due to radiofrequency generator (RFG) failure. Procedure was not continued using another system. No patient complications have been reported as a result of this event. Medtronic submits this report to comply with FDA regulations 21 CFR Parts 4 and 803. Medtronic has made reasonable efforts to provide as much relevant information as is available to the company as of the submission date of this report. This report does not constitute an admission or a conclusion by FDA, Medtronic, or its employees that the device, Medtronic, or its employee caused or contributed to the event described in the report. Any required fields that are unpopulated are blank because the information is currently unknown or unavailable. Medtronic will submit a supplemental report if additional relevant information becomes known."
+   },
+   {
+    "report_id": "50808640",
+    "event_type": "malfunction",
+    "date_received": "20260917",
+    "report_source": "Manufacturer report",
+    "brand_name": "EnSite¿ X SurfaceLink Module",
+    "manufacturer": "Abbott Medical",
+    "product_problems": [
+     "Material Frayed"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50804879",
+    "event_type": "malfunction",
+    "date_received": "20260917",
+    "report_source": "Manufacturer report",
+    "brand_name": "ILAB ULTRASOUND IMAGING SYSTEM",
+    "manufacturer": "BOSTON SCIENTIFIC CORPORATION",
+    "product_problems": [
+     "Complete Loss of Power"
+    ],
+    "text": "It was reported that a device issue occurred, resulting in an aborted procedure.An iLab ultrasound imaging system was selected for use. During the procedure, it was found that the device could not be turned on. The procedure was not completed due to this event. No patient complications were reported. Good faith effort attempts were made to try and retrieve additional details regarding the reported event, but further information was unable to be obtained.E1 Initial Reporter Phone: (b)(6)."
+   },
+   {
+    "report_id": "50793961",
+    "event_type": "malfunction",
+    "date_received": "20260916",
+    "report_source": "Manufacturer report",
+    "brand_name": "Avvigo+ Multi-modality Guidance System",
+    "manufacturer": "BOSTON SCIENTIFIC CORPORATION",
+    "product_problems": [
+     "Incorrect Measurement"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50793778",
+    "event_type": "malfunction",
+    "date_received": "20260916",
+    "report_source": "Manufacturer report",
+    "brand_name": "Avvigo+ Multi-modality Guidance System",
+    "manufacturer": "BOSTON SCIENTIFIC CORPORATION",
+    "product_problems": [
+     "Computer Software Problem",
+     "Incorrect Measurement"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50792829",
+    "event_type": "malfunction",
+    "date_received": "20260916",
+    "report_source": "Manufacturer report",
+    "brand_name": "Avvigo+ Multi-modality Guidance System",
+    "manufacturer": "BOSTON SCIENTIFIC CORPORATION",
+    "product_problems": [
+     "Incorrect Measurement"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50774306",
+    "event_type": "malfunction",
+    "date_received": "20260915",
+    "report_source": "Manufacturer report",
+    "brand_name": "CLEARSIGHT MODULE",
+    "manufacturer": "Edwards Lifesciences IRV",
+    "product_problems": [
+     "Incorrect, Inadequate or Imprecise Result or Readings"
+    ],
+    "text": "It was reported that during use of the Clearsight module the user kept getting inaccurate readings. Additional FDA Product Codes Include: DQE- Catheter, Oximeter, Fiber-Optic.QAQ- Adjunctive Predictive Cardiovascular Indicator.MUD- Oximeter, Tissue Saturation.DSB- Plethysmograph, Impedance.QMS- Adjunctive Open Loop Fluid Therapy Recommender.FLL- Thermometer, Electronic, Clinical.DXN- System, Measurement, Blood-Pressure, Non-Invasive.OLW- Index-Generating Electroencephalograph Software.The device is not expected to return. Without return of the unit, it is not possible to determine if some damage or defect existed on the unit that could have contributed to the event.An engineering evaluation will be initiated to assess for any manufacturing related processes which could be correlated to the reported lot number. A supplemental report will be forthcoming when the investigation is completed. Complaint histories for all reported events are reviewed against trending control limits on a monthly basis and any excursions above the control limits are assessed and documented as a part of the monthly review."
+   },
+   {
+    "report_id": "50774292",
+    "event_type": "malfunction",
+    "date_received": "20260915",
+    "report_source": "Manufacturer report",
+    "brand_name": "CLEARSIGHT MODULE",
+    "manufacturer": "Edwards Lifesciences Irvine",
+    "product_problems": [
+     "Incorrect, Inadequate or Imprecise Result or Readings"
+    ],
+    "text": "It was reported that during use of the Clearsight module the user kept getting inaccurate readings. Additional FDA Product Codes Include: DQE- Catheter, Oximeter, Fiber-Optic.QAQ- Adjunctive Predictive Cardiovascular Indicator.MUD- Oximeter, Tissue Saturation.DSB- Plethysmograph, Impedance.QMS- Adjunctive Open Loop Fluid Therapy Recommender.FLL- Thermometer, Electronic, Clinical.DXN- System, Measurement, Blood-Pressure, Non-Invasive.OLW- Index-Generating Electroencephalograph Software.The device evaluation is anticipated. A supplemental report will be forthcoming when the investigation is completed. Complaint histories for all reported events are reviewed against trending control limits on a monthly basis and any excursions above the control limits are assessed and documented as a part of the monthly review."
+   },
+   {
+    "report_id": "50772442",
+    "event_type": "malfunction",
+    "date_received": "20260915",
+    "report_source": "Manufacturer report",
+    "brand_name": "HemoSphere Advanced Monitor",
+    "manufacturer": "Edwards Lifesciences",
+    "product_problems": [
+     "Low Readings"
+    ],
+    "text": "As reported, during use in patient, this HemoSphere Monitor displayed a 13% Mixed Venous Oxygen Saturation (SvO2) value after calibration, when the expected value was 52%. There was no error message displayed on the screen. According to the customer, the discrepancy between the blood test results and the displayed Mixed Venous Oxygen Saturation (SvO2) value alerted the healthcare staff to the issue. The issue was solved by changing the monitor. There was no allegation of patient injury and no treatment given according to the incorrect values provided. The product has been returned for analysis, however, it has not been yet evaluated. An investigation will be completed to consider any potential factors that may have contributed to this complaint and a supplemental report will be sent with the investigation results. Complaint histories for all reported events are reviewed against trending control limits on a monthly basis and any excursions above the control limits are assessed and documented as part of this monthly review."
+   },
+   {
+    "report_id": "50740572",
+    "event_type": "malfunction",
+    "date_received": "20260911",
+    "report_source": "Manufacturer report",
+    "brand_name": "CARTO 3",
+    "manufacturer": "Biosense Webster Inc",
+    "product_problems": [
+     "Display or Visual Feedback Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50734622",
+    "event_type": "malfunction",
+    "date_received": "20260911",
+    "report_source": "Manufacturer report",
+    "brand_name": "HemoSphere Pressure Cable",
+    "manufacturer": "Edwards Lifesciences",
+    "product_problems": [
+     "Low Readings"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50734224",
+    "event_type": "injury",
+    "date_received": "20260911",
+    "report_source": "Manufacturer report",
+    "brand_name": "Affera",
+    "manufacturer": "Medtronic, Inc.",
+    "product_problems": [
+     "Adverse Event Without Identified Device or Use Problem"
+    ],
+    "text": "It was reported that during a cardiac ablation procedure, approximately one hour into ablation, a catheter display/navigation lag was observed. The catheter intermittently partially disappeared from the display, became stuck at one displayed location, and later intermittently resumed normal movement. The display/navigation problems progressively worsened. Restarting the catheter interface unit did not resolve the issue. A workstation restart generated an internal graphics error that disappeared after an additional restart. Upon resuming the case, the catheter was not visible, and starting a new case did not restore visibility. Multiple restarts of the system and workstation and reconnection of the magnetic field generator did not resolve the issue. A new catheter was visible within the sheath; however, upon expansion in the atrium, it became stuck and no longer moved. Several attempts to restore catheter movement were unsuccessful, and an electroanatomical map could not be generated. The procedure was aborted mid-case and was not continued using another system. No patient complications have been reported as a result of this event. It was further reported the case was aborted under general anesthesia. Continuation D10: Product ID AFR-00001 (Lot: 0013515729); Product Type: 0609-Catheter; Implant Date N/A; Explant Date N/A. Medtronic submits this report to comply with FDA regulations 21 CFR Parts 4 and 803. Medtronic has made reasonable efforts to provide as much relevant information as is available to the company as of the submission date of this report. This report does not constitute an admission or a conclusion by FDA, Medtronic, or its employees that the device, Medtronic, or its employee caused or contributed to the event described in the report. Any required fields that are unpopulated are blank because the information is currently unknown or unavailable. Medtronic will submit a supplemental report if additional relevant information becomes known."
+   },
+   {
+    "report_id": "50724632",
+    "event_type": "malfunction",
+    "date_received": "20260910",
+    "report_source": "Manufacturer report",
+    "brand_name": "CARTO 3",
+    "manufacturer": "Biosense Webster Inc",
+    "product_problems": [
+     "Device Emits Odor",
+     "Communication or Transmission Problem",
+     "Computer Operating System Problem",
+     "Noise, Audible"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50714553",
+    "event_type": "malfunction",
+    "date_received": "20260910",
+    "report_source": "Manufacturer report",
+    "brand_name": "WorkMate¿ Claris¿ Amplifier",
+    "manufacturer": "Abbott Medical",
+    "product_problems": [
+     "Communication or Transmission Problem"
+    ],
+    "text": "During a procedure, there was a cancellation. It was noted that the WorkMate Claris amplifier connected to the system correctly. However, when the ECG cable was connected to the WorkMate Claris system, there were no signals displayed. Troubleshooting included rebooting the WorkMate Claris amplifier and 4-6 reboots of the WorkMate Claris system, but the issue persisted. The issue was not resolved and the procedure was aborted. There were no patient consequences."
+   },
+   {
+    "report_id": "50712951",
+    "event_type": "malfunction",
+    "date_received": "20260910",
+    "report_source": "Manufacturer report",
+    "brand_name": "AVVIGO?+",
+    "manufacturer": "BOSTON SCIENTIFIC CORPORATION",
+    "product_problems": [
+     "Incorrect Measurement",
+     "Device Displays Incorrect Message",
+     "Connection Problem"
+    ],
+    "text": "It was reported that device issue occurred.The AVVIGO Plus Multi-modality Guidance System was selected for use. During the procedure, the catheter failed to register on the AVIGGO system. It was later noted that the default depth of field was too small and the catheter was identified as an OptiCross 18 instead of an OptiCross 35. The procedure was completed, and no patient complications were reported. D2b: Pro Code (Product Code) - DQK, DSK, ITX, IYO.Good faith effort attempts were made to try and retrieve additional details regarding the reported event, but further information was unable to be obtained."
+   },
+   {
+    "report_id": "50682405",
+    "event_type": "malfunction",
+    "date_received": "20260909",
+    "report_source": "Manufacturer report",
+    "brand_name": "ILAB ULTRASOUND IMAGING SYSTEM",
+    "manufacturer": "BOSTON SCIENTIFIC CORPORATION",
+    "product_problems": [
+     "Incorrect Measurement"
+    ],
+    "text": "It was reported that device issue occurred.The Polaris MMG System was selected for use. During the procedure, it was found that the device was repeatedly displaying abnormal results. The procedure was completed using a different device, and no patient complications were reported. Good faith effort attempts were made to try and retrieve additional details regarding the reported event, but further information was unable to be obtained."
+   },
+   {
+    "report_id": "50675553",
+    "event_type": "malfunction",
+    "date_received": "20260908",
+    "report_source": "Manufacturer report",
+    "brand_name": "CARTO 3",
+    "manufacturer": "Biosense Webster Inc",
+    "product_problems": [
+     "Display or Visual Feedback Problem",
+     "Poor Quality Image",
+     "Computer Operating System Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50673388",
+    "event_type": "malfunction",
+    "date_received": "20260908",
+    "report_source": "Manufacturer report",
+    "brand_name": "Avvigo+ Multi-modality Guidance System",
+    "manufacturer": "BOSTON SCIENTIFIC CORPORATION",
+    "product_problems": [
+     "Device Displays Incorrect Message"
+    ],
+    "text": "It was reported that the procedure was cancelled.The Avvigo Plus Multi-modality Guidance System was selected for IVUS examination. During the procedure, it was reported that the motor drive unit (MDU) incorrectly recognized the catheter. The system recognized Ultra ICE even when no catheter was connected. When the simulator was connected, it recognized OPTICROSS 6. Restarting the system and disconnecting/reconnecting the MDU did not resolve the issue. The procedure was cancelled as a result of the issue, and the catheter was not used. No patient complications were noted. It was later determined that replacing the MDU resolved the issue. D2b Pro Code: DSK."
+   },
+   {
+    "report_id": "50671851",
+    "event_type": "malfunction",
+    "date_received": "20260908",
+    "report_source": "Manufacturer report",
+    "brand_name": "AVVIGO?+",
+    "manufacturer": "BOSTON SCIENTIFIC CORPORATION",
+    "product_problems": [
+     "No Display/Image",
+     "Nonstandard Device"
+    ],
+    "text": "It was reported that a power cord issue occurred.An Avvigo Plus Multi-modality Guidance System was installed. The tableside controller (TSC) was experiencing intermittent issues with unexpected shutdown of the monitor. Upon inspection of the device, it was discovered that the power inlet on the TSC was loose and causing an unsecure connection with the power cord. When attempting to press down on the power cable to fix the connection issue, a small spark was observed. There were no injuries sustained and no patient was involved. D2b Pro Code: DSK, ITX, IYO."
+   },
+   {
+    "report_id": "50670878",
+    "event_type": "malfunction",
+    "date_received": "20260908",
+    "report_source": "Manufacturer report",
+    "brand_name": "EnSite X DWS v4.0",
+    "manufacturer": "Abbott Medical",
+    "product_problems": [
+     "Communication or Transmission Problem",
+     "Unexpected Shutdown"
+    ],
+    "text": "During the EFO procedure a cancellation was noted when the EnSite X DWS was unable to communicate with the monitor. Troubleshooting was performed and the issue was initially resolved, however, during the study the EnSite X DWS shutdown and went black. Multiple attempts to restart, reboot and reconnect the DWS were unsuccessful. While troubleshooting, the previous DWS was reconnected and was able to start with no issues to confirm that the monitors and cables were functioning correctly. Dut to the upgrades on other systems they could not continue with this old DWS and reconnected the EnSite X DWS with successful startup. The previous study was resumed and working however, when attempting to close the study the EnSite X DWS shut down. A force restart was required and upon restarting the initial issue continued. While troubleshooting for approximately 2.5 hours, the patient was under anesthesia for approximately 2 hours of that total time. It was noted that the EnSite X DWS was experiencing issues prior to the start of the procedure, and it was decided to proceed with the procedure despite the issues. There were additional issues with the non-Abbott BARD system as well and no ablation could be performed and the procedure was cancelled."
+   },
+   {
+    "report_id": "50618996",
+    "event_type": "malfunction",
+    "date_received": "20260904",
+    "report_source": "Manufacturer report",
+    "brand_name": "Smart Pressure Controller",
+    "manufacturer": "Edwards Lifesciences Irvine",
+    "product_problems": [
+     "Incorrect, Inadequate or Imprecise Result or Readings"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50613757",
+    "event_type": "malfunction",
+    "date_received": "20260904",
+    "report_source": "Manufacturer report",
+    "brand_name": "AVVIGO?+",
+    "manufacturer": "BOSTON SCIENTIFIC CORPORATION",
+    "product_problems": [
+     "Device Displays Incorrect Message"
+    ],
+    "text": "It was reported that an incorrect model identification issue occurred.An AVVIGO + MOB SYSTEM imaging system was chosen for use, and the technicians observed an incorrect model identification issue when connecting the Opticross HD to the motor drive unit. There were no reported patient complications. D2b Pro Code: DQK, DSK, ITX, IYO."
+   },
+   {
+    "report_id": "50610844",
+    "event_type": "malfunction",
+    "date_received": "20260904",
+    "report_source": "Manufacturer report",
+    "brand_name": "Sensis Vibe Combo",
+    "manufacturer": "Siemens Healthineers AG",
+    "product_problems": [
+     "No Visual Prompts/Feedback"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50610619",
+    "event_type": "malfunction",
+    "date_received": "20260904",
+    "report_source": "Manufacturer report",
+    "brand_name": "EnSite Velocity¿ System Amplifier",
+    "manufacturer": "Abbott Medical",
+    "product_problems": [
+     "Failure to Power Up"
+    ],
+    "text": "During an atrial fibrillation procedure, the EnSite Velocity Amplifier would not power on, and the procedure was cancelled. UDI information (D4) and 510k (G3) are not provided within this report as this product (model 100043514) is an OUS configuration not available in the US and is therefore not referenced in the GUDID database."
+   },
+   {
+    "report_id": "50601437",
+    "event_type": "malfunction",
+    "date_received": "20260904",
+    "report_source": "Manufacturer report",
+    "brand_name": "ILAB ULTRASOUND IMAGING SYSTEM",
+    "manufacturer": "BOSTON SCIENTIFIC CORPORATION",
+    "product_problems": [
+     "Nonstandard Device",
+     "Material Deformation"
+    ],
+    "text": "It was reported that the procedure was cancelled. The Polaris MMG System was selected for use. During the procedure, it was found that the motor and skateboard of the device were severely worn. The procedure could not be completed due to this event and was thus cancelled. No patient complications were reported. Good faith effort attempts were made to try and retrieve additional details regarding the reported event, but further information was unable to be obtained.E1: (b)(6)."
+   },
+   {
+    "report_id": "50600378",
+    "event_type": "malfunction",
+    "date_received": "20260904",
+    "report_source": "Manufacturer report",
+    "brand_name": "ILAB ULTRASOUND IMAGING SYSTEM",
+    "manufacturer": "BOSTON SCIENTIFIC CORPORATION",
+    "product_problems": [
+     "Application Program Problem",
+     "Complete Loss of Power"
+    ],
+    "text": ""
+   }
+  ]
+ },
+ "recalls": {
+  "query_url": "https://api.fda.gov/device/recall.json?search=product_code:DQK&sort=event_date_initiated:desc&limit=100",
+  "matched_total": 125,
+  "stored": 100,
+  "records": [
+   {
+    "recall_number": "Z-3143-2026",
+    "event_number": "99637",
+    "recalling_firm": "GE Medical Systems Information Technologies Inc",
+    "product_description": "Carescape Central Station\n\nCSCS V3 MAS800 Desktop\nPart Number 5867474-04, 5867474-13\nProduct code STU\n\nCSCS V3 MAI800  Integrated \nPart Number 5867474-03\nProduct Code STV",
+    "reason_for_recall": "Device may not resume patient monitoring for at least 3 minutes following system restart. Issue can lead to potential delay in recognition of clinically significant events.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260730",
+    "cfres_id": "222040"
+   },
+   {
+    "recall_number": "Z-2279-2026",
+    "event_number": "98932",
+    "recalling_firm": "GE Medical Systems Information Technologies Inc",
+    "product_description": "CASE v7.0 Cardiac Testing System\nModel no. 3031234-001\nProduct Code SU3",
+    "reason_for_recall": "Electrical sparking may occur at the printer head. If the Electrostatic Discharge (ESD) printer brush becomes dislodged, electrical sparking at the printer head can result in charring or discoloration of thermal printer paper. Ignition of the paper could potentially result in serious thermal injury.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260424",
+    "cfres_id": "220231"
+   },
+   {
+    "recall_number": "Z-0416-2026",
+    "event_number": "97686",
+    "recalling_firm": "Spacelabs Healthcare, Ltd.",
+    "product_description": "Brand Name: Sentinel V11\nProduct Name: Sentinel V11\nModel/Catalog Number: 92810\nSoftware Version: 11.6.0\nProduct Description: Cardiology Information Management System\nComponent: No\n\nThe Sentinel Cardiology Information Management System is intended to connect to supported medical devices and analyzers in order to download, store, access and manage cardiovascular information and to manage patient and facility information.",
+    "reason_for_recall": "Due to two distinct issues:\n1. During patient admission, patient demographic fields may default  to those of a previously viewed patient.\n2. Systems configured with Resting/Rhythm ECG functionality, under specific navigation conditions, test data intended for one patient may be saved under another patient's record",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250916",
+    "cfres_id": "216340"
+   },
+   {
+    "recall_number": "Z-2518-2025",
+    "event_number": "97429",
+    "recalling_firm": "Merge Healthcare, Inc.",
+    "product_description": "Merge Hemo, Model RCSV2, Model/Catalog Number 99-01172-00, software versions 11.1 and 11.1.1\nProduct Description: The Merge Hemo, Model RCSV2 device is a hemodynamics recording computer system that monitors, measures, displays, records and stores various physiologic and blood flow parameters based on the output from one or more electrodes, transducers, or measuring devices. The system is used for documenting and monitoring patients undergoing diagnostic and interventional catheter-based procedures. The procedures can be performed in the clinical areas of invasive cardiology, interventional radiology, and cardiac electrophysiology.",
+    "reason_for_recall": "Merge Healthcare has been informed by Schiller AG (Baar, Switzerland) of an issue with the Schiller ARGUS PB-3000 Patient Data Module (PDM) where certain units trigger an error message on the Merge Hemo Client (Pressure Sensor Defective) during non-invasive blood pressure (NIBP) measurements, specifically when the initial inflation pressure is set in the high-pressure range (>240 mmHg). The ARGUS PB-3000 is a vital signs monitoring instrument intended to be integrated into the Merge Hemo System. No other components of the Merge Hemo System are affected.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250811",
+    "cfres_id": "215580"
+   },
+   {
+    "recall_number": "Z-1760-2025",
+    "event_number": "96697",
+    "recalling_firm": "Centerline Biomedical Inc",
+    "product_description": "Centerline Biomedical IOPS Guidewire 2, REF ATW-2; Sensorized wire used to navigate through vasculature to facilitate placement of a catheter",
+    "reason_for_recall": "Centerline Biomedical has determined that the coating on the guidewires for lot 2404-2005 may delaminate during use of the guidewire.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250411",
+    "cfres_id": "213421"
+   },
+   {
+    "recall_number": "Z-0095-2025",
+    "event_number": "95331",
+    "recalling_firm": "Boston Scientific Corporation",
+    "product_description": "Boston Scientific AVVIGO+ Multi-Modality Guidance System, AVVIGO+ BRIDGE TO INTEGRATED KIT; the system utilizes an interactive display to provide physicians with physiologic, intravascular and/or intracardiac anatomical information. The system can provide various modalities which includes intravascular ultrasound (IVUS). When used with a peripheral vascular imaging catheter, the system utilizes the IVUS modality for ultrasound examination of intravascular pathology.",
+    "reason_for_recall": "Boston Scientific has received reports indicating the grid mark overlay on the cross-sectional view did not present correctly when an OptiCross 18 Peripheral Imaging Catheter was connected to the AVVIGO+ Multi-Modality Guidance System while in either Live or Record mode. The Boston Scientific investigation determined that, due to a software anomaly, a 9-grid mark overlay is incorrectly displayed during Live mode when AVVIGO+ is connected to an OptiCross 18 Peripheral Imaging Catheter. Note that the correct overlay display for this catheter is the 15-grid mark overlay, which allows for a reference depth setting of 14.9mm for peripheral catheters.\nThis software anomaly is limited to Live or Record mode. In Review mode, the correct 15-grid mark overlay is displayed, and the vessel image is correctly scaled to the appropriate size.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240905",
+    "cfres_id": "209999"
+   },
+   {
+    "recall_number": "Z-0096-2025",
+    "event_number": "95331",
+    "recalling_firm": "Boston Scientific Corporation",
+    "product_description": "Boston Scientific AVVIGO+ Multi-Modality Guidance System, AVVIGO + INT SYSTEM - ZERO COST JAPAN; the system utilizes an interactive display to provide physicians with physiologic, intravascular and/or intracardiac anatomical information. The system can provide various modalities which includes intravascular ultrasound (IVUS). When used with a peripheral vascular imaging catheter, the system utilizes the IVUS modality for ultrasound examination of intravascular pathology.",
+    "reason_for_recall": "Boston Scientific has received reports indicating the grid mark overlay on the cross-sectional view did not present correctly when an OptiCross 18 Peripheral Imaging Catheter was connected to the AVVIGO+ Multi-Modality Guidance System while in either Live or Record mode. The Boston Scientific investigation determined that, due to a software anomaly, a 9-grid mark overlay is incorrectly displayed during Live mode when AVVIGO+ is connected to an OptiCross 18 Peripheral Imaging Catheter. Note that the correct overlay display for this catheter is the 15-grid mark overlay, which allows for a reference depth setting of 14.9mm for peripheral catheters.\nThis software anomaly is limited to Live or Record mode. In Review mode, the correct 15-grid mark overlay is displayed, and the vessel image is correctly scaled to the appropriate size.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240905",
+    "cfres_id": "210000"
+   },
+   {
+    "recall_number": "Z-0097-2025",
+    "event_number": "95331",
+    "recalling_firm": "Boston Scientific Corporation",
+    "product_description": "Boston Scientific AVVIGO+ Multi-Modality Guidance System, AVVIGO + INT SYSTEM - ZERO COST US; the system utilizes an interactive display to provide physicians with physiologic, intravascular and/or intracardiac anatomical information. The system can provide various modalities which includes intravascular ultrasound (IVUS). When used with a peripheral vascular imaging catheter, the system utilizes the IVUS modality for ultrasound examination of intravascular pathology.",
+    "reason_for_recall": "Boston Scientific has received reports indicating the grid mark overlay on the cross-sectional view did not present correctly when an OptiCross 18 Peripheral Imaging Catheter was connected to the AVVIGO+ Multi-Modality Guidance System while in either Live or Record mode. The Boston Scientific investigation determined that, due to a software anomaly, a 9-grid mark overlay is incorrectly displayed during Live mode when AVVIGO+ is connected to an OptiCross 18 Peripheral Imaging Catheter. Note that the correct overlay display for this catheter is the 15-grid mark overlay, which allows for a reference depth setting of 14.9mm for peripheral catheters.\nThis software anomaly is limited to Live or Record mode. In Review mode, the correct 15-grid mark overlay is displayed, and the vessel image is correctly scaled to the appropriate size.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240905",
+    "cfres_id": "210001"
+   },
+   {
+    "recall_number": "Z-0098-2025",
+    "event_number": "95331",
+    "recalling_firm": "Boston Scientific Corporation",
+    "product_description": "Boston Scientific AVVIGO+ Multi-Modality Guidance System, AVVIGO + INT SYSTEM EU + ROW; the system utilizes an interactive display to provide physicians with physiologic, intravascular and/or intracardiac anatomical information. The system can provide various modalities which includes intravascular ultrasound (IVUS). When used with a peripheral vascular imaging catheter, the system utilizes the IVUS modality for ultrasound examination of intravascular pathology.",
+    "reason_for_recall": "Boston Scientific has received reports indicating the grid mark overlay on the cross-sectional view did not present correctly when an OptiCross 18 Peripheral Imaging Catheter was connected to the AVVIGO+ Multi-Modality Guidance System while in either Live or Record mode. The Boston Scientific investigation determined that, due to a software anomaly, a 9-grid mark overlay is incorrectly displayed during Live mode when AVVIGO+ is connected to an OptiCross 18 Peripheral Imaging Catheter. Note that the correct overlay display for this catheter is the 15-grid mark overlay, which allows for a reference depth setting of 14.9mm for peripheral catheters.\nThis software anomaly is limited to Live or Record mode. In Review mode, the correct 15-grid mark overlay is displayed, and the vessel image is correctly scaled to the appropriate size.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240905",
+    "cfres_id": "210002"
+   },
+   {
+    "recall_number": "Z-0099-2025",
+    "event_number": "95331",
+    "recalling_firm": "Boston Scientific Corporation",
+    "product_description": "Boston Scientific AVVIGO+ Multi-Modality Guidance System, AVVIGO + INT SYSTEM JAPAN; the system utilizes an interactive display to provide physicians with physiologic, intravascular and/or intracardiac anatomical information. The system can provide various modalities which includes intravascular ultrasound (IVUS). When used with a peripheral vascular imaging catheter, the system utilizes the IVUS modality for ultrasound examination of intravascular pathology.",
+    "reason_for_recall": "Boston Scientific has received reports indicating the grid mark overlay on the cross-sectional view did not present correctly when an OptiCross 18 Peripheral Imaging Catheter was connected to the AVVIGO+ Multi-Modality Guidance System while in either Live or Record mode. The Boston Scientific investigation determined that, due to a software anomaly, a 9-grid mark overlay is incorrectly displayed during Live mode when AVVIGO+ is connected to an OptiCross 18 Peripheral Imaging Catheter. Note that the correct overlay display for this catheter is the 15-grid mark overlay, which allows for a reference depth setting of 14.9mm for peripheral catheters.\nThis software anomaly is limited to Live or Record mode. In Review mode, the correct 15-grid mark overlay is displayed, and the vessel image is correctly scaled to the appropriate size.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240905",
+    "cfres_id": "210003"
+   },
+   {
+    "recall_number": "Z-0100-2025",
+    "event_number": "95331",
+    "recalling_firm": "Boston Scientific Corporation",
+    "product_description": "Boston Scientific AVVIGO+ Multi-Modality Guidance System, AVVIGO + INT SYSTEM US; the system utilizes an interactive display to provide physicians with physiologic, intravascular and/or intracardiac anatomical information. The system can provide various modalities which includes intravascular ultrasound (IVUS). When used with a peripheral vascular imaging catheter, the system utilizes the IVUS modality for ultrasound examination of intravascular pathology.",
+    "reason_for_recall": "Boston Scientific has received reports indicating the grid mark overlay on the cross-sectional view did not present correctly when an OptiCross 18 Peripheral Imaging Catheter was connected to the AVVIGO+ Multi-Modality Guidance System while in either Live or Record mode. The Boston Scientific investigation determined that, due to a software anomaly, a 9-grid mark overlay is incorrectly displayed during Live mode when AVVIGO+ is connected to an OptiCross 18 Peripheral Imaging Catheter. Note that the correct overlay display for this catheter is the 15-grid mark overlay, which allows for a reference depth setting of 14.9mm for peripheral catheters.\nThis software anomaly is limited to Live or Record mode. In Review mode, the correct 15-grid mark overlay is displayed, and the vessel image is correctly scaled to the appropriate size.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240905",
+    "cfres_id": "210004"
+   },
+   {
+    "recall_number": "Z-0101-2025",
+    "event_number": "95331",
+    "recalling_firm": "Boston Scientific Corporation",
+    "product_description": "Boston Scientific AVVIGO+ Multi-Modality Guidance System, AVVIGO + MOB SYSTEM - ZERO COST EU + RO; the system utilizes an interactive display to provide physicians with physiologic, intravascular and/or intracardiac anatomical information. The system can provide various modalities which includes intravascular ultrasound (IVUS). When used with a peripheral vascular imaging catheter, the system utilizes the IVUS modality for ultrasound examination of intravascular pathology.",
+    "reason_for_recall": "Boston Scientific has received reports indicating the grid mark overlay on the cross-sectional view did not present correctly when an OptiCross 18 Peripheral Imaging Catheter was connected to the AVVIGO+ Multi-Modality Guidance System while in either Live or Record mode. The Boston Scientific investigation determined that, due to a software anomaly, a 9-grid mark overlay is incorrectly displayed during Live mode when AVVIGO+ is connected to an OptiCross 18 Peripheral Imaging Catheter. Note that the correct overlay display for this catheter is the 15-grid mark overlay, which allows for a reference depth setting of 14.9mm for peripheral catheters.\nThis software anomaly is limited to Live or Record mode. In Review mode, the correct 15-grid mark overlay is displayed, and the vessel image is correctly scaled to the appropriate size.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240905",
+    "cfres_id": "210005"
+   },
+   {
+    "recall_number": "Z-0102-2025",
+    "event_number": "95331",
+    "recalling_firm": "Boston Scientific Corporation",
+    "product_description": "Boston Scientific AVVIGO+ Multi-Modality Guidance System, AVVIGO + MOB SYSTEM - ZERO COST JAPAN; the system utilizes an interactive display to provide physicians with physiologic, intravascular and/or intracardiac anatomical information. The system can provide various modalities which includes intravascular ultrasound (IVUS). When used with a peripheral vascular imaging catheter, the system utilizes the IVUS modality for ultrasound examination of intravascular pathology.",
+    "reason_for_recall": "Boston Scientific has received reports indicating the grid mark overlay on the cross-sectional view did not present correctly when an OptiCross 18 Peripheral Imaging Catheter was connected to the AVVIGO+ Multi-Modality Guidance System while in either Live or Record mode. The Boston Scientific investigation determined that, due to a software anomaly, a 9-grid mark overlay is incorrectly displayed during Live mode when AVVIGO+ is connected to an OptiCross 18 Peripheral Imaging Catheter. Note that the correct overlay display for this catheter is the 15-grid mark overlay, which allows for a reference depth setting of 14.9mm for peripheral catheters.\nThis software anomaly is limited to Live or Record mode. In Review mode, the correct 15-grid mark overlay is displayed, and the vessel image is correctly scaled to the appropriate size.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240905",
+    "cfres_id": "210006"
+   },
+   {
+    "recall_number": "Z-0103-2025",
+    "event_number": "95331",
+    "recalling_firm": "Boston Scientific Corporation",
+    "product_description": "Boston Scientific AVVIGO+ Multi-Modality Guidance System, AVVIGO + MOB SYSTEM - ZERO COST US; the system utilizes an interactive display to provide physicians with physiologic, intravascular and/or intracardiac anatomical information. The system can provide various modalities which includes intravascular ultrasound (IVUS). When used with a peripheral vascular imaging catheter, the system utilizes the IVUS modality for ultrasound examination of intravascular pathology.",
+    "reason_for_recall": "Boston Scientific has received reports indicating the grid mark overlay on the cross-sectional view did not present correctly when an OptiCross 18 Peripheral Imaging Catheter was connected to the AVVIGO+ Multi-Modality Guidance System while in either Live or Record mode. The Boston Scientific investigation determined that, due to a software anomaly, a 9-grid mark overlay is incorrectly displayed during Live mode when AVVIGO+ is connected to an OptiCross 18 Peripheral Imaging Catheter. Note that the correct overlay display for this catheter is the 15-grid mark overlay, which allows for a reference depth setting of 14.9mm for peripheral catheters.\nThis software anomaly is limited to Live or Record mode. In Review mode, the correct 15-grid mark overlay is displayed, and the vessel image is correctly scaled to the appropriate size.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240905",
+    "cfres_id": "210007"
+   },
+   {
+    "recall_number": "Z-0104-2025",
+    "event_number": "95331",
+    "recalling_firm": "Boston Scientific Corporation",
+    "product_description": "Boston Scientific AVVIGO+ Multi-Modality Guidance System, AVVIGO + MOB SYSTEM EU + ROW; the system utilizes an interactive display to provide physicians with physiologic, intravascular and/or intracardiac anatomical information. The system can provide various modalities which includes intravascular ultrasound (IVUS). When used with a peripheral vascular imaging catheter, the system utilizes the IVUS modality for ultrasound examination of intravascular pathology.",
+    "reason_for_recall": "Boston Scientific has received reports indicating the grid mark overlay on the cross-sectional view did not present correctly when an OptiCross 18 Peripheral Imaging Catheter was connected to the AVVIGO+ Multi-Modality Guidance System while in either Live or Record mode. The Boston Scientific investigation determined that, due to a software anomaly, a 9-grid mark overlay is incorrectly displayed during Live mode when AVVIGO+ is connected to an OptiCross 18 Peripheral Imaging Catheter. Note that the correct overlay display for this catheter is the 15-grid mark overlay, which allows for a reference depth setting of 14.9mm for peripheral catheters.\nThis software anomaly is limited to Live or Record mode. In Review mode, the correct 15-grid mark overlay is displayed, and the vessel image is correctly scaled to the appropriate size.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240905",
+    "cfres_id": "210008"
+   },
+   {
+    "recall_number": "Z-0105-2025",
+    "event_number": "95331",
+    "recalling_firm": "Boston Scientific Corporation",
+    "product_description": "Boston Scientific AVVIGO+ Multi-Modality Guidance System, AVVIGO + MOB SYSTEM EVAL - ZERO COST US; the system utilizes an interactive display to provide physicians with physiologic, intravascular and/or intracardiac anatomical information. The system can provide various modalities which includes intravascular ultrasound (IVUS). When used with a peripheral vascular imaging catheter, the system utilizes the IVUS modality for ultrasound examination of intravascular pathology.",
+    "reason_for_recall": "Boston Scientific has received reports indicating the grid mark overlay on the cross-sectional view did not present correctly when an OptiCross 18 Peripheral Imaging Catheter was connected to the AVVIGO+ Multi-Modality Guidance System while in either Live or Record mode. The Boston Scientific investigation determined that, due to a software anomaly, a 9-grid mark overlay is incorrectly displayed during Live mode when AVVIGO+ is connected to an OptiCross 18 Peripheral Imaging Catheter. Note that the correct overlay display for this catheter is the 15-grid mark overlay, which allows for a reference depth setting of 14.9mm for peripheral catheters.\nThis software anomaly is limited to Live or Record mode. In Review mode, the correct 15-grid mark overlay is displayed, and the vessel image is correctly scaled to the appropriate size.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240905",
+    "cfres_id": "210009"
+   },
+   {
+    "recall_number": "Z-0106-2025",
+    "event_number": "95331",
+    "recalling_firm": "Boston Scientific Corporation",
+    "product_description": "Boston Scientific AVVIGO+ Multi-Modality Guidance System, AVVIGO + MOB SYSTEM EVAL EU + ROW; the system utilizes an interactive display to provide physicians with physiologic, intravascular and/or intracardiac anatomical information. The system can provide various modalities which includes intravascular ultrasound (IVUS). When used with a peripheral vascular imaging catheter, the system utilizes the IVUS modality for ultrasound examination of intravascular pathology.",
+    "reason_for_recall": "Boston Scientific has received reports indicating the grid mark overlay on the cross-sectional view did not present correctly when an OptiCross 18 Peripheral Imaging Catheter was connected to the AVVIGO+ Multi-Modality Guidance System while in either Live or Record mode. The Boston Scientific investigation determined that, due to a software anomaly, a 9-grid mark overlay is incorrectly displayed during Live mode when AVVIGO+ is connected to an OptiCross 18 Peripheral Imaging Catheter. Note that the correct overlay display for this catheter is the 15-grid mark overlay, which allows for a reference depth setting of 14.9mm for peripheral catheters.\nThis software anomaly is limited to Live or Record mode. In Review mode, the correct 15-grid mark overlay is displayed, and the vessel image is correctly scaled to the appropriate size.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240905",
+    "cfres_id": "210010"
+   },
+   {
+    "recall_number": "Z-0107-2025",
+    "event_number": "95331",
+    "recalling_firm": "Boston Scientific Corporation",
+    "product_description": "Boston Scientific AVVIGO+ Multi-Modality Guidance System, AVVIGO + MOB SYSTEM EVAL US; the system utilizes an interactive display to provide physicians with physiologic, intravascular and/or intracardiac anatomical information. The system can provide various modalities which includes intravascular ultrasound (IVUS). When used with a peripheral vascular imaging catheter, the system utilizes the IVUS modality for ultrasound examination of intravascular pathology.",
+    "reason_for_recall": "Boston Scientific has received reports indicating the grid mark overlay on the cross-sectional view did not present correctly when an OptiCross 18 Peripheral Imaging Catheter was connected to the AVVIGO+ Multi-Modality Guidance System while in either Live or Record mode. The Boston Scientific investigation determined that, due to a software anomaly, a 9-grid mark overlay is incorrectly displayed during Live mode when AVVIGO+ is connected to an OptiCross 18 Peripheral Imaging Catheter. Note that the correct overlay display for this catheter is the 15-grid mark overlay, which allows for a reference depth setting of 14.9mm for peripheral catheters.\nThis software anomaly is limited to Live or Record mode. In Review mode, the correct 15-grid mark overlay is displayed, and the vessel image is correctly scaled to the appropriate size.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240905",
+    "cfres_id": "210011"
+   },
+   {
+    "recall_number": "Z-0108-2025",
+    "event_number": "95331",
+    "recalling_firm": "Boston Scientific Corporation",
+    "product_description": "Boston Scientific AVVIGO+ Multi-Modality Guidance System, AVVIGO + MOB SYSTEM JAPAN; the system utilizes an interactive display to provide physicians with physiologic, intravascular and/or intracardiac anatomical information. The system can provide various modalities which includes intravascular ultrasound (IVUS). When used with a peripheral vascular imaging catheter, the system utilizes the IVUS modality for ultrasound examination of intravascular pathology.",
+    "reason_for_recall": "Boston Scientific has received reports indicating the grid mark overlay on the cross-sectional view did not present correctly when an OptiCross 18 Peripheral Imaging Catheter was connected to the AVVIGO+ Multi-Modality Guidance System while in either Live or Record mode. The Boston Scientific investigation determined that, due to a software anomaly, a 9-grid mark overlay is incorrectly displayed during Live mode when AVVIGO+ is connected to an OptiCross 18 Peripheral Imaging Catheter. Note that the correct overlay display for this catheter is the 15-grid mark overlay, which allows for a reference depth setting of 14.9mm for peripheral catheters.\nThis software anomaly is limited to Live or Record mode. In Review mode, the correct 15-grid mark overlay is displayed, and the vessel image is correctly scaled to the appropriate size.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240905",
+    "cfres_id": "210012"
+   },
+   {
+    "recall_number": "Z-0109-2025",
+    "event_number": "95331",
+    "recalling_firm": "Boston Scientific Corporation",
+    "product_description": "Boston Scientific AVVIGO+ Multi-Modality Guidance System, AVVIGO + MOB SYSTEM US; the system utilizes an interactive display to provide physicians with physiologic, intravascular and/or intracardiac anatomical information. The system can provide various modalities which includes intravascular ultrasound (IVUS). When used with a peripheral vascular imaging catheter, the system utilizes the IVUS modality for ultrasound examination of intravascular pathology.",
+    "reason_for_recall": "Boston Scientific has received reports indicating the grid mark overlay on the cross-sectional view did not present correctly when an OptiCross 18 Peripheral Imaging Catheter was connected to the AVVIGO+ Multi-Modality Guidance System while in either Live or Record mode. The Boston Scientific investigation determined that, due to a software anomaly, a 9-grid mark overlay is incorrectly displayed during Live mode when AVVIGO+ is connected to an OptiCross 18 Peripheral Imaging Catheter. Note that the correct overlay display for this catheter is the 15-grid mark overlay, which allows for a reference depth setting of 14.9mm for peripheral catheters.\nThis software anomaly is limited to Live or Record mode. In Review mode, the correct 15-grid mark overlay is displayed, and the vessel image is correctly scaled to the appropriate size.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240905",
+    "cfres_id": "210013"
+   },
+   {
+    "recall_number": "Z-0110-2025",
+    "event_number": "95331",
+    "recalling_firm": "Boston Scientific Corporation",
+    "product_description": "Boston Scientific AVVIGO+ Multi-Modality Guidance System, AVVIGO II TO AVVIGO + INT Z UPGRADE JP; the system utilizes an interactive display to provide physicians with physiologic, intravascular and/or intracardiac anatomical information. The system can provide various modalities which includes intravascular ultrasound (IVUS). When used with a peripheral vascular imaging catheter, the system utilizes the IVUS modality for ultrasound examination of intravascular pathology.",
+    "reason_for_recall": "Boston Scientific has received reports indicating the grid mark overlay on the cross-sectional view did not present correctly when an OptiCross 18 Peripheral Imaging Catheter was connected to the AVVIGO+ Multi-Modality Guidance System while in either Live or Record mode. The Boston Scientific investigation determined that, due to a software anomaly, a 9-grid mark overlay is incorrectly displayed during Live mode when AVVIGO+ is connected to an OptiCross 18 Peripheral Imaging Catheter. Note that the correct overlay display for this catheter is the 15-grid mark overlay, which allows for a reference depth setting of 14.9mm for peripheral catheters.\nThis software anomaly is limited to Live or Record mode. In Review mode, the correct 15-grid mark overlay is displayed, and the vessel image is correctly scaled to the appropriate size.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240905",
+    "cfres_id": "210014"
+   },
+   {
+    "recall_number": "Z-0111-2025",
+    "event_number": "95331",
+    "recalling_firm": "Boston Scientific Corporation",
+    "product_description": "Boston Scientific AVVIGO+ Multi-Modality Guidance System, AVVIGO II TO AVVIGO + MOB Z UPGRADE JP; the system utilizes an interactive display to provide physicians with physiologic, intravascular and/or intracardiac anatomical information. The system can provide various modalities which includes intravascular ultrasound (IVUS). When used with a peripheral vascular imaging catheter, the system utilizes the IVUS modality for ultrasound examination of intravascular pathology.",
+    "reason_for_recall": "Boston Scientific has received reports indicating the grid mark overlay on the cross-sectional view did not present correctly when an OptiCross 18 Peripheral Imaging Catheter was connected to the AVVIGO+ Multi-Modality Guidance System while in either Live or Record mode. The Boston Scientific investigation determined that, due to a software anomaly, a 9-grid mark overlay is incorrectly displayed during Live mode when AVVIGO+ is connected to an OptiCross 18 Peripheral Imaging Catheter. Note that the correct overlay display for this catheter is the 15-grid mark overlay, which allows for a reference depth setting of 14.9mm for peripheral catheters.\nThis software anomaly is limited to Live or Record mode. In Review mode, the correct 15-grid mark overlay is displayed, and the vessel image is correctly scaled to the appropriate size.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240905",
+    "cfres_id": "210015"
+   },
+   {
+    "recall_number": "Z-0112-2025",
+    "event_number": "95331",
+    "recalling_firm": "Boston Scientific Corporation",
+    "product_description": "Boston Scientific AVVIGO+ Multi-Modality Guidance System, AVVIGO II TO AVVIGO INT UPGRADE JAPAN; the system utilizes an interactive display to provide physicians with physiologic, intravascular and/or intracardiac anatomical information. The system can provide various modalities which includes intravascular ultrasound (IVUS). When used with a peripheral vascular imaging catheter, the system utilizes the IVUS modality for ultrasound examination of intravascular pathology.",
+    "reason_for_recall": "Boston Scientific has received reports indicating the grid mark overlay on the cross-sectional view did not present correctly when an OptiCross 18 Peripheral Imaging Catheter was connected to the AVVIGO+ Multi-Modality Guidance System while in either Live or Record mode. The Boston Scientific investigation determined that, due to a software anomaly, a 9-grid mark overlay is incorrectly displayed during Live mode when AVVIGO+ is connected to an OptiCross 18 Peripheral Imaging Catheter. Note that the correct overlay display for this catheter is the 15-grid mark overlay, which allows for a reference depth setting of 14.9mm for peripheral catheters.\nThis software anomaly is limited to Live or Record mode. In Review mode, the correct 15-grid mark overlay is displayed, and the vessel image is correctly scaled to the appropriate size.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240905",
+    "cfres_id": "210016"
+   },
+   {
+    "recall_number": "Z-0113-2025",
+    "event_number": "95331",
+    "recalling_firm": "Boston Scientific Corporation",
+    "product_description": "Boston Scientific AVVIGO+ Multi-Modality Guidance System, AVVIGO II TO AVVIGO INT UPGRADE US; the system utilizes an interactive display to provide physicians with physiologic, intravascular and/or intracardiac anatomical information. The system can provide various modalities which includes intravascular ultrasound (IVUS). When used with a peripheral vascular imaging catheter, the system utilizes the IVUS modality for ultrasound examination of intravascular pathology.",
+    "reason_for_recall": "Boston Scientific has received reports indicating the grid mark overlay on the cross-sectional view did not present correctly when an OptiCross 18 Peripheral Imaging Catheter was connected to the AVVIGO+ Multi-Modality Guidance System while in either Live or Record mode. The Boston Scientific investigation determined that, due to a software anomaly, a 9-grid mark overlay is incorrectly displayed during Live mode when AVVIGO+ is connected to an OptiCross 18 Peripheral Imaging Catheter. Note that the correct overlay display for this catheter is the 15-grid mark overlay, which allows for a reference depth setting of 14.9mm for peripheral catheters.\nThis software anomaly is limited to Live or Record mode. In Review mode, the correct 15-grid mark overlay is displayed, and the vessel image is correctly scaled to the appropriate size.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240905",
+    "cfres_id": "210017"
+   },
+   {
+    "recall_number": "Z-0114-2025",
+    "event_number": "95331",
+    "recalling_firm": "Boston Scientific Corporation",
+    "product_description": "Boston Scientific AVVIGO+ Multi-Modality Guidance System, AVVIGO II TO AVVIGO MOB UPGRADE EU ROW; the system utilizes an interactive display to provide physicians with physiologic, intravascular and/or intracardiac anatomical information. The system can provide various modalities which includes intravascular ultrasound (IVUS). When used with a peripheral vascular imaging catheter, the system utilizes the IVUS modality for ultrasound examination of intravascular pathology.",
+    "reason_for_recall": "Boston Scientific has received reports indicating the grid mark overlay on the cross-sectional view did not present correctly when an OptiCross 18 Peripheral Imaging Catheter was connected to the AVVIGO+ Multi-Modality Guidance System while in either Live or Record mode. The Boston Scientific investigation determined that, due to a software anomaly, a 9-grid mark overlay is incorrectly displayed during Live mode when AVVIGO+ is connected to an OptiCross 18 Peripheral Imaging Catheter. Note that the correct overlay display for this catheter is the 15-grid mark overlay, which allows for a reference depth setting of 14.9mm for peripheral catheters.\nThis software anomaly is limited to Live or Record mode. In Review mode, the correct 15-grid mark overlay is displayed, and the vessel image is correctly scaled to the appropriate size.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240905",
+    "cfres_id": "210018"
+   },
+   {
+    "recall_number": "Z-0115-2025",
+    "event_number": "95331",
+    "recalling_firm": "Boston Scientific Corporation",
+    "product_description": "Boston Scientific AVVIGO+ Multi-Modality Guidance System, AVVIGO II TO AVVIGO MOB UPGRADE JAPAN; the system utilizes an interactive display to provide physicians with physiologic, intravascular and/or intracardiac anatomical information. The system can provide various modalities which includes intravascular ultrasound (IVUS). When used with a peripheral vascular imaging catheter, the system utilizes the IVUS modality for ultrasound examination of intravascular pathology.",
+    "reason_for_recall": "Boston Scientific has received reports indicating the grid mark overlay on the cross-sectional view did not present correctly when an OptiCross 18 Peripheral Imaging Catheter was connected to the AVVIGO+ Multi-Modality Guidance System while in either Live or Record mode. The Boston Scientific investigation determined that, due to a software anomaly, a 9-grid mark overlay is incorrectly displayed during Live mode when AVVIGO+ is connected to an OptiCross 18 Peripheral Imaging Catheter. Note that the correct overlay display for this catheter is the 15-grid mark overlay, which allows for a reference depth setting of 14.9mm for peripheral catheters.\nThis software anomaly is limited to Live or Record mode. In Review mode, the correct 15-grid mark overlay is displayed, and the vessel image is correctly scaled to the appropriate size.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240905",
+    "cfres_id": "210019"
+   },
+   {
+    "recall_number": "Z-0116-2025",
+    "event_number": "95331",
+    "recalling_firm": "Boston Scientific Corporation",
+    "product_description": "Boston Scientific AVVIGO+ Multi-Modality Guidance System, AVVIGO II TO AVVIGO MOB UPGRADE US; the system utilizes an interactive display to provide physicians with physiologic, intravascular and/or intracardiac anatomical information. The system can provide various modalities which includes intravascular ultrasound (IVUS). When used with a peripheral vascular imaging catheter, the system utilizes the IVUS modality for ultrasound examination of intravascular pathology.",
+    "reason_for_recall": "Boston Scientific has received reports indicating the grid mark overlay on the cross-sectional view did not present correctly when an OptiCross 18 Peripheral Imaging Catheter was connected to the AVVIGO+ Multi-Modality Guidance System while in either Live or Record mode. The Boston Scientific investigation determined that, due to a software anomaly, a 9-grid mark overlay is incorrectly displayed during Live mode when AVVIGO+ is connected to an OptiCross 18 Peripheral Imaging Catheter. Note that the correct overlay display for this catheter is the 15-grid mark overlay, which allows for a reference depth setting of 14.9mm for peripheral catheters.\nThis software anomaly is limited to Live or Record mode. In Review mode, the correct 15-grid mark overlay is displayed, and the vessel image is correctly scaled to the appropriate size.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240905",
+    "cfres_id": "210020"
+   },
+   {
+    "recall_number": "Z-0127-2025",
+    "event_number": "95284",
+    "recalling_firm": "CHANGE HEALTHCARE CANADA COMPANY",
+    "product_description": "Horizon Cardiology Hemo. Version 12.2.",
+    "reason_for_recall": "A potential issue has been identified in Change Healthcare Cardiology Hemo where incorrect data entry can lead to inaccurate hemodynamic calculations, potentially resulting in misdiagnosis and inappropriate treatment. This issue occurs when the unit of measurement (UOM) for hemoglobin is configured in a way that differs from the users understanding.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240821",
+    "cfres_id": "209899"
+   },
+   {
+    "recall_number": "Z-0128-2025",
+    "event_number": "95284",
+    "recalling_firm": "CHANGE HEALTHCARE CANADA COMPANY",
+    "product_description": "McKesson Cardiology Hemo. Versions 13.0, 13.1.1, 13.1.2, 13.2, 13.2.1, 14.0.",
+    "reason_for_recall": "A potential issue has been identified in Change Healthcare Cardiology Hemo where incorrect data entry can lead to inaccurate hemodynamic calculations, potentially resulting in misdiagnosis and inappropriate treatment. This issue occurs when the unit of measurement (UOM) for hemoglobin is configured in a way that differs from the users understanding.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240821",
+    "cfres_id": "209900"
+   },
+   {
+    "recall_number": "Z-2438-2024",
+    "event_number": "94956",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "Sensis Vibe systems with software version VD15B in combination with Sensis High End Server -Intended to be used as a diagnostic and administrative tool supporting hemodynamic catheterizations and/or electrophysiology studies, for cardiac as well as interventional Radiology as well as surgical studies. Equipped by modules, enabling various configurations.\nModel: 10910620",
+    "reason_for_recall": "If the Sensis documentation functionality is used during adding of once-per-study reporting events (e.g., Type 1 events, as further defined in the administrator manual), the possibility exists that the application could crash.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240703",
+    "cfres_id": "208935"
+   },
+   {
+    "recall_number": "Z-2439-2024",
+    "event_number": "94956",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "Sensis Vibe systems with software version VD15B in combination with VM VIRTUAL SERVER \nModel: 10765502-Intended to be used as a diagnostic and administrative tool supporting hemodynamic catheterizations and/or electrophysiology studies, for cardiac as well as interventional Radiology as well as surgical studies. Equipped by modules, enabling various configurations.",
+    "reason_for_recall": "If the Sensis documentation functionality is used during adding of once-per-study reporting events (e.g., Type 1 events, as further defined in the administrator manual), the possibility exists that the application could crash.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240703",
+    "cfres_id": "208936"
+   },
+   {
+    "recall_number": "Z-2440-2024",
+    "event_number": "94956",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "Sensis Vibe systems with software version VD15B in combination with  AXIOM Sensis Post\nProcessing Workstation-Intended to be used as a diagnostic and administrative tool supporting hemodynamic catheterizations and/or electrophysiology studies, for cardiac as well as interventional Radiology as well as surgical studies. Equipped by modules, enabling various configurations.\n\nModel: 6648161",
+    "reason_for_recall": "If the Sensis documentation functionality is used during adding of once-per-study reporting events (e.g., Type 1 events, as further defined in the administrator manual), the possibility exists that the application could crash.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240703",
+    "cfres_id": "208937"
+   },
+   {
+    "recall_number": "Z-2441-2024",
+    "event_number": "94956",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "Sensis Vibe systems with software version VD15B-Intended to be used as a diagnostic and administrative tool supporting hemodynamic catheterizations and/or electrophysiology studies, for cardiac as well as interventional Radiology as well as surgical studies. Equipped by modules, enabling various configurations.\n\nModel: 11007641",
+    "reason_for_recall": "If the Sensis documentation functionality is used during adding of once-per-study reporting events (e.g., Type 1 events, as further defined in the administrator manual), the possibility exists that the application could crash.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240703",
+    "cfres_id": "208940"
+   },
+   {
+    "recall_number": "Z-2258-2024",
+    "event_number": "94717",
+    "recalling_firm": "GE Medical Systems Information Technologies Inc",
+    "product_description": "Prucka 3 Amplifier Model #P1801PA used with CardioLab AltiX electrophysiology recording system and ComboLab AltiX hemodynamic and electrophysiology recording system; and Field Replacement Units spare part #5875569 (Assy CLABIII AMP 128CH 100-240V 50-60HZ).",
+    "reason_for_recall": "Capacitors in certain Prucka 3 Amplifiers used with CardioLab / ComboLab systems could fail resulting in transient oscillations on the display and inability to view surface and intracardiac ECG waveforms.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240422",
+    "cfres_id": "208103"
+   },
+   {
+    "recall_number": "Z-0683-2024",
+    "event_number": "93637",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "Sensis Vibe Hemo",
+    "reason_for_recall": "The possibility of the Sensis documentation functionality application to crash.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20231129",
+    "cfres_id": "204998"
+   },
+   {
+    "recall_number": "Z-0556-2024",
+    "event_number": "93419",
+    "recalling_firm": "APN Health LLC",
+    "product_description": "Navik 3D v2, REF NAVIK3D, 3D Mapping System",
+    "reason_for_recall": "IFU update",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20231107",
+    "cfres_id": "204307"
+   },
+   {
+    "recall_number": "Z-2647-2023",
+    "event_number": "92940",
+    "recalling_firm": "Baxter Healthcare Corporation",
+    "product_description": "Baxter Epiphany Cardio Server E3 ECG Management System Servers with software versions:  a) v6.1.x, b) v6.2.x, c) v7.0.x.",
+    "reason_for_recall": "Epiphany, now a Baxter Healthcare company, is issuing an Urgent Medical Device Correction for the Cardio Server E3 ECG Management System software listed below due to a report of the caliper tool becoming non-responsive, preventing the caliper function from being used temporarily on software versions v6.1.x, v6.2.x, and v7.0.x of the E3 user interface.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20230810",
+    "cfres_id": "202953"
+   },
+   {
+    "recall_number": "Z-2613-2023",
+    "event_number": "92903",
+    "recalling_firm": "GE Medical Systems Information Technologies Inc",
+    "product_description": "Prucka 3 Amplifiers, Model P1801PA, and Field Replaceable Units (FRUs), Model 5875569,  used with CardioLab AltiX and ComboLab AltiX.",
+    "reason_for_recall": "A diode on the power supply of the Prucka 3 Amplifier used with CardioLab/ComboLab systems could reach elevated temperatures and fail, then power off and become inoperable.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20230808",
+    "cfres_id": "202850"
+   },
+   {
+    "recall_number": "Z-0775-2023",
+    "event_number": "91240",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "Programmable Diagnostic Computer",
+    "reason_for_recall": "The firm will be performing a software update to address a software error which affects the listed products. This correction addresses four potential software issues: \n\n1) \"PASSWORD STORE CORRUPTED\" error message during system boot; \n\n2) Subsystem crash during examination;\n\n3) Dialog Monitor Computer (DMC) application crash while loading a study; and\n\n4) Software crash due to system internal timeout. \n\nIssue 1 may lead to a delay or interruption of procedure. Issues 2, 3, and 4 may result in delay in starting or continuing the examination, and may also prevent the operator from starting or continuing a study;",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20221116",
+    "cfres_id": "197321"
+   },
+   {
+    "recall_number": "Z-1558-2022",
+    "event_number": "90632",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "AXIOM Sensis or Sensis Vibe Combo systems as follows:\nSystem\t                              Material #\nAXIOM Sensis, Combo 64\t6623974;\nAXIOM Sensis, Hemo LOW\t6634633;\nAXIOM Sensis, Combo 32\t6634641;\nAXIOM Sensis, EP 129\t6634658;\nSensis\t                               10764561;\nSensis Vibe Combo\t     11007642;\n\nSensis recording system is intended to be used as a diagnostic and administrative tool supporting hemodynamic catheterizations and/or electrophysiology studies, for cardiac as well as interventional Radiology.",
+    "reason_for_recall": "The Sensis Signal Input Box provides hooks as a milled item on the bottom of the box support the possibility of mounting the Signal Input Box on an accessory rail (e.g., at the patient table),  In the event the mounting position deviates from the default position, the following are possible: Patient touching the Signal Input Box may result in a touch leakage current to the patient; Spillage of liquid entering the Signal Input Box",
+    "recall_status": "Terminated",
+    "date_initiated": "20220712",
+    "cfres_id": "195270"
+   },
+   {
+    "recall_number": "Z-1425-2022",
+    "event_number": "90504",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "Sensis with software version VD12A.   A diagnostic and administrative tool supporting hemodynamic catheterizations and/or electrophysiology studies, for cardiac as well as interventional Radiology \nModel:10764561",
+    "reason_for_recall": "Sensis/Sensis Vibe SoftwareVD12A, the ComboBox may encounter a disconnect of its communication during the first patient examination of the day or after a longer period of inactivity to the Sensis Vibe system resulting in no vital signs being available.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20220615",
+    "cfres_id": "194603"
+   },
+   {
+    "recall_number": "Z-1426-2022",
+    "event_number": "90504",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "Sensis Vibe Combo with software version VD12A.  A diagnostic and administrative tool supporting hemodynamic catheterizations and/or electrophysiology studies, for cardiac as well as interventional Radiology \nModel: 11007642",
+    "reason_for_recall": "Sensis/Sensis Vibe SoftwareVD12A, the ComboBox may encounter a disconnect of its communication during the first patient examination of the day or after a longer period of inactivity to the Sensis Vibe system resulting in no vital signs being available.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20220615",
+    "cfres_id": "194604"
+   },
+   {
+    "recall_number": "Z-1283-2022",
+    "event_number": "90154",
+    "recalling_firm": "CardioTek BV",
+    "product_description": "CardioTek EP-TRACER Software V2.x.",
+    "reason_for_recall": "Device did not pass electrical safety testing for adequate insulation.",
+    "recall_status": "Completed",
+    "date_initiated": "20220425",
+    "cfres_id": "193584"
+   },
+   {
+    "recall_number": "Z-1243-2022",
+    "event_number": "90175",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "Sensis, Programmable Diagnostic Computer, Model Nos.\t6623974                      6634633\n6634658                      6648153\n6648161                      10140973\n10764561                    10765502\n10910620",
+    "reason_for_recall": "Siemens has become aware of three potential software issues with AXIOM Sensis or Sensis/ Sensis Lite systems. This may lead to a hazardous situation for patients if treatment cannot be continued on the system and treatment needs to be continued on an alternate system.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20220413",
+    "cfres_id": "193661"
+   },
+   {
+    "recall_number": "Z-0919-2022",
+    "event_number": "89834",
+    "recalling_firm": "GE Healthcare, LLC",
+    "product_description": "MUSE Cardiology Information System, Model Numbers:  a) 3101011-040, b) 3101010-401, c) 3101010-009, d) 3101010-008",
+    "reason_for_recall": "Two scenarios may cause edits to measurements and diagnosis statements can be lost after a test is Signed in the MUSE NX web client.",
+    "recall_status": "Terminated",
+    "date_initiated": "20220316",
+    "cfres_id": "192653"
+   },
+   {
+    "recall_number": "Z-0499-2022",
+    "event_number": "89199",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "1. Sensis, material # 10764561; UDI: 04056869010137\n2. Sensis Vibe Hemo, material # 11007641; UDI: 04056869010199\n3. Sensis Vibe Combo, material # 11007642; UDI: 04056869010205       \n\nThe Sensis recording system is a diagnostic and administrative tool supporting hemodynamic catheterizations and/or electrophysiology studies, for cardiac, interventional Radiology, and surgical studies.",
+    "reason_for_recall": "Software error which affects Sensis Vibe Hemo, Sensis and Sensis Vibe Combo systems with software version VD12A, which could cause possible hazard to patients, operators, or other persons and equipment. Under certain sporadic circumstances, the CO (Cardiac Output) measurement using the Thermodilution method will temporarily no longer be possible.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20211123",
+    "cfres_id": "190744"
+   },
+   {
+    "recall_number": "Z-2387-2021",
+    "event_number": "88379",
+    "recalling_firm": "Merge Healthcare, Inc.",
+    "product_description": "Merge Hemo, Software packages 10.2, 10.3, and 10.4",
+    "reason_for_recall": "The firm identified a safety issue affecting the software associated with Merge Hemo versions 9.x and 10.x, used in combination with an HL7 lab interface.",
+    "recall_status": "Terminated",
+    "date_initiated": "20210723",
+    "cfres_id": "188542"
+   },
+   {
+    "recall_number": "Z-1853-2021",
+    "event_number": "87904",
+    "recalling_firm": "Abbott Laboratories Inc. (St Jude Medical)",
+    "product_description": "v.1.2 Upgrade Kit or v.1.2 upgrade installed on WorkMate Claris System, Model H700123.  The WorkMate Claris\" System is a computer-based electrocardiographic recording and monitoring system designed for efficient capture, display, and retrieval of surface and intracardiac signals during cardiac EP studies.",
+    "reason_for_recall": "Due to a software error, the user may lose functionality of the system or the screen may turn black during operation.",
+    "recall_status": "Terminated",
+    "date_initiated": "20210505",
+    "cfres_id": "187397"
+   },
+   {
+    "recall_number": "Z-1854-2021",
+    "event_number": "87904",
+    "recalling_firm": "Abbott Laboratories Inc. (St Jude Medical)",
+    "product_description": "v.1.2 Upgrade Kit or v.1.2 upgrade installed on WorkMate Claris\" System Display,  \nModel H700124, The WorkMate Claris\" System is a computer-based electrocardiographic recording and monitoring system designed for efficient capture, display, and retrieval of surface and intracardiac signals during cardiac EP studies.",
+    "reason_for_recall": "Due to a software error, the user may lose functionality of the system or the screen may turn black during operation.",
+    "recall_status": "Terminated",
+    "date_initiated": "20210505",
+    "cfres_id": "187398"
+   },
+   {
+    "recall_number": "Z-1855-2021",
+    "event_number": "87904",
+    "recalling_firm": "Abbott Laboratories Inc. (St Jude Medical)",
+    "product_description": "WorkMate Claris v.1.2 Upgrade Kits, Model Numbers H800007 and H800012",
+    "reason_for_recall": "Due to a software error, the user may lose functionality of the system or the screen may turn black during operation.",
+    "recall_status": "Terminated",
+    "date_initiated": "20210505",
+    "cfres_id": "187399"
+   },
+   {
+    "recall_number": "Z-1927-2021",
+    "event_number": "87844",
+    "recalling_firm": "GE Healthcare, LLC",
+    "product_description": "Case Cardiac Assessment System for Exercise Testing and CardioSoft Diagnostic System Exercise Stress Testing ECG application",
+    "reason_for_recall": "If a certain sequence of events occur, the pdf test report that belongs to one patient will appear in a different patient's record when viewed in an Electronic Medical Record (EMR) or a similar system.",
+    "recall_status": "Terminated",
+    "date_initiated": "20210419",
+    "cfres_id": "187234"
+   },
+   {
+    "recall_number": "Z-1434-2021",
+    "event_number": "87515",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "Sensis/ Sensis Vibe Hemo systems with VD12A software as follows:\n\nDedicated SIS Server- 6648153\nSensis Post-Processing Workstation- 6648161\nSensis- 10764561\nVM Virtual Server- 10765502\nSensis High-End Servers- 10910620\nSensis Vibe Hemo- 11007641\nSensis Vibe Combo- 11007642\n\nSensis Vibe is a recording and procedure data management system for interventional cardiology, interventional radiology, surgical procedures performed in a hybrid OR and electrophysiology",
+    "reason_for_recall": "Due to the configuration of certain  Windows Service Permissions  within the operating systems of the Sensis/ Sensis Vibe computer, there is a risk for exposure of sensitive information, manipulation of data, or  Denial of Service  attacks and could result in incorrect diagnostic or therapeutic decisions",
+    "recall_status": "Terminated",
+    "date_initiated": "20210304",
+    "cfres_id": "186215"
+   },
+   {
+    "recall_number": "Z-1173-2021",
+    "event_number": "87273",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "Sensis / Sensis Vibe systems with software version VD12 and equipped with HP Flex Pro-C PC.  Diagnostic and administrative tool supporting hemodynamic catheterizations and/or electrophysiology studies\nModel Numbers:\nSensis Vibe Hemo 11007641\nSensis Vibe Combo 11007642\nSensis 10764561\nPostprocessing Workstation 6648161\nSIS Server 6648153",
+    "reason_for_recall": "System may sporadically freeze (lock-up) during operation or while being in an idle state, no longer possible to interact with the system",
+    "recall_status": "Terminated",
+    "date_initiated": "20210127",
+    "cfres_id": "185684"
+   },
+   {
+    "recall_number": "Z-0563-2021",
+    "event_number": "86753",
+    "recalling_firm": "Spacelabs Healthcare, Ltd.",
+    "product_description": "Sentinel V10.x & V11.x, Models: 98200 & 98201 - Product Usage: designed using the latest programming technology and is easy to install and to use.",
+    "reason_for_recall": "During system upgrade incorrect comments may be added to existing tests. In such instance: Resting ECG and ABP tests which did not contain comments at the time of the upgrade, may have unrelated comments added. Existing comments will not be overwritten or removed. Rhythm ECG Tests may have comments overwritten with unrelated comments. Any tests created after the upgrade are not affected.",
+    "recall_status": "Terminated",
+    "date_initiated": "20201106",
+    "cfres_id": "184456"
+   },
+   {
+    "recall_number": "Z-2921-2020",
+    "event_number": "86179",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "Siemens Sensis Vibe Hemo system in combination with the MicroPodTM EtCO2 module-diagnostic and administrative tool supporting hemodynamic catheterization and/or  electrophysiology studies, for cardiac as well as interventional Radiology.",
+    "reason_for_recall": "The connector linking the EtCO2 module to the HemoBox may break and become damaged, if the connector is re-attached to the HemoBox in this damaged state, under certain incorrect pin alignment\nconditions, the HemoBox may stop functioning and all vital signs are lost",
+    "recall_status": "Terminated",
+    "date_initiated": "20200724",
+    "cfres_id": "182968"
+   },
+   {
+    "recall_number": "Z-2880-2020",
+    "event_number": "85910",
+    "recalling_firm": "Biosense Webster (israel), Ltd.",
+    "product_description": "CARTO 3 System (Software Version V7.1.80), CARTO VISITAG Module - Product Usage: FGThe intended use of the system is catheter-based cardiac electrophysiological (EP) procedures. The system provides information about the electrical activity of the heart and about catheter location during the procedure. The system can be used on patients who are eligible for a conventional electrophysiological procedure, Product Number: -5400-00, UDI: 10846835000870",
+    "reason_for_recall": "Software defect may result in disapperance of tag sites during recalculation and lead to additional ablation sites. This may lead to prolongation of the procedure and, in extremely rare circumstances, cardiac perforation.",
+    "recall_status": "Terminated",
+    "date_initiated": "20200622",
+    "cfres_id": "182136"
+   },
+   {
+    "recall_number": "Z-1682-2020",
+    "event_number": "85068",
+    "recalling_firm": "CHANGE HEALTHCARE CANADA COMPANY",
+    "product_description": "McKesson Cardiology ECG Management, Change Healthcare Cardiology ECG Management",
+    "reason_for_recall": "Inaccurate estimation of the heart rate may occur in instances where the user is estimating heart rate counting grid squares using the Sequential ECG format",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20200210",
+    "cfres_id": "180009"
+   },
+   {
+    "recall_number": "Z-1928-2020",
+    "event_number": "85409",
+    "recalling_firm": "Edwards Lifesciences, LLC",
+    "product_description": "Oxymetry Cable, Rxonly. REF/UDI: HEMOXSC100/(01)00690103196986 - Product Usage: The HemoSphere oximetry cable is a multi-use device that connects with a compatible Edwards monitor on one end and any approved Edwards oximetry catheter on the other end to continuously measure venous oxygen saturation.",
+    "reason_for_recall": "Intermittent communication due to inconsistent crimping of connectors onto cables.",
+    "recall_status": "Terminated",
+    "date_initiated": "20191007",
+    "cfres_id": "180770"
+   },
+   {
+    "recall_number": "Z-1804-2020",
+    "event_number": "85271",
+    "recalling_firm": "Boston Scientific Corporation",
+    "product_description": "iLab Polaris Multi-Modality Guidance System;                     iLab Ultrasound Imaging System",
+    "reason_for_recall": "Certain iLab Polaris Systems which were upgraded with a previous 2.10 software version (disk batch 629774) contained a bug in which only the True Color Secondary Capture (SC) format will archive Diastolic Hyperemia-Free Ratio data as intended.  If either Multi-Frame UltraSound (US)  or SC Image Storage formats are used, the DFR data will not be archived and the user will not be notified of this unexpected behavior.",
+    "recall_status": "Completed",
+    "date_initiated": "20190918",
+    "cfres_id": "180401"
+   },
+   {
+    "recall_number": "Z-0257-2020",
+    "event_number": "83899",
+    "recalling_firm": "GE Healthcare, LLC",
+    "product_description": "CardioLab/ComboLab Recording Systems",
+    "reason_for_recall": "Potential for failure of the patient leakage current test. There is a potential that if another device with electrical connectivity (e.g., ablation device, ECG monitor) fails, then the CLab II Plus Amplifier will not prevent an electric current from completing a circuit, which could cause an electrical shock to a patient.",
+    "recall_status": "Terminated",
+    "date_initiated": "20190916",
+    "cfres_id": "176715"
+   },
+   {
+    "recall_number": "Z-2060-2019",
+    "event_number": "83270",
+    "recalling_firm": "GE Healthcare, LLC",
+    "product_description": "MAC VU360, Model Number 2030360-001, Electrocardiograph",
+    "reason_for_recall": "Two issues:\n1) The MAC VU360 system may intermittently display an incorrect patient ID or visit number on the screen after scanning the patient s barcode. This may result in the ECG report being assigned to the incorrect patient.  \n\n2) The MAC VU360 may have the incorrect patient demographics appear on the patient banner. This may result in the ECG report being assigned to the incorrect patient.",
+    "recall_status": "Terminated",
+    "date_initiated": "20190628",
+    "cfres_id": "174501"
+   },
+   {
+    "recall_number": "Z-1489-2019",
+    "event_number": "82600",
+    "recalling_firm": "Change Healthcare Israel Ltd.",
+    "product_description": "Horizon Cardiology Hemo",
+    "reason_for_recall": "users are not notified of procedure medication discrepancies between the Vitals and Meds, the Procedure Notes and Patient Common Data screens in Horizon/McKesson Cardiology Hemo\" (Hemo).  The discrepancy may also affect administered medication data in reports generated from Hemo or the Horizon/McKesson Cardiology Physician s Report as well as customers, who have implemented an outbound interface of procedure results.",
+    "recall_status": "Terminated",
+    "date_initiated": "20190325",
+    "cfres_id": "172008"
+   },
+   {
+    "recall_number": "Z-1490-2019",
+    "event_number": "82600",
+    "recalling_firm": "Change Healthcare Israel Ltd.",
+    "product_description": "McKesson Cardiology Hemo",
+    "reason_for_recall": "users are not notified of procedure medication discrepancies between the Vitals and Meds, the Procedure Notes and Patient Common Data screens in Horizon/McKesson Cardiology Hemo\" (Hemo).  The discrepancy may also affect administered medication data in reports generated from Hemo or the Horizon/McKesson Cardiology Physician s Report as well as customers, who have implemented an outbound interface of procedure results.",
+    "recall_status": "Terminated",
+    "date_initiated": "20190325",
+    "cfres_id": "172011"
+   },
+   {
+    "recall_number": "Z-2035-2019",
+    "event_number": "83220",
+    "recalling_firm": "Spacelabs Healthcare, Inc.",
+    "product_description": "Spacelabs Healthcare Smart Disclosure System, Model 92810, a component of the Intesys Clinical Suite (ICS) G2.",
+    "reason_for_recall": "Several reports were received that patient records were printed with the correct patient demographics but containing another patient's waveforms.",
+    "recall_status": "Terminated",
+    "date_initiated": "20190128",
+    "cfres_id": "174065"
+   },
+   {
+    "recall_number": "Z-0936-2019",
+    "event_number": "81959",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "Sensis Vibe System, Model Number 11007642, with software version VD10B.",
+    "reason_for_recall": "A software error may result in a system crash.  The system must be restarted before the clinical procedure can be continued.  The ablation treatment must be performed with a different system or without the use of the interface.",
+    "recall_status": "Terminated",
+    "date_initiated": "20181129",
+    "cfres_id": "170426"
+   },
+   {
+    "recall_number": "Z-0614-2019",
+    "event_number": "81527",
+    "recalling_firm": "Philips Electronics North America Corporation",
+    "product_description": "Xper Flex Cardio Physiomonitoring System, Software versions 1.5.16.0322 and 1.6.1.0390, Model Numbers 453564241901, 453564241911, 453564483321, 453564483331, 453564621791, 453564621801, 453564669081",
+    "reason_for_recall": "There are 3 issues:\n1) Under certain conditions, real time waveforms may not be accurately plotted or displayed.  \n2) The oxygen saturation (SpO2) numeric value displayed on the device may freeze.\n3) In auto cycle mode, if the NIBP communication is lost, the pump would not cycle and the non-invasive blood pressure (NIBP) numeric value displayed on the device would not update.",
+    "recall_status": "Terminated",
+    "date_initiated": "20181115",
+    "cfres_id": "168911"
+   },
+   {
+    "recall_number": "Z-0462-2019",
+    "event_number": "81092",
+    "recalling_firm": "Invivo Corporation",
+    "product_description": "Xper Flex Cardio Physiomonitoring System, Software version 1.6.0.0388",
+    "reason_for_recall": "The Invasive Blood Pressure (IBP) numeric values will freeze on the display when any of the following functions are performed: change an IBP Site Label using the Site Label icon or the keyboard,  activate or deactivate the mean pressure waveform display option (On/Off) using the Invasive Pressure Options Dialog or the keyboard, activate or deactivate the waveform hide option (On/Off) using the Invasive Pressure Options Dialog, activate or deactivate the pressure waveform filter option (On/Off) using the keyboard, and/or perform a Pullback using the Pullback icon or the keyboard",
+    "recall_status": "Completed",
+    "date_initiated": "20180924",
+    "cfres_id": "167437"
+   },
+   {
+    "recall_number": "Z-0095-2019",
+    "event_number": "81075",
+    "recalling_firm": "GE Healthcare Finland Oy",
+    "product_description": "GE Healthcare CARESCAPE Monitor B450\n\nProduct Usage:  Intended uses of CARESCAPE B450 in 510(k) countries [UR_CRSCP-885]: The CARESCAPE Monitor B450 is a multi-parameter patient monitor intended for use in multiple areas and intrahospital transport within a professional healthcare facility. The CARESCAPE Monitor B450 is intended for use on adult, pediatric, and neonatal patients and on one patient at a time. The CARESCAPE Monitor B450 is indicated for monitoring of: -hemodynamic (including ECG, ST segment, arrhythmia detection, ECG diagnostic analysis and measurement, invasive pressure, non-invasive blood pressure, pulse oximetry, cardiac output (thermodilution and pulse contour), temperature, mixed venous oxygen saturation, and central venous oxygen saturation, -Respiratory (impedance respiration, airway gases (CO2, O2, N2O and anesthetic agents), and spirometry) -neurophysiological status (including electroencephalography, Entropy, Bispectral Index (BIS), and neuromuscular transmission).",
+    "reason_for_recall": "When multiple CARESCAPEMonitor B450 or B850 units are connected to the same network and a network overload occurs for a prolonged time, the monitors may simultaneously restart as designed. The monitor restart will not be completed until the network issue has been corrected.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20180904",
+    "cfres_id": "167390"
+   },
+   {
+    "recall_number": "Z-0096-2019",
+    "event_number": "81075",
+    "recalling_firm": "GE Healthcare Finland Oy",
+    "product_description": "GE Healthcare CARESCAPE Monitor B850\n\nProduct Usage:\n\nIntended uses of CARESCAPE B850 V2 in 510(k) countries [UR_CRSCP-1046]: The CARESCAPE Monitor B850 is a multi-parameter high acuity patient monitor intended for use in multiple areas within a professional healthcare facility. The CARESCAPE Monitor B850 is intended for use on adult, pediatric, and neonatal patients and on one patient at a time. The CARESCAPE Monitor B850 is indicated for monitoring of: -hemodynamic (including ECG, ST segment, arrhythmia detection, ECG diagnostic analysis and measurement, invasive pressure, non-invasive blood pressure, pulse oximetry, cardiac output (thermodilution and pulse contour), temperature, mixed venous oxygen saturation, and central venous oxygen saturation). -Respiratory (impedance respiration, airway gases (CO2, O2, N2O and anesthetic agents), spirometry, gas exchange) and -neurophysiological status (including electroencephalography, Entropy, Bispectral Index (BIS) and neuromuscular transmission. The CARESCAPE Monitor B850 also provides alarms, trends, snapshots and events, and calculations and can be connected to displays, printers and recording devices.",
+    "reason_for_recall": "When multiple CARESCAPEMonitor B450 or B850 units are connected to the same network and a network overload occurs for a prolonged time, the monitors may simultaneously restart as designed. The monitor restart will not be completed until the network issue has been corrected.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20180904",
+    "cfres_id": "167391"
+   },
+   {
+    "recall_number": "Z-2992-2018",
+    "event_number": "80896",
+    "recalling_firm": "Hitachi Healthcare Americas Corp Informatics Division",
+    "product_description": "VidiStar(TM) PACS & DICOM Viewer Software system",
+    "reason_for_recall": "The secure filesystem client software used in the interface between the Vidistar PACS and an EHR system may cause intermixed images from multiple patients showing in a single study.",
+    "recall_status": "Terminated",
+    "date_initiated": "20180828",
+    "cfres_id": "166868"
+   },
+   {
+    "recall_number": "Z-2340-2018",
+    "event_number": "80262",
+    "recalling_firm": "GE Healthcare Finland Oy",
+    "product_description": "GE Healthcare CARESCAPE Monitor B650",
+    "reason_for_recall": "When multiple CARESCAPE Monitor B650 units are connected to the same network and a network overload occurs for a prolonged time, the monitors may simultaneously restart as designed.  The monitor restart will not be completed until the network issue has been corrected.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20180525",
+    "cfres_id": "164976"
+   },
+   {
+    "recall_number": "Z-2968-2018",
+    "event_number": "80723",
+    "recalling_firm": "McKesson Israel Ltd.",
+    "product_description": "McKesson Cardiology Hemo, Release SW version 13.0.\nUsed for physiological monitoring, image and data processing.\n\n McKesson Cardiology Hemo is intended for complete physiological/hemodynamic monitoring, clinical data acquisition, medical image and data processing, and analytical assessment. McKesson Cardiology Hemo is also intended for patient/procedural data management, such as documentation, logging, reporting, trending, storing, reviewing, carrying out clinical calculations and exporting various representations of the acquired data.",
+    "reason_for_recall": "Change Healthcare has identified an issue where, under certain circumstances, the Real Time Monitor (RTM) may not display physiological signals.",
+    "recall_status": "Terminated",
+    "date_initiated": "20180312",
+    "cfres_id": "166225"
+   },
+   {
+    "recall_number": "Z-0487-2018",
+    "event_number": "78918",
+    "recalling_firm": "GE Medical Systems Information Technologies, Inc.",
+    "product_description": "GE HEALTHCARE CARESCAPE Central Station (CSCS) software version 2.0.2\n\n\nThe CARESCAPE Central Station is intended to collect information from a network and display this data. This data includes physiological, patient demographic and/or other non-medical information. Physiological parameters and waveforms from monitors and telemetry systems can be displayed, provide alarm annunciation, and can be printed from the CARESCAPE Central Station.",
+    "reason_for_recall": "CARESCAPE Central Station (CSCS) software version 2.0.2 units may experience unexpected NO COMM (No Communication) and network communication issues after boot-up or system restart.",
+    "recall_status": "Terminated",
+    "date_initiated": "20180111",
+    "cfres_id": "160858"
+   },
+   {
+    "recall_number": "Z-0496-2018",
+    "event_number": "78442",
+    "recalling_firm": "Edwards Lifesciences, LLC",
+    "product_description": "Hemosphere System with the following three components: HEM1 Advanced Monitor, HEMSGM10 (Swan-Ganz Module), and HEMOXSC100 (Oximetry Smart Cable). \n\nProduct Usage:\nThe HemoSphere Advanced Monitor (HEM1) is intended to be used in combination with a compatible Edwards hemodynamic monitoring technology module and/or cable and accompanying Edwards accessories and/or disposables. It provides Edwards hemodynamic monitoring technologies through modular connections. The HemoSphere Swan-Ganz Module (HEMSGM10) is intended to be used by qualified personnel or trained clinicians in a critical care environment in a hospital setting. It is a multi-use device that works in conjunction with the HemoSphere Advanced Monitor, patient CCO cable and compatible Swan-Ganz catheter to acquire and process temperature data supporting intermittent cardiac output (iCO), continuous cardiac output (CCO) and right ventricular end diastolic volume (EDV) monitoring. The HemoSphere Oximetry Smart Cable (HEMOXSC100) is intended to be used by qualified personnel or trained clinicians in a critical care environment in a hospital setting. It is a multi-use device that connects with a compatible Edwards monitor on one end and any approved Edwards oximetry catheter on the other end to continuously measure venous oxygen saturation by reflectance spectrophotometry. LEDs within the oximetry cable transmit light fiber optically to the distal end of the catheter. The amount of light absorbed, refracted, and reflected depends on the relative amounts of oxygenated and deoxygenated hemoglobin in the blood. This optical intensity data is gathered by the oximetry catheter, processed by the HemoSphere Oximetry Cable, and displayed on a compatible monitoring platform. Parameter output is mixed venous oxygen saturation (SvO2) or central venous oxygen saturation (ScvO2).",
+    "reason_for_recall": "Pre-procedural issues related to software defects",
+    "recall_status": "Terminated",
+    "date_initiated": "20171002",
+    "cfres_id": "159598"
+   },
+   {
+    "recall_number": "Z-2688-2017",
+    "event_number": "77324",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "Sensis Vibe Systems with Software Version VD10B,  Model Numbers 10765502, 10910620, 11007641, 6648161 --- Programmable diagnostic computer,",
+    "reason_for_recall": "Software error.  In Sensis Vibe systems with software version VD10B, a software error can result in:  problems generating a report and/ or\r\n- information from different examinations of the same patient being combined into one report. --- The error causes information from two examinations to be combined into one report.  This does not result in a hazardous situation; however, if the erroneous report has been used for treatment or diagnosis, this can potentially result in an incorrect treatment or diagnosis.",
+    "recall_status": "Terminated",
+    "date_initiated": "20170516",
+    "cfres_id": "155711"
+   },
+   {
+    "recall_number": "Z-2657-2017",
+    "event_number": "77025",
+    "recalling_firm": "CardioTek BV",
+    "product_description": "CardioTek EP-TRACER Software V1.x and V2.0\r\n\r\nThe EP-TRACER System is an electrophysiology measurement system used to acquire, filter, digitize, amplify, display, and record signals obtained during electrophysiological studies and related procedures. The system allows the user to monitor, display and record the signals. The system incorporates a stimulator intended to be used for diagnostic cardiac stimulation during electrophysiological testing of the heart.",
+    "reason_for_recall": "Software bug which allows parameters to be changed unintentionally during use.",
+    "recall_status": "Completed",
+    "date_initiated": "20170413",
+    "cfres_id": "154842"
+   },
+   {
+    "recall_number": "Z-2156-2017",
+    "event_number": "77016",
+    "recalling_firm": "Siemens Medical Solutions USA, Inc",
+    "product_description": "AXIOM Sensis, Computer, Diagnostic, Programmable.\n\nIntended to be used as a diagnostic and administrative tool supporting hemodynamic cardiac catheterizations and/or intracardiac electrophysiology studies.",
+    "reason_for_recall": "An extremely dusty computer can cause problems at system start, or rarely, cause system fail. Perform a system check prior to performing exams. If the Sensis system fails, its functions can not be used. Clinical treatment may need to be terminated, restarted, or transferred to a functioning system.",
+    "recall_status": "Terminated",
+    "date_initiated": "20170412",
+    "cfres_id": "154828"
+   },
+   {
+    "recall_number": "Z-0350-2018",
+    "event_number": "76847",
+    "recalling_firm": "Merge Healthcare, Inc.",
+    "product_description": "Fellows \"Mighty 8\" Power strip (Part Number 04175-0008) and TrippLite Power strip (PS-415-HGULTRA - Part Number 13-00106-00) are two components sold as part of the Merge Hemo System.",
+    "reason_for_recall": "Merge is conducting a hardware recall (replacement) of Fellows \"Mighty 8\" Power Strip and TrippLite Power Strip due to overheat of input resistor causing the power strip to smoke.",
+    "recall_status": "Terminated",
+    "date_initiated": "20170406",
+    "cfres_id": "154394"
+   },
+   {
+    "recall_number": "Z-2776-2016",
+    "event_number": "75012",
+    "recalling_firm": "Biosense Webster, Inc.",
+    "product_description": "CARTO 3 EP Navigation System and Accessories, Product Codes: FG540000 and FG540000C, Software Versions: v 3.2 ,  v 4.3 and v 2.3.\nThe CARTO 3 EP Navigation System is intended to be used in catheter-based cardiac electrophysiological (EP) procedures. The CARTO 3 System provides information about the electrical activity of the heart and catheter location during the procedure.",
+    "reason_for_recall": "Biosense Webster, Inc. is initiating a voluntary correction to re-install identified CARTO 3 Systems that were moved and installed in China without testing and approval by Biosense Webster Technical Services, as described in the Instructions for Use (IFU).",
+    "recall_status": "Terminated",
+    "date_initiated": "20160815",
+    "cfres_id": "149112"
+   },
+   {
+    "recall_number": "Z-1457-2017",
+    "event_number": "76447",
+    "recalling_firm": "Merge Healthcare, Inc.",
+    "product_description": "Merge Hemo software.  \n\nProduct Usage:\nMerge Hemo is a hemodynamic monitoring system that records and displays physiological data.",
+    "reason_for_recall": "In some instances, the system will lock tabs within a study, even when a second user does not have the study open on a different workstation.",
+    "recall_status": "Terminated",
+    "date_initiated": "20160404",
+    "cfres_id": "153232"
+   },
+   {
+    "recall_number": "Z-1778-2017",
+    "event_number": "76859",
+    "recalling_firm": "Merge Healthcare, Inc.",
+    "product_description": "Merge Hemo software.  The firm name on the labeling is Merge Healthcare, Hartland, WI.\nMerge Hemo monitors, measures, and records physiologic data from a human patient undergoing a cardiac catheterization procedure",
+    "reason_for_recall": "Use of the software may show an incorrect value to the user when viewing the Fractional Flow Reserve (FFR) results during recording.",
+    "recall_status": "Terminated",
+    "date_initiated": "20160404",
+    "cfres_id": "154414"
+   },
+   {
+    "recall_number": "Z-2640-2017",
+    "event_number": "76974",
+    "recalling_firm": "Merge Healthcare, Inc.",
+    "product_description": "SpO2 connecting cable for Masimo LNCS sensor (Merge Part Number: HW-HEMO-00014),\r\n\r\nProduct Usage:\r\nMerge Hemodynamics monitors, measures, and records physiologic data from a human patient undergoing a cardiac catheterization procedure. The Monitoring System is for the monitoring of vital parameters including ECG, SpO2, invasive blood pressure, temperature, NIBP and C02, and for the evaluation of resting ECG, arrhythmias, ST-segments and cardiac output.",
+    "reason_for_recall": "Under certain conditions, the cables used with the Hemo system during a patient procedure could stop displaying the patient SpO2 causing a slight delay in patient care.",
+    "recall_status": "Terminated",
+    "date_initiated": "20160404",
+    "cfres_id": "154740"
+   },
+   {
+    "recall_number": "Z-1091-2017",
+    "event_number": "76214",
+    "recalling_firm": "Merge Healthcare, Inc.",
+    "product_description": "Merge Hemo software.  Merge Hemo monitors, measures, and records physiologic data from a human patient undergoing a cardiac catheterization procedure",
+    "reason_for_recall": "There is a potential connection issue when powering up the Merge Hemo Record Station and the Hemo Monitor does not communicate with the Client PC.",
+    "recall_status": "Terminated",
+    "date_initiated": "20160328",
+    "cfres_id": "152533"
+   },
+   {
+    "recall_number": "Z-2707-2017",
+    "event_number": "77086",
+    "recalling_firm": "Merge Healthcare, Inc.",
+    "product_description": "The Schiller PB 1000, also known as Merge Hemo Patient Data Module (PDM), a major component of the Merge Hemo software.",
+    "reason_for_recall": "If the PDM is utilized to output a pressure for computing fractional flow reserve (FFR), the analog output may not reflect the true representation of the selected pressure waveform being provided by the PDM to the Link Assembly which provides the analog output.",
+    "recall_status": "Terminated",
+    "date_initiated": "20160310",
+    "cfres_id": "154942"
+   },
+   {
+    "recall_number": "Z-0554-2016",
+    "event_number": "72661",
+    "recalling_firm": "Merge Healthcare, Inc.",
+    "product_description": "Merge Hemo with software versions 10.0 LA.\n\nMerge Hemo (formerly named HeartSuite Hemodynamics) monitors, measures, and records physiologic data from a human patient undergoing a cardiac catheterization procedure.",
+    "reason_for_recall": "The firm, Merge Healthcare, sent out Merge HEMO V10.0 & Merge CARDIO V10.1 software to 3 customers before the product was completely validated in house.",
+    "recall_status": "Terminated",
+    "date_initiated": "20151026",
+    "cfres_id": "141900"
+   },
+   {
+    "recall_number": "Z-0002-2016",
+    "event_number": "72167",
+    "recalling_firm": "Biosense Webster, Inc.",
+    "product_description": "Carto 3 EP Navigation System. Electro physiology system which views of the electrical activity of the heart through real-time data on 3-D, color-coded cardiac maps.",
+    "reason_for_recall": "Image disappeared from the cardiac ultrasound system when the CARTO 3 EP Navigation System needed restarting while the patient was experiencing pericardial effusion.  Affects the CARTOSOUND Module of the CARTO 3 EP Navigation System when used with the SOUNDSTAR eco 8F and 10F Diagnostic Ultrasound Catheters. New precautions added.",
+    "recall_status": "Terminated",
+    "date_initiated": "20150910",
+    "cfres_id": "140077"
+   },
+   {
+    "recall_number": "Z-1203-2017",
+    "event_number": "75616",
+    "recalling_firm": "Merge Healthcare, Inc.",
+    "product_description": "The Schiller PB 1000, also known as: Merge Hemo Patient Data Module (PDM), V2 model, a major component of the Merge Hemo software.",
+    "reason_for_recall": "Non-invasive blood pressure pumps (NIBP) voltage is not sufficient and causes the NIBP pumps to fail prior to reaching adequate initial pressure.",
+    "recall_status": "Terminated",
+    "date_initiated": "20150531",
+    "cfres_id": "150915"
+   },
+   {
+    "recall_number": "Z-1923-2017",
+    "event_number": "76946",
+    "recalling_firm": "Merge Healthcare, Inc.",
+    "product_description": "Schiller AG ISA CO2 Sensor (AKA: PhaseIn Unit), Merge Part Number HW-HEMO-00001.  The PhaseIn Unit is an optional accessory (sold separately) to the Merge Hemo Patient Data Module (PDM). The PDM is a major component of the Merge Hemo system.",
+    "reason_for_recall": "The units may display the alarm \"sampling line clogged\" after the flow zeroing procedure that is conducted automatically 1 hour after start up.  This could result in the potential of a small bias added to the CO2 measurement and affect the alarm notification.",
+    "recall_status": "Terminated",
+    "date_initiated": "20150330",
+    "cfres_id": "154651"
+   },
+   {
+    "recall_number": "Z-1611-2015",
+    "event_number": "70891",
+    "recalling_firm": "Fujifilm Medical Systems U.S.A., Inc.",
+    "product_description": "FujiMedical Synapse Cardiovascular I ProSolv CardioVascular.   \nA picture Archiving and Communication System\nSoftware versions:\nSynapse Cardiovascular v4.0.8\nSynapse Cardiovascular v4.0.8 SR1",
+    "reason_for_recall": "Measurement values in the EMR may not accurately reflect the actual measurement value on the Synapse Cardiovascular clinical report.",
+    "recall_status": "Terminated",
+    "date_initiated": "20150204",
+    "cfres_id": "135415"
+   },
+   {
+    "recall_number": "Z-1612-2015",
+    "event_number": "70890",
+    "recalling_firm": "Fujifilm Medical Systems U.S.A., Inc.",
+    "product_description": "Fujifilm Synapse Cardiovascular I ProSolv CardioVascular\nSynapse Cardiovascular v4.0.8\nSynapse Cardiovascular v4.0.8 SR1   \nIntended Use:\nPicture Archiving and Communication System\nComputer, Diagnostic, Programmable",
+    "reason_for_recall": "Under certain circumstances the patient\nDemographics in a report exported into the EMR may not match the demographics shown in the corresponding Synapse CV clinical report.",
+    "recall_status": "Terminated",
+    "date_initiated": "20150204",
+    "cfres_id": "135411"
+   },
+   {
+    "recall_number": "Z-2347-2015",
+    "event_number": "71814",
+    "recalling_firm": "Merge Healthcare, Inc.",
+    "product_description": "Merge Hemo, 9.10, 9.20.0, 9.20.1,9.20.2, 9.30, 9.40.0, 9.40.1, 9.40.2 with Massimo PHASEIN End Tidal CO2 (EtCO2) module.   Merge Hemo (formerly named HeartSuite Hemodynamics) monitors, measures, and records physiologic data from a human patient undergoing a cardiac catheterization procedure.",
+    "reason_for_recall": "A system freeze-up of the Merge Hemo system, that included the PHASEIN End Tidal CO2 unit, resulted in the user needing to move the patient to another cath lab.",
+    "recall_status": "Terminated",
+    "date_initiated": "20150121",
+    "cfres_id": "139143"
+   },
+   {
+    "recall_number": "Z-0910-2015",
+    "event_number": "70144",
+    "recalling_firm": "McKesson Israel Ltd.",
+    "product_description": "McKesson Cardiology ECG Management\n\nIt is a software application designed to import, display, store, analyze, distribute and manage information related to ECG procedures of adult and pediatric patients from external ECG devices.",
+    "reason_for_recall": "An ECG procedure time stamp is incorrect, due to a software error in the McKesson Cardiology ECG Management with software versions 13.1 and 13.1.1.",
+    "recall_status": "Terminated",
+    "date_initiated": "20141219",
+    "cfres_id": "132318"
+   },
+   {
+    "recall_number": "Z-0143-2015",
+    "event_number": "69406",
+    "recalling_firm": "Merge Healthcare, Inc.",
+    "product_description": "Merge Healthcare, Merge Hemo Programmable diagnostic computer.\n\nThe system comprises the Patient Data Module and the HeartSuite Hemodynamics Hemo Monitor PC.  The two units are connected via a serial interface.  \nAll vital parameters and evaluations are registered and calculated in the Patient Data Module.  This data is then transmitted to the HeartSuite Hemodynamics Hemo Monitor PC via the serial interface.  All data can be shown and monitored on the HeartSuite Hemodynamics Hemo Monitor PC.  \nThe Patient Data Module uses an internal battery charged from an external power input (RS 232/12V).  The power supply, like the data transmission, is completely isolated from the visualization unit.  The HeartSuite Hemodynamics Hemo Monitor PC is powered via the normal mains connection 230V/1 IOV.",
+    "reason_for_recall": "It has been reported that during use, the SpO2 value displayed on the Hemo Monitor may not update to reflect changes in the patient's oxygen value.  It is also possible that if using the pulse rate of the SpO2 finger clip to calculate the patient's heart rate, it too may be subject to displaying a stale value.",
+    "recall_status": "Terminated",
+    "date_initiated": "20140929",
+    "cfres_id": "130438"
+   },
+   {
+    "recall_number": "Z-2535-2014",
+    "event_number": "68983",
+    "recalling_firm": "Philips Medical Systems, Inc.",
+    "product_description": "Philips IntelliSpace ECG Management System,  with software option C61 needed to import ECGs from the Quinton Stress ECG System.\n\nModel No. 860426",
+    "reason_for_recall": "Philips IntelliSpace ECG (IECG) Management Systems that are importing Stress ECG records from a Quinton Stress ECG system have the potential for the patient record to contain multiple and therefore inaccurate patient identifiers such as: patient name, patient ID (PID), Medical record number (MRN). This creates the potential for misdiagnosis and incorrect therapy.",
+    "recall_status": "Terminated",
+    "date_initiated": "20140807",
+    "cfres_id": "129200"
+   },
+   {
+    "recall_number": "Z-0665-2017",
+    "event_number": "75564",
+    "recalling_firm": "Merge Healthcare, Inc.",
+    "product_description": "Merge Hemo software.   \nMerge Hemo monitors, measures, and records physiologic data from a human patient undergoing a cardiac catheterization procedure. The Monitoring System is for the monitoring of vital parameters including ECG, SpO2, invasive blood pressure, temperature, NIBP and CO2, and for the evaluation of resting ECG, arrhythmias, ST-segments and cardiac output. Some systems are built and designed to measure End Tidal CO2. The system is intended for use in hospital cardiac catheterization laboratories",
+    "reason_for_recall": "The application may crash during the cath lab procedure.",
+    "recall_status": "Terminated",
+    "date_initiated": "20140430",
+    "cfres_id": "150802"
+   },
+   {
+    "recall_number": "Z-1273-2014",
+    "event_number": "67638",
+    "recalling_firm": "Spacelabs Healthcare, Llc",
+    "product_description": "Spacelabs Healthcare G2 Clinical Access Mislabeled CDs for PN: 063-1829-11 Rev A and Update Kit, PN: 040-1565-10.\n\nUsed for installing ICS G2 Clinical Access software onto hospital personal computers.",
+    "reason_for_recall": "Spacelabs has voluntarily recalled G2 Clinical Access Software CD because the programs installed on the Clinical Access CD are incorrect and it will prevent the customer from\ninstalling Clinical Access.",
+    "recall_status": "Terminated",
+    "date_initiated": "20140214",
+    "cfres_id": "125906"
+   },
+   {
+    "recall_number": "Z-1045-2014",
+    "event_number": "67505",
+    "recalling_firm": "Biosense Webster, Inc.",
+    "product_description": "CartoUnivu Module, Model: Carto 3 Software versions 3.2.2 and 3.2.3; Catalog No. KT-5400-124\n\nWITH THE CARTOUNIVU MODULE, FLUOROSCOPIC CAPTURES (IMAGES AND CINE CLIPS) CAN BE IMPORTED TO AND DISPLAYED IN THE CART0 3 SYSTEM. THESE IMAGES ARE NOT FOR DIAGNOSTIC PURPOSES. WHEN FLUOROSCOPIC CAPTURES ARE INTEGRATED INTO THE CART0 3 SYSTEM MAP VIEWERS (MAP VIEWER AND ADDITIONAL VIEW), CART0 3 MAPS, MRl OR CT IMAGES, AND CATHETER VISUALIZATION ARE SUPERIMPOSED ON THE FLUOROSCOPIC CAPTURE.",
+    "reason_for_recall": "Biosense Webster has initiated a recall of the  CartoUnivu Module within the Carto 3 System (V3.2.2 and V3.2.3) when used with Siemens Axiom Artis VB Fluoroscopy systems in particular procedural configurations only.  If the table rotation is not returned to zero point, there is a misalignment between the Carto 3 System map display and the fluoroscopic capture.",
+    "recall_status": "Terminated",
+    "date_initiated": "20140212",
+    "cfres_id": "125603"
+   },
+   {
+    "recall_number": "Z-1023-2013",
+    "event_number": "64579",
+    "recalling_firm": "Biosense Webster, Inc.",
+    "product_description": "20-Pole Eco Cable, Catalog #EM-5050-060\n\nProduct Usage:\nThe 20-Pole Eco Cable is intended to be used as an interface cable between the LASSO NAV Eco Catheter and CARTO 3 System.",
+    "reason_for_recall": "Biosense is recalling the 20-Pole Eco Cable because it was incorrectly calibrated.  When a catheter is connected to an affected to an affected 20-Pole Eco Cable, the catheter will not be recognized by the impacted 54 cable serial numbers within the field.",
+    "recall_status": "Terminated",
+    "date_initiated": "20130305",
+    "cfres_id": "116525"
+   },
+   {
+    "recall_number": "Z-0694-2013",
+    "event_number": "63931",
+    "recalling_firm": "Spacelabs Healthcare, Llc",
+    "product_description": "Spacelabs Smart Disclosure System, Model 92810, is an integrated component of the Intesys Clinical Suite (ICS) G2, Version 4.03.\n\nThe Smart Disclosure product collects patient waveforms, alarms, vital signs, and 12-lead reports. A 24-hour waveform acquisition is standard, with an upgrade option to 72 hours.\n\nThe product provides basic trends in both tabular and graphical format, along with a retrospective ECG analysis. The analysis may be defined by patient, and the data may be presented in multiple formats, including a rhythm, a histogram, and a summary view.\n\nStandard reports are available from Smart Disclosure, including saved events, disclosure, trends, histogram, and summary.\n\nThe Spacelabs Smart Disclosure System, Model 92810 is indicated for use in clinical situations where there is a need for review of physiological waveform information and alarm events up to 72 hours after the fact. Smart Disclosure is also indicated in those situations where a retrospective analysis of monitoring patients' ECG waveform data, that can be annotated and edited, is desired. The intended use of the Spacelabs Smart Disclosure is to interface with the Spacelabs monitoring network, providing the user with a means of recalling waveform information and performing retrospective analysis. The most recent 72 hours of monitored patient ECG waveform data can be analyzed, with each analysis limited to 24 hours or less.",
+    "reason_for_recall": "Displaying or printing of an incorrect waveform for the time indicated in the printout or display in the Spacelabs Healthcare Intesys Clinical Suite (ICS) G2, Version 4.03, Clinical Access portion of Smart Disclosure, Model 92810.",
+    "recall_status": "Terminated",
+    "date_initiated": "20121205",
+    "cfres_id": "115067"
+   },
+   {
+    "recall_number": "Z-2341-2016",
+    "event_number": "74577",
+    "recalling_firm": "Merge Healthcare, Inc.",
+    "product_description": "Merge HEMO software.",
+    "reason_for_recall": "The International Normalized Ratio (INR) value displayed in the study report does not match the value that is imported on the pre-procedure labs screen from HL7",
+    "recall_status": "Terminated",
+    "date_initiated": "20120702",
+    "cfres_id": "147937"
+   }
+  ]
+ },
+ "notes": []
+}

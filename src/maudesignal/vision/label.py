@@ -29,8 +29,12 @@ from typing import Any, Literal
 
 from PIL import Image
 
+from maudesignal.common.device_ids import (  # noqa: F401  (re-exported)
+    gtin_check_digit_ok,
+    normalize_k_number,
+    parse_udi,
+)
 from maudesignal.extraction.skill_loader import LoadedSkill
-from maudesignal.vision.fda_pdf import normalize_k_number
 from maudesignal.vision.images import crop_with_margin, encode, fit, open_image
 from maudesignal.vision.openfda510k import Fda510kRecord, OpenFda510k, OpenFdaError
 from maudesignal.vision.sam import SamBox, SamClient, SamError, SamResult, best_record
@@ -74,21 +78,6 @@ class LabelField:
     def present(self) -> bool:
         """The field was read (fully or partly)."""
         return bool(self.value) and self.legibility not in ("not_present", "illegible")
-
-
-def gtin_check_digit_ok(digits: str) -> bool:
-    """GS1 mod-10 check digit for GTIN-8/12/13/14."""
-    d = re.sub(r"\D", "", digits or "")
-    if len(d) not in (8, 12, 13, 14):
-        return False
-    body, check = d[:-1], int(d[-1])
-    total = sum(int(c) * (3 if i % 2 == 0 else 1) for i, c in enumerate(reversed(body)))
-    return (10 - total % 10) % 10 == check
-
-
-def parse_udi(udi: str) -> dict[str, str]:
-    """Split a human-readable GS1 UDI ``(01)...(17)...`` into application identifiers."""
-    return {m.group(1): m.group(2).strip() for m in re.finditer(r"\((\d{2,4})\)([^(]*)", udi)}
 
 
 #: GS1 application identifiers that may be stored: device id, production and expiry date.

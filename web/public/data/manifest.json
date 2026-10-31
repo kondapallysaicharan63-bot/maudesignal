@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "generated_utc": "2026-10-31T09:41:04Z",
+  "source_commit": "0af54661746e67c09c5c52f316f9615feb78de4a",
+  "files": [
+    "threads.json",
+    "evidence.json",
+    "briefs.json",
+    "audit.json",
+    "dossier.json",
+    "vision.json",
+    "company.json",
+    "sweep.json",
+    "investigations.json",
+    "protocol.json",
+    "sources.json",
+    "schedules.json",
+    "alerts.json",
+    "mentions.json"
+  ],
+  "assets": [
+    "dossier/SER-LLZ-20260831-001-draft.pdf",
+    "dossier/SER-LLZ-20260831-001-approved.pdf",
+    "vision/label-caresens-n.jpg",
+    "vision/label-nomad-pro2.jpg",
+    "vision/label-spot-vital-signs.jpg",
+    "vision/label-thermometer-1.jpg",
+    "vision/label-thermometer-2.jpg",
+    "vision/label-welch-802-ltr.jpg",
+    "vision/label-welch-module.jpg"
+  ],
+  "header": {
+    "claims_verified": 97,
+    "sentences_verified": 69,
+    "sentences_withheld": 1,
+    "answers": 30,
+    "audit_chain_ok": true
+  },
+  "notes": []
+}

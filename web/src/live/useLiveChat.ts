@@ -1,0 +1,216 @@
+// The conversation state: typed and spoken turns, history for the next question, and the fall back to stored runs.
+// Nothing here stores a question, an answer, audio or a photo outside this page's memory; a reload starts clean.
+import { useCallback, useRef, useState } from 'react'
+import type { Evidence, Thread } from '../types'
+import {
+  answerText,
+  checkQuestion,
+  LIMIT_TEXT,
+  LiveError,
+  postAsk,
+  postVoice,
+  type AskResponse,
+  type Turn,
+} from './api'
+import { recordedFor } from './recorded'
+import { speak, stopSpeaking } from './speech'
+
+type Fetcher = (url: string, init?: RequestInit) => Promise<Response>
+
+export interface LiveTurn {
+  id: number
+  via: 'text' | 'voice'
+  /** The question as typed, or as heard for a voice turn (null until the transcript arrives). */
+  question: string | null
+  status: 'pending' | 'done' | 'error'
+  resp?: AskResponse
+  /** Shown instead of an answer: a server message (patient data, bad input) or why nothing could be asked. */
+  error?: string
+  /** A voice turn that fell back: offer the stored voice run. */
+  offerRecordedVoice?: boolean
+}
+
+export interface LiveChat {
+  enabled: boolean
+  turns: LiveTurn[]
+  busy: boolean
+  limitReached: boolean
+  speaker: boolean
+  setSpeaker: (on: boolean) => void
+  speakingId: number | null
+  /** Reads one answer aloud now. */
+  readAloud: (id: number) => void
+  stopSpeech: () => void
+  /** Plain-words reason the microphone or a recording could not be used (shown on the voice screen). */
+  micNotice: string | null
+  setMicNotice: (m: string | null) => void
+  /** Returns a message when the question was refused before sending (too short or too long), otherwise null. */
+  ask: (q: string, o?: { productCode?: string | null }) => string | null
+  askVoice: (wav: Blob) => Promise<void>
+  clear: () => void
+}
+
+interface Options {
+  apiBase: string | null
+  ref: string | null
+  threads: Thread[]
+  evidence: Evidence
+  fetcher?: Fetcher
+}
+
+let nextId = 1
+
+export function useLiveChat(o: Options): LiveChat {
+  const [turns, setTurns] = useState<LiveTurn[]>([])
+  const [limitReached, setLimit] = useState(false)
+  const [speaker, setSpeaker] = useState(true)
+  const [speakingId, setSpeakingId] = useState<number | null>(null)
+  const [micNotice, setMicNotice] = useState<string | null>(null)
+  const turnsRef = useRef<LiveTurn[]>([])
+  const limitRef = useRef(false)
+  const speakerRef = useRef(true)
+  const opts = useRef(o)
+  opts.current = o
+  speakerRef.current = speaker
+
+  const put = useCallback((next: LiveTurn[]) => {
+    turnsRef.current = next
+    setTurns(next)
+  }, [])
+  const patch = useCallback(
+    (id: number, p: Partial<LiveTurn>) => put(turnsRef.current.map((t) => (t.id === id ? { ...t, ...p } : t))),
+    [put],
+  )
+
+  const history = (): Turn[] =>
+    turnsRef.current
+      .filter((t) => t.status === 'done' && t.question && t.resp)
+      .map((t) => ({ question: t.question as string, answer: answerText(t.resp!.answer) }))
+
+  const fetcher: Fetcher = useCallback((u, i) => (opts.current.fetcher ?? ((a, b) => fetch(a, b)))(u, i), [])
+
+  const say = useCallback((id: number, text: string) => {
+    const ok = speak(text, { onStart: () => setSpeakingId(id), onEnd: () => setSpeakingId((c) => (c === id ? null : c)) })
+    if (!ok) setSpeakingId(null)
+  }, [])
+
+  const ask = useCallback(
+    (raw: string, ask?: { productCode?: string | null }): string | null => {
+      let q: string
+      try {
+        q = checkQuestion(raw)
+      } catch (e) {
+        return (e as Error).message
+      }
+      const id = nextId++
+      const past = history()
+      put([...turnsRef.current, { id, via: 'text', question: q, status: 'pending' }])
+      const { apiBase, ref, threads, evidence } = opts.current
+      const recorded = (why: string) => patch(id, { status: 'done', resp: recordedFor(q, threads, evidence, why) })
+      if (limitRef.current) {
+        recorded(LIMIT_TEXT + '.')
+        return null
+      }
+      postAsk(q, { history: past, ref, productCode: ask?.productCode ?? null }, { apiBase, fetcher })
+        .then((resp) => patch(id, { status: 'done', resp }))
+        .catch((e: unknown) => {
+          const err = e instanceof LiveError ? e : new LiveError('network', 'The live service could not be reached.')
+          if (err.kind === 'rate_limited') {
+            limitRef.current = true
+            setLimit(true)
+            recorded(LIMIT_TEXT + '.')
+          } else if (err.kind === 'patient_data' || err.kind === 'invalid_input') patch(id, { status: 'error', error: err.message })
+          else recorded(`${err.message}`)
+        })
+      return null
+    },
+    [fetcher, patch, put], // eslint-disable-line react-hooks/exhaustive-deps
+  )
+
+  const askVoice = useCallback(
+    async (wav: Blob): Promise<void> => {
+      const id = nextId++
+      const past = history()
+      put([...turnsRef.current, { id, via: 'voice', question: null, status: 'pending' }])
+      const { apiBase } = opts.current
+      if (limitRef.current) {
+        patch(id, { status: 'error', error: `${LIMIT_TEXT}. A spoken question needs the live service; the stored voice run is available.`, offerRecordedVoice: true })
+        return
+      }
+      try {
+        const resp = await postVoice(wav, { history: past }, { apiBase, fetcher })
+        patch(id, { status: 'done', question: resp.heard ?? null, resp })
+        if (speakerRef.current && resp.answer.spoken_text) say(id, resp.answer.spoken_text)
+      } catch (e) {
+        const err = e instanceof LiveError ? e : new LiveError('network', 'The live service could not be reached.')
+        if (err.kind === 'rate_limited') {
+          limitRef.current = true
+          setLimit(true)
+          patch(id, { status: 'error', error: `${LIMIT_TEXT}. A spoken question needs the live service; the stored voice run is available.`, offerRecordedVoice: true })
+        } else if (err.kind === 'patient_data' || err.kind === 'invalid_input') patch(id, { status: 'error', error: err.message })
+        else patch(id, { status: 'error', error: `${err.message} The stored voice run is available.`, offerRecordedVoice: true })
+      }
+    },
+    [fetcher, patch, put, say], // eslint-disable-line react-hooks/exhaustive-deps
+  )
+
+  const readAloud = useCallback(
+    (id: number) => {
+      const t = turnsRef.current.find((x) => x.id === id)
+      if (t?.resp?.answer.spoken_text) say(id, t.resp.answer.spoken_text)
+    },
+    [say],
+  )
+  const stopSpeech = useCallback(() => {
+    stopSpeaking()
+    setSpeakingId(null)
+  }, [])
+  const clear = useCallback(() => {
+    stopSpeaking()
+    setSpeakingId(null)
+    limitRef.current = false
+    setLimit(false)
+    put([])
+  }, [put])
+
+  return {
+    enabled: !!o.apiBase,
+    turns,
+    busy: turns.some((t) => t.status === 'pending'),
+    limitReached,
+    speaker,
+    setSpeaker: (on) => {
+      setSpeaker(on)
+      if (!on) {
+        stopSpeaking()
+        setSpeakingId(null)
+      }
+    },
+    speakingId,
+    readAloud,
+    stopSpeech,
+    micNotice,
+    setMicNotice,
+    ask,
+    askVoice,
+    clear,
+  }
+}
+
+/** The switched-off conversation (no API address): nothing is sent, nothing is kept. */
+export const NO_LIVE: LiveChat = {
+  enabled: false,
+  turns: [],
+  busy: false,
+  limitReached: false,
+  speaker: false,
+  setSpeaker: () => undefined,
+  speakingId: null,
+  readAloud: () => undefined,
+  stopSpeech: () => undefined,
+  micNotice: null,
+  setMicNotice: () => undefined,
+  ask: () => 'The live service is not connected in this build.',
+  askVoice: async () => undefined,
+  clear: () => undefined,
+}

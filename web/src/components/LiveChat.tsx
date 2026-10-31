@@ -1,0 +1,282 @@
+import { useEffect, useRef, useState } from 'react'
+import { Icon } from '../icons'
+import { heldBackLine, LIMIT_TEXT, NOT_MEDICAL_ADVICE, VOICE_NOTE, type AskResponse } from '../live/api'
+import { speechSupported } from '../live/speech'
+import type { LiveChat as Chat, LiveTurn } from '../live/useLiveChat'
+import type { Thread } from '../types'
+import { LiveTrace } from './LiveTrace'
+
+const reduced = (): boolean => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
+/** Words shown so far: one more every 28 ms, all at once with prefers-reduced-motion. */
+function useReveal(total: number, active: boolean): number {
+  const [n, setN] = useState(active && !reduced() ? 0 : total)
+  useEffect(() => {
+    if (!active || reduced()) {
+      setN(total)
+      return
+    }
+    setN(0)
+    const id = window.setInterval(() => {
+      setN((c) => {
+        if (c + 1 >= total) window.clearInterval(id)
+        return Math.min(total, c + 1)
+      })
+    }, 28)
+    return () => window.clearInterval(id)
+  }, [total, active])
+  return n
+}
+
+function Sentence({ text, links, onDone }: { text: string; links: { label: string; url: string }[]; onDone: () => void }) {
+  const words = text.split(' ')
+  const n = useReveal(words.length, true)
+  const done = n >= words.length
+  const fired = useRef(false)
+  useEffect(() => {
+    if (done && !fired.current) {
+      fired.current = true
+      onDone()
+    }
+  }, [done, onDone])
+  return (
+    <li className="py-1.5" data-testid="answer-sentence">
+      <span className="ws-wrap">{words.slice(0, n).join(' ')}</span>
+      {done && links.length > 0 && (
+        <span className="mt-1 block text-[15px]" data-testid="sentence-links">
+          {links.map((l, i) => (
+            <span key={l.url}>
+              {i > 0 && ' · '}
+              <a href={l.url} target="_blank" rel="noreferrer" className="text-accent underline">
+                {l.label}
+              </a>
+            </span>
+          ))}
+        </span>
+      )}
+    </li>
+  )
+}
+
+/** The trace steps appear one by one as the run is shown, then the answer is written out word by word. */
+function Answer({ turn, chat }: { turn: LiveTurn; chat: Chat }) {
+  const resp = turn.resp as AskResponse
+  const steps = resp.trace
+  const [shownSteps, setSteps] = useState(reduced() ? steps.length : 0)
+  useEffect(() => {
+    if (shownSteps >= steps.length) return
+    const id = window.setTimeout(() => setSteps((s) => s + 1), 220)
+    return () => window.clearTimeout(id)
+  }, [shownSteps, steps.length])
+  const stepsDone = shownSteps >= steps.length
+  const [upTo, setUpTo] = useState(1)
+  const sentences = resp.answer.speakable
+  const held = heldBackLine(resp.answer.withheld)
+  const allShown = stepsDone && upTo > sentences.length
+  const recorded = resp.mode === 'recorded'
+  const speaking = chat.speakingId === turn.id
+  return (
+    <div data-testid="live-answer" data-mode={resp.mode}>
+      <p className="m-0 flex flex-wrap items-center gap-2">
+        <span className={`ws-pill ${recorded ? 'bg-warning-soft text-warning' : 'bg-success-soft text-success'}`} data-testid="mode-badge">
+          {recorded ? 'Recorded run' : 'Live answer'}
+        </span>
+        {resp.limits && !recorded && (
+          <span className="text-[15px] text-ink-2" data-testid="limits">
+            {resp.limits.remaining_today} live {resp.limits.remaining_today === 1 ? 'question' : 'questions'} left today
+          </span>
+        )}
+      </p>
+      {recorded && resp.recorded_note && (
+        <p className="ws-wrap m-0 mt-2 text-[16px] text-ink-2" data-testid="recorded-note">
+          {resp.recorded_note}
+        </p>
+      )}
+      {steps.length > 0 && (
+        <div className="mt-2">
+          <LiveTrace steps={steps} shown={shownSteps} />
+        </div>
+      )}
+      {stepsDone && (
+        <>
+          {sentences.length > 0 && (
+            <ul className="m-0 mt-2 list-none p-0" data-testid="answer-sentences">
+              {sentences.slice(0, upTo).map((s, i) => (
+                <Sentence key={i} text={s.text} links={s.links} onDone={() => setUpTo((u) => Math.max(u, i + 2))} />
+              ))}
+            </ul>
+          )}
+          {sentences.length === 0 && !held && !recorded && <p className="m-0 mt-2 text-ink-2">No sentence passed the claim gate for this question.</p>}
+          {allShown && held && (
+            <p className="ws-wrap m-0 mt-2 text-[16px] text-ink-2" data-testid="held-back">
+              {held}
+            </p>
+          )}
+        </>
+      )}
+      {allShown && (
+        <p className="m-0 mt-2 flex flex-wrap items-center gap-2 text-[15px] text-ink-2">
+          {resp.answer.spoken_text && speechSupported() && (
+            <button
+              type="button"
+              className="ms-btn ms-btn--secondary"
+              style={{ height: 36 }}
+              onClick={() => (speaking ? chat.stopSpeech() : chat.readAloud(turn.id))}
+              aria-label={speaking ? 'Stop reading aloud' : 'Read this answer aloud'}
+            >
+              {speaking ? 'Stop' : 'Read aloud'}
+            </button>
+          )}
+          {typeof resp.cost_usd === 'number' && <span className="ms-num">Cost of this answer: ${resp.cost_usd.toFixed(4)}</span>}
+        </p>
+      )}
+      <p className="m-0 mt-2 text-[15px] text-ink-2" data-testid="not-advice">
+        {NOT_MEDICAL_ADVICE}
+      </p>
+    </div>
+  )
+}
+
+/** While the model works: the steps that will run, the one in progress marked. Real timings arrive with the answer. */
+function Typing({ voice }: { voice: boolean }) {
+  return (
+    <div role="status" aria-live="polite" data-testid="typing" className="text-[16px] text-ink-2">
+      <p className="m-0 flex items-center gap-2">
+        <span className="ms-num inline-flex gap-1" aria-hidden="true">
+          <i className="ws-dot" />
+          <i className="ws-dot" />
+          <i className="ws-dot" />
+        </span>
+        <span>{voice ? 'Transcribing your question, then Muse Spark reads the stored records…' : 'Muse Spark is reading the stored records…'}</span>
+      </p>
+      <ol className="m-0 mt-1 list-none space-y-0.5 p-0 text-[15px]">
+        {voice && <li>1 · Voice Transcribe: working</li>}
+        <li>
+          {voice ? 2 : 1} · Muse Spark: working
+        </li>
+        <li>
+          {voice ? 3 : 2} · Claim gate: waits for the sentences
+        </li>
+      </ol>
+    </div>
+  )
+}
+
+function TurnView({ turn, chat, onRecordedVoice }: { turn: LiveTurn; chat: Chat; onRecordedVoice: () => void }) {
+  return (
+    <article className="space-y-3" data-testid="live-turn" data-status={turn.status}>
+      <div className="ml-auto max-w-[85%] rounded-md bg-sunk px-4 py-3" data-testid="user-bubble">
+        {turn.via === 'voice' ? (
+          <p className="ws-wrap m-0">
+            <span className="font-semibold">Heard:</span>{' '}
+            {turn.question ? <>&ldquo;{turn.question}&rdquo;</> : <span className="text-ink-2">{turn.status === 'pending' ? 'transcribing…' : 'nothing was heard'}</span>}
+          </p>
+        ) : (
+          <p className="ws-wrap m-0 whitespace-pre-wrap">{turn.question}</p>
+        )}
+      </div>
+      {turn.status === 'pending' && <Typing voice={turn.via === 'voice'} />}
+      {turn.status === 'error' && (
+        <div role="alert" className="ms-banner ms-banner--warn" data-testid="turn-error">
+          <span className="ws-wrap">{turn.error}</span>
+          {turn.offerRecordedVoice && (
+            <button type="button" className="ms-btn ms-btn--secondary mt-2" style={{ height: 40 }} onClick={onRecordedVoice}>
+              Open the recorded voice run
+            </button>
+          )}
+        </div>
+      )}
+      {turn.status === 'done' && turn.resp && (
+        <>
+          {turn.via === 'voice' && turn.resp.heard && <span className="sr-only">Heard: {turn.resp.heard}</span>}
+          <Answer turn={turn} chat={chat} />
+        </>
+      )}
+    </article>
+  )
+}
+
+/** The conversation: your questions as bubbles, a typing indicator with the live steps, then the checked answer. */
+export function LiveChatView({ chat, threads, onStarter, onRecordedVoice }: {
+  chat: Chat
+  threads: Thread[]
+  onStarter: (q: string) => void
+  onRecordedVoice: () => void
+}) {
+  const end = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    end.current?.scrollIntoView?.({ block: 'end' })
+  }, [chat.turns.length, chat.turns.map((t) => t.status).join()])
+  const starters = ['01-what-changed', '05-capa-need-evidence', '10-recalls']
+    .map((id) => threads.find((t) => t.id === id))
+    .filter((t): t is Thread => !!t)
+  return (
+    <div className="space-y-6" data-testid="live-chat">
+      <div>
+        <p className="ms-kicker">Live</p>
+        <h1 className="t-title-lg m-0">Ask Muse Spark</h1>
+        <p className="mt-1 max-w-xl text-ink-2">
+          Type a question or press the mic. Muse Spark answers from stored records only, and every sentence passes the claim gate before you see it.
+        </p>
+        <p className="m-0 mt-2 flex flex-wrap items-center gap-2">
+          {speechSupported() && (
+            <button
+              type="button"
+              className="ms-btn ms-btn--secondary"
+              style={{ height: 40 }}
+              aria-pressed={chat.speaker}
+              onClick={() => chat.setSpeaker(!chat.speaker)}
+              data-testid="speaker-toggle"
+            >
+              <Icon name="mic" size={16} /> Speaker {chat.speaker ? 'on' : 'off'}
+            </button>
+          )}
+          {chat.speakingId !== null && (
+            <button type="button" className="ms-btn ms-btn--secondary" style={{ height: 40 }} onClick={chat.stopSpeech} data-testid="stop-speech">
+              Stop reading
+            </button>
+          )}
+          {chat.turns.length > 0 && (
+            <button type="button" className="ms-btn ms-btn--secondary" style={{ height: 40 }} onClick={chat.clear}>
+              Clear conversation
+            </button>
+          )}
+        </p>
+        <p className="m-0 mt-2 text-[15px] text-ink-2" data-testid="voice-note">
+          {VOICE_NOTE}
+        </p>
+      </div>
+      {chat.limitReached && (
+        <p role="status" className="ms-banner ms-banner--warn m-0" data-testid="limit-banner">
+          <span className="ws-wrap">{LIMIT_TEXT}</span>
+        </p>
+      )}
+      {chat.micNotice && (
+        <p role="alert" className="ms-banner ms-banner--warn m-0">
+          <span className="ws-wrap">{chat.micNotice}</span>
+        </p>
+      )}
+      {chat.turns.length === 0 && starters.length > 0 && (
+        <div>
+          <h2 className="ms-kicker">Try one of these</h2>
+          <ul className="m-0 mt-1 list-none p-0">
+            {starters.map((t) => (
+              <li key={t.id}>
+                <button type="button" className="ws-side-item items-start border-b border-rule" onClick={() => onStarter(t.question)}>
+                  <span className="ws-wrap">{t.question}</span>
+                  <Icon name="chevron" size={18} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <div role="log" aria-live="polite" aria-label="Conversation" className="space-y-8">
+        {chat.turns.map((t) => (
+          <TurnView key={t.id} turn={t} chat={chat} onRecordedVoice={onRecordedVoice} />
+        ))}
+      </div>
+      <div ref={end} />
+    </div>
+  )
+}

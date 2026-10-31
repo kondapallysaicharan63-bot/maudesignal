@@ -1,0 +1,303 @@
+{
+  "schema_version": "1.0",
+  "company": "Demo MedTech Co. (simulated)",
+  "banner": "Simulated company — sample data. Problem evidence is real FDA data.",
+  "notes": [
+    "Simulated company: every name, owner, model, status and date in this file is sample data.",
+    "Problem evidence (reports, recalls) is real openFDA data kept in separate files; this file holds none of it.",
+    "Product codes: LLZ (x2), QIH, MYN, POK are in the demo database; IYN, OTE, DSI, MUD are sweep-flagged codes; DQK, LNH, MWI are sweep 'no change' codes with 3 or more prior reports."
+  ],
+  "devices": [
+    {
+      "device_id": "DMC-01",
+      "name": "Vellmar ViewStation",
+      "model": "HV-200",
+      "product_code": "LLZ",
+      "owner": "Mara Ellison (simulated)",
+      "device_type": {
+        "name": "System, Image Processing, Radiological",
+        "source": "openFDA device classification (stored in the demo database)",
+        "query_url": "https://api.fda.gov/device/classification.json?search=product_code:LLZ"
+      },
+      "sweep": {
+        "file": "demo/sweep/ai-device-sweep.json",
+        "product_code": "LLZ",
+        "as_of": "20260930",
+        "classification": "stable",
+        "triggers": [],
+        "current_count": 12,
+        "baseline_count": 288,
+        "prior_report_count": 19958,
+        "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
+      }
+    },
+    {
+      "device_id": "DMC-02",
+      "name": "Vellmar ReportDesk",
+      "model": "RD-110",
+      "product_code": "LLZ",
+      "owner": "Devon Park (simulated)",
+      "device_type": {
+        "name": "System, Image Processing, Radiological",
+        "source": "openFDA device classification (stored in the demo database)",
+        "query_url": "https://api.fda.gov/device/classification.json?search=product_code:LLZ"
+      },
+      "sweep": {
+        "file": "demo/sweep/ai-device-sweep.json",
+        "product_code": "LLZ",
+        "as_of": "20260930",
+        "classification": "stable",
+        "triggers": [],
+        "current_count": 12,
+        "baseline_count": 288,
+        "prior_report_count": 19958,
+        "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
+      }
+    },
+    {
+      "device_id": "DMC-03",
+      "name": "Lumenar Renal Assist",
+      "model": "LRA-3",
+      "product_code": "QIH",
+      "owner": "Iris Tanaka (simulated)",
+      "device_type": {
+        "name": "Automated Radiological Image Processing Software",
+        "source": "device.openfda.device_name of a stored MAUDE report",
+        "query_url": "https://api.fda.gov/device/classification.json?search=product_code:QIH"
+      },
+      "sweep": {
+        "file": "demo/sweep/ai-device-sweep.json",
+        "product_code": "QIH",
+        "as_of": "20260930",
+        "classification": "stable",
+        "triggers": [],
+        "current_count": 0,
+        "baseline_count": 0,
+        "prior_report_count": 10,
+        "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQIH+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
+      }
+    },
+    {
+      "device_id": "DMC-04",
+      "name": "Tessera Slide Reader",
+      "model": "TSR-5",
+      "product_code": "MYN",
+      "owner": "Tomas Reyes (simulated)",
+      "device_type": {
+        "name": "Analyzer, Medical Image",
+        "source": "openFDA device classification (stored in the demo database)",
+        "query_url": "https://api.fda.gov/device/classification.json?search=product_code:MYN"
+      },
+      "sweep": {
+        "file": "demo/sweep/ai-device-sweep.json",
+        "product_code": "MYN",
+        "as_of": "20260930",
+        "classification": "stable",
+        "triggers": [],
+        "current_count": 0,
+        "baseline_count": 0,
+        "prior_report_count": 5,
+        "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMYN+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
+      }
+    },
+    {
+      "device_id": "DMC-05",
+      "name": "Oriel Lesion Check",
+      "model": "OLC-2",
+      "product_code": "POK",
+      "owner": "Lena Osei (simulated)",
+      "device_type": {
+        "name": "Computer-Assisted Diagnostic Software For Lesions Suspicious For Cancer",
+        "source": "openFDA device classification (stored in the demo database)",
+        "query_url": "https://api.fda.gov/device/classification.json?search=product_code:POK"
+      },
+      "sweep": {
+        "file": "demo/sweep/ai-device-sweep.json",
+        "product_code": "POK",
+        "as_of": "20260930",
+        "classification": "stable",
+        "triggers": [],
+        "current_count": 0,
+        "baseline_count": 0,
+        "prior_report_count": 1,
+        "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3APOK+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
+      }
+    },
+    {
+      "device_id": "DMC-06",
+      "name": "Brindle Series 6",
+      "model": "BS-600",
+      "product_code": "IYN",
+      "owner": "Noor Haddad (simulated)",
+      "device_type": {
+        "name": null,
+        "source": null,
+        "query_url": "https://api.fda.gov/device/classification.json?search=product_code:IYN",
+        "note": "name is read from the fetched evidence file (openFDA classification)"
+      },
+      "sweep": {
+        "file": "demo/sweep/ai-device-sweep.json",
+        "product_code": "IYN",
+        "as_of": "20260930",
+        "classification": "spike",
+        "triggers": [
+          "spike"
+        ],
+        "current_count": 21,
+        "baseline_count": 42,
+        "prior_report_count": 2727,
+        "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AIYN+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
+      }
+    },
+    {
+      "device_id": "DMC-07",
+      "name": "Kestrel Series 7",
+      "model": "KS-700",
+      "product_code": "OTE",
+      "owner": "Callum Brodie (simulated)",
+      "device_type": {
+        "name": null,
+        "source": null,
+        "query_url": "https://api.fda.gov/device/classification.json?search=product_code:OTE",
+        "note": "name is read from the fetched evidence file (openFDA classification)"
+      },
+      "sweep": {
+        "file": "demo/sweep/ai-device-sweep.json",
+        "product_code": "OTE",
+        "as_of": "20260930",
+        "classification": "spike",
+        "triggers": [
+          "spike"
+        ],
+        "current_count": 15,
+        "baseline_count": 23,
+        "prior_report_count": 1017,
+        "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOTE+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
+      }
+    },
+    {
+      "device_id": "DMC-08",
+      "name": "Marlow Series 4",
+      "model": "MS-400",
+      "product_code": "DSI",
+      "owner": "Yuki Sato (simulated)",
+      "device_type": {
+        "name": null,
+        "source": null,
+        "query_url": "https://api.fda.gov/device/classification.json?search=product_code:DSI",
+        "note": "name is read from the fetched evidence file (openFDA classification)"
+      },
+      "sweep": {
+        "file": "demo/sweep/ai-device-sweep.json",
+        "product_code": "DSI",
+        "as_of": "20260930",
+        "classification": "severity_escalation",
+        "triggers": [
+          "severity_escalation"
+        ],
+        "current_count": 10,
+        "baseline_count": 29,
+        "prior_report_count": 33421,
+        "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADSI+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
+      }
+    },
+    {
+      "device_id": "DMC-09",
+      "name": "Quillon Series 2",
+      "model": "QS-200",
+      "product_code": "MUD",
+      "owner": "Ana Moreau (simulated)",
+      "device_type": {
+        "name": null,
+        "source": null,
+        "query_url": "https://api.fda.gov/device/classification.json?search=product_code:MUD",
+        "note": "name is read from the fetched evidence file (openFDA classification)"
+      },
+      "sweep": {
+        "file": "demo/sweep/ai-device-sweep.json",
+        "product_code": "MUD",
+        "as_of": "20260930",
+        "classification": "spike",
+        "triggers": [
+          "spike"
+        ],
+        "current_count": 3,
+        "baseline_count": 5,
+        "prior_report_count": 741,
+        "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMUD+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
+      }
+    },
+    {
+      "device_id": "DMC-10",
+      "name": "Fennick Series 6",
+      "model": "FS-600",
+      "product_code": "DQK",
+      "owner": "Ravi Menon (simulated)",
+      "device_type": {
+        "name": null,
+        "source": null,
+        "query_url": "https://api.fda.gov/device/classification.json?search=product_code:DQK",
+        "note": "name is read from the fetched evidence file (openFDA classification)"
+      },
+      "sweep": {
+        "file": "demo/sweep/ai-device-sweep.json",
+        "product_code": "DQK",
+        "as_of": "20260930",
+        "classification": "stable",
+        "triggers": [],
+        "current_count": 18,
+        "baseline_count": 52,
+        "prior_report_count": 4540,
+        "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADQK+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
+      }
+    },
+    {
+      "device_id": "DMC-11",
+      "name": "Sable Series 3",
+      "model": "SS-300",
+      "product_code": "LNH",
+      "owner": "Elin Strand (simulated)",
+      "device_type": {
+        "name": null,
+        "source": null,
+        "query_url": "https://api.fda.gov/device/classification.json?search=product_code:LNH",
+        "note": "name is read from the fetched evidence file (openFDA classification)"
+      },
+      "sweep": {
+        "file": "demo/sweep/ai-device-sweep.json",
+        "product_code": "LNH",
+        "as_of": "20260930",
+        "classification": "stable",
+        "triggers": [],
+        "current_count": 10,
+        "baseline_count": 33,
+        "prior_report_count": 4777,
+        "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALNH+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
+      }
+    },
+    {
+      "device_id": "DMC-12",
+      "name": "Pelham Series 9",
+      "model": "PS-900",
+      "product_code": "MWI",
+      "owner": "Joss Whitaker (simulated)",
+      "device_type": {
+        "name": null,
+        "source": null,
+        "query_url": "https://api.fda.gov/device/classification.json?search=product_code:MWI",
+        "note": "name is read from the fetched evidence file (openFDA classification)"
+      },
+      "sweep": {
+        "file": "demo/sweep/ai-device-sweep.json",
+        "product_code": "MWI",
+        "as_of": "20260930",
+        "classification": "stable",
+        "triggers": [],
+        "current_count": 19,
+        "baseline_count": 97,
+        "prior_report_count": 2155,
+        "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMWI+AND+date_received%3A%5B20241030+TO+20261030%5D&count=date_received"
+      }
+    }
+  ]
+}

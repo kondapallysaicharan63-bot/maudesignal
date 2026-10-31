@@ -1,0 +1,74 @@
+# HACKATHON-BUILT — live smoke test of the public Muse routes (/v1/live/*), run in process.
+# Spends a few cents of Meta credit (hard cap $0.60 in scripts/live_smoke.py). Runs ONLY when
+# demo/LIVE_SMOKE_REQUEST is pushed to track-c-live with content other than empty or 0, or
+# by hand (workflow_dispatch). The META_MODEL_API_KEY secret is injected as an env var and
+# never echoed. The result file holds no key and no address.
+name: Live smoke test
+
+on:
+  push:
+    branches: [track-c-live]
+    paths:
+      - "demo/LIVE_SMOKE_REQUEST"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: live-smoke
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Gate (a push must carry a request other than empty or 0)
+        id: gate
+        run: |
+          run=yes
+          if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
+            content="$(tr -d '[:space:]' < demo/LIVE_SMOKE_REQUEST 2>/dev/null || true)"
+            if [ -z "${content}" ] || [ "${content}" = "0" ]; then
+              run=no
+              echo "demo/LIVE_SMOKE_REQUEST is empty or 0: nothing is run and nothing is spent."
+            fi
+          fi
+          echo "run=${run}" >> "${GITHUB_OUTPUT}"
+      - uses: actions/setup-python@v5
+        if: steps.gate.outputs.run == 'yes'
+        with:
+          python-version: "3.12"
+      - if: steps.gate.outputs.run == 'yes'
+        run: pip install -e ".[connector]"
+      - name: Which secrets are present (names only)
+        if: steps.gate.outputs.run == 'yes'
+        env:
+          META_MODEL_API_KEY: ${{ secrets.META_MODEL_API_KEY }}
+        run: |
+          if [ -n "${META_MODEL_API_KEY}" ]; then echo "META_MODEL_API_KEY: set"; else echo "META_MODEL_API_KEY: MISSING"; fi
+      - name: Live smoke (2 chat turns, 1 voice, 1 label; cap $0.60)
+        if: steps.gate.outputs.run == 'yes'
+        env:
+          META_MODEL_API_KEY: ${{ secrets.META_MODEL_API_KEY }}
+          META_MODEL_API_BASE_URL: https://api.meta.ai/v1
+          OPENFDA_API_KEY: ${{ secrets.OPENFDA_API_KEY }}
+        run: python scripts/live_smoke.py
+      - name: Keep the result as a build artifact
+        if: steps.gate.outputs.run == 'yes' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-smoke-result
+          path: demo/live-smoke/result.json
+          if-no-files-found: ignore
+      - name: Commit the result to track-c-live
+        if: steps.gate.outputs.run == 'yes' && github.ref_name == 'track-c-live'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add demo/live-smoke/result.json
+          git diff --cached --quiet || git commit -m "chore(demo): live smoke result (Muse Spark, Voice Transcribe, SAM 3.1)"
+          git pull --rebase origin track-c-live
+          git push origin HEAD:track-c-live

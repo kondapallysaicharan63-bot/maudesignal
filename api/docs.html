@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MaudeSignal connector API</title>
+<meta name="description" content="Read-only MaudeSignal tools for a Meta Muse connector: REST API with an API key.">
+<style>
+{{STYLE}}
+</style>
+<style>
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-sans, system-ui, sans-serif); line-height: 1.55; }
+  main { max-width: 920px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-family: var(--font-serif, Georgia, serif); font-size: 40px; line-height: 1.1; margin: 8px 0 12px; }
+  h2 { font-family: var(--font-serif, Georgia, serif); font-size: 26px; margin: 40px 0 8px; padding-top: 16px; border-top: 1px solid var(--rule); }
+  h3 { font-size: 16px; margin: 20px 0 4px; }
+  h4 { font-size: 14px; margin: 20px 0 6px; }
+  p, li { color: var(--ink-2); }
+  a { color: var(--accent); }
+  code, pre { font-family: var(--font-mono, ui-monospace, monospace); font-size: 13px; }
+  code { background: var(--surface-sunk); padding: 1px 5px; border-radius: 4px; color: var(--ink); }
+  pre { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 12px; overflow-x: auto; margin: 6px 0; white-space: pre; color: var(--ink); }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 14px; display: block; overflow-x: auto; }
+  th, td { text-align: left; border-bottom: 1px solid var(--rule); padding: 8px 10px 8px 0; vertical-align: top; }
+  th { color: var(--ink-3); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+  .lede { font-size: 18px; color: var(--ink-2); max-width: 680px; }
+  .note { background: var(--accent-soft); border: 1px solid var(--rule); border-radius: 8px; padding: 12px 14px; color: var(--ink); margin: 16px 0; }
+  .meta { font-size: 12px; color: var(--ink-3); margin: 2px 0; }
+  .ex { margin: 8px 0 24px; }
+  .kick { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+  @media (max-width: 480px) { h1 { font-size: 30px; } }
+</style>
+</head>
+<body>
+<main>
+  <p class="kick">Read-only API &middot; version {{VERSION}} &middot; status: built and tested, not submitted</p>
+  <h1>Maude<em>Signal</em> connector API</h1>
+  <p class="lede">MaudeSignal reads FDA MAUDE adverse-event reports, recalls and 510(k) records for AI-enabled medical devices and flags what changed. This API gives a Meta Muse custom connector six read-only tools over that data. Every answer is a short summary that can be read aloud, a list of facts that each carry an openFDA or record link, a fixed advisory line, and where the data came from.</p>
+  <div class="note"><strong>Advisory line on every answer:</strong> {{ADVISORY}}</div>
+
+  <h2 id="tools">The six tools</h2>
+  <p>All are read-only. Send your key in the <code>X-API-Key</code> header. Never put it in the URL: a request with a key-like query parameter is refused with 400.</p>
+  <table>
+    <tr><th>Tool</th><th>Request</th><th>Input</th><th>What you get</th></tr>
+    <tr><td><code>what_changed_this_week</code></td><td><code>GET /v1/tools/what_changed_this_week</code></td><td><code>product_code</code> (optional, 3 letters, e.g. LLZ)</td><td>The latest stored week from the demo snapshot, with its dates. A code outside the stored set is checked live on openFDA.</td></tr>
+    <tr><td><code>check_device_type</code></td><td><code>GET /v1/tools/check_device_type</code></td><td><code>product_code</code> (3 letters)</td><td>Live openFDA report counts for any device type, using the same four rules, windows and thresholds as the weekly detector. If openFDA cannot be reached for a stored code, the stored snapshot answers and says so.</td></tr>
+    <tr><td><code>lookup_device</code></td><td><code>GET /v1/tools/lookup_device</code></td><td>any of <code>device_name</code>, <code>model</code>, <code>manufacturer</code>, <code>k_number</code>, <code>udi</code>, <code>gtin</code>, <code>product_code</code> (at least one)</td><td>For what a model read from a device photo: up to 3 possible FDA records from openFDA (510(k), registration &amp; listing, UDI), each with <code>why_matched</code> and <code>why_not_matched</code> and its links, plus this week's change, recent recalls and the report count for the top product code. <code>status</code> is <code>needs_person_to_confirm</code>, <code>no_match_found</code> or <code>search_failed</code>; <code>confirmed</code> is always <code>null</code>: a person confirms one record, or none. No model call.</td></tr>
+    <tr><td><code>ask</code></td><td><code>POST /v1/tools/ask</code> (body: <code>{"question": "..."}</code>, 3 to 500 characters)</td><td><code>question</code></td><td>A Muse Spark answer built only from stored records. Each sentence goes through the claim gate. Sentences the gate did not verify are listed under <code>withheld</code> and are never in <code>speakable</code>. Without a model key, or after the cost cap, the closest recorded answer is returned and labelled recorded. <code>POST</code> only because the question travels in the body; nothing is written.</td></tr>
+    <tr><td><code>get_report</code></td><td><code>GET /v1/tools/get_report</code></td><td><code>report_id</code> (MAUDE report id)</td><td>Key fields and the start of the narrative of one stored report, with its record link.</td></tr>
+    <tr><td><code>recalls</code></td><td><code>GET /v1/tools/recalls</code></td><td><code>product_code</code> (3 letters)</td><td>Stored openFDA recalls for the code, newest first.</td></tr>
+  </table>
+
+  <h2 id="prompts">Prompts and server instructions</h2>
+  <p>Over MCP the server also offers three prompts (<code>prompts/list</code>, <code>prompts/get</code>; also listed by <code>GET /v1/connect</code>). Each returns one message that asks the model to call the tools above. Each message says: cite the FDA links, this is not medical advice, and say "recorded" for recorded answers.</p>
+  <table>
+    <tr><th>Prompt</th><th>Arguments</th><th>What it asks the model to do</th></tr>
+    <tr><td><code>morning_brief</code></td><td><code>product_codes</code> (comma-separated, up to 10)</td><td>Call <code>what_changed_this_week</code> for each code and summarise with links.</td></tr>
+    <tr><td><code>check_this_device</code></td><td><code>text</code> (name, model, maker, K-number or UDI, read from a photo or typed)</td><td>Call <code>lookup_device</code>, list up to 3 possible matches with why, and ask the person to confirm one before going further.</td></tr>
+    <tr><td><code>does_this_apply_to_us</code></td><td><code>product_code</code>; <code>our_device_description</code> (optional)</td><td>Call <code>check_device_type</code>, <code>what_changed_this_week</code> and <code>recalls</code> and show the problem patterns as questions for the person's own records, never as a verdict.</td></tr>
+  </table>
+  <p>The MCP <code>initialize</code> reply carries these instructions, and the OpenAPI description starts with the same text: always cite the FDA links in each answer; not medical advice and nothing is filed with FDA; confirm the product code with the person before guessing one (use <code>lookup_device</code> or ask); say "recorded" and the date for a recorded answer; never present withheld sentences as fact; a person confirms every device match.</p>
+
+  <h2 id="errors">Error format</h2>
+  <p>A refused input gets HTTP 422 (REST) or <code>isError: true</code> (MCP) with a short message that says what to fix. An empty body, a body that cannot be parsed as JSON or one sent without a JSON content type gets "The request body is not valid JSON."; valid JSON that is not an object (such as [1, 2]) gets "The request body must be a JSON object."; a wrong field is named. The JSON body is always <code>{"error": {"code": "...", "message": "..."}}</code>, plus <code>"suggestions": [...]</code> when there is something to offer.</p>
+  <ul>
+    <li>A product code that is not three letters: "A product code is three letters, for example LLZ or QIH."</li>
+    <li>A three-letter code with no stored data, no reports on openFDA and no entry in the openFDA device classification list (<code>unknown_product_code</code>): "QAH isn't a product code we know - did you mean QAQ, QAS or QIH?", with up to 3 known codes one edit away in <code>suggestions</code>. When no known code is one edit away, the message is just "ZZZ isn't a product code we know." with no suggestions. The message repeats the code you sent (only a three-letter code that passed the letters check). Suggestions are never applied automatically, and a code with stored data, openFDA reports or a classification entry is never corrected (one with only a classification entry is answered "openFDA returned no reports"). If the classification list cannot be reached, the code is not called unknown. <code>recalls</code> never fails on an unknown code: it keeps its "no recalls on file" answer, may check openFDA to confirm the code exists, and returns the suggestions in the answer's <code>suggestions</code> list.</li>
+    <li>A malformed K-number: "K-numbers look like K123456 (the letter K and six digits)."</li>
+    <li>A UDI or GTIN whose last digit fails the GS1 check: the message says so.</li>
+    <li>A missing input is named ("product_code is required."); a question outside 3 to 500 characters gets the limit.</li>
+  </ul>
+
+  <h3>Answer shape</h3>
+<pre>{
+  "tool": "recalls",
+  "speakable": "1 to 3 plain sentences, no markdown, written to be read aloud",
+  "facts": [ { "text": "...", "link": "https://api.fda.gov/...", "link_label": "openFDA" } ],
+  "advisory": "{{ADVISORY}}",
+  "provenance": { "kind": "stored_demo_snapshot | live_openfda | recorded_answer | live_model",
+                  "source": "...", "data_dates": "...", "queried_at_utc": null, "note": "..." },
+  "withheld": []
+}</pre>
+
+  <h3>Other endpoints</h3>
+  <table>
+    <tr><th>Endpoint</th><th>Key</th><th>What it does</th></tr>
+    <tr><td><code>GET /v1/health</code></td><td>no</td><td>Service status, the tool list, and whether limits and the audit log are shared or per instance.</td></tr>
+    <tr><td><code>GET /openapi.json</code></td><td>no</td><td>The OpenAPI 3.1 spec of everything on this page.</td></tr>
+    <tr><td><code>GET /v1/audit/recent?limit=20</code></td><td>yes</td><td>The last audit entries (at most 200) with the hash chain re-checked on every call.</td></tr>
+    <tr><td><code>GET /v1/public/check_device_type?product_code=LLZ</code></td><td>no</td><td>For the web workspace, where a browser cannot reach openFDA directly. Same live check and the same query links as the keyed route, plus a <code>check</code> field with the figures. Per-address limit of {{PUBLIC_RATE}} per hour (per server instance unless the shared store is on) and a six-hour cache per code. Browsers may call it only from origins the operator lists. It never calls the model and never spends model credit.</td></tr>
+  </table>
+
+  <h2 id="auth">Authentication</h2>
+  <p>Header name: <code>X-API-Key</code>. Keys are created by the operator (see the deploy notes) and are read-only. A missing or wrong key gets <code>401</code> with the same body either way. Repeated wrong keys from one address get <code>429</code>. The key is never written to a response, a log or the audit log; the audit log names a caller by a server-side keyed hash of the key (an HMAC under the operator's pepper, 12 hex characters), never the key or its digest.</p>
+
+  <h2 id="limits">Rate limits and cost cap</h2>
+  <ul>
+    <li>Per key: {{RATE}} requests per minute{{WINDOW}}. Past that: <code>429</code> with <code>Retry-After</code>.</li>
+    <li><code>ask</code>: at most ${{REQUEST_USD}} of model cost per call and ${{DAILY_USD}} per key per UTC day. After the cap, <code>ask</code> returns the closest recorded answer, labelled recorded.</li>
+    <li>State (rate limits, per-key daily totals, six-hour cache, audit log) is {{SCOPE}}.</li>
+  </ul>
+
+  <h2 id="provenance">Data provenance</h2>
+  <p>Every answer says where it came from. <code>stored_demo_snapshot</code>: the committed demo copy of openFDA data, with the date it was fetched; not live. <code>live_openfda</code>: counts fetched at the UTC time in <code>queried_at_utc</code>. <code>recorded_answer</code>: a real, gated earlier run of the copilot. <code>live_model</code>: a Muse Spark answer from this call. MHRA (UK) alerts, where present, are regulator context only and never counted in a MAUDE number.</p>
+
+  <h2 id="examples">Examples from real local runs</h2>
+  <p>Captured from this API running locally with a test key. This environment had no network access to openFDA, so live checks fell back to the stored snapshot, and <code>ask</code> returned a recorded answer; both say so in <code>provenance</code>.</p>
+  {{EXAMPLES}}
+
+  <h2 id="support">Support</h2>
+  <p>Open an issue: <a href="{{SUPPORT}}">{{SUPPORT}}</a>. The OpenAPI spec is at <a href="/openapi.json">/openapi.json</a>.</p>
+  <p class="meta"><a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a></p>
+  <p class="meta">MaudeSignal is an open-source project. It is not clinical decision support, not a medical device and not a filing tool: nothing is filed with FDA. This connector has not been submitted to Meta.</p>
+</main>
+</body>
+</html>

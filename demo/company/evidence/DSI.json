@@ -1,0 +1,1181 @@
+{
+ "schema_version": "1.0",
+ "product_code": "DSI",
+ "fetched_utc": "2026-10-30T03:07:00Z",
+ "window": {
+  "date_from": "20260904",
+  "date_to": "20261030",
+  "weeks": 8
+ },
+ "classification": {
+  "device_name": "Detector And Alarm, Arrhythmia",
+  "device_class": "2",
+  "regulation_number": "870.1025",
+  "query_url": "https://api.fda.gov/device/classification.json?search=product_code:DSI&limit=1"
+ },
+ "reports": {
+  "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code:DSI+AND+date_received:[20260904+TO+20261030]&limit=100",
+  "matched_total": 27,
+  "stored": 27,
+  "records": [
+   {
+    "report_id": "50951017",
+    "event_type": "injury",
+    "date_received": "20260930",
+    "report_source": "Manufacturer report",
+    "brand_name": "Medtronic ILR",
+    "manufacturer": "Medtronic, Inc.",
+    "product_problems": [
+     "Adverse Event Without Identified Device or Use Problem"
+    ],
+    "text": "Literature was reviewed regarding Implantable Cardiac Monitors (ICMs). The authors described a patient who experienced an infection approximately seventeen days post implant of the ICM. The device was explanted and replaced. The status of the device is unknown. No additional adverse patient effects were reported. This information is based entirely on journal literature. Medtronic was made aware of this event through a search of literature publications. This event occurred outside the US. Patient information is limited due to confidentiality concerns. Of note, multiple patients and multiple manufacturers were noted in the article; however, a one-to-one correlation could not be made with unique product serial numbers. The baseline gender/age characteristics is male/62 years old. The model listed in the report is a representative of the model family, as there is no specific model listed. Without a device serial number, the manufacturing date cannot be determined. Since no device ID was provided, it is unknown if this event has been previously reported. A request for additional information was made. If additional information is obtained regarding this event, it will be added, and a supplemental report will be submitted accordingly. Referenced article: Incremental value of implantable loop recorders in arrhythmia detection and management in cardiomyopathies: Prospective study. Revista Portuguesa de Cardiologia. 2026. 45: 193-202. DOI: 10.1016/j.repc.2025.12.008 Medtronic submits this report to comply with FDA regulations 21 CFR Parts 4 and 803. Medtronic has made reasonable efforts to provide as much relevant information as is available to the company as of the submission date of this report. This report does not constitute an admission or a conclusion by FDA, Medtronic, or its employees that the device, Medtronic, or its employee caused or contributed to the event described in the report. Any required fields that are unpopulated are blank because the information is currently unknown or unavailable. Medtronic will submit a supplemental report if additional relevant information becomes known."
+   },
+   {
+    "report_id": "50946354",
+    "event_type": "malfunction",
+    "date_received": "20260930",
+    "report_source": "Manufacturer report",
+    "brand_name": "IntelliVue MX40 1.4GHz",
+    "manufacturer": "Philips Medical Systems",
+    "product_problems": [
+     "No Audible Prompt/Feedback"
+    ],
+    "text": "It was reported the device was presented with a speaker malfunction error message and it is unknown if there was still sound. The device was not in clinical use. There was no report of patient or user harm. The device was returned and analysis was performed at the Philips Authorized Repair Facility which included functional testing. Results of functional testing indicate that the speaker produced sound and the device did not display a speaker malfunction error message.Based on the results of the analysis, the product was confirmed to be operating per specifications and the product malfunction was unable to be confirmed and the cause remains unknown. Although the speaker was confirmed to be functioning per specification during testing it was indicated that there was no sound at the time of the event, the speaker has been replaced per current process. The device was operational after repairs were completed."
+   },
+   {
+    "report_id": "50944062",
+    "event_type": "malfunction",
+    "date_received": "20260930",
+    "report_source": "Manufacturer report",
+    "brand_name": "Reveal LINQ",
+    "manufacturer": "Medtronic Europe Sarl",
+    "product_problems": [
+     "Under-Sensing"
+    ],
+    "text": "It was reported that the Implantable Cardiac Monitor (ICM) experienced undersensing on Bradycardia and Atrial Tachycardia (AT)/ Atrial Fibrillation (AF) episodes. It was noted that the remote monitoring report failed to generate and was not received for review. The ICM remains in the patient. No patient complications have been reported as a result of this event. Medtronic submits this report to comply with FDA regulations 21 CFR Parts 4 and 803. Medtronic has made reasonable efforts to provide as much relevant information as is available to the company as of the submission date of this report. This report does not constitute an admission or a conclusion by FDA, Medtronic, or its employees that the device, Medtronic, or its employee caused or contributed to the event described in the report. Any required fields that are unpopulated are blank because the information is currently unknown or unavailable. Medtronic will submit a supplemental report if additional relevant information becomes known."
+   },
+   {
+    "report_id": "50937978",
+    "event_type": "malfunction",
+    "date_received": "20260929",
+    "report_source": "Manufacturer report",
+    "brand_name": "ECG Electrodes",
+    "manufacturer": "Philips Medical Systems",
+    "product_problems": [
+     "Imprecise or Erratic Results"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50931739",
+    "event_type": "malfunction",
+    "date_received": "20260929",
+    "report_source": "Manufacturer report",
+    "brand_name": "ECG Electrodes",
+    "manufacturer": "Philips Medical Systems",
+    "product_problems": [
+     "Imprecise or Erratic Results"
+    ],
+    "text": "Philips received a complaint on a CBL ECG 5 lead Grabber AAMI + SpO2, Tele indicating the lead set was not working and was unable to provide appropriate rhythm; the readings were inaccurate. The device was in clinical use at the time the issue was discovered. There was no adverse or patient harm reported. A Philips Contract Administrator (CA) worked with the customer. It was determined that the cable needed to be replaced.Based on the results of the analysis, it was determined that the product has malfunctioned and the most likely cause of the reported problem was a faulty cable. A replacement cable was sent to resolve the issue. Based on the information available and results of additional analysis, no further action is necessary at this time. The data entered in this complaint record will be utilized for product quality and safety improvements per the Post Market Surveillance and Risk Management processes. If additional information is received, the complaint file will be reopened for further investigation."
+   },
+   {
+    "report_id": "50914723",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "Reveal LINQ",
+    "manufacturer": "Medtronic Singapore Operations",
+    "product_problems": [
+     "Under-Sensing"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50911495",
+    "event_type": "injury",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "Reveal LINQ",
+    "manufacturer": "Medtronic Singapore Operations",
+    "product_problems": [
+     "Adverse Event Without Identified Device or Use Problem"
+    ],
+    "text": "It was reported that the Implantable Cardiac Monitor (ICM) patient experienced an infection. The patient was prescribed antibiotics however this did not clear the infection. The ICM was removed. It was further noted that the patient had an allergy to surgical glues and several antibiotics. No further patient complications have been reported as a result of this event. Medtronic submits this report to comply with FDA regulations 21 CFR Parts 4 and 803. Medtronic has made reasonable efforts to provide as much relevant information as is available to the company as of the submission date of this report. This report does not constitute an admission or a conclusion by FDA, Medtronic, or its employees that the device, Medtronic, or its employee caused or contributed to the event described in the report. Any required fields that are unpopulated are blank because the information is currently unknown or unavailable. Medtronic will submit a supplemental report if additional relevant information becomes known."
+   },
+   {
+    "report_id": "50896941",
+    "event_type": "malfunction",
+    "date_received": "20260925",
+    "report_source": "Manufacturer report",
+    "brand_name": "Reveal LINQ",
+    "manufacturer": "Medtronic Singapore Operations",
+    "product_problems": [
+     "Unable to Obtain Readings"
+    ],
+    "text": "It was reported that the Implantable Cardiac Monitor (ICM) did not record the full duration of a pause episode. The ICM remains in use. No patient complications have been reported as a result of this event. Product Event Summary: The device was not returned for analysis, however, performance data collected from the device was received and analyzed. Analysis of the device memory indicated an issue with diagnostic data collection. Medtronic submits this report to comply with FDA regulations 21 CFR Parts 4 and 803. Medtronic has made reasonable efforts to provide as much relevant information as is available to the company as of the submission date of this report. This report does not constitute an admission or a conclusion by FDA, Medtronic, or its employees that the device, Medtronic, or its employee caused or contributed to the event described in the report. Any required fields that are unpopulated are blank because the information is currently unknown or unavailable. Medtronic will submit a supplemental report if additional relevant information becomes known."
+   },
+   {
+    "report_id": "50882902",
+    "event_type": "malfunction",
+    "date_received": "20260924",
+    "report_source": "Manufacturer report",
+    "brand_name": "Reveal LINQ",
+    "manufacturer": "Medtronic Europe Sarl",
+    "product_problems": [
+     "Over-Sensing"
+    ],
+    "text": "It was reported that the Implantable Cardiac Monitor (ICM) experienced oversensing. It was further reported that a transmission was not received for review. The ICM remains in use. No patient complications have been reported as a result of this event. Medtronic submits this report to comply with FDA regulations 21 CFR Parts 4 and 803. Medtronic has made reasonable efforts to provide as much relevant information as is available to the company as of the submission date of this report. This report does not constitute an admission or a conclusion by FDA, Medtronic, or its employees that the device, Medtronic, or its employee caused or contributed to the event described in the report. Any required fields that are unpopulated are blank because the information is currently unknown or unavailable. Medtronic will submit a supplemental report if additional relevant information becomes known."
+   },
+   {
+    "report_id": "50882881",
+    "event_type": "malfunction",
+    "date_received": "20260924",
+    "report_source": "Manufacturer report",
+    "brand_name": "Reveal LINQ",
+    "manufacturer": "Medtronic Singapore Operations",
+    "product_problems": [
+     "Over-Sensing"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50865464",
+    "event_type": "malfunction",
+    "date_received": "20260923",
+    "report_source": "Manufacturer report",
+    "brand_name": "IntelliVue MX40 1.4GHz",
+    "manufacturer": "Philips Medical Systems",
+    "product_problems": [
+     "No Audible Alarm"
+    ],
+    "text": "During evaluation at bench repair, it was identified that the device had No Audio. Analysis was performed at the Philips Authorized Repair Facility. The results of the analysis indicate that the Bench Technician was unable to test speaker in the unit on MT56060 tool due to broken red wire on speaker.Based on the results of the analysis, it was determined that the product has malfunctioned and the most likely cause of the reported problem was a defective speaker. The issue was resolved by replacing the speaker and the product was returned to the customer.D4: The Manufacturing date for the reported device is prior to 24Sept2016 so no UDI required."
+   },
+   {
+    "report_id": "50854477",
+    "event_type": "malfunction",
+    "date_received": "20260922",
+    "report_source": "Manufacturer report",
+    "brand_name": "IntelliVue MX40 1.4GHz",
+    "manufacturer": "Philips Medical Systems",
+    "product_problems": [
+     "No Audible Alarm"
+    ],
+    "text": "During evaluation at bench repair, it was identified that the device had no Audio. The device was not in clinical use. There was no report of patient or user harm. Analysis was performed at the Philips Authorized Repair Facility. The results of the analysis indicate that the device was tampered as it was received in unassembled. Unable to test speaker in unit but the speaker wire was broken.Based on the results of the analysis, it was determined that the product has malfunctioned and the most likely cause of the reported problem was a defective speaker. The issue was resolved by replacing the speaker and the product was returned to the customer."
+   },
+   {
+    "report_id": "50853288",
+    "event_type": "malfunction",
+    "date_received": "20260922",
+    "report_source": "Manufacturer report",
+    "brand_name": "IntelliVue MX40 1.4GHz",
+    "manufacturer": "Philips Medical Systems",
+    "product_problems": [
+     "Defective Alarm"
+    ],
+    "text": "It was reported the unit shows a waveform that should have produced a Vtac, but the device did not alarm for Vtac. The device was in clinical use. There was no report of patient or user harm. Philips is in process of obtaining additional information. A Follow-up report will be submitted upon completion of the investigation"
+   },
+   {
+    "report_id": "50818337",
+    "event_type": "malfunction",
+    "date_received": "20260918",
+    "report_source": "Manufacturer report",
+    "brand_name": "Reveal LINQ",
+    "manufacturer": "Medtronic Europe Sarl",
+    "product_problems": [
+     "Signal Artifact/Noise",
+     "Unable to Obtain Readings"
+    ],
+    "text": "It was reported that during the Implantable Cardiac Monitor (ICM) implant procedure the ICM exhibited noise, there was no electrocar diogram (ECG). The ICM was removed and the procedure completed using a different device. No patient complications have been reported as a result of this event. Medtronic submits this report to comply with FDA regulations 21 CFR Parts 4 and 803. Medtronic has made reasonable efforts to provide as much relevant information as is available to the company as of the submission date of this report. This report does not constitute an admission or a conclusion by FDA, Medtronic, or its employees that the device, Medtronic, or its employee caused or contributed to the event described in the report. Any required fields that are unpopulated are blank because the information is currently unknown or unavailable. Medtronic will submit a supplemental report if additional relevant information becomes known."
+   },
+   {
+    "report_id": "50818119",
+    "event_type": "malfunction",
+    "date_received": "20260918",
+    "report_source": "Manufacturer report",
+    "brand_name": "Reveal LINQ",
+    "manufacturer": "Medtronic Europe Sarl",
+    "product_problems": [
+     "Over-Sensing",
+     "Under-Sensing"
+    ],
+    "text": "It was reported that the Implantable Cardiac Monitor (ICM) experienced undersensing and oversensing. It was further reported Remote Monitoring Network report did not generate. The ICM remains in use. No patient complications have been reported as a result of this event. B3: Date is approximate. Month and year are confirmed valid. Medtronic submits this report to comply with FDA regulations 21 CFR Parts 4 and 803. Medtronic has made reasonable efforts to provide as much relevant information as is available to the company as of the submission date of this report. This report does not constitute an admission or a conclusion by FDA, Medtronic, or its employees that the device, Medtronic, or its employee caused or contributed to the event described in the report. Any required fields that are unpopulated are blank because the information is currently unknown or unavailable. Medtronic will submit a supplemental report if additional relevant information becomes known."
+   },
+   {
+    "report_id": "50817048",
+    "event_type": "malfunction",
+    "date_received": "20260918",
+    "report_source": "Manufacturer report",
+    "brand_name": "Reveal LINQ",
+    "manufacturer": "Medtronic Europe Sarl",
+    "product_problems": [
+     "Communication or Transmission Problem"
+    ],
+    "text": "It was reported that the Implantable Cardiac Monitor (ICM) was paired to the remote monitor prior to Implant resulting in the Reason for Monitoring displaying? marks. It was further noted that the last connection showed invalid parameters. The ICM remains in the patient. No patient complications have been reported as a result of this event. Medtronic submits this report to comply with FDA regulations 21 CFR Parts 4 and 803. Medtronic has made reasonable efforts to provide as much relevant information as is available to the company as of the submission date of this report. This report does not constitute an admission or a conclusion by FDA, Medtronic, or its employees that the device, Medtronic, or its employee caused or contributed to the event described in the report. Any required fields that are unpopulated are blank because the information is currently unknown or unavailable. Medtronic will submit a supplemental report if additional relevant information becomes known."
+   },
+   {
+    "report_id": "50798579",
+    "event_type": "malfunction",
+    "date_received": "20260917",
+    "report_source": "Manufacturer report",
+    "brand_name": "Reveal LINQ",
+    "manufacturer": "Medtronic Singapore Operations",
+    "product_problems": [
+     "Device Sensing Problem"
+    ],
+    "text": "It was reported that the Implantable Cardiac Monitor (ICM) rejected a true pause episode that occurred during an Atrial Fibrillation (AF) episode. The ICM remains in use. No patient complications have been reported as a result of this event. Medtronic submits this report to comply with FDA regulations 21 CFR Parts 4 and 803. Medtronic has made reasonable efforts to provide as much relevant information as is available to the company as of the submission date of this report. This report does not constitute an admission or a conclusion by FDA, Medtronic, or its employees that the device, Medtronic, or its employee caused or contributed to the event described in the report. Any required fields that are unpopulated are blank because the information is currently unknown or unavailable. Medtronic will submit a supplemental report if additional relevant information becomes known."
+   },
+   {
+    "report_id": "50772931",
+    "event_type": "malfunction",
+    "date_received": "20260915",
+    "report_source": "Manufacturer report",
+    "brand_name": "Reveal LINQ",
+    "manufacturer": "Medtronic Europe Sarl",
+    "product_problems": [
+     "Under-Sensing"
+    ],
+    "text": "It was reported that the Implantable Cardiac Monitor (ICM) experienced undersensing on a tachycardia episode. It was noted that there were X's on the Portable Document Format (PDF) pages of the remote monitoring network reports. The ICM remains in the patient. No patient complications have been reported as a result of this event. Medtronic submits this report to comply with FDA regulations 21 CFR Parts 4 and 803. Medtronic has made reasonable efforts to provide as much relevant information as is available to the company as of the submission date of this report. This report does not constitute an admission or a conclusion by FDA, Medtronic, or its employees that the device, Medtronic, or its employee caused or contributed to the event described in the report. Any required fields that are unpopulated are blank because the information is currently unknown or unavailable. Medtronic will submit a supplemental report if additional relevant information becomes known."
+   },
+   {
+    "report_id": "50772322",
+    "event_type": "malfunction",
+    "date_received": "20260915",
+    "report_source": "Manufacturer report",
+    "brand_name": "IntelliVue MX40 1.4GHz",
+    "manufacturer": "Philips Medical Systems",
+    "product_problems": [
+     "Incorrect Measurement"
+    ],
+    "text": "It was reported the unit is picking up the incorrect rhythms. It is unknown if the device was in use on a patient. There was no report of patient or user harm. The device was returned and the analysis was performed at the Philips Authorized Repair Facility. The Bench Repair Technician could reproduce the reported issue. The results of the analysis indicate that the pins were corroded. Based on the results of the analysis, it was determined that the product has malfunctioned and the most likely cause of the reported problem were defective connector pins. The issue was resolved by replacing the defective parts and the product was returned to the customer."
+   },
+   {
+    "report_id": "50750438",
+    "event_type": "malfunction",
+    "date_received": "20260914",
+    "report_source": "Manufacturer report",
+    "brand_name": "Reveal LINQ",
+    "manufacturer": "Medtronic Singapore Operations",
+    "product_problems": [
+     "Failure to Interrogate",
+     "Communication or Transmission Problem",
+     "Reset Problem"
+    ],
+    "text": "It was reported that the Implantable Cardiac Monitor (ICM) upon interrogation exhibited an electrical reset message. It was noted that the ICM was unable to be interrogated any further. The ICM remains in the patient. No patient complications have been reported as a result of this event. Medtronic submits this report to comply with FDA regulations 21 CFR Parts 4 and 803. Medtronic has made reasonable efforts to provide as much relevant information as is available to the company as of the submission date of this report. This report does not constitute an admission or a conclusion by FDA, Medtronic, or its employees that the device, Medtronic, or its employee caused or contributed to the event described in the report. Any required fields that are unpopulated are blank because the information is currently unknown or unavailable. Medtronic will submit a supplemental report if additional relevant information becomes known."
+   },
+   {
+    "report_id": "50740872",
+    "event_type": "malfunction",
+    "date_received": "20260911",
+    "report_source": "Manufacturer report",
+    "brand_name": "IntelliVue MP50",
+    "manufacturer": "Philips Medizin Systeme Böblingen GmbH",
+    "product_problems": [
+     "No Audible Alarm"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50714780",
+    "event_type": "malfunction",
+    "date_received": "20260910",
+    "report_source": "Manufacturer report",
+    "brand_name": "Reveal LINQ",
+    "manufacturer": "Medtronic Neuromodulation",
+    "product_problems": [
+     "Reset Problem"
+    ],
+    "text": "It was reported that the Implantable Cardiac Monitor (ICM) exhibited an electrical reset having been implanted 4 years. The ICM remains in the patient. No patient complications have been reported as a result of this event. Medtronic submits this report to comply with FDA regulations 21 CFR Parts 4 and 803. Medtronic has made reasonable efforts to provide as much relevant information as is available to the company as of the submission date of this report. This report does not constitute an admission or a conclusion by FDA, Medtronic, or its employees that the device, Medtronic, or its employee caused or contributed to the event described in the report. Any required fields that are unpopulated are blank because the information is currently unknown or unavailable. Medtronic will submit a supplemental report if additional relevant information becomes known."
+   },
+   {
+    "report_id": "50714520",
+    "event_type": "malfunction",
+    "date_received": "20260910",
+    "report_source": "Manufacturer report",
+    "brand_name": "Reveal LINQ",
+    "manufacturer": "Medtronic Singapore Operations",
+    "product_problems": [
+     "Reset Problem"
+    ],
+    "text": "It was reported that the Implantable Cardiac Monitor (ICM) exhibited an electrical reset error message during attempted interrogation. It was further reported that the ICM had been implanted more than four years. An attempt was made to clear the message/ End session however was unsuccessful. The ICM remains in the patient. No patient complications have been reported as a result of this event. Medtronic submits this report to comply with FDA regulations 21 CFR Parts 4 and 803. Medtronic has made reasonable efforts to provide as much relevant information as is available to the company as of the submission date of this report. This report does not constitute an admission or a conclusion by FDA, Medtronic, or its employees that the device, Medtronic, or its employee caused or contributed to the event described in the report. Any required fields that are unpopulated are blank because the information is currently unknown or unavailable. Medtronic will submit a supplemental report if additional relevant information becomes known."
+   },
+   {
+    "report_id": "50688656",
+    "event_type": "malfunction",
+    "date_received": "20260909",
+    "report_source": "Manufacturer report",
+    "brand_name": "Reveal LINQ",
+    "manufacturer": "Medtronic Europe Sarl",
+    "product_problems": [
+     "Communication or Transmission Problem"
+    ],
+    "text": "It was reported that the Implantable Cardiac Monitor (ICM) experienced connectivity issues with the remote monitor. This resulted in no successful transmissions to the Remote monitoring network for a short period of time. The ICM remains in use. It was also reported that the implanted device and monitor had not successfully communicated since (b)(6) 2026. The communication between the device and the monitor could not be established, resulting in unsuccessful wireless transmissions. No troubleshooting indicated. No patient complications were reported as a result of this event. Medtronic submits this report to comply with FDA regulations 21 CFR Parts 4 and 803. Medtronic has made reasonable efforts to provide as much relevant information as is available to the company as of the submission date of this report. This report does not constitute an admission or a conclusion by FDA, Medtronic, or its employees that the device, Medtronic, or its employee caused or contributed to the event described in the report. Any required fields that are unpopulated are blank because the information is currently unknown or unavailable. Medtronic will submit a supplemental report if additional relevant information becomes known."
+   },
+   {
+    "report_id": "50665829",
+    "event_type": "malfunction",
+    "date_received": "20260908",
+    "report_source": "Manufacturer report",
+    "brand_name": "Reveal LINQ",
+    "manufacturer": "Medtronic Europe Sarl",
+    "product_problems": [
+     "Device Sensing Problem"
+    ],
+    "text": "It was reported that there was disagreement regarding the atrial fibrillation episode detection algorithm adjudication of an atrial fibrillation episode. One review adjudicated the episode as true atrial fibrillation, while another review assessed the episode as sinus rhythm with ectopy and not atrial fibrillation. The ICM remains in use. No patient complications have been reported as a result of this event. Medtronic submits this report to comply with FDA regulations 21 CFR Parts 4 and 803. Medtronic has made reasonable efforts to provide as much relevant information as is available to the company as of the submission date of this report. This report does not constitute an admission or a conclusion by FDA, Medtronic, or its employees that the device, Medtronic, or its employee caused or contributed to the event described in the report. Any required fields that are unpopulated are blank because the information is currently unknown or unavailable. Medtronic will submit a supplemental report if additional relevant information becomes known."
+   },
+   {
+    "report_id": "50648818",
+    "event_type": "malfunction",
+    "date_received": "20260907",
+    "report_source": "Manufacturer report",
+    "brand_name": "Reveal LINQ",
+    "manufacturer": "Medtronic Europe Sarl",
+    "product_problems": [
+     "Signal Artifact/Noise"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50608865",
+    "event_type": "malfunction",
+    "date_received": "20260904",
+    "report_source": "Manufacturer report",
+    "brand_name": "Reveal LINQ",
+    "manufacturer": "Medtronic Singapore Operations",
+    "product_problems": [
+     "Signal Artifact/Noise",
+     "Under-Sensing",
+     "Device Sensing Problem"
+    ],
+    "text": "It was reported that an implantable cardiac monitor (ICM) undersensed R-waves on the current electrocardiogram. Three ignored beats were noted on the current electrocardiogram. The patient also had a deep brain stimulation device. The ICM remains in use. No patient complications have been reported as a result of this event. Medtronic submits this report to comply with FDA regulations 21 CFR Parts 4 and 803. Medtronic has made reasonable efforts to provide as much relevant information as is available to the company as of the submission date of this report. This report does not constitute an admission or a conclusion by FDA, Medtronic, or its employees that the device, Medtronic, or its employee caused or contributed to the event described in the report. Any required fields that are unpopulated are blank because the information is currently unknown or unavailable. Medtronic will submit a supplemental report if additional relevant information becomes known."
+   }
+  ]
+ },
+ "recalls": {
+  "query_url": "https://api.fda.gov/device/recall.json?search=product_code:DSI&sort=event_date_initiated:desc&limit=100",
+  "matched_total": 82,
+  "stored": 82,
+  "records": [
+   {
+    "recall_number": "Z-2052-2026",
+    "event_number": "98722",
+    "recalling_firm": "Spacelabs Healthcare, Inc.",
+    "product_description": "Brand Name: Spacelabs Ultraview SL Command Module\nProduct Name: SL Command Module\nModel/Catalog Number: 91496\nSoftware Version: N/A\nProduct Description: The Command Module (91496) is the core of the Spacelabs patient monitoring system, providing the processing power for all basic physiologic parameters. The Command Module inserts into the side of a Spacelabs patient monitor. A variety of configurations can be selected to suit the monitoring needs of specific patients or care units in the hospital.\nComponent: N/A",
+    "reason_for_recall": "Due to a manufacturing issue (i.e. malfunctioning of electrical Leakage tester).",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260326",
+    "cfres_id": "219564"
+   },
+   {
+    "recall_number": "Z-1793-2026",
+    "event_number": "98374",
+    "recalling_firm": "Spacelabs Healthcare, Inc.",
+    "product_description": "Multi-parameter Command Module, Model 91496, optioned with Masimo or Nellcor",
+    "reason_for_recall": "Multi-parameter command module has a circuit board issue and when in Auto mode, Cardiac Output (CO) measurement may activate early, resulting in Bad Curve error with no CO measurement or Irregular Curve error with CO measurement not automatically excluded, which may result in inaccurate readings, or the need of additional readings, which may lead to delayed care and/or fluid overload.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260227",
+    "cfres_id": "218485"
+   },
+   {
+    "recall_number": "Z-0849-2026",
+    "event_number": "97917",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "IntelliVue MP2. Product Number: M8102A.",
+    "reason_for_recall": "Potential issue where the IntelliVue monitors did not alarm.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251031",
+    "cfres_id": "217156"
+   },
+   {
+    "recall_number": "Z-0850-2026",
+    "event_number": "97917",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "IntelliVue MP5. Product Number: M8105A.",
+    "reason_for_recall": "Potential issue where the IntelliVue monitors did not alarm.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251031",
+    "cfres_id": "217163"
+   },
+   {
+    "recall_number": "Z-0851-2026",
+    "event_number": "97917",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "IntelliVue MP20. Product Number: M8001A.",
+    "reason_for_recall": "Potential issue where the IntelliVue monitors did not alarm.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251031",
+    "cfres_id": "217164"
+   },
+   {
+    "recall_number": "Z-0852-2026",
+    "event_number": "97917",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "IntelliVue MP30. Product Number: M8002A.",
+    "reason_for_recall": "Potential issue where the IntelliVue monitors did not alarm.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251031",
+    "cfres_id": "217166"
+   },
+   {
+    "recall_number": "Z-0853-2026",
+    "event_number": "97917",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "IntelliVue MP40. Product Number: M8003A.",
+    "reason_for_recall": "Potential issue where the IntelliVue monitors did not alarm.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251031",
+    "cfres_id": "217167"
+   },
+   {
+    "recall_number": "Z-0854-2026",
+    "event_number": "97917",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "IntelliVue MP50. Product Number: M8004A.",
+    "reason_for_recall": "Potential issue where the IntelliVue monitors did not alarm.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251031",
+    "cfres_id": "217168"
+   },
+   {
+    "recall_number": "Z-0855-2026",
+    "event_number": "97917",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "IntelliVue MP60. Product Number: M8005A.",
+    "reason_for_recall": "Potential issue where the IntelliVue monitors did not alarm.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251031",
+    "cfres_id": "217169"
+   },
+   {
+    "recall_number": "Z-0856-2026",
+    "event_number": "97917",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "IntelliVue MP70. Product Number: M8007A.",
+    "reason_for_recall": "Potential issue where the IntelliVue monitors did not alarm.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251031",
+    "cfres_id": "217170"
+   },
+   {
+    "recall_number": "Z-0857-2026",
+    "event_number": "97917",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "IntelliVue MP80. Product Number: M8008A.",
+    "reason_for_recall": "Potential issue where the IntelliVue monitors did not alarm.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251031",
+    "cfres_id": "217171"
+   },
+   {
+    "recall_number": "Z-0858-2026",
+    "event_number": "97917",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "IntelliVue MP90. Product Number: M8010A.",
+    "reason_for_recall": "Potential issue where the IntelliVue monitors did not alarm.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251031",
+    "cfres_id": "217172"
+   },
+   {
+    "recall_number": "Z-0859-2026",
+    "event_number": "97917",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "IntelliVue Multi Measurement Server X2. Product Number: M3002A.",
+    "reason_for_recall": "Potential issue where the IntelliVue monitors did not alarm.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251031",
+    "cfres_id": "217173"
+   },
+   {
+    "recall_number": "Z-0860-2026",
+    "event_number": "97917",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "IntelliVue Multi-Measurement Module X3. Product Number: 867030.",
+    "reason_for_recall": "Potential issue where the IntelliVue monitors did not alarm.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251031",
+    "cfres_id": "217174"
+   },
+   {
+    "recall_number": "Z-0861-2026",
+    "event_number": "97917",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "IntelliVue Patient Monitor MX100. Product Number: 867033.",
+    "reason_for_recall": "Potential issue where the IntelliVue monitors did not alarm.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251031",
+    "cfres_id": "217175"
+   },
+   {
+    "recall_number": "Z-0862-2026",
+    "event_number": "97917",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "IntelliVue Patient Monitor MX400. Product Number: 866060.",
+    "reason_for_recall": "Potential issue where the IntelliVue monitors did not alarm.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251031",
+    "cfres_id": "217176"
+   },
+   {
+    "recall_number": "Z-0863-2026",
+    "event_number": "97917",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "IntelliVue Patient Monitor MX450. Product Number: 866062.",
+    "reason_for_recall": "Potential issue where the IntelliVue monitors did not alarm.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251031",
+    "cfres_id": "217177"
+   },
+   {
+    "recall_number": "Z-0866-2026",
+    "event_number": "97917",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "IntelliVue Patient Monitor MX600. Product Number: 865242.",
+    "reason_for_recall": "Potential issue where the IntelliVue monitors did not alarm.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251031",
+    "cfres_id": "217180"
+   },
+   {
+    "recall_number": "Z-0867-2026",
+    "event_number": "97917",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "IntelliVue Patient Monitor MX700. Product Number: 865241.",
+    "reason_for_recall": "Potential issue where the IntelliVue monitors did not alarm.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251031",
+    "cfres_id": "217181"
+   },
+   {
+    "recall_number": "Z-0869-2026",
+    "event_number": "97917",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "IntelliVue Patient Monitor MX800. Product Number: 865240.",
+    "reason_for_recall": "Potential issue where the IntelliVue monitors did not alarm.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251031",
+    "cfres_id": "217183"
+   },
+   {
+    "recall_number": "Z-1938-2025",
+    "event_number": "96830",
+    "recalling_firm": "GE Medical Systems Information Technologies Inc",
+    "product_description": "MUSE 5 Systems, Model Numbers 2021274-001, 2023032-005, 2027478-001, Large capacity client-server-based computer system that accesses stores and manages cardiovascular information.",
+    "reason_for_recall": "The MUSE Administrator Account active directory or local credential could potentially be used from your local network to log into a GE HealthCare MUSE 5 system and potentially manipulate recorded patient data.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250425",
+    "cfres_id": "213775"
+   },
+   {
+    "recall_number": "Z-0035-2025",
+    "event_number": "95325",
+    "recalling_firm": "Philips North America",
+    "product_description": "Patient Information Center iX, Product Code 866386, and Patient Information Center iX Expand, Product Code 866390, Software Revision 4.0.1",
+    "reason_for_recall": "During extended operation of the MX40 with the PIC iX, the DHCP (Dynamic Host Configuration Protocol) lease can expire on the MX40. If the DHCP lease expires while the device is offline, upon reconnecting with the PIC iX, a new IP address will be assigned to the MX40. The PIC iX will not recognize the new IP address after reconnecting and therefore the expecting settings sync fails.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20230419",
+    "cfres_id": "209983"
+   },
+   {
+    "recall_number": "Z-1503-2023",
+    "event_number": "91851",
+    "recalling_firm": "Spacelabs Healthcare, Inc.",
+    "product_description": "Ultraview SL (UVSL) Command Module, Model 91496",
+    "reason_for_recall": "Command modules will display the following when parameter processing is suspended, depending on software version: 1) Older versions will have waveforms present with no alarms, 2) Newer versions have waveforms absent with no alarms. This may cause clinicians to miss a potentially catastrophic event.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20230412",
+    "cfres_id": "199041"
+   },
+   {
+    "recall_number": "Z-0007-2025",
+    "event_number": "95301",
+    "recalling_firm": "Philips North America",
+    "product_description": "IntelliVue G7m Anesthesia Gas Module, Product Number 866173",
+    "reason_for_recall": "The 866173 lntelliVue G7m Anesthesia Gas Modules could have a component issue that may trigger an interruption of the gas measurement. This issue concerns the G7m's sample gas pump which could stop working, producing a technical, INOP (inoperable) alarm. The pump may fail prematurely when there is friction caused by an abrasion. This recall is for an IMPORTANT PRODUCT NOTICE dated 1/18/23.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20230118",
+    "cfres_id": "209939"
+   },
+   {
+    "recall_number": "Z-0183-2023",
+    "event_number": "90954",
+    "recalling_firm": "iRhythm Technologies, Inc.",
+    "product_description": "Zio AT Clinical Reference Manual, Part: ALB0031, and Zio AT Important Information Pamphlet, Part: ALB0034.  For Zio Ambulatory ECG monitoring system",
+    "reason_for_recall": "Ambulatory ECG monitoring system labeling update: 1) Clinically actionable arrhythmia notifications delayed until patient registration is complete; 2) Patches limited to 100 symptomatic and 500 asymptomatic wireless transmissions; once the maximum transmission limit is reached for either type, any further transmissions for that type will cease. Risk of delayed reporting to health providers.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20220928",
+    "cfres_id": "196267"
+   },
+   {
+    "recall_number": "Z-1671-2021",
+    "event_number": "87829",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "IntelliVue MX40 Patient Monitor, Model Number: 865350 (US) 865352 (OUS) Software version number B.06.59 - Product Usage: Intended for monitoring and recording of, and to generate alarms for, multiple physiological parameters of adults and pediatrics in hospital environments and during transport inside hospitals.",
+    "reason_for_recall": "Manufacturing failed to follow process steps resulting in the distribution of potentially defective devices",
+    "recall_status": "Terminated",
+    "date_initiated": "20210202",
+    "cfres_id": "187136"
+   },
+   {
+    "recall_number": "Z-0544-2021",
+    "event_number": "86848",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "Philips IntelliVue X2 Multi measurement Server: M3002A (865039) - Product Usage: intended for monitoring and recording of, and to generate alarms for, multiple physiological parameters of adults, pediatrics, and neonates in a hospital environment and during patient transport inside and outside of the hospital environment.",
+    "reason_for_recall": "Speakers on IntelliVue X2 and IntelliVue MP2 may fail,  identified by the display of a  Speaker Malfunct.  INOP or by the absence of audible sound, may result in delayed treatment of the patient.",
+    "recall_status": "Terminated",
+    "date_initiated": "20201118",
+    "cfres_id": "184676"
+   },
+   {
+    "recall_number": "Z-0545-2021",
+    "event_number": "86848",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "Philips IntelliVue MP2 Patient Monitors (865040) - Product Usage: intended for monitoring and recording of, and to generate alarms for, multiple physiological parameters of adults, pediatrics, and neonates in a hospital environment and during patient transport inside and outside of the hospital environment.",
+    "reason_for_recall": "Speakers on IntelliVue X2 and IntelliVue MP2 may fail,  identified by the display of a  Speaker Malfunct.  INOP or by the absence of audible sound, may result in delayed treatment of the patient.",
+    "recall_status": "Terminated",
+    "date_initiated": "20201118",
+    "cfres_id": "184681"
+   },
+   {
+    "recall_number": "Z-2531-2020",
+    "event_number": "85799",
+    "recalling_firm": "Philips North America, LLC",
+    "product_description": "Philips M3015A  Microstream CO2 Extension Model No. 862393 -used with an lntelliVue X3 Patient Monitor (Model No. 867030) or a lntelliVue MMX Multi-Measurement Module (Model No. 867036)",
+    "reason_for_recall": "Affected M3015A extensions are incompatible with the lntelliVue X3 Patient Monitor (Model No. 867030) and lntelliVue MMX multi-measurement server (Model No. 867036).If they are connected to a host monitor, communication with the X3 or MMX could be disrupted, resulting in a loss of monitoring on the host monitor.",
+    "recall_status": "Terminated",
+    "date_initiated": "20200608",
+    "cfres_id": "181796"
+   },
+   {
+    "recall_number": "Z-0725-2020",
+    "event_number": "84372",
+    "recalling_firm": "GE Healthcare, LLC",
+    "product_description": "ApexPro Telemetry System - Product Usage: The ApexPro Telemetry System is intended for use under the direct supervision of a licensed healthcare practitioner. The system is designed to acquire and monitor physiological data for ambulating patients within a defined coverage area. The system processes this physiological data to detect various ECG arrhythmia events and select physiological parameter limit violations. The ApexPro Telemetry System is intended to be installed in the hospital or clinical environment in order to provide clinicians with patient physiological data, while allowing for patient mobility. These systems are typically deployed in sub acute care areas in hospitals or clinical sites where patient mobility can enhance the effectiveness of the medical procedures administered.",
+    "reason_for_recall": "When connected to the Mission Critical (MC) and /or Information Exchange (IX) networks, certain versions of the CARESCAPE Telemetry Server, ApexPro Telemetry Server, CARESCAPE Central Station (CSCS) version 1 and Central Information Center (CIC) systems were identified to have vulnerabilities to a cyber-attack.",
+    "recall_status": "Terminated",
+    "date_initiated": "20191112",
+    "cfres_id": "178163"
+   },
+   {
+    "recall_number": "Z-0726-2020",
+    "event_number": "84372",
+    "recalling_firm": "GE Healthcare, LLC",
+    "product_description": "CIC Pro Clinical Information Center Central Station - Product Usage: The intended use is to provide clinicians with adult, pediatric and neonatal patient data in a centralized location within a hospital or clinical environment. CIC Pro Clinical Information Center central station is intended to collect information from a network and display this data. This data includes physiological, patient demographic and/or other nonmedical information.",
+    "reason_for_recall": "When connected to the Mission Critical (MC) and /or Information Exchange (IX) networks, certain versions of the CARESCAPE Telemetry Server, ApexPro Telemetry Server, CARESCAPE Central Station (CSCS) version 1 and Central Information Center (CIC) systems were identified to have vulnerabilities to a cyber-attack.",
+    "recall_status": "Terminated",
+    "date_initiated": "20191112",
+    "cfres_id": "178165"
+   },
+   {
+    "recall_number": "Z-0727-2020",
+    "event_number": "84372",
+    "recalling_firm": "GE Healthcare, LLC",
+    "product_description": "CARESCAPE Central Station - Product Usage: The intended use is to provide clinicians with adult, pediatric and neonatal patient data within a hospital or clinical environment. The CARESCAPE Central Station is intended to collect information from a network and display this data. This data includes physiological, patient demographic and/or other nonmedical information.",
+    "reason_for_recall": "When connected to the Mission Critical (MC) and /or Information Exchange (IX) networks, certain versions of the CARESCAPE Telemetry Server, ApexPro Telemetry Server, CARESCAPE Central Station (CSCS) version 1 and Central Information Center (CIC) systems were identified to have vulnerabilities to a cyber-attack.",
+    "recall_status": "Terminated",
+    "date_initiated": "20191112",
+    "cfres_id": "178167"
+   },
+   {
+    "recall_number": "Z-0175-2020",
+    "event_number": "83813",
+    "recalling_firm": "GE Healthcare, LLC",
+    "product_description": "ApexPro Telemetry Server System.  Also identified as Modification To: ApexPro Telemetry System and ApexPro FH Telemetry System - Product Usage: These systems are typically deployed in sub acute care areas in hospitals or clinical sites where patient mobility can enhance the effectiveness of the medical procedures administered.",
+    "reason_for_recall": "May not provide visual and/or audible alarms at the CARESCAPE Central Station or Clinical Information Center monitor for ECG arrhythmias, ECG LEADS FAIL or Pulse Oximetry (SpO2) under certain conditions.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20190830",
+    "cfres_id": "176411"
+   },
+   {
+    "recall_number": "Z-2479-2020",
+    "event_number": "85233",
+    "recalling_firm": "Preventice Services, LLC",
+    "product_description": "BodyGuardian Heart Remote Monitoring Kit, consisting of two BG Heart monitors, either Models BC-1001-A or BC1001-D, and a cell phone, either Models BP1008 or BP10014, that is paired to both of the monitors.",
+    "reason_for_recall": "The device data being collected and transferred to the monitoring center may not be accurate due to nonvalidated association between the phone software and the heart monitors, therefore, the patient's report should not be used to evaluate their condition.",
+    "recall_status": "Terminated",
+    "date_initiated": "20190806",
+    "cfres_id": "180336"
+   },
+   {
+    "recall_number": "Z-1692-2019",
+    "event_number": "82696",
+    "recalling_firm": "Philips North America, LLC",
+    "product_description": "IntelliVue MX40 Patient Monitor, Product number 865350, Service # USA: 453564262491 and 453564262511 - Product Usage: Used primarily as a traditional telemetry medical device. It connects to the IntelliVue Information Center by way of a wireless network. When the MX40 is connected to the IntelliVue Information Center the IntelliVue Information Center provides the primary patient monitoring and alarming function. The MX40 does not automatically provide local monitoring or alarming when connected to the Information Center.",
+    "reason_for_recall": "The MX40 may experience increased power consumption and may have a lack of visual and/or audible notifications while in a  Low Battery State .",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20190328",
+    "cfres_id": "172393"
+   },
+   {
+    "recall_number": "Z-1693-2019",
+    "event_number": "82696",
+    "recalling_firm": "Philips North America, LLC",
+    "product_description": "IntelliVue MX40 Patient Monitor, Product number 865351, Service Numbers\nAll other countries: 453564451791, 453564451811, 453564467721, 453564467741, 453564467761, 453564467781, 453564467801, 453564467821, 453564467841, 453564467861, 453564262531, and 453564262551 - Product Usage: Used primarily as a traditional telemetry medical device. It connects to the IntelliVue Information Center by way of a wireless network. When the MX40 is connected to the IntelliVue Information Center the IntelliVue Information Center provides the primary patient monitoring and alarming function. The MX40 does not automatically provide local monitoring or alarming when connected to the Information Center.",
+    "reason_for_recall": "The MX40 may experience increased power consumption and may have a lack of visual and/or audible notifications while in a  Low Battery State .",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20190328",
+    "cfres_id": "172394"
+   },
+   {
+    "recall_number": "Z-1694-2019",
+    "event_number": "82696",
+    "recalling_firm": "Philips North America, LLC",
+    "product_description": "IntelliVue MX40 Patient Monitor, Product number 865352, Service Numbers All: 453564262571, 453564262591, 453564615311, 453564615331, 453564615351, and 453564615371\nProduct Usage: Used primarily as a traditional telemetry medical device. It connects to the IntelliVue Information Center by way of a wireless network. When the MX40 is connected to the IntelliVue Information Center the IntelliVue Information Center provides the primary patient monitoring and alarming function. The MX40 does not automatically provide local monitoring or alarming when connected to the Information Center.",
+    "reason_for_recall": "The MX40 may experience increased power consumption and may have a lack of visual and/or audible notifications while in a  Low Battery State .",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20190328",
+    "cfres_id": "172395"
+   },
+   {
+    "recall_number": "Z-1695-2019",
+    "event_number": "82696",
+    "recalling_firm": "Philips North America, LLC",
+    "product_description": "IntelliVue MX40 Patient Monitor, Product number 857146, Service Numbers All:\n453564711531 and 453564711541 - Product Usage: Used primarily as a traditional telemetry medical device. It connects to the IntelliVue Information Center by way of a wireless network. When the MX40 is connected to the IntelliVue Information Center the IntelliVue Information Center provides the primary patient monitoring and alarming function. The MX40 does not automatically provide local monitoring or alarming when connected to the Information Center.",
+    "reason_for_recall": "The MX40 may experience increased power consumption and may have a lack of visual and/or audible notifications while in a  Low Battery State .",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20190328",
+    "cfres_id": "172396"
+   },
+   {
+    "recall_number": "Z-0592-2019",
+    "event_number": "81531",
+    "recalling_firm": "Philips Electronics North America Corporation",
+    "product_description": "IntelliVue MX40 Patient Monitor, Model Nos. 865350, 865351, 865352, 867146 - Product Usage: Indicated for use by health care professionals whenever there is a need for monitoring the physiological parameters of patients. Intended for monitoring and recording of, and to generate alarms for, multiple physiological parameters of adults and pediatrics in hospital environments and during transport inside hospitals.",
+    "reason_for_recall": "A problem has been detected in the Philips IntelliVue MX4O that, if it were to occur, could affect the\nperformance of the equipment. The volume of the MX4O speaker in these devices may be diminished or not audible above 4,500 feet when operating in Monitor Mode. These devices may\nintermittently exhibit  Speaker Malfunct  INOP messages after the Power On\nSelf-Test.\nThe issue is only apparent when the device is being used in Monitor Mode at an\naltitude of greater than 4,500 feet.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20181010",
+    "cfres_id": "168916"
+   },
+   {
+    "recall_number": "Z-2141-2018",
+    "event_number": "80064",
+    "recalling_firm": "Philips Electronics North America Corporation",
+    "product_description": "IntelliVue MX40 Patient Monitor, Software Versions B.05, B.06, B.06.5X, Model 865350",
+    "reason_for_recall": "Five warning statements are missing from the instructions for use.",
+    "recall_status": "Terminated",
+    "date_initiated": "20180430",
+    "cfres_id": "164319"
+   },
+   {
+    "recall_number": "Z-2142-2018",
+    "event_number": "80064",
+    "recalling_firm": "Philips Electronics North America Corporation",
+    "product_description": "IntelliVue MX40 Patient Monitor, Software Versions B.05, B.06, B.06.5X, Model 865351",
+    "reason_for_recall": "Five warning statements are missing from the instructions for use.",
+    "recall_status": "Terminated",
+    "date_initiated": "20180430",
+    "cfres_id": "164320"
+   },
+   {
+    "recall_number": "Z-2143-2018",
+    "event_number": "80064",
+    "recalling_firm": "Philips Electronics North America Corporation",
+    "product_description": "IntelliVue MX40 Patient Monitor, Software Versions B.05, B.06, B.06.5X, Model 865352",
+    "reason_for_recall": "Five warning statements are missing from the instructions for use.",
+    "recall_status": "Terminated",
+    "date_initiated": "20180430",
+    "cfres_id": "164321"
+   },
+   {
+    "recall_number": "Z-2144-2018",
+    "event_number": "80064",
+    "recalling_firm": "Philips Electronics North America Corporation",
+    "product_description": "IntelliVue MX40 Patient Monitor, Software Versions B.05, B.06, B.06.5X, Model 867146",
+    "reason_for_recall": "Five warning statements are missing from the instructions for use.",
+    "recall_status": "Terminated",
+    "date_initiated": "20180430",
+    "cfres_id": "164322"
+   },
+   {
+    "recall_number": "Z-1707-2017",
+    "event_number": "76656",
+    "recalling_firm": "Philips Electronics North  America Corporation",
+    "product_description": "Philips IntelliVue MX4O WLAN Patient Wearable Monitor\nProduct: 865352\nExchange part (service numbers):\n453564615311 TELE PWM,802.lla/b/g,ECG only, US only\n453564615331 TELE PWM,802.1 1 a/b/g,ECG&Sp02, US only\n\nProduct Usage:\nIndicated for use by health care professionals whenever there is a need for monitoring the physiological parameters of patients. Intended for monitoring and recording of, and to generate alarms for, multiple physiological parameters of adults and pediatrics in hospital environments and during transport inside hospitals. The MX4O is to be used primarily as a traditional telemetry medical device. It connects to the IntelliVue Information Center by way of a wireless network. When the MX4O is connected the IntelliVue Information Center the IntelliVue Information Center provides the primary patient monitoring and alarming function. The MX4O does not automatically provide local monitoring or alarming when connected to the Information Center.",
+    "reason_for_recall": "Philips lntelliVue MX4O WLAN Patient Wearable Monitor may not automatically switch to\nMonitor Mode with audible alarms when association with central monitoring system is unsuccessful [incomplete]",
+    "recall_status": "Terminated",
+    "date_initiated": "20170306",
+    "cfres_id": "153762"
+   },
+   {
+    "recall_number": "Z-2343-2016",
+    "event_number": "74549",
+    "recalling_firm": "Spacelabs Healthcare Inc",
+    "product_description": "91496 Ultraview SL Command Module, Options A, B, C, and I.\n\nOption A: ECG/Respiration, SpO2, Temperature x2 & adult/neonate NIBP.\n\nOption B: ECG/Respiration, Invasive Pressure x2, SpO2, Temperature x2 & adult/neonate NIBP.\n\nOption C: ECG/Respiration, Invasive Pressure x4, SpO2, Cardiac Output, Temperature x2 & adult/neonate NIBP.\n\nOption I: SpO2, Temperature x2, & adult/neonate NIBP.",
+    "reason_for_recall": "The firm has received multiple reports of the Non-Invasive Blood Pressure (NIBP) parameter becoming non-functional with an associated message (No Reading). In addition, there is one of the following three error messages: Inflate Error, HW Error, or No Data.",
+    "recall_status": "Terminated",
+    "date_initiated": "20160701",
+    "cfres_id": "147885"
+   },
+   {
+    "recall_number": "Z-1315-2016",
+    "event_number": "73381",
+    "recalling_firm": "Scottcare Corporation",
+    "product_description": "TeleSentry Battery, 3.7 Li-Ion Polymer Battery, CAUTION Do not expose to high temperature. Do not disassemble. Dispose of properly. Use specified charger only. 60pC/140pF The ScottCare Corporation. \n\nIntended for diagnostic evaluation of patients who experience transient symptoms or asymptomatic events that may suggest cardiac arrhythmia.",
+    "reason_for_recall": "The firm received a complaint of the battery exploding while recharging.",
+    "recall_status": "Terminated",
+    "date_initiated": "20160225",
+    "cfres_id": "143993"
+   },
+   {
+    "recall_number": "Z-1249-2016",
+    "event_number": "73494",
+    "recalling_firm": "Medtronic Inc.",
+    "product_description": "Reveal LINQ insertable Cardiac Monitor, Model LNQ11.\nMonitors subcutaneous ECG continuously.",
+    "reason_for_recall": "Medtronic has identified an issue with the sensitivity of an algorithm used in the Reveal LINQ ICM that may prematurely trigger the Recommended Replacement Time (RRT) alert in some devices. Battery capacity is not affected and the device will continue to support data collection and manual data transmissions. As part of the normal behavior of the device, 30 days after RRT status is reached, Reveal",
+    "recall_status": "Terminated",
+    "date_initiated": "20160223",
+    "cfres_id": "144301"
+   },
+   {
+    "recall_number": "Z-1577-2015",
+    "event_number": "71118",
+    "recalling_firm": "Spacelabs Healthcare Inc",
+    "product_description": "Ultraview SL Command Modules, Model 91496,  with the Masimo SpO2 PCBA, PN: 010-1636-02.\n\nThe Spacelabs Multi-parameter Module is intended for use with the Patient Care Management System (PCMS) to acquire, monitor, and process various clinical parameters from an adult or neonate/infant populations in any type of clinical environment other than home use.",
+    "reason_for_recall": "Modules resetting. This failure mode happens when the Spacelabs Command Module is configured with the Masimo SpO2 option (-M), the Spacelabs Respiration option (-R) and the Masimo SpO2 PCBA, PN: 010-1136-02. With these two options and the Masimo SpO2 PCBA present, the module may experience random resets.",
+    "recall_status": "Terminated",
+    "date_initiated": "20150421",
+    "cfres_id": "136155"
+   },
+   {
+    "recall_number": "Z-1542-2015",
+    "event_number": "71074",
+    "recalling_firm": "Spacelabs Healthcare Inc",
+    "product_description": "Ultraview SL Command Modules,  Model 91496-M, upgraded with the Masimo SpO2 Option.\n\nProduct Usage:\nThe Spacelabs Multi-parameter Module is intended for use with the Patient Care Management System (PCMS) to acquire, monitor, and process various clinical parameters from an adult or neonate/infant populations in any type of clinical environment other than home use. Physiological parameters that may be monitored include ECG with arrhythmia detection, respiration, invasive and noninvasive blood pressure, temperature, oxygen saturation (Sp02) and cardiac output. Acquired data may then be communicated to all information network for display, recording, editing and analysis.",
+    "reason_for_recall": "Ultraview SL Command Modules which were upgraded with the Masimo SpO2 Option, Model 91496-M was affected.  Customer reported that during the time that the module is resetting (~10 seconds), monitoring of all parameters will be suspended. Upon completion of this sequence, alarms will be reset to their default values.",
+    "recall_status": "Terminated",
+    "date_initiated": "20150417",
+    "cfres_id": "136025"
+   },
+   {
+    "recall_number": "Z-1705-2014",
+    "event_number": "68357",
+    "recalling_firm": "Spacelabs Healthcare Inc",
+    "product_description": "Spacelabs Medical Ultraview SL Command Module, Model 91496. \n\nArrhythmia Detector and Alarm. The  Multi-parameter Module is used with the Patient Care Management System (PCMS) to acquire, monitor, and process various clinical parameters from a patient in a clinical environment.",
+    "reason_for_recall": "A software anomaly causes temperature alarm limits to change to limits which are not physiologically possible and result in nuisance false positive alarms.",
+    "recall_status": "Terminated",
+    "date_initiated": "20140508",
+    "cfres_id": "127459"
+   },
+   {
+    "recall_number": "Z-2382-2012",
+    "event_number": "63007",
+    "recalling_firm": "Spacelabs Healthcare, Llc",
+    "product_description": "Ultraview SL 91493 Integrated Module Housing.\n\nPCIS patient monitors is intended to sound various alarm tones that are generated by the specific PCIS patient parameter modules. Each patient parameter module determines (a) when an alarm condition is violated; (b) the alarm priority (i.e. high, medium or low); (c) alarm limits; and (d) when to generate and terminate alarms. PCIS patient monitors are also capable of displaying alarm conditions on other monitors that are on the network through the Alarm Watch feature. Spacelabs Medical PCIS patient monitors are designed to communicate with a variety of external devices such as display devices, network devices, serial devices, user input devices, audio system, local/remote recorders and Spacelabs Medical patient parameter modules. In all applications, Spacelabs Medical PCIS patient monitors provide access to that data on the Spacelabs Medical network either via hardwire or wireless transmission. Through this network, a patient's data may be displayed at the bedside monitor, central station or clinical information system.",
+    "reason_for_recall": "There is a potential failure of the Integrated Module Housing causing the patient module parameters to drop off the monitor display or the patient module will fail to sign on when inserted into the housing.",
+    "recall_status": "Terminated",
+    "date_initiated": "20120827",
+    "cfres_id": "112262"
+   },
+   {
+    "recall_number": "Z-1400-2012",
+    "event_number": "61370",
+    "recalling_firm": "Scottcare Corporation",
+    "product_description": "TeleSentry, Multi-parameter Ambulatory Telemetry, Model #TS01. Dist. By: ScottCare Corporation, Cleveland, OH.\n\nThe TeleSentry device is intended for diagnostic evaluation of patients who experience transient symptoms or asymptomatic events that may suggest cardiac arrhythmia. The device continuously monitors and records the data, automatically records events triggered by an arrhythmia detection algorithm or manually by the patient, and automatically transmits the recorded event activity associated with these symptoms for review by a licensed physician.",
+    "reason_for_recall": "Certain TeleSentry Devices contain a Bad SD Card. When the SD Card goes bad, the TeleSentry Device cannot read or write data to the SD Card. The TeleSentry Device then stops functioning.",
+    "recall_status": "Terminated",
+    "date_initiated": "20120119",
+    "cfres_id": "107929"
+   },
+   {
+    "recall_number": "Z-0690-2012",
+    "event_number": "60593",
+    "recalling_firm": "Spacelabs Healthcare, Llc",
+    "product_description": "Ultraview SL Command Module is the Spacelabs Multi-parameter Module.  It is intended for use with the Patient Care Management System (PCMS) to acquire, monitor, and process various clinical parameters from an adult or neonate/infant populations in any type of clinical environment other than home use.\n\nThe Spacelabs Multi-parameter Module is intended for use with the Patient Care Management System (PCMS) to acquire, monitor, and process various clinical parameters from an adult or neonate/infant populations in any type of clinical environment other than home use. Physiological parameters that may be monitored include ECG with arrhythmia detection, respiration, invasive and noninvasive blood pressure, temperature, oxygen saturation (Sp02) and cardiac output. Acquired data may then be communicated to an information network for display, recording, editing and analysis.",
+    "reason_for_recall": "NIBP pump inside the Ultraview SL Command Module, Model 91496, became loose. The pump is suspended by the air hoses and electrical connections, but there can be enough movement to\ndamage internal components and cause the module to fail.",
+    "recall_status": "Terminated",
+    "date_initiated": "20111103",
+    "cfres_id": "105892"
+   },
+   {
+    "recall_number": "Z-0776-2012",
+    "event_number": "60764",
+    "recalling_firm": "Spacelabs Healthcare, Llc",
+    "product_description": "Spacelabs Medical Ultraview SL Command Module, Model 91496.\n\nThe Spacelabs Multi-parameter Module is intended for use with the Patient Care Management System (PCMS) to acquire, monitor, and process various clinical parameters from an adult or neonate/infant populations in any type of clinical environment other than home use. Physiological parameters that may be monitored include ECG with arrhythmia detection, respiration, invasive and noninvasive blood pressure, temperature, oxygen saturation (SpO2) and cardiac output. Acquired data may then be communicated to an information network for display, recording, editing and analysis.",
+    "reason_for_recall": "One Spacelabs Medical Ultraview SL Command Module, Model 91496, was removed from customer due to software error.",
+    "recall_status": "Terminated",
+    "date_initiated": "20110713",
+    "cfres_id": "106417"
+   },
+   {
+    "recall_number": "Z-2918-2011",
+    "event_number": "58978",
+    "recalling_firm": "Welch Allyn Protocol, Inc",
+    "product_description": "Aruba Wireless Network Access Points, Model 65 utilized by the Acuity Central Monitoring System.\nWelch Allyn Protocol, Inc.\n\nIntended for use by clinicians for the central monitoring of neonatal, pediatric and adult patients in health care facilities. The system connects to a network of patient monitors to record and analyze physiological data being acquired by the monitors.",
+    "reason_for_recall": "Aruba Wireless Network Access Points, Model Number 65, experienced a higher than expected incidence of dropouts due to external RF interference.",
+    "recall_status": "Terminated",
+    "date_initiated": "20110516",
+    "cfres_id": "100762"
+   },
+   {
+    "recall_number": "Z-2625-2010",
+    "event_number": "56646",
+    "recalling_firm": "Philips Healthcare Inc.",
+    "product_description": "Philips M3002A IntelliVue X2\nModel: 865039\nIndicated for use by health care professionals whenever there is a need for monitoring the physiological parameters of patients. Intended for monitoring, recording, and alarming of multiple physiological parameters of adults, pediatrics, and neonates in a hospital environment. ST segment monitoring is restricted to adult patients only. The M3002A and M8102A are used for monitoring, recording and alarming of multiple physiological parameters of adults, pediatrics, and neonates in health care facilities",
+    "reason_for_recall": "Speakers on the Philips IntelliVue X2 and MP2 patient monitors may fail, causing absence of an audible alarm and delaying patient treatment.",
+    "recall_status": "Terminated",
+    "date_initiated": "20100831",
+    "cfres_id": "94172"
+   },
+   {
+    "recall_number": "Z-2626-2010",
+    "event_number": "56646",
+    "recalling_firm": "Philips Healthcare Inc.",
+    "product_description": "Philips M8102A IntelliVue MP2\nModel: 865040\nIndicated for use by health care professionals whenever there is a need for monitoring the physiological parameters of patients. Intended for monitoring, recording, and alarming of multiple physiological parameters of adults, pediatrics, and neonates in a hospital environment. ST segment monitoring is restricted to adult patients only. The M3002A and M8102A are used for monitoring, recording and alarming of multiple physiological parameters of adults, pediatrics, and neonates in health care facilities",
+    "reason_for_recall": "Speakers on the Philips IntelliVue X2 and MP2 patient monitors may fail, causing absence of an audible alarm and delaying patient treatment.",
+    "recall_status": "Terminated",
+    "date_initiated": "20100831",
+    "cfres_id": "94173"
+   },
+   {
+    "recall_number": "Z-2724-2011",
+    "event_number": "56016",
+    "recalling_firm": "Brentwood Medical Technology Corp",
+    "product_description": "IQecg IQiC Interface, Part Numbers: 4-100-1407, Software Version 6.0\n\nIQecg is to be used, under the supervision of a Physician, to obtain Electrocardiograms from the human body surface.",
+    "reason_for_recall": "The recall was initiated because when a user of the IQmanager, IQdevices SDK, and IQiC (Centricity) software versions listed above accesses the QT dialogue box to either accept or edit the QT value, the QTc value is recalculated using a Hodges QTc equation, regardless of patient's age.  The software does this without notifying the user of the change from use of the Bazett equation, which is utiliz",
+    "recall_status": "Terminated",
+    "date_initiated": "20100518",
+    "cfres_id": "92429"
+   },
+   {
+    "recall_number": "Z-2725-2011",
+    "event_number": "56016",
+    "recalling_firm": "Brentwood Medical Technology Corp",
+    "product_description": "IQecg IQdevices SDK, Part Numbers: 4-100-1403, Software Version 8.3.2 \n\nProduct Usage: IQecg is to be used, under the supervision of a Physician, to obtain Electrocardiograms from the human body surface.",
+    "reason_for_recall": "The recall was initiated because when a user of the IQmanager, IQdevices SDK, and IQiC (Centricity) software versions listed above accesses the QT dialogue box to either accept or edit the QT value, the QTc value is recalculated using a Hodges QTc equation, regardless of patient's age.  The software does this without notifying the user of the change from use of the Bazett equation, which is utiliz",
+    "recall_status": "Terminated",
+    "date_initiated": "20100518",
+    "cfres_id": "100320"
+   },
+   {
+    "recall_number": "Z-2726-2011",
+    "event_number": "56016",
+    "recalling_firm": "Brentwood Medical Technology Corp",
+    "product_description": "IQecg IQmanager Diagnostic Workstation, Part Numbers: 4-100-1200, Software Version 8.0.1, 8.3, 8.3.1, 8.3.2\n\nIQecg is to be used, under the supervision of a Physician, to obtain Electrocardiograms from the human body surface.",
+    "reason_for_recall": "The recall was initiated because when a user of the IQmanager, IQdevices SDK, and IQiC (Centricity) software versions listed above accesses the QT dialogue box to either accept or edit the QT value, the QTc value is recalculated using a Hodges QTc equation, regardless of patient's age.  The software does this without notifying the user of the change from use of the Bazett equation, which is utiliz",
+    "recall_status": "Terminated",
+    "date_initiated": "20100518",
+    "cfres_id": "100321"
+   },
+   {
+    "recall_number": "Z-0349-2011",
+    "event_number": "51883",
+    "recalling_firm": "Welch Allyn Protocol, Inc",
+    "product_description": "ViewSonic 19\" flat panel LCD display Model VG930M which is used as part of the Welch Allyn Acuity Central Monitoring System.  The affected serial numbers are those less than QC2082880001.\n\nThe ViewSonic 19\" flat panel LCD display Model VG930M is used as part of the Welch Allyn Acuity Central Monitoring System (Acuity System.) The Acuity System consists of a central monitoring station, Acuity System software, and a collection of other commercially available networked products",
+    "reason_for_recall": "The 19\" Model VG930M ViewSonic flat panel LCD display may have faulty capacitors at certain locations in the power supply section.  The faulty capacitors may cause a loss of power to the display resulting in the display screen going dark and loss of both visual and secondary patient alarms.",
+    "recall_status": "Terminated",
+    "date_initiated": "20090501",
+    "cfres_id": "81539"
+   },
+   {
+    "recall_number": "Z-1600-2009",
+    "event_number": "52002",
+    "recalling_firm": "GE Medical Systems Information Tecnology",
+    "product_description": "GE Healthcare CIC Pro Clinical Information Center Central Station (CIC Pro version 5.1, MP100 Hardware).\n\nThe CIC Pro\" clinical Information Center central station is intended to collect information from a network and display this date. This data includes physiological, patient dermographic and/or other non-medical information.",
+    "reason_for_recall": "GE Healthcare has become aware of a potential issue associated with the failure to restart CARESCAPE CIC Pro v5.1 on the MP100 hardware.  This issue may impact patient safety.",
+    "recall_status": "Terminated",
+    "date_initiated": "20090310",
+    "cfres_id": "81860"
+   },
+   {
+    "recall_number": "Z-1232-2009",
+    "event_number": "51253",
+    "recalling_firm": "GE Medical Systems Information Tecnology",
+    "product_description": "GE Healthcare CIC Pro\"  Software Versions 5.0.3, 5.0.6 ,5.0.7, 5.0.8 and 4.1.\n\nThe CIC Pro\" Clinical Information Center Central Station is intended for use under the direct supervision of a licensed healthcare practitioner. The intended use is to provide clinicians with adult, pediatric and neonatal patient data in a centralized location within a hospital or clinical environment. The CIC Pro Central Station is intended to collect information from a network and display this data. This data included physiological, patient demographic and/or other non-medical information. Physiological parameters and waveforms from GE Healthcare Information Technologies monitors and telemetry systems can be displayed and printed from the CIC Pro Clinical Information central station. Beat to beat patient information for all parameters and waveforms from he bedsides and telemetry systems can be displayed. The CIC Pro Clinical Information Center central station supports the ability to access information from GE Medical Systems Information Technologies products in web browser format. Additionally, the CICC Pro clinical Information central station supports the ability to access patient information collected from the unity network and stored on a network server.",
+    "reason_for_recall": "GE Healthcare is aware of potential network time issues associated with the time change aspects of certain CARESCAPE CIC Pro\" software versions.  These issues may impact patient safety. \nNo reported patient injuries or illnesses for the use of this device in conjunction with this device correction.",
+    "recall_status": "Terminated",
+    "date_initiated": "20090227",
+    "cfres_id": "79458"
+   },
+   {
+    "recall_number": "Z-0034-2011",
+    "event_number": "50215",
+    "recalling_firm": "Philips Medical Systems North America Co.   Phillips",
+    "product_description": "The device's marketing brochure states: \"IntelliVue M3150 Information Center...Philips Medical Systems\".\n\nThe beige-colored PAS-210 external speakers can be identified by their use of DB15-to-3.5 mm mini-phone jack cable (Agispec-081Y-4 or Agispec-081-6) to connect to the rp5700 PC.\n\nIndicated for central monitoring of multiple adult, pediatric, and neonatal patients.",
+    "reason_for_recall": "Potential for Internal Sound Amplifier to malfunction  which could delay treatment.",
+    "recall_status": "Terminated",
+    "date_initiated": "20081121",
+    "cfres_id": "74994"
+   },
+   {
+    "recall_number": "Z-0817-2009",
+    "event_number": "50088",
+    "recalling_firm": "Philips Medical Systems",
+    "product_description": "Philips M8000-64100 Table Mount \n\nShipped standard with all IntelliVue Patient Monitors MP40-70, Gas Modules Gl and G5 and certain options of the IntelliVue Patient Monitors MP5 MPST and MP20/30.\n\nProduct shipped between 6/03/08 and 9/12/08 as follows:\nM1013A IntelliVue G1 Gas Module\nM1019A IntelliVue GS Gas Module\nM8001A option E22 Quick release mount for IntelliVue MP20\nM8002A option E22 Quick release mount for IntelliVue MP30\nM8003A IntelliVue MP40\nM8004A IntelliVue MPSO\nM8005A IntelliVue MP60\nM8007A IntelliVue MP70\nM8105A option E22 IntelliVue MP5 Quick Release Mount\nM8105AT option E22 IntelliVue MPST Quick Release Mount\nM8040A option U02 U02 Table top mount kit\nM8040A option E22 Quick release kit for MP20MP30\n\nThe Philips IntelliVue Patient Monitors are intended for monitoring and recording of and to generate alarms for, multiple physiological parameters of adults, pediatrics and neonates in hospital environments. The MP2, X2, MP5, MP20, MP30, MP40, and MP50 are additionally intended for use in transport situations within hospital environments.",
+    "reason_for_recall": "Table Mounts assembled with incorrect length hardware may fall",
+    "recall_status": "Terminated",
+    "date_initiated": "20081022",
+    "cfres_id": "74699"
+   },
+   {
+    "recall_number": "Z-2342-2008",
+    "event_number": "48759",
+    "recalling_firm": "Spacelabs Healthcare, Incorporated",
+    "product_description": "Ultraview SL Command Module, Model 90496\nThe product is intended for use with the Patient Care Monitoring System (PCMS)  to acquire, monitor, and process various clinical parameters from an adult or neonate/infant populations in any type of clinical environment other than home use. Physiological parameters that may be monitored include cardiac activity, respiration, invasive and noninvasive pressure, temperature, oxygen saturation (SpO2) and cardiac output.  Acquired data may then be communicated to an information network for display, recording, editing and analysis.",
+    "reason_for_recall": "Potential for module to fail to obtain a NIBP reading on hypertension patients.",
+    "recall_status": "Terminated",
+    "date_initiated": "20080722",
+    "cfres_id": "72067"
+   },
+   {
+    "recall_number": "Z-2343-2008",
+    "event_number": "48759",
+    "recalling_firm": "Spacelabs Healthcare, Incorporated",
+    "product_description": "Ultraview SL Command Module, Model 91496\nThe product is intended for use with the Patient Care Monitoring System (PCMS)  to acquire, monitor, and process various clinical parameters from an adult or neonate/infant populations in any type of clinical environment other than home use. Physiological parameters that may be monitored include cardiac activity, respiration, invasive and noninvasive pressure, temperature, oxygen saturation (SpO2) and cardiac output.  Acquired data may then be communicated to an information network for display, recording, editing and analysis.",
+    "reason_for_recall": "Potential for module to fail to obtain a NIBP reading on hypertension patients.",
+    "recall_status": "Terminated",
+    "date_initiated": "20080722",
+    "cfres_id": "72427"
+   },
+   {
+    "recall_number": "Z-1652-2008",
+    "event_number": "48985",
+    "recalling_firm": "Spacelabs Healthcare, Incorporated",
+    "product_description": "Ultraview Digital Telemetry Transmitter, Model 90478\nThe Spacelabs Medical Digital Telemetry system provides continuous electrocardiographic (ECG) monitoring to detect ST segment changes, abnormal cardiac rhythms, including asystole, ventricular fibrillation and ventricular tachycardia.",
+    "reason_for_recall": "Telemetry Modules are failing to alarm for low heart rate and asystole.",
+    "recall_status": "Terminated",
+    "date_initiated": "20080718",
+    "cfres_id": "72451"
+   },
+   {
+    "recall_number": "Z-2336-2008",
+    "event_number": "48973",
+    "recalling_firm": "Spacelabs Healthcare, Incorporated",
+    "product_description": "Ultraview Digital Telemetry Transmitter, Model 91341-09\nThe Spacelabs Medical Digital Telemetry system provides continuous electrocardiographic (ECG) monitoring to detect ST segment changes, abnormal cardiac rhythms, including asystole, ventricular fibrillation and ventricular tachycardia.",
+    "reason_for_recall": "During battery insertion there is potential for patient waveforms to move to an open receiver module or to an occupied receiver causing the intermittent inappropriate monitoring of both patients for several minutes.",
+    "recall_status": "Terminated",
+    "date_initiated": "20080717",
+    "cfres_id": "72436"
+   },
+   {
+    "recall_number": "Z-2314-2008",
+    "event_number": "48744",
+    "recalling_firm": "Spacelabs Healthcare, Incorporated",
+    "product_description": "Spacelabs Medical Temperature Probe Adaptor PN-700-0031-00.  Device is packaged in clear plastic bags with an attached insert card Insert  card reads \"TruLink series Dual Temperature Cable REF 700-0032-00 Spacelabs Medical Issaquah, WA USA\"",
+    "reason_for_recall": "Intermittent contact of temperature probe adaptors can cause a loss of temperature monitoring which can cause a delay in care when an alarm is missed.",
+    "recall_status": "Terminated",
+    "date_initiated": "20080702",
+    "cfres_id": "72041"
+   },
+   {
+    "recall_number": "Z-0285-2009",
+    "event_number": "49135",
+    "recalling_firm": "GE Healthcare",
+    "product_description": "GE Healthcare Solar 8000M System, a multiparameter physiological patient monitoring system intended for use on adult, pediatric and neonatal patients, within a hospital or facility environment",
+    "reason_for_recall": "A software error has been discovered when using Combination Monitoring with Solar 8000M/i - PDM - Telemetry in combo mode.  This error has only been noted with this particular configuration and mode of monitoring.  It has not been observed in other monitoring applications.  The software error will result in a reset of the Solar 8000M/i, causing a loss of monitoring  for approximately 1-2 minutes a",
+    "recall_status": "Terminated",
+    "date_initiated": "20080402",
+    "cfres_id": "72835"
+   },
+   {
+    "recall_number": "Z-0519-2008",
+    "event_number": "45913",
+    "recalling_firm": "General Electric Medical Systems Information Technology",
+    "product_description": "GE Medical Systems Information Technologies Clinical Information Center (CIC) Pro v5.0.3 & v5.0.6 systems, GE Healthcare, Clinical Systems",
+    "reason_for_recall": "Potential for Loss of Audible Alarming and ECG Tab Setting Changes; from Clinical Informaiton Center (CIC) Pro v5.0.3 & 5.0.6 when used in combination with Telemetry and bedside monitors.",
+    "recall_status": "Terminated",
+    "date_initiated": "20071108",
+    "cfres_id": "66467"
+   },
+   {
+    "recall_number": "Z-0280-2008",
+    "event_number": "45454",
+    "recalling_firm": "General Electric Medical Systems Information Technology",
+    "product_description": "GE Healthcare CIC Pro Clinical Information Center, Central Station, Software Version 4.1. (CIC Pro v4.1).  GE Medical Systems Information Technologies, Inc., Milwaukee, Wisconsin  (System hardware consists of a processing unit and a monitor)",
+    "reason_for_recall": "Two separate issues may occur with operating The CiC Pro v4.1 System with Telemetry. 1) Experience a loss of audible alarms when operating system memory resource reaches approximately 170MG.  This will occur if CIC Pro continuously runs for average of 160 day, and  2) System may continuously reboot upon start up in an attempt to correct the issue.",
+    "recall_status": "Terminated",
+    "date_initiated": "20070124",
+    "cfres_id": "65487"
+   },
+   {
+    "recall_number": "Z-0891-2007",
+    "event_number": "37309",
+    "recalling_firm": "General Electric Medical Systems Information Technology",
+    "product_description": "GE Healthcare CIC Pro Clinical Information Center, Central Station, Software Version 4.1. , GE Medical Systems Information Technologies, Inc., 8200 W. Tower Ave. Milwaukee, Wisconsin USA. (System hardware consists of a processing unit and a monitor)",
+    "reason_for_recall": "Alarm and Reboot problems: Two separate issues could occur with the CIC Pro system when used with Telemetry.  Each issue occurs in software version v4.1 only; A)  the system may experience a loss of audible alarms when operating system memory resources reach 170MB and/or  B) the system may intentionally or unexpectedly reboot .",
+    "recall_status": "Terminated",
+    "date_initiated": "20070124",
+    "cfres_id": "50585"
+   },
+   {
+    "recall_number": "Z-0523-2007",
+    "event_number": "37077",
+    "recalling_firm": "Spacelabs Healthcare, Incorporated",
+    "product_description": "Ultraview SL Command Module with Masimo Sp02 Option, a multiparameter patient monitor.",
+    "reason_for_recall": "Potential for modules to reset, alarms returning to default settings, invasive pressure losing its labels and zero calibration and Sp02 alarm limits being frozen.  This can result in delay in treatment.",
+    "recall_status": "Terminated",
+    "date_initiated": "20070103",
+    "cfres_id": "49866"
+   },
+   {
+    "recall_number": "Z-1202-06",
+    "event_number": "35391",
+    "recalling_firm": "Spacelabs Medical Incorporated",
+    "product_description": "Spacelabs Medical 1400 MHz Telemetry System,. Model 91341-09.  Telemetry System consists of  Model 91341-09 transmitter, 90478-1CST receiver and 90478-1CSV receiver.",
+    "reason_for_recall": "Potential for patient waveforms to move to an open receiver module or to an occupied receiver causing the intermittent inappropriate monitoring of both patients for several minutes.",
+    "recall_status": "Terminated",
+    "date_initiated": "20060505",
+    "cfres_id": "45982"
+   },
+   {
+    "recall_number": "Z-0063-06",
+    "event_number": "33458",
+    "recalling_firm": "Spacelabs Medical Incorporated",
+    "product_description": "Tru-Link DIN unshielded ECG cable, 5-lead",
+    "reason_for_recall": "ECG 5-lead cable miswired - A physician could interpret the incorrect polarities as a conduction defect.",
+    "recall_status": "Terminated",
+    "date_initiated": "20050916",
+    "cfres_id": "41911"
+   },
+   {
+    "recall_number": "Z-0030-05",
+    "event_number": "30018",
+    "recalling_firm": "General Electric Medical Systems Information Technology",
+    "product_description": "GE CIC Central Station Monitoring Product, Versions 3.x, 4.0.5, 4.0.6",
+    "reason_for_recall": "The following two conditions may occur with the printing of full disclosure strips and reports,  printing of the alarm history events stored on a GE Unity Network Patient Data Server (PDS), and printing of caliper reports in the GE CIC Pro central station monitoring product,  1) a delay or cessation in updating portions of th display screen: or, 2) System reset/restart.",
+    "recall_status": "Terminated",
+    "date_initiated": "20041011",
+    "cfres_id": "35018"
+   },
+   {
+    "recall_number": "Z-1007-04",
+    "event_number": "29038",
+    "recalling_firm": "Spacelabs Medical Inc.",
+    "product_description": "Ultraview Universal Clinical Workstation Model 90385.",
+    "reason_for_recall": "Potential for telemetry channels to drop off display.",
+    "recall_status": "Terminated",
+    "date_initiated": "20040507",
+    "cfres_id": "33021"
+   },
+   {
+    "recall_number": "Z-1008-04",
+    "event_number": "29038",
+    "recalling_firm": "Spacelabs Medical Inc.",
+    "product_description": "Ultraview 1700 Monitor Model 90387.",
+    "reason_for_recall": "Potential for telemetry channels to drop off display.",
+    "recall_status": "Terminated",
+    "date_initiated": "20040507",
+    "cfres_id": "33022"
+   },
+   {
+    "recall_number": "Z-0538-04",
+    "event_number": "28003",
+    "recalling_firm": "Welch Allyn Protocol, Inc",
+    "product_description": "Welch Allyn Acuity Central Monitoring Station (With SunBlade Model 150,650 MHZ.  Part # 700-0362-00",
+    "reason_for_recall": "Potential failure to audibly alarm due to speaker hardware component failure.",
+    "recall_status": "Terminated",
+    "date_initiated": "20031231",
+    "cfres_id": "30993"
+   },
+   {
+    "recall_number": "Z-0092-04",
+    "event_number": "27558",
+    "recalling_firm": "General Electric Medical Systems Information Technology",
+    "product_description": "Solar 8000M Patient Monitor  with software versions 3A, 3B and 3C",
+    "reason_for_recall": "Various user settings may change without an audible warning or visual indication.   Examples of settings  that may change are pacemaker detection which may turn from on to off, selected ECG leads for display, and selected gain settings for a selected waveform.",
+    "recall_status": "Terminated",
+    "date_initiated": "20020614",
+    "cfres_id": "30066"
+   }
+  ]
+ },
+ "notes": []
+}

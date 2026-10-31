@@ -20,14 +20,22 @@ The two reads are never merged, and the model is never asked to break a tie.
 from __future__ import annotations
 
 import re
-import unicodedata
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from difflib import SequenceMatcher
 from typing import Any, Literal
 
-from maudesignal.vision.fda_pdf import find_k_numbers, is_k_number, normalize_k_number
+from maudesignal.common.device_ids import (  # noqa: F401  (re-exported)
+    norm_company as norm_company,
+)
+from maudesignal.common.device_ids import (
+    norm_text as norm_text,
+)
+from maudesignal.common.device_ids import (
+    normalize_k_number,
+)
+from maudesignal.vision.fda_pdf import find_k_numbers, is_k_number
 from maudesignal.vision.openfda510k import Fda510kRecord
 from maudesignal.vision.reader import (
     LIST_FIELDS,
@@ -56,10 +64,6 @@ SUMMARY_AGREE = 0.5  # token Jaccard for the (condensed) technology summary
 NAME_AGREE = 0.9
 TEXT_LAYER_MATCH = 0.9  # share of the read's 4-word shingles found in the text layer
 
-_CORP = re.compile(
-    r"\b(incorporated|inc|llc|l\.l\.c|ltd|limited|corp|corporation|co|company|gmbh|b\.?v|"
-    r"s\.?a|s\.?l|ag|plc|pty|kk|ab|oy|srl|spa|nv)\b"
-)
 _MONTHS = {
     m: i
     for i, names in enumerate(
@@ -86,25 +90,6 @@ _MONTHS = {
 # ---------------------------------------------------------------------------
 # Normalization
 # ---------------------------------------------------------------------------
-
-
-def norm_text(value: str) -> str:
-    """Casefold, unify unicode, drop marks like ® ™, rejoin hyphenated words, collapse space."""
-    t = unicodedata.normalize("NFKC", value or "")
-    t = t.replace("®", " ").replace("™", " ").replace("©", " ")
-    t = re.sub(r"(\w)-\s+(\w)", r"\1\2", t)  # "detec- tion" -> "detection"
-    t = t.casefold()
-    t = re.sub(r"[‘’“”\"'`]", "", t)
-    t = re.sub(r"[^\w\s]", " ", t)
-    return " ".join(t.split())
-
-
-def norm_company(value: str) -> str:
-    """Company name without punctuation and corporate suffixes."""
-    t = unicodedata.normalize("NFKC", value or "").casefold()
-    t = re.sub(r"[.,]", " ", t)
-    t = _CORP.sub(" ", t)
-    return " ".join(re.sub(r"[^\w\s]", " ", t).split())
 
 
 def norm_date(value: str) -> str:
