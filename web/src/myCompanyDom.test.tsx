@@ -8,9 +8,10 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import company from '../public/data/company.json'
 import sweep from '../public/data/sweep.json'
-import { AlertBuddy, BUBBLE_MS, buddyLabel, buddyText } from './components/AlertBuddy'
+import { AlertBuddy, BUBBLE_MS, buddyLabel, buddyText, resetBubbleSeen } from './components/AlertBuddy'
 import { CompanyList } from './components/OurDevices'
 import { LiveLabelResult } from './components/CameraPanel'
+import { plainImportError } from './components/MakeItYours'
 import { parseLabelResponse } from './live/api'
 import { MINE_BANNER, MINE_KEY, MODE_KEY, buildMyCompany, flaggedCodes, knownCodes } from './myCompany'
 import type { AlertItem } from './dashboard'
@@ -324,6 +325,8 @@ describe('your data: export, import, clear', () => {
     expect(q('import-errors')?.textContent).toMatch(/not valid JSON/)
     await pick(file('x.json', JSON.stringify({ app: 'other', version: 9, devices: [] })))
     expect(q('import-errors')?.textContent).toMatch(/Not a MaudeSignal company export/)
+    expect(q('import-errors-heading')?.textContent).toMatch(/This file could not be imported, \d+ problems?/)
+    expect(q('import-errors')?.querySelectorAll('li').length).toBeGreaterThan(0)
     expect(stored().devices).toHaveLength(1)
   })
 
@@ -355,7 +358,7 @@ describe('your data: export, import, clear', () => {
     seed()
     click(q('clear-company'))
     expect(q('clear-confirm')?.textContent).toMatch(/cannot be undone/)
-    click(q('clear-confirm')!.querySelectorAll('button')[1])
+    click(q('clear-keep'))
     expect(stored().devices).toHaveLength(1)
     click(q('clear-company'))
     click(q('clear-yes'))
@@ -416,6 +419,7 @@ describe('alert buddy', () => {
     { id: 'sweep:AAA', kind: 'severity_escalation', productCode: 'AAA', label: 'More serious than usual', source: 'sweep', date: '2026-10-30', detail: '5 reports this week' },
     { id: 'sweep:BBB', kind: 'new_signal', productCode: 'BBB', label: 'New kind of problem', source: 'sweep', date: '2026-10-30', detail: '3 reports this week' },
   ]
+  beforeEach(() => resetBubbleSeen())
   it('is calm with nothing to look at: a picture with a label, not a control, no bubble', () => {
     show(<AlertBuddy items={[]} count={0} onOpen={() => undefined} />)
     const b = q('alert-buddy')!
@@ -426,14 +430,14 @@ describe('alert buddy', () => {
     expect(q('buddy-bubble')).toBeNull()
     expect(q('buddy-svg')?.getAttribute('class')).not.toContain('alert')
   })
-  it('with alerts it is a button with a count badge and a speech bubble', () => {
+  it('with alerts it is a button with the count in its label (no second badge next to the bell) and a speech bubble', () => {
     show(<AlertBuddy items={items} count={2} onOpen={() => undefined} />)
     const b = q('alert-buddy')!
     expect(b.tagName).toBe('BUTTON')
     expect(b.getAttribute('data-state')).toBe('alert')
     expect(b.getAttribute('aria-label')).toBe('Alert buddy: 2 alerts need a look. Open the first one.')
     expect(q('buddy-bubble')?.textContent).toBe('2 alerts need a look')
-    expect(q('buddy-badge')?.textContent).toBe('2')
+    expect(q('buddy-badge')).toBeNull()
     expect(q('buddy-svg')?.getAttribute('class')).toContain('ms-buddy-svg--alert')
   })
   it('the speech bubble goes away after a few seconds and comes back on hover; the state stays in the label and badge', () => {
@@ -446,7 +450,6 @@ describe('alert buddy', () => {
       })
       expect(q('buddy-bubble')).toBeNull()
       expect(q('alert-buddy')!.getAttribute('aria-label')).toMatch(/2 alerts need a look/)
-      expect(q('buddy-badge')?.textContent).toBe('2')
       act(() => {
         q('alert-buddy')!.parentElement!.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }))
         q('alert-buddy')!.parentElement!.dispatchEvent(new MouseEvent('mouseenter'))
@@ -456,6 +459,13 @@ describe('alert buddy', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+  it('the bubble opens once per session: a second mount shows none until hover', () => {
+    show(<AlertBuddy items={items} count={2} onOpen={() => undefined} />)
+    expect(q('buddy-bubble')).not.toBeNull()
+    show(<span />)
+    show(<AlertBuddy items={items} count={3} onOpen={() => undefined} />)
+    expect(q('buddy-bubble')).toBeNull()
   })
   it('says "1 alert needs a look" for one', () => {
     expect(buddyText(1)).toBe('1 alert needs a look')
@@ -477,5 +487,43 @@ describe('alert buddy', () => {
     expect(css).toMatch(/\.ms-buddy-svg--alert \.ms-buddy-body \{\s*fill: var\(--critical\)/)
     // Tokens only: no literal colours in the buddy stylesheet.
     expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b|rgb\(|hsl\(/)
+  })
+})
+
+describe('UI fix round', () => {
+  it('plain-language import errors drop developer paths', () => {
+    expect(plainImportError('devices[0].name must be text of 1 to 120 characters.')).toBe('Row 1: name must be text of 1 to 120 characters.')
+    expect(plainImportError('devices[2] is not an object.')).toBe('Row 3: is not an object.')
+    expect(plainImportError('devices must be a list.')).toBe('devices must be a list.')
+  })
+  it('your company gets its own banner style (not the amber of the simulated one), with the stays-in-browser note by the add buttons', () => {
+    show(<Harness />)
+    expect(q('company-banner')?.className).toContain('ms-banner--warn')
+    open()
+    expect(q('company-banner')?.className).toContain('ms-banner--mine')
+    expect(q('company-banner')?.className).not.toContain('ms-banner--warn')
+    expect(q('stays-note')?.textContent).toMatch(/Stays in this browser/)
+    click(q('method-csv'))
+    expect(q('stays-note')).toBeNull() // shown with the CSV import button once there is a preview
+    type('in-csv-text', 'name,product_code\nA,LLZ\n')
+    expect(q('stays-note')).not.toBeNull()
+  })
+  it('the clear confirm puts the safe choice first and focused, offers Export first, and uses the danger colour for the destructive one', () => {
+    show(<Harness />)
+    open()
+    type('in-company', 'Acme')
+    type('in-code', HOT)
+    submit('add-code')
+    click(q('clear-company'))
+    const buttons = Array.from(q('clear-confirm')!.querySelectorAll('button'))
+    expect(buttons.map((b) => b.textContent)).toEqual(['Keep it', 'Export first', 'Yes, clear it'])
+    expect(q('clear-keep')).toBe(document.activeElement)
+    expect(q('clear-yes')!.getAttribute('style')).toContain('var(--critical)')
+    expect(q('clear-yes')!.className).not.toContain('ws-btn-primary')
+  })
+  it('the buddy stylesheet hides the bubble on phones and the wide-screen buddy is 32 px or more', () => {
+    const css = readFileSync(join(__dirname, 'buddy.css'), 'utf8')
+    expect(css).toMatch(/max-width: 639px\)\s*\{\s*\.ms-buddy-bubble\s*\{\s*display: none/)
+    expect(css).toMatch(/min-width: 768px\)[^@]*width: 36px/)
   })
 })

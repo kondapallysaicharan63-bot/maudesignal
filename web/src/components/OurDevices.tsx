@@ -1,6 +1,6 @@
 import { useAlertPanel } from '../alertPanelContext'
 import { MentionsBox } from './MentionsBox'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { CLASS_LABEL } from '../artifacts'
 import { NEEDS_REVIEW, sortedDevices, statusesByPriority } from '../dashboard'
 import { isoDay } from '../data'
@@ -13,11 +13,35 @@ import type { Tone } from './artifacts/common'
 
 /** Shown on every view of this workflow (text comes from company.json; a test checks it is the contract string). */
 export function CompanyBanner({ company }: { company: Company }) {
+  // Amber is for the simulated company only; the person's own company gets the success tint and a lock (the privacy line).
+  if (company.mine === true)
+    return (
+      <p className="ms-banner ms-banner--mine m-0" data-testid="company-banner">
+        <Icon name="lock" size={18} />
+        <span className="ws-wrap font-semibold">{company.banner}</span>
+      </p>
+    )
   return (
     <p className="ms-banner ms-banner--warn m-0" data-testid="company-banner">
       <span className="ws-wrap font-semibold">{company.banner}</span>
     </p>
   )
+}
+
+/** True below 480 px: the device table then renders as stacked cards. */
+function useNarrow(max = 480): boolean {
+  const q = `(max-width: ${max - 1}px)`
+  const get = () => (typeof window !== 'undefined' && typeof window.matchMedia === 'function' ? window.matchMedia(q).matches : false)
+  const [n, setN] = useState(get)
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return
+    const m = window.matchMedia(q)
+    const on = () => setN(m.matches)
+    on()
+    m.addEventListener('change', on)
+    return () => m.removeEventListener('change', on)
+  }, [q])
+  return n
 }
 
 const STATUS_TONE: Record<string, Tone> = {
@@ -149,7 +173,7 @@ export const chipName = (label: string | null): string =>
 /** Filter chips with counts (the same filter as the left column). */
 function FilterChips({ company, filter, onFilter }: { company: Company; filter: string | null; onFilter: FilterFn }) {
   return (
-    <div role="group" aria-label="Filter by status" className="flex flex-wrap gap-2" data-testid="filter-chips">
+    <div role="group" aria-label="Filter by status" className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0" data-testid="filter-chips">
       {rowsOf(company).map((c) => (
         <button
           key={c.label}
@@ -159,7 +183,7 @@ function FilterChips({ company, filter, onFilter }: { company: Company; filter: 
           title={c.label}
           onClick={() => onFilter(c.value)}
           className={[
-            'min-h-11 rounded-xs border px-3 text-[17px] leading-tight',
+            'min-h-11 shrink-0 whitespace-nowrap rounded-xs border px-3 text-[17px] leading-tight',
             filter === c.value ? 'border-ink bg-inverse font-semibold text-on-inverse' : 'border-rule-strong bg-surface text-ink hover:bg-sunk',
           ].join(' ')}
         >
@@ -188,6 +212,35 @@ function AlertDetailsButton({ id, code, label }: { id: string; code: string; lab
 
 function DeviceTable({ rows, onDevice, mine = false }: { rows: CompanyDevice[]; onDevice: (id: string) => void; mine?: boolean }) {
   const th = 'sticky top-0 z-10 border-b border-rule bg-sunk px-2 py-2 font-semibold'
+  const narrow = useNarrow()
+  if (narrow)
+    return (
+      <ul className="m-0 list-none space-y-2 p-0" aria-label={mine ? 'Our devices (your company)' : 'Our devices (simulated)'} data-testid="device-cards">
+        {rows.map((d) => {
+          const need = d.status?.label === NEEDS_REVIEW
+          return (
+            <li key={d.id} className={['rounded-md border border-rule px-3 py-2', need ? 'bg-critical-soft shadow-[inset_6px_0_0_var(--critical)] pl-4' : 'bg-surface'].join(' ')} data-needs-review={need || undefined}>
+              <button
+                type="button"
+                className="block min-h-11 w-full text-left text-accent"
+                onClick={() => onDevice(d.id)}
+                aria-label={`${d.name} ${d.model}, ${d.status?.label ?? 'no status'}. Open.`}
+              >
+                <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className={['ws-wrap min-w-0 underline', need ? 'font-semibold' : ''].join(' ')}>{d.name}</span>
+                  <span className="ms-code !text-[16px] !text-ink">{d.product_code}</span>
+                  {d.status ? <StatusChip label={d.status.label} /> : <span className="text-ink-2">none</span>}
+                </span>
+                <span className="mt-0.5 block text-[16px] text-ink-2">
+                  {d.model} · {d.owner}
+                </span>
+              </button>
+              {need && <AlertDetailsButton id={`company:${d.id}`} code={d.product_code} label={`${d.name}`} />}
+            </li>
+          )
+        })}
+      </ul>
+    )
   return (
     <div className="rounded-md border border-rule bg-surface">
       <table className="w-full table-fixed border-collapse text-left text-[17px]" aria-label={mine ? 'Our devices (your company)' : 'Our devices (simulated)'}>
@@ -266,8 +319,8 @@ export function CompanyList({
           }}
         />
       )}
-      {api && editor && api.mode === 'mine' && <MakeItYours onClose={() => setEditor(false)} />}
       <CompanyBanner company={company} />
+      {api && editor && api.mode === 'mine' && <MakeItYours onClose={() => setEditor(false)} />}
       {company.devices.length === 0 ? (
         <p className="text-ink-2" data-testid="no-devices">
           {mine ? 'No devices yet. Press Make it yours to add some.' : 'No simulated devices are stored.'}

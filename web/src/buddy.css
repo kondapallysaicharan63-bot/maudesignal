@@ -1,5 +1,5 @@
 /* Alert buddy (top bar): colours from the design tokens only. Calm = gentle breathing; alert = pulse in the danger colour
-   with a speech bubble and a count badge. prefers-reduced-motion: no animation, the colour and the badge still show it. */
+   with a short speech bubble. prefers-reduced-motion: no animation, the colour and the badge still show it. */
 .ms-buddy {
   display: inline-flex;
   align-items: center;
@@ -56,27 +56,11 @@
 .ms-buddy-svg--alert .ms-buddy-tip {
   fill: var(--critical);
 }
-.ms-buddy-badge {
-  position: absolute;
-  right: -2px;
-  top: -2px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  border-radius: 9999px;
-  background: var(--critical);
-  color: var(--on-critical);
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 18px;
-  text-align: center;
-  box-shadow: 0 0 0 2px var(--paper);
-}
 .ms-buddy-bubble {
   position: absolute;
   right: 0;
   top: calc(100% + 4px);
-  z-index: 40;
+  z-index: 20;
   max-width: min(14rem, 70vw);
   padding: 4px 10px;
   border: 1px solid var(--critical);
@@ -99,6 +83,22 @@
   border-top: 1px solid var(--critical);
   background: var(--surface);
   transform: rotate(45deg);
+}
+/* Larger on wide screens so the expression reads; no speech bubble on phones (it would cover the verification strip). */
+@media (min-width: 768px) {
+  .ms-buddy {
+    width: 44px;
+    height: 44px;
+  }
+  .ms-buddy > svg {
+    width: 36px;
+    height: 36px;
+  }
+}
+@media (max-width: 639px) {
+  .ms-buddy-bubble {
+    display: none;
+  }
 }
 @keyframes ms-buddy-breathe {
   0%,

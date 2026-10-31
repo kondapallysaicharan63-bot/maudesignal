@@ -185,3 +185,41 @@ describe('first screen and the placeholder wording', () => {
     expect(html).not.toMatch(/GitHub|Google Drive|Upload file|Connected sources/)
   })
 })
+
+describe('sidebar Our devices row follows the active company', () => {
+  const side = (company?: unknown) =>
+    renderToStaticMarkup(
+      <Sidebar
+        open={false}
+        collapsed={false}
+        threads={threads as never}
+        briefs={briefs.briefs as never}
+        sources={sources.sources}
+        schedules={schedules.schedules as never}
+        runs={[]}
+        vision={vision as never}
+        sweep={sweep as never}
+        company={company as never}
+        activeWorkflow={null}
+        activeBrief={null}
+        isRead={() => true}
+        onNewChat={() => {}}
+        onWorkflow={() => {}}
+        onBrief={() => {}}
+        onClose={() => {}}
+      />,
+    )
+  const dev = (label: string) => ({ id: label, status: { label } })
+  it('simulated: "Our devices" with a simulated tag and the simulated count', () => {
+    const t = side({ mine: false, devices: [dev('Needs review'), dev('Needs review'), dev('Already covered')] })
+    expect(t).toContain('data-testid="side-tag-simulated"')
+    expect(t).not.toContain('side-tag-yours')
+    expect(text(t)).toMatch(/Our devices\s*simulated\s*2 to review/)
+  })
+  it('your company: a yours tag and your own count, never the word simulated on that row', () => {
+    const t = side({ mine: true, devices: [dev('Needs review')] })
+    expect(t).toContain('data-testid="side-tag-yours"')
+    expect(t).not.toContain('side-tag-simulated')
+    expect(text(t)).toMatch(/Our devices\s*yours\s*1 to review/)
+  })
+})

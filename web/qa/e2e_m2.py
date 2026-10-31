@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -94,7 +95,7 @@ def go_devices(page: Page, phone: bool) -> None:
     if phone:
         page.get_by_label("Toggle sidebar").click()
         page.wait_for_timeout(250)
-    page.locator("#sidebar").get_by_role("button", name="Our devices (simulated)").first.click()
+    page.locator("#sidebar").get_by_role("button", name=re.compile(r"^Our devices")).first.click()
     page.wait_for_selector("h1")
     page.wait_for_timeout(300)
 
@@ -138,10 +139,18 @@ def flow(browser: Browser, w: int, h: int, scheme: str, stub: Stub, report: dict
     check(f"{tag} buddy: alert state with the data's alerts", buddy.get_attribute("data-state") == "alert", buddy.get_attribute("data-state"))
     label = buddy.get_attribute("aria-label") or ""
     badge = tid(page, "alert-badge").inner_text()
-    check(f"{tag} buddy: label and bubble say the same count as the bell badge", f"{badge} alert" in label and badge in tid(page, "buddy-bubble").inner_text(), (label, badge))
-    check(f"{tag} buddy: badge equals bell badge", tid(page, "buddy-badge").inner_text() == badge)
+    check(f"{tag} buddy: label says the same count as the bell badge", f"{badge} alert" in label, (label, badge))
+    check(f"{tag} buddy: no second count badge beside the bell", tid(page, "buddy-badge").count() == 0)
+    bubble_vis = tid(page, "buddy-bubble").count() > 0 and tid(page, "buddy-bubble").is_visible()
+    if phone:
+        check(f"{tag} buddy: no speech bubble on a phone (it would cover the verification strip)", not bubble_vis)
+    else:
+        check(f"{tag} buddy: bubble opens once and says the same count", bubble_vis and badge in tid(page, "buddy-bubble").inner_text())
+        page.wait_for_timeout(4500)
+        check(f"{tag} buddy: bubble hides itself after about 4 s", tid(page, "buddy-bubble").count() == 0)
     box = buddy.bounding_box() or {}
-    check(f"{tag} buddy: about 28-32 px drawing inside the header", 26 <= (tid(page, "buddy-svg").bounding_box() or {}).get("width", 0) <= 36 and box.get("x", -1) >= 0 and box.get("x", 0) + box.get("width", 0) <= w, box)
+    svg_w = float(page.evaluate("parseFloat(getComputedStyle(document.querySelector('[data-testid=buddy-svg]')).width)"))
+    check(f"{tag} buddy: 28-32 px drawing on a phone, 32-36 px on wide screens, inside the header", (26 <= svg_w <= 32 if phone else 32 <= svg_w <= 36) and box.get("x", -1) >= 0 and box.get("x", 0) + box.get("width", 0) <= w, (svg_w, box))
     check(f"{tag} buddy: header has no sideways scroll", overflow(page) == 0, overflow(page))
     check(f"{tag} buddy: pulses (animation running)", page.evaluate("getComputedStyle(document.querySelector('[data-testid=buddy-svg]')).animationName") == "ms-buddy-pulse")
     shot(page, report, tag, "buddy-alert")
@@ -213,19 +222,31 @@ def flow(browser: Browser, w: int, h: int, scheme: str, stub: Stub, report: dict
     tid(page, "add-confirmed").click()
     devs = (stored(page) or {}).get("devices", [])
     check(f"{tag} label: only the confirmed match was added", len(devs) == 8 and devs[-1]["k_number"] == "K000002" and devs[-1]["source"] == "label", devs[-1:])  # type: ignore[index]
-    shot(page, report, tag, "label-confirmed", full=True)
+    shot(page, report, tag, "label-confirmed")
 
     # Table, chips, alert counts
     tid(page, "make-it-yours").click()  # closes the editor
     page.wait_for_timeout(200)
     check(f"{tag} table: your devices, status chips, Needs review count", "Hot Device" in page.inner_text("main") and tid(page, "status-chip").count() >= 7 and tid(page, "need-review-line").inner_text().startswith(("2 devices need review", "1 device needs review")), tid(page, "need-review-line").inner_text())
+    check(f"{tag} table: banner is the neutral/success yours style, not amber", "ms-banner--mine" in (tid(page, "company-banner").get_attribute("class") or ""))
+    check(f"{tag} table: heading says yours", page.locator("h1").inner_text() == "Our devices (your company)")
+    if phone:
+        check(f"{tag} table: phone shows stacked cards, filter chips in one row", tid(page, "device-cards").count() == 1 and (tid(page, "filter-chips").bounding_box() or {}).get("height", 999) < 70, tid(page, "filter-chips").bounding_box())
     shot(page, report, tag, "table-yours")
+    if phone:
+        page.get_by_label("Toggle sidebar").click()
+        page.wait_for_timeout(250)
+    side_text = page.locator("#sidebar").inner_text()
+    check(f"{tag} sidebar: Our devices row is tagged yours and not simulated", re.search(r"Our devices\s*yours", side_text) is not None and "Our devices (simulated)" not in side_text, side_text[:300])
+    if phone:
+        page.get_by_label("Close menu").click()
+        page.wait_for_timeout(250)
     # Device page with stored evidence, forward-only status
     page.get_by_role("button", name="Viewer LLZ").first.click()
     page.wait_for_selector("[data-testid='device-detail']")
     check(f"{tag} device: the same real FDA evidence as the stored LLZ device", tid(page, "report-count").count() == 1 and tid(page, "report-count").inner_text() != "not stored", tid(page, "report-count").inner_text() if tid(page, "report-count").count() else "")
     check(f"{tag} device: Monitoring is last, so no forward move", tid(page, "no-forward").count() == 1)
-    shot(page, report, tag, "device-evidence", full=True)
+    shot(page, report, tag, "device-evidence")
     tid(page, "device-detail").get_by_role("button", name="All devices").click()
     page.get_by_role("button", name="Hot Device").first.click()
     page.wait_for_selector("[data-testid='device-detail']")
@@ -233,7 +254,7 @@ def flow(browser: Browser, w: int, h: int, scheme: str, stub: Stub, report: dict
     check(f"{tag} device: Needs review can move forward only", "Move to Needs review" not in moves and "Move to Testing in progress" in moves, moves)
     page.get_by_role("button", name="Move to Testing in progress").click()
     check(f"{tag} device: status moved and is in the history", "Needs review → Testing in progress" in tid(page, "history").inner_text() and "Move to Testing in progress" not in tid(page, "move-status").all_inner_texts())
-    shot(page, report, tag, "device-status", full=True)
+    shot(page, report, tag, "device-status")
     tid(page, "device-detail").get_by_role("button", name="All devices").click()
 
     # Export, reload, clear, import
@@ -250,6 +271,7 @@ def flow(browser: Browser, w: int, h: int, scheme: str, stub: Stub, report: dict
     check(f"{tag} persists: after reload the view is still yours", page.locator("h1").inner_text() == "Our devices (your company)")
     tid(page, "make-it-yours").click()
     tid(page, "clear-company").click()
+    check(f"{tag} clear: Keep it is focused, Export first is offered, Yes is the danger colour", page.evaluate("document.activeElement && document.activeElement.dataset.testid") == "clear-keep" and tid(page, "clear-export").count() == 1 and "critical" in (tid(page, "clear-yes").get_attribute("style") or ""))
     shot(page, report, tag, "clear-confirm")
     tid(page, "clear-yes").click()
     check(f"{tag} clear: confirmed clear empties it", stored(page) is None)
@@ -261,8 +283,8 @@ def flow(browser: Browser, w: int, h: int, scheme: str, stub: Stub, report: dict
     bad.write_text(json.dumps({"app": "maudesignal-my-company", "version": 1, "company": "x", "devices": [{"id": "MY-01", "name": "", "product_code": "ab", "status": "Done"}]}))
     tid(page, "import-json-file").set_input_files(str(bad))
     page.wait_for_selector("[data-testid='import-confirm'], [data-testid='import-errors']")
-    check(f"{tag} import: a bad file gives clear errors", "product_code must be 3 capital letters" in tid(page, "import-errors").inner_text())
-    shot(page, report, tag, "import-errors", full=True)
+    check(f"{tag} import: a bad file gives clear errors with a heading and plain rows", "product_code must be 3 capital letters" in tid(page, "import-errors").inner_text() and "could not be imported" in tid(page, "import-errors").inner_text() and "devices[0]" not in tid(page, "import-errors").inner_text() and "Row 1:" in tid(page, "import-errors").inner_text())
+    shot(page, report, tag, "import-errors")
 
     # Calm buddy after Mark all seen
     page.get_by_test_id("alert-bell").click()
@@ -288,7 +310,7 @@ def side_checks(browser: Browser, stub: Stub, report: dict[str, object]) -> None
     page = new_page(browser, 1440, 900, "light", reduced=True)
     open_app(page)
     anim = page.evaluate("getComputedStyle(document.querySelector('[data-testid=buddy-svg]')).animationName")
-    check("reduced motion: the buddy does not animate, the colour and badge still show the alert", anim == "none" and tid(page, "buddy-badge").is_visible() and page.evaluate("getComputedStyle(document.querySelector('[data-testid=buddy-svg] .ms-buddy-body')).fill") != "none")
+    check("reduced motion: the buddy does not animate, the colour and the bell badge still show the alert", anim == "none" and tid(page, "alert-badge").is_visible() and page.evaluate("getComputedStyle(document.querySelector('[data-testid=buddy-svg] .ms-buddy-body')).fill") != "none")
     shot(page, report, "1440-light", "buddy-reduced-motion")
     page.context.close()
 

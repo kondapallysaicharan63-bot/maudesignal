@@ -104,7 +104,13 @@ export function Sidebar(p: Props) {
                     onClick={() => p.onWorkflow(w.id)}
                   >
                     <span className="min-w-0">
-                      {w.title}
+                      {w.id === 'our-devices' ? 'Our devices' : w.title}
+                      {w.id === 'our-devices' &&
+                        (p.company?.mine === true ? (
+                          <span className="ws-pill ml-2 bg-success-soft text-success" data-testid="side-tag-yours">yours</span>
+                        ) : (
+                          <span className="ws-pill ml-2 bg-warning-soft text-warning" data-testid="side-tag-simulated">simulated</span>
+                        ))}
                       {DEMO_WORKFLOWS.includes(w.id) && <span className="ws-pill ml-2 bg-warning-soft text-warning">demo</span>}
                     </span>
                     {n !== undefined && (

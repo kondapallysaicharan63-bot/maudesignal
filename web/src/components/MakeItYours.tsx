@@ -30,6 +30,15 @@ import { CameraPanel } from './CameraPanel'
 const INPUT = 'mt-1 block h-11 w-full max-w-sm rounded-xs border border-rule-strong bg-surface px-3 text-[17px] text-ink placeholder:text-ink-2'
 const BTN2 = 'ms-btn ms-btn--secondary'
 
+/** A short privacy reminder beside the buttons that add data. */
+function Stays() {
+  return (
+    <p className="m-0 mt-2 flex items-center gap-1 text-[15px] text-ink-2" data-testid="stays-note">
+      <Icon name="lock" size={14} /> Stays in this browser
+    </p>
+  )
+}
+
 function Field({ label, children, hint }: { label: string; children: (id: string) => ReactNode; hint?: string }) {
   const id = useId()
   return (
@@ -49,21 +58,23 @@ export function MineBar({ onOpen, open }: { onOpen: () => void; open: boolean })
   if (!mine) return null
   const seg = (on: boolean) =>
     [
-      'min-h-11 px-3 text-[17px] leading-tight border',
+      'min-h-11 whitespace-nowrap px-3 text-[17px] leading-tight border max-sm:px-2 max-sm:text-[16px]',
       on ? 'border-ink bg-inverse font-semibold text-on-inverse' : 'border-rule-strong bg-surface text-ink hover:bg-sunk',
     ].join(' ')
   return (
     <div className="space-y-2" data-testid="mine-bar">
-      <div role="group" aria-label="Which company to show" className="flex flex-wrap gap-2">
-        <button type="button" className={seg(mine.mode === 'demo')} aria-pressed={mine.mode === 'demo'} onClick={() => mine.setMode('demo')} data-testid="mode-demo">
-          Demo MedTech Co. (simulated)
+      <div role="group" aria-label="Which company to show" className="flex gap-2 sm:flex-wrap">
+        <button type="button" className={seg(mine.mode === 'demo')} aria-label="Demo MedTech Co. (simulated)" aria-pressed={mine.mode === 'demo'} onClick={() => mine.setMode('demo')} data-testid="mode-demo">
+          <span className="max-sm:hidden">Demo MedTech Co. (simulated)</span>
+          <span className="sm:hidden">Simulated</span>
         </button>
-        <button type="button" className={seg(mine.mode === 'mine')} aria-pressed={mine.mode === 'mine'} onClick={() => mine.setMode('mine')} data-testid="mode-mine">
-          Your company
+        <button type="button" className={seg(mine.mode === 'mine')} aria-label="Your company" aria-pressed={mine.mode === 'mine'} onClick={() => mine.setMode('mine')} data-testid="mode-mine">
+          <span className="max-sm:hidden">Your company</span>
+          <span className="sm:hidden">Yours</span>
         </button>
         <button
           type="button"
-          className="ms-btn ws-btn-primary"
+          className="ms-btn ws-btn-primary max-sm:!px-3 max-sm:!text-[16px]"
           style={{ height: 44 }}
           aria-expanded={open}
           aria-controls="make-it-yours"
@@ -133,6 +144,7 @@ function ByCode({ mine, onDone }: { mine: MineApi; onDone: (msg: string) => void
       <button type="submit" className="ms-btn ws-btn-primary mt-3" style={{ height: 44 }} data-testid="add-code">
         Add device
       </button>
+      <Stays />
     </form>
   )
 }
@@ -206,6 +218,7 @@ function ByK({ mine, onDone }: { mine: MineApi; onDone: (msg: string) => void })
       <button type="submit" disabled={busy} className="ms-btn ws-btn-primary mt-3" style={{ height: 44 }} data-testid="add-k">
         {busy ? 'Looking up…' : 'Add device'}
       </button>
+      <Stays />
     </form>
   )
 }
@@ -301,6 +314,7 @@ function ByCsv({ mine, onDone }: { mine: MineApi; onDone: (msg: string) => void 
           <button type="button" className="ms-btn ws-btn-primary mt-3" style={{ height: 44 }} disabled={res.rows.length === 0} onClick={importRows} data-testid="csv-import">
             Import {Math.min(res.rows.length, room)} {res.rows.length === 1 ? 'device' : 'devices'}
           </button>
+          <Stays />
         </div>
       )}
     </div>
@@ -333,8 +347,15 @@ function ByLabel({ mine, onDone }: { mine: MineApi; onDone: (msg: string) => voi
         Take or upload a photo of the device label. Possible matches from openFDA are listed; confirm one and only that match is added.
       </p>
       <CameraPanel apiBase={mine.apiBase} onAdd={add} addLabel="Add to your company" />
+      <Stays />
     </div>
   )
+}
+
+/** "devices[0].name must be text of 1 to 120 characters." becomes "Row 1: name must be text of 1 to 120 characters." */
+export function plainImportError(line: string): string {
+  const m = /^devices\[(\d+)\]\.?(.*)$/.exec(line)
+  return m ? `Row ${Number(m[1]) + 1}: ${m[2].trim() || 'is not valid.'}` : line
 }
 
 /** Export, import and clear. */
@@ -406,11 +427,20 @@ function Data({ mine }: { mine: MineApi }) {
         <div role="alertdialog" aria-label="Confirm clear" className="mt-3 rounded-md border-2 border-warning bg-warning-soft p-3" data-testid="clear-confirm">
           <p className="m-0 text-[17px] font-semibold">Remove your company name and all {mine.mine.devices.length} devices from this browser? This cannot be undone. Export first to keep a copy.</p>
           <div className="mt-2 flex flex-wrap gap-2">
-            <button type="button" className="ms-btn ws-btn-primary" style={{ height: 44 }} onClick={() => { mine.clear(); setConfirmClear(false); setMsg({ ok: true, lines: ['Cleared.'] }) }} data-testid="clear-yes">
-              Yes, clear it
-            </button>
-            <button type="button" className={BTN2} style={{ height: 44 }} onClick={() => setConfirmClear(false)}>
+            <button type="button" className={BTN2} style={{ height: 44 }} autoFocus onClick={() => setConfirmClear(false)} data-testid="clear-keep">
               Keep it
+            </button>
+            <button type="button" className={BTN2} style={{ height: 44 }} onClick={doExport} data-testid="clear-export">
+              Export first
+            </button>
+            <button
+              type="button"
+              className="ms-btn"
+              style={{ height: 44, background: 'var(--critical)', color: 'var(--on-critical)', borderColor: 'var(--critical)' }}
+              onClick={() => { mine.clear(); setConfirmClear(false); setMsg({ ok: true, lines: ['Cleared.'] }) }}
+              data-testid="clear-yes"
+            >
+              Yes, clear it
             </button>
           </div>
         </div>
@@ -431,12 +461,25 @@ function Data({ mine }: { mine: MineApi }) {
         </div>
       )}
       {msg && (
-        <div role={msg.ok ? 'status' : 'alert'} className={`ms-banner ${msg.ok ? 'ms-banner--ok' : 'ms-banner--err'} mt-3`} data-testid={msg.ok ? 'data-ok' : 'import-errors'}>
-          <ul className="m-0 list-none p-0">
-            {msg.lines.map((l, i) => (
-              <li key={i} className="ws-wrap">{l}</li>
-            ))}
-          </ul>
+        <div role={msg.ok ? 'status' : 'alert'} className={`ms-banner ${msg.ok ? 'ms-banner--ok' : 'ms-banner--err'} mt-3 !block`} data-testid={msg.ok ? 'data-ok' : 'import-errors'}>
+          {msg.ok ? (
+            <ul className="m-0 list-none p-0">
+              {msg.lines.map((l, i) => (
+                <li key={i} className="ws-wrap">{l}</li>
+              ))}
+            </ul>
+          ) : (
+            <>
+              <p className="m-0 font-semibold" data-testid="import-errors-heading">
+                This file could not be imported, {msg.lines.length} {msg.lines.length === 1 ? 'problem' : 'problems'}
+              </p>
+              <ul className="m-0 mt-1 list-disc pl-5 text-ink">
+                {msg.lines.map((l, i) => (
+                  <li key={i} className="ws-wrap">{plainImportError(l)}</li>
+                ))}
+              </ul>
+            </>
+          )}
         </div>
       )}
     </div>

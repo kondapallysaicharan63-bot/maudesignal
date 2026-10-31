@@ -317,9 +317,15 @@ fetched yet"; no number is estimated.
 
 **Alert buddy** (`src/components/AlertBuddy.tsx`, `src/buddy.css`): an original SVG character (about 30 px) in the top bar. The count is the bell's
 badge count (alerts not yet marked seen: sweep and brief signals flagged by the detector rules, plus "Needs review" devices of whichever company is shown). With 0 it is a calm
-picture (`role="img"`, gentle breathing); with N > 0 it is a button that pulses in the token danger colour with a count badge and a bubble "N alerts need a look"
-(shown 8 s after the count changes, and on hover or focus); click or Enter opens the first alert's panel (P2). `aria-label` states the state in words.
-`prefers-reduced-motion: reduce` switches the animation off; the colour and the badge remain. Colours come from the design tokens only.
+picture (`role="img"`, gentle breathing); with N > 0 it is a button that pulses in the token danger colour; click or Enter opens the first alert's panel (P2).
+The count is shown on the bell only (no second badge); the buddy's `aria-label` carries it in words ("N alerts need a look"). The bubble "N alerts need a look"
+opens once per browser session (sessionStorage key `ms-buddy-bubble-seen-v1`, in memory if blocked), hides itself after 4 s, shows again on hover or focus on wide
+screens, and is never drawn below 640 px (it would cover the verification strip). The drawing is 36 px from 768 px up and 30 px below.
+`prefers-reduced-motion: reduce` switches the animation off; the colour remains. Colours come from the design tokens only.
+In the sidebar the Our devices row reads "Our devices" with a `simulated` or `yours` tag and the Needs review count of the company that is shown. The yours banner
+(lock icon, success tint) differs from the simulated banner (amber); "Stays in this browser" repeats beside Add device, CSV import and the photo add. Below 480 px
+the device table renders as stacked cards and the status chips scroll in one row. The clear confirm focuses "Keep it", offers "Export first" and uses the danger colour
+for "Yes, clear it"; import errors list as "Row N: ..." under a heading.
 A device you added has no stored alert detail of its own: its panel falls back to the sweep alert for the same product code (never to the simulated
 company's alert) or says no stored detail exists.
 
