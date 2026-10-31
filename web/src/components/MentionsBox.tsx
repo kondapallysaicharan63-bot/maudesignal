@@ -6,8 +6,11 @@ import {
   MENTION_BADGE,
   MENTIONS_TITLE,
   NO_STORED_SEARCH,
+  statusLabel,
+  zeroLine,
   type Mention,
   type MentionsResult,
+  type SourceTried,
 } from '../mentions'
 import { Icon } from '../icons'
 import { Pill } from './artifacts/common'
@@ -48,6 +51,28 @@ function MentionCard({ m }: { m: Mention }) {
         </a>
       </p>
     </li>
+  )
+}
+
+function SourceList({ tried, testid }: { tried: SourceTried[]; testid: string }) {
+  if (tried.length === 0) return <p className="m-0 mt-1 text-[15px] text-ink-2" data-testid={testid}>No source list was recorded for this search.</p>
+  return (
+    <ul className="m-0 mt-1 list-none p-0 text-[15px]" data-testid={testid}>
+      {tried.map((s, i) => (
+        <li key={`${s.name}-${i}`} className="ws-wrap py-1" data-testid="source-row">
+          {s.url ? (
+            <a className="text-accent underline" href={s.url} target="_blank" rel="noreferrer noopener">
+              {s.name}
+            </a>
+          ) : (
+            s.name
+          )}{' '}
+          <span className="text-ink-2">
+            · {statusLabel(s.status)} · <span className="ms-num">{s.n}</span> {s.n === 1 ? 'page' : 'pages'}
+          </span>
+        </li>
+      ))}
+    </ul>
   )
 }
 
@@ -131,7 +156,13 @@ export function MentionsBox({
           </p>
           {shown.dropped.off_topic > 0 && <p className="m-0 mt-1 text-[15px] text-ink-2">{shown.dropped.off_topic} more were off topic and are not shown.</p>}
           {shown.mentions.length === 0 ? (
-            <p className="m-0 mt-2 text-ink-2">Nothing was kept from this search.</p>
+            <div className="mt-2" data-testid="mentions-zero">
+              <p className="ws-wrap m-0 text-[17px] font-semibold text-ink" data-testid="mentions-zero-line">
+                {zeroLine(shown.searched_utc)}
+              </p>
+              <p className="m-0 mt-1 text-[15px] text-ink-2">Sources checked, with what each one returned:</p>
+              <SourceList tried={shown.sources_tried} testid="sources-checked" />
+            </div>
           ) : (
             <ul className="m-0 mt-3 list-none space-y-3 p-0" aria-label="Mentions">
               {shown.mentions.map((m, i) => (
@@ -139,25 +170,10 @@ export function MentionsBox({
               ))}
             </ul>
           )}
-          {shown.sources_tried.length > 0 && (
+          {shown.mentions.length > 0 && shown.sources_tried.length > 0 && (
             <details className="mt-3">
               <summary className="min-h-11 cursor-pointer py-2 text-[16px] text-ink-2">Sources tried ({shown.sources_tried.length})</summary>
-              <ul className="m-0 list-none p-0 text-[15px]">
-                {shown.sources_tried.map((s, i) => (
-                  <li key={`${s.name}-${i}`} className="ws-wrap py-1">
-                    {s.url ? (
-                      <a className="text-accent underline" href={s.url} target="_blank" rel="noreferrer noopener">
-                        {s.name}
-                      </a>
-                    ) : (
-                      s.name
-                    )}{' '}
-                    <span className="text-ink-2">
-                      · {s.status} · <span className="ms-num">{s.n}</span> {s.n === 1 ? 'page' : 'pages'}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              <SourceList tried={shown.sources_tried} testid="sources-tried" />
             </details>
           )}
           {shown.trace.length > 0 && (

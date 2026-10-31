@@ -7,7 +7,7 @@ import type { AlertDetail, AlertsFile } from './alerts'
 import { AlertPanel } from './components/AlertPanel'
 import { ConnectView } from './components/ConnectView'
 import { MentionsBox } from './components/MentionsBox'
-import { parseMentions } from './mentions'
+import { parseMentions, zeroLine, statusLabel } from './mentions'
 import alerts from '../public/data/alerts.json'
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
@@ -155,6 +155,40 @@ describe('MentionsBox', () => {
     expect(host.textContent).not.toContain('Dr. Smith')
     expect(f).toHaveBeenCalledTimes(1)
   })
+  it('zero mentions: "0 found in these sources (date)" and every source with status and count; MassDevice never shown', () => {
+    const zero = {
+      ...mentionsBody,
+      mentions: [],
+      dropped: { quote_not_found: 0, personal_details: 0, off_topic: 0 },
+      sources_tried: [
+        { name: 'GDELT DOC 2.0 (news index)', url: 'https://api.gdeltproject.org/x', status: 'failed: ConnectTimeout', n: 0 },
+        { name: 'FDA recalls (RSS)', url: 'https://www.fda.gov/r.xml', status: 'ok', n: 0 },
+        { name: 'MassDevice (RSS)', url: 'https://www.massdevice.com/feed/', status: 'failed: http 403', n: 0 },
+      ],
+      mode: 'recorded',
+    }
+    const stored = parseMentions(zero)!
+    act(() => root.render(<MentionsBox code="LLZ" apiBase={null} stored={stored} />))
+    expect(q('mentions-zero-line')?.textContent).toBe('0 found in these sources (2026-10-31)')
+    const rows = Array.from(host.querySelectorAll('[data-testid=source-row]')).map((r) => r.textContent ?? '')
+    expect(rows).toHaveLength(2)
+    expect(rows[0]).toContain('failed: ConnectTimeout')
+    expect(rows[1]).toContain('ok')
+    expect(rows[1]).toContain('0 pages')
+    expect(host.textContent).not.toMatch(/massdevice/i)
+    expect(host.textContent).not.toContain('Nothing was kept')
+    expect(host.querySelectorAll('[data-testid=mention]')).toHaveLength(0)
+  })
+  it('zeroLine and statusLabel handle missing data honestly', () => {
+    expect(zeroLine('')).toBe('0 found in these sources (date not recorded)')
+    expect(statusLabel('')).toBe('status not recorded')
+    expect(statusLabel('http 500')).toBe('failed: http 500')
+    expect(statusLabel('ok')).toBe('ok')
+  })
+  it('a MassDevice mention in the data is dropped', () => {
+    const r = parseMentions({ ...mentionsBody, mentions: [{ source_name: 'MassDevice', source_kind: 'news', url: 'https://www.massdevice.com/a', quote: 'A sentence.', why_matched: 'x', badge: 'x' }] })!
+    expect(r.mentions).toHaveLength(0)
+  })
   it('429: falls back to the stored search and says why', async () => {
     const stored = { ...parseMentions(mentionsBody)!, mode: 'recorded' as const }
     const f = vi.fn(async () => new Response(JSON.stringify({ message: 'x' }), { status: 429 }))
@@ -181,6 +215,7 @@ describe('ConnectView', () => {
     expect(t).toContain('https://maudesignal-api.vercel.app/mcp')
     expect(t).toContain('https://maudesignal-api.vercel.app/openapi.json')
     expect(t).toContain('Ask Charan for a key')
+    expect(q('connect-status')?.textContent).toContain("Submitted to Meta's Muse Connector Program — pending review (submitted Oct 30). Not approved or listed.")
     expect(q('no-demo-key')).not.toBeNull()
     expect(q('link-privacy')?.getAttribute('href')).toBe('https://maudesignal-api.vercel.app/privacy')
     expect(q('link-terms')?.getAttribute('href')).toBe('https://maudesignal-api.vercel.app/terms')

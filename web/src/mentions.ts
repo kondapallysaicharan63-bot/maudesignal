@@ -93,11 +93,28 @@ export function buildMentionsBody(code: string, terms?: string[]): Record<string
   return t.length ? { product_code: c, device_terms: t } : { product_code: c }
 }
 
+/** The site is dropped from the outside search (owner decision); nothing from it is shown. */
+const isDropped = (text: string): boolean => /massdevice/i.test(text)
+
+/** "0 found in these sources (2026-10-31)": the honest empty state. Falls back to "date not recorded". */
+export function zeroLine(searchedUtc: string): string {
+  const d = /^\d{4}-\d{2}-\d{2}/.test(searchedUtc) ? searchedUtc.slice(0, 10) : 'date not recorded'
+  return `0 found in these sources (${d})`
+}
+
+/** "ok" stays "ok"; anything else is shown as "failed: reason" so a silent failure is never read as "nothing there". */
+export function statusLabel(status: string): string {
+  const s = status.trim()
+  if (!s) return 'status not recorded'
+  return s === 'ok' || /^failed/i.test(s) ? s : `failed: ${s}`
+}
+
 function parseMention(v: unknown): Mention | 'personal' | null {
   if (!isObj(v)) return null
   const url = typeof v.url === 'string' && /^https:\/\//.test(v.url) ? v.url : null
   const quote = typeof v.quote === 'string' ? v.quote.replace(/\s+/g, ' ').trim() : ''
   if (!url || !quote) return null
+  if (isDropped(url) || isDropped(String(v.source_name ?? ''))) return null
   if (hasPersonalDetails(quote)) return 'personal'
   // "Official source" only for a fda.gov address, whatever the server called it.
   const kind: SourceKind = isOfficialUrl(url) ? 'official' : v.source_kind === 'news' ? 'news' : 'web'
@@ -139,7 +156,7 @@ export function parseMentions(body: unknown): MentionsResult | null {
     url: typeof s.url === 'string' && /^https:\/\//.test(s.url) ? s.url : '',
     status: String(s.status ?? ''),
     n: int(s.n),
-  }))
+  })).filter((s) => !isDropped(s.name) && !isDropped(s.url))
   const lim = isObj(body.limits) && typeof body.limits.remaining_today === 'number' ? { remaining_today: body.limits.remaining_today, resets_utc: String(body.limits.resets_utc ?? '') } : null
   return {
     product_code: typeof body.product_code === 'string' ? body.product_code.toUpperCase() : '',

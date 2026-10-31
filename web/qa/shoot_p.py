@@ -253,13 +253,22 @@ def main() -> int:
             page.close()
             stub.mode = "ok"
             stub.mentions_mode = "empty"
-            page = page_for(browser, 1440, 900, "light")
-            open_site(page, e.LIVE_URL)
-            page.locator("article[aria-label=Alerts] ul button").first.click()
-            page.get_by_test_id("search-outside").click()
-            page.wait_for_selector("[data-testid=mentions-result]")
-            check("mentions: an empty result says nothing was kept", "Nothing was kept" in page.get_by_test_id("mentions-box").inner_text() and page.get_by_test_id("mention").count() == 0)
-            page.close()
+            for scheme, w, h in (("light", 1440, 900), ("dark", 1440, 900), ("light", 390, 844), ("dark", 390, 844)):
+                page = page_for(browser, w, h, scheme)
+                open_site(page, e.LIVE_URL)
+                page.locator("article[aria-label=Alerts] ul button").first.click()
+                page.get_by_test_id("search-outside").click()
+                page.wait_for_selector("[data-testid=mentions-zero]")
+                zero = page.get_by_test_id("mentions-zero-line").inner_text()
+                check(f"mentions zero {w} {scheme}: '0 found in these sources (date)', never an empty box", zero == "0 found in these sources (2026-10-31)" and page.get_by_test_id("mention").count() == 0, zero)
+                rows = page.get_by_test_id("source-row").all_inner_texts()
+                check(f"mentions zero {w} {scheme}: every source tried is listed with status and count", len(rows) == 2 and all("ok" in r and "page" in r for r in rows), rows)
+                check(f"mentions zero {w} {scheme}: no MassDevice text", "massdevice" not in page.get_by_test_id("mentions-box").inner_text().lower())
+                check(f"mentions zero {w} {scheme}: contrast", ratio(page, "[data-testid=mentions-zero-line]") >= 4.5, ratio(page, "[data-testid=mentions-zero-line]"))
+                page.get_by_test_id("mentions-box").scroll_into_view_if_needed()
+                snap(page, "mentions-zero", w, scheme, report)
+                check(f"mentions zero {w} {scheme}: no sideways scroll", not report[f"overflow_mentions-zero_{w}_{scheme}"], report[f"overflow_mentions-zero_{w}_{scheme}"])
+                page.close()
             stub.mentions_mode = "ok"
 
             # ---- 4. Connect to Muse ---------------------------------------------------------------------------------
