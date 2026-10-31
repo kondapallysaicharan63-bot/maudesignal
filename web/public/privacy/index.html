@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MaudeSignal privacy</title>
+    <meta name="description" content="What MaudeSignal collects, where it is processed and stored, who handles it, what is logged, and how to ask for deletion." />
+    <link rel="stylesheet" href="../design-system/tokens.css" />
+    <link rel="stylesheet" href="../design-system/maudesignal.css" />
+    <script>
+      try {
+        var t = localStorage.getItem('ms-theme')
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t)
+      } catch (e) {}
+    </script>
+    <style>
+      html { background: var(--paper); color: var(--ink); }
+      body { margin: 0; background: var(--paper); color: var(--ink); font: 400 18px/1.55 var(--font-sans); }
+      main { max-width: 46rem; margin: 0 auto; padding: 24px 16px 64px; }
+      h1 { font: 600 clamp(28px, 5vw, 38px)/1.15 var(--font-serif); margin: 4px 0 8px; }
+      h2 { font: 600 22px/1.25 var(--font-serif); margin: 32px 0 8px; padding-top: 12px; border-top: 1px solid var(--rule); }
+      p, li { overflow-wrap: anywhere; }
+      a { color: var(--accent); }
+      dl { margin: 0; }
+      dt { font-weight: 600; margin-top: 18px; }
+      dd { margin: 4px 0 0; }
+      .kicker { font: 600 14px/1.2 var(--font-sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); margin: 0; }
+      .note { background: var(--warning-soft); color: var(--warning); padding: 12px 16px; border-radius: var(--radius-xs); font-weight: 600; }
+      .muted { color: var(--ink-2); }
+      nav a { display: inline-flex; align-items: center; min-height: 44px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <nav aria-label="Back"><a href="../">Back to the MaudeSignal workspace</a></nav>
+      <p class="kicker">Privacy</p>
+      <h1>What MaudeSignal does with data</h1>
+      <p>
+        MaudeSignal is an advisory triage aid for quality and regulatory review of public FDA device data. It is not medical advice,
+        it is not clinical decision support, and it files nothing with FDA.
+      </p>
+      <p class="note">There is no personal data and no patient data in this service by design. Please do not type patient details anywhere.</p>
+
+      <h2>The short answers</h2>
+      <dl>
+        <dt>Does it collect personal data?</dt>
+        <dd>
+          No. There are no accounts and no sign-up, and nothing asks for a name or an e-mail address. Feedback is free text without a
+          name. Free text is checked for e-mail addresses, phone numbers, "MRN" with digits and dates of birth before it is stored (a guard,
+          not a guarantee).
+        </dd>
+
+        <dt>Does it handle patient or health data?</dt>
+        <dd>
+          No. The data it serves is public openFDA data (adverse-event reports, recalls, 510(k) records) that FDA has already de-identified.
+        </dd>
+
+        <dt>Where is data processed and stored?</dt>
+        <dd>
+          On Vercel, in the United States: serverless functions in region iad1 (Washington, D.C.). The workspace you are reading is static
+          files served by Vercel. Feedback notes and visit counts are kept in a private Vercel Blob store. Snapshots of public data are
+          part of the deployment itself.
+        </dd>
+
+        <dt>Who else handles data?</dt>
+        <dd>
+          <ul>
+            <li><strong>Vercel</strong>: hosting, serverless functions, private Blob storage, and Web Analytics on this website.</li>
+            <li>
+              <strong>Meta Platforms, through the Meta Model API</strong>: only for the "ask" tool, and only when live answers are switched
+              on. It receives the question text (and the earlier turns the page sends with it) plus the checked facts needed to answer. With
+              live answers off, or when the daily cost limit is reached, a recorded answer is shown and nothing is sent to Meta. What Meta does
+              with API requests is governed by Meta's own terms for the Meta Model API.
+            </li>
+            <li>
+              <strong>openFDA (api.fda.gov, run by FDA)</strong>: the public data source. It receives only a three-letter product code or a
+              report number, never a question.
+            </li>
+            <li>
+              <strong>Public news and web sources</strong>, only when you press "Search outside sources": the server asks GDELT, FDA feeds and
+              other public feeds for pages that match a product code and a few short device terms, then fetches those public pages.
+            </li>
+            <li><strong>Resend</strong>, only if the owner turns on e-mail notifications of new feedback; it is off unless configured.</li>
+          </ul>
+        </dd>
+
+        <dt>What is logged?</dt>
+        <dd>
+          For each tool call: the key id (a keyed hash; never the key itself), the tool name and the time, plus the public identifiers used
+          (a product code or a report number), a hash of the answer and counts of facts and withheld sentences. <strong>The text of a question
+          is not kept</strong>: only a hash of it and its length. Feedback entries hold a rating, your free text, the page and an optional
+          personal link code, <strong>with no name, no e-mail, no IP address and no browser identifier</strong>. Visit entries hold the page,
+          the time and the link code. For rate limiting, a counter keyed by a salted hash of the network address exists only for the length of
+          the limit window. Vercel also keeps its own request logs (method, path, status, address, time) under its own retention period.
+        </dd>
+
+        <dt>How long is it kept?</dt>
+        <dd>
+          No automatic deletion period is set yet for audit, feedback or visit entries. Rate-limit counters last only for their window, and
+          anything held in a server's memory disappears when the instance stops. Entries are deleted when you ask (below). Vercel's own
+          request logs follow Vercel's retention, which MaudeSignal does not control.
+        </dd>
+
+        <dt>How do I ask for deletion?</dt>
+        <dd>
+          E-mail <a href="mailto:kondapallysaicharan63@gmail.com">kondapallysaicharan63@gmail.com</a> with the key id or the personal link
+          code your entries are tied to. Because no name or e-mail is stored, entries can only be found by that code or key id. They are
+          deleted and you get a reply when it is done.
+        </dd>
+
+        <dt>Is it sold, used for advertising, or shared for marketing?</dt>
+        <dd>
+          No. It is not sold, not used for advertising or profiling, and not shared with anyone except the services listed above, which handle
+          it only to run MaudeSignal. MaudeSignal does not use it to train models.
+        </dd>
+      </dl>
+
+      <h2>Scope</h2>
+      <p>
+        U.S. FDA (openFDA) data only. UK MHRA alerts appear only where an answer labels them "MHRA (UK)". Mentions found on news sites and the
+        public web are shown in a separate box, marked "Unverified — not checked against FDA records", and are never mixed with the checked FDA
+        facts.
+      </p>
+      <p class="muted">The same answers are given on the Meta Muse connector form (docs/hackathon/MUSE_CONNECTOR.md in the repository).</p>
+    </main>
+  </body>
+</html>

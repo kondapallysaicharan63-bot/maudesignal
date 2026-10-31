@@ -383,9 +383,10 @@ def main() -> int:
                 and page.get_by_role("button", name="Confirm this match").count() == 3,
             )
             check(
-                "camera: reading shows legibility banner and withheld values",
+                "camera: reading shows legibility banner and unreadable fields as not read",
                 page.get_by_test_id("legibility-banner").count() == 1
-                and page.get_by_test_id("reading-fields").inner_text().count("value withheld") == 4
+                and page.get_by_test_id("reading-fields").inner_text().count("not read") == 4
+                and page.get_by_test_id("reading-fields").inner_text().count("value withheld") == 0
                 and page.get_by_test_id("lot-serial-note").count() == 1,
                 [page.get_by_test_id("legibility-banner").count(), page.get_by_test_id("lot-serial-note").count()],
             )
@@ -659,6 +660,26 @@ def main() -> int:
                 reached,
             )
             page.close()
+
+            # 4b. recorded stub mode: the camera answer is the recorded shape, labelled, and still counts against the daily counter
+            stub.mode = "recorded"
+            left_before = stub.live_left
+            page = new_page(browser, 1440, 900, "light")
+            open_live(page)
+            page.get_by_test_id("composer-camera").click()
+            page.get_by_test_id("use-camera").click()
+            page.wait_for_function("document.querySelector('video') && document.querySelector('video').videoWidth > 0", timeout=10000)
+            page.get_by_test_id("capture").click()
+            page.wait_for_selector("[data-testid=label-live][data-mode=recorded]", timeout=20000)
+            check(
+                "recorded stub: label result carries the Recorded run badge and its note",
+                page.get_by_test_id("mode-badge").last.inner_text() == "Recorded run"
+                and page.get_by_test_id("recorded-note").count() >= 1
+                and stub.live_left == left_before - 1,
+                [stub.live_left, left_before],
+            )
+            page.close()
+            stub.mode = "ok"
 
             # fonts / contrast spot check is covered by contrast_b7-style tests elsewhere; here only the live parts' tokens
             # 7. stored-first demo with no API address

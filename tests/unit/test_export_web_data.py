@@ -35,6 +35,8 @@ JSON_FILES = [
     "protocol.json",
     "sources.json",
     "schedules.json",
+    "alerts.json",
+    "mentions.json",
 ]
 
 

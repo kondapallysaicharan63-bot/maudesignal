@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { AlertItem } from '../dashboard'
 import { Icon } from '../icons'
 import { AlertBell } from './AlertBell'
@@ -15,6 +15,8 @@ interface Props {
   onTheme: () => void
   onPalette: () => void
   onFeedback: () => void
+  /** Opens the "Connect to Muse" page. */
+  onConnect: () => void
   alerts: AlertItem[]
   onAlert: (a: AlertItem) => void
   /** company.json's banner, printed over the simulated devices in the bell. */
@@ -26,6 +28,72 @@ interface Props {
 
 const THEME_ICON = { system: 'auto', light: 'sun', dark: 'moon' } as const
 const THEME_NEXT = { system: 'light', light: 'dark', dark: 'system' } as const
+
+/** Phone only: the secondary actions in one menu so the top bar fits at 390 px. */
+function MoreMenu(p: Props) {
+  const [open, setOpen] = useState(false)
+  const wrap = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const key = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    const down = (e: MouseEvent) => {
+      if (wrap.current && !wrap.current.contains(e.target as Node)) setOpen(false)
+    }
+    window.addEventListener('keydown', key)
+    window.addEventListener('mousedown', down)
+    return () => {
+      window.removeEventListener('keydown', key)
+      window.removeEventListener('mousedown', down)
+    }
+  }, [open])
+  const item = (label: string, icon: 'search' | 'chat' | 'plug' | 'sun' | 'moon' | 'auto', run: () => void, testid: string, keep = false) => (
+    <li key={testid}>
+      <button
+        type="button"
+        className="flex min-h-11 w-full items-center gap-3 rounded-xs px-3 text-left text-[17px] text-ink hover:bg-sunk"
+        onClick={() => {
+          if (!keep) setOpen(false)
+          run()
+        }}
+        data-testid={testid}
+      >
+        <Icon name={icon} size={20} /> {label}
+      </button>
+    </li>
+  )
+  return (
+    <div className="relative sm:hidden" ref={wrap}>
+      <button
+        type="button"
+        className="ws-icon-btn"
+        onClick={() => setOpen((o) => !o)}
+        aria-label="More actions"
+        aria-expanded={open}
+        aria-controls="more-menu"
+        data-testid="more-menu-button"
+      >
+        <Icon name="more" />
+      </button>
+      {open && (
+        <ul
+          id="more-menu"
+          data-popover-open
+          aria-label="More actions"
+          className="absolute right-0 top-12 z-[60] m-0 w-64 list-none rounded-md border border-rule-strong bg-surface p-1"
+          style={{ boxShadow: 'var(--shadow-pop)' }}
+          data-testid="more-menu"
+        >
+          {item('Search workflows', 'search', p.onPalette, 'more-search')}
+          {item('Connect to Muse', 'plug', p.onConnect, 'more-connect')}
+          {item('Give feedback', 'chat', p.onFeedback, 'more-feedback')}
+          {item(`Theme: ${p.theme}. Switch to ${THEME_NEXT[p.theme]}`, THEME_ICON[p.theme], p.onTheme, 'more-theme', true)}
+        </ul>
+      )}
+    </div>
+  )
+}
 
 export function Header(p: Props) {
   const [detail, setDetail] = useState(false)
@@ -46,29 +114,29 @@ export function Header(p: Props) {
         <span className="t-wordmark mr-auto min-w-0 truncate pl-1 max-sm:!text-[19px]" style={{ fontSize: 22 }}>
           MaudeSignal
         </span>
-        <button className="ws-icon-btn" onClick={p.onPalette} aria-label="Search workflows (Ctrl or Cmd K)">
+        <button className="ws-icon-btn max-sm:hidden" onClick={p.onPalette} aria-label="Search workflows (Ctrl or Cmd K)">
           <Icon name="search" />
           <span className="hidden text-[15px] md:inline">Search</span>
           <kbd className="ms-code hidden rounded-xs border border-rule px-1 md:inline">Ctrl K</kbd>
         </button>
         <AlertBell items={p.alerts} onOpen={p.onAlert} onViewAll={p.onViewAll} companyBanner={p.companyBanner} />
-        <button
-          className="ws-icon-btn"
-          onClick={p.onFeedback}
-          aria-haspopup="dialog"
-          aria-label="Give feedback"
-        >
+        <button className="ws-icon-btn max-sm:hidden" onClick={p.onConnect} aria-label="Connect to Muse" title="Connect to Muse" data-testid="connect-button">
+          <Icon name="plug" />
+          <span className="hidden text-[15px] lg:inline">Connect to Muse</span>
+        </button>
+        <button className="ws-icon-btn max-sm:hidden" onClick={p.onFeedback} aria-haspopup="dialog" aria-label="Give feedback">
           <Icon name="chat" />
           <span className="hidden text-[15px] md:inline">Feedback</span>
         </button>
         <button
-          className="ws-icon-btn"
+          className="ws-icon-btn max-sm:hidden"
           onClick={p.onTheme}
           aria-label={`Theme: ${p.theme}. Switch to ${THEME_NEXT[p.theme]}`}
           title={`Theme: ${p.theme}`}
         >
           <Icon name={THEME_ICON[p.theme]} />
         </button>
+        <MoreMenu {...p} />
         <button
           className="ws-icon-btn"
           onClick={p.onToggleArtifacts}

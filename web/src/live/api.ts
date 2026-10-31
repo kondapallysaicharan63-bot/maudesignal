@@ -2,6 +2,7 @@
 // Everything here is plain functions: payload builders, history trimming, response parsing and error mapping, so the
 // network layer can be tested with a fake fetch. Nothing is invented: a field the server did not send is absent here.
 import { apiBaseFrom } from '../liveCheck'
+import { buildMentionsBody, MENTIONS_PATH, parseMentions, type MentionsResult } from '../mentions'
 
 export { apiBaseFrom }
 
@@ -255,7 +256,7 @@ export function parseLabelResponse(body: unknown): LabelResponse | null {
   return {
     ...common(body),
     reading: {
-      legibility: String(r.legibility ?? 'unknown'),
+      legibility: typeof r.legibility === 'string' && r.legibility.trim() ? r.legibility.trim() : 'unknown',
       fields: r.fields as LiveReading['fields'],
       ...(r.values_withheld != null ? { values_withheld: r.values_withheld as LiveReading['values_withheld'] } : {}),
     },
@@ -313,6 +314,17 @@ export const postAsk = async (question: string, o: AskOptions, d: Deps): Promise
 
 export const postVoice = async (wav: Blob, o: Pick<AskOptions, 'history' | 'productCode'>, d: Deps): Promise<AskResponse> =>
   post(VOICE_PATH, { body: buildVoiceForm(wav, o) }, parseAsk, d)
+
+/** POST /v1/live/mentions: a three-letter code and short device terms; no key, no question text, no photo. */
+export const postMentions = async (code: string, terms: string[] | undefined, d: Deps): Promise<MentionsResult> => {
+  let body: Record<string, unknown>
+  try {
+    body = buildMentionsBody(code, terms)
+  } catch (e) {
+    throw new LiveError('invalid_input', (e as Error).message)
+  }
+  return post(MENTIONS_PATH, { body: JSON.stringify(body), json: true }, parseMentions, d)
+}
 
 export function postLabel(image: Blob, d: Deps): Promise<LabelResponse> {
   if (image.size === 0) return Promise.reject(new LiveError('invalid_input', 'That image is empty.'))

@@ -1,3 +1,4 @@
+import { useAlertPanel } from '../alertPanelContext'
 import { useState } from 'react'
 import { CLASS_LABEL, flaggedRows } from '../artifacts'
 import { isoDay } from '../data'
@@ -117,6 +118,7 @@ export function SweepHead({ sweep, compact = false }: { sweep: Sweep; compact?: 
 export function SweepFlagged({ sweep, focusCode = null }: { sweep: Sweep; focusCode?: string | null }) {
   const m = sweep.meta
   const flagged = flaggedRows(sweep)
+  const { openAlert } = useAlertPanel()
   return (
     <article className="rounded-md border border-rule-strong bg-surface p-4" aria-label="Flagged product codes">
       <h3 className="ms-kicker m-0">Flagged product codes · {flagged.length}</h3>
@@ -146,6 +148,15 @@ export function SweepFlagged({ sweep, focusCode = null }: { sweep: Sweep; focusC
                   {r.current_count} this week · {r.baseline_weekly_mean} a week on average in the 4 weeks before
                 </span>
               </div>
+              <button
+                type="button"
+                className="flex min-h-11 items-center text-[17px] font-semibold text-accent underline"
+                onClick={() => openAlert(`sweep:${r.product_code}`, r.product_code)}
+                aria-label={`Alert details for ${r.product_code}: ${CLASS_LABEL[r.classification] ?? r.classification}`}
+                data-testid="sweep-alert-details"
+              >
+                Alert details
+              </button>
               {r.queries && r.queries.length > 0 && (
                 <details className="mt-1">
                   <summary className="min-h-11 cursor-pointer py-2 text-[17px] text-ink-2">

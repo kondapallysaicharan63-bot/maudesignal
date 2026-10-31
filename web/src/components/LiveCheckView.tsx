@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useAlertPanel } from '../alertPanelContext'
+import { MentionsBox } from './MentionsBox'
 import { isoDay, STREAMLIT_URL } from '../data'
 import {
   apiBaseFrom,
@@ -97,6 +99,11 @@ export function OutcomeView({ out }: { out: CheckOutcome }) {
   )
 }
 
+function OutsideMentions({ code }: { code: string }) {
+  const { apiBase, mentionsFor } = useAlertPanel()
+  return <MentionsBox code={code} apiBase={apiBase} stored={mentionsFor(code)} />
+}
+
 /** The API base is fixed when the site is built (VITE_MAUDESIGNAL_API_BASE); empty means no live check here. */
 const API_BASE = apiBaseFrom(import.meta.env.VITE_MAUDESIGNAL_API_BASE)
 
@@ -159,6 +166,11 @@ export function LiveCheckView({ initialCode = '' }: { initialCode?: string }) {
         browser without asking again.
       </p>
       {out && <OutcomeView out={out} />}
+      {out?.ok && (
+        <div className="mt-4">
+          <OutsideMentions code={out.result.product_code} />
+        </div>
+      )}
     </div>
   )
 }

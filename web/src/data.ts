@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { parseAlerts } from './alerts'
+import type { MentionsFile } from './mentions'
 import type {
   Audit,
   Brief,
@@ -26,6 +28,20 @@ async function getJson<T>(name: string): Promise<T> {
   return (await res.json()) as T
 }
 
+/** A file the workspace can do without (alerts.json, mentions.json): null when it is missing or is not JSON of the expected kind. */
+async function getOptional<T>(name: string, ok: (raw: unknown) => T | null): Promise<T | null> {
+  try {
+    const res = await fetch(`${base}data/${name}`)
+    if (!res.ok) return null
+    return ok(await res.json())
+  } catch {
+    return null
+  }
+}
+
+const asMentions = (raw: unknown): MentionsFile | null =>
+  typeof raw === 'object' && raw !== null && typeof (raw as MentionsFile).codes === 'object' ? (raw as MentionsFile) : null
+
 /** Loads the stored exports. Everything works with no API key: these files are the data. */
 export function useWorkspaceData(): { data: WorkspaceData | null; error: string | null } {
   const [data, setData] = useState<WorkspaceData | null>(null)
@@ -46,8 +62,10 @@ export function useWorkspaceData(): { data: WorkspaceData | null; error: string 
       getJson<Sweep>('sweep.json'),
       getJson<Protocol>('protocol.json'),
       getJson<Company>('company.json'),
+      getOptional('alerts.json', parseAlerts),
+      getOptional('mentions.json', asMentions),
     ])
-      .then(([manifest, threads, briefs, sources, schedules, investigations, evidence, audit, dossier, vision, sweep, protocol, company]) => {
+      .then(([manifest, threads, briefs, sources, schedules, investigations, evidence, audit, dossier, vision, sweep, protocol, company, alerts, mentions]) => {
         if (live)
           setData({
             manifest,
@@ -63,6 +81,8 @@ export function useWorkspaceData(): { data: WorkspaceData | null; error: string 
             sweep,
             protocol,
             company,
+            alerts,
+            mentions,
           })
       })
       .catch((e: unknown) => live && setError(e instanceof Error ? e.message : String(e)))

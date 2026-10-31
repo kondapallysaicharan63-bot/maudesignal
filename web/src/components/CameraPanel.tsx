@@ -3,7 +3,7 @@ import { Icon } from '../icons'
 import { legibilityBanner } from '../labelMatch'
 import { LIMIT_TEXT, LiveError, MAX_SOURCE_BYTES, NOT_MEDICAL_ADVICE, PHOTO_NOTE, postLabel, type Candidate, type LabelResponse } from '../live/api'
 import { readingRows } from '../live/label'
-import { PHOTO_TOO_BIG_TEXT, PhotoError, cameraErrorText, fileToJpeg, frameToJpeg } from '../live/photo'
+import { PHOTO_ENCODE_FAILED_TEXT, PHOTO_TOO_BIG_TEXT, PhotoError, cameraErrorText, fileToJpeg, frameToJpeg } from '../live/photo'
 import { LiveTrace } from './LiveTrace'
 
 type Fetcher = (url: string, init?: RequestInit) => Promise<Response>
@@ -301,6 +301,7 @@ export function CameraPanel({ apiBase, fetcher }: { apiBase: string | null; fetc
       await send(blob)
     } catch (e) {
       if (e instanceof PhotoError && e.kind === 'too_big') setProblem(PHOTO_TOO_BIG_TEXT)
+      else if (e instanceof PhotoError && e.kind === 'encode_failed') setProblem(PHOTO_ENCODE_FAILED_TEXT)
       else setProblem('No picture could be taken yet. Wait a second for the camera to start, then try again.')
     }
   }
@@ -317,6 +318,7 @@ export function CameraPanel({ apiBase, fetcher }: { apiBase: string | null; fetc
     } catch (e) {
       // The original file is never sent: if this browser cannot decode and shrink it, nothing is uploaded.
       if (e instanceof PhotoError && e.kind === 'too_big') return setProblem(PHOTO_TOO_BIG_TEXT)
+      if (e instanceof PhotoError && e.kind === 'encode_failed') return setProblem(PHOTO_ENCODE_FAILED_TEXT)
       return setProblem('That image could not be read in this browser. Choose a JPEG or PNG photo.')
     }
     await send(blob)

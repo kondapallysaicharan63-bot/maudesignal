@@ -21,7 +21,7 @@ import {
 } from './api'
 import { byteLevel, downmixToMono, encodeWavPcm16, fmtClock, MAX_SECONDS, resample, rmsLevel, TARGET_RATE, toWav16k } from './audio'
 import { fitSize, isAcceptedImage, readingRows } from './label'
-import { drawToJpeg, encodeWithin, PhotoError, PHOTO_QUALITIES, type PhotoCanvas } from './photo'
+import { drawToJpeg, encodeWithin, PHOTO_QUALITIES, type PhotoCanvas } from './photo'
 import { recordedFor, threadToResponse } from './recorded'
 import { speechText } from './speech'
 
@@ -345,14 +345,19 @@ describe('label helpers', () => {
     })
     const by = Object.fromEntries(rows.map((r) => [r.key, r]))
     expect(by.device_name.value).toBe('Stub')
-    expect(by.model).toMatchObject({ value: null, hidden: true })
-    expect(by.k_number).toMatchObject({ value: null, hidden: true })
+    expect(by.model).toMatchObject({ value: null, hidden: false }) // illegible: "not read", not "value withheld"
+    expect(by.k_number).toMatchObject({ value: null, hidden: true }) // listed in values_withheld
     expect(by.gtin).toMatchObject({ value: null, hidden: false })
     expect(by.manufacturer.value).toBe('Acme')
   })
   it('an illegible reading hides every value', () => {
     const rows = readingRows({ legibility: 'illegible', fields: { device_name: { value: 'Looks real', legibility: 'clear' } } })
-    expect(rows[0]).toMatchObject({ value: null, hidden: true })
+    expect(rows[0]).toMatchObject({ value: null, hidden: false })
+  })
+  it('an empty legibility becomes "unknown"', () => {
+    const b = { mode: 'live', matches: { candidates: [] }, reading: { legibility: '  ', fields: {} } }
+    expect(parseLabelResponse(b)?.reading.legibility).toBe('unknown')
+    expect(parseLabelResponse({ ...b, reading: { fields: {} } })?.reading.legibility).toBe('unknown')
   })
   it('fitSize keeps the aspect ratio, never enlarges, and handles bad sizes', () => {
     expect(fitSize(4000, 3000)).toEqual({ width: 1600, height: 1200 })
@@ -453,8 +458,8 @@ describe('photo downscale and size logic (fake canvas and encoder)', () => {
     await expect(drawToJpeg('src', 4000, 3000, () => c)).rejects.toMatchObject({ name: 'PhotoError', kind: 'too_big' })
     expect(calls.q).toEqual([0.85, 0.7, 0.55])
   })
-  it('an empty encode result counts as too big, not as a photo', async () => {
-    await expect(encodeWithin(async () => blobOf(0))).rejects.toBeInstanceOf(PhotoError)
+  it('an empty encode result is encode_failed, not a photo and not too big', async () => {
+    await expect(encodeWithin(async () => blobOf(0))).rejects.toMatchObject({ name: 'PhotoError', kind: 'encode_failed' })
   })
   it('a source with no pixels throws no_frame before any canvas is made', async () => {
     const make = vi.fn()

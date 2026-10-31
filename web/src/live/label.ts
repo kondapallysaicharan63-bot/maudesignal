@@ -12,15 +12,18 @@ export interface Row {
 
 const LABELS: Record<string, string> = { ...FIELD_LABEL, model: 'Model', udi_gtin: 'UDI / GTIN', 'udi/gtin': 'UDI / GTIN' }
 
-/** The fields of a live reading as rows. Withheld, illegible or empty values are hidden (value null). */
+/** The fields of a live reading as rows. Withheld, illegible or empty values are never shown (value null). */
 export function readingRows(r: LiveReading): Row[] {
   const withheldKeys = Array.isArray(r.values_withheld) ? new Set(r.values_withheld.map(String)) : new Set<string>()
-  const allWithheld = r.values_withheld === true || r.legibility === 'illegible'
+  const allWithheld = r.values_withheld === true
   return Object.entries(r.fields).map(([key, f]) => {
     const raw = typeof f === 'string' || f === null ? f : (f?.value ?? null)
     const leg = typeof f === 'object' && f !== null ? f.legibility : undefined
-    const hidden = allWithheld || withheldKeys.has(key) || leg === 'illegible' || !raw
-    return { key, label: LABELS[key] ?? key.replace(/_/g, ' '), value: hidden ? null : String(raw), hidden: hidden && (allWithheld || withheldKeys.has(key) || leg === 'illegible') }
+    // "hidden" (shown as "value withheld") only for keys the server listed in values_withheld; an unreadable or empty
+    // field has no value and shows "not read". A value that was read as illegible is never shown either way.
+    const withheld = allWithheld || withheldKeys.has(key)
+    const unreadable = r.legibility === 'illegible' || leg === 'illegible' || !raw
+    return { key, label: LABELS[key] ?? key.replace(/_/g, ' '), value: withheld || unreadable ? null : String(raw), hidden: withheld }
   })
 }
 

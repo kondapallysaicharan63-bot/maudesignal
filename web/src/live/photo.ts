@@ -17,6 +17,9 @@ export class PhotoError extends Error {
 
 export const PHOTO_TOO_BIG_TEXT = `This photo is still larger than ${MAX_IMAGE_BYTES / (1024 * 1024)} MB after it was shrunk. Take it again closer to the label, or choose a smaller photo.`
 
+/** Shown when the browser's encoder returns no picture. */
+export const PHOTO_ENCODE_FAILED_TEXT = 'This browser could not make a picture to send. Try again, or choose a different photo.'
+
 /** The minimal canvas surface this file needs (a real HTMLCanvasElement fits; tests pass a fake). */
 export interface PhotoCanvas {
   width: number
@@ -27,7 +30,7 @@ export interface PhotoCanvas {
 
 /**
  * Encodes with each quality in turn and returns the first result of at most `maxBytes`. Throws PhotoError('too_big') when
- * even the last quality is over the limit. The original file or frame is never an option here: only encoder output is returned.
+ * even the last quality is over the limit, and PhotoError('encode_failed') when the encoder returns an empty result. The original file or frame is never an option here: only encoder output is returned.
  */
 export async function encodeWithin(
   encode: (quality: number) => Promise<Blob>,
@@ -36,7 +39,8 @@ export async function encodeWithin(
 ): Promise<Blob> {
   for (const q of qualities) {
     const b = await encode(q)
-    if (b.size > 0 && b.size <= maxBytes) return b
+    if (b.size === 0) throw new PhotoError('encode_failed') // the encoder returned nothing: not "too big"
+    if (b.size <= maxBytes) return b
   }
   throw new PhotoError('too_big')
 }

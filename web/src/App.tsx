@@ -1,17 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { producedTabs, relatedTabs, type TabId } from './artifacts'
-import { alertItems, NEEDS_REVIEW, sweepRowId, type AlertItem } from './dashboard'
+import { alertItems, NEEDS_REVIEW, sweepRowId } from './dashboard'
 import { ArtifactsPane } from './components/ArtifactsPane'
 import { ChatPane, type View, type WithheldNav } from './components/ChatPane'
 import type { CaptureMode } from './capture'
 import { CommandPalette } from './components/CommandPalette'
+import { AlertPanel } from './components/AlertPanel'
 import { FeedbackDialog } from './components/FeedbackDialog'
 import { Header } from './components/Header'
 import { MiniPane, miniTitle } from './components/MiniDashboard'
 import { PanelNav } from './components/PanelBar'
 import { Sidebar } from './components/Sidebar'
 import type { VisionSel } from './components/VisionWorkflow'
+import { AlertPanelContext } from './alertPanelContext'
+import { findAlert, chatQuestion, type AlertDetail } from './alerts'
 import { withheldSentences } from './claims'
+import { closestThread } from './match'
+import { storedMentions } from './mentions'
 import { useWorkspaceData, visibleWorkflows } from './data'
 import { apiBaseOrNull, resolveRef, sendVisit, sessionStore } from './feedback'
 import { useReadBriefs, useTheme } from './storage'
@@ -26,6 +31,7 @@ export function pageName(view: View): string {
   if (view.kind === 'new') return 'new'
   if (view.kind === 'capture') return `capture:${view.mode}`
   if (view.kind === 'live') return 'live'
+  if (view.kind === 'connect') return 'connect'
   return `${view.kind}:${view.id}`
 }
 
@@ -61,6 +67,9 @@ export default function App() {
   // ?r=CODE from the person's link, kept for the session (other URL parameters are left alone).
   const [refCode] = useState(() => resolveRef(window.location.search, sessionStore()))
   const page = pageName(view)
+  // The open alert panel (side sheet / full screen) and the element that had focus when it opened.
+  const [panel, setPanel] = useState<{ id: string; code?: string } | null>(null)
+  const panelReturn = useRef<HTMLElement | null>(null)
   // The live conversation lives here so it survives opening other screens. Without an API address it is switched off.
   const live = useLiveChat({
     apiBase: API_BASE,
@@ -206,16 +215,58 @@ export default function App() {
     setArtifacts(true)
   }
 
-  const openAlert = (a: AlertItem) => {
-    if (a.source === 'brief') openBrief(a.date)
-    else if (a.source === 'company') openDevice(a.deviceId ?? null)
+  /** Where an alert lives in the workspace, from its id: the sweep row, the brief or the device. */
+  const showAlertById = (id: string, code?: string) => {
+    const [kind, a, b] = id.split(':')
+    if (kind === 'brief' && a) openBrief(a)
+    else if (kind === 'company' && a) openDevice(a)
     else {
-      // The flagged list lives in the AI device sweep's dashboard: open it full screen and scroll to the row.
       openWorkflow('ai-sweep')
       setExpanded('mini')
-      setSweepFocus((cur) => ({ code: a.productCode, nonce: (cur?.nonce ?? 0) + 1 }))
+      setSweepFocus((cur) => ({ code: a ?? code ?? b ?? '', nonce: (cur?.nonce ?? 0) + 1 }))
     }
   }
+  /** Opens the detail panel of an alert and remembers what had focus so it can be given back. */
+  const openAlertPanel = useCallback((id: string, code?: string) => {
+    const el = document.activeElement
+    panelReturn.current = el instanceof HTMLElement && el !== document.body ? el : null
+    setPanel({ id, code })
+  }, [])
+  const closeAlertPanel = useCallback(() => {
+    setPanel(null)
+    const el = panelReturn.current
+    panelReturn.current = null
+    // The list the click came from may be gone (the bell closes itself): fall back to the bell.
+    window.setTimeout(() => {
+      const target = el && el.isConnected ? el : document.querySelector<HTMLElement>('[data-testid="alert-bell"]')
+      target?.focus()
+    }, 0)
+  }, [])
+  const openInChat = (a: Pick<AlertDetail, 'product_code' | 'rule'>) => {
+    const q = chatQuestion(a)
+    setPanel(null)
+    panelReturn.current = null
+    setWIdx(null)
+    setDrawer(false)
+    if (live.enabled) {
+      const refused = live.ask(q, { productCode: a.product_code })
+      setView(refused ? { kind: 'new' } : { kind: 'live' })
+      return
+    }
+    // No API: the closest stored run answers (recorded fallback).
+    const m = data ? closestThread(q, data.threads.threads) : null
+    if (m) setView({ kind: 'thread', id: m.thread.id })
+    else setView({ kind: 'new' })
+  }
+  const openConnect = () => {
+    setWIdx(null)
+    setView({ kind: 'connect' })
+    setDrawer(false)
+  }
+  const panelApi = useMemo(
+    () => ({ openAlert: openAlertPanel, apiBase: API_BASE, mentionsFor: (code: string) => storedMentions(data?.mentions, code) }),
+    [openAlertPanel, data?.mentions],
+  )
   const goHome = () => {
     setExpanded(null)
     setSweepFocus(null)
@@ -271,6 +322,7 @@ export default function App() {
       : null
 
   return (
+    <AlertPanelContext.Provider value={panelApi}>
     <PanelNav.Provider value={{ onHome: goHome, workflow: activeWorkflow ? miniTitle(activeWorkflow) : null }}>
     <div className="flex h-full flex-col">
       <Header
@@ -279,7 +331,7 @@ export default function App() {
         sidebarOpen={desktop ? !collapsed : drawer}
         alerts={data ? alertItems(data.sweep, data.briefs, data.company) : []}
         companyBanner={data?.company.banner}
-        onAlert={openAlert}
+        onAlert={(a) => openAlertPanel(a.id, a.productCode)}
         onViewAll={(group) => (group === 'devices' ? filterDevices(NEEDS_REVIEW) : openWorkflow('ai-sweep'))}
         artifactsOpen={artifacts}
         onToggleSidebar={toggleSidebar}
@@ -287,6 +339,7 @@ export default function App() {
         onTheme={next}
         onPalette={() => setPalette(true)}
         onFeedback={() => setFeedback(true)}
+        onConnect={openConnect}
         onWithheld={withheldRefs.length > 0 ? () => openWithheld(0) : undefined}
       />
       {data && (
@@ -352,7 +405,8 @@ export default function App() {
                 setDrawer(false)
               }}
               onBrief={openBrief}
-              onAlert={openAlert}
+              onAlert={(a) => openAlertPanel(a.id, a.productCode)}
+              apiBase={API_BASE}
               expanded={expanded === 'main'}
               onToggleExpand={() => toggle('main')}
             />
@@ -390,6 +444,23 @@ export default function App() {
         workflows={visibleWorkflows(runs)}
       />
     </div>
+      {panel && (
+        <AlertPanel
+          detail={findAlert(data?.alerts, panel.id, panel.code)}
+          fallbackCode={panel.code}
+          onClose={closeAlertPanel}
+          onShow={() => {
+            const p = panel
+            setPanel(null)
+            panelReturn.current = null
+            showAlertById(p.id, p.code)
+          }}
+          onOpenInChat={openInChat}
+          apiBase={API_BASE}
+          mentions={storedMentions(data?.mentions, findAlert(data?.alerts, panel.id, panel.code)?.product_code ?? panel.code ?? '')}
+        />
+      )}
     </PanelNav.Provider>
+    </AlertPanelContext.Provider>
   )
 }

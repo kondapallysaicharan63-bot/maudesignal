@@ -1378,6 +1378,10 @@ def export(root: Path, out: Path, *, generated_utc: str | None = None) -> dict[s
     sweep = build_sweep(root)
     dossier, dossier_assets = build_dossier(root, out)
     vision, vision_assets = build_vision(root, out)
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import export_alerts  # noqa: PLC0415  (imports this module; loaded late to avoid a cycle)
+
+    company = build_company(root, generated_utc)
     files: dict[str, Any] = {
         "threads.json": threads,
         "evidence.json": evidence,
@@ -1385,12 +1389,14 @@ def export(root: Path, out: Path, *, generated_utc: str | None = None) -> dict[s
         "audit.json": audit,
         "dossier.json": dossier,
         "vision.json": vision,
-        "company.json": build_company(root, generated_utc),
+        "company.json": company,
         "sweep.json": sweep,
         "investigations.json": build_investigations(root),
         "protocol.json": build_protocol(transcripts),
         "sources.json": sources,
         "schedules.json": build_schedules(root, briefs, sweep),
+        "alerts.json": export_alerts.build_alerts(root, generated_utc, company),
+        "mentions.json": export_alerts.build_mentions(root),
     }
     for name, doc in files.items():
         write_json(out / name, doc)

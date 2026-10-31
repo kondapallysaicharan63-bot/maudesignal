@@ -1,3 +1,5 @@
+import { useAlertPanel } from '../alertPanelContext'
+import { MentionsBox } from './MentionsBox'
 import { useState, type ReactNode } from 'react'
 import { CLASS_LABEL } from '../artifacts'
 import { NEEDS_REVIEW, sortedDevices, statusesByPriority } from '../dashboard'
@@ -165,6 +167,22 @@ function FilterChips({ company, filter, onFilter }: { company: Company; filter: 
   )
 }
 
+/** Opens the alert panel of a Needs review device. */
+function AlertDetailsButton({ id, code, label }: { id: string; code: string; label: string }) {
+  const { openAlert } = useAlertPanel()
+  return (
+    <button
+      type="button"
+      className="mt-1 flex min-h-11 items-center text-left text-[16px] font-semibold text-accent underline"
+      onClick={() => openAlert(id, code)}
+      aria-label={`Alert details for ${label}`}
+      data-testid="device-alert-details"
+    >
+      Alert details
+    </button>
+  )
+}
+
 function DeviceTable({ rows, onDevice }: { rows: CompanyDevice[]; onDevice: (id: string) => void }) {
   const th = 'sticky top-0 z-10 border-b border-rule bg-sunk px-2 py-2 font-semibold'
   return (
@@ -196,7 +214,10 @@ function DeviceTable({ rows, onDevice }: { rows: CompanyDevice[]; onDevice: (id:
                   </button>
                 </td>
                 <td className="ms-code px-2 py-3 !text-[17px]">{d.product_code}</td>
-                <td className="px-2 py-3">{d.status ? <StatusChip label={d.status.label} /> : <span className="text-ink-2">none</span>}</td>
+                <td className="px-2 py-3">
+                  {d.status ? <StatusChip label={d.status.label} /> : <span className="text-ink-2">none</span>}
+                  {need && <AlertDetailsButton id={`company:${d.id}`} code={d.product_code} label={`${d.name}`} />}
+                </td>
               </tr>
             )
           })}
@@ -532,6 +553,12 @@ function JumpNav({ items }: { items: { id: string; label: string }[] }) {
   )
 }
 
+/** The separate "News and public web (unverified)" box for one product code (stored search first). */
+function OutsideMentions({ code, terms }: { code: string; terms?: string[] }) {
+  const { apiBase, mentionsFor } = useAlertPanel()
+  return <MentionsBox code={code} terms={terms} apiBase={apiBase} stored={mentionsFor(code)} />
+}
+
 export function CompanyDeviceView({ company, device: d, onBack }: { company: Company; device: CompanyDevice; onBack: () => void }) {
   const tone: Tone = d.status ? toneOf(d.status.label) : 'neutral'
   const nav = [
@@ -580,6 +607,7 @@ export function CompanyDeviceView({ company, device: d, onBack }: { company: Com
         )}
       </section>
       <Evidence d={d} />
+      <OutsideMentions code={d.product_code} terms={d.device_type.name ? [d.device_type.name] : undefined} />
       <History d={d} chainOk={company.audit.chain_ok} firstBad={company.audit.first_bad_seq} />
     </div>
   )

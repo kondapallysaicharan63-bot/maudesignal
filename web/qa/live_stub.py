@@ -69,6 +69,8 @@ class Stub:
         self.mode = "ok"
         self.label_mode = "ok"
         self.live_left = 20
+        self.connect_mode = "ok"  # "ok" (a demo key is handed out), "no_key", "404"
+        self.mentions_mode = "ok"  # "ok", "empty" (nothing found)
         self._server: ThreadingHTTPServer | None = None
 
     def start(self) -> None:
@@ -87,7 +89,9 @@ class Stub:
             def _send(
                 self, status: int, body: dict[str, Any], extra: dict[str, str] | None = None
             ) -> None:
-                if "code" in body and "error" not in body:  # the real API repeats code and message under "error"
+                if (
+                    "code" in body and "error" not in body
+                ):  # the real API repeats code and message under "error"
                     body = {**body, "error": {"code": body["code"], "message": body["message"]}}
                 raw = json.dumps(body).encode()
                 self.send_response(status)
@@ -109,6 +113,19 @@ class Stub:
             def do_GET(self) -> None:  # noqa: N802
                 if self.path == "/__log":
                     self._send(200, {"log": stub.log})
+                elif self.path == "/v1/connect":
+                    stub.log.append(
+                        {
+                            "path": self.path,
+                            "method": "GET",
+                            "origin": self.headers.get("Origin"),
+                            "credentials_sent": "Cookie" in self.headers,
+                        }
+                    )
+                    if stub.connect_mode == "404":
+                        self._send(404, {"code": "not_found", "message": "no such path"})
+                    else:
+                        self._send(200, stub.connect())
                 else:
                     self._send(404, {"code": "not_found", "message": "no such path"})
 
@@ -123,7 +140,9 @@ class Stub:
                     "credentials_sent": "Cookie" in self.headers,
                 }
                 stub.log.append(entry)
-                if n > MAX_IMAGE_BYTES + 64 * 1024:  # the real server caps the body at 4 MB plus multipart overhead
+                if (
+                    n > MAX_IMAGE_BYTES + 64 * 1024
+                ):  # the real server caps the body at 4 MB plus multipart overhead
                     return self._send(413, {"code": "too_large", "message": "too large"})
                 if stub.mode == "429":
                     return self._send(
@@ -137,6 +156,8 @@ class Stub:
                     )
                 if stub.mode == "500":
                     return self._send(500, {"code": "server", "message": "boom"})
+                if self.path == "/v1/live/mentions":
+                    return stub.mentions_route(self, raw, entry)
                 if self.path == "/v1/live/ask":
                     try:
                         body = json.loads(raw)
@@ -145,14 +166,22 @@ class Stub:
                             422, {"code": "invalid_input", "message": "Body is not JSON."}
                         )
                     entry["body"] = body
-                    if not isinstance(body, dict) or set(body) - {"question", "history", "product_code", "ref"}:
+                    if not isinstance(body, dict) or set(body) - {
+                        "question",
+                        "history",
+                        "product_code",
+                        "ref",
+                    }:
                         return self._send(
                             422, {"code": "invalid_input", "message": "Invalid input: request."}
                         )
                     pc = body.get("product_code")
-                    if pc is not None and not (isinstance(pc, str) and len(pc) == 3 and pc.isalpha()):
+                    if pc is not None and not (
+                        isinstance(pc, str) and len(pc) == 3 and pc.isalpha()
+                    ):
                         return self._send(
-                            422, {"code": "invalid_input", "message": "Invalid input: product_code."}
+                            422,
+                            {"code": "invalid_input", "message": "Invalid input: product_code."},
                         )
                     q = body.get("question")
                     if not isinstance(q, str) or not 3 <= len(q.strip()) <= 500:
@@ -253,8 +282,9 @@ class Stub:
 
     def common(self, trace: list[dict[str, Any]], recorded: str | None = None) -> dict[str, Any]:
         """Fields every real live response has: mode, recorded_note (recorded only), trace, cost_usd, limits."""
-        if recorded is None:
-            self.live_left -= 1
+        self.live_left = max(
+            0, self.live_left - 1
+        )  # every accepted request counts, live or recorded
         out: dict[str, Any] = {
             "mode": "live" if recorded is None else "recorded",
             "not_medical_advice": True,
@@ -321,9 +351,11 @@ class Stub:
         ]
         out = self.common(
             trace,
-            'No live model call was made. Shown instead: a recorded run that answered "What changed this week?" (recorded 2026-10-28).'
-            if recorded
-            else None,
+            (
+                'No live model call was made. Shown instead: a recorded run that answered "What changed this week?" (recorded 2026-10-28).'
+                if recorded
+                else None
+            ),
         )
         out["answer"] = {
             "speakable": sentences,
@@ -333,6 +365,120 @@ class Stub:
         if heard:
             out["heard"] = heard
         return out
+
+    def connect(self) -> dict[str, Any]:
+        """GET /v1/connect as the page expects it. The key is a fake string for the stub only."""
+        return {
+            "mcp_url": "https://maudesignal-api.vercel.app/mcp",
+            "openapi_url": "https://maudesignal-api.vercel.app/openapi.json",
+            "privacy_url": "https://maudesignal-api.vercel.app/privacy",
+            "terms_url": "https://maudesignal-api.vercel.app/terms",
+            "key_header": "X-API-Key",
+            "demo_key": None if self.connect_mode == "no_key" else "stub-demo-key-not-a-real-key",
+            "limits": {
+                "read_only": True,
+                "live_spark": False,
+                "note": "Stub demo key: read-only, no live Spark, rate-limited.",
+            },
+        }
+
+    def mentions_route(self, h: Any, raw: bytes, entry: dict[str, Any]) -> None:
+        """POST /v1/live/mentions: check the body the way the real server must, then answer with canned, clearly fake mentions."""
+        try:
+            body = json.loads(raw)
+        except ValueError:
+            return h._send(422, {"code": "invalid_input", "message": "Body is not JSON."})
+        entry["body"] = body
+        if not isinstance(body, dict) or set(body) - {"product_code", "device_terms"}:
+            return h._send(422, {"code": "invalid_input", "message": "Invalid input: request."})
+        pc = body.get("product_code")
+        if not (isinstance(pc, str) and len(pc) == 3 and pc.isalpha()):
+            return h._send(
+                422, {"code": "invalid_input", "message": "Invalid input: product_code."}
+            )
+        terms = body.get("device_terms", [])
+        if (
+            not isinstance(terms, list)
+            or len(terms) > 5
+            or any(not isinstance(t, str) for t in terms)
+        ):
+            return h._send(
+                422, {"code": "invalid_input", "message": "Invalid input: device_terms."}
+            )
+        return h._send(200, self.mentions(pc.upper(), terms))
+
+    def mentions(self, code: str, terms: list[str]) -> dict[str, Any]:
+        """A mentions answer shaped like the contract. Content is fake (example.com) except one fda.gov address."""
+        self.live_left = max(0, self.live_left - 1)
+        empty = self.mentions_mode == "empty"
+        found = (
+            []
+            if empty
+            else [
+                {
+                    "source_name": "FDA press releases",
+                    "source_kind": "official",
+                    "date": "2026-10-20",
+                    "url": "https://www.fda.gov/news-events/press-announcements/stub-announcement",
+                    "quote": f"Stub sentence about {code} found on the fetched page.",
+                    "why_matched": f"matched: {code}",
+                    "badge": "Checked and approved by FDA",  # the page must ignore this and print its own fixed badge
+                },
+                {
+                    "source_name": "Stub News",
+                    "source_kind": "official",  # claims official but the address is not fda.gov: the page must show it as Public web
+                    "date": "2026-10-21",
+                    "url": "https://example.com/news/stub",
+                    "quote": "Stub sentence from a news page about the device type.",
+                    "why_matched": "matched: device type",
+                    "badge": "x",
+                },
+                {
+                    "source_name": "Stub Blog",
+                    "source_kind": "web",
+                    "date": None,
+                    "url": "https://example.com/blog/stub",
+                    "quote": "Dr. Smith said the device failed.",  # personal details: the page drops it and counts it
+                    "why_matched": "matched: device",
+                    "badge": "x",
+                },
+            ]
+        )
+        return {
+            "product_code": code,
+            "searched_utc": "2026-10-31T12:00:00Z",
+            "sources_tried": [
+                {
+                    "name": "GDELT news search",
+                    "url": "https://api.gdeltproject.org/api/v2/doc/doc",
+                    "status": "ok",
+                    "n": 5,
+                },
+                {
+                    "name": "FDA press releases",
+                    "url": "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/press-releases/rss.xml",
+                    "status": "ok",
+                    "n": 2,
+                },
+            ],
+            "mentions": found,
+            "dropped": {
+                "quote_not_found": 0 if empty else 2,
+                "personal_details": 0,
+                "off_topic": 0 if empty else 1,
+            },
+            "trace": [
+                {
+                    "step": "Fetch and check pages",
+                    "model": None,
+                    "ms": 220,
+                    "status": "ok",
+                    "note": f"terms: {', '.join(terms) or 'none'}",
+                }
+            ],
+            "limits": {"remaining_today": self.live_left, "resets_utc": "2026-11-01T00:00:00Z"},
+            "mode": "live",
+        }
 
     def label(self) -> dict[str, Any]:
         """A label answer shaped like the real one (reading fields as the API names them, lot and serial withheld)."""
@@ -377,8 +523,27 @@ class Stub:
         if failed:
             matches["search_failed"] = True
             matches["note"] = SEARCH_FAILED_NOTE
-        out = self.common(trace)
-        out["cost_usd"] = 0.0123  # fake figure for the stub only
+        recorded = self.mode == "recorded"
+        if recorded:
+            trace = [
+                {"step": "Re-encode photo, drop metadata", "model": None, "ms": 38, "status": "ok"},
+                {
+                    "step": "Muse Spark read",
+                    "model": "muse-spark-1.3",
+                    "ms": 0,
+                    "status": "skipped",
+                    "note": "No live model key is configured here.",
+                },
+            ]
+        out = self.common(
+            trace,
+            (
+                "No live model call was made. Shown instead: a recorded label run (stub sample)."
+                if recorded
+                else None
+            ),
+        )
+        out["cost_usd"] = None if recorded else 0.0123  # fake figure for the stub only
         out.update(
             reading={
                 "legibility": "partly_legible",

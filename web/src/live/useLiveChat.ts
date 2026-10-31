@@ -45,7 +45,7 @@ export interface LiveChat {
   micNotice: string | null
   setMicNotice: (m: string | null) => void
   /** Returns a message when the question was refused before sending (too short or too long), otherwise null. */
-  ask: (q: string) => string | null
+  ask: (q: string, o?: { productCode?: string | null }) => string | null
   askVoice: (wav: Blob) => Promise<void>
   clear: () => void
 }
@@ -95,7 +95,7 @@ export function useLiveChat(o: Options): LiveChat {
   }, [])
 
   const ask = useCallback(
-    (raw: string): string | null => {
+    (raw: string, ask?: { productCode?: string | null }): string | null => {
       let q: string
       try {
         q = checkQuestion(raw)
@@ -111,7 +111,7 @@ export function useLiveChat(o: Options): LiveChat {
         recorded(LIMIT_TEXT + '.')
         return null
       }
-      postAsk(q, { history: past, ref }, { apiBase, fetcher })
+      postAsk(q, { history: past, ref, productCode: ask?.productCode ?? null }, { apiBase, fetcher })
         .then((resp) => patch(id, { status: 'done', resp }))
         .catch((e: unknown) => {
           const err = e instanceof LiveError ? e : new LiveError('network', 'The live service could not be reached.')

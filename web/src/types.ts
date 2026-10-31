@@ -1,3 +1,5 @@
+import type { AlertsFile } from './alerts'
+import type { MentionsFile } from './mentions'
 // Shapes of web/public/data/*.json (see web/DATA_CONTRACT.md). Only what the UI reads.
 
 export interface Manifest {
@@ -356,6 +358,10 @@ export interface WorkspaceData {
   sweep: Sweep
   protocol: Protocol
   company: Company
+  /** alerts.json: the detail panel of each alert (absent when the file is not there). */
+  alerts?: AlertsFile | null
+  /** mentions.json: stored outside-source searches (absent when the file is not there). */
+  mentions?: MentionsFile | null
 }
 
 export type WorkflowId =

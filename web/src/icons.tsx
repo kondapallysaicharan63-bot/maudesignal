@@ -24,6 +24,8 @@ const PATHS = {
   bell: 'M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0',
   expand: 'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5',
   warn: 'M12 3.5 2.5 20h19zM12 10v5M12 17.4v.01',
+  plug: 'M9 7V3M15 7V3M7 7h10v4a5 5 0 0 1-10 0zM12 16v5',
+  more: 'M5 12h.01M12 12h.01M19 12h.01',
   collapse: 'M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5',
 } as const
 

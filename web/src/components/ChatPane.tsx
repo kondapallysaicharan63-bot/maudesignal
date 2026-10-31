@@ -6,6 +6,7 @@ import type { AlertItem } from '../dashboard'
 import { FULLSCREEN } from '../layout'
 import { Icon } from '../icons'
 import type { WorkflowDef, WorkflowId, WorkspaceData } from '../types'
+import { ConnectView } from './ConnectView'
 import { CaptureView } from './CaptureView'
 import { Composer } from './Composer'
 import { LiveChatView } from './LiveChat'
@@ -27,10 +28,11 @@ export type View =
   | { kind: 'run'; id: string }
   | { kind: 'capture'; mode: CaptureMode }
   | { kind: 'live' }
+  | { kind: 'connect' }
 
 /** Stable identity of the screen shown (used to scope the composer's messages). */
 export const viewKey = (v: View): string =>
-  v.kind === 'new' ? 'new' : v.kind === 'live' ? 'live' : v.kind === 'capture' ? `capture:${v.mode}` : `${v.kind}:${v.id}${v.kind === 'workflow' && v.code ? `:${v.code}` : ''}`
+  v.kind === 'new' ? 'new' : v.kind === 'live' ? 'live' : v.kind === 'connect' ? 'connect' : v.kind === 'capture' ? `capture:${v.mode}` : `${v.kind}:${v.id}${v.kind === 'workflow' && v.code ? `:${v.code}` : ''}`
 
 export interface WithheldNav {
   /** Sentence to highlight in the open thread. */
@@ -63,6 +65,8 @@ interface Props {
   live?: LiveChat
   /** Shows the live conversation. */
   onLive?: () => void
+  /** The API address (null: stored data only); the Connect page asks it for the connector details. */
+  apiBase?: string | null
 }
 
 function StoredList({ def, data, onThread }: { def: WorkflowDef; data: WorkspaceData; onThread: (id: string) => void }) {
@@ -127,6 +131,8 @@ export function ChatPane(p: Props) {
         onRecordedVoice={() => p.onCapture('voice')}
       />
     )
+  } else if (p.view.kind === 'connect') {
+    body = <ConnectView apiBase={p.apiBase ?? null} />
   } else if (p.view.kind === 'new') {
     body = <Dashboard data={data} onWorkflow={p.onWorkflow} onBrief={p.onBrief} onAlert={p.onAlert} />
   } else if (p.view.kind === 'workflow') {

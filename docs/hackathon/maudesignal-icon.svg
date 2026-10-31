@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="t d">
+  <title id="t">MaudeSignal</title>
+  <desc id="d">A flat line that jumps into one tall spike and settles, drawn on a paper-coloured rounded square.</desc>
+  <rect width="512" height="512" rx="104" fill="#f6f3ec"/>
+  <rect x="24" y="24" width="464" height="464" rx="84" fill="none" stroke="#16130f" stroke-width="8"/>
+  <path d="M64 296 H168 L212 296 L252 120 L304 392 L340 296 H448" fill="none" stroke="#16130f" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="252" cy="120" r="30" fill="#a3201a"/>
+</svg>
