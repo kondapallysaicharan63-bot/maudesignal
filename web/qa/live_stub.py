@@ -69,6 +69,7 @@ class Stub:
         self.mode = "ok"
         self.label_mode = "ok"
         self.live_left = 20
+        self.lookup_mode = "ok"  # "ok", "404" (the tool is not deployed)
         self.connect_mode = "ok"  # "ok" (a demo key is handed out), "no_key", "404"
         self.mentions_mode = "ok"  # "ok", "empty" (nothing found)
         self._server: ThreadingHTTPServer | None = None
@@ -107,7 +108,7 @@ class Stub:
                 self.send_response(204)
                 self._cors()
                 self.send_header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-                self.send_header("Access-Control-Allow-Headers", "content-type")
+                self.send_header("Access-Control-Allow-Headers", "content-type, x-api-key")
                 self.end_headers()
 
             def do_GET(self) -> None:  # noqa: N802
@@ -126,6 +127,35 @@ class Stub:
                         self._send(404, {"code": "not_found", "message": "no such path"})
                     else:
                         self._send(200, stub.connect())
+                elif self.path.startswith("/v1/tools/lookup_device"):
+                    # Make it yours: GET with the demo key in X-API-Key; only the K-number is sent.
+                    q = self.path.partition("?")[2]
+                    entry = {
+                        "path": self.path,
+                        "method": "GET",
+                        "origin": self.headers.get("Origin"),
+                        "key_sent": self.headers.get("X-API-Key") == "stub-demo-key-not-a-real-key",
+                        "credentials_sent": "Cookie" in self.headers,
+                        "query": q,
+                    }
+                    stub.log.append(entry)
+                    if not entry["key_sent"]:
+                        return self._send(401, {"code": "unauthorized", "message": "key needed"})
+                    if stub.lookup_mode == "404":
+                        return self._send(404, {"code": "not_found", "message": "no such path"})
+                    if q == "k_number=K999999":
+                        return self._send(200, {"found": False})
+                    return self._send(
+                        200,
+                        {
+                            "device": {
+                                "k_number": q.partition("=")[2],
+                                "device_name": "Stub looked-up device",
+                                "applicant": "Stub Maker",
+                                "product_code": "QIH",
+                            }
+                        },
+                    )
                 else:
                     self._send(404, {"code": "not_found", "message": "no such path"})
 

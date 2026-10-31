@@ -8,13 +8,17 @@ import { LiveTrace } from './LiveTrace'
 
 type Fetcher = (url: string, init?: RequestInit) => Promise<Response>
 
-function CandidateCard({ c, rank, total, confirmed, onConfirm, onUndo }: {
+function CandidateCard({ c, rank, total, confirmed, onConfirm, onUndo, addLabel, added, onAdd }: {
   c: Candidate
   rank: number
   total: number
   confirmed: boolean
   onConfirm: () => void
   onUndo: () => void
+  /** Make it yours: after a person confirms this match, a button adds it to their company. */
+  addLabel?: string
+  added?: boolean
+  onAdd?: () => void
 }) {
   return (
     <li
@@ -35,6 +39,19 @@ function CandidateCard({ c, rank, total, confirmed, onConfirm, onUndo }: {
           <button type="button" onClick={onUndo} className="min-h-11 text-accent underline" data-testid="undo-confirm">
             Undo
           </button>
+          {onAdd && (
+            <span className="mt-2 block">
+              {added ? (
+                <span className="font-semibold text-success" data-testid="added-note">
+                  Added to your company.
+                </span>
+              ) : (
+                <button type="button" onClick={onAdd} className="ms-btn ws-btn-primary" style={{ height: 44 }} data-testid="add-confirmed">
+                  {addLabel ?? 'Add this device'}
+                </button>
+              )}
+            </span>
+          )}
         </p>
       ) : (
         <div className="mt-2" data-testid="confirm-row">
@@ -96,8 +113,9 @@ function CandidateCard({ c, rank, total, confirmed, onConfirm, onUndo }: {
 }
 
 /** The possible matches of a live reading. Nothing is chosen for the person; a click confirms one, in this page only. */
-export function LiveMatches({ res }: { res: LabelResponse }) {
+export function LiveMatches({ res, onAdd, addLabel }: { res: LabelResponse; onAdd?: (c: Candidate) => void; addLabel?: string }) {
   const [picked, setPicked] = useState<number | null>(null)
+  const [addedAt, setAddedAt] = useState<number[]>([])
   const [none, setNone] = useState(false)
   const cands = res.matches.candidates
   return (
@@ -158,6 +176,17 @@ export function LiveMatches({ res }: { res: LabelResponse }) {
                   setNone(false)
                 }}
                 onUndo={() => setPicked(null)}
+                addLabel={addLabel}
+                added={addedAt.includes(i)}
+                onAdd={
+                  onAdd
+                    ? () => {
+                        if (addedAt.includes(i)) return
+                        setAddedAt((a) => [...a, i])
+                        onAdd(c)
+                      }
+                    : undefined
+                }
               />
             ))}
           </ul>
@@ -168,7 +197,7 @@ export function LiveMatches({ res }: { res: LabelResponse }) {
 }
 
 /** The reading, the possible matches and the steps of one live label run. */
-export function LiveLabelResult({ res }: { res: LabelResponse }) {
+export function LiveLabelResult({ res, onAdd, addLabel }: { res: LabelResponse; onAdd?: (c: Candidate) => void; addLabel?: string }) {
   const rows = readingRows(res.reading)
   const banner = legibilityBanner(res.reading.legibility)
   const recorded = res.mode === 'recorded'
@@ -210,7 +239,7 @@ export function LiveLabelResult({ res }: { res: LabelResponse }) {
           Lot and serial numbers on the label are never shown or kept.
         </p>
       )}
-      <LiveMatches res={res} />
+      <LiveMatches res={res} onAdd={recorded ? undefined : onAdd} addLabel={addLabel} />
       <div className="mt-4">
         <h3 className="ms-kicker m-0 !text-[16px]">Steps of this run</h3>
         <div className="mt-1">
@@ -223,7 +252,18 @@ export function LiveLabelResult({ res }: { res: LabelResponse }) {
 }
 
 /** Live camera preview + capture, or an uploaded photo. Both end in one JPEG sent to POST /v1/live/label. */
-export function CameraPanel({ apiBase, fetcher }: { apiBase: string | null; fetcher?: Fetcher }) {
+export function CameraPanel({
+  apiBase,
+  fetcher,
+  onAdd,
+  addLabel,
+}: {
+  apiBase: string | null
+  fetcher?: Fetcher
+  /** Make it yours: called with the one match a person confirmed and chose to add. */
+  onAdd?: (c: Candidate) => void
+  addLabel?: string
+}) {
   const [cam, setCam] = useState(false)
   const [busy, setBusy] = useState(false)
   const [res, setRes] = useState<LabelResponse | null>(null)
@@ -384,7 +424,7 @@ export function CameraPanel({ apiBase, fetcher }: { apiBase: string | null; fetc
           </span>
         </p>
       )}
-      {res && <LiveLabelResult res={res} />}
+      {res && <LiveLabelResult res={res} onAdd={onAdd} addLabel={addLabel} />}
     </section>
   )
 }

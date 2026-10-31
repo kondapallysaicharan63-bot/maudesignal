@@ -59,6 +59,8 @@ export interface AlertItem {
   deviceId?: string
   /** Company alerts: the simulated device's name. Sweep and brief alerts: the device type's name when a stored brief gives one. */
   deviceName?: string
+  /** Company alerts: true when the device is in the person's own company (Make it yours). */
+  mine?: boolean
   /** Sweep: the sweep date. Brief: the brief date. */
   date: string
   detail: string
@@ -117,6 +119,7 @@ export function alertItems(sweep: Sweep, briefs: Brief[], company?: Company | nu
         source: 'company',
         deviceId: d.id,
         deviceName: d.name,
+        ...(company?.mine ? { mine: true } : {}),
         date: d.status.date,
         detail: `${d.model} · ${d.owner}`,
       })

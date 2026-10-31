@@ -5,6 +5,9 @@ import { CLASS_LABEL } from '../artifacts'
 import { NEEDS_REVIEW, sortedDevices, statusesByPriority } from '../dashboard'
 import { isoDay } from '../data'
 import { Icon } from '../icons'
+import { nextStatuses } from '../myCompany'
+import { useMine } from '../useMyCompany'
+import { MakeItYours, MineBar } from './MakeItYours'
 import type { Company, CompanyDevice, CompanyPattern } from '../types'
 import type { Tone } from './artifacts/common'
 
@@ -183,11 +186,11 @@ function AlertDetailsButton({ id, code, label }: { id: string; code: string; lab
   )
 }
 
-function DeviceTable({ rows, onDevice }: { rows: CompanyDevice[]; onDevice: (id: string) => void }) {
+function DeviceTable({ rows, onDevice, mine = false }: { rows: CompanyDevice[]; onDevice: (id: string) => void; mine?: boolean }) {
   const th = 'sticky top-0 z-10 border-b border-rule bg-sunk px-2 py-2 font-semibold'
   return (
     <div className="rounded-md border border-rule bg-surface">
-      <table className="w-full table-fixed border-collapse text-left text-[17px]" aria-label="Our devices (simulated)">
+      <table className="w-full table-fixed border-collapse text-left text-[17px]" aria-label={mine ? 'Our devices (your company)' : 'Our devices (simulated)'}>
         <thead>
           <tr className="text-[17px] text-ink-2">
             <th className={`${th} w-[44%] px-3`}>Device</th>
@@ -241,32 +244,55 @@ export function CompanyList({
 }) {
   const need = company.devices.filter((d) => d.status?.label === NEEDS_REVIEW).length
   const rows = sortedDevices(company, filter)
+  const mine = company.mine === true
+  const [editor, setEditor] = useState(false)
+  const api = useMine()
   return (
     <div className="space-y-3">
       <div>
-        <h1 className="t-title-lg m-0">Our devices (simulated)</h1>
+        <h1 className="t-title-lg m-0">{mine ? 'Our devices (your company)' : 'Our devices (simulated)'}</h1>
         <p className="mt-1 text-ink-2 max-sm:hidden">
-          Does this apply to us? {company.company ?? 'A simulated company'} has {company.devices.length} fictional devices. The real FDA
-          reports and recalls on each product code are shown so a person can decide.
+          {mine
+            ? `Does this apply to us? ${company.company ?? 'Your company'} has ${company.devices.length} ${company.devices.length === 1 ? 'device' : 'devices'} that you entered. The real FDA reports and recalls on a product code are shown where they are stored.`
+            : `Does this apply to us? ${company.company ?? 'A simulated company'} has ${company.devices.length} fictional devices. The real FDA reports and recalls on each product code are shown so a person can decide.`}
         </p>
       </div>
+      {api && (
+        <MineBar
+          open={editor}
+          onOpen={() => {
+            api.setMode('mine')
+            setEditor((o) => !o)
+          }}
+        />
+      )}
+      {api && editor && api.mode === 'mine' && <MakeItYours onClose={() => setEditor(false)} />}
       <CompanyBanner company={company} />
       {company.devices.length === 0 ? (
-        <p className="text-ink-2">No simulated devices are stored.</p>
+        <p className="text-ink-2" data-testid="no-devices">
+          {mine ? 'No devices yet. Press Make it yours to add some.' : 'No simulated devices are stored.'}
+        </p>
       ) : (
         <>
           <p className="m-0 text-ink" data-testid="need-review-line">
             <span className="ms-num font-semibold">{need}</span> {need === 1 ? 'device needs' : 'devices need'} review.<span className="max-sm:hidden"> Sorted by status, then by the date it was set.</span>
           </p>
           <FilterChips company={company} filter={filter} onFilter={onFilter} />
-          {rows.length === 0 ? <p className="text-ink-2">No device has this status.</p> : <DeviceTable rows={rows} onDevice={onDevice} />}
+          {rows.length === 0 ? <p className="text-ink-2">No device has this status.</p> : <DeviceTable rows={rows} onDevice={onDevice} mine={mine} />}
         </>
       )}
-      <p className="m-0 text-[16px] leading-snug text-ink-2">
-        A status is set by a named simulated person, never by the tool, and only moves forward. Every change is in a hash-chained audit
-        {company.audit.chain_ok === true && ' that was recomputed when this page was built and is intact'}. Signals for human review, not
-        medical advice.
-      </p>
+      {mine ? (
+        <p className="m-0 text-[16px] leading-snug text-ink-2" data-testid="mine-footer">
+          A status is set by you, never by the tool, and only moves forward. Changes are listed on the device page and kept only in this
+          browser; they are not hash-chained or sent anywhere. Signals for human review, not medical advice.
+        </p>
+      ) : (
+        <p className="m-0 text-[16px] leading-snug text-ink-2">
+          A status is set by a named simulated person, never by the tool, and only moves forward. Every change is in a hash-chained audit
+          {company.audit.chain_ok === true && ' that was recomputed when this page was built and is intact'}. Signals for human review, not
+          medical advice.
+        </p>
+      )}
       {company.notes.length > 0 && (
         <details>
           <summary className="min-h-11 cursor-pointer py-2 text-[17px] text-ink-2">Notes ({company.notes.length})</summary>
@@ -489,6 +515,56 @@ function Evidence({ d }: { d: CompanyDevice }) {
   )
 }
 
+/** Your own device: move its status forward, see the K-number check, remove it. */
+function MineControls({ d }: { d: CompanyDevice }) {
+  const api = useMine()
+  const [confirm, setConfirm] = useState(false)
+  if (!api || !d.mine) return null
+  const next = d.status ? nextStatuses(d.status.label) : []
+  return (
+    <div className="mt-3 border-t border-rule pt-3" data-testid="mine-controls">
+      <p className="m-0 text-[17px]">
+        K-number: <span className="ms-code !text-[17px]">{d.mine.k_number ?? 'none given'}</span>
+        {d.mine.k_number ? <span data-testid="k-check"> · {d.mine.k_check}</span> : null}
+      </p>
+      {d.mine.note && (
+        <p className="ws-wrap m-0 mt-1 text-[17px] text-ink-2" data-testid="device-note">
+          {d.mine.note}
+        </p>
+      )}
+      {next.length > 0 ? (
+        <div className="mt-2" role="group" aria-label="Move the status forward">
+          <p className="m-0 text-[16px] text-ink-2">A status only moves forward. It is set by you and kept in this browser.</p>
+          <div className="mt-1 flex flex-wrap gap-2">
+            {next.map((n) => (
+              <button key={n} type="button" className="ms-btn ms-btn--secondary" style={{ height: 44 }} onClick={() => api.move(d.id, n)} data-testid="move-status">
+                Move to {n}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <p className="m-0 mt-2 text-[16px] text-ink-2" data-testid="no-forward">This status cannot move forward.</p>
+      )}
+      {!confirm ? (
+        <button type="button" className="mt-2 min-h-11 text-[17px] text-accent underline" onClick={() => setConfirm(true)} data-testid="remove-device">
+          Remove this device
+        </button>
+      ) : (
+        <p className="m-0 mt-2 text-[17px]">
+          Remove it from your company?{' '}
+          <button type="button" className="min-h-11 font-semibold text-accent underline" onClick={() => api.remove(d.id)} data-testid="remove-yes">
+            Yes, remove
+          </button>{' '}
+          <button type="button" className="min-h-11 text-accent underline" onClick={() => setConfirm(false)}>
+            Keep
+          </button>
+        </p>
+      )}
+    </div>
+  )
+}
+
 function History({ d, chainOk, firstBad }: { d: CompanyDevice; chainOk: boolean | null; firstBad: number | null }) {
   return (
     <section id="dev-history" aria-label="Status history" className="scroll-mt-16 rounded-md border border-rule bg-surface p-4">
@@ -522,7 +598,9 @@ function History({ d, chainOk, firstBad }: { d: CompanyDevice; chainOk: boolean 
         ))}
       </ol>
       <p className="m-0 mt-2 text-[16px] leading-snug text-ink-2">
-        Each entry is chained to the one before it with a SHA-256 hash; the chain was recomputed when this page was built.
+        {d.mine
+          ? 'These entries are kept only in this browser. They are not hash-chained.'
+          : 'Each entry is chained to the one before it with a SHA-256 hash; the chain was recomputed when this page was built.'}
       </p>
     </section>
   )
@@ -596,6 +674,7 @@ export function CompanyDeviceView({ company, device: d, onBack }: { company: Com
         ) : (
           <p className="m-0 mt-2 text-ink-2">No status is stored.</p>
         )}
+        <MineControls d={d} />
         {d.sweep && (
           <p className="ws-wrap m-0 mt-2 text-[17px] text-ink">
             AI device sweep, as of <span className="ms-num">{day(d.sweep.as_of)}</span>:{' '}

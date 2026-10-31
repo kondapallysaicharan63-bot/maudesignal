@@ -459,6 +459,8 @@ export interface CompanyDevice {
   history: CompanyHistoryEntry[]
   evidence: CompanyEvidence
   patterns: CompanyPattern[]
+  /** Only on the person's own devices (Make it yours): what they typed and whether the K-number was checked. */
+  mine?: { k_number: string | null; k_check: string; note: string | null; source: string }
 }
 
 export interface Company {
@@ -470,4 +472,6 @@ export interface Company {
   devices: CompanyDevice[]
   audit: { file: string; chain_ok: boolean | null; first_bad_seq: number | null; entries: unknown[] }
   notes: string[]
+  /** True for the person's own company (kept in their browser); absent for the simulated one. */
+  mine?: boolean
 }

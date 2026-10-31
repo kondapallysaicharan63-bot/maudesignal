@@ -21,6 +21,8 @@ import { useWorkspaceData, visibleWorkflows } from './data'
 import { apiBaseOrNull, resolveRef, sendVisit, sessionStore } from './feedback'
 import { useReadBriefs, useTheme } from './storage'
 import { useLiveChat } from './live/useLiveChat'
+import { buildMyCompany, flaggedCodes, knownCodes } from './myCompany'
+import { MineContext, useMineState, type MineApi } from './useMyCompany'
 import { collapseOnEscape, toggleExpanded, type PanelId } from './layout'
 import type { WorkflowId } from './types'
 
@@ -53,7 +55,35 @@ function useIsDesktop(): boolean {
 }
 
 export default function App() {
-  const { data, error } = useWorkspaceData()
+  const { data: rawData, error } = useWorkspaceData()
+  // "Make it yours": the person's own company (kept in this browser) replaces the simulated one in every view while the switch is on.
+  const my = useMineState()
+  const data = useMemo(
+    () => (rawData && my.mode === 'mine' ? { ...rawData, company: buildMyCompany(my.mine, rawData.company, rawData.sweep) } : rawData),
+    [rawData, my.mode, my.mine],
+  )
+  const mineApi = useMemo<MineApi | null>(() => {
+    if (!rawData) return null
+    const flagged = flaggedCodes(rawData.sweep)
+    return {
+      mode: my.mode,
+      setMode: my.setMode,
+      mine: my.mine,
+      persisted: my.persisted,
+      known: knownCodes(rawData.sweep, rawData.briefs, rawData.company),
+      flagged,
+      apiBase: API_BASE,
+      setCompany: my.setCompany,
+      add: (inputs) => {
+        my.setMode('mine')
+        my.add(inputs, flagged)
+      },
+      move: my.move,
+      remove: my.remove,
+      replace: my.replace,
+      clear: my.clear,
+    }
+  }, [rawData, my])
   const { theme, next } = useTheme()
   const { isRead, markRead } = useReadBriefs()
   const [view, setView] = useState<View>({ kind: 'new' })
@@ -322,8 +352,9 @@ export default function App() {
       : null
 
   return (
+    <MineContext.Provider value={mineApi}>
     <AlertPanelContext.Provider value={panelApi}>
-    <PanelNav.Provider value={{ onHome: goHome, workflow: activeWorkflow ? miniTitle(activeWorkflow) : null }}>
+    <PanelNav.Provider value={{ onHome: goHome, workflow: activeWorkflow ? miniTitle(activeWorkflow, data?.company.mine === true) : null }}>
     <div className="flex h-full flex-col">
       <Header
         manifest={data?.manifest ?? null}
@@ -462,5 +493,6 @@ export default function App() {
       )}
     </PanelNav.Provider>
     </AlertPanelContext.Provider>
+    </MineContext.Provider>
   )
 }

@@ -16,7 +16,7 @@ const FALLBACK_BANNER = 'Simulated company — sample data. Problem evidence is 
 const SEEN_KEY = 'ms-seen-alerts'
 
 /** Alert ids the person marked as seen (a per-browser convenience; the alerts themselves stay listed). */
-function useSeen(): { seen: string[]; markAll: (ids: string[]) => void } {
+export function useSeen(): { seen: string[]; markAll: (ids: string[]) => void } {
   const [seen, setSeen] = useState<string[]>(() => {
     try {
       const v = JSON.parse(readStore(SEEN_KEY) ?? '[]') as unknown
@@ -35,6 +35,8 @@ function useSeen(): { seen: string[]; markAll: (ids: string[]) => void } {
 }
 
 /** One alert: the device name with its code, the kind as a pill, then where it comes from and when. */
+const sourceLabel = (a: AlertItem): string => (a.mine ? 'Your company' : SOURCE_LABEL[a.source])
+
 function AlertRow({ a, onOpen, dim }: { a: AlertItem; onOpen: (a: AlertItem) => void; dim?: boolean }) {
   return (
     <li className="border-t border-rule first:border-t-0">
@@ -45,7 +47,7 @@ function AlertRow({ a, onOpen, dim }: { a: AlertItem; onOpen: (a: AlertItem) => 
           dim ? 'opacity-75' : '',
         ].join(' ')}
         onClick={() => onOpen(a)}
-        aria-label={`${a.deviceName ? `${a.deviceName}, ` : ''}${a.productCode}: ${a.label}. ${SOURCE_LABEL[a.source]}, ${a.date}. Open.`}
+        aria-label={`${a.deviceName ? `${a.deviceName}, ` : ''}${a.productCode}: ${a.label}. ${sourceLabel(a)}, ${a.date}. Open.`}
       >
         <span className="min-w-0">
           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -54,7 +56,7 @@ function AlertRow({ a, onOpen, dim }: { a: AlertItem; onOpen: (a: AlertItem) => 
             <Pill tone={a.kind === 'severity_escalation' ? 'bad' : 'warn'}>{a.label}</Pill>
           </span>
           <span className="ws-wrap block text-[17px] text-ink-2">
-            {a.detail} · {SOURCE_LABEL[a.source]} · <span className="ms-num whitespace-nowrap">{a.date}</span>
+            {a.detail} · {sourceLabel(a)} · <span className="ms-num whitespace-nowrap">{a.date}</span>
           </span>
         </span>
         <span className="shrink-0 text-accent" aria-hidden="true">
@@ -122,7 +124,10 @@ export function AlertBell({
   onOpen,
   onViewAll = () => undefined,
   companyBanner = FALLBACK_BANNER,
+  seenState,
 }: {
+  /** Shared with the alert buddy so both agree on what is unseen; the bell keeps its own when absent. */
+  seenState?: { seen: string[]; markAll: (ids: string[]) => void }
   items: AlertItem[]
   /** The banner of company.json, printed over the simulated devices. */
   companyBanner?: string
@@ -131,7 +136,8 @@ export function AlertBell({
   onViewAll?: (group: 'signals' | 'devices') => void
 }) {
   const [open, setOpen] = useState(false)
-  const { seen, markAll } = useSeen()
+  const own = useSeen()
+  const { seen, markAll } = seenState ?? own
   const unseen = items.filter((a) => !seen.includes(a.id)).length
   const { signals, devices } = groupAlerts(items)
   useEffect(() => {
@@ -201,7 +207,7 @@ export function AlertBell({
                 seen={seen}
               />
               <AlertGroup
-                title="Our devices (simulated)"
+                title={devices.some((x) => x.mine) ? 'Our devices (your company)' : 'Our devices (simulated)'}
                 items={devices}
                 onOpen={(a) => {
                   setOpen(false)
@@ -217,7 +223,7 @@ export function AlertBell({
               />
               <p className="m-0 mt-2 text-[16px] leading-snug text-ink-2">
                 Signals: a new kind of problem, or more serious than usual, in the AI device sweep and the newest demo-snapshot brief.
-                Our devices: simulated devices that need review. Signals for a person to review.
+                Our devices: devices that need review (simulated, or yours in Make it yours). Signals for a person to review.
               </p>
             </div>
             <div className="flex shrink-0 items-center justify-between gap-2 border-t border-rule p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">

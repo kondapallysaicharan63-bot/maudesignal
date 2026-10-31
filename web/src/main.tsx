@@ -7,6 +7,7 @@ import './styles/fonts.css'
 import './styles/tokens.css'
 import './styles/maudesignal.css'
 import './index.css'
+import './buddy.css'
 
 // Vercel Web Analytics: page views only, no custom events; the personal ref code is stripped.
 inject({ beforeSend: (e) => ({ ...e, url: stripRef(e.url) }) })

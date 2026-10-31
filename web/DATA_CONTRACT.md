@@ -267,8 +267,68 @@ older names (`key_header`, `privacy_url`, `terms_url`, `limits: {read_only, live
 `https://maudesignal-api.vercel.app/mcp`, OpenAPI URL `https://maudesignal-api.vercel.app/openapi.json`, "Ask Charan for a key", and links
 to `/privacy` and `/terms` on the API. Three steps: open Muse connectors, add the MCP URL, paste the key in the `X-API-Key` header. No OAuth.
 
+## Make it yours (browser only) and the alert buddy
+
+"Our devices" has a **Make it yours** button. A person types a company name and adds devices; their company then shows in the same
+views as the simulated Demo MedTech Co. (table, status chips, alert counts, device pages), under the banner **"Your company — your data
+stays in your browser"**. The simulated company stays the default for new visitors and keeps its banner "Simulated company — sample data.
+Problem evidence is real FDA data." A switch ("Demo MedTech Co. (simulated)" / "Your company") goes between them. Code: `src/myCompany.ts`
+(pure logic), `src/useMyCompany.tsx` (state), `src/components/MakeItYours.tsx` (UI).
+
+**Storage.** `localStorage`, versioned keys: `ms-my-company-v1` (the company) and `ms-company-mode-v1` (`"mine"`; anything else = demo). Every
+access is in try/catch. When storage is blocked the company lives in memory for the tab and the page says so ("kept in memory only"); a
+stored value that fails validation is ignored. Nothing about the company or its devices is sent anywhere: no analytics event, no change to the
+visit ping body (`{ref?, page, client_ts}`; the page name of the device view carries no device or company name), and the Web Analytics URL is
+unchanged. The only network calls Make it yours can cause are the K-number look-up below and the existing label-photo call.
+
+**Stored shape** (`ms-my-company-v1`, also the export file, plus `app` and `exported_utc`):
+`{version: 1, company: str<=80, devices: [{id: "MY-NN", name: str<=120, product_code: "ABC"|null, k_number: "K123456"|null, added: "YYYY-MM-DD",
+source: "code"|"k_number"|"csv"|"label"|"json", note: str|null, k_check: str, status: <one of the five statuses>, history: [{seq, date, from: str|null, to}]}]}`.
+At most 200 devices; each device has a product code or a K-number. **Export JSON** writes `{app: "maudesignal-my-company", version: 1, exported_utc, company, devices}`;
+**Import JSON** validates every field and names each problem (not JSON, wrong app/version, bad code or K-number, unknown status, duplicate id, a
+history that goes backwards or does not end on the status); a valid file replaces the company after a confirm (no confirm when it is empty).
+**Clear** asks first.
+
+**Statuses** are the same five as the simulated company, with the same ranks, and only move forward (to a higher rank; never back, never
+sideways). They are set by the person and kept only in this browser; the history on the device page says "kept only in this browser, not
+hash-chained". A new device starts in "Needs review" only when its product code is flagged by the AI device sweep (a new kind of problem or
+more serious than usual; the same stored data that drives the bell), otherwise in "Monitoring — nothing open". Nothing is guessed beyond that.
+
+**Four ways to add a device.**
+1. Product code: exactly 3 letters (upper-cased). A code the site has stored data for (sweep, briefs, the simulated company) is accepted
+   plainly; any other 3-letter code is accepted with the note "not one this site has stored data for".
+2. K-number (`K` + 6 digits): when `VITE_MAUDESIGNAL_API_BASE` is set and `GET /v1/connect` hands out a `demo_key`, one call
+   `GET {api}/v1/tools/lookup_device?k_number=K123456` with the key in the `auth_header` (`X-API-Key`), `credentials: omit`. Only the
+   K-number is sent (never the company name or the device list). The page reads the record from the top level or from `device`, `result`, `facts` or
+   `record`: `device_name` (or `name`), `applicant`, `product_code`. A record stores "checked with the FDA 510(k) record K…"; an answer without a
+   record stores "checked: no 510(k) record found"; no API address, no key, a non-2xx answer (including 404 when the tool is not deployed), a
+   timeout (12 s) or a network error stores **"not checked yet"**. This path assumes the tool name and parameter above and that the API's CORS
+   allows the `X-API-Key` header from the site's origin; both are the API track's to confirm.
+3. CSV: columns `name`, `product_code`, `k_number` (header row required; `name` plus a code or a K-number per row; max 200 rows, 200 KB;
+   BOM, CRLF and quoted commas handled). A preview with the valid rows and a line-numbered error per bad row is shown first; only valid rows are imported
+   when the person presses Import. K-numbers in a file are stored as "not checked yet".
+4. Label photo: only when an API address is set. The existing camera / upload goes to `POST /v1/live/label`; the possible matches are shown with
+   "Confirm this match"; after one is confirmed an "Add to your company" button adds only that match (name, K-number, product code). A recorded run
+   cannot be added.
+
+**Evidence.** Real FDA evidence (report count, recalls, patterns with quotes, the gate lines) is attached to a device only where it is stored for its
+product code: it is taken from the simulated company's stored evidence for that code (`demo_db` or `fetched`). Any other device shows "evidence not
+fetched yet"; no number is estimated.
+
+**Alert buddy** (`src/components/AlertBuddy.tsx`, `src/buddy.css`): an original SVG character (about 30 px) in the top bar. The count is the bell's
+badge count (alerts not yet marked seen: sweep and brief signals flagged by the detector rules, plus "Needs review" devices of whichever company is shown). With 0 it is a calm
+picture (`role="img"`, gentle breathing); with N > 0 it is a button that pulses in the token danger colour with a count badge and a bubble "N alerts need a look"
+(shown 8 s after the count changes, and on hover or focus); click or Enter opens the first alert's panel (P2). `aria-label` states the state in words.
+`prefers-reduced-motion: reduce` switches the animation off; the colour and the badge remain. Colours come from the design tokens only.
+A device you added has no stored alert detail of its own: its panel falls back to the sweep alert for the same product code (never to the simulated
+company's alert) or says no stored detail exists.
+
 ## Tests
 
+- Make it yours and the buddy (`web/`): `src/myCompany.test.ts` (codes, storage incl. blocked storage, CSV, import validation, export round-trip, clear, forward-only
+  statuses, the K-number look-up with a fake fetch, the built company and alert counts), `src/myCompanyDom.test.tsx` (jsdom: every way to add, export / import / clear,
+  blocked storage, the label match flow, buddy states, bubble, keyboard, reduced motion), `qa/e2e_m2.py` (Playwright against `qa/live_stub.py`, 390 and 1440, light and dark;
+  screenshots `qa/screenshots/M2-*.png`).
 - Alerts, mentions, connect (`web/`): `src/alertsMentions.test.ts` (helpers, validation, the POST, fallback), `src/alertPanel.test.tsx` (DOM: panel, mentions box,
   Connect page), `python3 qa/shoot_p.py` (Playwright against `vite preview` and the stub: every way into the panel, Esc, focus trap and return,
   Open in chat live and recorded, mentions, Connect, header at 390 and 1440, light and dark, screenshots `qa/screenshots/P-*.png`).

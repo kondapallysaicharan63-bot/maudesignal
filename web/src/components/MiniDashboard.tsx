@@ -10,7 +10,8 @@ import { Crumbs, ExpandButton } from './PanelBar'
 import { StatusBars, StatusFilterList } from './OurDevices'
 import { SweepFlagged, SweepRules } from './SweepCard'
 
-export function miniTitle(workflow: WorkflowId): string {
+export function miniTitle(workflow: WorkflowId, mine = false): string {
+  if (workflow === 'our-devices' && mine) return 'Our devices (your company)'
   return WORKFLOWS.find((w) => w.id === workflow)?.title ?? 'Dashboard'
 }
 
@@ -141,6 +142,7 @@ export function MiniPane({
   const threads = workflowThreads(data, workflow)
   const items = recentItems(workflow, data)
   const devices = workflow === 'our-devices'
+  const mineCo = data.company?.mine === true
   const needReview = devices ? data.company.devices.filter((d) => d.status?.label === NEEDS_REVIEW).length : 0
   const pick = (label: string | null) => {
     setShown(false)
@@ -153,7 +155,7 @@ export function MiniPane({
   }
   return (
     <aside
-      aria-label={`${miniTitle(workflow)} dashboard`}
+      aria-label={`${miniTitle(workflow, mineCo)} dashboard`}
       data-expanded={expanded}
       className={[
         'flex shrink-0 flex-col border-rule bg-surface',
@@ -162,13 +164,13 @@ export function MiniPane({
     >
       <div className="flex shrink-0 items-center justify-between gap-2 px-3 py-1">
         {expanded && devices ? (
-          <h2 className="m-0 min-w-0 truncate text-[19px] font-semibold">{miniTitle(workflow)}</h2>
+          <h2 className="m-0 min-w-0 truncate text-[19px] font-semibold">{miniTitle(workflow, mineCo)}</h2>
         ) : expanded ? (
           <Crumbs panel="mini" />
         ) : (
           <>
             <h2 className="ws-wrap m-0 min-w-0 text-[17px] font-semibold leading-snug max-lg:hidden">
-              {miniTitle(workflow)}
+              {miniTitle(workflow, mineCo)}
             </h2>
             {/* Phone and tablet: one bar that names the workflow and opens its numbers and recorded answers. */}
             <button
@@ -180,7 +182,7 @@ export function MiniPane({
               data-testid="mini-toggle"
             >
               <span className="min-w-0">
-                <span className="block truncate text-[17px] font-semibold">{miniTitle(workflow)}</span>
+                <span className="block truncate text-[17px] font-semibold">{miniTitle(workflow, mineCo)}</span>
                 <span className="block text-[17px] text-ink-2" data-testid="mini-summary">
                   {devices
                     ? `${needReview} ${needReview === 1 ? 'needs' : 'need'} review · ${data.company.devices.length} devices`

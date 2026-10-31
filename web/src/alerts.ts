@@ -92,6 +92,9 @@ export function findAlert(file: AlertsFile | null | undefined, id: string, code?
   if (!file || !Array.isArray(file.alerts)) return null
   const exact = file.alerts.find((a) => a.id === id)
   if (exact) return exact
+  // A device the person added themselves (company:MY-01) has no stored detail of its own; it never borrows the
+  // simulated company's alert (that one names a simulated owner). The sweep alert for the same code is the only fallback.
+  if (id.startsWith('company:MY-')) return code ? (file.alerts.find((a) => a.id === `sweep:${code}`) ?? null) : null
   if (!code) return null
   return file.alerts.find((a) => a.product_code === code) ?? null
 }

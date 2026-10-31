@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { AlertItem } from '../dashboard'
 import { Icon } from '../icons'
-import { AlertBell } from './AlertBell'
+import { AlertBell, useSeen } from './AlertBell'
+import { AlertBuddy } from './AlertBuddy'
 import type { ThemeChoice } from '../storage'
 import type { Manifest } from '../types'
 
@@ -97,6 +98,9 @@ function MoreMenu(p: Props) {
 
 export function Header(p: Props) {
   const [detail, setDetail] = useState(false)
+  // The bell and the buddy share one "seen" list, so both show the same count.
+  const seenState = useSeen()
+  const unseenItems = p.alerts.filter((a) => !seenState.seen.includes(a.id))
   const h = p.manifest?.header
   return (
     <header className="shrink-0 border-b border-rule bg-paper">
@@ -119,7 +123,8 @@ export function Header(p: Props) {
           <span className="hidden text-[15px] md:inline">Search</span>
           <kbd className="ms-code hidden rounded-xs border border-rule px-1 md:inline">Ctrl K</kbd>
         </button>
-        <AlertBell items={p.alerts} onOpen={p.onAlert} onViewAll={p.onViewAll} companyBanner={p.companyBanner} />
+        <AlertBuddy items={unseenItems} count={unseenItems.length} onOpen={p.onAlert} />
+        <AlertBell seenState={seenState} items={p.alerts} onOpen={p.onAlert} onViewAll={p.onViewAll} companyBanner={p.companyBanner} />
         <button className="ws-icon-btn max-sm:hidden" onClick={p.onConnect} aria-label="Connect to Muse" title="Connect to Muse" data-testid="connect-button">
           <Icon name="plug" />
           <span className="hidden text-[15px] lg:inline">Connect to Muse</span>
