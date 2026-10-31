@@ -328,6 +328,15 @@ _ADVISORY = re.compile(
     r"|\bnot medical advice\b|\bnothing (?:is|was) filed\b",
     re.IGNORECASE,
 )
+#: A word that makes a sentence a statement about FDA data (then it is never filler).
+_FACT_WORD = re.compile(
+    r"\b(?:devices?|recall\w*|report\w*|fda|maude|510|k\d{6}|clearances?|cleared|injur\w*"
+    r"|deaths?|died|malfunction\w*|software|failures?|failed|errors?|signals?|capa|"
+    r"manufacturers?|firms?|complaints?|adverse|events?|problems?|increase\w*|decrease\w*"
+    r"|spike\w*|product codes?|brands?|models?|labels?|narratives?|patients?)\b",
+    re.IGNORECASE,
+)
+_CODE_IN_SENTENCE = re.compile(r"\b[A-Z]{3}\b")  # a product code such as LLZ (case-sensitive)
 MAX_CONNECTIVE_WORDS = 14
 NO_FACTS_LINE = (
     "I have nothing checked to add to that. Ask about a product code, a report, a recall or "
@@ -339,14 +348,19 @@ def is_connective(text: str) -> bool:
     """True for a sentence that states no fact: a greeting, a transition, an advisory line.
 
     Used only for sentences that carry no claim and passed the gate. Such a sentence is
-    neither shown as a fact nor listed as held back. Anything with a digit, or longer than
-    a short transition, is not connective.
+    neither shown as a fact nor listed as held back. Anything with a digit, longer than a
+    short transition, or naming FDA data (a device, recall, report, problem, product code ...)
+    is not connective, so "Based on the records, the device was recalled for software failure."
+    is still listed as held back. The narrow advisory lines ("a named human must review ...",
+    "not medical advice") state no fact and stay filler.
     """
     t = " ".join(text.split())
     if not t or any(c.isdigit() for c in t):
         return False
     if _ADVISORY.search(t):
         return True
+    if _FACT_WORD.search(t) or _CODE_IN_SENTENCE.search(t):
+        return False
     return len(t.split()) <= MAX_CONNECTIVE_WORDS and _CONNECTIVE_START.search(t) is not None
 
 

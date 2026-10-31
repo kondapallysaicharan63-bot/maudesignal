@@ -35,9 +35,15 @@ TTL_SECONDS = int(TTL.total_seconds())
 VERSION = "v1"
 
 
-def cache_key(namespace: str, question: str, product_code: str | None = None) -> str:
-    """Store key for a question: a hash of its normalised text and the product code."""
-    basis = f"{normalise(question)}|{(product_code or '').upper()}"
+def cache_key(
+    namespace: str, question: str, product_code: str | None = None, version: str = ""
+) -> str:
+    """Store key: a hash of the normalised question, the product code and the data version.
+
+    ``version`` names the stored data the answer was made from (``ConnectorData.version``), so
+    a new snapshot never reuses an answer about the old one.
+    """
+    basis = f"{version}|{normalise(question)}|{(product_code or '').upper()}"
     digest = hashlib.sha256(basis.encode("utf-8")).hexdigest()[:32]
     return f"chat-{VERSION}-{namespace}-{digest}"
 
@@ -65,6 +71,7 @@ class AnswerCache:
         *,
         now: Callable[[], datetime] | None = None,
         ttl: timedelta = TTL,
+        version: Callable[[], str] | None = None,
     ) -> None:
         """Create a cache.
 
@@ -73,15 +80,18 @@ class AnswerCache:
             namespace: Keeps the website chat and the connector tool apart (``live``, ``tool``).
             now: UTC clock (tests).
             ttl: How long an answer may be reused.
+            version: The stored data's version (part of every key).
         """
         self._state, self._ns = state, namespace
+        self._version = version or (lambda: "")
         self._now = now or (lambda: datetime.now(UTC))
         self._ttl = ttl
 
     def get(self, question: str, product_code: str | None = None) -> CachedAnswer | None:
         """The stored answer for this question if it is younger than the TTL, else None."""
         try:
-            raw = self._state.cache_get(cache_key(self._ns, question, product_code))
+            key = cache_key(self._ns, question, product_code, self._version())
+            raw = self._state.cache_get(key)
             if raw is None:
                 return None
             entry = json.loads(raw)
@@ -102,7 +112,8 @@ class AnswerCache:
         try:
             value = json.dumps({"stored_at": self._now().isoformat(), "body": body})
             ttl = max(1, int(self._ttl.total_seconds()))
-            self._state.cache_set(cache_key(self._ns, question, product_code), value, ttl)
+            key = cache_key(self._ns, question, product_code, self._version())
+            self._state.cache_set(key, value, ttl)
             return True
         except Exception as exc:  # noqa: BLE001 - a cache that cannot be written is skipped
             logger.warning("chat_cache_put_failed", error_type=type(exc).__name__)

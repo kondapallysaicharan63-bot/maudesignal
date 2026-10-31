@@ -25,6 +25,18 @@ number, a fact about a device, or the words approved, validated, compliant, safe
 test checks this). A greeting before a real question ("hi, what changed for LLZ?") is dropped
 and the question is routed on its own.
 
+**Medical advice vs regulatory questions.** The fixed medical reply is used only when the
+message asks something clinical (should I take or stop, diagnose, dose, safe or dangerous, ...)
+about a body or a patient (I, me, my, kids, pacemaker, MRI, rash, ...) and names no product code
+and no regulatory word (CAPA, recall, report, MAUDE, MDR, signal, complaint, spike, 510(k), ...).
+"Should we start a CAPA for LLZ?" or "Should I worry about the LLZ spike?" go to Muse Spark;
+"Is it safe for me to get an MRI with my pacemaker?" gets the medical reply. "Is X safe" with a
+regulatory word ("is it safe to close the CAPA") also goes to Muse Spark.
+
+The privacy reply says that greetings and simple lookups use no model, that when live answers
+are on an open question is sent to Meta's Muse Spark, and that MaudeSignal keeps only a hash of
+the question (the same as /privacy).
+
 ## Tier 2: direct lookups through the claim gate
 
 The router finds one intent and at most one product code, report id or K-number. The answer is
@@ -38,6 +50,13 @@ together with the baseline count it comes from ("8.75 ... (35 reports)"), so the
 checked too. The quoted LLZ figures (33 reports, weekly average 8.75) are the stored ones,
 unchanged.
 
+A question with a qualifier the templates do not apply goes to Muse Spark instead of getting
+a template that answers something else: a year or month, since / before / after / between /
+from, last or past year / quarter / month / week / N days, class I / II / III, per or by
+manufacturer / firm / year / status, a break-down, open or terminated recalls, most / top /
+only / except, compare / vs, and "how many ... are / were ...". "How many LLZ recalls are class
+I?", "LLZ recalls in 2019" and "what changed for LLZ last year" are tier 4.
+
 What tier 2 never does: state live openFDA numbers (they cannot be recomputed from stored
 records). A product code outside the stored snapshot gets "not in the stored snapshot" and a
 button that opens Check any device type. An unknown code one letter away from a known one gets
@@ -47,9 +66,11 @@ by the manufacturer?") goes to tier 4, which has the context.
 
 ## Tier 3: six-hour cache
 
-Only live, gate-checked Muse Spark answers are kept (recorded and free answers are not). The
-key is a SHA-256 of the normalised question (lower case, punctuation and extra spaces removed)
-and the chosen product code; the question text is never stored. Storage is the connector's
+Only live Muse Spark answers with at least one gate-passed, linked sentence are kept (recorded,
+free and fully held-back answers are not). The key is a SHA-256 of the data version (snapshot
+dates, digest week and sweep run, `ConnectorData.version`), the normalised question (lower
+case, punctuation and extra spaces removed) and the chosen product code; the question text is
+never stored. The connector's public demo key never receives a cached live answer. Storage is the connector's
 existing cache: Upstash Redis when configured, this instance's memory otherwise. Any read,
 parse or write error is a miss. A question that points back to earlier turns ("why did that
 happen?") is not looked up or stored when history is sent.
@@ -82,8 +103,9 @@ ledger entry is written).
 
 A sentence that passed the gate with no claims and states no fact (a greeting, "Here is what I
 found.", "A named human must review this.") is no longer listed as "held back"; it is simply not
-shown (`ask.is_connective`). Anything with a digit, or longer than a short transition, is not
-connective, and an unlinked factual sentence is still held back. When the model wrote no factual
+shown (`ask.is_connective`). Anything with a digit, longer than a short transition, or naming FDA data
+(a device, recall, report, problem, failure, product code ...) is not connective, so "Based on
+the records, the device was recalled for software failure." is still listed as held back. When the model wrote no factual
 sentence at all, the answer says "I have nothing checked to add to that …" instead of "I could
 not verify an answer". Numbers and FDA facts go through the claim gate unchanged.
 
@@ -94,8 +116,9 @@ the real router over the stored demo data (no model, no network). Before: every 
 priced at the recorded average typed-ask cost, **$0.048**. After: tiers 1 to 3 are $0, and each
 tier-4 question is still priced at $0.048, which is an upper bound because the cheaper tier-4
 settings above were not measured (that needs paid calls). No other cost number is used. The
-sample is not measured traffic; with a different mix the after-average is
-$0.048 × (share of open questions).
+sample is not measured traffic, and it has no qualified ("in 2019", "class I") or regulatory
+"should we" questions, which now go to tier 4; with a different mix the after-average is
+$0.048 × (share of questions that reach tier 4).
 
 <!-- cost-table:start -->
 Sample: 20 questions (`scripts/chat_tier_costs.py`). Before: every question goes to Muse Spark at the recorded average typed-ask cost of $0.048. After: tiers 1 to 3 cost $0; a tier-4 question is still priced at $0.048 (upper bound: the cheaper tier-4 settings are not measured, which would need paid calls).
@@ -148,5 +171,9 @@ Average per question: before **$0.0480**, after **$0.0120** (upper bound; target
   answer, tiers 1 to 3 use no daily limit and write no ledger entry, tier 4 uses the compact
   prompt, low effort and two tool rounds, the cache hit is free.
 * `tests/unit/test_chat_tier_costs.py`: the table above is what the script prints.
+* `tests/unit/test_chat_tiers_review.py`: regulatory "should" questions are not medical,
+  first-person medical questions are, qualified questions reach tier 4, factual sentences stay
+  held back, the cache key carries the data version, held-back answers are not cached, the demo
+  key gets no cached live answer, the privacy reply.
 * Web: `web/src/live/*.test.ts(x)` (badge, chips, cost line); Playwright scenarios in
   `scripts/release/e2e_web.py` (greeting, direct lookup, live question with a mocked route).

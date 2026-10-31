@@ -965,7 +965,7 @@ def mount_live(
             "so the shared per-address daily limits are multiplied by the number of instances",
         )
     pepper = (pepper_src or secrets.token_hex(16)).encode("utf-8")
-    live_cache = AnswerCache(state, "live", now=clock_now)
+    live_cache = AnswerCache(state, "live", now=clock_now, version=data.version)
 
     def who(request: Request) -> str:
         """Peppered HMAC of the caller address: all the limiters and counters ever see."""
@@ -1151,7 +1151,9 @@ def mount_live(
             r = chat.route_for(
                 data, body.question, body.product_code, has_history=bool(body.history)
             )
-            if cacheable(body.question, r, has_history=bool(body.history)):
+            if cacheable(body.question, r, has_history=bool(body.history)) and chat.has_fact(
+                response
+            ):
                 live_cache.put(body.question, body.product_code, chat.cache_entry(response))
         log("ask", response["mode"], started, tier="live")
         return JSONResponse(response, headers={"Cache-Control": "no-store"})

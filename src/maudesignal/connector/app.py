@@ -378,7 +378,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     state.attach_blob(cfg.feedback_store)  # the private Blob store also holds the spend ledger
     ask_runtime = cfg.ask_runtime or AskRuntime(state=state)
-    ask_cache = AnswerCache(state, "tool", now=cfg.now)
+    ask_cache = AnswerCache(state, "tool", now=cfg.now, version=cfg.data.version)
     demo_limiter = cfg.demo_limiter or state.rate_limiter(
         "demo-key",
         RateLimiter.from_env(name=DEMO_RATE_ENV, default=DEFAULT_DEMO_RATE_PER_MIN).limit,

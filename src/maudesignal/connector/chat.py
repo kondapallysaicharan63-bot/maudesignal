@@ -147,6 +147,16 @@ def cached_body(hit: CachedAnswer, ms: float) -> dict[str, Any]:
     }
 
 
+def has_fact(body: dict[str, Any]) -> bool:
+    """True when a live body shows at least one gate-passed, linked sentence.
+
+    An answer whose every sentence was held back (only the fixed "could not verify" line is
+    left) is not cached: asking again may give a checked answer.
+    """
+    items = (body.get("answer") or {}).get("speakable") or []
+    return any(isinstance(i, dict) and i.get("links") for i in items)
+
+
 def cache_entry(body: dict[str, Any]) -> dict[str, Any]:
     """What is kept of a live answer for the cache (the shown answer; no question text)."""
     return {"answer": body["answer"], "mode": body.get("mode"), "cost_usd": body.get("cost_usd")}
@@ -223,7 +233,7 @@ def ask_with_tiers(
             return canned_answer(r, now)
         if r.tier == "direct":
             return direct_tool_answer(direct_answer(data, r), data, now)
-        if cache is not None:
+        if cache is not None and allow_live:  # the demo key never gets a live answer
             hit = cache.get(question)
             if hit is not None:
                 try:
@@ -244,6 +254,6 @@ def ask_with_tiers(
         tier="live",
         cost_usd=round(outcome.cost_usd, 6) if outcome.live else None,
     )
-    if tiers_on and cache is not None and outcome.live:
+    if tiers_on and cache is not None and outcome.live and out.facts:
         cache.put(question, None, out.model_dump(mode="json"))  # one question, no history
     return out

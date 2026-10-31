@@ -199,6 +199,26 @@ class ConnectorData:
         self._known_codes = frozenset(c.upper() for c in codes if len(c) == 3)
         return self._known_codes
 
+    def version(self) -> str:
+        """Short id of the stored data: snapshot dates, digest window and sweep run.
+
+        Part of the answer-cache key, so an answer about one snapshot is never reused for the
+        next one. Empty parts are kept (a missing file gives a stable, different id).
+        """
+        try:
+            m = self.manifest()
+            w = self.digest().get("window") or {}
+            sweep = (self.sweep().get("meta") or {}).get("generated_utc")
+            parts = [
+                str(m.get("max_date_received") or ""),
+                str(m.get("fetched_at_utc") or ""),
+                str(w.get("current_end") or ""),
+                str(sweep or ""),
+            ]
+        except (OSError, ValueError, KeyError, AttributeError):
+            parts = ["unknown"]
+        return hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()[:12]
+
     def sweep(self) -> dict[str, Any]:
         """The stored AI-device sweep (``demo/sweep/ai-device-sweep.json``); empty when absent."""
         try:

@@ -1,0 +1,175 @@
+"""Chat tiers, review fixes (HACKATHON-BUILT). Offline.
+
+1. Regulatory "should we ..." questions are never refused as medical advice.
+2. A qualifier the templates do not apply (a year, a month, since/before, last year, class I,
+   by manufacturer, open recalls, compare ...) sends the question to Muse Spark.
+3. A no-digit factual sentence without a claim is still listed as held back.
+4. The cache key carries the data version; fully withheld answers are not cached; the demo key
+   never receives a cached live answer.
+5. First-person medical questions without a product code get the fixed medical reply.
+6. The privacy reply says open questions go to Meta's Muse Spark and the text is not stored.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
+
+import pytest
+
+from maudesignal.connector.answer_cache import AnswerCache, cache_key
+from maudesignal.connector.ask import ask, is_connective
+from maudesignal.connector.chat import ask_with_tiers, has_fact
+from maudesignal.connector.data import ConnectorData
+from maudesignal.connector.store import ConnectorState
+from maudesignal.connector.tiers import canned_sentences, is_medical, normalise, route
+from tests.unit.test_chat_tiers_routes import LIVE_SENTENCES, OPEN, Counting
+from tests.unit.test_connector_safety import LLZ_33, OneAnswerClient, live_rt
+
+KNOWN = frozenset({"LLZ", "QIH", "MYN", "POK", "JAK", "QAS"})
+
+REGULATORY_NOT_MEDICAL = [
+    "Should we start a CAPA for LLZ?",
+    "Should I worry about the LLZ spike?",
+    "Should we use LLZ devices given the recalls?",
+    "Should we file an MDR for this report?",
+    "Should I escalate the QIH complaints?",
+    "Should we stop using QIH while the recall is open?",
+    "Is it safe to close the CAPA for LLZ?",
+    "Should my team review the MAUDE reports for MYN?",
+]
+
+
+@pytest.mark.parametrize("q", REGULATORY_NOT_MEDICAL)
+def test_regulatory_should_questions_are_not_medical(q: str) -> None:
+    r = route(q, KNOWN)
+    assert r.intent != "medical_advice", q
+    assert r.tier == "live", q
+
+
+MEDICAL = [
+    "Is it safe for me to get an MRI with my pacemaker?",
+    "Can you diagnose this rash?",
+    "is this device dangerous for kids",
+    "Should I stop using my insulin pump?",
+    "What dose should my mother take?",
+    "Is my CT scan normal?",
+    "is it safe for my baby",
+]
+
+
+@pytest.mark.parametrize("q", MEDICAL)
+def test_first_person_medical_questions_get_the_fixed_reply(q: str) -> None:
+    r = route(q, KNOWN)
+    assert (r.tier, r.intent) == ("canned", "medical_advice"), q
+
+
+def test_medical_rule_needs_a_body_word_and_no_regulatory_word() -> None:
+    assert is_medical(normalise("can you diagnose this rash"))
+    assert not is_medical(normalise("can you diagnose this signal"))
+    assert not is_medical(normalise("is it safe for me"), has_code=True)
+
+
+QUALIFIED = [
+    "How many LLZ recalls are class I?",
+    "LLZ recalls in 2019",
+    "what changed for LLZ last year",
+    "Recalls for LLZ since March",
+    "recalls for QIH before 2024",
+    "LLZ reports between July and August",
+    "what changed for LLZ in the past 3 months",
+    "recalls for LLZ by manufacturer",
+    "open recalls for QIH",
+    "most recent class II recalls for LLZ",
+    "who filed LLZ reports last quarter",
+    "LLZ reports from 2025",
+    "what changed last week",
+]
+
+
+@pytest.mark.parametrize("q", QUALIFIED)
+def test_qualified_questions_go_to_muse_spark(q: str) -> None:
+    assert route(q, KNOWN).tier == "live", q
+
+
+@pytest.mark.parametrize(
+    "q",
+    ["Recalls for QIH", "What changed this week for LLZ?", "Open report 19864749", "K261677"],
+)
+def test_plain_lookups_stay_direct(q: str) -> None:
+    assert route(q, KNOWN).tier == "direct", q
+
+
+def test_factual_sentence_without_a_claim_is_still_held_back(tmp_path: Path) -> None:
+    assert not is_connective("Based on the records, the device was recalled for software failure.")
+    assert not is_connective("Here is what I found for LLZ.")
+    assert is_connective("Here is what I found.")
+    d = ConnectorData(work_dir=tmp_path / "w")
+    client = OneAnswerClient(
+        [
+            {"text": "LLZ had 33 reports from August 25 to August 31, 2026.", "claims": [LLZ_33]},
+            {
+                "text": "Based on the records, the device was recalled for software failure.",
+                "claims": [],
+            },
+        ]
+    )
+    a = ask(d, "Why did LLZ increase?", key_id="abc", runtime=live_rt(tmp_path, client))
+    assert "software failure" not in a.speakable
+    assert len(a.withheld) == 1 and "no openFDA or record link" in a.withheld[0].reason
+
+
+def test_cache_key_carries_the_data_version(tmp_path: Path) -> None:
+    assert cache_key("live", "q a", None, "v1") != cache_key("live", "q a", None, "v2")
+    st = ConnectorState()
+    version = ["v1"]
+    cache = AnswerCache(st, "live", version=lambda: version[0])
+    cache.put("why did it rise", None, {"answer": {}})
+    assert cache.get("why did it rise") is not None
+    version[0] = "v2"  # a new snapshot: the old answer is not reused
+    assert cache.get("why did it rise") is None
+    d = ConnectorData(work_dir=tmp_path / "w")
+    assert d.version() == d.version() and len(d.version()) == 12
+
+
+def test_fully_withheld_answers_are_not_cached() -> None:
+    assert not has_fact({"answer": {"speakable": [{"text": "I could not verify", "links": []}]}})
+    assert has_fact({"answer": {"speakable": [{"text": "x", "links": [{"url": "https://a"}]}]}})
+
+
+def _connector_ask(
+    tmp_path: Path, client: Any, cache: AnswerCache, *, allow_live: bool = True
+) -> Any:
+    return ask_with_tiers(
+        ConnectorData(work_dir=tmp_path / "w"),
+        OPEN,
+        key_id="k",
+        runtime=live_rt(tmp_path, client),
+        cache=cache,
+        allow_live=allow_live,
+    )
+
+
+def test_connector_does_not_cache_an_answer_with_nothing_verified(tmp_path: Path) -> None:
+    cache = AnswerCache(ConnectorState(), "tool")
+    blocked = Counting([{"text": "LLZ had 34 reports.", "claims": []}])
+    first = _connector_ask(tmp_path, blocked, cache)
+    assert first.tier == "live" and not first.facts
+    assert cache.get(OPEN) is None
+
+
+def test_demo_key_never_gets_a_cached_live_answer(tmp_path: Path) -> None:
+    cache = AnswerCache(ConnectorState(), "tool")
+    model = Counting(LIVE_SENTENCES)
+    live = _connector_ask(tmp_path, model, cache)
+    assert live.tier == "live" and live.provenance.kind == "live_model"
+    assert cache.get(OPEN) is not None
+    demo = _connector_ask(tmp_path / "demo", model, cache, allow_live=False)
+    assert demo.tier == "live" and demo.provenance.kind != "live_model"
+
+
+def test_privacy_reply_says_what_goes_to_meta_and_what_is_kept() -> None:
+    text = " ".join(canned_sentences("privacy"))
+    assert "Muse Spark" in text and "Meta" in text
+    assert "does not store the question text" in text
+    assert "When live answers are on" in text  # never claims a call when live is off

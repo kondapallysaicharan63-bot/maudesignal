@@ -102,7 +102,10 @@ _CANNED_TEXT: dict[str, tuple[str, ...]] = {
         "Each fact links to the openFDA query or record behind it.",
     ),
     "privacy": (
-        "Your question is not stored: only a hash of it is kept in the audit log.",
+        "Greetings and simple lookups are answered here without any model. When live answers "
+        "are on, an open question is sent to Meta's Muse Spark (Meta Model API) to be answered.",
+        "MaudeSignal does not store the question text: only a hash of it is kept in the audit "
+        "log.",
         "Please do not type patient details; MAUDE data is already de-identified.",
     ),
     "medical_advice": (
@@ -274,6 +277,26 @@ _MEDICAL = re.compile(
     r"|\bam i (?:sick|ok|okay|at risk|going to)\b|\bis my (?:scan|result|x ?ray|mri|ct)\b"
     r"|\bshould i be worried\b|\bmedical advice (?:for|about|on) (?:me|my)\b"
 )
+#: A clinical ask that is not already in ``_MEDICAL`` ("can you diagnose this rash").
+_CLINICAL_ASK = re.compile(
+    r"\b(?:safe|unsafe|dangerous|harmful|risky|diagnos\w*|treat|treatment|cure|dose|dosage"
+    r"|symptoms?|side effects?)\b"
+)
+#: Words about a person's own body, a patient or a clinical situation.
+_BODY = re.compile(
+    r"\b(?:i|me|my|mine|myself|im|kids?|child|children|baby|babies|infant|pregnan\w*|patient"
+    r"|mother|father|mom|dad|wife|husband|son|daughter|grandma|grandpa|doctor|pacemaker|mri"
+    r"|ct scan|x ?ray|scan|rash|pain|fever|cancer|lump|tumou?r|infection|headache|insulin"
+    r"|surgery|blood|heart|skin|body|pill|medicine|medication)\b"
+)
+#: Words that make it a regulatory / postmarket question, never a request for medical advice.
+_REGULATORY = re.compile(
+    r"\bfda\b|\bmaude\b|\breports?\b|\breported\b|\brecalls?\b|\brecalled\b"
+    r"|\b510 ?\(?k\)?|\bk\d{6}\b|\bproduct codes?\b|\bmdr\b|\badverse\b|\bsignals?\b"
+    r"|\bclearance\b|\bmanufacturers?\b|\bcapa\b|\bsurveillance\b|\bcomplaints?\b"
+    r"|\bspike\b|\btrend\b|\bpsur\b|\baudit\b|\bregulat\w*|\breportab\w*|\bquality\b"
+    r"|\bfiled\b|\bfiling\b|\bsubmission\b|\bvigilance\b"
+)
 _SAFETY_JUDGEMENT = re.compile(
     r"^(?:is|are) (?:the |this |that |it |these )?[\w\s()-]{0,40}? (?:safe|unsafe|dangerous)"
     r"(?: to use)?$|\bis it safe to\b|\bcan i trust (?:this|the|it)\b|^which (?:device|one) is"
@@ -308,6 +331,26 @@ _OPEN = re.compile(
     r"|\b(?:injur(?:y|ies)|deaths?|malfunctions?)\b|\bsoftware\b|\bai related\b|\bfailures?\b"
     r"|\bdraft\b|\bwrite\b|\bplan\b|\bstrategy\b|\bimpact\b|\bif\b|\brelat"
     r"|\blinked\b|\bconnect(?:ed|ion)\b"
+)
+_MONTHS = (
+    "january|february|march|april|may|june|july|august|september|october|november|december"
+    "|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec"
+)
+#: A qualifier the templates do not apply (a date, a period, a class, a split, a status, a
+#: ranking): the template would answer a different question, so Muse Spark answers.
+_QUALIFIER = re.compile(
+    r"\b(?:19|20)\d{2}\b|\b(?:" + _MONTHS + r")\b"
+    r"|\b(?:since|before|after|between|during|until|from|ago|prior)\b"
+    r"|\b(?:last|past|previous|prior|next|first|second|third|fourth) (?:\d+ )?"
+    r"(?:years?|months?|quarters?|weeks?|days?|q[1-4])\b|\b\d+ (?:years?|months?|weeks?|days?)\b"
+    r"|\byesterday\b|\btoday\b|\bq[1-4]\b|\bytd\b|\bannual\w*|\bmonthly\b|\byearly\b"
+    r"|\bclass (?:i{1,3}|[123]|one|two|three)\b"
+    r"|\b(?:per|by|each|every) (?:manufacturer|firm|company|maker|brand|model|year|month"
+    r"|status|class|type|source)\b|\bbreak ?down\b|\bsplit\b|\bgroup(?:ed)? by\b"
+    r"|\b(?:open|ongoing|active|terminated|completed|closed|voluntary|mandatory)\s+recalls?\b"
+    r"|\brecalls? (?:that are |which are |still )?(?:open|ongoing|active|terminated|closed)\b"
+    r"|\b(?:most|top|least|only|except|excluding|without|biggest|largest|highest|lowest)\b"
+    r"|\b(?:compare|compared|versus|vs)\b|\bhow many\b.*\b(?:are|were|is|was|have|had)\b"
 )
 _ALERTS = re.compile(
     r"\balerts?\b|\bnotifications?\b|\bwhat(?:s| is) flagged\b|\bflagged\b"
@@ -423,8 +466,23 @@ def _strip_greeting(norm: str) -> str:
     return " ".join(words[i:]) if 0 < i < len(words) else norm
 
 
-def canned_intent(norm: str) -> str | None:
-    """The tier-1 intent of a normalised message, or None."""
+def is_medical(norm: str, *, has_code: bool = False) -> bool:
+    """A request for medical advice: a clinical ask about a body or a patient, not regulatory.
+
+    "Should we start a CAPA for LLZ?" or "Should I worry about the LLZ spike?" are regulatory
+    questions (a product code or a regulatory word), so they are never refused as medical.
+    """
+    if has_code or _REGULATORY.search(norm):
+        return False
+    asks = _MEDICAL.search(norm) or _CLINICAL_ASK.search(norm)
+    return bool(asks) and _BODY.search(norm) is not None
+
+
+def canned_intent(norm: str, *, has_code: bool = False) -> str | None:
+    """The tier-1 intent of a normalised message, or None.
+
+    ``has_code``: the message names a product code (it is then never a medical request).
+    """
     if not norm:
         return "capabilities"
     if _is_greeting(norm):
@@ -434,7 +492,7 @@ def canned_intent(norm: str) -> str | None:
         return "thanks"
     if _only(words, _BYE_CORE, _BYE | _THANKS | _GREET_FILLER):
         return "bye"
-    if _MEDICAL.search(norm):
+    if is_medical(norm, has_code=has_code):
         return "medical_advice"
     if _IS_ADVICE.search(norm):
         return "is_medical_advice"
@@ -446,8 +504,8 @@ def canned_intent(norm: str) -> str | None:
         return "privacy"
     if _DATA_SOURCE.search(norm):
         return "data_source"
-    if _SAFETY_JUDGEMENT.search(norm):
-        return "safety_judgement"
+    if _SAFETY_JUDGEMENT.search(norm) and not _REGULATORY.search(norm):
+        return "safety_judgement"  # "is it safe to close the CAPA" is a regulatory question
     if _OFF_TOPIC.search(norm) and not _DOMAIN.search(norm):
         return "off_topic"
     return None
@@ -459,6 +517,8 @@ def _direct_intent(
     """The tier-2 intent of a normalised question (None: not a simple lookup)."""
     words = _words(norm)
     if len(words) > 14 or _OPEN.search(norm) or len(codes) + len(unclear) > 1:
+        return None
+    if _QUALIFIER.search(norm):
         return None
     if k and _K510.search(norm):
         return "k510"
@@ -506,16 +566,17 @@ def route(
     """
     known = frozenset(c.upper() for c in known_codes)
     norm = normalise(question)
-    intent = canned_intent(norm)
+    original = unicodedata.normalize("NFKC", question)
+    codes, unclear = _codes_in(original, known)
+    named = bool(codes or unclear)
+    intent = canned_intent(norm, has_code=named)
     if intent is not None:
         return Route("canned", intent, suggestions=SUGGESTIONS)
     rest = _strip_greeting(norm)
     if rest != norm:
-        intent = canned_intent(rest)
+        intent = canned_intent(rest, has_code=named)
         if intent is not None and intent != "greeting":
             return Route("canned", intent, suggestions=SUGGESTIONS)
-    original = unicodedata.normalize("NFKC", question)
-    codes, unclear = _codes_in(original, known)
     if not codes and not unclear and product_code and len(product_code) == 3:
         chosen = product_code.upper()
         (codes if chosen in known else unclear).append(chosen)
