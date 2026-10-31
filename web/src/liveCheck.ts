@@ -13,6 +13,8 @@ export const CURRENT_WINDOW_DAYS = 7
 export const SPIKE_MULTIPLIER = 2
 export const SPIKE_MIN_REPORTS = 3
 export const SEVERITY_ESCALATION_PP = 15
+/** The severity rule needs the same minimum count as the spike rule (matches deterioration.py). */
+export const SEVERITY_MIN_REPORTS = SPIKE_MIN_REPORTS
 export const SEVERE_EVENT_TYPES = ['injury', 'death']
 export const UNKNOWN_EVENT_TYPE = 'unknown'
 export const EARLIEST = '19900101'
@@ -165,7 +167,7 @@ export function classifyCounts(
     const num = 100 * (curSev * base - baseSev * cur)
     const den = cur * base
     delta = num / den
-    if (num >= SEVERITY_ESCALATION_PP * den) triggers.push('severity_escalation')
+    if (cur >= SEVERITY_MIN_REPORTS && num >= SEVERITY_ESCALATION_PP * den) triggers.push('severity_escalation')
   }
   // spike: cur >= 2 * (base / 4) and cur >= 3, all in integers.
   if (cur >= SPIKE_MIN_REPORTS && cur * BASELINE_WEEKS >= SPIKE_MULTIPLIER * base) triggers.push('spike')
