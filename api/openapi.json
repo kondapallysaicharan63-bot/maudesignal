@@ -31,7 +31,7 @@
             "type": "string"
           },
           "actor": {
-            "description": "connector:key:<server-side keyed hash of the key> or public.",
+            "description": "connector:key:[<label>:]<server-side keyed hash of the key> or public.",
             "title": "Actor",
             "type": "string"
           },
@@ -165,6 +165,98 @@
           "baseline_end"
         ],
         "title": "CheckWindow",
+        "type": "object"
+      },
+      "ConnectInfo": {
+        "description": "``GET /v1/connect`` body.",
+        "properties": {
+          "auth_header": {
+            "title": "Auth Header",
+            "type": "string"
+          },
+          "demo_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Demo Key"
+          },
+          "demo_limits": {
+            "$ref": "#/components/schemas/DemoLimits"
+          },
+          "docs_url": {
+            "title": "Docs Url",
+            "type": "string"
+          },
+          "mcp_url": {
+            "title": "Mcp Url",
+            "type": "string"
+          },
+          "openapi_url": {
+            "title": "Openapi Url",
+            "type": "string"
+          },
+          "privacy_url": {
+            "title": "Privacy Url",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "terms_url": {
+            "title": "Terms Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mcp_url",
+          "openapi_url",
+          "docs_url",
+          "privacy_url",
+          "terms_url",
+          "auth_header",
+          "demo_key",
+          "demo_limits",
+          "steps"
+        ],
+        "title": "ConnectInfo",
+        "type": "object"
+      },
+      "DemoLimits": {
+        "description": "Limits of the public demo key.",
+        "properties": {
+          "live_model": {
+            "title": "Live Model",
+            "type": "boolean"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "per_day": {
+            "title": "Per Day",
+            "type": "integer"
+          },
+          "per_minute": {
+            "title": "Per Minute",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "per_minute",
+          "per_day",
+          "live_model",
+          "note"
+        ],
+        "title": "DemoLimits",
         "type": "object"
       },
       "ErrorBody": {
@@ -672,7 +764,7 @@
   "paths": {
     "/v1/audit/recent": {
       "get": {
-        "description": "Read-only. The last entries (default 20, at most 200) of the append-only, hash-chained log of tool calls: tool, inputs, answer SHA-256, gate counts, provenance and the caller's key id (a keyed hash held by the server; never the key). An `ask` question is stored as its SHA-256 and length, not its text. `chain.verified` is recomputed on every call.",
+        "description": "Read-only. The last entries (default 20, at most 200) of the append-only, hash-chained log of tool calls: tool, inputs, answer SHA-256, gate counts, provenance and the caller's label (if any) and key id (a keyed hash held by the server; never the key). An `ask` question is stored as its SHA-256 and length, not its text. Full keys only: the public demo key gets 403. `chain.verified` is recomputed on every call.",
         "operationId": "audit_recent",
         "parameters": [
           {
@@ -753,6 +845,28 @@
         ],
         "x-maudesignal-read-only": true,
         "x-maudesignal-scope": "read"
+      }
+    },
+    "/v1/connect": {
+      "get": {
+        "description": "Where the MCP and REST endpoints are, which header carries the key, the public demo key (when the operator has set one) with its lower limits, and three steps. The demo key is public by design, works on every read tool and never starts a live model call.",
+        "operationId": "connect_info",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "How to connect (no key needed)",
+        "tags": [
+          "service"
+        ]
       }
     },
     "/v1/health": {

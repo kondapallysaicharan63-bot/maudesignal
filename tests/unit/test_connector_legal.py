@@ -91,7 +91,7 @@ def test_privacy_has_the_questionnaire_answers(client: TestClient) -> None:
         "no names and no email addresses",
         "Feedback sent before 31 October 2026 could include a name the",
         "IP addresses are never stored",
-        "2026-11-30",
+        "2026-12-31",
         "No sale of data, no advertising and no tracking cookies",
         "not medical advice",
         "nothing is filed with FDA",

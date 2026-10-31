@@ -10,6 +10,12 @@ under a server-side pepper (``MAUDESIGNAL_KEY_PEPPER``), so a short id cannot be
 check key guesses offline without the pepper. Plain keys shorter than 32 characters are
 refused.
 
+Several keys may be listed, each revocable by deleting its entry. An entry may carry a
+label, ``label=KEY`` or ``label=sha256:<hex>`` (label: 1 to 32 letters, digits, ``-`` or
+``_``), so logs and the audit chain show the label next to the key id. Public demo keys come
+from ``MAUDESIGNAL_DEMO_KEYS`` (same format): they work on every read tool, have their own lower
+limits, and never start a live model call. A demo key is public by design.
+
 Scope: every key is read-only, because no tool writes anything.
 """
 
@@ -24,12 +30,17 @@ import threading
 import time
 from collections import deque
 from collections.abc import Callable
+from dataclasses import dataclass
 
 from maudesignal.common.logging import get_logger
 
 logger = get_logger(__name__)
 
 KEYS_ENV = "MAUDESIGNAL_API_KEYS"
+DEMO_KEYS_ENV = "MAUDESIGNAL_DEMO_KEYS"
+DEMO_RATE_ENV = "MAUDESIGNAL_DEMO_RATE_PER_MIN"
+DEFAULT_DEMO_RATE_PER_MIN = 10
+DEMO_PER_DAY = 200
 RATE_ENV = "MAUDESIGNAL_RATE_LIMIT_PER_MIN"
 DEFAULT_RATE_PER_MIN = 30
 MAX_KEY_CHARS = 256
@@ -42,6 +53,86 @@ MAX_TRACKED_CLIENTS = 10_000
 WINDOW_SECONDS = 60.0
 
 _HEX64 = re.compile(r"^[0-9a-f]{64}$")
+_LABEL = re.compile(r"[A-Za-z0-9_-]{1,32}")
+
+
+class KeyConfigError(ValueError):
+    """A key list entry is malformed (for example a bad label). The message never holds a key."""
+
+
+def split_label(item: str) -> tuple[str | None, str]:
+    """Split ``label=KEY`` into ``(label, KEY)``; anything else is ``(None, item)``.
+
+    The text before the first ``=`` is a label when it is 1 to 32 letters, digits, ``-`` or
+    ``_`` and something follows the ``=``; the label is never part of the key. A plain key that
+    ends in base64 padding (``=``) has nothing after its ``=`` and is kept whole.
+
+    Raises:
+        KeyConfigError: The part after the first ``=`` looks like a key (a ``sha256:`` digest or
+            ``MIN_KEY_CHARS`` or more characters) but the part before it is not a valid label.
+    """
+    head, sep, rest = item.partition("=")
+    rest = rest.strip()
+    if not sep or not rest.strip("="):
+        return None, item
+    if _LABEL.fullmatch(head):
+        return head, rest
+    if rest.lower().startswith("sha256:") or len(rest) >= MIN_KEY_CHARS:
+        raise KeyConfigError(
+            "A key entry has an invalid label. A label is 1 to 32 letters, digits, - or _, "
+            "written LABEL=KEY."
+        )
+    return None, item
+
+
+@dataclass(frozen=True)
+class KeyMatch:
+    """Who a presented key is: its non-secret id, optional label and whether it is a demo key."""
+
+    key_id: str
+    label: str | None = None
+    demo: bool = False
+
+
+def first_plain_key(raw: str) -> str | None:
+    """The first entry's plain key (label removed), or None if it is a digest or too short."""
+    first = next((e.strip() for e in raw.split(",") if e.strip()), "")
+    try:
+        first = split_label(first)[1]
+    except KeyConfigError:
+        return None
+    if not first or first.lower().startswith("sha256:") or len(first) < MIN_KEY_CHARS:
+        return None
+    return first
+
+
+def parse_entries(raw: str) -> tuple[list[tuple[str, str | None]], int]:
+    """Split a comma-separated key list into ``(digest, label)`` pairs.
+
+    Returns the pairs and the number of plain keys refused for being too short. Entries are
+    ``KEY``, ``sha256:<hex>``, ``label=KEY`` or ``label=sha256:<hex>``, separated by commas
+    (whitespace around entries is ignored).
+
+    Raises:
+        KeyConfigError: An entry has an invalid label (the message names the entry number).
+    """
+    out: list[tuple[str, str | None]] = []
+    too_short = 0
+    for number, entry in enumerate(raw.split(","), start=1):
+        item = entry.strip()
+        if not item:
+            continue
+        try:
+            label, item = split_label(item)
+        except KeyConfigError as exc:
+            raise KeyConfigError(f"Entry {number}: {exc}") from None
+        if item.lower().startswith("sha256:"):
+            out.append((item[7:].strip().lower(), label))
+        elif len(item) < MIN_KEY_CHARS:
+            too_short += 1
+        else:
+            out.append((sha256_hex(item), label))
+    return out, too_short
 
 
 def sha256_hex(key: str) -> str:
@@ -50,18 +141,36 @@ def sha256_hex(key: str) -> str:
 
 
 class KeyStore:
-    """Set of accepted key digests."""
+    """Set of accepted key digests (with optional labels) and of public demo key digests."""
 
-    def __init__(self, digests: list[str], pepper: str | None = None) -> None:
+    def __init__(
+        self,
+        digests: list[str],
+        pepper: str | None = None,
+        *,
+        labels: dict[str, str] | None = None,
+        demo_digests: list[str] | None = None,
+        demo_labels: dict[str, str] | None = None,
+        demo_key_hint: str | None = None,
+    ) -> None:
         """Create a store from SHA-256 hex digests.
 
         Args:
             digests: SHA-256 hex digests of the accepted keys.
             pepper: Server-side secret for key ids. When unset, one is derived from the
                 configured digests (never leaves the server).
+            labels: Optional ``digest -> label`` for ``digests``.
+            demo_digests: Digests of public demo keys (lower limits, no live model call).
+            demo_labels: Optional ``digest -> label`` for ``demo_digests``.
+            demo_key_hint: The first demo key in clear, shown by ``GET /v1/connect``. A demo
+                key is public by design; this is never set for a full key.
         """
+        self.demo_key_hint = demo_key_hint
         self._digests = [d.lower() for d in digests if _HEX64.match(d.lower())]
-        material = pepper or "maudesignal-key-id:" + ",".join(sorted(self._digests))
+        self._demo = [d.lower() for d in (demo_digests or []) if _HEX64.match(d.lower())]
+        self._labels = {d.lower(): v for d, v in (labels or {}).items()}
+        self._labels |= {d.lower(): v for d, v in (demo_labels or {}).items()}
+        material = pepper or "maudesignal-key-id:" + ",".join(sorted(self._digests + self._demo))
         self._pepper = material.encode("utf-8")
 
     def key_id(self, key: str) -> str:
@@ -71,45 +180,61 @@ class KeyStore:
 
     @classmethod
     def from_env(cls, env: dict[str, str] | None = None) -> KeyStore:
-        """Read ``MAUDESIGNAL_API_KEYS`` (plain keys and/or ``sha256:<hex>`` entries)."""
-        raw = (os.environ if env is None else env).get(KEYS_ENV, "")
-        digests: list[str] = []
-        too_short = 0
-        for entry in raw.split(","):
-            item = entry.strip()
-            if not item:
-                continue
-            if item.lower().startswith("sha256:"):
-                digests.append(item[7:].strip())
-            elif len(item) < MIN_KEY_CHARS:
-                too_short += 1
-            else:
-                digests.append(sha256_hex(item))
-        if too_short:
+        """Read ``MAUDESIGNAL_API_KEYS`` and ``MAUDESIGNAL_DEMO_KEYS`` (see the module text)."""
+        src = os.environ if env is None else env
+        pairs, too_short = parse_entries(src.get(KEYS_ENV, ""))
+        demo_pairs, demo_short = parse_entries(src.get(DEMO_KEYS_ENV, ""))
+        if too_short or demo_short:
             logger.warning(
-                "connector_keys_rejected_too_short", count=too_short, min_chars=MIN_KEY_CHARS
+                "connector_keys_rejected_too_short",
+                count=too_short + demo_short,
+                min_chars=MIN_KEY_CHARS,
             )
-        pepper = (os.environ if env is None else env).get(PEPPER_ENV) or None
-        return cls(digests, pepper)
+        pepper = src.get(PEPPER_ENV) or None
+        return cls(
+            [d for d, _ in pairs],
+            pepper,
+            labels={d: lbl for d, lbl in pairs if lbl},
+            demo_digests=[d for d, _ in demo_pairs],
+            demo_labels={d: lbl for d, lbl in demo_pairs if lbl},
+            demo_key_hint=first_plain_key(src.get(DEMO_KEYS_ENV, "")),
+        )
 
     @property
     def configured(self) -> bool:
-        """True when at least one key is accepted."""
-        return bool(self._digests)
+        """True when at least one key (full or demo) is accepted."""
+        return bool(self._digests or self._demo)
 
-    def verify(self, presented: str | None) -> str | None:
-        """Return the key id when ``presented`` matches a configured key, else None.
+    @property
+    def demo_configured(self) -> bool:
+        """True when at least one public demo key is accepted."""
+        return bool(self._demo)
+
+    def match(self, presented: str | None) -> KeyMatch | None:
+        """Who ``presented`` is, or None when it matches no configured key.
 
         Every stored digest is compared (no early exit) so timing does not reveal which
         position matched.
         """
         if not presented or len(presented) > MAX_KEY_CHARS:
             return None
-        digest = sha256_hex(presented)
-        matched = False
+        digest = sha256_hex(presented).encode("ascii")
+        found: str | None = None
+        demo = False
         for stored in self._digests:
-            matched |= hmac.compare_digest(digest.encode("ascii"), stored.encode("ascii"))
-        return self.key_id(presented) if matched else None
+            if hmac.compare_digest(digest, stored.encode("ascii")):
+                found = stored
+        for stored in self._demo:
+            if hmac.compare_digest(digest, stored.encode("ascii")):
+                found, demo = stored, True
+        if found is None:
+            return None
+        return KeyMatch(self.key_id(presented), self._labels.get(found), demo)
+
+    def verify(self, presented: str | None) -> str | None:
+        """Return the key id when ``presented`` matches a configured key, else None."""
+        m = self.match(presented)
+        return m.key_id if m else None
 
 
 class RateLimiter:

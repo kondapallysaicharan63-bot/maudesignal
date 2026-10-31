@@ -44,12 +44,55 @@ surveillance staff. Not for patients; not clinical decision support.
 | OpenAPI 3.1 | `https://maudesignal-api.vercel.app/openapi.json` |
 | Docs page | `https://maudesignal-api.vercel.app/` |
 | Health (no key) | `https://maudesignal-api.vercel.app/v1/health` |
+| Connect info (no key) | `https://maudesignal-api.vercel.app/v1/connect` |
+| Privacy / Terms | `https://maudesignal-api.vercel.app/privacy`, `https://maudesignal-api.vercel.app/terms` |
+
+`GET /v1/connect` needs no key (CORS only for the origins in `MAUDESIGNAL_WEB_ORIGINS`). It returns
+`mcp_url`, `openapi_url`, `docs_url`, `privacy_url`, `terms_url`, `auth_header` (`X-API-Key`),
+`demo_key` (the first demo key, or `null` when none is set), `demo_limits` and three short steps.
+Set `MAUDESIGNAL_PUBLIC_URL` if the public address differs from the one the request arrives on.
 
 ## Authentication
 
-Header `X-API-Key: <key>` (the form `Authorization: Bearer <key>` also works). A reviewer key,
-named "meta-review", is sent privately by Charan; it is never written in this repository. Keys are
-personal, read-only and can be revoked at any time. A key in a URL is refused. No OAuth.
+Header `X-API-Key: <key>` (the form `Authorization: Bearer <key>` also works). Keys are read-only
+and can be revoked at any time. A key in a URL is refused. No OAuth.
+
+`MAUDESIGNAL_API_KEYS` holds the keys, comma-separated. Each entry may carry a label, written
+`label=KEY` (label: 1 to 32 letters, digits, `-` or `_`). For this submission the value is exactly:
+
+```
+charan=<your key>,meta-review=<reviewer key>
+```
+
+The label is never part of the key: send only `<key>`, never `charan=<key>` (that is refused).
+Logs and the audit list show the label next to the key id. Other accepted entry forms: a plain
+`KEY` (at least 32 characters), `sha256:<64 hex>` and `label=sha256:<64 hex>`. Spaces around commas
+are fine. A bad label stops the server at startup with a message that names the entry number and
+never shows a key.
+
+**How the reviewer key is sent:** privately, outside this repository and outside the submission
+form (for example in the form's private reviewer-notes field or a direct message to the reviewer),
+as the bare key. It is never written in the repository, in a pull request or in a public post.
+
+**Revoking:** delete that entry from `MAUDESIGNAL_API_KEYS` in Vercel and redeploy; only that key
+stops working. Set `MAUDESIGNAL_KEY_PEPPER` first so the other key keeps its key id.
+
+## Demo key
+
+A public key anyone can use for a first try, set with `MAUDESIGNAL_DEMO_KEYS` (same entry formats;
+leave it unset to switch the demo key off). It is public by design and must never be committed.
+`GET /v1/connect` shows the first demo key when it was entered as a plain key.
+
+* Can: call every read tool (`what_changed_this_week`, `check_device_type`, `ask`, `get_report`,
+  `recalls`) over REST and MCP.
+* Cannot: read the audit list (HTTP 403), start a live model call (`ask` returns a recorded answer,
+  labelled recorded, whatever the server's model settings), or reach any admin route.
+* Limits, per demo key: `MAUDESIGNAL_DEMO_RATE_PER_MIN` requests per minute (default 10) and 200
+  per UTC day. Over a limit the answer is HTTP 429 with `Retry-After`.
+* Audit: its calls are logged with the label `demo`.
+
+To enable it: in Vercel > Project > Settings > Environment Variables (Production) set
+`MAUDESIGNAL_DEMO_KEYS` to a new random key (for example `demo=<key>`), then redeploy.
 
 ## Tools (all read-only; none writes anything)
 
@@ -95,7 +138,7 @@ Public openFDA data only (and MHRA (UK) alerts, labelled). No personal or patien
 or wanted. Hosted on Vercel, United States (function region iad1). Question text is not logged
 (only its SHA-256 and length). IP addresses are never stored by this code: before any rate limit
 sees one it is turned into a salted one-way hash, and only that hash is the limit key (in memory,
-or in the operator's Redis store for at most twice the limit window). Feedback records (no email addresses; no names except where the person chose to be quoted by name and role, see the Data questionnaire) and visit records are kept until 2026-11-30.
+or in the operator's Redis store for at most twice the limit window). Feedback records (no email addresses; no names except where the person chose to be quoted by name and role, see the Data questionnaire) and visit records are kept until 2026-12-31.
 Meta receives an `ask` question only when live ask is on. Details: `/privacy`.
 
 ## Privacy URL
@@ -127,25 +170,27 @@ An original mark (a signal pulse through a magnifier ring); no Meta or FDA logo.
 | Subprocessors? | Vercel Inc. (hosting, logs, Blob). Meta Platforms (Meta Model API) only when `ask` runs live with a server-side model key. Upstash (Redis) and Resend (email) only if the operator configures them. |
 | Does Meta receive user input? | Only the text of an `ask` question, only when live ask is on. When off, `ask` returns recorded answers and nothing is sent to Meta. `/privacy` states which applies at request time. |
 | Which public sources are queried? | openFDA (api.fda.gov) is queried live with a product code only. MHRA (UK) alerts come from a stored copy previously fetched from the GOV.UK search API; this service does not call GOV.UK when you use it. |
-| What is logged? | Key id (a peppered one-way hash, never the key), tool name, time, status. Spend on `ask` is kept as a daily total per key id (not per call). Question text is not logged; during a live `ask` it is held briefly in the server instance's temporary working database and replaced by its SHA-256 when the answer is done. |
+| What is logged? | Key id (a peppered one-way hash, never the key), tool name, time, status. If the key has a label (for example a reviewer's name) the label is logged next to the key id. Calls made with the public demo key are logged the same way, with the label `demo`. Spend on `ask` is kept as a daily total per key id (not per call). Question text is not logged; during a live `ask` it is held briefly in the server instance's temporary working database and replaced by its SHA-256 when the answer is done. |
 | What do feedback and visits store? | New feedback stores rating, comments, role, quote consent, referral code, page and time - no names and no email addresses. Feedback sent before 31 October 2026 could include a name the person typed; names are removed from those entries except where the person chose to be quoted by name and role. Visits: referral code, page, time. |
 | Are IP addresses stored? | No. Before any rate limit sees an address it is turned into a salted one-way hash (HMAC-SHA256); only that hash is the limit key, in memory or, if a Redis store is configured, in that store for at most twice the limit window. (Vercel, as host, keeps its own request logs.) |
-| Retention? | Request logs follow Vercel's runtime-log retention for this plan. Feedback and visit records are kept until 2026-11-30 and then deleted, earlier on request. |
+| Retention? | Request logs follow Vercel's runtime-log retention for this plan. Feedback and visit records are kept until 2026-12-31 and then deleted, earlier on request. |
 | Sale, advertising, cookies? | No sale of data, no advertising, no tracking cookies. |
 | Deletion or questions? | The support email above or the GitHub issues URL. |
 | Medical advice? | No. Not medical advice; nothing is filed with FDA; not an FDA-cleared device. Open-source project by Saicharan Kondapally. |
 
 ## Two keys (reviewer key plus your own)
 
-`MAUDESIGNAL_API_KEYS` takes several keys in one value, separated by commas. Format:
-`<key1>,<key2>` (spaces around the comma are fine; empty entries are ignored; each plain key must be
-at least 32 characters, or an entry can be `sha256:<64 hex>`). Run `python3.12 -m
-maudesignal.connector.keygen` **without** `VERCEL_TOKEN` to get a key in a mode-600 file, once per
-key (one for "meta-review", one of your own). Do not use the Vercel-API mode for the second key:
-it **replaces** the whole value. Paste `<key1>,<key2>` as the value in Vercel > Settings >
-Environment Variables > Production and redeploy. To revoke one key, delete its entry from the list
-and redeploy; the other keeps working (a unit test checks this). Audit and spend records are kept
-per key id, so the two keys are counted apart.
+`MAUDESIGNAL_API_KEYS` takes several entries in one value, separated by commas, and the value for
+this submission is `charan=<key>,meta-review=<key>` (see Authentication above). Run
+`python3.12 -m maudesignal.connector.keygen --label charan` (and again with `--label meta-review`)
+**without** `VERCEL_TOKEN` to get each entry in a mode-600 file outside the repository (the file's
+single line is `LABEL=KEY`; the key is never printed). With `VERCEL_TOKEN` and `VERCEL_PROJECT_ID`
+set, the script instead **appends** `LABEL=KEY` to the existing value (earlier keys keep working);
+if the existing value cannot be read back through the API it changes nothing and tells you to use
+the file mode. Paste the entries as the value in Vercel > Settings > Environment Variables >
+Production and redeploy. To revoke one key, delete its entry and redeploy; the other keeps working
+(a unit test checks this). Audit and spend records are kept per key id, so the two keys are
+counted apart.
 
 **Before the second key goes in (cost and key ids):**
 
@@ -207,7 +252,10 @@ installed the root manifest, tell the owner before going on: the fix is a projec
 
 | Name | Value | Notes |
 |---|---|---|
-| `MAUDESIGNAL_API_KEYS` | the key | Made by the script in step 3; never typed into git or chat. `<key1>,<key2>` for several keys (see "Two keys" above). |
+| `MAUDESIGNAL_API_KEYS` | `charan=<key>,meta-review=<key>` | Made by the script in step 3; never typed into chat or the repository. Labelled entries, see Authentication. |
+| `MAUDESIGNAL_DEMO_KEYS` | optional, e.g. `demo=<key>` | The public demo key (see "Demo key"). Unset means no demo key. |
+| `MAUDESIGNAL_DEMO_RATE_PER_MIN` | default `10` | Requests per demo key per minute (plus 200 per UTC day). |
+| `MAUDESIGNAL_PUBLIC_URL` | optional | Base URL shown by `GET /v1/connect` when it differs from the request address. |
 | `MAUDESIGNAL_CONTACT_EMAIL` | the support email | Shown (HTML-escaped) on `/privacy` and `/terms`; unset shows the GitHub issues URL. Never in git. |
 | `MAUDESIGNAL_TRUST_FORWARDED` | `1` | Vercel's edge sets `X-Forwarded-For`; without this the limiter would see one address. |
 | `MAUDESIGNAL_KEY_PEPPER` | a long random string | Server-side secret for key ids in ledger file names and audit session ids. |
@@ -229,23 +277,31 @@ domain). The first `curl` below shows whether it is.
 ### 3. Create the key without ever printing it
 
 ```bash
-# Option a: the script writes it straight into Vercel (encrypted, Production).
+# Option a: the script appends LABEL=KEY to the encrypted Production variable in Vercel.
 VERCEL_TOKEN=... VERCEL_PROJECT_ID=prj_... VERCEL_TEAM_ID=team_... \
-  python3.12 -m maudesignal.connector.keygen
+  python3.12 -m maudesignal.connector.keygen --label meta-review
 # prints only: set; copy it from Vercel > Project > Settings > Environment Variables >
 #              MAUDESIGNAL_API_KEYS (click to reveal)
 
-# Option b: no Vercel token; the key goes to a mode-600 file outside the repository.
-python3.12 -m maudesignal.connector.keygen
+# Option b: no Vercel token; the entry goes to a mode-600 file outside the repository.
+python3.12 -m maudesignal.connector.keygen --label charan
 # prints only the file path and what to do with it
 ```
 
-Option a replaces the previous value of `MAUDESIGNAL_API_KEYS` (older keys stop working); to keep
-several keys, edit the comma-separated list in the dashboard. Option b: paste the file's one line
-as the value of `MAUDESIGNAL_API_KEYS` in the dashboard, then delete the file. Either way the key
-is never printed to stdout or stderr, never logged, never written inside the repository, and
-Vercel's reply is never printed (only an HTTP status on failure). Tests run the script as a
-subprocess and scan both streams for the key. Redeploy after changing an environment variable.
+Option a appends: earlier keys keep working. If the existing value cannot be read back (a variable
+marked sensitive), the script changes nothing and says so; use option b and add the line by hand.
+Option b: paste the file's one line (`LABEL=KEY`) into `MAUDESIGNAL_API_KEYS` in the dashboard
+(after a comma if a value exists), then delete the file. Either way the key is never printed to
+stdout or stderr, never logged, never written inside the repository, and Vercel's reply is never
+printed (only an HTTP status on failure). Tests run the script as a subprocess and scan both
+streams for the key. Redeploy after changing an environment variable.
+
+### After the first deploy: remove old names (once)
+
+Open `/admin`, enter the admin key, and press **Remove names** once. It removes names from feedback
+sent before 31 October 2026, except where the person chose to be quoted by name and role (this is
+what the privacy page states). Feedback and visit records are deleted by 2026-12-31, or earlier on
+request.
 
 ### 4. Verify with harmless reads
 

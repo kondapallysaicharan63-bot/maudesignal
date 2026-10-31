@@ -19,11 +19,12 @@ from maudesignal.connector.ask import (
     live_mode_allowed,
 )
 from maudesignal.connector.models import ADVISORY
+from maudesignal.connector.security import DEFAULT_DEMO_RATE_PER_MIN, DEMO_PER_DAY
 
 CONTACT_ENV = "MAUDESIGNAL_CONTACT_EMAIL"
 ISSUES_URL = "https://github.com/kondapallysaicharan63-bot/maudesignal/issues"
 LAST_UPDATED = "2026-10-31"
-RETENTION_DATE = "2026-11-30"
+RETENTION_DATE = "2026-12-31"
 
 _CSS = """
 :root{--paper:#f6f3ec;--ink:#16130f;--ink-2:#4a443b;--rule:#d8d1c3;--card:#fffdf8}
@@ -139,7 +140,9 @@ you use it.</p>
 <h2>What is logged</h2>
 <ul>
 <li>For each tool call: a key id (a peppered one-way hash, never the key), the tool name, the time,
-and the status. Spend on <code>ask</code> is kept as a daily total per key id (not per call).</li>
+and the status. Spend on <code>ask</code> is kept as a daily total per key id (not per call).
+If the key has a label (for example a reviewer's name) the label is logged next to the key id.
+Calls made with the public demo key are logged the same way, with the label <code>demo</code>.</li>
 <li>The text of a question is <strong>not</strong> logged: only its SHA-256 and its length.
 During a live <code>ask</code> the question is held briefly in the server instance's temporary
 working database and replaced by its SHA-256 when the answer is done.</li>
@@ -180,6 +183,8 @@ def render_terms(
     request_usd: float,
     failed_auth_per_min: int,
     total_daily_usd: float,
+    demo_per_min: int = DEFAULT_DEMO_RATE_PER_MIN,
+    demo_per_day: int = DEMO_PER_DAY,
 ) -> str:
     """The terms page, with the limits in force.
 
@@ -190,6 +195,8 @@ def render_terms(
         request_usd: Cost cap of one ``ask`` call.
         failed_auth_per_min: Wrong keys per address per minute before a 429.
         total_daily_usd: Daily cost cap of ``ask`` over all keys together.
+        demo_per_min: Requests per minute allowed to the public demo key.
+        demo_per_day: Requests per UTC day allowed to the public demo key.
     """
     body = f"""
 <h1>Terms</h1>
@@ -212,6 +219,10 @@ person to review. Nothing is filed with FDA, and the project is not an FDA-clear
 <ul>
 <li>API keys are personal and can be revoked at any time. Do not share a key.</li>
 <li>{rate_per_min} requests per key per minute.</li>
+<li>The public demo key (shown by <code>GET /v1/connect</code> when the operator sets one) is
+shared by design: it works on every read tool except the audit list, is limited to
+{demo_per_min} requests per minute and {demo_per_day} per UTC day, and never starts a live model
+call (<code>ask</code> returns a recorded answer, labelled recorded).</li>
 <li>{failed_auth_per_min} wrong or missing keys per address per minute, then HTTP 429.</li>
 <li>{public_per_hour} keyless device-type checks per address per hour.</li>
 <li>For <code>ask</code>: a question of {MIN_QUESTION_CHARS} to {MAX_QUESTION_CHARS} characters,

@@ -8,8 +8,8 @@ The key is random (43 URL-safe characters) and goes to exactly one place:
     project), it is written to the project's encrypted ``MAUDESIGNAL_API_KEYS`` environment
     variable for Production through the Vercel REST API. The script prints only where to read
     it back: Vercel > Project > Settings > Environment Variables > MAUDESIGNAL_API_KEYS
-    (click to reveal). The new value replaces the old one, so older keys stop working; to keep
-    several, edit the comma-separated list in the dashboard.
+    (click to reveal). The new key is APPENDED to the comma-separated list, so earlier keys keep
+    working; to revoke a key, delete its entry in the dashboard.
 
 (b) Otherwise it is written to a new file outside the repository with mode 600, and the script
     prints only that path and what to do with it.
@@ -18,9 +18,12 @@ The key is never printed to stdout or stderr, never passed on a command line, ne
 never written inside the repository. Vercel's reply is never printed either (it can echo the
 value); only the HTTP status is shown on failure.
 
+With ``--label LABEL`` the entry is written as ``LABEL=KEY`` so logs and the audit chain show
+the label. The script then also prints the line to paste, without the key: ``LABEL=<key>``.
+
 Usage::
 
-    python3.12 -m maudesignal.connector.keygen [--out-dir DIR]
+    python3.12 -m maudesignal.connector.keygen [--label LABEL] [--out-dir DIR]
 """
 
 from __future__ import annotations
@@ -28,6 +31,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import secrets
 import sys
 import urllib.error
@@ -79,8 +83,23 @@ def _team_query(env: Mapping[str, str]) -> str:
     return f"?teamId={team}" if team else ""
 
 
-def set_vercel_env(key: str, env: Mapping[str, str], http: HttpFn) -> int | None:
-    """Create or update the encrypted Production variable. Returns None on success, else status."""
+#: ``set_vercel_env`` result when the variable exists but its value cannot be read back.
+EXISTING_VALUE_UNREADABLE = -1
+
+
+def entry_for(key: str, label: str | None) -> str:
+    """The list entry for a key: ``KEY`` or ``LABEL=KEY``."""
+    return f"{label}={key}" if label else key
+
+
+def set_vercel_env(
+    key: str, env: Mapping[str, str], http: HttpFn, label: str | None = None
+) -> int | None:
+    """Append the key to the encrypted Production variable (created if missing).
+
+    Earlier keys are kept. Returns None on success, else the HTTP status (0 for no response).
+    The existing value is read through the API and written back; it is never printed.
+    """
     token, project = env["VERCEL_TOKEN"], env["VERCEL_PROJECT_ID"]
     q = _team_query(env)
     status, listing = http("GET", f"{VERCEL_API}/v10/projects/{project}/env{q}", token, None)
@@ -94,7 +113,22 @@ def set_vercel_env(key: str, env: Mapping[str, str], http: HttpFn) -> int | None
         ),
         None,
     )
-    body: dict[str, Any] = {"value": key, "type": "encrypted", "target": ["production"]}
+    entry = entry_for(key, label)
+    value = entry
+    if existing and existing.get("id"):
+        # Encrypted values are not in the list; read this one by id (decrypted) to append.
+        status, one = http(
+            "GET", f"{VERCEL_API}/v1/projects/{project}/env/{existing['id']}{q}", token, None
+        )
+        if status != 200 or not isinstance(one, dict):
+            return status or 0
+        old = str(one.get("value") or "").strip().strip(",")
+        if not old:
+            # A sensitive variable (or a failed decrypt) comes back empty. Writing only the new
+            # key would revoke every earlier key, so refuse and let the operator add it by hand.
+            return EXISTING_VALUE_UNREADABLE
+        value = f"{old},{entry}"
+    body: dict[str, Any] = {"value": value, "type": "encrypted", "target": ["production"]}
     if existing and existing.get("id"):
         url = f"{VERCEL_API}/v9/projects/{project}/env/{existing['id']}{q}"
         status, _ = http("PATCH", url, token, body)
@@ -111,8 +145,8 @@ def _inside_repository(target_dir: Path) -> bool:
     return any((p / ".git").exists() for p in (target_dir, *target_dir.parents))
 
 
-def write_key_file(key: str, directory: Path, now: datetime) -> Path:
-    """Write the key to a new mode-600 file in ``directory`` (never inside the repository)."""
+def write_key_file(key: str, directory: Path, now: datetime, label: str | None = None) -> Path:
+    """Write the entry (``KEY`` or ``LABEL=KEY``) to a new mode-600 file outside the repository."""
     target_dir = directory.expanduser().resolve()
     if _inside_repository(target_dir):
         raise ValueError("refusing to write a key inside the repository")
@@ -120,7 +154,7 @@ def write_key_file(key: str, directory: Path, now: datetime) -> Path:
     path = target_dir / f"maudesignal-connector-key-{now:%Y%m%dT%H%M%SZ}.txt"
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     with os.fdopen(fd, "w", encoding="utf-8") as fh:
-        fh.write(key + "\n")
+        fh.write(entry_for(key, label) + "\n")
     path.chmod(0o600)
     return path
 
@@ -144,10 +178,31 @@ def main(
         default=Path("~/.config/maudesignal"),
         help="Where the key file goes when Vercel is not configured (outside the repository).",
     )
+    parser.add_argument(
+        "--label",
+        default=None,
+        help="Name for the key (1 to 32 letters, digits, - or _), e.g. meta-review. Logs and "
+        "the audit chain show it. Prints the line to paste, without the key.",
+    )
     args = parser.parse_args(argv)
+    label: str | None = args.label
+    if label is not None and not re.fullmatch(r"[A-Za-z0-9_-]{1,32}", label):
+        print("The label must be 1 to 32 letters, digits, - or _.", file=err)
+        return 2
     key = new_key()
     if environ.get("VERCEL_TOKEN") and environ.get("VERCEL_PROJECT_ID"):
-        failed = set_vercel_env(key, environ, http)
+        failed = set_vercel_env(key, environ, http, label)
+        if failed == EXISTING_VALUE_UNREADABLE:
+            print(
+                f"{ENV_NAME} exists but its value could not be read back (a sensitive variable "
+                "cannot be read through the API). Nothing was changed, because writing only the "
+                "new key would revoke every earlier key. Add the new entry by hand: in Vercel > "
+                "Project > Settings > Environment Variables, edit the variable and append "
+                "',<entry>' to the end. Use --out-dir mode (unset VERCEL_TOKEN) to get a key "
+                "file for that.",
+                file=err,
+            )
+            return 1
         if failed is not None:
             print(
                 f"Vercel API call failed (HTTP {failed or 'no response'}). "
@@ -158,13 +213,13 @@ def main(
             return 1
         print(REVEAL, file=out)
         print(
-            "Redeploy the project so the new value is used. The previous value of "
-            "MAUDESIGNAL_API_KEYS was replaced.",
+            "Redeploy the project so the new value is used. The new key was appended; earlier "
+            "keys keep working. Delete an entry in the dashboard to revoke that key.",
             file=out,
         )
         return 0
     try:
-        path = write_key_file(key, args.out_dir, now())
+        path = write_key_file(key, args.out_dir, now(), label)
     except (OSError, ValueError) as exc:
         print(f"Could not save the key: {type(exc).__name__}. Nothing was written.", file=err)
         return 1
@@ -174,10 +229,18 @@ def main(
         "(Production) and paste the file's single line as the value, then redeploy.",
         file=out,
     )
-    print(
-        f'To try it from this shell without showing it: MAUDESIGNAL_KEY="$(cat {path})"',
-        file=out,
-    )
+    if label:
+        print(
+            f"The file's line is {label}=<key>. To add it to a list that already exists, append "
+            "it after a comma. To try the key from this shell without showing it, use the part "
+            f'after the first "=": MAUDESIGNAL_KEY="$(cut -d= -f2- {path})"',
+            file=out,
+        )
+    else:
+        print(
+            f'To try it from this shell without showing it: MAUDESIGNAL_KEY="$(cat {path})"',
+            file=out,
+        )
     print("Delete the file once the key is stored in your password manager.", file=out)
     return 0
 

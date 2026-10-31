@@ -77,6 +77,7 @@ _LEADS = {
     "no_model": f"Live answers are not switched on here, so {_RECORDED}",
     "live_off": f"Live answers are switched off on this server, so {_RECORDED}",
     "model_error": f"The live model is not available just now, so {_RECORDED}",
+    "demo_key": f"The public demo key never starts a live model call, so {_RECORDED}",
 }
 _REASON_NOTES = {
     "cap": "The daily cost cap for this key was reached, so no live model call was made.",
@@ -86,6 +87,7 @@ _REASON_NOTES = {
         "so no live model call was made."
     ),
     "model_error": "The live model call failed, so no live answer is shown.",
+    "demo_key": "The public demo key never starts a live model call, so none was made.",
 }
 _UNLINKED_REASON = "passed the claim gate but has no openFDA or record link, so it is not spoken"
 _FORBIDDEN_REASON = "contains a term this service does not use, so it is not spoken"
@@ -499,6 +501,7 @@ def ask(
     key_id: str,
     runtime: AskRuntime,
     now: Clock = utc_now,
+    allow_live: bool = True,
 ) -> ToolAnswer:
     """Answer a question through the copilot and the claim gate, or from a recorded run.
 
@@ -508,6 +511,7 @@ def ask(
         key_id: Non-secret id of the calling API key (hash prefix), for its cost ledger.
         runtime: Live-model settings.
         now: Clock (tests).
+        allow_live: False for the public demo key: never start a live model call.
 
     Raises:
         InvalidInputError: The question is empty or too long.
@@ -519,7 +523,9 @@ def ask(
             f"Ask a question of {MIN_QUESTION_CHARS} to {MAX_QUESTION_CHARS} characters."
         )
     reason = "live_off" if os.environ.get("META_MODEL_API_KEY") else "no_model"
-    if runtime.live_enabled():
+    if not allow_live:
+        reason = "demo_key"
+    elif runtime.live_enabled():
         guard = SpendGuard(
             session_id=f"api-{key_id}",
             caps=runtime.caps,
