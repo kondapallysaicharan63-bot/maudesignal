@@ -8,6 +8,15 @@ Routes (hidden from the public OpenAPI document, keyless, browser origin must be
     POST /v1/live/ask    JSON {question, history?, product_code?, ref?}
     POST /v1/live/voice  multipart: "audio" (WAV PCM16 mono 16 kHz, <= 60 s, <= 4 MB), "meta"?
     POST /v1/live/label  multipart: "image" (JPEG or PNG, <= 8 MB)
+    POST /v1/live/research/save  JSON {url, title?, date?, person_action: true, ref?}
+                                 (only when MAUDESIGNAL_RESEARCH is on; 404 otherwise)
+
+When ``MAUDESIGNAL_RESEARCH`` is on (default off), ``POST /v1/live/ask`` also takes
+``research: true`` and the response gets a ``research`` block (``connector.research``) BESIDE
+the gated answer, never in it, with its own per-visitor limit (5 a day) and its own spend
+reservation. Not for canned replies (greetings, medical-advice or "is it safe" refusals) or
+a question refused as patient data. When the flag is off the ``research`` field is refused
+(422, unknown field) and the save route answers exactly like a route that does not exist.
 
 What this module adds on top of the existing pieces (it reuses, and does not copy, them):
 
@@ -42,6 +51,7 @@ Rules enforced here:
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import hmac
 import io
@@ -55,16 +65,18 @@ from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
+from urllib.parse import unquote, urlsplit
 
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from PIL import Image, ImageOps
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 from starlette.concurrency import run_in_threadpool
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.requests import ClientDisconnect
 
 from maudesignal.common.logging import get_logger
-from maudesignal.connector import chat, links
+from maudesignal.connector import chat, links, research
 from maudesignal.connector.answer_cache import AnswerCache
 from maudesignal.connector.ask import (
     _REASON_NOTES,
@@ -137,7 +149,8 @@ ASK_PATH = "/v1/live/ask"
 VOICE_PATH = "/v1/live/voice"
 LABEL_PATH = "/v1/live/label"
 MENTIONS_PATH = "/v1/live/mentions"
-LIVE_PATHS = (ASK_PATH, VOICE_PATH, LABEL_PATH, MENTIONS_PATH)
+RESEARCH_SAVE_PATH = "/v1/live/research/save"
+LIVE_PATHS = (ASK_PATH, VOICE_PATH, LABEL_PATH, MENTIONS_PATH, RESEARCH_SAVE_PATH)
 
 # Environment names (all optional).
 ASK_PER_DAY_ENV = "MAUDESIGNAL_LIVE_ASK_PER_DAY"
@@ -317,6 +330,19 @@ def default_sam(timeout_s: float) -> SamClient | None:  # pragma: no cover
     )
 
 
+def default_research_transport(
+    timeout_s: float,
+) -> research.ResearchTransport | None:  # pragma: no cover
+    """Real Responses API transport for Research mode (None when no key)."""
+    if not _key():
+        return None
+    return research.HttpResearchTransport(
+        _key(),
+        base_url=os.environ.get("META_MODEL_API_BASE_URL", "https://api.meta.ai/v1"),
+        timeout_s=timeout_s,
+    )
+
+
 def default_searcher(timeout_s: float) -> Searcher:  # pragma: no cover
     """Real openFDA searcher (the optional ``OPENFDA_API_KEY`` is never stored)."""
     return OpenFdaSearcher(os.environ.get("OPENFDA_API_KEY") or None, timeout_s=timeout_s)
@@ -337,6 +363,10 @@ class LiveBackends:
     vision_dir: Path = field(default_factory=lambda: PROJECT_ROOT / "demo" / "vision")
     mentions_fetcher: Callable[[], Fetcher] = HttpFetcher
     mentions_dir: Path = field(default_factory=lambda: PROJECT_ROOT / "demo" / "mentions")
+    research_transport: Callable[[float], research.ResearchTransport | None] = (
+        default_research_transport
+    )
+    research_fetcher: Callable[[], Fetcher] = HttpFetcher  # GDELT backup of Research mode
 
 
 class DeadlineClient:
@@ -469,6 +499,53 @@ class AskIn(_CommonIn):
     @classmethod
     def _ref(cls, value: Any) -> Any:
         return clean_ref(value)  # never kept or logged; only accepted
+
+
+class AskResearchIn(AskIn):
+    """``POST /v1/live/ask`` body while ``MAUDESIGNAL_RESEARCH`` is on (adds ``research``)."""
+
+    research: bool = Field(default=False, strict=True)
+
+
+_SAVE_DATE = re.compile(r"^\d{4}-\d{2}(?:-\d{2})?$")
+MAX_SAVE_QUERY_CHARS = 200
+
+
+class ResearchSaveIn(BaseModel):
+    """Body of ``POST /v1/live/research/save`` (a link a person chose to keep)."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    url: str = Field(min_length=8, max_length=research.MAX_URL_CHARS)
+    title: str = Field(default="", max_length=research.MAX_TITLE_CHARS)
+    date: str | None = Field(default=None, max_length=research.MAX_DATE_CHARS)
+    #: Set only by the web app's Save button: the save is a person's action, never automatic.
+    person_action: bool = Field(strict=True)
+    ref: str | None = Field(default=None, max_length=200)
+
+    @field_validator("url", mode="after")
+    @classmethod
+    def _url(cls, value: str) -> str:
+        url = value.split("#", 1)[0]  # fragments are never kept
+        if research.clean_url(url) is None:
+            raise ValueError("url must be an http(s) link")
+        if len(urlsplit(url).query) > MAX_SAVE_QUERY_CHARS:
+            raise ValueError("url query is too long")
+        return url
+
+    @field_validator("date", mode="after")
+    @classmethod
+    def _date(cls, value: str | None) -> str | None:
+        if value is None or value == "":
+            return None
+        if not _SAVE_DATE.fullmatch(value):
+            raise ValueError("date must be YYYY-MM-DD or YYYY-MM")
+        return value
+
+    @field_validator("ref", mode="before")
+    @classmethod
+    def _ref(cls, value: Any) -> Any:
+        return clean_ref(value)
 
 
 class MetaIn(_CommonIn):
@@ -956,6 +1033,10 @@ def mount_live(
         "voice": state.daily_counter("live-voice", cfg.voice_per_day, today=today),
         "label": state.daily_counter("live-label", cfg.label_per_day, today=today),
         "mentions": state.daily_counter("live-mentions", cfg.mentions_per_day, today=today),
+        "research": state.daily_counter("live-research", research.per_day(env), today=today),
+        "research-save": state.daily_counter(
+            "live-research-save", research.save_per_day(env), today=today
+        ),
     }
     pepper_src = (env if env is not None else os.environ).get(PEPPER_ENV)
     if not pepper_src and state.shared:
@@ -996,6 +1077,9 @@ def mount_live(
         request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
         """CORS for the live routes: exact origins from the environment, no credentials."""
+        if request.url.path == RESEARCH_SAVE_PATH and not research_on():
+            # Research off: every method gets exactly what a route that does not exist gets.
+            return JSONResponse(status_code=404, content={"detail": "Not Found"})
         if request.url.path not in LIVE_PATHS:
             return await call_next(request)
         origin = request.headers.get("origin", "").rstrip("/")
@@ -1114,6 +1198,42 @@ def mount_live(
             history=history_pairs(body.history),
         )
 
+    # --- research mode (web links next to the answer; never inside it) --------------------
+
+    def research_on() -> bool:
+        return research.research_enabled(env)
+
+    def do_research(body: AskIn) -> dict[str, Any]:
+        """The research block for one question (its own spend reservation and fallback)."""
+        transport = be.research_transport(research.TIMEOUT_S) if be.live_enabled() else None
+        return research.run_research(
+            body.question,
+            body.product_code,
+            transport=transport,
+            ledger=call_ledger,
+            fee_per_search=research.search_fee_usd(env),
+            news_fetcher=be.research_fetcher,
+            hold_cap=research.hold_cap_usd(env),
+        )
+
+    async def research_for(request: Request, body: AskIn) -> dict[str, Any] | None:
+        """``None`` unless research was asked for, the flag is on and the reply is not canned.
+
+        Canned replies (greetings, medical-advice and "is it safe" refusals) never trigger a
+        web search; a patient-data question was already refused before this point.
+        """
+        if not research_on() or not getattr(body, "research", False):
+            return None
+        route = chat.route_for(
+            data, body.question, body.product_code, has_history=bool(body.history)
+        )
+        if route.tier == "canned":
+            return None
+        ok, _left = counters["research"].hit(who(request))
+        if not ok:
+            return research.limit_block(counters["research"].limit)
+        return await run_in_threadpool(do_research, body)
+
     @app.post(ASK_PATH, include_in_schema=False)
     async def live_ask(request: Request) -> Response:
         started = be.clock()
@@ -1124,7 +1244,8 @@ def mount_live(
             return raw
         try:
             payload = json.loads(raw)
-            body = AskIn.model_validate(payload)
+            model = AskResearchIn if research_on() else AskIn
+            body = model.model_validate(payload)
         except ValueError as exc:
             if isinstance(exc, ValidationError):
                 return invalid(exc)
@@ -1135,13 +1256,18 @@ def mount_live(
             free = await run_in_threadpool(free_answer, body)
             if free is not None:
                 free["limits"] = limits(counters["ask"].peek(who(request)))
+                found = await research_for(request, body)
+                if found is not None:
+                    free["research"] = found  # beside the answer, never inside it
                 log("ask", free["mode"], started, tier=free["tier"])
                 return JSONResponse(free, headers={"Cache-Control": "no-store"})
         refused, remaining = daily_refusal(request, "ask")
         if refused is not None:
             return refused
         try:
-            outcome = await run_in_threadpool(do_ask, body)
+            outcome, found = await asyncio.gather(
+                run_in_threadpool(do_ask, body), research_for(request, body)
+            )
         except InvalidInputError as exc:
             return _err(422, "invalid_input", str(exc))
         except SourceUnavailableError:
@@ -1155,8 +1281,59 @@ def mount_live(
                 response
             ):
                 live_cache.put(body.question, body.product_code, chat.cache_entry(response))
+        if found is not None:
+            response["research"] = found  # added after caching: never stored with the answer
         log("ask", response["mode"], started, tier="live")
         return JSONResponse(response, headers={"Cache-Control": "no-store"})
+
+    @app.post(RESEARCH_SAVE_PATH, include_in_schema=False)
+    async def live_research_save(request: Request) -> Response:
+        """Keep one research link in the audit trail: url, title, date, who, when. No question."""
+        if not research_on():  # exactly what a route that does not exist answers
+            raise StarletteHTTPException(status_code=404)
+        if (blocked := burst_refusal(request)) is not None:
+            return blocked
+        raw = await read_capped(request, MAX_JSON_BYTES)
+        if isinstance(raw, Response):
+            return raw
+        try:
+            body = ResearchSaveIn.model_validate(json.loads(raw))
+        except ValueError as exc:
+            if isinstance(exc, ValidationError):
+                return invalid(exc)
+            return _err(422, "invalid_input", "Body must be a JSON object.")
+        if not body.person_action:
+            return _err(422, "invalid_input", "A person must choose to save this link.")
+        if phi_in([body.title, unquote(body.url), body.date or ""]):
+            return _err(422, "patient_data", PHI_MESSAGE)
+        refused, remaining = daily_refusal(request, "research-save")
+        if refused is not None:
+            return refused
+        saved_at = _iso(clock_now())
+        payload = research.save_payload(
+            body.url,
+            research.safe_title(body.title, body.url),
+            body.date,
+            saved_at,
+            visitor=who(request),
+            ref=body.ref,
+        )
+        try:
+            entry = await run_in_threadpool(
+                state.audit_append,
+                actor="web:research-save",
+                action="research:save",
+                entity_id=hashlib.sha256(body.url.encode("utf-8")).hexdigest()[:16],
+                payload=payload,
+            )
+        except Exception as exc:  # noqa: BLE001 - the store failing is a 503, never a 500
+            logger.error("research_save_failed", error_type=type(exc).__name__)
+            return _err(503, "unavailable", "The link could not be saved right now.")
+        return JSONResponse(
+            {"saved": True, "entry_seq": entry.get("seq"), "saved_at": saved_at}
+            | {"limits": limits(remaining)},
+            headers={"Cache-Control": "no-store"},
+        )
 
     # --- outside mentions (no model; free public sources; inside the global cost cap) -------
 
@@ -1592,6 +1769,7 @@ __all__ = [
     "ASK_PATH",
     "LABEL_PATH",
     "LIVE_PATHS",
+    "RESEARCH_SAVE_PATH",
     "VOICE_PATH",
     "LiveBackends",
     "LiveConfig",

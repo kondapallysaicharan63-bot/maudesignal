@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "maudesignal/skills/web-research/output.schema.json",
+  "title": "Research block (web-research 1.1.0)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "label", "items", "summary_text", "cost_usd", "note"],
+  "properties": {
+    "status": {"type": "string", "enum": ["ok", "news_only", "unavailable"]},
+    "label": {"const": "Web research — not FDA records, not verified by the gate"},
+    "items": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["title", "url", "date", "source"],
+        "properties": {
+          "title": {"type": "string", "maxLength": 300},
+          "url": {"type": "string", "pattern": "^https?://", "maxLength": 2000},
+          "date": {"type": ["string", "null"], "maxLength": 40},
+          "source": {"type": "string", "maxLength": 200}
+        }
+      }
+    },
+    "summary_text": {"type": "null"},
+    "cost_usd": {"type": "number", "minimum": 0},
+    "note": {"type": ["string", "null"]}
+  }
+}

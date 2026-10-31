@@ -1,0 +1,51 @@
+# HACKATHON-BUILT — one-shot probe of the Meta Model API built-in web_search tool (Track B, phase 1).
+# Runs ONLY on a push to a branch named probe/research** (no schedule, no manual trigger, no PRs).
+# Probe 2. Spend: at most 2 Responses API requests on muse-spark-1.3 (the second only after an
+# HTTP 400 rejects max_tool_calls / include, and is sent without them), 3000 output tokens,
+# low reasoning, max_tool_calls 2, 60 s timeout. Expected max token cost $0.0628 (printed).
+# The key comes from the repository secret and is never echoed; the script never prints headers.
+name: Research probe (web_search)
+
+on:
+  push:
+    branches: ["probe/research**"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: research-probe-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - name: Probe web_search (max 2 requests)
+        env:
+          META_MODEL_API_KEY: ${{ secrets.META_MODEL_API_KEY }}
+          META_MODEL_API_BASE_URL: https://api.meta.ai/v1
+        run: |
+          set -o pipefail
+          python scripts/research_probe.py 2>&1 | tee research-probe.txt
+      - name: Job summary
+        if: always()
+        run: |
+          {
+            echo "## Research probe (web_search)"
+            echo '```'
+            cat research-probe.txt 2>/dev/null || echo "(no output)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: research-probe-output
+          path: research-probe.txt
+          if-no-files-found: warn

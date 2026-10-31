@@ -94,6 +94,7 @@ from maudesignal.connector.registry import (
     WHAT_CHANGED_DESCRIPTION,
     explain_error,
 )
+from maudesignal.connector.research import research_enabled
 from maudesignal.connector.security import (
     DEFAULT_DEMO_RATE_PER_MIN,
     DEMO_PER_DAY,
@@ -810,6 +811,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 live_on=live_mode_allowed()
                 and (state.has_call_ledger or os.environ.get(ALLOW_PER_INSTANCE_ENV) == "1"),
                 audit_full_text=audit_full_text,
+                research_on=research_enabled(),
             )
         )
 
@@ -835,8 +837,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         summary="Service status (no key needed)",
         tags=["service"],
     )
-    def health() -> Health:
-        return Health(
+    def health() -> Health | JSONResponse:
+        body = Health(
             status="ok",
             service="maudesignal-connector",
             version=API_VERSION,
@@ -846,6 +848,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             state_store=state.backend,
             feedback_store=cfg.feedback_store.backend,
         )
+        if research_enabled():  # off: the body (and the OpenAPI schema) stay exactly as before
+            return JSONResponse(body.model_dump() | {"features": {"research": True}})
+        return body
 
     @app.get(
         "/v1/tools/what_changed_this_week",
