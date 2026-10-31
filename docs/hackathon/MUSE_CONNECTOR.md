@@ -275,7 +275,7 @@ counted apart.
    id and starts a fresh per-key ledger and audit trail for each key (a test checks that with a
    pepper the remaining key keeps its id).
 2. Set `MAUDESIGNAL_API_DAILY_USD=1.50` (or less). The per-key cap is `2.00` by default.
-3. The one global live cap applies on top: `MAUDESIGNAL_LIVE_DAILY_USD`, default `3.00` per UTC
+3. The one overall live cap applies on top: `MAUDESIGNAL_LIVE_DAILY_USD`, default `3.00` per UTC
    day, however many keys exist, shared with the website's live routes. `/terms` shows it. When either cap is reached, `ask`
    returns a recorded answer. Live `ask` is also still off unless `META_MODEL_API_KEY` is set and the private
    Vercel Blob store (`BLOB_READ_WRITE_TOKEN`) that holds the spend ledger is configured (or the
@@ -834,7 +834,7 @@ or `invalid_input`, 429 `rate_limited` with `retry_after_s` and a `Retry-After` 
      to (k-1) x $0.10 for k lagging instances (a probe with three lagging instances reached $3.10).
   6. *Per-key totals.* The per-key daily total of the keyed `ask` tool (`MAUDESIGNAL_API_DAILY_USD`)
      is a separate, smaller limit that counts real cost after a call. It holds nothing and
-     releases nothing in the global ledger.
+     releases nothing in the overall ledger.
   Tested (`tests/unit/test_call_ledger.py`, fake store, no network): hold arithmetic; the hold is on
   the ledger before the call; hold 0.08 settles to 0.03 and is counted 0.03; an exception after the
   send, a timeout, a failed settle write and a reply without usage all keep the hold; a failed

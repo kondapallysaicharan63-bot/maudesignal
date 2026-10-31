@@ -4,21 +4,127 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+## In 30 seconds
+
 **Every morning, MaudeSignal shows where reports suddenly increased, where they are more serious than usual and where there is a new kind of problem, for the device types you choose — your competitors' devices and reports about your device you didn't file. It only shows facts it can match to the FDA record. People make every decision.**
 
-> **What this is:** a B2B tool for postmarket-surveillance (PMS) and
-> regulatory-affairs teams at medical-device makers, working on public openFDA
-> MAUDE adverse-event data.
-> **What it is not:** medical advice, clinical decision support, or an
-> FDA-cleared device. It never decides whether an event is reportable or
-> whether a CAPA is needed, and it does not define "similar devices": it works
-> on the device types you choose.
-> **People decide:** whether a CAPA is required is decided by the company's own
-> CAPA-need form; MaudeSignal prepares evidence only, and a named person accepts
-> it. Nothing is filed with FDA automatically.
+- **Who it is for:** postmarket-surveillance (PMS) and regulatory-affairs teams at
+  medical-device makers, working on public openFDA data (MAUDE adverse-event reports,
+  recalls, 510(k) records).
+- **How it works:** a deterministic monitor (no model) flags changes week over week;
+  **Muse Spark** (Meta Model API) answers questions through 13 deterministic tools over
+  stored records; a deterministic claim gate recomputes every number and matches every
+  quote and record id against the stored FDA record, and withholds any sentence it cannot
+  match.
+- **On the demo data:** LLZ had 33 reports in the stored week against a weekly average of
+  8.75 in the four weeks before (3.77x), from
+  [digests/2026-08-31.md](digests/2026-08-31.md).
+- **Try it with no key:** the [website](https://maudesignal-app.vercel.app), the
+  [API](https://maudesignal-api.vercel.app), or the laptop quickstart below. Without a key,
+  answers are recorded runs and are labelled "recorded".
+- **What it is not:** medical advice, an FDA-cleared device, or a compliance tool. It uses
+  U.S. FDA data only.
 
-Validation facts (what is deterministic, what a model writes, what is tested,
-what a manufacturer would still do): [docs/VALIDATION_EVIDENCE.md](docs/VALIDATION_EVIDENCE.md).
+## Links
+
+| | |
+|---|---|
+| Website | <https://maudesignal-app.vercel.app> |
+| API (read-only REST + MCP) | <https://maudesignal-api.vercel.app> (`/v1/health`, `/docs-page`, `/mcp`) |
+| Muse connector | Submitted to Meta's Muse Connector Program — pending review. Form answers: [docs/hackathon/MUSE_CONNECTOR.md](docs/hackathon/MUSE_CONNECTOR.md) |
+| Streamlit dashboard | <https://maudesignal-4vniqswm9ptaxqtf2iawox.streamlit.app/> |
+| What was built during the hackathon | [HACKATHON.md](HACKATHON.md) |
+| What is deterministic, what a model writes, what is tested | [docs/VALIDATION_EVIDENCE.md](docs/VALIDATION_EVIDENCE.md) |
+
+## Meta models and tools used
+
+All calls go through the **Meta Model API** (OpenAI-compatible, default base URL
+`https://api.meta.ai/v1`; key read from `META_MODEL_API_KEY`, never committed or logged).
+
+| Meta model / tool | Where it is used | Code |
+|---|---|---|
+| **Muse Spark 1.3** (`muse-spark-1.3`) | Copilot answers: tool calling over 13 tools, strict `json_schema` output (sentences + typed claims), one repair turn after a gate block; the web chat's live tier and the connector's `ask` tool; the weekly investigator and recall sweep; the evidence-pack summary | [`copilot/agent.py`](src/maudesignal/copilot/agent.py), [`connector/ask.py`](src/maudesignal/connector/ask.py), [`connector/live.py`](src/maudesignal/connector/live.py), [`copilot/investigator.py`](src/maudesignal/copilot/investigator.py), [`copilot/recall_sweep.py`](src/maudesignal/copilot/recall_sweep.py), [`dossier/narrative.py`](src/maudesignal/dossier/narrative.py) |
+| **Muse Spark 1.3 image understanding** | Reads 510(k) summary pages twice and device-label crops; fields are checked against openFDA | [`vision/spark.py`](src/maudesignal/vision/spark.py), [`skills/fda-document-reader`](skills/fda-document-reader/SKILL.md), [`skills/device-label-reader`](skills/device-label-reader/SKILL.md) |
+| **SAM 3.1** (`sam-3.1`) | Finds the label in a device photo before Muse Spark reads the crop | [`vision/sam.py`](src/maudesignal/vision/sam.py), [`connector/live.py`](src/maudesignal/connector/live.py) |
+| **Meta Voice Transcribe** (`muse-voice-transcribe-1.0`) | Spoken questions; only the transcript text reaches Muse Spark, through the same copilot and gate | [`copilot/voice.py`](src/maudesignal/copilot/voice.py), [`connector/live.py`](src/maudesignal/connector/live.py) |
+| **Muse Wonder 1.0** (`muse-wonder-1.0`) | Independent review of the whole evidence-pack PDF; lists findings only, never edits the record | [`dossier/review.py`](src/maudesignal/dossier/review.py) |
+| **Muse Image 1.0** (`muse-image-1.0`) | Optional cover illustration, off by default, captioned "AI-generated illustration — not evidence" | [`dossier/illustration.py`](src/maudesignal/dossier/illustration.py) |
+
+The keyless public demo replays real runs recorded in GitHub Actions
+([`copilot-record.yml`](.github/workflows/copilot-record.yml), key from repository
+secrets). **Standard tier only**, never the Contributor tier, which trains on your data.
+
+## Numbers (each from a file in this repo)
+
+| Number | Source file |
+|---|---|
+| Demo database: 137 real MAUDE reports (LLZ 121) | [`data/demo/SEED_MANIFEST.json`](data/demo/SEED_MANIFEST.json) |
+| LLZ, stored week Aug 25–31, 2026: 33 reports vs a weekly average of 8.75 (3.77x) | [`digests/2026-08-31.md`](digests/2026-08-31.md) |
+| Recorded cost of a typed question: average $0.048, highest $0.098 (22 typed answers) | `cost_usd` in [`demo/transcripts/`](demo/transcripts/) (the `2026*.json` files except `00-voice-*`) |
+| Recorded cost of a spoken question: average $0.037 (9 voice answers) | `cost_usd` in [`demo/transcripts/`](demo/transcripts/) (`2026*-00-voice-*.json`) |
+| Recorded cost of a label photo: average $0.012 (7 photos; SAM 3.1 $0.0025 + Muse Spark read) | `trace[].cost_usd` in `demo/vision/label-match-*.json` ([`demo/vision/`](demo/vision/)) |
+| Chat answer tiers, estimate on a 20-question sample: $0.048 per question before, $0.012 after (upper bound; 5 of 20 reach Muse Spark) | [`docs/hackathon/CHAT_TIERS.md`](docs/hackathon/CHAT_TIERS.md) |
+| Recorded copilot answers: 31; sentences passing the gate on the first pass 71/73; replies that never parsed 0; hand-check: every sentence correct in 30 of 31 answers | [`docs/hackathon/HAND_CHECK.md`](docs/hackathon/HAND_CHECK.md) |
+| Gate adversarial set: 130 cases (84 must be withheld, 46 must pass), 0 false passes, 0 false blocks | [`tests/fixtures/gate/adversarial.jsonl`](tests/fixtures/gate/adversarial.jsonl), [`tests/unit/test_gate.py`](tests/unit/test_gate.py) |
+| Weekly investigator, one recorded LLZ run: $0.224989 | [`demo/investigations/20261030T010942Z-weekly-llz.json`](demo/investigations/20261030T010942Z-weekly-llz.json) |
+| Daily ceiling on all live Meta calls together: $3.00 per UTC day | [`src/maudesignal/connector/callcap.py`](src/maudesignal/connector/callcap.py) (`MAUDESIGNAL_LIVE_DAILY_USD`) |
+
+## How to run it
+
+**1. No install:** open the [website](https://maudesignal-app.vercel.app). With no
+model key on the server, chat, voice and camera replay recorded runs, labelled "recorded".
+
+**2. On a laptop, no key (about 2 minutes):**
+
+```bash
+git clone https://github.com/kondapallysaicharan63-bot/maudesignal.git
+cd maudesignal
+python3.12 -m venv .venv && source .venv/bin/activate
+pip install -e .
+
+# What-changed digest from the committed demo database (no network, no model)
+maudesignal monitor --no-fetch
+
+# Dashboard on the demo database: Signals, Copilot, Vision, Audit
+streamlit run streamlit_app.py
+```
+
+The demo database ([`data/demo/maudesignal_demo.db`](data/demo/)) holds 137
+real MAUDE reports fetched without a key from openFDA (LLZ complete for
+Jul–Aug 2026; all QIH, MYN and POK reports). The exact queries are in
+[`SEED_MANIFEST.json`](data/demo/SEED_MANIFEST.json). With no
+`MAUDESIGNAL_DB_PATH` set and no local `data/maudesignal.db`, the dashboard
+opens this database automatically. Without a key, the Copilot page replays
+recorded Muse Spark runs from [`demo/transcripts/`](demo/transcripts/) and lets you try
+to fool the gate live.
+
+**3. Live answers (costs money):** set `META_MODEL_API_KEY` to ask live questions. Every
+live Meta call counts against the daily ceiling above.
+
+**Deploy (Streamlit Community Cloud):** entry point `streamlit_app.py`,
+dependencies from `requirements.txt`, no secrets required. Your own Vercel copy:
+see [Deploy your own copy](#deploy-your-own-copy).
+
+## Limits
+
+- **Not medical advice** and not clinical decision support. Outputs are signals for a
+  person in quality or regulatory to review.
+- **Not an FDA-cleared device** and **not a compliance tool.** It never decides whether an
+  event is reportable or whether a CAPA is needed; a named person decides, and nothing is
+  filed with FDA.
+- **U.S. FDA data only** (MAUDE, recalls, 510(k)). UK MHRA alerts are shown as labelled
+  regulator context and are never counted.
+- **Recorded vs live.** Without a model key, answers are recorded runs and say "recorded"
+  with their date; a live answer is labelled live. The demo database is a stored snapshot,
+  not live openFDA.
+- **$3/day cap** on all live Meta calls together (each call reserves its worst case first).
+- **Not built:** team accounts or SSO (today: a public demo key plus personal keys, no
+  logins). A shared Upstash store for rate limits, caches and the audit log is supported by
+  the code but not turned on for the public copy.
+
+## Today / Tomorrow
+
+Today: U.S. FDA data (MAUDE, recalls, 510(k)). UK MHRA alerts appear as labelled regulator context only, not counted. EU data is not included yet. Tomorrow: EU national safety notices (BfArM, ANSM), EUDAMED vigilance once the EU makes it public, Health Canada and Australia TGA recalls.
 
 ---
 
@@ -94,7 +200,7 @@ guidance, 510(k) history and MAUDE). MaudeSignal differs in three ways:
 - **It withholds what it cannot match.** Every number is recomputed, every
   quote matched word for word, every report id, 510(k), recall, PMID and CFR
   section checked against stored FDA records — or the sentence is not shown.
-  Adversarial set: 112 cases, 0 false passes, 0 false blocks.
+  Adversarial set: 130 cases, 0 false passes, 0 false blocks.
 - **It reads scanned 510(k) documents with a two-read accuracy check.**
 - **It is open source and self-hostable** (MIT), on public FDA data only.
 
@@ -169,32 +275,6 @@ as a date (adversarial cases dt03–dt05).
 - **Pilot metric:** time to prepare the signal-evidence section for the device types you choose
   in a PMS report, with and without MaudeSignal.
 
-## Tomorrow
-
-- Team accounts / SSO (not built: today it is a public demo key plus personal keys, no logins)
-- A shared Upstash store, so rate limits, caches and the audit log are shared by every API
-  instance (supported by the code, not turned on for the public copy)
-- More regulators: only after a scope review (today FDA / openFDA, plus MHRA (UK) alerts shown as
-  labelled context)
-
-## How Meta AI is used
-
-| Step | Meta model / API | Why |
-|---|---|---|
-| Answering a question | **Muse Spark 1.3** (`muse-spark-1.3`) via the **Meta Model API** (OpenAI-compatible, `https://api.meta.ai/v1`) | Tool calling over 13 deterministic tools; **strict `json_schema` structured output** (sentences + typed claims, [`skills/safety-copilot`](skills/safety-copilot/SKILL.md)); a **repair turn** after a gate block, fed the gate's reasons and recomputed values |
-| Reading scanned FDA documents | **Muse Spark 1.3 image understanding** ([`skills/fda-document-reader`](skills/fda-document-reader/SKILL.md)) | 510(k) summary pages → structured fields with per-field legibility; two independent reads + openFDA + text layer decide VERIFIED / CONFLICT / UNVERIFIABLE |
-| Device-label camera | **SAM 3.1** (`sam-3.1`) + **Muse Spark 1.3 vision** | SAM locates the label in the photo, Spark reads the crop, the K-number / GTIN is checked against FDA |
-| Dossier narrative | **Muse Spark 1.3** ([`skills/dossier-narrative`](skills/dossier-narrative/SKILL.md)) | One-page summary drafted as claims and passed through the gate |
-| Independent reviewer | **Muse Wonder 1.0** (`muse-wonder-1.0`, PDF input, 1M context) | Reads the full dossier PDF + cited reports and lists unsupported or contradicted statements before a person accepts the evidence; never edits the record |
-| Cover illustration (optional, off by default) | **Muse Image 1.0** | Non-evidentiary cover art, captioned "AI-generated illustration — not evidence"; never inside evidence sections |
-| Spoken questions | **Meta Voice Transcribe** (`muse-voice-transcribe-1.0`) | Ask by voice; only the transcript text reaches Muse Spark, and it goes through the same copilot and gate |
-| Recording the public demo | All of the above in GitHub Actions ([`copilot-record.yml`](.github/workflows/copilot-record.yml)), key from repository secrets | The public, keyless app replays real runs instead of mocked ones |
-
-**Muse connector** (read-only MCP + REST at `https://maudesignal-api.vercel.app/mcp`): Submitted to Meta's Muse Connector Program — pending review. Form answers: [docs/hackathon/MUSE_CONNECTOR.md](docs/hackathon/MUSE_CONNECTOR.md).
-
-**Standard tier only.** Never the Contributor tier, which trains on your data.
-The key is read from `META_MODEL_API_KEY`, never committed or logged.
-
 ## Architecture
 
 ```mermaid
@@ -249,15 +329,15 @@ model calls. For every sentence the copilot wants to show:
 - a sentence that mentions a number, K-number, report id or CFR section
   **without** a matching structured claim is blocked as ungrounded.
 
-**Adversarial test set:** [112 cases](tests/fixtures/gate/adversarial.jsonl)
-(70 must block, 42 must pass): fabricated and drifted quotes, real quotes on
+**Adversarial test set:** [130 cases](tests/fixtures/gate/adversarial.jsonl)
+(84 must block, 46 must pass): fabricated and drifted quotes, real quotes on
 the wrong report, stale / inflated counts, wrong shares, fake and mismatched
 K-numbers, hallucinated and superseded CFR sections, fake recall numbers and
 PMIDs, real ones on the wrong product or year, wrong report-source counts,
 untagged mentions (including "N hospital reports"), dates that look like counts,
 and counts written in words or scientific notation ("thirty-three reports", "1e3 reports").
 Result: **0 false passes, 0 false blocks**
-([`tests/unit/test_gate.py`](tests/unit/test_gate.py), 129 tests).
+([`tests/unit/test_gate.py`](tests/unit/test_gate.py), 147 tests).
 
 Real verdicts on the demo database (137 MAUDE reports):
 
@@ -269,36 +349,6 @@ Real verdicts on the demo database (137 MAUDE reports):
 | "LLZ had 500 reports" | ⛔ `claimed 500, records show 121` |
 | "Open a CAPA under 21 CFR 820.100" | ⛔ `superseded by QMSR (ISO 13485 clauses 8.5.2/8.5.3) on 2026-02-02` |
 | "About 40% of LLZ reports were malfunctions" (no claim attached) | ⛔ `ungrounded: 40% has no share claim` |
-
-## Quickstart (about 2 minutes, no API key)
-
-```bash
-git clone https://github.com/kondapallysaicharan63-bot/maudesignal.git
-cd maudesignal
-python3.12 -m venv .venv && source .venv/bin/activate
-pip install -e .
-
-# What-changed digest from the committed demo database (no network, no LLM)
-maudesignal monitor --no-fetch
-
-# Dashboard on the demo database: Signals, Copilot, Vision, Audit
-streamlit run streamlit_app.py
-```
-
-The demo database ([`data/demo/maudesignal_demo.db`](data/demo/)) holds 137
-real MAUDE reports fetched without a key from openFDA (LLZ complete for
-Jul–Aug 2026; all QIH, MYN and POK reports). The exact queries are in
-[`SEED_MANIFEST.json`](data/demo/SEED_MANIFEST.json). With no
-`MAUDESIGNAL_DB_PATH` set and no local `data/maudesignal.db`, the dashboard
-opens this database automatically. Without a key, the Copilot page replays
-recorded Muse Spark runs (from [`demo/transcripts/`](demo/), once recorded)
-and lets you try to fool the gate live. Set `META_MODEL_API_KEY` to ask live
-questions.
-
-**Live demo:** <https://maudesignal-4vniqswm9ptaxqtf2iawox.streamlit.app/>
-
-**Deploy (Streamlit Community Cloud):** entry point `streamlit_app.py`,
-dependencies from `requirements.txt`, no secrets required.
 
 ## Deploy your own copy
 
@@ -362,7 +412,7 @@ rate limits.
 
 | Skill | Version | Purpose |
 |---|---|---|
-| [`safety-copilot`](skills/safety-copilot/SKILL.md) | v1.0.0 | **Hackathon.** Copilot behaviour contract: tools, structured claims, advisory-only rules |
+| [`safety-copilot`](skills/safety-copilot/SKILL.md) | v1.3.2 | **Hackathon.** Copilot behaviour contract: tools, structured claims, advisory-only rules |
 | [`regulatory-citation-verifier`](skills/regulatory-citation-verifier/SKILL.md) | v1.0.0 | Citation rules; enforced in code by `gate/` (hackathon) |
 | [`maude-narrative-extractor`](skills/maude-narrative-extractor/SKILL.md) | v1.0.0 | Structured fields from MAUDE narratives |
 | [`severity-triage`](skills/severity-triage/SKILL.md) | v1.0.0 | Death / serious injury / malfunction / other |

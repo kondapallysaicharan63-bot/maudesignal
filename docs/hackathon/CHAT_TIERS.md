@@ -112,7 +112,7 @@ happen?") is not looked up or stored when history is sent.
 * **The real cost of each answer** is shown under it ("Cost of this answer: $…", $0.0000 with
   "no model call" for tiers 1 to 3).
 
-The $3/day global cap and the per-call reservation ledger (`callcap.py`) are unchanged and apply
+The $3/day overall cap and the per-call reservation ledger (`callcap.py`) are unchanged and apply
 to every tier-4 model call exactly as before. Tiers 1 to 3 never call it (tests check that no
 ledger entry is written).
 

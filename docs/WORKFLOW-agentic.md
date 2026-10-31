@@ -65,6 +65,16 @@ Status: **approved by Charan on Oct 29** (design system kept; deploy steps go to
 - **Deploy rules.** No Vercel write without Charan's explicit OK. Order: API first, smoke it (`/v1/health`, `/docs-page`, one keyed tool call, one recorded `ask`), then the web project with `VITE_MAUDESIGNAL_API_BASE` set to the verified API URL, smoke it again. Production keeps Vercel Authentication off. Keys and tokens live only in Vercel env vars.
 - **Merge resolutions.** Connector code is the union of `track-c-live` and `track-c-lookup` (every route, the per-call ledger, `lookup_device`, MCP prompts and instructions, helpful errors). `label.py` takes the shared helpers from `common/device_ids.py` and keeps stripping lot and serial from stored UDIs. `api/requirements.txt` includes Pillow (live label route), so the import test no longer blocks it. `vercel.json` includes `demo/mentions`, `demo/vision` and `demo/sweep`. `demo/mentions/LLZ.json` is the original recorded `track-c-live` file again (byte-identical, including the MassDevice row and trace step that failed with HTTP 403). An earlier commit (8aba053) had replaced it with a hand-edited `track-b-m2` copy without those rows; that edit is reverted so the recorded run can be checked. MassDevice stays dropped from searching (see `connector/mentions.py` sources) and the UI (`web/src/mentions.ts` `isDropped`) and the connector doc keep the `track-c-live` versions. Web data re-exported from the merged stored data; quoted numbers unchanged (63/65, 27/28, 19,970 / 99.3%, 6 of 181).
 
+#### 2026-10-31 (day log: decisions and outcomes)
+- **API + web deployed from `d5bb583`** (Merge release-tools into release/m1). The smoke run found a mismatch in its own photo mock, not in the app; fixed in the test mock only (`b4dcb81`, "photo mock matches the real /v1/live/label shape").
+- **Main merge:** PR #16 (`a48c3aa`, `merge-main`). The demo database stays frozen at 137 reports; bot digests are parked (`cd3c48a`, main's 2026-09-06 digest moved next to the other bot digests).
+- **Chat answer tiers:** built (`76fbf13`, tests `a5b8868`), three review rounds (`e604c7f`, `5ff66e1`, `a6dcabb`), deployed from `d4bea03`. Post-deploy smoke cost $0.046. Description and cost estimate: `docs/hackathon/CHAT_TIERS.md`.
+- **Outside mentions re-recorded** (request `1c207c0`, bot commit `9d45690` on `track-c-live`, searched 2026-10-31 17:38 UTC): 0 mentions found for LLZ. Sources tried: GDELT DOC 2.0 (failed: TimeoutError after 3 tries), FDA press releases RSS (ok, 0), FDA recalls RSS (ok, 0), FDA MedWatch safety alerts RSS (ok, 0), FDA medical devices feed RSS (failed: http 404), MedTech Dive RSS (ok, 0).
+- **Label-reader workflow** ran on the `hackathon-day2` merge: about $0.09 (estimate), nothing saved.
+- **Deploys used today: 4.** Today's paid Meta spend is about $0.50 (estimate).
+- **Owner's new rules:** one agent per track; flags; at most 2 more deploys, each only after the owner says yes.
+- **Tracks A–E started** (Track D: docs and wording on `track-d-docs`, this entry).
+
 ### Open items needing Charan
 1. Add the four `claude/` docs (RUBRIC-100, PRD-v2-final, TASK-oct28, daily-status) to the repo, or paste them.
 2. Vercel: web project Root Directory `web`, Vite, deploy `track-b-ui`; send the preview URL. Later a second project for the API (Track C steps).
