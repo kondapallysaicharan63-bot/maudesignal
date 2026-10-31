@@ -129,15 +129,30 @@ function parseMention(v: unknown): Mention | 'personal' | null {
   }
 }
 
+const traceStatus = (raw: unknown): { status: LiveTraceStep['status']; note?: string } => {
+  const t = typeof raw === 'string' ? raw.trim() : ''
+  if (t === 'skipped') return { status: 'skipped' }
+  if (/^failed/i.test(t)) return { status: 'failed', note: t }
+  if (t === '' || t === 'ok') return { status: 'ok' }
+  return { status: 'ok', note: t } // a plain remark such as "0 page(s) tried"
+}
+
 const traceOf = (v: unknown): LiveTraceStep[] =>
   Array.isArray(v)
-    ? v.filter(isObj).map((s) => ({
-        step: String(s.step ?? ''),
-        model: typeof s.model === 'string' ? s.model : null,
-        ms: typeof s.ms === 'number' && Number.isFinite(s.ms) ? s.ms : 0,
-        status: s.status === 'skipped' || s.status === 'failed' ? s.status : 'ok',
-        ...(typeof s.note === 'string' ? { note: s.note } : {}),
-      }))
+    ? v
+        .filter(isObj)
+        .filter((s) => !isDropped(String(s.step ?? '')) && !isDropped(String(s.note ?? '')))
+        .map((s) => {
+          const st = traceStatus(s.status)
+          const note = st.note ?? (typeof s.note === 'string' ? s.note : undefined)
+          return {
+            step: String(s.step ?? ''),
+            model: typeof s.model === 'string' ? s.model : null,
+            ms: typeof s.ms === 'number' && Number.isFinite(s.ms) ? s.ms : 0,
+            status: st.status,
+            ...(note ? { note } : {}),
+          }
+        })
     : []
 
 /** A mentions answer (live or stored); null when it lacks the mentions list. Mentions the page cannot vouch for are dropped and counted. */

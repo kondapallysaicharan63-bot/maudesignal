@@ -9,6 +9,7 @@ import { ConnectView } from './components/ConnectView'
 import { MentionsBox } from './components/MentionsBox'
 import { parseMentions, zeroLine, statusLabel } from './mentions'
 import alerts from '../public/data/alerts.json'
+import publicMentions from '../public/data/mentions.json'
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
@@ -178,6 +179,35 @@ describe('MentionsBox', () => {
     expect(host.textContent).not.toMatch(/massdevice/i)
     expect(host.textContent).not.toContain('Nothing was kept')
     expect(host.querySelectorAll('[data-testid=mention]')).toHaveLength(0)
+  })
+  it('the shipped LLZ record: no MassDevice anywhere (sources and steps), failed steps read failed', () => {
+    const llz = parseMentions((publicMentions as unknown as { codes: Record<string, unknown> }).codes.LLZ)!
+    act(() => root.render(<MentionsBox code="LLZ" apiBase={null} stored={{ ...llz, mode: 'recorded' }} />))
+    expect(host.textContent).not.toMatch(/massdevice/i)
+    const steps = Array.from(host.querySelectorAll('[data-testid=trace-step]')).map((r) => r.textContent ?? '')
+    expect(steps.length).toBeGreaterThan(0)
+    const gdelt = steps.find((t) => t.includes('GDELT'))!
+    expect(gdelt).toContain('failed')
+    expect(gdelt).not.toContain('done')
+    const warn = steps.find((t) => t.includes('warning letters'))!
+    expect(warn).toContain('failed')
+    expect(warn).not.toContain('done')
+    expect(steps.find((t) => t.includes('recalls'))).toContain('done')
+  })
+  it('a "failed: ConnectTimeout" trace step is failed, a skipped one skipped, anything else ok', () => {
+    const r = parseMentions({
+      ...mentionsBody,
+      trace: [
+        { step: 'A', ms: 1, status: 'failed: ConnectTimeout' },
+        { step: 'B', ms: 1, status: 'skipped' },
+        { step: 'C', ms: 1, status: 'ok' },
+        { step: 'D', ms: 1, status: '0 page(s) tried' },
+        { step: 'Search: MassDevice (RSS)', ms: 1, status: 'ok' },
+      ],
+    })!
+    expect(r.trace.map((t) => t.step)).toEqual(['A', 'B', 'C', 'D'])
+    expect(r.trace.map((t) => t.status)).toEqual(['failed', 'skipped', 'ok', 'ok'])
+    expect(r.trace[0].note).toBe('failed: ConnectTimeout')
   })
   it('zeroLine and statusLabel handle missing data honestly', () => {
     expect(zeroLine('')).toBe('0 found in these sources (date not recorded)')
