@@ -36,6 +36,7 @@ jobs:
       - name: Install package
         run: |
           pip install -e ".[dev]"
+          pip install -r api/requirements.txt
       - name: ruff, black, mypy --strict, unit tests with a coverage floor, gate adversarial set, secret scan, quoted numbers, review findings
         run: python scripts/release/python_job.py --out-dir release-out --cov-floor 70
       - uses: actions/upload-artifact@v4
