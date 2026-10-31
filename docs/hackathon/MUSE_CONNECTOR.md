@@ -1,58 +1,167 @@
 # MaudeSignal connector for Meta Muse (read-only REST API and MCP server)
 
-Status: **built and tested locally; not deployed from this environment; not submitted.** Part 1
-is the REST API, how to deploy it, how to make a key, and how to check it. Part 2 (at the end of
-this page) is the MCP transport at `/mcp`, the draft answers for the connector submission form,
-privacy and terms text, and a real local MCP client transcript. Nothing on this page says anyone
-has reviewed or endorsed the connector.
+This page is the single source for every answer on the Meta connector form (the first part,
+"Form answers"), followed by how the API is deployed and what it does. Nothing on this page says
+Meta, Muse or anyone else has reviewed or endorsed the connector.
 
-## Form answers (single source for the Meta connector form)
+# Form answers
 
-**Submission status: Not submitted.** This section is the one place the connector form answers
-live; the pages `/privacy` and `/terms` and the answers below are written from the same text
-(`src/maudesignal/connector/legal_pages.py`, checked by a test). Field names on the live form may
-differ: read the live form before pasting anything, and correct what differs here.
+**Status: Not submitted.** (Charan changes this line after he submits the form himself.)
 
-| Field | Answer |
+Field names and limits on the live form may differ from the headings below; read the form first
+and paste from here.
+
+## Name
+
+MaudeSignal
+
+## Short description
+
+Read-only triage of public FDA device adverse-event data, with links. (66 characters; limit 80.)
+
+## Long description
+
+MaudeSignal is a read-only connector to public FDA adverse-event data (MAUDE, recalls and 510(k)
+records from openFDA). It answers questions for quality and regulatory professionals at
+medical-device companies: what changed this week for a device type, a live count check for any
+three-letter product code, one stored report, recalls, and a free-text question answered through
+deterministic tools. Every sentence of an `ask` answer passes a claim check, and a sentence that
+cannot be linked to an openFDA or stored record is listed as withheld and is never spoken as fact.
+Every answer carries its source and date, and a fixed line: advisory triage aid; not medical
+advice; nothing is filed with FDA. MHRA (UK) alerts appear only as labelled regulator context.
+
+## Category suggestion
+
+Regulatory and quality (B2B) or Research. Audience: quality, regulatory and post-market
+surveillance staff. Not for patients; not clinical decision support.
+
+## Endpoints
+
+| What | URL |
 |---|---|
-| Connector name | MaudeSignal |
-| Icon | `docs/hackathon/maudesignal-icon.svg` (vector) and `docs/hackathon/maudesignal-icon.png` (512 x 512). Original artwork: a pulse line across a report page. No Meta and no FDA logo. |
-| Short description | Read-only triage aid for U.S. FDA device adverse-event reports (MAUDE), recalls and device-type checks. Each fact carries its openFDA link. Advisory only; not medical advice; nothing is filed with FDA. |
-| Long description | Five read-only tools over public openFDA device data: what changed this week (a stored snapshot, with its dates), a live openFDA check of any three-letter product code using the weekly detector's rules, a question tool answered by Muse Spark through deterministic tools where every sentence goes through a claim gate and sentences that cannot be verified are marked and never spoken as fact, one stored report, and recalls for a product code. Every answer carries a fixed advisory line and its data source (stored snapshot with dates, or live openFDA with the query time). For quality and regulatory professionals at medical-device companies; not for patients; not clinical decision support. |
-| Endpoint (MCP) | `https://maudesignal-api.vercel.app/mcp` (MCP over streamable HTTP, stateless, protocol 2025-06-18). `GET /v1/connect` (no key) returns this URL, the OpenAPI URL, the header name, the demo key and three steps. |
-| Endpoint (REST) | `https://maudesignal-api.vercel.app/v1/tools/<tool>` |
-| OpenAPI URL | `https://maudesignal-api.vercel.app/openapi.json` (OpenAPI 3.1; `info.termsOfService` points to `/terms`) |
-| Authentication | API key in the `X-API-Key` header (`Authorization: Bearer <key>` also works). No OAuth. Several keys can be listed in `MAUDESIGNAL_API_KEYS`, each revocable by deleting its entry; an entry may be labelled `label=KEY` so logs show the label (for example `charan=...,meta-review=...`). **How a reviewer gets a key:** Charan sends the `meta-review` key to the reviewer privately, never in the form, a chat transcript or the repository. For a first try without any key request, a public **demo key** is shown by `GET /v1/connect` when the operator sets `MAUDESIGNAL_DEMO_KEYS`. |
-| Tools (all read-only) | `what_changed_this_week`: this week's change for a product code, from the stored snapshot (dates shown). `check_device_type`: a live openFDA check of any three-letter product code. `ask`: a question answered by Muse Spark through read-only tools, every sentence checked by the claim gate, or the closest recorded answer, labelled. `get_report`: one stored report by id. `recalls`: recalls for a product code with their openFDA links. |
-| Example prompts | 1. "What changed this week for LLZ?" 2. "Check device type QIH against live openFDA." 3. "Show recalls for LLZ." 4. "Get report 50426770." 5. "How many LLZ reports were filed in the last stored week, and what is the link?" |
-| Rate limits | Keyed: 30 requests per key per minute (`MAUDESIGNAL_RATE_LIMIT_PER_MIN`) and a per-key daily cost cap on `ask` (`MAUDESIGNAL_API_DAILY_USD`, default $2.00; $0.25 per call). Demo key: 10 per minute (`MAUDESIGNAL_DEMO_RATE_PER_MIN`) and 200 per day, on every read tool, and it never starts a live model call (`ask` returns a recorded answer, labelled). Keyless public check: 10 per address per hour. Live website routes: ask 30, voice 10, label 5, mentions 10 per address per day. **Global cap:** all live model calls together, the website routes and the keyed `ask` tool, stop at **$3.00 per UTC day** (`MAUDESIGNAL_LIVE_DAILY_USD`); after that, answers come from recorded runs, labelled recorded. The shared ledger is one stored record per request, so concurrent requests cannot erase each other's entries; it was tested with a fake store only (limits and the one known assumption are in the cost section of Part 2). |
-| Data handling | Public openFDA data only (de-identified by FDA); no personal or patient data collected; no accounts. Question text is not logged (hash and length only). See the Data questionnaire below and `/privacy`. |
-| Privacy policy | `https://maudesignal-api.vercel.app/privacy` |
-| Terms | `https://maudesignal-api.vercel.app/terms` |
-| Support contact | The address in `MAUDESIGNAL_CONTACT_EMAIL` (shown at runtime on `/privacy` and `/terms`; never written in git), and GitHub issues: `https://github.com/kondapallysaicharan63-bot/maudesignal/issues` |
-| Writes / side effects | None. No tool writes anywhere; nothing is filed with FDA. |
-| Category / audience | Quality and regulatory professionals at medical-device companies (B2B). |
-| Anything else the form asks | Not known. Leave blank or ask the owner; do not invent. |
+| MCP (streamable HTTP, stateless, protocol 2025-06-18) | `https://maudesignal-api.vercel.app/mcp` |
+| REST base | `https://maudesignal-api.vercel.app` |
+| OpenAPI 3.1 | `https://maudesignal-api.vercel.app/openapi.json` |
+| Docs page | `https://maudesignal-api.vercel.app/` |
+| Health (no key) | `https://maudesignal-api.vercel.app/v1/health` |
+
+## Authentication
+
+Header `X-API-Key: <key>` (the form `Authorization: Bearer <key>` also works). A reviewer key,
+named "meta-review", is sent privately by Charan; it is never written in this repository. Keys are
+personal, read-only and can be revoked at any time. A key in a URL is refused. No OAuth.
+
+## Tools (all read-only; none writes anything)
+
+| Tool | What it does | Source |
+|---|---|---|
+| `what_changed_this_week` | Latest stored week for a product code, labelled with its dates; a code outside the stored set is checked live on openFDA. | stored snapshot, or live openFDA |
+| `check_device_type` | Live openFDA report counts for any product code, using the weekly detector's four rules, windows and thresholds. | live openFDA |
+| `ask` | A free-text question (3 to 500 characters) answered through deterministic tools; every sentence passes the claim gate; withheld sentences are listed apart. | **Live Muse Spark only when live ask is on; with it off, a recorded answer, labelled `recorded_answer`.** |
+| `get_report` | Key fields and the start of the narrative of one stored report. | stored snapshot |
+| `recalls` | Stored openFDA recalls for a product code, newest first. | stored snapshot |
+
+`check_device_type` has a keyless twin, `GET /v1/public/check_device_type`, limited per address and
+never calling a model.
+
+## Example prompts
+
+1. What changed this week for LLZ?
+2. Check product code QAS on openFDA.
+3. Show recalls for LLZ.
+4. Get report 50426770.
+5. Ask: what changed this week for LLZ? (with live ask off this returns the closest recorded answer)
+
+## Rate limits and cost caps
+
+Defaults in the code (each can be changed by the operator with an environment variable):
+
+* 30 requests per key per minute (`MAUDESIGNAL_RATE_LIMIT_PER_MIN`); every HTTP request to `/mcp`
+  counts once.
+* 10 wrong or missing keys per address per minute, then 429 (`MAUDESIGNAL_FAILED_AUTH_PER_MIN`).
+* 10 keyless device-type checks per address per hour (`MAUDESIGNAL_PUBLIC_CHECK_PER_HOUR`).
+* `ask`: at most $0.25 per call, $2.00 per key per UTC day and $3.00 over all keys together per
+  UTC day (`MAUDESIGNAL_API_REQUEST_USD`, `MAUDESIGNAL_API_DAILY_USD`,
+  `MAUDESIGNAL_API_TOTAL_DAILY_USD`); past a cap the closest recorded answer is returned. With two
+  keys, set `MAUDESIGNAL_API_DAILY_USD=1.50` (or less) as well, and keep `MAUDESIGNAL_KEY_PEPPER`
+  set (see "Two keys").
+* Feedback form: 5 per hour per address; visits 60 per hour per address.
+
+The live pages `/terms` and `/privacy` show the numbers actually in force.
+
+## Data handling summary
+
+Public openFDA data only (and MHRA (UK) alerts, labelled). No personal or patient data is collected
+or wanted. Hosted on Vercel, United States (function region iad1). Question text is not logged
+(only its SHA-256 and length). IP addresses are never stored by this code: before any rate limit
+sees one it is turned into a salted one-way hash, and only that hash is the limit key (in memory,
+or in the operator's Redis store for at most twice the limit window). Feedback and visit records (no names, no emails) are kept until 2026-11-30.
+Meta receives an `ask` question only when live ask is on. Details: `/privacy`.
+
+## Privacy URL
+
+`https://maudesignal-api.vercel.app/privacy`
+
+## Terms URL
+
+`https://maudesignal-api.vercel.app/terms`
+
+## Support / work email
+
+`<Charan's SJSU email - Charan fills in>` (the same address goes in the Vercel variable
+`MAUDESIGNAL_CONTACT_EMAIL`, so `/privacy` and `/terms` show it; it is never written in git).
+GitHub issues: `https://github.com/kondapallysaicharan63-bot/maudesignal/issues`
+
+## Icon
+
+`docs/hackathon/maudesignal-icon.png` (512x512 PNG), source `docs/hackathon/maudesignal-icon.svg`.
+An original mark (a signal pulse through a magnifier ring); no Meta or FDA logo.
 
 ## Data questionnaire
 
-The same answers as `/privacy` (one text, two places).
-
 | Question | Answer |
 |---|---|
-| What does this service do with data? | It gives read-only access to public FDA device data (openFDA: adverse-event reports, recalls, 510(k) records) and, where a result says so, to device alerts from the UK MHRA, always labelled as UK. It is an advisory triage aid for quality and regulatory review. |
-| Is any personal or patient data collected? | No. The data served is public and already de-identified by FDA. There are no accounts and no sign-up. Do not type patient or personal details into a question: the live routes refuse text that looks like a name with a title, an age, an email address or a phone number, and nothing is kept when they do. |
-| Where is data processed and stored? | The service's functions run on Vercel in region iad1 (Washington, D.C., United States), as set in the project's vercel.json. Feedback entries, page-visit entries and the daily spend records are stored in a private Vercel Blob store. The region of that store is chosen when the store is created in the Vercel dashboard; the code does not check it, so this page does not state it. The other services named below (Meta Model API, Resend, GDELT, and Upstash if the operator sets it up) process what they receive in their own locations, which this service does not control. |
-| Who else handles data (subprocessors)? | Vercel (hosting, runtime logs and Blob storage). Meta Model API: only when live answers are switched on, for the live ask, voice and label routes; the question text, the voice clip or the label photo is sent once to produce the answer when live answers are on, and is not stored by this service. Resend (email): only if the operator turns on email for new feedback; the email carries the feedback fields, no name and no address. Upstash (Redis): optional, only if the operator sets it up; it then holds the audit log, the rate-limit hashes and the daily cost ledger (no question text, no address, no name). Public data sources that this service reads: openFDA, GOV.UK (MHRA alerts), GDELT and FDA public feeds (for the outside-mentions search). These send us public data; we send them a product code or a search term, never a person's details. |
-| What is logged, and for how long? | Per tool call: a key id (a keyed hash of the key, never the key), the tool name, the time, the status and the cost. Never the text of a question: for ask, only a hash and a length are recorded. Feedback is stored without names (role and quote consent only). A page visit stores the referral code, the page and the time. This service never stores an IP address: before any rate limit or counter sees it, the address is replaced by a keyed hash, which is held in memory (or in the operator's Redis store, if one is set up) only to apply limits, for at most twice the limit window (two days for daily counters). Vercel's own request logs may include the address; they are kept by Vercel for Vercel's runtime-log retention for this plan. Feedback and visits are kept until the hackathon review ends, then deleted on request or by 30 November 2026. |
-| Cookies, tracking, sale of data, advertising? | No tracking cookies. No sale of data. No advertising and no use of data for ads. The separate web app may use Vercel Web Analytics for page-view counts, which sets no cookies. |
-| Not medical advice, nothing filed | Nothing here is medical advice or clinical decision support. Nothing is filed with FDA or any other regulator. This is not an FDA-cleared device. It is an open-source project by Saicharan Kondapally. |
-| How do I ask for deletion? | Write to the contact address (shown on `/privacy`, read from `MAUDESIGNAL_CONTACT_EMAIL` at runtime; if it is not set, the GitHub issues URL is shown) and give the referral code you were sent. Feedback and visits carry no name, so the code is how an entry is found. Entries are deleted on request. |
+| What is the service? | A read-only connector to public FDA adverse-event data (openFDA). MHRA (UK) alerts are shown only as labelled regulator context. |
+| Does it collect personal or patient data? | No, none is collected or wanted. No accounts, names or emails. |
+| Where is data processed and stored? | Vercel, United States (function region iad1, Washington DC). Vercel Blob (private) holds only website feedback and visit records. |
+| Subprocessors? | Vercel Inc. (hosting, logs, Blob). Meta Platforms (Meta Model API) only when `ask` runs live with a server-side model key. Upstash (Redis) and Resend (email) only if the operator configures them. |
+| Does Meta receive user input? | Only the text of an `ask` question, only when live ask is on. When off, `ask` returns recorded answers and nothing is sent to Meta. `/privacy` states which applies at request time. |
+| Which public sources are queried? | openFDA (api.fda.gov) is queried live with a product code only. MHRA (UK) alerts come from a stored copy previously fetched from the GOV.UK search API; this service does not call GOV.UK when you use it. |
+| What is logged? | Key id (a peppered one-way hash, never the key), tool name, time, status. Spend on `ask` is kept as a daily total per key id (not per call). Question text is not logged; during a live `ask` it is held briefly in the server instance's temporary working database and replaced by its SHA-256 when the answer is done. |
+| What do feedback and visits store? | Feedback: rating, comments, role, consent, referral code, page, time. Visits: referral code, page, time. No names, no emails. |
+| Are IP addresses stored? | No. Before any rate limit sees an address it is turned into a salted one-way hash (HMAC-SHA256); only that hash is the limit key, in memory or, if a Redis store is configured, in that store for at most twice the limit window. (Vercel, as host, keeps its own request logs.) |
+| Retention? | Request logs follow Vercel's runtime-log retention for this plan. Feedback and visit records are kept until 2026-11-30 and then deleted, earlier on request. |
+| Sale, advertising, cookies? | No sale of data, no advertising, no tracking cookies. |
+| Deletion or questions? | The support email above or the GitHub issues URL. |
+| Medical advice? | No. Not medical advice; nothing is filed with FDA; not an FDA-cleared device. Open-source project by Saicharan Kondapally. |
 
-Retention detail: logs live as long as Vercel keeps runtime logs on the plan in use; the number of
-days is not stated here because it depends on the plan and was not checked. The daily spend record
-is a set of small objects, one per request, under one UTC day in the private Blob store (each name
-holds a dollar figure and a call count; no personal data).
+## Two keys (reviewer key plus your own)
+
+`MAUDESIGNAL_API_KEYS` takes several keys in one value, separated by commas. Format:
+`<key1>,<key2>` (spaces around the comma are fine; empty entries are ignored; each plain key must be
+at least 32 characters, or an entry can be `sha256:<64 hex>`). Run `python3.12 -m
+maudesignal.connector.keygen` **without** `VERCEL_TOKEN` to get a key in a mode-600 file, once per
+key (one for "meta-review", one of your own). Do not use the Vercel-API mode for the second key:
+it **replaces** the whole value. Paste `<key1>,<key2>` as the value in Vercel > Settings >
+Environment Variables > Production and redeploy. To revoke one key, delete its entry from the list
+and redeploy; the other keeps working (a unit test checks this). Audit and spend records are kept
+per key id, so the two keys are counted apart.
+
+**Before the second key goes in (cost and key ids):**
+
+1. Set `MAUDESIGNAL_KEY_PEPPER` (any long random value) **before** adding or removing a key. Without
+   it the key ids are derived from all key digests, so adding or removing a key changes every key
+   id and starts a fresh per-key ledger and audit trail for each key (a test checks that with a
+   pepper the remaining key keeps its id).
+2. Set `MAUDESIGNAL_API_DAILY_USD=1.50` (or less). The per-key cap is `2.00` by default.
+3. A cap over all keys together applies on top: `MAUDESIGNAL_API_TOTAL_DAILY_USD`, default `3.00`
+   per UTC day, however many keys exist. `/terms` shows it. When either cap is reached, `ask`
+   returns a recorded answer. Live `ask` is also still off unless `META_MODEL_API_KEY` is set and a
+   shared store (or the per-instance override) is configured.
+
+---
+
+# Deploy and behaviour
 
 ## Part 1. Deploy the REST API (a second Vercel project)
 
@@ -68,7 +177,7 @@ Vercel > Add New > Project > import the GitHub repository
 | Setting | Value |
 |---|---|
 | Project name | anything, e.g. `maudesignal-api` |
-| Production branch | the branch you want live (`track-c-muse` until it is merged) |
+| Production branch | the branch now in production (`track-c-next`; this change is `track-c-submit`) |
 | Root Directory | `./` (the repository root; **not** `web/`) |
 | Framework Preset | Other |
 | Build Command | leave empty |
@@ -81,7 +190,8 @@ What the repository gives Vercel (all in git, nothing to paste):
 * `vercel.json`: one function `api/index.py` (`maxDuration` 60 s), `includeFiles` for the demo
   database and the files it reads (`src`, `skills`, `demo/transcripts`, `digests`, `data/demo`,
   `design-system`, `api`), `excludeFiles` for `web`, `docs`, `tests`, `screenshots`, and rewrites
-  that send `/`, `/docs-page`, `/openapi.json` and `/v1/*` to the function.
+  that send `/`, `/docs-page`, `/privacy`, `/terms`, `/openapi.json` and `/v1/*` to the
+  function, and `regions: ["iad1"]`.
 * `api/requirements.txt`: fastapi, pydantic, sqlalchemy, httpx, tenacity, structlog, jsonschema,
   jinja2, python-dotenv, rich, openai. No streamlit, weasyprint, playwright, pandas or scipy.
   (A test fails if a heavy package is added.)
@@ -97,7 +207,8 @@ installed the root manifest, tell the owner before going on: the fix is a projec
 
 | Name | Value | Notes |
 |---|---|---|
-| `MAUDESIGNAL_API_KEYS` | the key | Made by the script in step 3; never typed into git or chat. Comma-separated for several keys; each entry is `KEY`, `sha256:<hex>`, `label=KEY` or `label=sha256:<hex>`. Delete an entry to revoke that key. |
+| `MAUDESIGNAL_API_KEYS` | the key | Made by the script in step 3; never typed into git or chat. `<key1>,<key2>` for several keys (see "Two keys" above). |
+| `MAUDESIGNAL_CONTACT_EMAIL` | the support email | Shown (HTML-escaped) on `/privacy` and `/terms`; unset shows the GitHub issues URL. Never in git. |
 | `MAUDESIGNAL_TRUST_FORWARDED` | `1` | Vercel's edge sets `X-Forwarded-For`; without this the limiter would see one address. |
 | `MAUDESIGNAL_KEY_PEPPER` | a long random string | Server-side secret for key ids in ledger file names and audit session ids. |
 | `MAUDESIGNAL_WEB_ORIGINS` | e.g. `https://<web-project>.vercel.app` | Comma-separated exact origins that may call the keyless route from a browser. No wildcard (a `*` entry is ignored). Empty means no browser origin is allowed. |
@@ -105,14 +216,9 @@ installed the root manifest, tell the owner before going on: the fix is a projec
 | `MAUDESIGNAL_FAILED_AUTH_PER_MIN` | default `10` | Wrong or missing keys per address per minute before 429. |
 | `MAUDESIGNAL_PUBLIC_CHECK_PER_HOUR` | default `10` | Keyless checks per address per hour. |
 | `MAUDESIGNAL_API_DAILY_USD` / `MAUDESIGNAL_API_REQUEST_USD` | defaults `2.00` / `0.25` | Cost cap of `ask` per key per UTC day, and per call. |
+| `MAUDESIGNAL_API_TOTAL_DAILY_USD` | default `3.00` | Cost cap of `ask` over all keys together per UTC day (a ledger shared by every key). |
 | `OPENFDA_API_KEY` | optional | Used only on the server for live openFDA checks (higher quota). Never in a response. |
 | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | optional | Add an Upstash Redis database (Vercel Marketplace, or upstash.com) and copy its REST URL and token. When both are set, the rate limits, the daily cost ledger, the six-hour cache and the audit log are shared by every instance. If the integration names them differently, add these two names by hand. |
-| `BLOB_READ_WRITE_TOKEN` | the private Blob store's token | Also makes the global daily cost ledger durable and shared when Upstash is not configured (see below). |
-| `MAUDESIGNAL_LIVE_DAILY_USD` | default `3.00` | The one global cap for every live model call per UTC day. |
-| `MAUDESIGNAL_DEMO_KEYS` | optional | Public demo keys, same format as `MAUDESIGNAL_API_KEYS`; not secret. |
-| `MAUDESIGNAL_DEMO_RATE_PER_MIN` | default `10` | Demo key requests per minute (and 200 per day). |
-| `MAUDESIGNAL_CONTACT_EMAIL` | an address you choose to publish | Shown on `/privacy` and `/terms` at runtime; never in git. |
-| `MAUDESIGNAL_PUBLIC_URL` | optional, e.g. `https://maudesignal-api.vercel.app` | Base URL that `GET /v1/connect` reports. |
 | `META_MODEL_API_KEY` | optional | Leave **unset** until you accept the cost: `ask` then answers from recorded runs. |
 | `MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP` | `1` only if you set the model key without Upstash | Explicit acceptance that the cap and limits are per instance. Not needed with Upstash. |
 
@@ -134,10 +240,8 @@ python3.12 -m maudesignal.connector.keygen
 # prints only the file path and what to do with it
 ```
 
-Option a appends the new key to the existing `MAUDESIGNAL_API_KEYS` list (earlier keys keep
-working); to revoke a key, delete its entry in the dashboard. If the existing variable is a Vercel
-"sensitive" one, its value cannot be read back, so the script refuses and changes nothing; add the
-entry by hand instead. Option b: paste the file's one line
+Option a replaces the previous value of `MAUDESIGNAL_API_KEYS` (older keys stop working); to keep
+several keys, edit the comma-separated list in the dashboard. Option b: paste the file's one line
 as the value of `MAUDESIGNAL_API_KEYS` in the dashboard, then delete the file. Either way the key
 is never printed to stdout or stderr, never logged, never written inside the repository, and
 Vercel's reply is never printed (only an HTTP status on failure). Tests run the script as a
@@ -146,7 +250,7 @@ subprocess and scan both streams for the key. Redeploy after changing an environ
 ### 4. Verify with harmless reads
 
 ```bash
-BASE=https://<your-api-project>.vercel.app
+BASE=https://maudesignal-api.vercel.app
 KEY=$(cat /path/printed/by/the/script)   # option b; for option a, reveal it in the dashboard
 
 curl -i "$BASE/v1/health"                                   # no key: 200 JSON, read_only true
@@ -476,11 +580,9 @@ and window number exactly what the gate recomputed.
 
 ---
 
-# Part 2. MCP server, submission answers, privacy, terms
+# Part 2. MCP server
 
-**Submission status: Not submitted.** The owner changes this line only after he submits the form
-himself. Nothing here says Meta, Muse or anyone else has reviewed, accepted or endorsed this
-connector, and no such review has happened.
+Submission status: see the top of this page (Not submitted until Charan changes it).
 
 ## Feedback and visits (private)
 
@@ -523,169 +625,6 @@ request. The Blob REST headers (`x-vercel-blob-access: private`, `x-add-random-s
 `x-api-version`) follow the documented API from memory and were not exercised against the live
 service from this environment; check the first real write.
 
-## Live Muse for the public website (`/v1/live/*`)
-
-Added so the website can talk to Muse without a connector key: a typed chat with earlier turns,
-a spoken question, and a device-label photo. It is the same copilot, claim gate and label reader
-as everywhere else; this layer adds limits, cost caps, upload checks and recorded fallbacks. Not
-medical advice. Nothing is filed with FDA. Not in the public OpenAPI document.
-
-| Route | Body | Muse models | What comes back |
-|---|---|---|---|
-| `POST /v1/live/ask` | JSON `{question (3-500 chars), history? (max 4 of {question, answer}), product_code? (3 letters), ref?}`. Each history answer is cut to 600 characters on the server. | Muse Spark 1.3 (read-only tools) | the answer sentences with their links, left-out reasons, spoken text |
-| `POST /v1/live/voice` | multipart: `audio` (WAV, PCM16, mono, 16000 Hz, at most 60 s and 4 MB) and an optional `meta` JSON part `{history?, product_code?}` | Muse Voice Transcribe 1.0, then Muse Spark 1.3 | `heard` (the transcript, shown before the answer) plus the same answer block |
-| `POST /v1/live/label` | multipart: `image` (JPEG or PNG, at most 4 MB; the website shrinks photos to 1600 px on the long side, JPEG quality 0.85, before sending) | SAM 3.1, then Muse Spark 1.3, then openFDA searches | `reading` and up to 3 possible matches; `confirmed` is always `null` (a person confirms) |
-
-Every response has `mode` (`live` or `recorded`), `recorded_note` (when recorded: why, and which
-recorded run), `not_medical_advice: true`, `trace` (one entry per step: `step`, `model`
-(`muse-spark-1.3`, `muse-voice-transcribe-1.0`, `sam-3.1` or `null`), measured `ms`, `status`
-`ok` / `skipped` / `failed`, `note`), `cost_usd` (a number, or `null` when nothing was spent) and
-`limits` (`remaining_today`, `resets_utc`). `ask` and `voice` add `answer`
-(`speakable: [{text, links: [{label, url}]}]`, `withheld: [{reason}]`, `spoken_text`); `voice` adds
-`heard`; `label` adds `reading` (`legibility`, `fields` for device name, manufacturer, model,
-K-number, UDI and GTIN, `values_withheld`) and `matches` (`status`
-`needs_person_to_confirm` or `no_match_found`, `candidates` with `k_number`, `device_name`,
-`applicant`, `product_code`, `why_matched`, `why_not_matched`, `links`).
-
-Errors are `{code, message}` (also repeated under `error` for older clients): 422 `patient_data`
-or `invalid_input`, 429 `rate_limited` with `retry_after_s` and a `Retry-After` header, 413
-`too_large`, 403 `origin_not_allowed`, 503 `unavailable` (no recorded answer exists either).
-
-**Rules**
-
-- *Limits per address per UTC day:* ask 30, voice 10, label 5 (`MAUDESIGNAL_LIVE_ASK_PER_DAY`,
-  `MAUDESIGNAL_LIVE_VOICE_PER_DAY`, `MAUDESIGNAL_LIVE_LABEL_PER_DAY`), plus a per-minute burst limit
-  (`MAUDESIGNAL_LIVE_PER_MIN`, default 10). The address is only ever a peppered HMAC
-  (`MAUDESIGNAL_KEY_PEPPER`), held in memory or in Upstash; it is never in a record and never
-  logged. A request that fails validation does not use the daily count.
-- *Cost:* one global cap for every live call, **$3.00 per UTC day** (`MAUDESIGNAL_LIVE_DAILY_USD`),
-  shared by the website routes (ask, voice, label, mentions) and the keyed `ask` tool. Per-request
-  caps: ask 0.25, voice 0.30, label 0.30 (`MAUDESIGNAL_LIVE_ASK_USD`, `_VOICE_USD`, `_LABEL_USD`);
-  mentions costs nothing (no model) and
-  only checks that the cap is not yet reached. The ledger is, in this order: (1) Upstash
-  Redis when configured (atomic, the whole value is enforced); (2) otherwise **one small object
-  per request under each UTC day in the private Blob store** (`BLOB_READ_WRITE_TOKEN`), shared by
-  every instance and kept across cold starts; (3) only without either, a per-instance memory
-  ledger with the cap divided by `MAUDESIGNAL_LIVE_INSTANCE_DIVISOR` (default 2), which resets on a
-  cold start and is not a hard cap. **Blob ledger design:** nothing is read, changed and written
-  back, so no writer can overwrite another's entry. Each hold, each release and each real cost is
-  its own new object (`ledger/live-global/<day>/<kind>-<micro-USD>-<calls>-<uuid>.json`, kind h,
-  r or a); today's spend is the sum of the listing (holds + real costs - releases). A request
-  reserves before any model call: if the listed total plus its hold is already over the cap it is
-  refused without writing; otherwise it writes its hold, lists again, and removes its own hold and
-  is refused if the sum is over the cap. Two requests that reserve at the same moment each write
-  before they list, so the later listing sees both and at least one is refused (at worst both).
-  Settling adds a real-cost object and a release object; the hold is never edited. **It fails
-  closed:** if the listing cannot be read, a write fails or an object name cannot be parsed, the
-  answer is a recorded one and no model call starts (the keyed `ask` tool reports reason `cap`).
-  **Known limit:** this relies on a completed write showing up in the next listing of the store.
-  That was tested with a fake store only, not against a real Blob store. If the store ever lagged,
-  overlapping requests could pass by at most one request cap; the cap enforced is therefore the
-  daily total minus the largest per-request cap (default 3.00 - 0.30 = 2.70), which leaves room
-  for one such overlap, so total live spend is still meant to stay at or under $3.00. More than
-  one such overlap is not covered and is not measured. A model call that has been paid for but
-  whose cost object could not be written is logged as `connector_spend_not_recorded` (USD amount
-  and day only) for the operator to reconcile. No call starts once a cap is reached.
-- *Fallback:* with no `META_MODEL_API_KEY`, a cap reached, or any model error, the answer is a
-  recorded run and says so (`mode: "recorded"`, with the recorded question or sample photo
-  named). A recorded answer is never shown as live. Voice: if the clip cannot be transcribed, a
-  recorded spoken-question run is returned and `heard` is absent. Label: the closest stored
-  `demo/vision/label-match-*.json` (first one with candidates), marked as not your photo.
-- *Claim gate:* every sentence goes through the gate exactly as in `ask`; a left-out sentence's
-  text is never returned live, only a fixed reason. Tools are read-only (`readonly.py`);
-  temperature 0; the prompts live in `skills/`.
-- *Patient data:* a question, a history entry or a voice transcript that looks like patient
-  details (email, phone, SSN, MRN, date of birth, a title with a name such as "Mrs. Jane Smith",
-  an age such as "age 67" or "67-year-old") is refused with 422 `patient_data` and not answered.
-  A guard, not a guarantee: other free-text names are not caught, so the website input keeps the
-  "not a guarantee" wording.
-- *Uploads:* size, type, duration and pixel count are checked before any model call. Multipart is
-  parsed in memory (the standard form parsers spool large parts to temporary files, which uploads
-  here must not be). The photo is decoded and re-encoded as a plain JPEG from its pixels, so EXIF,
-  GPS, ICC and comment blocks are dropped; orientation is applied first. Audio and image bytes are
-  never written to disk or Blob and never logged. Lot and serial numbers are never returned (the
-  UDI keeps only the 01, 11 and 17 identifiers).
-- *Time:* the label request is designed to end in under 55 s when upstream services behave: SAM
-  calls time out at 10 s and start no new prompt after 12 s; each Spark call gets the time left of
-  a 50 s budget; openFDA calls time out at 6 s, are cut at 8 s of wall-clock time (an httpx
-  timeout counts each phase, not the whole call) and start no new query after 45 s. SAM's 10 s is
-  a per-phase timeout, so a slowly dripping SAM response can run longer; no figure here is
-  measured against the real services. The voice request has one deadline of 52 s from the start
-  (transcription gets at most 15 s, Spark gets the time left, and with under 3 s left the
-  recorded run answers with a timeout note). On a timeout the stored run answers, with a note.
-  `vercel.json` keeps `maxDuration` 60.
-- *Request size on Vercel:* Vercel rejects request bodies over 4.5 MB before the app runs, with a
-  413 that has no CORS headers, so a browser sees a network error. The server limit is therefore
-  4 MB for photos and audio, and the web client must downscale or re-encode a photo (1600 px long
-  side, JPEG quality 0.85) before upload.
-- *Label with no search:* if openFDA could not be searched (every query failed, or the 45 s window
-  ended), `matches` has `search_failed: true` and a `note`; the web side shows that note instead of
-  "no match found". `no_match_found` without the flag means a search ran and found nothing.
-- *Shared limits need a pepper:* set `MAUDESIGNAL_KEY_PEPPER` (required when Upstash is configured).
-  Without it each instance makes its own random pepper, one address gets a different id on every
-  instance, and the per-address daily limits are multiplied by the number of warm instances; a
-  warning (`live_pepper_missing`) is logged at start-up when this happens.
-- *CORS:* only the exact origins in `MAUDESIGNAL_WEB_ORIGINS`, `POST` and `OPTIONS`, header
-  `Content-Type`, no credentials; another origin gets 403.
-
-**Deploy:** `vercel.json` `includeFiles` now covers `src`, `skills`, `demo/transcripts`,
-`demo/vision` (the stored label runs), `digests`, `data/demo`, `design-system` and `api`. `api/requirements.txt`
-gains `pillow`. Set `META_MODEL_API_KEY` for live answers; `OPENFDA_API_KEY` is optional. These
-steps are the owner's; nothing was deployed from this branch.
-
-**Live smoke test:** `.github/workflows/live-smoke.yml` runs `scripts/live_smoke.py` (two chat
-turns, the second with history; one spoken question from `demo/voice/question.wav`, else
-`question-c.wav`, resampled to 16 kHz mono if needed; one photo,
-`demo/vision/labels/label-caresens-n.jpg`) in process through the real app, with a hard cap of
-$0.60 in total, and commits `demo/live-smoke/result.json` to `track-c-live`. It runs only when
-`demo/LIVE_SMOKE_REQUEST` is pushed to `track-c-live` with a value other than empty or `0`
-(it holds `0`, so the first push spends nothing), or by hand. No live run has been made from this
-branch, so no live result or cost figure is claimed here.
-
-## Outside mentions (`POST /v1/live/mentions`, no key, no model)
-
-Body `{product_code (3 letters), device_terms? (max 5 strings of 2 to 60 characters)}`. It looks
-for the code and terms in free public sources only (GDELT DOC 2.0 for news, FDA press-release,
-recall and warning-letter feeds, two public medical-device news feeds), labelled **news and public
-web**. The feed URLs were not reachable from the build sandbox, so `sources_tried` reports each
-source's real status (`ok`, `failed: ...`) instead of assuming it. Each candidate page is
-fetched; a mention is kept only if its quoted sentence is found word for word in the fetched page
-text. Dropped, with counts in `dropped`: `quote_not_found` (the source offered a sentence that is
-not on the page), `personal_details` (an email, phone, age, a title with a name, "patient
-<Name>"), `off_topic` (the page does not mention the terms, or the sentence has a term this
-service never uses). Every mention has `badge` "Unverified — not checked against FDA records" and
-is never mixed with claim-gated FDA facts; `source_kind` is the fixed value for FDA-hosted pages (listed in
-`mentions.py`), otherwise `news` or `web`. At most 10 mentions; the whole search ends in under 50 s. Limits: 10 per address
-per UTC day, inside the global cost cap (a read-only check, no hold; refused when the cap is reached or
-the ledger cannot be read). When the cap, the limit or the network stops a live search, the stored
-file `demo/mentions/<CODE>.json` answers with `mode: "recorded"` and a `recorded_note`; with no
-file the lists are empty and the note says so. `.github/workflows/mentions-record.yml` writes
-`LLZ.json` (and any codes in the request) when `demo/mentions/REQUEST` changes on `track-c-live`;
-the file holds `0`, so nothing runs yet and **no stored mentions file exists yet**.
-
-## Demo key, labelled keys and `GET /v1/connect`
-
-`MAUDESIGNAL_DEMO_KEYS` (same format as `MAUDESIGNAL_API_KEYS`) holds public demo keys. A demo key
-works on every read tool, has its own limits (`MAUDESIGNAL_DEMO_RATE_PER_MIN`, default 10 per
-minute, plus 200 per day per key) and **never starts a live model call**: `ask` returns a recorded
-answer, labelled. It is public by design and must never be committed. `GET /v1/connect` (no key,
-CORS for the web origins) returns `mcp_url`, `openapi_url`, `docs_url`, `auth_header`
-(`X-API-Key`), `demo_key` (the first entry of `MAUDESIGNAL_DEMO_KEYS` when it is a plain key,
-otherwise `null`), `demo_limits` and three `steps`. Key labels (`label=KEY`) appear in the audit
-actor (`connector:key:<label>:<key id>`) and in the request log; the key itself never does.
-`python3.12 -m maudesignal.connector.keygen --label meta-review` appends the new key to
-`MAUDESIGNAL_API_KEYS` through the Vercel API (earlier keys keep working) and prints the line to
-paste, without the key.
-
-## Remove stored names (`POST /v1/admin/redact-names`)
-
-Admin key required. Body `{"dry_run": true|false}` (default true). For every stored feedback
-record with a non-empty `name`, the name is removed unless the record's consent is
-`quote_name_role`; nothing else in any record is changed and visits are never touched. The reply is
-`{checked, names_removed, names_kept_for_quote_by_name, dry_run, failed}`. The `/admin` page has
-the button "Remove names (keep only 'quote me by name')": it previews the counts with a dry run,
-asks for confirmation, then runs.
-
 ## 2.1 The MCP server (`POST /mcp`)
 
 Same five tools as the REST routes, same process, same code path. Each REST route and each
@@ -694,7 +633,7 @@ entry and the cost cap are shared.
 
 | Item | Value |
 |---|---|
-| Endpoint | `https://<your-api-project>.vercel.app/mcp` (HTTPS on Vercel; the host is whatever the API project gets) |
+| Endpoint | `https://maudesignal-api.vercel.app/mcp` |
 | Transport | Streamable HTTP, **stateless**: one JSON-RPC message per `POST`, a JSON reply, no session id, no event stream. `GET`, `DELETE`, `PUT`, `PATCH` on `/mcp` return 405. |
 | Protocol version | `2025-06-18` (header `MCP-Protocol-Version` may be `2025-06-18` or `2025-03-26`; anything else is 400) |
 | Methods | `initialize`, `ping`, `tools/list`, `tools/call`; notifications and client replies get 202 with no body. Batches are refused (protocol 2025-06-18 removed them). |
@@ -786,16 +725,9 @@ ping number 11: HTTP 429
 Not done: no call from Muse or from any third-party MCP client, no deploy to Vercel, no live
 openFDA call, no live Muse Spark call.
 
-## 2.2 to 2.4 Form answers, privacy and terms
+## 2.2 Privacy, terms and what is still open
 
-Moved to the top of this page ("Form answers" and "Data questionnaire") so there is one source.
-The pages are served at `/privacy` and `/terms`.
-
-## 2.5 What the owner must still do (nothing below has been done)
-
-* Deploy the API project and note its URL; create a read-only reviewer key with the key script.
-* Set `MAUDESIGNAL_CONTACT_EMAIL` (the pages show it at runtime) and, optionally,
-  `MAUDESIGNAL_DEMO_KEYS` and `MAUDESIGNAL_PUBLIC_URL`.
-* Read the live submission form, correct every field marked "confirm against the live form", and
-  submit it himself.
-* Only then change the status line at the top of part 2 from "Not submitted".
+The privacy and terms texts are served by the API itself at `/privacy` and `/terms`
+(`connector/legal_pages.py`); the form answers above repeat them. Still open, and done by Charan:
+set `MAUDESIGNAL_CONTACT_EMAIL` in Vercel, add the two keys, redeploy, read the live form and
+correct any field that differs, submit it himself, then change the status line at the top.

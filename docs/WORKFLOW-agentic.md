@@ -109,7 +109,7 @@ reasoning never reaches it.
 
 ## 7. How it runs
 
-- Commits: author "Saicharan Kondapally <kondapallysaicharan63@gmail.com>" with
+- Commits: author "Saicharan Kondapally" with
   `Co-Authored-By: Claude`.
 
 - One Workflow per batch of milestones (A1–A3 with B1–B3 in parallel; then

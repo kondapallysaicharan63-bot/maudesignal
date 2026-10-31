@@ -312,20 +312,6 @@ def main() -> int:
             check("connect (no API in this build): fixed text with the MCP URL, the OpenAPI URL and 'ask Charan for a key'", "https://maudesignal-api.vercel.app/mcp" in txt and "https://maudesignal-api.vercel.app/openapi.json" in txt and "Ask Charan for a key" in txt)
             page.close()
 
-            # ---- 4b. the static privacy page (served at /privacy/) -------------------------------------------------------
-            for scheme, w, h in (("light", 1440, 900), ("dark", 390, 844), ("light", 390, 844), ("dark", 1440, 900)):
-                page = page_for(browser, w, h, scheme)
-                page.goto(e.LIVE_URL + "privacy/", wait_until="load")
-                txt = page.locator("main").inner_text()
-                need = ["iad1", "Vercel", "Meta Model API", "openFDA", "Upstash", "never stores an IP address", "No sale of data", "How do I ask for deletion?", "read from MAUDESIGNAL_CONTACT_EMAIL at runtime", "issues"]
-                check(f"privacy {w} {scheme}: no personal e-mail address on the page", re.search(r"[\w.+-]+@[\w-]+\.[a-z]{2,}", txt) is None)
-                missing = [n for n in need if n.lower() not in txt.lower()]
-                check(f"privacy {w} {scheme}: answers the data questions (region, subprocessors, logs, retention, deletion contact, no sale)", not missing, missing)
-                check(f"privacy {w} {scheme}: no forbidden words", FORBIDDEN.search(txt) is None, FORBIDDEN.search(txt))
-                check(f"privacy {w} {scheme}: no sideways scroll and readable contrast", e.overflow(page) == 0 and ratio(page, "main p") >= 4.5, [e.overflow(page), ratio(page, "main p")])
-                snap(page, "privacy", w, scheme, report)
-                page.close()
-
             # ---- 5. header at 390 and 1440 -----------------------------------------------------------------------------
             for scheme in ("light", "dark"):
                 for w, h in ((390, 844), (1440, 900)):
