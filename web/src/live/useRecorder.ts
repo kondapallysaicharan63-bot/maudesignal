@@ -14,7 +14,9 @@ export interface RecResult {
 }
 
 /** How many recent levels the waveform shows. */
-export const WAVE_BARS = 32
+export const WAVE_BARS = 24
+/** From here the bar says when the recording will stop. */
+export const WARN_SECONDS = 45
 /** The waveform takes a new level this often (ms), so the page is not re-drawn on every animation frame. */
 const WAVE_STEP_MS = 90
 
@@ -27,6 +29,8 @@ export interface Recorder {
   levels: number[]
   /** False when this browser's MediaRecorder cannot pause. */
   canPause: boolean
+  /** True once MAX_SECONDS were recorded: the recording is paused (not sent); Stop uses it, Cancel discards it. */
+  atLimit: boolean
   start: () => Promise<void>
   /** Stops and hands the WAV to onResult. */
   stop: () => void
@@ -85,6 +89,8 @@ interface Handlers {
   onResult: (r: RecResult) => void
   /** Called with a plain-words message when the mic cannot be used or nothing was recorded. */
   onError: (message: string, kind: 'denied' | 'empty' | 'unsupported') => void
+  /** At MAX_SECONDS: pause and wait for Stop or Cancel (the message box) instead of stopping and sending (earlier composer). */
+  pauseAtLimit?: boolean
 }
 
 export function useRecorder(h: Handlers): Recorder {
@@ -93,6 +99,7 @@ export function useRecorder(h: Handlers): Recorder {
   const [level, setLevel] = useState(0)
   const [levels, setLevels] = useState<number[]>([])
   const [canPause, setCanPause] = useState(true)
+  const [atLimit, setAtLimit] = useState(false)
   const rec = useRef<MediaRecorder | null>(null)
   const stream = useRef<MediaStream | null>(null)
   const meter = useRef<{ ctx: AudioContext; raf: number } | null>(null)
@@ -117,6 +124,7 @@ export function useRecorder(h: Handlers): Recorder {
     paused.current = false
     setLevel(0)
     setLevels([])
+    setAtLimit(false)
   }, [])
 
   useEffect(
@@ -161,6 +169,8 @@ export function useRecorder(h: Handlers): Recorder {
   const resume = useCallback(() => {
     const r = rec.current
     if (!r || r.state !== 'paused' || typeof r.resume !== 'function') return
+    const t = timing.current
+    if (t.doneMs >= MAX_SECONDS * 1000) return // the limit is reached: only Stop or Cancel
     r.resume()
     timing.current.since = Date.now()
     paused.current = false
@@ -243,12 +253,28 @@ export function useRecorder(h: Handlers): Recorder {
     }
     timing.current = { doneMs: 0, since: Date.now() }
     setSeconds(0)
+    setAtLimit(false)
     setLevels([])
     tick.current = window.setInterval(() => {
       const t = timing.current
       const sec = elapsedSeconds(t.doneMs, t.since, Date.now())
       setSeconds(sec)
-      if (sec >= MAX_SECONDS) stop() // the longest question: it stops by itself here
+      // The longest question: at the limit the recording is paused, not sent. Nothing is used until the person
+      // presses Stop (or Cancel discards it).
+      if (sec >= MAX_SECONDS && t.since !== null && !handlers.current.pauseAtLimit) stop()
+      else if (sec >= MAX_SECONDS && t.since !== null) {
+        const r = rec.current
+        t.doneMs = MAX_SECONDS * 1000
+        t.since = null
+        setSeconds(MAX_SECONDS)
+        setAtLimit(true)
+        if (r && r.state === 'recording' && typeof r.pause === 'function') {
+          r.pause()
+          paused.current = true
+          setLevel(0)
+          setState('paused')
+        } else stop() // no pause in this browser: stop here; the person still presses Send
+      }
     }, 200)
     mr.start()
     setState('recording')
@@ -259,5 +285,5 @@ export function useRecorder(h: Handlers): Recorder {
     else if (state === 'idle') void start()
   }, [state, start, stop])
 
-  return { state, seconds, level, levels, canPause, start, stop, toggle, pause, resume, cancel }
+  return { state, seconds, level, levels, canPause, atLimit, start, stop, toggle, pause, resume, cancel }
 }

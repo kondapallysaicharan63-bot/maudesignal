@@ -247,16 +247,11 @@ export function ChatPane(p: Props) {
                     if (!refused) onLive()
                     return refused
                   },
-                  onPhoto: (jpeg) => {
-                    live.askPhoto(jpeg)
+                  onPhoto: (jpeg, followUp) => {
+                    live.askPhoto(jpeg, followUp)
                     onLive()
                   },
                   transcribe: live.transcribe,
-                  onVoiceAnswer: (wav) => {
-                    live.setMicNotice(null)
-                    void live.askVoice(wav)
-                    onLive()
-                  },
                 }
               : null
           }

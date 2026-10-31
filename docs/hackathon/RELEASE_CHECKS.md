@@ -125,7 +125,9 @@ dark. Per combination:
   it is edited and one ask carries the edited text; Take photo opens the live camera at 1440 and the phone
   camera input (`capture=environment`) at 390; a refused camera falls back to the file picker with "Camera
   blocked — choose a photo instead"; the thumbnail's remove button drops the photo (no `/v1/live/label`
-  request); "Research the web" is hidden unless `/v1/health` lists `features.research`;
+  request); "Research the web" is hidden unless `/v1/health` lists `features.research`; at 1:00 (Playwright
+  clock) the recording pauses and no voice request is made until Stop; without `voice_transcribe_only` in
+  health, "Ask by voice" records nothing and opens the recorded run;
 * no sideways scroll on every main view;
 * axe-core (installed from npm in the job) on five views: serious or critical violations fail,
   and all counts by impact are in the report (`axe_violations_all_views_all_combinations`);

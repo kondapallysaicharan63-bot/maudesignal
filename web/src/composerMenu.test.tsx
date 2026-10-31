@@ -12,7 +12,7 @@ import { LiveChatView } from './components/LiveChat'
 import { MessageBox } from './components/MessageBox'
 import { menuMove } from './components/PlusMenu'
 import { ResearchSection } from './components/ResearchSection'
-import { voiceAnnouncement } from './components/VoiceBar'
+import { voiceAnnouncement, waveHeights } from './components/VoiceBar'
 import { composerMenuOn } from './composerFlag'
 import {
   buildAskBody,
@@ -139,6 +139,13 @@ describe('menu keys, waveform and timer helpers', () => {
     expect(elapsedSeconds(4000, null, 99999)).toBe(4)
     expect(elapsedSeconds(4000, 10000, 12500)).toBe(6.5)
   })
+  it('the waveform has 24 bars from the newest levels; flat while paused', () => {
+    const h = waveHeights([0, 0.04, 0.25, 1], true)
+    expect(h).toHaveLength(24)
+    expect(h.slice(-3).map((v) => Math.round(v * 100) / 100)).toEqual([0.32, 0.8, 1])
+    expect(h[0]).toBe(0)
+    expect(waveHeights([0.5, 0.5], false).every((v) => v === 0)).toBe(true)
+  })
   it('announces the state, and the time only every 15 seconds', () => {
     expect(voiceAnnouncement('recording', 0)).toContain('Recording')
     expect(voiceAnnouncement('recording', 15)).toBe('Recording, 0:15.')
@@ -208,7 +215,6 @@ let fetcher: ReturnType<typeof vi.fn<(u: string, i?: RequestInit) => Promise<Res
 let clicks: string[]
 let features: ApiFeatures
 let phone = false
-const voiceAnswers: Blob[] = []
 
 function Harness() {
   const live = useLiveChat({ apiBase: 'https://api.example', ref: null, threads: T, evidence: EV, fetcher: (u, i) => fetcher(u, i) })
@@ -229,16 +235,15 @@ function Harness() {
           busy: live.busy,
           features,
           onAsk: (q, o) => live.ask(q, { research: o.research }),
-          onPhoto: (b) => live.askPhoto(b),
+          onPhoto: (b, f) => live.askPhoto(b, f),
           transcribe: live.transcribe,
-          onVoiceAnswer: (w) => voiceAnswers.push(w),
         }}
       />
     </>
   )
 }
 
-const q = (id: string) => host.querySelector(`[data-testid="${id}"]`) as HTMLElement | null
+const q = (id: string) => document.querySelector(`[data-testid="${id}"]`) as HTMLElement | null
 const flush = () => act(async () => { await new Promise((r) => setTimeout(r, 30)) })
 const click = (el: Element | null) => act(async () => { (el as HTMLElement).click() })
 const keyOn = (el: Element | null, key: string) =>
@@ -265,7 +270,6 @@ async function mount() {
 
 beforeEach(async () => {
   clicks = []
-  voiceAnswers.length = 0
   phone = false
   features = { research: false, transcribeOnly: true }
   fetcher = vi.fn()
@@ -302,7 +306,9 @@ describe('the + menu', () => {
     const plus = q('composer-plus') as HTMLButtonElement
     expect(plus.getAttribute('aria-haspopup')).toBe('menu')
     expect(plus.getAttribute('aria-expanded')).toBe('false')
-    expect(plus.getAttribute('aria-label')).toBeTruthy()
+    expect(plus.getAttribute('aria-label')).toBe('More: photo, sample label, web research, voice')
+    expect(q('composer-send')?.getAttribute('aria-label')).toBe('Send')
+    expect((q('composer-send') as HTMLButtonElement).disabled).toBe(true) // empty box
     // the scattered camera / mic buttons of the earlier composer are gone
     expect(q('composer-camera')).toBeNull()
     expect(q('composer-mic')).toBeNull()
@@ -312,7 +318,7 @@ describe('the + menu', () => {
     expect(menu).not.toBeNull()
     expect(plus.getAttribute('aria-expanded')).toBe('true')
     const labels = Array.from(menu.querySelectorAll('[role^="menuitem"]')).map((b) => b.textContent)
-    expect(labels.map((l) => l?.split(/(?=[A-Z][a-z]+ a |Photograph|Choose|Recorded|You can)/)[0])).toEqual([
+    expect(labels.map((l) => ['Take photo', 'Upload photo', 'Try a sample label', 'Ask by voice'].find((w) => l?.startsWith(w)))).toEqual([
       'Take photo',
       'Upload photo',
       'Try a sample label',
@@ -354,10 +360,12 @@ describe('the + menu', () => {
     const item = q('menu-research') as HTMLElement
     expect(item.getAttribute('role')).toBe('menuitemcheckbox')
     expect(item.getAttribute('aria-checked')).toBe('false')
+    expect(q('menu-research-state')?.textContent).toBe('Off')
     await click(item)
     expect(q('research-pill')?.textContent).toContain('Web research on')
     await click(q('composer-plus'))
     expect(q('menu-research')?.getAttribute('aria-checked')).toBe('true')
+    expect(q('menu-research-state')?.textContent).toBe('On')
     await keyOn(host.querySelector('[role="menu"]'), 'Escape')
     fetcher.mockResolvedValueOnce(res(200, { answer: { speakable: [], withheld: [] } }))
     await typeInto('Any news about LLZ?')
@@ -382,7 +390,7 @@ describe('photos', () => {
     expect(pick).toHaveBeenCalled()
     await upload()
     expect(q('photo-thumb')?.querySelector('img')?.getAttribute('src')).toBe('blob:thumb')
-    expect(q('composer-send')?.textContent).toBe('Send photo')
+    expect(q('composer-send')?.getAttribute('aria-label')).toBe('Send photo')
     const remove = q('photo-remove') as HTMLButtonElement
     expect(remove.getAttribute('aria-label')).toBe('Remove the attached photo')
     await click(remove)
@@ -390,7 +398,34 @@ describe('photos', () => {
     expect(fetcher).not.toHaveBeenCalled()
   })
 
-  it('Send sends the photo and then the words typed with it', async () => {
+  it('Send sends the photo; the words typed with it are asked after the reading, with its product code', async () => {
+    vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(() => undefined)
+    await upload()
+    let release: (r: Response) => void = () => undefined
+    const cand = { k_number: 'K990001', device_name: 'Sample viewer', applicant: 'Sample Co', product_code: 'QIH', why_matched: ['name'], why_not_matched: [], links: [] }
+    fetcher.mockImplementation((u: string) =>
+      u.endsWith('/v1/live/label')
+        ? new Promise<Response>((r) => (release = r))
+        : Promise.resolve(res(200, { answer: { speakable: [], withheld: [] } })),
+    )
+    await typeInto('Is this one recalled?')
+    await click(q('composer-send'))
+    await flush()
+    expect(calls('/v1/live/label')).toHaveLength(1)
+    expect(calls('/v1/live/label')[0][1]?.body).toBeInstanceOf(FormData)
+    expect(calls('/v1/live/ask')).toHaveLength(0) // two steps: the question waits for the reading
+    expect(q('photo-followup-note')?.textContent).toBe('Your question is sent after the photo reading.')
+    expect(q('photo-thumb')).toBeNull()
+    await act(async () => release(res(200, { mode: 'live', reading: { legibility: 'clear', fields: {} }, matches: { status: 'needs_person_to_confirm', candidates: [cand] }, trace: [] })))
+    await flush()
+    const sent = JSON.parse(calls('/v1/live/ask')[0][1]?.body as string)
+    expect(sent).toMatchObject({ question: 'Is this one recalled?', product_code: 'QIH' })
+    expect(host.querySelector('[data-via="photo"] img')?.getAttribute('alt')).toBe('Your photo of a device label')
+    expect(q('match-card')).not.toBeNull()
+    expect(q('confirmed-block')).toBeNull() // nothing is confirmed for the person
+  })
+
+  it('without a match code the words are asked as typed', async () => {
     vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(() => undefined)
     await upload()
     fetcher.mockImplementation(async (u: string) =>
@@ -401,11 +436,9 @@ describe('photos', () => {
     await typeInto('Is this one recalled?')
     await click(q('composer-send'))
     await flush()
-    expect(calls('/v1/live/label')).toHaveLength(1)
-    expect(calls('/v1/live/label')[0][1]?.body).toBeInstanceOf(FormData)
-    expect(JSON.parse(calls('/v1/live/ask')[0][1]?.body as string).question).toBe('Is this one recalled?')
-    expect(q('photo-thumb')).toBeNull()
-    expect(host.querySelector('[data-via="photo"] img')?.getAttribute('alt')).toBe('Your photo of a device label')
+    const sent = JSON.parse(calls('/v1/live/ask')[0][1]?.body as string)
+    expect(sent.question).toBe('Is this one recalled?')
+    expect('product_code' in sent).toBe(false)
     expect(q('no-match')).not.toBeNull()
   })
 
@@ -413,7 +446,8 @@ describe('photos', () => {
     await menuItem('take-photo')
     await flush()
     expect(q('camera-sheet')).not.toBeNull()
-    expect(host.querySelector('[role="dialog"]')?.getAttribute('aria-modal')).toBe('true')
+    expect(document.querySelector('[role="dialog"]')?.getAttribute('aria-modal')).toBe('true')
+    expect(q('camera-sheet')?.parentElement).toBe(document.body) // a portal: the scrim covers the sidebar too
     const video = q('camera-live') as HTMLVideoElement
     Object.defineProperty(video, 'videoWidth', { value: 640 })
     Object.defineProperty(video, 'videoHeight', { value: 480 })
@@ -505,8 +539,13 @@ describe('voice', () => {
     expect(document.activeElement).toBe(box())
     expect(host.querySelector('[role="listbox"]')).toBeNull() // focus moved by the page does not open the type-ahead
     expect(calls('/v1/live/ask')).toHaveLength(0)
-    expect(q('voice-left')?.textContent).toBe('7 voice questions left today')
-    // "Did you mean LLZ?" swaps the heard code only when clicked
+    // the voice questions left are in the "Ask by voice" item, not loose under the box
+    await click(q('composer-plus'))
+    expect(q('menu-voice')?.textContent).toContain('7 voice questions left today')
+    await keyOn(host.querySelector('[role="menu"]'), 'Escape')
+    // "Did you mean LLZ? Use LLZ" is one chip inside the box; it swaps the heard code only when clicked
+    expect(q('message-box')?.contains(q('did-you-mean'))).toBe(true)
+    expect(q('did-you-mean')?.textContent).toContain('Did you mean LLZ?')
     expect(q('did-you-mean')?.textContent).toContain('LLC')
     await click(q('did-you-mean-code'))
     expect(box().value).toBe('What changed this week for LLZ?')
@@ -529,16 +568,39 @@ describe('voice', () => {
     expect(calls('/v1/live/ask')).toHaveLength(0)
   })
 
-  it('an API without transcribe-only keeps the one-call voice question', async () => {
+  it('without transcribe-only confirmed by the API, voice opens the recorded run and never records or sends', async () => {
     await act(async () => root.unmount())
     host.remove()
     features = { research: false, transcribeOnly: false }
     await mount()
+    await click(q('composer-plus'))
+    expect(q('menu-voice')?.textContent).toContain('Voice needs the live service')
+    await click(q('menu-voice'))
+    expect(clicks).toEqual(['recorded-mic'])
+    expect(q('voice-bar')).toBeNull()
+    expect(fetcher).not.toHaveBeenCalled()
+  })
+
+  it('at 1:00 the recording pauses (not sent) until Stop; "Stops at 1:00" shows from 0:45', async () => {
+    const t0 = Date.now()
+    const now = vi.spyOn(Date, 'now').mockReturnValue(t0)
     await startVoice()
+    now.mockReturnValue(t0 + 46_000)
+    await act(async () => { await new Promise((r) => setTimeout(r, 260)) })
+    expect(q('voice-limit')?.textContent).toBe('Stops at 1:00')
+    now.mockReturnValue(t0 + 61_000)
+    await act(async () => { await new Promise((r) => setTimeout(r, 260)) })
+    expect(FakeMediaRecorder.last?.state).toBe('paused')
+    expect(q('voice-bar')?.dataset.limit).toBe('true')
+    expect(q('voice-timer')?.textContent).toBe('1:00')
+    expect(q('voice-limit')?.textContent).toBe('Limit reached — press Stop to use it or ✕ to discard')
+    expect((q('voice-pause') as HTMLButtonElement).disabled).toBe(true)
+    expect(fetcher).not.toHaveBeenCalled() // no voice question is used yet
+    fetcher.mockResolvedValueOnce(res(200, { heard: 'What changed this week for LLZ?', did_you_mean: [] }))
     await click(q('voice-stop'))
     await flush()
-    expect(voiceAnswers).toHaveLength(1)
-    expect(fetcher).not.toHaveBeenCalled()
+    expect(calls(VOICE_PATH)).toHaveLength(1)
+    expect(box().value).toBe('What changed this week for LLZ?')
   })
 })
 
@@ -575,7 +637,7 @@ describe('the camera dialog on its own', () => {
     const onClose = vi.fn()
     await act(async () => root.render(<CameraSheet onUse={() => undefined} onClose={onClose} onFail={() => undefined} />))
     await flush()
-    await keyOn(host.querySelector('[role="dialog"]'), 'Escape')
+    await keyOn(document.querySelector('[role="dialog"]'), 'Escape')
     expect(onClose).toHaveBeenCalled()
   })
 })

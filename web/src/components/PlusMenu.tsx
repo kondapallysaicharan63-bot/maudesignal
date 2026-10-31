@@ -6,6 +6,8 @@ import { Icon, type IconName } from '../icons'
 
 export interface MenuItem {
   id: string
+  /** Shown but not usable (aria-disabled); the hint says why. */
+  disabled?: boolean
   label: string
   icon: IconName
   /** A second line under the label. */
@@ -68,9 +70,12 @@ export function PlusMenu({ items, disabled = false }: { items: MenuItem[]; disab
       <button
         ref={btn}
         type="button"
-        className={['ws-icon-btn min-h-11 min-w-11 !rounded-sm border !border-rule-strong', open ? '!bg-sunk !text-ink' : ''].join(' ')}
-        aria-label="Add a photo, a sample label or a voice question"
-        title="Add a photo, a sample label or a voice question"
+        className={[
+          'inline-flex h-11 w-11 items-center justify-center rounded-full bg-transparent text-ink-2 hover:bg-sunk hover:text-ink',
+          open ? '!bg-sunk !text-ink' : '',
+        ].join(' ')}
+        aria-label="More: photo, sample label, web research, voice"
+        title="More: photo, sample label, web research, voice"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
@@ -125,12 +130,14 @@ export function PlusMenu({ items, disabled = false }: { items: MenuItem[]; disab
                 type="button"
                 role={check ? 'menuitemcheckbox' : 'menuitem'}
                 aria-checked={check ? it.checked : undefined}
+                aria-disabled={it.disabled || undefined}
                 tabIndex={i === active ? 0 : -1}
                 data-testid={`menu-${it.id}`}
-                onClick={() => choose(it)}
+                onClick={() => !it.disabled && choose(it)}
                 onMouseMove={() => i !== active && setActive(i)}
                 className={[
-                  'flex min-h-11 w-full items-center gap-3 rounded-xs px-3 py-2 text-left text-[16px] leading-snug text-ink focus-visible:!-outline-offset-2',
+                  'flex min-h-11 w-full items-center gap-3 rounded-sm px-3 py-2 text-left leading-snug text-ink focus-visible:!-outline-offset-2',
+                  it.disabled ? 'cursor-not-allowed opacity-60' : '',
                   i === active ? 'bg-accent-soft shadow-[inset_4px_0_0_var(--accent)]' : 'hover:bg-sunk',
                 ].join(' ')}
               >
@@ -138,18 +145,20 @@ export function PlusMenu({ items, disabled = false }: { items: MenuItem[]; disab
                   <Icon name={it.icon} size={20} />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block font-semibold">{it.label}</span>
+                  <span className="block text-[17px] font-semibold">{it.label}</span>
                   {it.hint && <span className="ws-wrap block text-[15px] text-ink-2">{it.hint}</span>}
                 </span>
                 {check && (
-                  <span
-                    aria-hidden="true"
-                    className={[
-                      'inline-flex h-6 w-10 shrink-0 items-center rounded-sm border p-0.5',
-                      it.checked ? 'justify-end border-accent bg-accent' : 'justify-start border-rule-strong bg-sunk',
-                    ].join(' ')}
-                  >
-                    <span className={['block h-4 w-4 rounded-full', it.checked ? 'bg-surface' : 'bg-ink-2'].join(' ')} />
+                  <span className="flex shrink-0 items-center gap-2" aria-hidden="true" data-testid={`menu-${it.id}-state`}>
+                    <span className={['text-[15px] font-semibold', it.checked ? 'text-accent' : 'text-ink-2'].join(' ')}>{it.checked ? 'On' : 'Off'}</span>
+                    <span
+                      className={[
+                        'inline-flex h-6 w-10 items-center rounded-sm border p-0.5',
+                        it.checked ? 'justify-end border-accent bg-accent' : 'justify-start border-rule-strong bg-sunk',
+                      ].join(' ')}
+                    >
+                      <span className={['block h-4 w-4 rounded-full', it.checked ? 'bg-surface' : 'bg-ink-2'].join(' ')} />
+                    </span>
                   </span>
                 )}
               </button>

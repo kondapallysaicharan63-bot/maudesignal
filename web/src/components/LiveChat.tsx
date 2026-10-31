@@ -207,6 +207,14 @@ function PhotoTurn({ turn, onRecordedLabel }: { turn: LiveTurn; onRecordedLabel?
         ) : (
           <p className="m-0 px-2 py-1">Photo of a device label</p>
         )}
+        {turn.followUp && (
+          <>
+            <p className="ws-wrap m-0 mt-2 whitespace-pre-wrap px-1">{turn.followUp}</p>
+            <p className="m-0 mt-1 px-1 text-[15px] text-ink-2" data-testid="photo-followup-note">
+              {turn.status === 'pending' ? 'Your question is sent after the photo reading.' : 'Your question was sent after the photo reading.'}
+            </p>
+          </>
+        )}
       </div>
       {turn.status === 'pending' && (
         <p role="status" aria-live="polite" className="m-0 text-[16px] text-ink-2" data-testid="label-busy">

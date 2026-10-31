@@ -40,6 +40,8 @@ export interface LiveTurn {
   label?: LabelResponse
   /** A photo turn that failed: offer the stored label runs. */
   offerRecordedLabel?: boolean
+  /** A photo turn: the words typed with the photo, asked after the reading (shown in the bubble). */
+  followUp?: string
 }
 
 export interface LiveChat {
@@ -59,8 +61,11 @@ export interface LiveChat {
   /** Returns a message when the question was refused before sending (too short or too long), otherwise null. */
   ask: (q: string, o?: { productCode?: string | null; research?: boolean }) => string | null
   askVoice: (wav: Blob) => Promise<void>
-  /** A label photo sent from the message box: one turn with the picture and the reading. */
-  askPhoto: (image: Blob) => void
+  /**
+   * A label photo sent from the message box: one turn with the picture and the reading. Words typed with it are asked
+   * after the reading returns, with the top match's product code when it has one (otherwise as typed).
+   */
+  askPhoto: (image: Blob, followUp?: { question: string; research?: boolean } | null) => void
   /** The words of a recording only (nothing is asked): they go into the message box for editing. */
   transcribe: (wav: Blob) => Promise<TranscribeResult>
   /** Saves one web-research item to the audit trail ('unsupported' when the server has no such route). */
@@ -77,6 +82,12 @@ interface Options {
 }
 
 let nextId = 1
+
+/** The product code a question about a label photo is asked with: the top match's, when it is a proper code. */
+export function productCodeOf(label: LabelResponse): string | null {
+  const c = label.matches.candidates[0]?.product_code?.trim().toUpperCase() ?? ''
+  return /^[A-Z]{3}$/.test(c) ? c : null
+}
 
 export function useLiveChat(o: Options): LiveChat {
   const [turns, setTurns] = useState<LiveTurn[]>([])
@@ -173,21 +184,28 @@ export function useLiveChat(o: Options): LiveChat {
   )
 
   const askPhoto = useCallback(
-    (image: Blob): void => {
+    (image: Blob, followUp?: { question: string; research?: boolean } | null): void => {
       const id = nextId++
       const url = typeof URL.createObjectURL === 'function' ? URL.createObjectURL(image) : undefined
-      put([...turnsRef.current, { id, via: 'photo', question: null, status: 'pending', image: url }])
+      put([...turnsRef.current, { id, via: 'photo', question: null, status: 'pending', image: url, ...(followUp ? { followUp: followUp.question } : {}) }])
       const { apiBase } = opts.current
+      const thenAsk = (code: string | null) => {
+        if (followUp) ask(followUp.question, { productCode: code, research: followUp.research === true })
+      }
       postLabel(image, { apiBase, fetcher })
-        .then((label) => patch(id, { status: 'done', label }))
+        .then((label) => {
+          patch(id, { status: 'done', label })
+          thenAsk(productCodeOf(label))
+        })
         .catch((e: unknown) => {
+          thenAsk(null)
           const err = e instanceof LiveError ? e : new LiveError('network', 'The live service could not be reached.')
           if (err.kind === 'rate_limited') patch(id, { status: 'error', error: `${LIMIT_TEXT}. The recorded label runs are available.`, offerRecordedLabel: true })
           else if (err.kind === 'patient_data' || err.kind === 'invalid_input' || err.kind === 'too_large') patch(id, { status: 'error', error: err.message })
           else patch(id, { status: 'error', error: `${err.message} The recorded label runs are available.`, offerRecordedLabel: true })
         })
     },
-    [fetcher, patch, put],
+    [ask, fetcher, patch, put],
   )
 
   const transcribe = useCallback(

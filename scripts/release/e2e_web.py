@@ -1097,6 +1097,70 @@ def s_research_hidden(env: Env) -> str:
     return "hidden without features.research; an on/off item when offered"
 
 
+def s_voice_limit(env: Env) -> str:
+    """At 1:00 the recording pauses and waits: no voice request until the person presses Stop."""
+    voice_engine(env)
+    seen = mock_voice(env)
+    mock_health(env)
+    env.page.clock.install()
+    env.open()
+    need_menu(env)
+    start_voice(env)
+    env.page.wait_for_timeout(800)
+    env.page.clock.fast_forward("00:46")
+    env.page.wait_for_function(
+        "(() => { const e = document.querySelector('[data-testid=voice-limit]');"
+        " return !!e && e.textContent.includes('Stops at 1:00') })()",
+        timeout=10_000,
+    )
+    env.page.clock.fast_forward("00:16")
+    env.page.wait_for_selector("[data-testid=voice-bar][data-limit=true]", timeout=10_000)
+    said = env.page.get_by_test_id("voice-limit").inner_text()
+    if "Limit reached" not in said:
+        raise AssertionError(f"the limit is not explained: {said!r}")
+    env.page.wait_for_timeout(1000)
+    if seen:
+        raise AssertionError("a voice request was sent at the limit before Stop was pressed")
+    env.shot("recording-limit")
+    env.page.get_by_test_id("voice-stop").click()
+    env.page.wait_for_function(
+        "want => { const t = document.querySelector(\"textarea[aria-label='Ask a question']\");"
+        " return !!t && t.value === want }",
+        arg=HEARD,
+        timeout=20_000,
+    )
+    if len(seen) != 1:
+        raise AssertionError(f"{len(seen)} voice requests after one Stop")
+    return "paused at 1:00 with the limit message; no voice request until Stop; then one"
+
+
+def s_voice_unavailable(env: Env) -> str:
+    """Without voice_transcribe_only in /v1/health, voice never records: it opens the recorded run."""
+    seen = mock_voice(env)
+    env.page.route(
+        HEALTH_ROUTE,
+        lambda r: r.fulfill(
+            status=200,
+            headers=CORS_ANY,
+            content_type="application/json",
+            body=json.dumps({"status": "ok", "features": {}}),
+        ),
+    )
+    env.open()
+    need_menu(env)
+    env.page.locator(PLUS).click()
+    hint = env.page.get_by_test_id("menu-voice").inner_text()
+    if "Voice needs the live service" not in hint:
+        raise AssertionError(f"the voice item does not say it needs the live service: {hint!r}")
+    env.page.get_by_test_id("menu-voice").click()
+    env.page.wait_for_timeout(1000)
+    if env.page.get_by_test_id("voice-bar").count():
+        raise AssertionError("a recording started although transcribe-only is not offered")
+    if seen:
+        raise AssertionError("a voice request was sent although transcribe-only is not offered")
+    return "voice item says it needs the live service; opens the recorded run; nothing recorded or sent"
+
+
 COMPOSER_SCENARIOS: tuple[tuple[str, Callable[[Env], str]], ...] = (
     ("+ menu: open, keyboard, Escape", s_plus_menu),
     ("voice: cancel sends nothing", s_voice_cancel),
@@ -1106,6 +1170,8 @@ COMPOSER_SCENARIOS: tuple[tuple[str, Callable[[Env], str]], ...] = (
     ("photo: camera refused, file picker with reason", s_camera_refused),
     ("photo: thumbnail remove", s_thumbnail_remove),
     ("research toggle hidden without the feature", s_research_hidden),
+    ("voice: 1:00 limit pauses, no request until Stop", s_voice_limit),
+    ("voice: unavailable without transcribe-only", s_voice_unavailable),
 )
 
 

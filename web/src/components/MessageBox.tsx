@@ -5,7 +5,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { STREAMLIT_URL } from '../data'
 import { Icon } from '../icons'
-import { MAX_SOURCE_BYTES, transcribeErrorText, type TranscribeResult } from '../live/api'
+import { checkQuestion, MAX_SOURCE_BYTES, transcribeErrorText, type TranscribeResult } from '../live/api'
 import { applyCodeSuggestion, heardCodeFor } from '../live/codeSuggest'
 import type { ApiFeatures } from '../live/features'
 import { fileToJpeg, PHOTO_ENCODE_FAILED_TEXT, PHOTO_TOO_BIG_TEXT, PhotoError } from '../live/photo'
@@ -14,19 +14,20 @@ import { closestThread } from '../match'
 import { exactKnownCode, moveActive, suggest, type CodeInfo, type Suggestion } from '../typeahead'
 import type { Thread } from '../types'
 import { CameraSheet } from './CameraSheet'
-import { DISCLAIMER, DISCLAIMER_SHORT, Marked, SUGGESTED } from './Composer'
+import { DISCLAIMER, Marked, SUGGESTED } from './Composer'
 import { PlusMenu, type MenuItem } from './PlusMenu'
 import { VoiceBar } from './VoiceBar'
 
 export interface MessageBoxLive {
   /** Sends a typed (or transcribed and edited) question; returns a message when it was refused before sending. */
   onAsk: (q: string, o: { research: boolean }) => string | null
-  /** Sends a label photo (one turn in the conversation). */
-  onPhoto: (jpeg: Blob) => void
-  /** The words of a recording only; nothing is asked. */
+  /**
+   * Sends a label photo (one turn in the conversation). Words typed with it are asked after the reading returns, with
+   * the top match's product code when it has one.
+   */
+  onPhoto: (jpeg: Blob, followUp: { question: string; research: boolean } | null) => void
+  /** The words of a recording only; nothing is asked. Used only when GET /v1/health confirms voice_transcribe_only. */
   transcribe: (wav: Blob) => Promise<TranscribeResult>
-  /** Used when the API has no transcribe-only option: the recording is asked in one call, as before. */
-  onVoiceAnswer: (wav: Blob) => void
   busy: boolean
   features: ApiFeatures
 }
@@ -85,6 +86,12 @@ export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera
   const [voiceLeft, setVoiceLeft] = useState<number | null>(null)
 
   const researchOn = !!live?.features.research && research
+  // Voice in the box needs transcribe-only, confirmed by the API. Until then the item opens the recorded voice run;
+  // a recording is never sent as a question by itself.
+  const voiceLive = !!live?.features.transcribeOnly
+  const [showDetails, setShowDetails] = useState(false)
+  // While the box is in use, the alert buddy's speech bubble (top bar) is hidden so nothing overlaps.
+  const [inUse, setInUse] = useState(false)
 
   // Focus moved here by the page (after a transcript, a photo, Cancel) does not open the list of recorded questions;
   // only the person's own focus or typing does.
@@ -99,12 +106,9 @@ export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera
 
   // The recording: Stop -> WAV -> words in the box (or, on an older API, the one-call voice answer as before).
   const rec = useRecorder({
+    pauseAtLimit: true,
     onResult: (r) => {
-      if (!live) return
-      if (!live.features.transcribeOnly) {
-        live.onVoiceAnswer(r.wav)
-        return
-      }
+      if (!live || !live.features.transcribeOnly) return // never sent without the transcribe-only option
       setTranscribing(true)
       live
         .transcribe(r.wav)
@@ -132,6 +136,14 @@ export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera
     onError: (message) => setVoiceNote(message),
   })
   const recording = rec.state !== 'idle' || transcribing
+  useEffect(() => {
+    const on = inUse || recording || camera
+    if (on) document.body.dataset.composerActive = 'true'
+    else delete document.body.dataset.composerActive
+    return () => {
+      delete document.body.dataset.composerActive
+    }
+  }, [inUse, recording, camera])
   // After Cancel the box comes back with focus in it.
   const wasRecording = useRef(false)
   useEffect(() => {
@@ -191,7 +203,7 @@ export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera
   }
 
   const startVoice = () => {
-    if (!live) return onMic()
+    if (!live || !voiceLive) return onMic()
     setVoiceNote(null)
     setDidYouMean([])
     void rec.start()
@@ -204,7 +216,19 @@ export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera
     ...(live?.features.research
       ? [{ id: 'research', label: 'Research the web', icon: 'globe' as const, hint: 'Outside pages, not FDA records', checked: research, onSelect: () => setResearch((r) => !r) }]
       : []),
-    { id: 'voice', label: 'Ask by voice', icon: 'mic', hint: 'You can edit the words before sending', onSelect: startVoice },
+    {
+      id: 'voice',
+      label: 'Ask by voice',
+      icon: 'mic',
+      hint: !live
+        ? 'Opens the recorded voice run'
+        : !voiceLive
+          ? 'Voice needs the live service — opens the recorded voice run'
+          : voiceLeft !== null
+            ? `${voiceLeft} voice ${voiceLeft === 1 ? 'question' : 'questions'} left today · you edit the words before sending`
+            : 'You edit the words before sending',
+      onSelect: startVoice,
+    },
   ]
 
   const pick = (sg: Suggestion) => {
@@ -221,14 +245,18 @@ export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera
     if (photo && live) {
       if (live.busy) return setAskError('Wait for the current answer to finish, then send the next one.')
       const q = text.trim()
-      live.onPhoto(photo.blob)
-      setPhoto(null)
-      // Any words typed with the photo are asked as a question after the label reading.
       if (q) {
-        const refused = live.onAsk(q, { research: researchOn })
-        setAskError(refused)
-        if (!refused) setText('')
+        try {
+          checkQuestion(q)
+        } catch (e) {
+          return setAskError((e as Error).message)
+        }
       }
+      // Any words typed with the photo are asked after the label reading (two steps; the turn says so).
+      live.onPhoto(photo.blob, q ? { question: q, research: researchOn } : null)
+      setPhoto(null)
+      setText('')
+      setAskError(null)
       setDidYouMean([])
       inputRef.current?.focus()
       return
@@ -276,6 +304,10 @@ export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera
       className={['relative shrink-0 border-t border-rule bg-paper px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 md:px-6', open ? 'z-40' : 'z-20'].join(' ')}
       data-testid="composer"
       data-composer="menu"
+      onFocusCapture={() => setInUse(true)}
+      onBlurCapture={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setInUse(false)
+      }}
     >
       {open && (
         <div
@@ -373,10 +405,14 @@ export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera
           </div>
         )}
         {recording ? (
-          <VoiceBar rec={rec} transcribing={transcribing} />
+          <VoiceBar
+            rec={rec}
+            transcribing={transcribing}
+            title={voiceLeft !== null ? `${voiceLeft} voice ${voiceLeft === 1 ? 'question' : 'questions'} left today` : undefined}
+          />
         ) : (
           <form
-            className="relative z-10 rounded-md border border-rule-strong bg-surface p-1.5"
+            className="relative z-10 rounded-lg border border-rule bg-surface p-2 shadow-[var(--shadow-pop)]"
             onSubmit={(e) => {
               e.preventDefault()
               submit()
@@ -446,19 +482,59 @@ export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera
                 </p>
               </div>
             )}
+            {didYouMean.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 px-2 pb-1 pt-0.5 text-[16px] text-ink" data-testid="did-you-mean">
+                <span className="ws-pill ws-pill--ring flex-wrap bg-accent-soft py-1 text-ink">
+                  <span>
+                    Did you mean <span className="ms-code !text-ink">{didYouMean.join(' or ')}</span>?
+                  </span>
+                  <span className="sr-only">Heard {heardCodeFor(text, didYouMean[0]) ?? 'a code'}, which is not a product code on file.</span>
+                  {didYouMean.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      className="ml-1 inline-flex min-h-11 items-center rounded-full px-3 font-semibold text-accent underline hover:bg-sunk"
+                      onClick={() => {
+                        setText((t) => applyCodeSuggestion(t, c))
+                        setDidYouMean([])
+                        focusBox(true)
+                      }}
+                      aria-label={`Use ${c} instead of the heard code`}
+                      data-testid="did-you-mean-code"
+                    >
+                      Use {c}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-ink-2 hover:bg-sunk"
+                    onClick={() => {
+                      setDidYouMean([])
+                      focusBox(true)
+                    }}
+                    aria-label="Keep the words as heard"
+                  >
+                    <Icon name="close" size={16} />
+                  </button>
+                </span>
+              </div>
+            )}
             {(photo || researchOn) && (
               <div className="flex flex-wrap items-center gap-2 px-1.5 pb-1.5 pt-0.5" data-testid="attachments">
                 {photo && (
-                  <span className="relative inline-block" data-testid="photo-thumb">
-                    <img src={photo.url} alt="Attached label photo" className="block h-16 w-16 rounded-sm border border-rule object-cover" />
+                  <span className="relative inline-block h-[72px] w-[72px]" data-testid="photo-thumb">
+                    <img src={photo.url} alt="Attached label photo" className="block h-full w-full rounded-md border border-rule object-cover" />
+                    {/* 44 x 44 hit area; the visible 24px circle sits 6px inside the thumbnail's corner. */}
                     <button
                       type="button"
                       onClick={removePhoto}
                       aria-label="Remove the attached photo"
-                      className="absolute -right-2 -top-2 inline-flex h-7 w-7 items-center justify-center rounded-sm border border-rule-strong bg-surface text-ink hover:bg-sunk"
+                      className="group absolute right-0 top-0 flex h-11 w-11 items-start justify-end p-[6px]"
                       data-testid="photo-remove"
                     >
-                      <Icon name="close" size={14} />
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-rule-strong bg-surface text-ink group-hover:bg-sunk">
+                        <Icon name="close" size={14} />
+                      </span>
                     </button>
                   </span>
                 )}
@@ -529,57 +605,40 @@ export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera
               <span className="min-w-0 flex-1" />
               <button
                 type="submit"
-                className={live ? 'ms-btn ws-btn-primary !min-h-11 shrink-0' : 'ms-btn ms-btn--secondary !min-h-11 shrink-0'}
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent text-[var(--on-accent)] hover:opacity-90 disabled:bg-sunk disabled:text-ink-3 disabled:hover:opacity-100"
                 disabled={live?.busy || (!typed && !photo)}
+                aria-label={live ? (photo ? 'Send photo' : 'Send') : 'Open the closest recorded answer'}
+                title={live ? (photo ? 'Send photo' : 'Send') : 'Open the closest recorded answer'}
                 data-testid="composer-send"
               >
-                {live ? (photo ? 'Send photo' : 'Send') : 'Open'}
+                <Icon name="send" size={22} />
               </button>
             </div>
           </form>
         )}
-        {(didYouMean.length > 0 || voiceLeft !== null) && !recording && (
-          <div className="relative z-10 mt-1 flex flex-wrap items-center gap-2 text-[16px] text-ink-2" data-testid="voice-after">
-            {didYouMean.length > 0 && (
-              <span className="flex flex-wrap items-center gap-2" data-testid="did-you-mean">
-                <span>
-                  Heard <span className="ms-code !text-ink">{heardCodeFor(text, didYouMean[0]) ?? 'a code'}</span>, not a product code on file. Did you mean{' '}
-                  {didYouMean.join(' or ')}?
-                </span>
-                {didYouMean.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    className="ms-btn ms-btn--secondary !min-h-11"
-                    onClick={() => {
-                      setText((t) => applyCodeSuggestion(t, c))
-                      setDidYouMean([])
-                      focusBox(true)
-                    }}
-                    aria-label={`Use ${c} instead of the heard code`}
-                    data-testid="did-you-mean-code"
-                  >
-                    Use <span className="ms-code !text-ink">{c}</span>
-                  </button>
-                ))}
-              </span>
-            )}
-            {voiceLeft !== null && (
-              <span data-testid="voice-left">
-                {voiceLeft} voice {voiceLeft === 1 ? 'question' : 'questions'} left today
-              </span>
-            )}
-          </div>
-        )}
-        <p className="relative z-10 m-0 mt-1 text-center text-[17px] leading-snug text-ink-2" data-testid="disclaimer">
-          <span className="hidden sm:inline">{DISCLAIMER}</span>
-          <span className="sm:hidden">{DISCLAIMER_SHORT}</span>
-          {live ? (
-            <span className="hidden md:inline"> Enter sends, Shift+Enter adds a line. If the live service is unavailable, recorded runs are shown and labelled.</span>
-          ) : (
-            <span className="hidden md:inline"> Photo and voice show a recorded run until the live API answers.</span>
+        <div className="relative z-10 m-0 mt-1.5 text-center text-[15px] leading-snug text-ink-2" data-testid="disclaimer">
+          <p className="m-0">
+            Signals for review. Not medical advice.{' '}
+            <button
+              type="button"
+              className="inline-flex min-h-8 items-center px-1 font-semibold text-ink-2 underline hover:text-ink"
+              aria-expanded={showDetails}
+              aria-controls="composer-details"
+              onClick={() => setShowDetails((v) => !v)}
+              data-testid="disclaimer-details"
+            >
+              Details
+            </button>
+          </p>
+          {showDetails && (
+            <p id="composer-details" className="ws-wrap m-0 mx-auto mt-1 max-w-2xl text-[15px]">
+              {DISCLAIMER}{' '}
+              {live
+                ? 'Enter sends, Shift+Enter adds a line. If the live service is unavailable, recorded runs are shown and labelled.'
+                : 'Photo and voice show a recorded run until the live API answers.'}
+            </p>
           )}
-        </p>
+        </div>
       </div>
     </div>
   )

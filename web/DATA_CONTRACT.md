@@ -260,15 +260,19 @@ renders unchanged. Code: `src/components/MessageBox.tsx`, `PlusMenu.tsx`, `Voice
   "Use LLZ". Errors: `503 {code: "unavailable", message}` (no model key, live calls off, cost cap, transcription
   failed; the message is shown and ends "Type your question instead"), `422` no speech / patient data, `429` the
   daily voice limit (the server's message is shown). Server switch: `MAUDESIGNAL_VOICE_TRANSCRIBE_ONLY` (default on;
-  off, the option is refused with 422 and health says `voice_transcribe_only: false`). When the API does not offer
-  it, the page keeps the one-call voice question as before.
+  off, the option is refused with 422 and health says `voice_transcribe_only: false`). Until health confirms it
+  (pending, failed or an older API), "Ask by voice" says "Voice needs the live service" and opens the recorded voice
+  run; the message box never sends a recording as a question by itself. At 1:00 a recording pauses ("Limit reached
+  — press Stop to use it or ✕ to discard"); nothing is sent and no voice question is used until Stop.
 - "Research the web" (shown only with `features.research === true`) adds `research: true` to the ask body. An answer
   may then carry `research: {status, items: [{title, url, date, source}], label}`, shown under the answer headed
   exactly "Web research — not FDA records, not verified by the gate"; each title is a link (`target=_blank`,
   `rel=noopener noreferrer`) with its date and source. "Save to audit" posts `{url, title, date}` to
   `POST /v1/live/research/save` and shows "Saved"; a 404 hides the button. Both routes belong to another track.
 - A photo (camera, phone camera or file) is attached as a thumbnail with a remove button; Send posts it to
-  `/v1/live/label` as one conversation turn, then any words typed with it as an ask.
+  `/v1/live/label` as one conversation turn. Words typed with it are asked after the reading returns (the turn says
+  "Your question is sent after the photo reading"), with `product_code` set to the top match's code when it has one,
+  otherwise as typed. Nothing is confirmed for the person.
 
 The stub used by the browser tests is `qa/live_stub.py`; it implements this contract, checks the WAV header and the
 JPEG (no EXIF) and logs request bodies at `GET /__log`. Run `python3 qa/e2e_live.py` from `web/`.

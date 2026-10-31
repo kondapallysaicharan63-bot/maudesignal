@@ -2,6 +2,7 @@
 // photo. If the camera cannot be used (permission refused, no camera, a page that is not secure) the dialog closes and the
 // caller falls back to the file picker with a short reason. The picture is a fresh JPEG drawn from the video (no EXIF).
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Icon } from '../icons'
 import { frameToJpeg, PHOTO_ENCODE_FAILED_TEXT, PHOTO_TOO_BIG_TEXT, PhotoError } from '../live/photo'
 
@@ -117,8 +118,9 @@ export function CameraSheet({ onUse, onClose, onFail }: {
   }
 
   const btn = 'ms-btn !min-h-11 flex-1 sm:flex-none'
-  return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center p-3 sm:items-center" data-testid="camera-sheet">
+  // A portal to <body>, so the scrim covers the whole page (sidebar included), above every pane.
+  return createPortal(
+    <div className="fixed inset-0 z-[80] flex items-end justify-center p-3 sm:items-center" data-testid="camera-sheet">
       <div className="ws-scrim" aria-hidden="true" onClick={onClose} />
       <div
         ref={dialog}
@@ -199,6 +201,7 @@ export function CameraSheet({ onUse, onClose, onFail }: {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

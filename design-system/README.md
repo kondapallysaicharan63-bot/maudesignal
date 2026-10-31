@@ -85,7 +85,7 @@ Two families from Google Fonts, plus a mono for codes.
 - The overview is a 12-column bento grid, 116px rows, `space-4` gaps, max width 1220px, `space-10` side padding.
 - Order: Bar + dateline; HeroSignal 7×3 beside DeadlineRing 5×2 and AISummary 5×1; four StatTiles 3×2; SeverityMix 6×2 beside SignalList 6×2.
 - Below 960px: 6 columns, hero and lists full width. Below 640px: one column, in the same order.
-- Radius: `radius-xs` 2px for buttons, chips and badges; `radius-sm` 4px for icon buttons, nav and the mix bar; `radius-md` 8px for tiles; `radius-full` only for dots and the ring.
+- Radius: `radius-xs` 2px for buttons, chips and badges; `radius-sm` 4px for icon buttons, nav and the mix bar; `radius-md` 8px for tiles; `radius-lg` 20px for the chat message box only; `radius-full` only for dots, the ring and the message box's round + and Send buttons.
 - No shadows on tiles. `shadow-pop` only for menus and popovers.
 - Focus: 2px `focus-ring` outline, 2px offset.
 
