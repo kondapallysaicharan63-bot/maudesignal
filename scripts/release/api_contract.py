@@ -1229,7 +1229,9 @@ def check_mentions_injection(rep: Report, windows: set[str], secrets_: list[str]
         import os
 
         os.environ.setdefault("MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP", "1")
-        # isort: off  (first-party vs third-party depends on whether src/ has the connector)
+        # Import order depends on whether this checkout has src/maudesignal/connector
+        # (first-party vs third-party), so ruff must not sort this block.
+        # isort: off
         from fastapi.testclient import TestClient
         from maudesignal.connector.app import Settings, create_app
         from maudesignal.connector.live import LiveBackends
