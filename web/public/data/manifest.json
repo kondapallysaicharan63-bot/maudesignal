@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "generated_utc": "2026-10-30T04:14:01Z",
-  "source_commit": "a7e9288d6747ad2c005c5a2642f2427b396cde29",
+  "generated_utc": "2026-10-31T09:35:41Z",
+  "source_commit": "109e519e4ece257fe356e286dcae35b6c2202350",
   "files": [
     "threads.json",
     "evidence.json",
@@ -14,7 +14,9 @@
     "investigations.json",
     "protocol.json",
     "sources.json",
-    "schedules.json"
+    "schedules.json",
+    "alerts.json",
+    "mentions.json"
   ],
   "assets": [
     "dossier/SER-LLZ-20260831-001-draft.pdf",
@@ -28,10 +30,10 @@
     "vision/label-welch-module.jpg"
   ],
   "header": {
-    "claims_verified": 89,
-    "sentences_verified": 61,
+    "claims_verified": 97,
+    "sentences_verified": 69,
     "sentences_withheld": 1,
-    "answers": 27,
+    "answers": 30,
     "audit_chain_ok": true
   },
   "notes": []

@@ -14,10 +14,10 @@
     {
       "id": "ai-sweep",
       "label": "AI device sweep",
-      "cron": "23 12 * * 1",
+      "cron": null,
       "workflow": ".github/workflows/ai-sweep.yml",
       "last_result": {
-        "date": "2026-10-29T07:42:52Z",
+        "date": "2026-10-30T02:55:38Z",
         "flagged": 6,
         "checked": 181
       }

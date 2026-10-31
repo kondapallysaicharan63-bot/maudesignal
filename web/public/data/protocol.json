@@ -877,6 +877,119 @@
         "run_at": "2026-10-28T20:45:33+00:00"
       }
     ],
+    "00-voice-take1": [
+      {
+        "tool": "weekly_signals",
+        "dataset": "openFDA MAUDE (stored copy)",
+        "filters": {},
+        "date_from": "20260825",
+        "date_to": "20260831",
+        "count": null,
+        "run_at": "2026-10-29T22:32:50+00:00"
+      },
+      {
+        "tool": "product_summary",
+        "dataset": "openFDA MAUDE (stored copy)",
+        "filters": {
+          "product_code": "LLZ"
+        },
+        "date_from": null,
+        "date_to": null,
+        "count": 121,
+        "run_at": "2026-10-29T22:32:50+00:00"
+      },
+      {
+        "tool": "my_device_types",
+        "dataset": null,
+        "filters": {},
+        "date_from": null,
+        "date_to": null,
+        "count": null,
+        "run_at": "2026-10-29T22:32:50+00:00"
+      },
+      {
+        "tool": "search_reports",
+        "dataset": "openFDA MAUDE (stored copy)",
+        "filters": {
+          "limit": 3,
+          "product_code": "LLZ"
+        },
+        "date_from": null,
+        "date_to": null,
+        "count": 121,
+        "run_at": "2026-10-29T22:32:50+00:00"
+      },
+      {
+        "tool": "get_report",
+        "dataset": "openFDA MAUDE (stored copy)",
+        "filters": {
+          "report_id": "50426770"
+        },
+        "date_from": null,
+        "date_to": null,
+        "count": null,
+        "run_at": "2026-10-29T22:32:50+00:00"
+      },
+      {
+        "tool": "report_sources",
+        "dataset": "openFDA MAUDE (stored copy)",
+        "filters": {
+          "product_code": "LLZ"
+        },
+        "date_from": null,
+        "date_to": null,
+        "count": 121,
+        "run_at": "2026-10-29T22:32:50+00:00"
+      }
+    ],
+    "00-voice-take4": [
+      {
+        "tool": "weekly_signals",
+        "dataset": "openFDA MAUDE (stored copy)",
+        "filters": {},
+        "date_from": "20260825",
+        "date_to": "20260831",
+        "count": null,
+        "run_at": "2026-10-29T22:33:52+00:00"
+      },
+      {
+        "tool": "compare_signals",
+        "dataset": "openFDA MAUDE (stored copy)",
+        "filters": {
+          "product_codes": [
+            "LLZ"
+          ]
+        },
+        "date_from": "20260825",
+        "date_to": "20260831",
+        "count": null,
+        "run_at": "2026-10-29T22:33:52+00:00"
+      },
+      {
+        "tool": "product_summary",
+        "dataset": "openFDA MAUDE (stored copy)",
+        "filters": {
+          "product_code": "LLZ"
+        },
+        "date_from": null,
+        "date_to": null,
+        "count": 121,
+        "run_at": "2026-10-29T22:33:52+00:00"
+      }
+    ],
+    "00-voice-take6": [
+      {
+        "tool": "report_sources",
+        "dataset": "openFDA MAUDE (stored copy)",
+        "filters": {
+          "product_code": "LLZ"
+        },
+        "date_from": null,
+        "date_to": null,
+        "count": 121,
+        "run_at": "2026-10-29T22:34:21+00:00"
+      }
+    ],
     "00-voice-a": [],
     "00-voice-b": []
   }

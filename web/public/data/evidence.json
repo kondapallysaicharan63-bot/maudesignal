@@ -648,6 +648,186 @@
       "brand": "IntelliSpace Cardiovascular",
       "excerpt": "Philips identified a software defect in ISCV (Intelli Space Cardiovascular) system wherein Dr (b)(6) experienced another reported issue this afternoon. The device was in clinical use at the time of event. Based on the new information that Philips became aware, this has been determined to be a reportable malfunction. Under specific circumstances, it could potentially lead to delayed diagnosis. Give",
       "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50346085"
+    },
+    "25675105": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLISPACE CARDIOVASCULAR) SYSTEM WHEREIN ISCV REPORT MANAGER NOT ALLOWING SAVE. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO DELAYED DIAGNOSIS. GIVEN THE DEFECT¿S NATURE A",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25675105"
+    },
+    "25675201": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHEREIN THE QIDO WADO INTEGRATION WITH EUNITY CONTAINS BLANK SPACES AFTER MRN. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO DELAYED DIAGN",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25675201"
+    },
+    "25675205": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHEREIN THE QIDO WADO IS MODIFYING TRANSFER SYNTAX WHEN IMAGES ARE PULLED BY THIRD PARTY CAUSING UNREADABLE IMAGES. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT CO",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25675205"
+    },
+    "25675206": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHEREIN FETCHING OF MIGRATED STUDIES FAILING. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO DELAYED DIAGNOSIS. GIVEN THE DEFECT¿S NATURE A",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25675206"
+    },
+    "25675207": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHEREIN ISSUE: GO NO WEB THUMBNAILS. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO DELAYED DIAGNOSIS. GIVEN THE DEFECT¿S NATURE AND ITS PO",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25675207"
+    },
+    "25675209": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLISPACE CARDIOVASCULAR) SYSTEM WHEREIN A STUDY COULDN¿T BE SAVED FROM ECHO MODULE. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO DELAYED DIAGNOSIS. GIVEN THE DEFECT¿S NAT",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25675209"
+    },
+    "25675210": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT INTERNALLY IN ISCV (INTELLISPACE CARDIOVASCULAR) WHEREIN THERE IS NOT A WAY TO HIGHLIGHT STAT PATIENTS. THE ISSUE WAS IDENTIFIED INTERNALLY AND WAS NOT IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO D",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25675210"
+    },
+    "25675211": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLISPACE CARDIOVASCULAR) SYSTEM WHEREIN SERVER STABILITY REPEATED INTERNAL 500 ERRORS ON WEB SERVER. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO DELAYED DIAGNOSIS. GIVEN",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25675211"
+    },
+    "25676049": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHEREIN THE DETERMINING CONVERTER SERVICE JOB RESTART NEED - WHY / HOW TO PREVENT. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO DELAYED D",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25676049"
+    },
+    "25676051": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHEREIN THE DICOM IMPORT ESTABLISHES MULTI-THREAD, STORES IMAGES IN TWO SEPARATE LOCATIONS. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO ",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25676051"
+    },
+    "25676052": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHERE IN THE SINGLE ISCV STUDY IS APPEARING IN TWO DIFFERENT REPOSITORY LOCATIONS. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO DELAYED D",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25676052"
+    },
+    "25676056": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHEREIN THE USERS REPORTING THAT SINCE THE UPGRADE TO ISCV 8.0 THE USERS HAVE ENCOUNTERED PERIODS OF TIME. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTEN",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25676056"
+    },
+    "25676163": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHEREIN NOT ABLE TO SEND STUDY IN WEB SERVER (IN THIN CLIENT), INTERNAL SERVER ERROR 500. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO DE",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25676163"
+    },
+    "25676164": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHEREIN THE TEST SYSTEM UPGRADED TO 8.0 BUT STILL FINDING COPY WEB IS NOT FUNCTIONING AS THICK CLIENT COPY STUDY. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COUL",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25676164"
+    },
+    "25676165": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLISPACE CARDIOVASCULAR) SYSTEM WHEREIN THE DATABASE DEADLOCKS CAUSING MAJOR ISSUES. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO DELAYED DIAGNOSIS. GIVEN THE DEFECT¿S NA",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25676165"
+    },
+    "25676169": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHEREIN THE COPY STUDY (WEB) IS NOT WORKING, IT IS SHOWING UNAUTHORIZED (401), NOT AUTHORIZED TO COMPLETE. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTEN",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25676169"
+    },
+    "25677353": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHEREIN CANNOT DOWNLOAD STUDY, INTERNAL ERROR 500. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF EVENT. BASED ON THE NEW INFORMATION THAT PHILIPS BECAME AWARE, THIS HAS BEEN DETERMINED TO BE A REPORTABLE MALFUNCTION. UNDER SPECIFIC CIRCUMSTANCES, IT COULD POTENTIALLY LEAD TO DELAYED DIAGNOSIS. GIVEN THE DEFECT¿S NAT",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25677353"
+    },
+    "25678841": {
+      "product_code": "LLZ",
+      "date_received": "20260701",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS IDENTIFIED A SOFTWARE DEFECT INTERNALLY IN THE INTELLISPACE CARDIOVASCULAR (ISCV) WHEREBY THE ISCV SYSTEM DID NOT RELEASE THE LICENSE AFTER THE 'END SESSION' OPTION IS USED. THE ISSUE WAS IDENTIFIED INTERNALLY AND WAS NOT IN CLINICAL USE AT THE TIME OF EVENT. PHILIPS INVESTIGATION IS ON-GOING.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25678841"
+    },
+    "25688996": {
+      "product_code": "LLZ",
+      "date_received": "20260702",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS RECEIVED A COMPLAINT ON THE INTELLISPACE CARDIOVASCULAR (ISCV) INDICATING THAT ECHO PROCEDURES WERE FINALIZED IN ISCV; HOWEVER, HL7 MESSAGES WERE NOT TRANSMITTED TO EPIC, AND THE CORRESPONDING IMAGES WERE NOT AVAILABLE. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF THE EVENT, AND NO ADVERSE EVENTS OR HARM WERE REPORTED IN THE COMPLAINT (B)(4). PHILIPS HAS STARTED AN INVESTIGATION OF THIS C",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25688996"
+    },
+    "25689005": {
+      "product_code": "LLZ",
+      "date_received": "20260702",
+      "event_type": "Malfunction",
+      "report_source": "manufacturer",
+      "brand": "INTELLISPACE CARDIOVASCULAR",
+      "excerpt": "PHILIPS RECEIVED A COMPLAINT ON THE INTELLISPACE CARDIOVASCULAR (ISCV) INDICATING THAT THE USER WAS UNABLE TO VIEW EXAMINATIONS. THE DEVICE WAS IN CLINICAL USE AT THE TIME OF THE EVENT, AND NO ADVERSE EVENTS OR HARM WERE REPORTED IN THE COMPLAINT (B)(4). PHILIPS HAS STARTED AN INVESTIGATION OF THIS COMPLAINT.",
+      "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=25689005"
     }
   },
   "other": {

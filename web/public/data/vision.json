@@ -2510,11 +2510,11 @@
       "model": "muse-spark-1.3",
       "skill_version": "1.0.0",
       "input_tokens": 1678,
-      "output_tokens": 2287,
+      "output_tokens": 1505,
       "cost_usd": {
-        "spark": 0.011817,
+        "spark": 0.008494,
         "sam": 0.0025,
-        "total": 0.014317
+        "total": 0.010994
       },
       "image_file": "label-caresens-n.jpg",
       "image": "vision/label-caresens-n.jpg",
@@ -3410,11 +3410,11 @@
       "model": "muse-spark-1.3",
       "skill_version": "1.0.0",
       "input_tokens": 1314,
-      "output_tokens": 2283,
+      "output_tokens": 2425,
       "cost_usd": {
-        "spark": 0.011345,
+        "spark": 0.011949,
         "sam": 0.0025,
-        "total": 0.013845
+        "total": 0.014449
       },
       "image_file": "label-nomad-pro2.jpg",
       "image": "vision/label-nomad-pro2.jpg",
@@ -4196,11 +4196,11 @@
       "model": "muse-spark-1.3",
       "skill_version": "1.0.0",
       "input_tokens": 1257,
-      "output_tokens": 1189,
+      "output_tokens": 1256,
       "cost_usd": {
-        "spark": 0.006624,
+        "spark": 0.006909,
         "sam": 0.0025,
-        "total": 0.009124
+        "total": 0.009409
       },
       "image_file": "label-spot-vital-signs.jpg",
       "image": "vision/label-spot-vital-signs.jpg",
@@ -4352,7 +4352,7 @@
         }
       },
       "session_fields_omitted": true,
-      "overall_legibility": "clear",
+      "overall_legibility": "partly_legible",
       "sam": {
         "prompts_tried": [
           "label"
@@ -4432,11 +4432,11 @@
       "model": "muse-spark-1.3",
       "skill_version": "1.0.0",
       "input_tokens": 1637,
-      "output_tokens": 879,
+      "output_tokens": 1478,
       "cost_usd": {
-        "spark": 0.005782,
+        "spark": 0.008328,
         "sam": 0.0025,
-        "total": 0.008282
+        "total": 0.010828
       },
       "image_file": "label-thermometer-1.jpg",
       "image": "vision/label-thermometer-1.jpg",
@@ -5090,11 +5090,11 @@
       "model": "muse-spark-1.3",
       "skill_version": "1.0.0",
       "input_tokens": 1597,
-      "output_tokens": 1047,
+      "output_tokens": 1279,
       "cost_usd": {
-        "spark": 0.006446,
+        "spark": 0.007432,
         "sam": 0.0025,
-        "total": 0.008946
+        "total": 0.009932
       },
       "image_file": "label-thermometer-2.jpg",
       "image": "vision/label-thermometer-2.jpg",
@@ -5723,11 +5723,11 @@
       "model": "muse-spark-1.3",
       "skill_version": "1.0.0",
       "input_tokens": 1507,
-      "output_tokens": 1664,
+      "output_tokens": 1975,
       "cost_usd": {
-        "spark": 0.008956,
+        "spark": 0.010278,
         "sam": 0.0025,
-        "total": 0.011456
+        "total": 0.012778
       },
       "image_file": "label-welch-802-ltr.jpg",
       "image": "vision/label-welch-802-ltr.jpg",
@@ -5919,15 +5919,15 @@
       ],
       "fields": {
         "device_name": {
-          "value": "AEROSOL, VASCULAR AND PULMONARY EQUIPMENT",
+          "value": "ARROW ES 1000",
           "legibility": "partly_legible"
         },
         "manufacturer": {
-          "value": "",
-          "legibility": "not_present"
+          "value": "AEROLAB LABORATORY AND PHARMACY EQUIPMENT",
+          "legibility": "partly_legible"
         },
         "model_number": {
-          "value": "ARGON ES 1000 / 1300 V1.2.0",
+          "value": "E45609",
           "legibility": "partly_legible"
         },
         "k_number": {
@@ -6005,11 +6005,11 @@
       "model": "muse-spark-1.3",
       "skill_version": "1.0.0",
       "input_tokens": 1258,
-      "output_tokens": 1748,
+      "output_tokens": 2913,
       "cost_usd": {
-        "spark": 0.009001,
+        "spark": 0.013953,
         "sam": 0.0025,
-        "total": 0.011501
+        "total": 0.016453
       },
       "image_file": "label-welch-module.jpg",
       "image": "vision/label-welch-module.jpg",
