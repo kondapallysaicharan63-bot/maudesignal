@@ -1,0 +1,24 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["iad1"],
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 60,
+      "includeFiles": "{src,skills,demo/transcripts,demo/vision,demo/mentions,digests,data/demo,design-system,api}/**",
+      "excludeFiles": "{web,docs,tests,screenshots,.git,.claude,node_modules}/**"
+    }
+  },
+  "rewrites": [
+    { "source": "/", "destination": "/api/index" },
+    { "source": "/docs-page", "destination": "/api/index" },
+    { "source": "/privacy", "destination": "/api/index" },
+    { "source": "/terms", "destination": "/api/index" },
+    { "source": "/openapi.json", "destination": "/api/index" },
+    { "source": "/mcp", "destination": "/api/index" },
+    { "source": "/admin", "destination": "/api/index" },
+    { "source": "/mcp-manifest.json", "destination": "/api/index" },
+    { "source": "/privacy", "destination": "/api/index" },
+    { "source": "/terms", "destination": "/api/index" },
+    { "source": "/v1/(.*)", "destination": "/api/index" }
+  ]
+}

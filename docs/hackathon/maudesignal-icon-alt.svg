@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="MaudeSignal icon">
+  <title>MaudeSignal icon</title>
+  <rect width="512" height="512" rx="112" fill="#16130f"/>
+  <circle cx="226" cy="226" r="118" fill="none" stroke="#f6f3ec" stroke-width="28"/>
+  <line x1="313" y1="313" x2="420" y2="420" stroke="#f6f3ec" stroke-width="34" stroke-linecap="round"/>
+  <polyline points="56,262 150,262 190,176 240,330 284,226 316,262 380,262" fill="none" stroke="#e8a33d" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

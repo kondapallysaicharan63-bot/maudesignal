@@ -1,0 +1,1046 @@
+{
+  "advisory": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+  "authentication": {
+    "headers": [
+      "X-API-Key",
+      "Authorization: Bearer <key>"
+    ],
+    "note": "Read-only key. Never send a key in the URL.",
+    "type": "api-key"
+  },
+  "description": "Read-only MaudeSignal tools over openFDA device data. Speak the text content; every fact in structuredContent has an openFDA or record link. Sentences listed under withheld were not verified: never state them as fact. Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+  "name": "maudesignal-connector",
+  "protocolVersion": "2025-06-18",
+  "readOnly": true,
+  "title": "MaudeSignal (read-only)",
+  "tools": [
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": true,
+        "title": "What changed this week"
+      },
+      "description": "Read-only. Latest stored week from the demo snapshot (labelled with its dates). A product code outside the stored set is checked live on openFDA.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "product_code": {
+            "description": "Optional three-letter product code.",
+            "pattern": "^[A-Za-z]{3}$",
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "what_changed_this_week",
+      "outputSchema": {
+        "$defs": {
+          "Fact": {
+            "additionalProperties": false,
+            "description": "One checkable statement with the link a reader can open to see it.",
+            "properties": {
+              "link": {
+                "description": "https link to the openFDA query or record behind the fact.",
+                "title": "Link",
+                "type": "string"
+              },
+              "link_label": {
+                "default": "openFDA",
+                "description": "What the link opens.",
+                "title": "Link Label",
+                "type": "string"
+              },
+              "text": {
+                "description": "One plain-language fact; every number comes from the source.",
+                "title": "Text",
+                "type": "string"
+              }
+            },
+            "required": [
+              "text",
+              "link"
+            ],
+            "title": "Fact",
+            "type": "object"
+          },
+          "Provenance": {
+            "additionalProperties": false,
+            "description": "Where the data came from and how fresh it is.",
+            "properties": {
+              "data_dates": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Dates the data covers (a stored snapshot, or the live window).",
+                "title": "Data Dates"
+              },
+              "kind": {
+                "description": "stored_demo_snapshot, live_openfda, recorded_answer or live_model.",
+                "enum": [
+                  "stored_demo_snapshot",
+                  "live_openfda",
+                  "recorded_answer",
+                  "live_model"
+                ],
+                "title": "Kind",
+                "type": "string"
+              },
+              "note": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Why this source was used, if not obvious.",
+                "title": "Note"
+              },
+              "queried_at_utc": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "UTC time of the live openFDA query or live model call.",
+                "title": "Queried At Utc"
+              },
+              "source": {
+                "description": "Plain description of the source.",
+                "title": "Source",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "source"
+            ],
+            "title": "Provenance",
+            "type": "object"
+          },
+          "WithheldSentence": {
+            "additionalProperties": false,
+            "description": "A sentence the gate did not verify. It is never part of ``speakable``.",
+            "properties": {
+              "claim_kinds": {
+                "description": "Kinds of claim the sentence made (e.g. count, quote).",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Claim Kinds",
+                "type": "array"
+              },
+              "reason": {
+                "description": "Why the gate withheld it.",
+                "title": "Reason",
+                "type": "string"
+              },
+              "status": {
+                "const": "withheld",
+                "default": "withheld",
+                "title": "Status",
+                "type": "string"
+              },
+              "text": {
+                "description": "NOT VERIFIED. Do not state or speak this as fact.",
+                "title": "Text",
+                "type": "string"
+              }
+            },
+            "required": [
+              "text",
+              "reason"
+            ],
+            "title": "WithheldSentence",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "description": "What every tool returns.",
+        "properties": {
+          "advisory": {
+            "default": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+            "title": "Advisory",
+            "type": "string"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/$defs/Fact"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "provenance": {
+            "$ref": "#/$defs/Provenance"
+          },
+          "speakable": {
+            "description": "1 to 3 plain sentences, no markdown, written to be read aloud.",
+            "title": "Speakable",
+            "type": "string"
+          },
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "withheld": {
+            "description": "Only ask() uses this; gate-withheld sentences.",
+            "items": {
+              "$ref": "#/$defs/WithheldSentence"
+            },
+            "title": "Withheld",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tool",
+          "speakable",
+          "provenance"
+        ],
+        "title": "ToolAnswer",
+        "type": "object"
+      },
+      "title": "What changed this week"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": true,
+        "title": "Check any device type live on openFDA"
+      },
+      "description": "Read-only. Live openFDA report counts for any product code, using the same four rules, windows and thresholds as the weekly detector.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "product_code": {
+            "description": "Three-letter FDA product code, e.g. LLZ.",
+            "pattern": "^[A-Za-z]{3}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_code"
+        ],
+        "type": "object"
+      },
+      "name": "check_device_type",
+      "outputSchema": {
+        "$defs": {
+          "Fact": {
+            "additionalProperties": false,
+            "description": "One checkable statement with the link a reader can open to see it.",
+            "properties": {
+              "link": {
+                "description": "https link to the openFDA query or record behind the fact.",
+                "title": "Link",
+                "type": "string"
+              },
+              "link_label": {
+                "default": "openFDA",
+                "description": "What the link opens.",
+                "title": "Link Label",
+                "type": "string"
+              },
+              "text": {
+                "description": "One plain-language fact; every number comes from the source.",
+                "title": "Text",
+                "type": "string"
+              }
+            },
+            "required": [
+              "text",
+              "link"
+            ],
+            "title": "Fact",
+            "type": "object"
+          },
+          "Provenance": {
+            "additionalProperties": false,
+            "description": "Where the data came from and how fresh it is.",
+            "properties": {
+              "data_dates": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Dates the data covers (a stored snapshot, or the live window).",
+                "title": "Data Dates"
+              },
+              "kind": {
+                "description": "stored_demo_snapshot, live_openfda, recorded_answer or live_model.",
+                "enum": [
+                  "stored_demo_snapshot",
+                  "live_openfda",
+                  "recorded_answer",
+                  "live_model"
+                ],
+                "title": "Kind",
+                "type": "string"
+              },
+              "note": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Why this source was used, if not obvious.",
+                "title": "Note"
+              },
+              "queried_at_utc": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "UTC time of the live openFDA query or live model call.",
+                "title": "Queried At Utc"
+              },
+              "source": {
+                "description": "Plain description of the source.",
+                "title": "Source",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "source"
+            ],
+            "title": "Provenance",
+            "type": "object"
+          },
+          "WithheldSentence": {
+            "additionalProperties": false,
+            "description": "A sentence the gate did not verify. It is never part of ``speakable``.",
+            "properties": {
+              "claim_kinds": {
+                "description": "Kinds of claim the sentence made (e.g. count, quote).",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Claim Kinds",
+                "type": "array"
+              },
+              "reason": {
+                "description": "Why the gate withheld it.",
+                "title": "Reason",
+                "type": "string"
+              },
+              "status": {
+                "const": "withheld",
+                "default": "withheld",
+                "title": "Status",
+                "type": "string"
+              },
+              "text": {
+                "description": "NOT VERIFIED. Do not state or speak this as fact.",
+                "title": "Text",
+                "type": "string"
+              }
+            },
+            "required": [
+              "text",
+              "reason"
+            ],
+            "title": "WithheldSentence",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "description": "What every tool returns.",
+        "properties": {
+          "advisory": {
+            "default": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+            "title": "Advisory",
+            "type": "string"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/$defs/Fact"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "provenance": {
+            "$ref": "#/$defs/Provenance"
+          },
+          "speakable": {
+            "description": "1 to 3 plain sentences, no markdown, written to be read aloud.",
+            "title": "Speakable",
+            "type": "string"
+          },
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "withheld": {
+            "description": "Only ask() uses this; gate-withheld sentences.",
+            "items": {
+              "$ref": "#/$defs/WithheldSentence"
+            },
+            "title": "Withheld",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tool",
+          "speakable",
+          "provenance"
+        ],
+        "title": "ToolAnswer",
+        "type": "object"
+      },
+      "title": "Check any device type live on openFDA"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": true,
+        "title": "Ask the Muse Spark copilot"
+      },
+      "description": "Read-only (POST only because the question is in the body). Muse Spark answers through deterministic tools over stored records; every sentence passes the claim gate. Withheld sentences are listed in `withheld` and are never in `speakable`. With no model key, or after the key's daily cost cap, the closest recorded answer is returned and labelled recorded.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "question": {
+            "description": "A question about stored MAUDE reports, recalls, 510(k)s or the MDR clock.",
+            "examples": [
+              "What changed this week for LLZ?"
+            ],
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "type": "object"
+      },
+      "name": "ask",
+      "outputSchema": {
+        "$defs": {
+          "Fact": {
+            "additionalProperties": false,
+            "description": "One checkable statement with the link a reader can open to see it.",
+            "properties": {
+              "link": {
+                "description": "https link to the openFDA query or record behind the fact.",
+                "title": "Link",
+                "type": "string"
+              },
+              "link_label": {
+                "default": "openFDA",
+                "description": "What the link opens.",
+                "title": "Link Label",
+                "type": "string"
+              },
+              "text": {
+                "description": "One plain-language fact; every number comes from the source.",
+                "title": "Text",
+                "type": "string"
+              }
+            },
+            "required": [
+              "text",
+              "link"
+            ],
+            "title": "Fact",
+            "type": "object"
+          },
+          "Provenance": {
+            "additionalProperties": false,
+            "description": "Where the data came from and how fresh it is.",
+            "properties": {
+              "data_dates": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Dates the data covers (a stored snapshot, or the live window).",
+                "title": "Data Dates"
+              },
+              "kind": {
+                "description": "stored_demo_snapshot, live_openfda, recorded_answer or live_model.",
+                "enum": [
+                  "stored_demo_snapshot",
+                  "live_openfda",
+                  "recorded_answer",
+                  "live_model"
+                ],
+                "title": "Kind",
+                "type": "string"
+              },
+              "note": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Why this source was used, if not obvious.",
+                "title": "Note"
+              },
+              "queried_at_utc": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "UTC time of the live openFDA query or live model call.",
+                "title": "Queried At Utc"
+              },
+              "source": {
+                "description": "Plain description of the source.",
+                "title": "Source",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "source"
+            ],
+            "title": "Provenance",
+            "type": "object"
+          },
+          "WithheldSentence": {
+            "additionalProperties": false,
+            "description": "A sentence the gate did not verify. It is never part of ``speakable``.",
+            "properties": {
+              "claim_kinds": {
+                "description": "Kinds of claim the sentence made (e.g. count, quote).",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Claim Kinds",
+                "type": "array"
+              },
+              "reason": {
+                "description": "Why the gate withheld it.",
+                "title": "Reason",
+                "type": "string"
+              },
+              "status": {
+                "const": "withheld",
+                "default": "withheld",
+                "title": "Status",
+                "type": "string"
+              },
+              "text": {
+                "description": "NOT VERIFIED. Do not state or speak this as fact.",
+                "title": "Text",
+                "type": "string"
+              }
+            },
+            "required": [
+              "text",
+              "reason"
+            ],
+            "title": "WithheldSentence",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "description": "What every tool returns.",
+        "properties": {
+          "advisory": {
+            "default": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+            "title": "Advisory",
+            "type": "string"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/$defs/Fact"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "provenance": {
+            "$ref": "#/$defs/Provenance"
+          },
+          "speakable": {
+            "description": "1 to 3 plain sentences, no markdown, written to be read aloud.",
+            "title": "Speakable",
+            "type": "string"
+          },
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "withheld": {
+            "description": "Only ask() uses this; gate-withheld sentences.",
+            "items": {
+              "$ref": "#/$defs/WithheldSentence"
+            },
+            "title": "Withheld",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tool",
+          "speakable",
+          "provenance"
+        ],
+        "title": "ToolAnswer",
+        "type": "object"
+      },
+      "title": "Ask the Muse Spark copilot"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "One stored MAUDE report"
+      },
+      "description": "Read-only. Key fields and the start of the narrative of one stored report.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "report_id": {
+            "description": "MAUDE report id (mdr_report_key).",
+            "pattern": "^[A-Za-z0-9-]{1,24}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "report_id"
+        ],
+        "type": "object"
+      },
+      "name": "get_report",
+      "outputSchema": {
+        "$defs": {
+          "Fact": {
+            "additionalProperties": false,
+            "description": "One checkable statement with the link a reader can open to see it.",
+            "properties": {
+              "link": {
+                "description": "https link to the openFDA query or record behind the fact.",
+                "title": "Link",
+                "type": "string"
+              },
+              "link_label": {
+                "default": "openFDA",
+                "description": "What the link opens.",
+                "title": "Link Label",
+                "type": "string"
+              },
+              "text": {
+                "description": "One plain-language fact; every number comes from the source.",
+                "title": "Text",
+                "type": "string"
+              }
+            },
+            "required": [
+              "text",
+              "link"
+            ],
+            "title": "Fact",
+            "type": "object"
+          },
+          "Provenance": {
+            "additionalProperties": false,
+            "description": "Where the data came from and how fresh it is.",
+            "properties": {
+              "data_dates": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Dates the data covers (a stored snapshot, or the live window).",
+                "title": "Data Dates"
+              },
+              "kind": {
+                "description": "stored_demo_snapshot, live_openfda, recorded_answer or live_model.",
+                "enum": [
+                  "stored_demo_snapshot",
+                  "live_openfda",
+                  "recorded_answer",
+                  "live_model"
+                ],
+                "title": "Kind",
+                "type": "string"
+              },
+              "note": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Why this source was used, if not obvious.",
+                "title": "Note"
+              },
+              "queried_at_utc": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "UTC time of the live openFDA query or live model call.",
+                "title": "Queried At Utc"
+              },
+              "source": {
+                "description": "Plain description of the source.",
+                "title": "Source",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "source"
+            ],
+            "title": "Provenance",
+            "type": "object"
+          },
+          "WithheldSentence": {
+            "additionalProperties": false,
+            "description": "A sentence the gate did not verify. It is never part of ``speakable``.",
+            "properties": {
+              "claim_kinds": {
+                "description": "Kinds of claim the sentence made (e.g. count, quote).",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Claim Kinds",
+                "type": "array"
+              },
+              "reason": {
+                "description": "Why the gate withheld it.",
+                "title": "Reason",
+                "type": "string"
+              },
+              "status": {
+                "const": "withheld",
+                "default": "withheld",
+                "title": "Status",
+                "type": "string"
+              },
+              "text": {
+                "description": "NOT VERIFIED. Do not state or speak this as fact.",
+                "title": "Text",
+                "type": "string"
+              }
+            },
+            "required": [
+              "text",
+              "reason"
+            ],
+            "title": "WithheldSentence",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "description": "What every tool returns.",
+        "properties": {
+          "advisory": {
+            "default": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+            "title": "Advisory",
+            "type": "string"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/$defs/Fact"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "provenance": {
+            "$ref": "#/$defs/Provenance"
+          },
+          "speakable": {
+            "description": "1 to 3 plain sentences, no markdown, written to be read aloud.",
+            "title": "Speakable",
+            "type": "string"
+          },
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "withheld": {
+            "description": "Only ask() uses this; gate-withheld sentences.",
+            "items": {
+              "$ref": "#/$defs/WithheldSentence"
+            },
+            "title": "Withheld",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tool",
+          "speakable",
+          "provenance"
+        ],
+        "title": "ToolAnswer",
+        "type": "object"
+      },
+      "title": "One stored MAUDE report"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "FDA recalls for a product code"
+      },
+      "description": "Read-only. Stored openFDA recalls for a product code, newest first.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "product_code": {
+            "description": "Three-letter FDA product code, e.g. LLZ.",
+            "pattern": "^[A-Za-z]{3}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_code"
+        ],
+        "type": "object"
+      },
+      "name": "recalls",
+      "outputSchema": {
+        "$defs": {
+          "Fact": {
+            "additionalProperties": false,
+            "description": "One checkable statement with the link a reader can open to see it.",
+            "properties": {
+              "link": {
+                "description": "https link to the openFDA query or record behind the fact.",
+                "title": "Link",
+                "type": "string"
+              },
+              "link_label": {
+                "default": "openFDA",
+                "description": "What the link opens.",
+                "title": "Link Label",
+                "type": "string"
+              },
+              "text": {
+                "description": "One plain-language fact; every number comes from the source.",
+                "title": "Text",
+                "type": "string"
+              }
+            },
+            "required": [
+              "text",
+              "link"
+            ],
+            "title": "Fact",
+            "type": "object"
+          },
+          "Provenance": {
+            "additionalProperties": false,
+            "description": "Where the data came from and how fresh it is.",
+            "properties": {
+              "data_dates": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Dates the data covers (a stored snapshot, or the live window).",
+                "title": "Data Dates"
+              },
+              "kind": {
+                "description": "stored_demo_snapshot, live_openfda, recorded_answer or live_model.",
+                "enum": [
+                  "stored_demo_snapshot",
+                  "live_openfda",
+                  "recorded_answer",
+                  "live_model"
+                ],
+                "title": "Kind",
+                "type": "string"
+              },
+              "note": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Why this source was used, if not obvious.",
+                "title": "Note"
+              },
+              "queried_at_utc": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "UTC time of the live openFDA query or live model call.",
+                "title": "Queried At Utc"
+              },
+              "source": {
+                "description": "Plain description of the source.",
+                "title": "Source",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "source"
+            ],
+            "title": "Provenance",
+            "type": "object"
+          },
+          "WithheldSentence": {
+            "additionalProperties": false,
+            "description": "A sentence the gate did not verify. It is never part of ``speakable``.",
+            "properties": {
+              "claim_kinds": {
+                "description": "Kinds of claim the sentence made (e.g. count, quote).",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Claim Kinds",
+                "type": "array"
+              },
+              "reason": {
+                "description": "Why the gate withheld it.",
+                "title": "Reason",
+                "type": "string"
+              },
+              "status": {
+                "const": "withheld",
+                "default": "withheld",
+                "title": "Status",
+                "type": "string"
+              },
+              "text": {
+                "description": "NOT VERIFIED. Do not state or speak this as fact.",
+                "title": "Text",
+                "type": "string"
+              }
+            },
+            "required": [
+              "text",
+              "reason"
+            ],
+            "title": "WithheldSentence",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "description": "What every tool returns.",
+        "properties": {
+          "advisory": {
+            "default": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+            "title": "Advisory",
+            "type": "string"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/$defs/Fact"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "provenance": {
+            "$ref": "#/$defs/Provenance"
+          },
+          "speakable": {
+            "description": "1 to 3 plain sentences, no markdown, written to be read aloud.",
+            "title": "Speakable",
+            "type": "string"
+          },
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "withheld": {
+            "description": "Only ask() uses this; gate-withheld sentences.",
+            "items": {
+              "$ref": "#/$defs/WithheldSentence"
+            },
+            "title": "Withheld",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tool",
+          "speakable",
+          "provenance"
+        ],
+        "title": "ToolAnswer",
+        "type": "object"
+      },
+      "title": "FDA recalls for a product code"
+    }
+  ],
+  "transport": {
+    "mode": "stateless, JSON responses, POST only (no session, no event stream)",
+    "path": "/mcp",
+    "type": "streamable-http"
+  },
+  "version": "0.1.0"
+}

@@ -86,6 +86,12 @@ dev = [
 vision-fetch = [
     "playwright>=1.40",
 ]
+# Read-only REST API for the Meta Muse connector (api/, src/maudesignal/connector/).
+connector = [
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "pillow>=10.0",
+]
 
 # ==========================================
 # CLI entry points (Doc 5 §6 folder structure)
