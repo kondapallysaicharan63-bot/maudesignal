@@ -76,7 +76,7 @@ LOOKUP_DESCRIPTION = (
     "search_failed. `confirmed` is always null: a person confirms one record, or none. "
     "Example questions: 'I photographed a label: Welch Allyn 802 LTR - which FDA records "
     "match?'; 'Which device is K123456?'; 'Find the FDA record for UDI "
-    "(01)00380740000000(17)261231.'."
+    "(01)00380740000004(17)261231.'."
 )
 LOOKUP_PATTERN_K = r"^\s*[Kk][\s-]?[0-9]{6}\s*$"
 
@@ -289,7 +289,7 @@ TOOL_SPECS: tuple[ToolSpec, ...] = (
             ),
             Param(
                 "udi",
-                "Printed UDI, for example (01)00380740000000(17)261231.",
+                "Printed UDI, for example (01)00380740000004(17)261231.",
                 required=False,
                 max_length=200,
             ),

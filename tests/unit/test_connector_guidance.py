@@ -220,6 +220,39 @@ def test_recalls_offers_suggestions_without_failing(small: ConnectorData, tmp_pa
     assert "did you mean" not in known["speakable"]
 
 
+@pytest.mark.parametrize("exists", [True, None])
+def test_recalls_never_corrects_a_real_or_unchecked_code(
+    small: ConnectorData, tmp_path: Path, exists: bool | None
+) -> None:
+    # FRN is a real FDA code outside the stored set: FDA lists it (True) or the list could not
+    # be read (None). Either way recalls gives no suggestion and no "isn't a product code".
+    c = make_client(small, tmp_path, exists=exists)
+    r = c.get("/v1/tools/recalls", params={"product_code": "FRN"}, headers=H)
+    assert r.status_code == 200
+    body = r.json()
+    assert "did you mean" not in body["speakable"]
+    assert "isn't a product code" not in body["speakable"]
+    assert "not applied" not in (body["provenance"]["note"] or "")
+    res = rpc(c, "tools/call", {"name": "recalls", "arguments": {"product_code": "FRN"}})
+    assert "isn't a product code" not in json.dumps(res)
+
+
+def test_every_udi_and_gtin_in_descriptions_passes_the_check_digit() -> None:
+    import re
+
+    from maudesignal.connector.lookup import gtin_check_digit_ok
+
+    root = Path(__file__).resolve().parents[2]
+    texts = [
+        (root / "src/maudesignal/connector/registry.py").read_text(encoding="utf-8"),
+        (root / "api/openapi.json").read_text(encoding="utf-8"),
+        (root / "api/mcp-manifest.json").read_text(encoding="utf-8"),
+    ]
+    found = [m for t in texts for m in re.findall(r"\(01\)(\d{8,14})", t)]
+    assert found
+    assert all(gtin_check_digit_ok(g) for g in found), found
+
+
 def test_known_set_without_the_sweep_file_still_suggests(tmp_path: Path) -> None:
     # The deployed bundle may lack demo/sweep: suggestions then come from the other sources.
     d = ConnectorData(work_dir=tmp_path / "nosweep")

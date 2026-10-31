@@ -477,8 +477,14 @@ def _first_sentence(text: str, limit: int = 160) -> str:
     return cut if len(cut) <= limit else cut[:limit].rsplit(" ", 1)[0] + "..."
 
 
-def recalls(data: ConnectorData, product_code: str) -> ToolAnswer:
+def recalls(
+    data: ConnectorData, product_code: str, *, code_exists: CodeChecker | None = None
+) -> ToolAnswer:
     """Stored FDA recalls for a product code, newest first (top five as facts).
+
+    Suggestions ("did you mean") appear only when the code is not stored and the openFDA
+    classification check says it does not exist (``False``). A real code, or a check that
+    could not run (``None``), gets no suggestion and is never called unknown.
 
     Raises:
         InvalidInputError: The code is not three letters.
@@ -494,7 +500,10 @@ def recalls(data: ConnectorData, product_code: str) -> ToolAnswer:
     if not rows:
         # recalls is stored-only, so a typo is not an error here: the answer still opens the
         # openFDA link, and close known codes are offered as a question, never applied.
-        close = suggest_codes(code, data.known_product_codes())
+        known = data.known_product_codes()
+        close: list[str] = []
+        if code not in known and code_exists is not None and code_exists(code) is False:
+            close = suggest_codes(code, known)
         said = [
             f"The stored demo snapshot holds no recalls for product code {code}.",
             "That does not mean none exist; open the openFDA link to check.",

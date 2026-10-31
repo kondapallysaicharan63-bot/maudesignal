@@ -296,7 +296,9 @@ def clean_inputs(
         if gtin_check_digit_ok(digits):
             g = digits
         else:
-            notes.append(f"{GTIN_HINT} It was not used.")
+            notes.append(
+                GTIN_HINT if not (name or mdl or maker or k) else f"{GTIN_HINT} It was not used."
+            )
     elif raw_udi or raw_gtin:
         notes.append(
             "No GTIN could be read from the UDI. A UDI has (01) followed by 8 to 14 digits; "
@@ -677,7 +679,7 @@ def lookup_device(
         model: Model, catalog or reference number.
         manufacturer: Maker named on the label.
         k_number: 510(k) number printed on the label (K plus six digits).
-        udi: Printed UDI, such as ``(01)00380740000000(17)261231``.
+        udi: Printed UDI, such as ``(01)00380740000004(17)261231``.
         gtin: GTIN (8, 12, 13 or 14 digits).
         product_code: Three-letter FDA product code, if known.
         searcher: openFDA searcher (a fake in tests).

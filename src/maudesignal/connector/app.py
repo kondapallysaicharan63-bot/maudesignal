@@ -564,7 +564,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 request,
                 name,
                 {"product_code": args["product_code"]},
-                lambda: tools.recalls(cfg.data, args["product_code"]),
+                lambda: tools.recalls(cfg.data, args["product_code"], code_exists=code_exists),
             )
         if name == "lookup_device":
             given = {k: args[k] for k in LOOKUP_FIELDS if args.get(k)}

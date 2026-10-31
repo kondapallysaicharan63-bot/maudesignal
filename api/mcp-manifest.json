@@ -1044,7 +1044,7 @@
         "readOnlyHint": true,
         "title": "Look up possible FDA records for a device"
       },
-      "description": "Use this when a person has a device in hand (a photographed label, a model name, a K-number or UDI) and needs the matching FDA records. Read-only; no model call. Give what was read from the photo or label (device_name, model, manufacturer, k_number, udi or gtin, product_code; at least one) and get up to 3 possible FDA records from openFDA (510(k), registration & listing, UDI), each with why_matched and why_not_matched, plus this week's change, recent recalls and the report count for the top product code, each with its openFDA link. status is needs_person_to_confirm, no_match_found or search_failed. `confirmed` is always null: a person confirms one record, or none. Example questions: 'I photographed a label: Welch Allyn 802 LTR - which FDA records match?'; 'Which device is K123456?'; 'Find the FDA record for UDI (01)00380740000000(17)261231.'.",
+      "description": "Use this when a person has a device in hand (a photographed label, a model name, a K-number or UDI) and needs the matching FDA records. Read-only; no model call. Give what was read from the photo or label (device_name, model, manufacturer, k_number, udi or gtin, product_code; at least one) and get up to 3 possible FDA records from openFDA (510(k), registration & listing, UDI), each with why_matched and why_not_matched, plus this week's change, recent recalls and the report count for the top product code, each with its openFDA link. status is needs_person_to_confirm, no_match_found or search_failed. `confirmed` is always null: a person confirms one record, or none. Example questions: 'I photographed a label: Welch Allyn 802 LTR - which FDA records match?'; 'Which device is K123456?'; 'Find the FDA record for UDI (01)00380740000004(17)261231.'.",
       "inputSchema": {
         "additionalProperties": false,
         "properties": {
@@ -1091,7 +1091,7 @@
             "type": "string"
           },
           "udi": {
-            "description": "Printed UDI, for example (01)00380740000000(17)261231.",
+            "description": "Printed UDI, for example (01)00380740000004(17)261231.",
             "maxLength": 200,
             "type": "string"
           }
