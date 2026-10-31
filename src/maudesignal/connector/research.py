@@ -45,7 +45,8 @@ Rules:
   ``MAX_OUTPUT_TOKENS`` output tokens or more than the 60,000 input-token allowance, or its
   real cost is above the hold, web research is switched off for this process AND for the rest
   of the UTC day in the ledger (flag ``research``), with a warning; the real cost is still
-  settled. A failed or timed-out request stays counted at its hold.
+  settled. A request that fails or times out after it was sent (Meta may still bill it) also
+  raises the day flag, and stays counted at its hold.
 * Failure gives ``status: "unavailable"`` (or ``news_only`` when GDELT answers) and
   ``cost_usd`` = what the ledger counts for this request, so no partial cost is hidden.
 * Items: url citations of the final message first, then ``web_search_call.action.sources``.

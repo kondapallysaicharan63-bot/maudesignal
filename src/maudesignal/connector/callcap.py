@@ -356,9 +356,13 @@ class CallLedger:
             result = call()
         except BaseException:
             if reserve_options.get("exclusive"):
-                # An exclusive (research) call that failed is no longer in flight: mark its
-                # object settled AT ITS HOLD, so it counts exactly what an unsettled hold counts
-                # but no longer blocks the next call of its kind. Other calls are untouched.
+                # An exclusive (research) call that failed after it was sent may still be
+                # billed for an unknown amount: raise the day flag FIRST, so the freed slot can
+                # never let a second such call through today. Then mark its object settled AT
+                # ITS HOLD, so it counts exactly what an unsettled hold counts but no longer
+                # blocks as "in flight". Other calls are untouched.
+                if kill_flag is not None:
+                    self.set_flag(kill_flag, "call failed after it was sent")
                 reservation.settle(reservation.hold_usd)
             raise
         try:

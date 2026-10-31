@@ -119,7 +119,7 @@ RESEARCH_PRIVACY = """
 would otherwise be answered without a model. If the web search fails, words from the question
 are sent to the GDELT news index instead. The links shown are public web pages, not FDA records,
 and are not checked by the claim gate. When a person clicks Save on a link, its address, title
-and date, the time, and an unverified visitor marker (a salted one-way hash of the address, plus
+and date, the time, and an unverified visitor marker (a salted one-way hash of your IP address, plus
 the referral code of the link the visitor came from, if any) are kept in the audit trail. The
 question itself is not kept.</p>
 """

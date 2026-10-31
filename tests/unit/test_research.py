@@ -297,12 +297,31 @@ def test_failure_keeps_the_hold_and_shows_it() -> None:
     assert out["cost_usd"] == pytest.approx(HOLD)  # no partial cost hidden
     assert led.total(DAY.isoformat()) == pytest.approx(HOLD)
     assert len(t.sent) == 1 and research.disabled_reason() is None
+    assert led.flag_set(research.KILL_FLAG)  # possibly billed: no second call today
 
 
-def test_timeout_counts_the_hold() -> None:
-    led, _ = ledger()
-    out = run(led, FakeTransport(TimeoutError("slow")))
+@pytest.mark.parametrize("failure", [TimeoutError("slow"), ConnectionError("reset")])
+def test_failure_after_sending_raises_the_day_flag(failure: Exception) -> None:
+    led, store = ledger()
+    out = run(led, FakeTransport(failure))
     assert out["status"] == "unavailable" and out["cost_usd"] == pytest.approx(HOLD)
+    assert led.flag_set(research.KILL_FLAG)
+    # counted at its hold (settled at the hold, no longer "in flight")
+    assert led.total(DAY.isoformat()) == pytest.approx(HOLD)
+    (ref,) = store.list_prefix("ledger/")
+    assert json.loads(store.get(ref))["actual_usd"] == pytest.approx(HOLD)
+    # the freed slot never lets a second paid call through today, even in a new process
+    research.reset_rejected()
+    t2 = FakeTransport()
+    again = run(led, t2)
+    assert t2.sent == [] and again["note"] == research.NOTE_OFF
+    assert led.total(DAY.isoformat()) == pytest.approx(HOLD)
+
+
+def test_refused_before_sending_raises_no_flag() -> None:
+    led, _ = ledger(cap=0.01)
+    run(led, FakeTransport())
+    assert not led.flag_set(research.KILL_FLAG)
 
 
 @pytest.mark.parametrize("param", ["max_tool_calls", "include"])
@@ -469,7 +488,8 @@ def test_gdelt_backup_only_when_web_search_fails() -> None:
     assert "api.gdeltproject.org" in fetcher.urls[0] and "JAK" in fetcher.urls[0]
     assert out["summary_text"] is None
     fetcher2 = FakeFetcher()
-    ok = run(led, FakeTransport(), news_fetcher=lambda: fetcher2)
+    led2, _ = ledger()  # a new day ledger: the failed call above raised today's flag
+    ok = run(led2, FakeTransport(), news_fetcher=lambda: fetcher2)
     assert ok["status"] == "ok" and fetcher2.urls == []
 
 
