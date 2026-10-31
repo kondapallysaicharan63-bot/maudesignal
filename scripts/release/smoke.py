@@ -38,7 +38,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 
-from budget import HOLD_USD, SKIPPED_BUDGET, Budget  # noqa: E402
+from budget import HOLD_USD, LIMITS, SKIPPED_BUDGET, Budget  # noqa: E402
 from compare import llz_snapshot_diffs  # noqa: E402
 from leaks import contains_any, find_key_shapes  # noqa: E402
 from load_test import evaluate, run_load, summarize  # noqa: E402
@@ -84,7 +84,8 @@ class Smoke:
     ) -> None:
         """Remember the targets, the report, the secret values and the one shared budget."""
         self.api, self.web, self.rep, self.secrets = api.rstrip("/"), web.rstrip("/"), rep, secrets
-        self.budget = budget if budget is not None else Budget()
+        # the plan is one ask and one spoken question: the ask count is capped in code, not only by a flag
+        self.budget = budget if budget is not None else Budget(limits={**LIMITS, "ask": 1})
         self.live_cost = 0.0
         self.load_cost = 0.0
         self.web_live_cost = 0.0  # cost_usd of the live calls the browser pass made

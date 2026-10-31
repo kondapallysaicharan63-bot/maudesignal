@@ -189,13 +189,14 @@ jobs:
         run: |
           mkdir -p release-out
           cp -r parts/screenshots release-out/ 2>/dev/null || true
-          # one informational line: the real model is not called here (never a pass, never a failure)
+          # one informational part: the real model is not called here. Its verdict is INFO,
+          # never PASS (it holds only a KNOWN_GAP line).
           python - <<'PYEOF'
           import sys
           sys.path.insert(0, "scripts/release")
           from pathlib import Path
           from report import KNOWN_GAP, Report
-          rep = Report("live model")
+          rep = Report("live model (not called)")
           rep.add("live model", KNOWN_GAP, "checked after deploy by smoke.yml", group="live", required=False)
           rep.write(Path("parts"), "live-model-note")
           PYEOF

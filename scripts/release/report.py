@@ -14,7 +14,8 @@ Status words (one place, so every script uses the same ones):
   Reported by name, not counted as a pass.
 
 The overall verdict is FAIL if any check failed, else BLOCKED if any check was blocked, else
-PASS. Numbers in a report come from the run; nothing is typed in.
+INFO if no check passed (only notes and gaps), else PASS. Numbers in a report come from the
+run; nothing is typed in.
 
     python3 scripts/release/report.py merge a.json b.json --json out.json --md out.md
 """
@@ -32,6 +33,7 @@ from typing import Any
 
 PASS, FAIL, SKIPPED, BLOCKED = "PASS", "FAIL", "SKIPPED", "BLOCKED"
 NOT_PRESENT, KNOWN_GAP = "NOT_PRESENT", "KNOWN_GAP"
+INFO = "INFO"  # a report of only notes and gaps: nothing was checked, so never PASS
 STATUSES = (PASS, FAIL, SKIPPED, BLOCKED, NOT_PRESENT, KNOWN_GAP)
 MAX_DETAIL = 600
 
@@ -105,6 +107,8 @@ class Report:
             return FAIL
         if any(c.status == BLOCKED for c in self.checks):
             return BLOCKED
+        if not any(c.status == PASS for c in self.checks):  # only notes and gaps: nothing passed
+            return INFO
         return PASS
 
     def exit_code(self) -> int:
@@ -147,7 +151,10 @@ def overall(verdicts: list[str]) -> str:
     """FAIL if any job failed (or none ran), else BLOCKED if any was blocked, else PASS."""
     if FAIL in verdicts or not verdicts:
         return FAIL
-    return BLOCKED if BLOCKED in verdicts else PASS
+    if BLOCKED in verdicts:
+        return BLOCKED
+    # an INFO report (only notes and gaps) neither passes nor fails the whole
+    return PASS if any(v != INFO for v in verdicts) else INFO
 
 
 def render_markdown(reports: list[dict[str, Any]]) -> str:

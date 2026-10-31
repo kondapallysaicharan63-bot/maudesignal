@@ -131,8 +131,9 @@ Screenshots are in the `e2e-report` artifact (`screenshots/`, failures prefixed 
 The release check has no `live` job, no Meta key and no secret, and spends $0. Real-model checks
 happen only in `smoke.yml`, after a deploy: one live ask and one spoken question ($0.55 at the
 holds, see the budget below), inside the deployed app's own daily cap. The merged report holds
-one informational line, `live model: checked after deploy by smoke.yml` (KNOWN_GAP, not required),
-so the report says plainly that no model was called. It is never a pass and never a failure.
+one informational part, `live model: checked after deploy by smoke.yml` (KNOWN_GAP, not required),
+so the report says plainly that no model was called. Its job verdict is `INFO` (a report with no
+passed check is never `PASS`), and it never fails the release check.
 
 ## Smoke test (`smoke/**`)
 
@@ -163,11 +164,11 @@ a string, a boolean, negative, NaN or infinite) is counted at the full cap of it
 
 **Spend budget per smoke run** (`scripts/release/budget.py`): one `Budget` object is shared by the
 live checks and the load test, and the web quick pass is kept out of live spending. In total at
-most **$0.60**, **10** live asks, **2** photos and **1** spoken question. Before each live call
+most **$0.60**, **1** live ask (enforced in code by the smoke budget), **2** photos and **1** spoken question. Before each live call
 the budget checks the cost already spent, plus the holds of calls in flight, plus this call's
 maximum hold: **$0.25 ask, $0.30 voice, $0.30 photo**. These are the *deployed* API's default
 per-request caps (`globalcap.py` on `track-c-live`), the most one call can cost there; they are
-the caps of a local API (the release check has no live job).
+not the caps of any local API (the release check has no live job and calls no model).
 `/v1/health` does not report the deployed caps, so the numbers are copied into `budget.py` (a
 unit test pins them); raise them if the deployment's caps are raised. A call that gets no usable
 answer (timeout, non-200, no `cost_usd`) may still have run the model, so its full hold is
@@ -187,7 +188,8 @@ calls); the report carries a KNOWN_GAP line "live photo" saying so, and no autom
 it. The 390 px pass runs only the alert-bell scenario.
 
 The cost line "cap ledger: cost reported by the responses" is informational (KNOWN_GAP, not
-required): it sums `cost_usd` from the live checks and the load test (the browser pass is mocked, $0), and
+required): it reports the run budget's total (reported `cost_usd`, or the full hold for a call without a
+usable cost; the browser pass is mocked, $0), and
 quotes the last `remaining_today`. It confirms nothing by itself.
 
 ## Reading a report
@@ -217,8 +219,8 @@ only within the app's own daily cap.
 
 ## Limits of these checks
 
-* The API contract job has no fake model, so prompt injection against a real model is checked
-  only by the smoke test's one live ask after a deploy; the other injection checks prove
+* The API contract job has no fake model, so prompt injection against a real model is not checked
+  by any automated check (the release check calls no model; the smoke ask is a normal question); the other injection checks prove
   that the server never returns keys, prompt text or ungated sentences, not how a model
   behaves.
 * `smoke.yml` and the `e2e` job of `release-check.yml` install the same pinned `playwright==1.63.0`

@@ -123,6 +123,22 @@ def test_write_creates_json_and_markdown(tmp_path: Path, monkeypatch: pytest.Mon
     assert "## job: PASS" in summary.read_text()
 
 
+def test_gap_only_report_is_info_never_pass_in_the_merged_markdown() -> None:
+    note = rpt.Report("live model (not called)")
+    note.add("live model", rpt.KNOWN_GAP, "checked after deploy by smoke.yml", required=False)
+    real = rpt.Report("python")
+    real.add("ruff", rpt.PASS)
+    assert note.verdict() == rpt.INFO
+    assert rpt.overall([note.verdict(), real.verdict()]) == rpt.PASS
+    assert rpt.overall([note.verdict()]) == rpt.INFO
+    assert note.exit_code() == 0
+    doc = rpt.merge([note.to_dict(), real.to_dict()], "t")
+    md = rpt.render_markdown([note.to_dict(), real.to_dict()])
+    assert "| live model (not called) | INFO |" in md
+    assert "live model" not in "".join(ln for ln in md.splitlines() if "| PASS |" in ln)
+    assert doc["verdict"] == rpt.PASS
+
+
 def test_merge_takes_the_worst_verdict_and_adds_counts() -> None:
     a = make((rpt.PASS, True)).to_dict()
     b = make((rpt.FAIL, True), (rpt.PASS, True)).to_dict()
@@ -857,7 +873,7 @@ def test_smoke_note_live_keeps_the_hold_when_the_answer_has_no_cost(
     import smoke
 
     rep = rpt.Report("t")
-    s = smoke.Smoke("https://a", "", rep, [])
+    s = smoke.Smoke("https://a", "", rep, [], budget=smoke.Budget())
     assert s.budget.reserve("ask")
     s.note_live("x", netutil.Response(504, {}, b"", 90_000), "ask")  # timeout / error
     assert s.budget.spent == pytest.approx(0.25)
@@ -960,3 +976,11 @@ def test_workflows_pin_uvicorn_and_do_not_upgrade_pip() -> None:
         assert "--upgrade pip" not in text
         assert "uvicorn>=" not in text
     assert "uvicorn==" in (WORKFLOWS / "release-check.yml").read_text()
+
+
+def test_smoke_default_budget_allows_one_live_ask() -> None:
+    import smoke
+
+    s = smoke.Smoke("https://a", "", rpt.Report("t"), [])
+    assert s.budget.reserve("ask")
+    assert not s.budget.reserve("ask")
