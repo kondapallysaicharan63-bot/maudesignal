@@ -88,7 +88,9 @@ leave it unset to switch the demo key off). It is public by design and must neve
 * Cannot: read the audit list (HTTP 403), start a live model call (`ask` returns a recorded answer,
   labelled recorded, whatever the server's model settings), or reach any admin route.
 * Limits, per demo key: `MAUDESIGNAL_DEMO_RATE_PER_MIN` requests per minute (default 10) and 200
-  per UTC day. Over a limit the answer is HTTP 429 with `Retry-After`.
+  per UTC day. Over a limit the answer is HTTP 429 with `Retry-After`. Without a shared Upstash
+  store these counts are kept per server instance (and reset on a cold start), so the effective
+  limit is the number times the instances.
 * Audit: its calls are logged with the label `demo`.
 
 To enable it: in Vercel > Project > Settings > Environment Variables (Production) set

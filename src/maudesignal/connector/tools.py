@@ -23,7 +23,7 @@ from maudesignal.connector.data import ConnectorData
 from maudesignal.connector.errors import InvalidInputError, NotFoundError, SourceUnavailableError
 from maudesignal.connector.forbidden import is_clean
 from maudesignal.connector.models import Fact, Provenance, ToolAnswer
-from maudesignal.connector.speech import compose, plain, speak_date, speak_range
+from maudesignal.connector.speech import compose, plain, plural, speak_date, speak_range, were
 from maudesignal.monitor.digest import CHANGE_LABELS
 from maudesignal.monitor.live_check import LiveCheck, LiveCheckError, normalize_code
 
@@ -158,7 +158,7 @@ def _signal_fact(s: dict[str, Any], names: dict[str, str], window: dict[str, str
     name = names.get(code)
     head = f"{code} ({name})" if name else code
     text = (
-        f"{head}: {s['label']}. {s['current_count']} reports received "
+        f"{head}: {s['label']}. {plural(int(s['current_count']), 'report')} received "
         f"{speak_range(start, end)}, against a weekly average of "
         f"{_num(float(s['baseline_weekly_mean']))} in the four weeks before."
     )
@@ -193,7 +193,8 @@ def _stored_what_changed(data: ConnectorData, product_code: str | None) -> ToolA
         top = flagged[0]
         parts.append(
             f"In the stored demo snapshot for {rng}, {top['product_code']} shows "
-            f"{top['label']}: {top['current_count']} reports against a weekly average of "
+            f"{top['label']}: {plural(int(top['current_count']), 'report')} against a weekly "
+            f"average of "
             f"{_num(float(top['baseline_weekly_mean']))} in the four weeks before."
         )
         if len(flagged) > 1:
@@ -221,7 +222,8 @@ def _live_answer(tool: str, check: LiveCheck, now: datetime) -> ToolAnswer:
     if check.window is None or check.as_of is None:
         total = check.prior_report_count
         said = (
-            f"{code} has no reports on openFDA in the last two years; {total} reports in total."
+            f"{code} has no reports on openFDA in the last two years; "
+            f"{plural(total, 'report')} in total."
             if total
             else f"openFDA returned no reports for {code}."
         )
@@ -230,7 +232,7 @@ def _live_answer(tool: str, check: LiveCheck, now: datetime) -> ToolAnswer:
             speakable=compose([said]),
             facts=[
                 Fact(
-                    text=f"{total} reports on openFDA for {code}, all dates.",
+                    text=f"{plural(total, 'report')} on openFDA for {code}, all dates.",
                     link=links.counts_link(code, None, None),
                     link_label="openFDA: reports, all dates",
                 )
@@ -243,7 +245,8 @@ def _live_answer(tool: str, check: LiveCheck, now: datetime) -> ToolAnswer:
     changes = " and ".join(CHANGE_LABELS[t] for t in check.triggers) or check.change
     parts = [
         f"Live from openFDA as of {speak_date(check.as_of)}, {code} shows {changes}.",
-        f"There were {check.current_count} reports in the 7 days ending that day, against a "
+        f"There {were(check.current_count)} {plural(check.current_count, 'report')} in the 7 "
+        "days ending that day, against a "
         f"weekly average of {_num(check.baseline_weekly_mean)} in the four weeks before.",
     ]
     if check.new_event_types:
@@ -252,20 +255,20 @@ def _live_answer(tool: str, check: LiveCheck, now: datetime) -> ToolAnswer:
         parts.append(_severe_phrase(check.current_severe_count))
     facts = [
         Fact(
-            text=f"{check.current_count} reports received {speak_range(cs, ce)}.",
+            text=f"{plural(check.current_count, 'report')} received {speak_range(cs, ce)}.",
             link=links.counts_link(code, cs, ce),
             link_label="openFDA: reports in this week",
         ),
         Fact(
             text=(
-                f"{check.baseline_count} reports received {speak_range(bs, be)}, a weekly "
-                f"average of {_num(check.baseline_weekly_mean)}."
+                f"{plural(check.baseline_count, 'report')} received {speak_range(bs, be)}, "
+                f"a weekly average of {_num(check.baseline_weekly_mean)}."
             ),
             link=links.counts_link(code, bs, be),
             link_label="openFDA: reports in the baseline",
         ),
         Fact(
-            text=f"{check.prior_report_count} reports received before {speak_date(cs)}.",
+            text=f"{plural(check.prior_report_count, 'report')} received before {speak_date(cs)}.",
             link=prior_link,
             link_label="openFDA: reports before this week",
         ),
@@ -274,8 +277,9 @@ def _live_answer(tool: str, check: LiveCheck, now: datetime) -> ToolAnswer:
         facts.append(
             Fact(
                 text=(
-                    f"{check.current_severe_count} of this week's {check.current_count} "
-                    "reports were injury or death."
+                    f"{check.current_severe_count} of this week's "
+                    f"{plural(check.current_count, 'report')} "
+                    f"{were(check.current_count)} injury or death."
                 ),
                 link=dict(check.queries).get("This week, by event type")
                 or links.counts_link(code, cs, ce),
@@ -483,9 +487,12 @@ def recalls(data: ConnectorData, product_code: str) -> ToolAnswer:
     events = {r.event_number for r in rows if r.event_number}
     if events and all(r.event_number for r in rows):
         # openFDA lists one row per recalled product; several rows can share one recall event
-        counted = f"{len(rows)} recall product records ({len(events)} recall events)"
+        counted = (
+            f"{plural(len(rows), 'recall product record')} "
+            f"({plural(len(events), 'recall event')})"
+        )
     else:
-        counted = f"{len(rows)} recall product records"
+        counted = plural(len(rows), "recall product record")
     parts = [
         f"The stored demo snapshot holds {counted} for product code {code}.",
         f"The most recent started {started}"

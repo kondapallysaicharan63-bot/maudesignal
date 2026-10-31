@@ -75,6 +75,7 @@ def split_label(item: str) -> tuple[str | None, str]:
     rest = rest.strip()
     if not sep or not rest.strip("="):
         return None, item
+    head = head.strip()
     if _LABEL.fullmatch(head):
         return head, rest
     if rest.lower().startswith("sha256:") or len(rest) >= MIN_KEY_CHARS:

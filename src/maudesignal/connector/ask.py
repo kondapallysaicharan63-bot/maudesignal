@@ -37,7 +37,7 @@ from maudesignal.connector.errors import InvalidInputError, SourceUnavailableErr
 from maudesignal.connector.forbidden import is_clean
 from maudesignal.connector.models import Fact, Provenance, ToolAnswer, WithheldSentence
 from maudesignal.connector.readonly import make_read_only
-from maudesignal.connector.speech import compose, speak_date
+from maudesignal.connector.speech import compose, plural, speak_date
 from maudesignal.connector.store import ConnectorState, UpstashLedger, shared_store_configured
 from maudesignal.connector.tools import Clock, _stamp, utc_now
 from maudesignal.copilot.agent import CopilotAgent, CopilotResult
@@ -327,7 +327,7 @@ def _speakable(lead: str | None, passed: list[str], withheld: int) -> str:
         parts.append(
             "One sentence was left out because it could not be verified or tied to a source."
             if withheld == 1
-            else f"{withheld} sentences were left out because they could not be verified "
+            else f"{plural(withheld, 'sentence')} were left out because they could not be verified "
             "or tied to a source."
         )
     return compose(parts)

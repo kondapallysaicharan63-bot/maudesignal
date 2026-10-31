@@ -584,7 +584,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def connect_info(request: Request) -> ConnectInfo:
         base = os.environ.get(PUBLIC_URL_ENV, "").strip().rstrip("/")
         if not base.startswith(("https://", "http://")):
-            base = str(request.base_url).rstrip("/")
+            base = API_BASE_URL
         return ConnectInfo(
             mcp_url=f"{base}{MCP_PATH}",
             openapi_url=f"{base}/openapi.json",

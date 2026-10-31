@@ -222,7 +222,9 @@ person to review. Nothing is filed with FDA, and the project is not an FDA-clear
 <li>The public demo key (shown by <code>GET /v1/connect</code> when the operator sets one) is
 shared by design: it works on every read tool except the audit list, is limited to
 {demo_per_min} requests per minute and {demo_per_day} per UTC day, and never starts a live model
-call (<code>ask</code> returns a recorded answer, labelled recorded).</li>
+call (<code>ask</code> returns a recorded answer, labelled recorded). The per-minute and
+per-day limits are counted per server instance unless a shared Upstash store is configured, so
+without one the effective limit is the number shown times the instances.</li>
 <li>{failed_auth_per_min} wrong or missing keys per address per minute, then HTTP 429.</li>
 <li>{public_per_hour} keyless device-type checks per address per hour.</li>
 <li>For <code>ask</code>: a question of {MIN_QUESTION_CHARS} to {MAX_QUESTION_CHARS} characters,

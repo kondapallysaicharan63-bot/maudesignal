@@ -190,9 +190,10 @@ class SharedRateLimiter(RateLimiter):
 
 
 class DailyCounter:
-    """Per-address count per UTC day, in this instance's memory (resets on a cold start).
+    """Per-id count per UTC day, in this instance's memory (resets on a cold start).
 
-    The address is only ever a salted hash made by the caller; the counter never sees it raw.
+    The id is only ever a salted hash or a key id made by the caller; the counter never sees a
+    raw address or key. Counts are per server instance, not shared across instances.
     """
 
     def __init__(self, limit: int, *, today: Callable[[], date] | None = None) -> None:
