@@ -167,11 +167,11 @@ def cache_entry(body: dict[str, Any]) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def canned_answer(r: Route, now: Clock = utc_now) -> AskAnswer:
-    """Tier 1 as an :class:`AskAnswer`."""
+def canned_answer(r: Route, now: Clock = utc_now, *, company_audit: bool = False) -> AskAnswer:
+    """Tier 1 as an :class:`AskAnswer` (``company_audit``: see ``tiers.canned_sentences``)."""
     return AskAnswer(
         tool="ask",
-        speakable=compose(list(canned_sentences(r.intent))),
+        speakable=compose(list(canned_sentences(r.intent, company_audit=company_audit))),
         facts=[],
         provenance=Provenance(
             kind="canned_reply", source=CANNED_SOURCE, queried_at_utc=_stamp(now())
@@ -220,8 +220,12 @@ def ask_with_tiers(
     now: Clock = utc_now,
     allow_live: bool = True,
     tiers_on: bool = True,
+    company_audit: bool = False,
 ) -> AskAnswer:
     """The connector's ``ask``: tiers 1 to 3 first, then Muse Spark (or a recorded run).
+
+    ``company_audit`` is the resolved self-hosted company audit mode; it selects the canned
+    privacy reply that says question and answer text are kept.
 
     Raises:
         InvalidInputError: The question is empty or too long (tier 4 only).
@@ -230,7 +234,7 @@ def ask_with_tiers(
     if tiers_on:
         r = route_for(data, question)
         if r.tier == "canned":
-            return canned_answer(r, now)
+            return canned_answer(r, now, company_audit=company_audit)
         if r.tier == "direct":
             return direct_tool_answer(direct_answer(data, r), data, now)
         if cache is not None and allow_live:  # the demo key never gets a live answer

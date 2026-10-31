@@ -374,6 +374,33 @@ Two Vercel projects from the same repository: the website (`web/`) and the read-
 
 Full variable list and limits: [`docs/hackathon/MUSE_CONNECTOR.md`](docs/hackathon/MUSE_CONNECTOR.md).
 
+### Self-hosted company mode (audit full text)
+
+For a company's own deployment only. By default, and always on the public demo, the audit chain
+keeps an `ask` question as its SHA-256 and length, never its text; the public privacy page and the
+connector questionnaire describe that default. A company running its own copy for its own staff
+can have each `ask` entry (REST and MCP, with a key) also keep the question text and the answer's
+spoken text (`question_text`, `answer_text`, `full_text: "stored"`). The text is inside the hashed
+record, so `/v1/audit/recent` still re-verifies the chain, and that list (full keys only) shows
+the text only for entries where it was stored. When the mode is on, the served `/privacy` page and
+the `/v1/audit/recent` description say so; when it is off they are the public demo's, unchanged.
+
+It fails closed. A flag is on when its value is `1`, `true`, `yes` or `on` (any case); anything
+else, or unset, is off. Full text turns on only when **all** of these hold:
+
+- `MAUDESIGNAL_AUDIT_FULL_TEXT` is on, **and** `MAUDESIGNAL_SELF_HOSTED` is on;
+- no public signal: `MAUDESIGNAL_DEMO_KEYS` unset or empty (and no demo key configured),
+  `MAUDESIGNAL_PUBLIC_DEMO` not on, `VERCEL_ENV` not `production`, and `MAUDESIGNAL_WEB_ORIGINS`
+  unset or empty.
+
+Otherwise the mode stays off and, if it was asked for, startup logs `audit_full_text_refused`
+naming each failing condition (never a value). A question or answer that looks like patient
+details (email, phone, ID or record number, date of birth, a titled name, an age) is never
+stored: the entry keeps the hash and `full_text: "withheld_possible_patient_details"`. The
+website's live routes (`/v1/live/*`) never store question text in either mode. MaudeSignal is
+still not a PHI system; this mode is for questions about public MAUDE data. Code:
+[`src/maudesignal/connector/audit_mode.py`](src/maudesignal/connector/audit_mode.py).
+
 ## Built during the hackathon vs pre-existing
 
 Built during the Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026):

@@ -71,8 +71,17 @@ def _live_limits() -> tuple[int, int, int, int, int]:
     )
 
 
-def live_routes_line(live_on: bool | None = None) -> str:
-    """What the live website routes send to Meta, stated for the running configuration."""
+def live_routes_line(live_on: bool | None = None, audit_full_text: bool = False) -> str:
+    """What the live website routes send to Meta, stated for the running configuration.
+
+    ``audit_full_text`` (self-hosted company audit mode) adds that the mode does not cover these
+    routes; the public demo wording is unchanged when it is off.
+    """
+    company = (
+        " The self-hosted company audit mode on in this deployment does not cover these routes."
+        if audit_full_text
+        else ""
+    )
     if live_mode_allowed() if live_on is None else live_on:
         return (
             "<strong>Live routes are ON in this deployment.</strong> The website's live ask, "
@@ -80,12 +89,12 @@ def live_routes_line(live_on: bool | None = None) -> str:
             "Spark for questions and label reading, Muse Voice for transcription, SAM 3.1 for "
             "the label crop): the question text, the audio clip or the label image. It is sent "
             "once to produce the answer; this service does not store the text, the audio or "
-            "the image."
+            "the image." + company
         )
     return (
         "<strong>Live routes are OFF in this deployment</strong> (no model key or no private "
         "spend ledger is configured). The website's ask, voice and label routes return "
-        "recorded answers and nothing is sent to Meta."
+        "recorded answers and nothing is sent to Meta." + company
     )
 
 
@@ -118,6 +127,7 @@ def render_privacy(
     public_per_hour: int,
     shared_store: bool,
     live_on: bool | None = None,
+    audit_full_text: bool = False,
 ) -> str:
     """The privacy page (it answers a connector data questionnaire).
 
@@ -126,7 +136,23 @@ def render_privacy(
         public_per_hour: Keyless checks per address per hour in force.
         shared_store: True when an Upstash Redis store is configured.
         live_on: Whether live Meta calls are on here; ``None`` reads the environment.
+        audit_full_text: Self-hosted company audit mode is on (``audit_mode.py``). Off, the
+            page is the public demo's, word for word.
     """
+    question_logged = (
+        "<li>Self-hosted company audit mode is <strong>on</strong> in this deployment: for the "
+        "<code>ask</code> tool (with a key), the audit log keeps the question text and the "
+        "answer's spoken text, as well as the question's SHA-256 and length. Text that looks "
+        "like patient details is not stored (only the hash). The website's live routes never "
+        "store question text. During a live <code>ask</code> the question is also held briefly "
+        "in the server instance's temporary working database and replaced there by its SHA-256 "
+        "when the answer is done.</li>"
+        if audit_full_text
+        else "<li>The text of a question is <strong>not</strong> logged: only its SHA-256 and "
+        "its length.\nDuring a live <code>ask</code> the question is held briefly in the server "
+        "instance's temporary\nworking database and replaced by its SHA-256 when the answer is "
+        "done.</li>"
+    )
     redis = (
         "Upstash Redis is configured here: rate-limit counters, the per-key daily totals, a "
         "six-hour cache of keyless check answers and the audit log are held there."
@@ -166,7 +192,7 @@ cost) and no text, no address and no key. {html.escape(redis)}</p>
 <li>Vercel Inc.: hosting, runtime logs and Blob storage.</li>
 <li>Meta Platforms: Meta Model API, only when a model key is set on the server: for the
 <code>ask</code> tool (full keys only) and for the website's live ask, voice and label routes.
-{live_ask_line(live_on)} {live_routes_line(live_on)}</li>
+{live_ask_line(live_on)} {live_routes_line(live_on, audit_full_text)}</li>
 <li>Upstash: only if a Redis store is configured (see above).</li>
 <li>Resend: only if an email notifier is configured. {html.escape(resend)}</li>
 </ul>
@@ -191,9 +217,7 @@ and the spend ledger keeps one small object per Meta call with its dollar amount
 data is processed and stored).
 If the key has a label (for example a reviewer's name) the label is logged next to the key id.
 Calls made with the public demo key are logged the same way, with the label <code>demo</code>.</li>
-<li>The text of a question is <strong>not</strong> logged: only its SHA-256 and its length.
-During a live <code>ask</code> the question is held briefly in the server instance's temporary
-working database and replaced by its SHA-256 when the answer is done.</li>
+{question_logged}
 <li>New feedback stores rating, comments, role, quote consent, referral code, page and time -
 no names and no email addresses. Feedback sent before 31 October 2026 could include a name the
 person typed; names are removed from those entries except where the person chose to be quoted by

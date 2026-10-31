@@ -712,8 +712,26 @@ def _reask(intent: str, code: str) -> str:
     return f"Check product code {code}"
 
 
-def canned_sentences(intent: str) -> tuple[str, ...]:
-    """The fixed sentences of a canned reply."""
+#: The ``privacy`` reply of the connector ``ask`` tool when the self-hosted company audit mode
+#: (``audit_mode.py``) is on. The website's live routes never store text and keep the public one.
+_PRIVACY_COMPANY: tuple[str, ...] = (
+    _CANNED_TEXT["privacy"][0],
+    "In this self-hosted deployment the question text and the answer text are kept in the audit "
+    "log, except text that looks like patient details, of which only a hash is kept.",
+    _CANNED_TEXT["privacy"][2],
+)
+
+
+def canned_sentences(intent: str, *, company_audit: bool = False) -> tuple[str, ...]:
+    """The fixed sentences of a canned reply.
+
+    Args:
+        intent: The canned intent.
+        company_audit: The self-hosted company audit mode is on for this route (connector
+            ``ask`` only); it changes the ``privacy`` reply and nothing else.
+    """
+    if company_audit and intent == "privacy":
+        return _PRIVACY_COMPANY
     return _CANNED_TEXT[intent]
 
 
