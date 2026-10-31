@@ -1,0 +1,73 @@
+name: Smoke test (live URLs)
+
+# Post-deploy check of the deployed API and web app. Push to a branch named smoke/** (any
+# commit), or run it by hand. It makes a few real model calls through the live API (at most
+# 10 live questions in the load test plus one question, one photo and one spoken question), so
+# it spends from the app's own daily cap, and it writes TEST entries that it deletes only when
+# the secret MAUDESIGNAL_ADMIN_KEY_SMOKE exists. Keys never appear in the log or the report.
+# How to read the report: docs/hackathon/RELEASE_CHECKS.md.
+#
+# Optional repository secrets:
+#   MAUDESIGNAL_SMOKE_KEYS       comma-separated full API keys; without them the keyed checks are
+#                                reported BLOCKED ("keys not provided"), never PASS
+#   MAUDESIGNAL_ADMIN_KEY_SMOKE  the admin key, to delete the TEST entries this run makes
+
+on:
+  push:
+    branches: ["smoke/**"]
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: "API base URL"
+        default: "https://maudesignal-api.vercel.app"
+      web_url:
+        description: "Web app URL"
+        default: "https://maudesignal-git-track-b-ui-kondapallysaicharan63-9868s-projects.vercel.app"
+      load_seconds:
+        description: "Load test length in seconds (20 virtual users)"
+        default: "120"
+
+concurrency:
+  group: smoke-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      API_URL: ${{ inputs.api_url || 'https://maudesignal-api.vercel.app' }}
+      WEB_URL: ${{ inputs.web_url || 'https://maudesignal-git-track-b-ui-kondapallysaicharan63-9868s-projects.vercel.app' }}
+      LOAD_SECONDS: ${{ inputs.load_seconds || '120' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - name: Install Playwright and Chromium
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright pillow
+          python -m playwright install --with-deps chromium
+      - name: Smoke test, quick web pass and light load test
+        env:
+          MAUDESIGNAL_SMOKE_KEYS: ${{ secrets.MAUDESIGNAL_SMOKE_KEYS }}
+          MAUDESIGNAL_ADMIN_KEY_SMOKE: ${{ secrets.MAUDESIGNAL_ADMIN_KEY_SMOKE }}
+        run: |
+          python scripts/release/smoke.py --api "$API_URL" --web "$WEB_URL" \
+            --vus 20 --seconds "$LOAD_SECONDS" --max-live-asks 10 --out-dir release-out
+      - name: Copy the report to the job summary
+        if: always()
+        run: |
+          if [ -f release-out/smoke.md ]; then cat release-out/smoke.md >> "$GITHUB_STEP_SUMMARY"; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-report
+          path: release-out/
+          retention-days: 30
