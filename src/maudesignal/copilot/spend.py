@@ -329,7 +329,13 @@ class GuardedClient:
     """
 
     def __init__(self, client: Any, guard: SpendGuard) -> None:
-        """Wrap ``client``."""
+        """Wrap ``client``; an SDK client that retries on its own is switched to no retries.
+
+        One spend reservation covers exactly one HTTP request, so the SDK's silent retries
+        (a billed first attempt followed by a cheaper second one) must never happen.
+        """
+        if getattr(client, "max_retries", 0) and hasattr(client, "with_options"):
+            client = client.with_options(max_retries=0)
         completions = _GuardedCompletions(client.chat.completions, guard)
         self.chat = type("Chat", (), {"completions": completions})()
 

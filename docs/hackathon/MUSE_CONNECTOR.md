@@ -208,8 +208,9 @@ counted apart.
 2. Set `MAUDESIGNAL_API_DAILY_USD=1.50` (or less). The per-key cap is `2.00` by default.
 3. The one global live cap applies on top: `MAUDESIGNAL_LIVE_DAILY_USD`, default `3.00` per UTC
    day, however many keys exist, shared with the website's live routes. `/terms` shows it. When either cap is reached, `ask`
-   returns a recorded answer. Live `ask` is also still off unless `META_MODEL_API_KEY` is set and a
-   shared store (or the per-instance override) is configured.
+   returns a recorded answer. Live `ask` is also still off unless `META_MODEL_API_KEY` is set and the private
+   Vercel Blob store (`BLOB_READ_WRITE_TOKEN`) that holds the spend ledger is configured (or the
+   local-only per-instance override).
 
 ---
 

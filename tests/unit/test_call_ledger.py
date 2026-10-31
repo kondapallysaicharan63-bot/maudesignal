@@ -335,7 +335,7 @@ def test_two_instances_that_see_each_other_cannot_both_take_the_last_room() -> N
     store = LagStore()
     store.seed_ledger(2.80)
     got_a, got_b = race(store, 0.08, 0.08, lag=False)
-    assert got_a != got_b or not (got_a and got_b)  # at most one passes
+    assert not (got_a and got_b)  # at most one passes
     assert store.ledger_usd() <= CAP + 1e-9
 
 
@@ -355,7 +355,7 @@ def test_without_the_margin_the_same_race_would_pass_three_dollars() -> None:
     store2 = LagStore()
     store2.seed_ledger(2.95)
     race(store2, 0.05, 0.05, lag=True, cap=3.00)
-    assert store2.ledger_usd() > 3.00 or store.ledger_usd() > 3.00 - 1e-9
+    assert store2.ledger_usd() > 3.00
 
 
 # --- 1000 randomized calls -----------------------------------------------------------------------
@@ -671,3 +671,31 @@ def test_the_cost_sections_state_the_rule_and_use_no_banned_words() -> None:
     flat = _plain(terms)
     assert "$2.90" in terms and "worst case" in flat
     assert forbidden_in(cost) == [] and forbidden_in(flat) == []
+
+
+def test_guarded_client_forces_no_sdk_retries_one_http_request_per_reservation() -> None:
+    from types import SimpleNamespace
+
+    import httpx
+    from openai import OpenAI
+
+    from maudesignal.copilot.spend import GuardedClient
+
+    calls: list[int] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        return httpx.Response(503) if len(calls) < 2 else httpx.Response(200, json={})
+
+    transport = httpx.MockTransport(handler)
+    raw = OpenAI(api_key="k", base_url="http://x/v1", http_client=httpx.Client(transport=transport))
+    assert raw.max_retries == 2
+    store = FakeBlobStore()
+    guard = SimpleNamespace(
+        meter=CallMeter(led(store)), check=lambda kind: None, record=lambda **kw: None
+    )
+    client = GuardedClient(raw, guard)  # type: ignore[arg-type]
+    with pytest.raises(Exception, match=""):  # noqa: B017
+        client.chat.completions.create(model="muse-spark-1.3", messages=[], max_tokens=10)
+    assert len(calls) == 1
+    assert count(store) == 1

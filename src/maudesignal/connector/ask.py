@@ -154,7 +154,11 @@ def default_agent_factory(
         base_url=os.environ.get("META_MODEL_API_BASE_URL", "https://api.meta.ai/v1"),
     )
     model = os.environ.get("META_MODEL_API_MODEL", "muse-spark-1.3")
-    agent = CopilotAgent(guard.wrap(provider.client), data.tool_context(), model=model)
+    from maudesignal.connector.live import CALL_TIMEOUT_S
+
+    # No SDK retries and a bounded wait: one reservation covers exactly one HTTP request.
+    client = provider.client.with_options(max_retries=0, timeout=CALL_TIMEOUT_S)
+    agent = CopilotAgent(guard.wrap(client), data.tool_context(), model=model)
     make_read_only(agent)
     return agent
 

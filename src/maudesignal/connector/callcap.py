@@ -23,7 +23,9 @@ Because the real cost of a call never exceeds its worst case, the day's total ca
 over-counted, never under-counted. Two calls that reserve at the same moment can each pass, so
 the cap enforced is the daily total (``MAUDESIGNAL_LIVE_DAILY_USD``, 3.00) minus the largest
 possible single-call hold, :data:`MAX_CALL_HOLD_USD` (0.10): a call whose worst case is above
-that is not made. With the defaults the enforced cap is 2.90.
+that is not made. With the defaults the enforced cap is 2.90. This bound assumes a listing
+sees the objects just written (list-after-put visibility); if listings lag for three or more
+simultaneous instances the overshoot could reach (k-1) x 0.10.
 """
 
 from __future__ import annotations
