@@ -160,7 +160,7 @@ GitHub issues: `https://github.com/kondapallysaicharan63-bot/maudesignal/issues`
 ## Icon
 
 `docs/hackathon/maudesignal-icon.png` (512x512 PNG, Charan's design: "MAUDE / SIGNAL" with a pulse line on green). Earlier draft kept as `docs/hackathon/maudesignal-icon-alt.png` / `.svg`.
-An original mark (a signal pulse through a magnifier ring); no Meta or FDA logo.
+An original mark (the words MAUDE and SIGNAL above a pulse line); no Meta or FDA logo.
 
 ## Data questionnaire
 
