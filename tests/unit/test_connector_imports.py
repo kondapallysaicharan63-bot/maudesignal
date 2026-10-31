@@ -8,9 +8,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
-# Heavy top-level packages that api/requirements.txt does not install.
+# Heavy top-level packages that api/requirements.txt does not install. Pillow is installed
+# (the live label route re-encodes photos), so it is not blocked.
 BLOCKED = (
-    "PIL",
     "numpy",
     "pandas",
     "scipy",
@@ -43,7 +43,7 @@ print("IMPORT OK")
 def test_connector_app_imports_without_packages_missing_from_api_requirements() -> None:
     lines = (ROOT / "api" / "requirements.txt").read_text().lower().splitlines()
     reqs = "\n".join(ln for ln in lines if not ln.lstrip().startswith("#"))
-    for pkg in ("pillow", "numpy", "pandas", "scipy", "streamlit", "weasyprint"):
+    for pkg in ("numpy", "pandas", "scipy", "streamlit", "weasyprint"):
         assert pkg not in reqs
     out = subprocess.run(
         [sys.executable, "-c", SCRIPT % (BLOCKED,)],

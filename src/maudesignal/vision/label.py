@@ -80,6 +80,17 @@ class LabelField:
         return bool(self.value) and self.legibility not in ("not_present", "illegible")
 
 
+#: GS1 application identifiers that may be stored: device id, production and expiry date.
+#: Lot (10), serial (21) and every other identifier stay in the session only.
+UDI_STORED_AIS = ("01", "11", "17")
+
+
+def udi_without_session_ais(udi: str) -> str:
+    """The human-readable UDI rebuilt from AIs 01 / 11 / 17 only (never lot or serial)."""
+    parsed = parse_udi(udi)
+    return "".join(f"({ai}){parsed[ai]}" for ai in UDI_STORED_AIS if parsed.get(ai))
+
+
 @dataclass
 class LabelResult:
     """Everything the UI needs to show a label reading honestly."""
@@ -123,7 +134,14 @@ class LabelResult:
     def to_dict(self, *, include_session_fields: bool = False) -> dict[str, Any]:
         """JSON form. Lot / serial are omitted unless ``include_session_fields``."""
         fields = {
-            k: {"value": v.value, "legibility": v.legibility}
+            k: {
+                "value": (
+                    udi_without_session_ais(v.value)
+                    if k == "udi" and not include_session_fields
+                    else v.value
+                ),
+                "legibility": v.legibility,
+            }
             for k, v in self.fields.items()
             if include_session_fields or k not in SESSION_ONLY_FIELDS
         }
