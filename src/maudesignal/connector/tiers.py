@@ -625,6 +625,32 @@ def _direct_intent_raw(
     return None
 
 
+def did_you_mean_codes(text: str, known_codes: Iterable[str]) -> list[str]:
+    """Known product codes one letter from an unknown code-like word in ``text``.
+
+    Used for a voice transcript ("Heard QAH -> did you mean QIH?"). Only a capitalised
+    three-letter word that is not a known code is considered, so a real code is never
+    "corrected", and a word after "my" (a personal device: "my CGM") is left alone. The codes
+    are offered to the person and never applied by themselves.
+
+    Args:
+        text: The transcript.
+        known_codes: Product codes that have stored records.
+
+    Returns:
+        Up to three codes, in the order their unclear word appears.
+    """
+    known = frozenset(c.upper() for c in known_codes)
+    norm = normalise(text)
+    _found, unclear = _codes_in(unicodedata.normalize("NFKC", text), known)
+    out: list[str] = []
+    for u in unclear:
+        if re.search(rf"\bmy {u.lower()}\b", norm):
+            continue
+        out.extend(suggest_codes(u, known))
+    return list(dict.fromkeys(out))[:3]
+
+
 def route(
     question: str,
     known_codes: Iterable[str],

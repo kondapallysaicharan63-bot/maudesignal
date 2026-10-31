@@ -7,6 +7,7 @@ Routes (hidden from the public OpenAPI document, keyless, browser origin must be
 
     POST /v1/live/ask    JSON {question, history?, product_code?, ref?}
     POST /v1/live/voice  multipart: "audio" (WAV PCM16 mono 16 kHz, <= 60 s, <= 4 MB), "meta"?
+                         (meta {"transcribe_only": true}: only {heard, did_you_mean}, no answer)
     POST /v1/live/label  multipart: "image" (JPEG or PNG, <= 8 MB)
 
 What this module adds on top of the existing pieces (it reuses, and does not copy, them):
@@ -15,7 +16,11 @@ What this module adds on top of the existing pieces (it reuses, and does not cop
   (read-only tools, temperature 0, prompt in ``skills/safety-copilot``), or from a recorded
   run, labelled as recorded with the recorded question named.
 * ``copilot.voice.MetaTranscriber`` turns a spoken question into text first (audio never
-  reaches the chat model); the transcript is returned with the answer.
+  reaches the chat model); the transcript is returned with the answer. With
+  ``transcribe_only`` (switch ``MAUDESIGNAL_VOICE_TRANSCRIBE_ONLY``, on by default) only the
+  transcript and any "did you mean" product codes come back, so the person can edit the words
+  before sending them as a typed question. It counts toward the voice limit and the cost cap
+  exactly like a full voice question (the transcription reserves first, settles after).
 * ``vision.label_match`` reads a label photo (SAM 3.1 crop, Muse Spark read) and searches
   openFDA for up to three possible matches. Nothing is picked for the person.
 
@@ -103,7 +108,7 @@ from maudesignal.connector.models import ToolAnswer
 from maudesignal.connector.readonly import make_read_only
 from maudesignal.connector.security import RateLimiter
 from maudesignal.connector.store import ConnectorState, MemoryLedger
-from maudesignal.connector.tiers import cacheable
+from maudesignal.connector.tiers import cacheable, did_you_mean_codes
 from maudesignal.copilot.agent import CopilotAgent
 from maudesignal.copilot.spend import (
     DailyLedger,
@@ -146,6 +151,8 @@ LABEL_PER_DAY_ENV = "MAUDESIGNAL_LIVE_LABEL_PER_DAY"
 MENTIONS_PER_DAY_ENV = "MAUDESIGNAL_LIVE_MENTIONS_PER_DAY"
 BURST_PER_MIN_ENV = "MAUDESIGNAL_LIVE_PER_MIN"
 PEPPER_ENV = "MAUDESIGNAL_KEY_PEPPER"
+#: "0", "false", "off" or "no" switches the transcribe-only voice option off (default on).
+VOICE_TRANSCRIBE_ONLY_ENV = "MAUDESIGNAL_VOICE_TRANSCRIBE_ONLY"
 
 DEFAULT_ASK_PER_DAY = 30
 DEFAULT_VOICE_PER_DAY = 10
@@ -212,6 +219,15 @@ def _int_env(env: dict[str, str], name: str, default: int, *, minimum: int = 1) 
     return value if value >= minimum else default
 
 
+def _bool_env(env: dict[str, str], name: str, default: bool) -> bool:
+    raw = env.get(name, "").strip().lower()
+    if raw in ("0", "false", "off", "no"):
+        return False
+    if raw in ("1", "true", "on", "yes"):
+        return True
+    return default
+
+
 def _float_env(env: dict[str, str], name: str, default: float) -> float:
     try:
         value = float(env.get(name, ""))
@@ -233,6 +249,7 @@ class LiveConfig:
     voice_usd: float = DEFAULT_VOICE_USD
     label_usd: float = DEFAULT_LABEL_USD
     mentions_per_day: int = DEFAULT_MENTIONS_PER_DAY
+    voice_transcribe_only: bool = True
 
     @classmethod
     def from_env(cls, env: dict[str, str] | None = None) -> LiveConfig:
@@ -248,6 +265,7 @@ class LiveConfig:
             voice_usd=_float_env(e, VOICE_USD_ENV, DEFAULT_VOICE_USD),
             label_usd=_float_env(e, LABEL_USD_ENV, DEFAULT_LABEL_USD),
             mentions_per_day=_int_env(e, MENTIONS_PER_DAY_ENV, DEFAULT_MENTIONS_PER_DAY),
+            voice_transcribe_only=_bool_env(e, VOICE_TRANSCRIBE_ONLY_ENV, True),
         )
 
 
@@ -473,6 +491,9 @@ class AskIn(_CommonIn):
 
 class MetaIn(_CommonIn):
     """The optional ``meta`` part of ``POST /v1/live/voice``."""
+
+    #: Return only the transcript and "did you mean" codes; nothing is asked or answered.
+    transcribe_only: bool = False
 
 
 class MentionsIn(BaseModel):
@@ -1347,6 +1368,56 @@ def mount_live(
             resp["recorded_note"] = recorded_note(outcome)
         return resp, None, None
 
+    def do_transcribe(
+        wav: bytes, seconds: float, deadline: float
+    ) -> tuple[dict[str, Any], int | None, str | None, str]:
+        """Transcribe only: ``(body_without_limits, http_status, code, message)``.
+
+        The transcription goes through the same per-call meter as a full voice question (its
+        worst case is reserved first and settled after), so it counts toward the cost cap
+        exactly like today. No question is asked and no answer is written.
+        """
+        reason = room_for_live()
+        if reason is None and deadline - be.clock() < MIN_CALL_BUDGET_S:
+            reason = "timeout"
+        if reason is not None or meter is None:
+            note = _REASON_NOTES.get(reason or "live_off", "")
+            return {}, 503, "unavailable", f"{note} Type your question instead."
+        t0 = be.clock()
+        try:
+            transcriber = be.transcriber(min(VOICE_TRANSCRIBE_TIMEOUT_S, deadline - be.clock()))
+            transcript = meter.transcribe(seconds, lambda: transcriber.transcribe_bytes(wav))
+        except CallRefusedError:
+            return {}, 503, "unavailable", f"{_REASON_NOTES['cap']} Type your question instead."
+        except Exception as exc:  # noqa: BLE001 - never fail the visitor on this
+            logger.warning("live_voice_transcribe_failed", error_type=type(exc).__name__)
+            return (
+                {},
+                503,
+                "unavailable",
+                "The recording could not be transcribed. Try again, or type your question.",
+            )
+        heard = transcript.text.strip()
+        if not heard:
+            return {}, 422, "invalid_input", "No speech was heard in the recording. Try again."
+        if phi_in([heard]):
+            return {}, 422, "patient_data", PHI_MESSAGE
+        ms = (be.clock() - t0) * 1000
+        return (
+            {
+                "mode": "live",
+                "transcribe_only": True,
+                "not_medical_advice": NOT_MEDICAL_ADVICE,
+                "heard": heard,
+                "did_you_mean": did_you_mean_codes(heard, data.known_product_codes()),
+                "trace": [_step("Muse Voice Transcribe", VOICE_MODEL, ms, "ok")],
+                "cost_usd": _cost(estimate_cost_usd(seconds)),
+            },
+            None,
+            None,
+            "",
+        )
+
     @app.post(VOICE_PATH, include_in_schema=False)
     async def live_voice(request: Request) -> Response:
         started = be.clock()
@@ -1376,9 +1447,21 @@ def mount_live(
                 return _err(422, "invalid_input", "The meta part must be a JSON object.")
         if phi_in(history_texts(meta.history)):
             return _err(422, "patient_data", PHI_MESSAGE)
+        if meta.transcribe_only and not cfg.voice_transcribe_only:
+            return _err(422, "invalid_input", "transcribe_only is switched off on this server.")
         refused, remaining = daily_refusal(request, "voice")
         if refused is not None:
             return refused
+        if meta.transcribe_only:
+            body, t_status, t_code, t_message = await run_in_threadpool(
+                do_transcribe, wav, seconds, started + VOICE_REQUEST_BUDGET_S
+            )
+            if t_status is not None:
+                log("voice", "transcribe_only", started, status=t_status)
+                return _err(t_status, t_code or "invalid_input", t_message)
+            body["limits"] = limits(remaining)
+            log("voice", "transcribe_only", started)
+            return JSONResponse(body, headers={"Cache-Control": "no-store"})
         try:
             response, status, code = await run_in_threadpool(
                 do_voice, wav, seconds, meta, started + VOICE_REQUEST_BUDGET_S

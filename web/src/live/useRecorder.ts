@@ -1,10 +1,11 @@
 // Browser side of the voice question: getUserMedia -> MediaRecorder -> AudioContext.decodeAudioData -> 16 kHz mono WAV.
 // The pure parts (downmix, resample, WAV header) are in audio.ts and are unit-tested; the browser calls here are covered by
-// the Playwright run with a fake microphone. Audio never leaves the page except in the one request that asks the question.
+// the Playwright run with a fake microphone. Audio never leaves the page except in the one request that sends it.
+// Cancel discards the recording: no WAV is made and nothing is sent. Pause and resume use MediaRecorder's own pause.
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { byteLevel, MAX_SECONDS, toWav16k } from './audio'
 
-export type RecState = 'idle' | 'recording' | 'processing'
+export type RecState = 'idle' | 'recording' | 'paused' | 'processing'
 
 export interface RecResult {
   wav: Blob
@@ -12,13 +13,28 @@ export interface RecResult {
   truncated: boolean
 }
 
+/** How many recent levels the waveform shows. */
+export const WAVE_BARS = 32
+/** The waveform takes a new level this often (ms), so the page is not re-drawn on every animation frame. */
+const WAVE_STEP_MS = 90
+
 export interface Recorder {
   state: RecState
+  /** Recorded time (paused time is not counted). */
   seconds: number
   level: number
+  /** The last WAVE_BARS levels, oldest first (0..1). */
+  levels: number[]
+  /** False when this browser's MediaRecorder cannot pause. */
+  canPause: boolean
   start: () => Promise<void>
+  /** Stops and hands the WAV to onResult. */
   stop: () => void
   toggle: () => void
+  pause: () => void
+  resume: () => void
+  /** Stops and throws the recording away: onResult is never called. */
+  cancel: () => void
 }
 
 type AC = typeof AudioContext
@@ -53,6 +69,18 @@ export async function blobToWav(blob: Blob): Promise<RecResult> {
   }
 }
 
+/** Pushes `v` onto a fixed-length history (oldest dropped). */
+export function pushLevel(levels: number[], v: number, max = WAVE_BARS): number[] {
+  const next = levels.length >= max ? levels.slice(levels.length - max + 1) : levels.slice()
+  next.push(Math.max(0, Math.min(1, v)))
+  return next
+}
+
+/** Recorded time: finished segments plus the running one (none while paused). */
+export function elapsedSeconds(doneMs: number, runningSince: number | null, now: number): number {
+  return (doneMs + (runningSince === null ? 0 : now - runningSince)) / 1000
+}
+
 interface Handlers {
   onResult: (r: RecResult) => void
   /** Called with a plain-words message when the mic cannot be used or nothing was recorded. */
@@ -63,18 +91,22 @@ export function useRecorder(h: Handlers): Recorder {
   const [state, setState] = useState<RecState>('idle')
   const [seconds, setSeconds] = useState(0)
   const [level, setLevel] = useState(0)
+  const [levels, setLevels] = useState<number[]>([])
+  const [canPause, setCanPause] = useState(true)
   const rec = useRef<MediaRecorder | null>(null)
   const stream = useRef<MediaStream | null>(null)
   const meter = useRef<{ ctx: AudioContext; raf: number } | null>(null)
   const tick = useRef<number | null>(null)
-  const auto = useRef<number | null>(null)
+  const discard = useRef(false)
+  const paused = useRef(false)
+  // Recorded time: milliseconds of finished segments, and when the running segment started (null while paused).
+  const timing = useRef<{ doneMs: number; since: number | null }>({ doneMs: 0, since: null })
   const handlers = useRef(h)
   handlers.current = h
 
   const cleanup = useCallback(() => {
     if (tick.current) window.clearInterval(tick.current)
-    if (auto.current) window.clearTimeout(auto.current)
-    tick.current = auto.current = null
+    tick.current = null
     if (meter.current) {
       cancelAnimationFrame(meter.current.raf)
       void meter.current.ctx.close().catch(() => undefined)
@@ -82,7 +114,9 @@ export function useRecorder(h: Handlers): Recorder {
     }
     stream.current?.getTracks().forEach((t) => t.stop())
     stream.current = null
+    paused.current = false
     setLevel(0)
+    setLevels([])
   }, [])
 
   useEffect(
@@ -102,6 +136,37 @@ export function useRecorder(h: Handlers): Recorder {
     if (r && r.state !== 'inactive') r.stop()
   }, [])
 
+  const cancel = useCallback(() => {
+    const r = rec.current
+    discard.current = true
+    if (r && r.state !== 'inactive') r.stop()
+    else {
+      cleanup()
+      setState('idle')
+    }
+  }, [cleanup])
+
+  const pause = useCallback(() => {
+    const r = rec.current
+    if (!r || r.state !== 'recording' || typeof r.pause !== 'function') return
+    r.pause()
+    const t = timing.current
+    if (t.since !== null) t.doneMs += Date.now() - t.since
+    t.since = null
+    paused.current = true
+    setLevel(0)
+    setState('paused')
+  }, [])
+
+  const resume = useCallback(() => {
+    const r = rec.current
+    if (!r || r.state !== 'paused' || typeof r.resume !== 'function') return
+    r.resume()
+    timing.current.since = Date.now()
+    paused.current = false
+    setState('recording')
+  }, [])
+
   const start = useCallback(async () => {
     if (state !== 'idle') return
     if (typeof MediaRecorder === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
@@ -116,9 +181,12 @@ export function useRecorder(h: Handlers): Recorder {
       return
     }
     stream.current = s
+    discard.current = false
+    paused.current = false
     const chunks: Blob[] = []
     const mr = new MediaRecorder(s)
     rec.current = mr
+    setCanPause(typeof mr.pause === 'function' && typeof mr.resume === 'function')
     mr.ondataavailable = (e) => {
       if (e.data.size > 0) chunks.push(e.data)
     }
@@ -126,6 +194,13 @@ export function useRecorder(h: Handlers): Recorder {
       const type = mr.mimeType || 'audio/webm'
       cleanup()
       rec.current = null
+      if (discard.current) {
+        // Cancelled: the chunks are dropped here and nothing is decoded or sent.
+        chunks.length = 0
+        discard.current = false
+        setState('idle')
+        return
+      }
       setState('processing')
       blobToWav(new Blob(chunks, { type }))
         .then((r) => handlers.current.onResult(r))
@@ -149,9 +224,15 @@ export function useRecorder(h: Handlers): Recorder {
         ctx.createMediaStreamSource(s).connect(an)
         const buf = new Uint8Array(an.fftSize)
         const m = { ctx, raf: 0 }
-        const loop = () => {
-          an.getByteTimeDomainData(buf)
-          setLevel(byteLevel(buf))
+        let last = 0
+        const loop = (now: number) => {
+          if (!paused.current && now - last >= WAVE_STEP_MS) {
+            last = now
+            an.getByteTimeDomainData(buf)
+            const v = byteLevel(buf)
+            setLevel(v)
+            setLevels((l) => pushLevel(l, v))
+          }
           m.raf = requestAnimationFrame(loop)
         }
         m.raf = requestAnimationFrame(loop)
@@ -160,18 +241,23 @@ export function useRecorder(h: Handlers): Recorder {
         meter.current = null
       }
     }
-    const t0 = Date.now()
+    timing.current = { doneMs: 0, since: Date.now() }
     setSeconds(0)
-    tick.current = window.setInterval(() => setSeconds((Date.now() - t0) / 1000), 200)
-    auto.current = window.setTimeout(stop, MAX_SECONDS * 1000)
+    setLevels([])
+    tick.current = window.setInterval(() => {
+      const t = timing.current
+      const sec = elapsedSeconds(t.doneMs, t.since, Date.now())
+      setSeconds(sec)
+      if (sec >= MAX_SECONDS) stop() // the longest question: it stops by itself here
+    }, 200)
     mr.start()
     setState('recording')
   }, [state, cleanup, stop])
 
   const toggle = useCallback(() => {
-    if (state === 'recording') stop()
+    if (state === 'recording' || state === 'paused') stop()
     else if (state === 'idle') void start()
   }, [state, start, stop])
 
-  return { state, seconds, level, start, stop, toggle }
+  return { state, seconds, level, levels, canPause, start, stop, toggle, pause, resume, cancel }
 }

@@ -16,7 +16,7 @@ import type { Recorder } from './useRecorder'
 const T = threads.threads as unknown as Thread[]
 const EV = evidence as unknown as Evidence
 
-const idle: Recorder = { state: 'idle', seconds: 0, level: 0, start: async () => undefined, stop: () => undefined, toggle: () => undefined }
+const idle: Recorder = { state: 'idle', seconds: 0, level: 0, levels: [], canPause: true, start: async () => undefined, stop: () => undefined, toggle: () => undefined, pause: () => undefined, resume: () => undefined, cancel: () => undefined }
 
 const liveBody = (n: number, extra: Record<string, unknown> = {}) => ({
   mode: 'live',

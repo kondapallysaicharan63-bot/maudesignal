@@ -8,8 +8,15 @@ import {
   LIMIT_TEXT,
   LiveError,
   postAsk,
+  postLabel,
+  postResearchSave,
+  postTranscribe,
   postVoice,
   type AskResponse,
+  type LabelResponse,
+  type ResearchItem,
+  type SaveOutcome,
+  type TranscribeResult,
   type Turn,
 } from './api'
 import { recordedFor } from './recorded'
@@ -19,7 +26,7 @@ type Fetcher = (url: string, init?: RequestInit) => Promise<Response>
 
 export interface LiveTurn {
   id: number
-  via: 'text' | 'voice'
+  via: 'text' | 'voice' | 'photo'
   /** The question as typed, or as heard for a voice turn (null until the transcript arrives). */
   question: string | null
   status: 'pending' | 'done' | 'error'
@@ -28,6 +35,11 @@ export interface LiveTurn {
   error?: string
   /** A voice turn that fell back: offer the stored voice run. */
   offerRecordedVoice?: boolean
+  /** A photo turn: the picture as sent (an object URL in this page only) and the label reading. */
+  image?: string
+  label?: LabelResponse
+  /** A photo turn that failed: offer the stored label runs. */
+  offerRecordedLabel?: boolean
 }
 
 export interface LiveChat {
@@ -45,8 +57,14 @@ export interface LiveChat {
   micNotice: string | null
   setMicNotice: (m: string | null) => void
   /** Returns a message when the question was refused before sending (too short or too long), otherwise null. */
-  ask: (q: string, o?: { productCode?: string | null }) => string | null
+  ask: (q: string, o?: { productCode?: string | null; research?: boolean }) => string | null
   askVoice: (wav: Blob) => Promise<void>
+  /** A label photo sent from the message box: one turn with the picture and the reading. */
+  askPhoto: (image: Blob) => void
+  /** The words of a recording only (nothing is asked): they go into the message box for editing. */
+  transcribe: (wav: Blob) => Promise<TranscribeResult>
+  /** Saves one web-research item to the audit trail ('unsupported' when the server has no such route). */
+  saveResearch: (item: ResearchItem) => Promise<SaveOutcome>
   clear: () => void
 }
 
@@ -95,7 +113,7 @@ export function useLiveChat(o: Options): LiveChat {
   }, [])
 
   const ask = useCallback(
-    (raw: string, ask?: { productCode?: string | null }): string | null => {
+    (raw: string, ask?: { productCode?: string | null; research?: boolean }): string | null => {
       let q: string
       try {
         q = checkQuestion(raw)
@@ -111,7 +129,7 @@ export function useLiveChat(o: Options): LiveChat {
         recorded(LIMIT_TEXT + '.')
         return null
       }
-      postAsk(q, { history: past, ref, productCode: ask?.productCode ?? null }, { apiBase, fetcher })
+      postAsk(q, { history: past, ref, productCode: ask?.productCode ?? null, research: ask?.research === true }, { apiBase, fetcher })
         .then((resp) => patch(id, { status: 'done', resp }))
         .catch((e: unknown) => {
           const err = e instanceof LiveError ? e : new LiveError('network', 'The live service could not be reached.')
@@ -154,6 +172,34 @@ export function useLiveChat(o: Options): LiveChat {
     [fetcher, patch, put, say], // eslint-disable-line react-hooks/exhaustive-deps
   )
 
+  const askPhoto = useCallback(
+    (image: Blob): void => {
+      const id = nextId++
+      const url = typeof URL.createObjectURL === 'function' ? URL.createObjectURL(image) : undefined
+      put([...turnsRef.current, { id, via: 'photo', question: null, status: 'pending', image: url }])
+      const { apiBase } = opts.current
+      postLabel(image, { apiBase, fetcher })
+        .then((label) => patch(id, { status: 'done', label }))
+        .catch((e: unknown) => {
+          const err = e instanceof LiveError ? e : new LiveError('network', 'The live service could not be reached.')
+          if (err.kind === 'rate_limited') patch(id, { status: 'error', error: `${LIMIT_TEXT}. The recorded label runs are available.`, offerRecordedLabel: true })
+          else if (err.kind === 'patient_data' || err.kind === 'invalid_input' || err.kind === 'too_large') patch(id, { status: 'error', error: err.message })
+          else patch(id, { status: 'error', error: `${err.message} The recorded label runs are available.`, offerRecordedLabel: true })
+        })
+    },
+    [fetcher, patch, put],
+  )
+
+  const transcribe = useCallback(
+    (wav: Blob): Promise<TranscribeResult> => postTranscribe(wav, {}, { apiBase: opts.current.apiBase, fetcher }),
+    [fetcher],
+  )
+
+  const saveResearch = useCallback(
+    (item: ResearchItem): Promise<SaveOutcome> => postResearchSave(item, { apiBase: opts.current.apiBase, fetcher }),
+    [fetcher],
+  )
+
   const readAloud = useCallback(
     (id: number) => {
       const t = turnsRef.current.find((x) => x.id === id)
@@ -170,6 +216,7 @@ export function useLiveChat(o: Options): LiveChat {
     setSpeakingId(null)
     limitRef.current = false
     setLimit(false)
+    turnsRef.current.forEach((t) => t.image && typeof URL.revokeObjectURL === 'function' && URL.revokeObjectURL(t.image))
     put([])
   }, [put])
 
@@ -193,6 +240,9 @@ export function useLiveChat(o: Options): LiveChat {
     setMicNotice,
     ask,
     askVoice,
+    askPhoto,
+    transcribe,
+    saveResearch,
     clear,
   }
 }
@@ -212,5 +262,8 @@ export const NO_LIVE: LiveChat = {
   setMicNotice: () => undefined,
   ask: () => 'The live service is not connected in this build.',
   askVoice: async () => undefined,
+  askPhoto: () => undefined,
+  transcribe: () => Promise.reject(new LiveError('not_configured', 'The live service is not connected in this build.')),
+  saveResearch: async () => 'unsupported',
   clear: () => undefined,
 }

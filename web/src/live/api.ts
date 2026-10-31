@@ -9,6 +9,10 @@ export { apiBaseFrom }
 export const ASK_PATH = '/v1/live/ask'
 export const VOICE_PATH = '/v1/live/voice'
 export const LABEL_PATH = '/v1/live/label'
+/** Built by another track: saves one web-research item to the audit trail. A 404 means it is not there yet. */
+export const RESEARCH_SAVE_PATH = '/v1/live/research/save'
+/** The heading of a web-research section, word for word. */
+export const RESEARCH_LABEL = 'Web research — not FDA records, not verified by the gate'
 
 /** Two characters, so a plain "hi" gets the server's fixed reply (tier 1). */
 export const MIN_QUESTION = 2
@@ -72,6 +76,18 @@ interface Common {
   cost_usd: number | null
   limits: LiveLimits | null
 }
+/** One outside web page found by web research (never an FDA record, never checked by the gate). */
+export interface ResearchItem {
+  title: string
+  url: string
+  date: string | null
+  source: string | null
+}
+export interface ResearchBlock {
+  status: string
+  items: ResearchItem[]
+  label: string
+}
 export interface AskResponse extends Common {
   heard?: string
   answer: LiveAnswer
@@ -86,6 +102,8 @@ export interface AskResponse extends Common {
   open?: OpenView
   /** For a reused answer: when Muse Spark first answered it (UTC). */
   answered_at?: string
+  /** Present only when web research was asked for and the server sent it. */
+  research?: ResearchBlock
 }
 export interface LiveField {
   value?: string | null
@@ -141,6 +159,8 @@ export class LiveError extends Error {
     public kind: FailKind,
     message: string,
     public retryAfterS?: number,
+    /** The server's own message, when it sent one meant for people (shown where the generic text says too little). */
+    public detail?: string,
   ) {
     super(message)
     this.name = 'LiveError'
@@ -161,6 +181,8 @@ export interface AskOptions {
   history?: Turn[]
   productCode?: string | null
   ref?: string | null
+  /** "Research the web" is on: the request carries research: true (only sent when the API offers it). */
+  research?: boolean
 }
 
 /** The JSON body of POST /v1/live/ask. Optional keys are left out when empty. */
@@ -170,6 +192,7 @@ export function buildAskBody(question: string, o: AskOptions = {}): Record<strin
   if (history.length) body.history = history
   if (o.productCode) body.product_code = o.productCode
   if (o.ref) body.ref = o.ref
+  if (o.research === true) body.research = true
   return body
 }
 
@@ -182,6 +205,16 @@ export function buildVoiceForm(wav: Blob, o: Pick<AskOptions, 'history' | 'produ
   if (history.length) meta.history = history
   if (o.productCode) meta.product_code = o.productCode
   if (Object.keys(meta).length) form.append('meta', new Blob([JSON.stringify(meta)], { type: 'application/json' }), 'meta.json')
+  return form
+}
+
+/** The voice body for "transcribe only": the WAV plus meta {transcribe_only: true}. Nothing is asked or answered. */
+export function buildTranscribeForm(wav: Blob, o: Pick<AskOptions, 'productCode'> = {}): FormData {
+  const form = new FormData()
+  form.append('audio', wav, 'question.wav')
+  const meta: Record<string, unknown> = { transcribe_only: true }
+  if (o.productCode) meta.product_code = o.productCode
+  form.append('meta', new Blob([JSON.stringify(meta)], { type: 'application/json' }), 'meta.json')
   return form
 }
 
@@ -205,7 +238,7 @@ export function mapError(status: number, body: unknown): LiveError {
     if (b.code === 'patient_data') return new LiveError('patient_data', message || 'This looks like it contains patient details, so it was not sent on. Remove them and try again.')
     return new LiveError('invalid_input', message || 'The live service could not use that input.')
   }
-  return new LiveError('server', `The live service returned an error (HTTP ${status}).`)
+  return new LiveError('server', `The live service returned an error (HTTP ${status}).`, undefined, message || undefined)
 }
 
 const traceOf = (v: unknown): LiveTraceStep[] =>
@@ -267,7 +300,47 @@ export function parseAsk(body: unknown): AskResponse | null {
     out.open = { view: body.open.view as OpenView['view'], ...(code ? { code } : {}) }
   }
   if (typeof body.answered_at === 'string' && body.answered_at) out.answered_at = body.answered_at.slice(0, 20)
+  const research = parseResearch(body.research)
+  if (research) out.research = research
   return out
+}
+
+/** The web-research block of an answer; null when absent or unusable. Only http(s) links with a title are kept. */
+export function parseResearch(v: unknown): ResearchBlock | null {
+  if (!isObj(v)) return null
+  const items: ResearchItem[] = (Array.isArray(v.items) ? v.items : [])
+    .filter(isObj)
+    .filter((i) => typeof i.url === 'string' && /^https?:\/\//.test(i.url) && typeof i.title === 'string' && i.title.trim() !== '')
+    .slice(0, 10)
+    .map((i) => ({
+      title: String(i.title).trim().slice(0, 200),
+      url: String(i.url),
+      date: typeof i.date === 'string' && i.date.trim() ? i.date.trim().slice(0, 40) : null,
+      source: typeof i.source === 'string' && i.source.trim() ? i.source.trim().slice(0, 80) : null,
+    }))
+  return {
+    status: typeof v.status === 'string' && v.status.trim() ? v.status.trim().slice(0, 40) : 'unknown',
+    items,
+    label: typeof v.label === 'string' && v.label.trim() ? v.label.trim().slice(0, 120) : RESEARCH_LABEL,
+  }
+}
+
+export interface TranscribeResult {
+  heard: string
+  /** Known product codes one letter from an unknown one in the words; offered, never applied. */
+  did_you_mean: string[]
+  limits: LiveLimits | null
+  cost_usd: number | null
+}
+
+/** A transcribe-only voice answer; null without the words. */
+export function parseTranscribe(body: unknown): TranscribeResult | null {
+  if (!isObj(body) || typeof body.heard !== 'string' || !body.heard.trim()) return null
+  const dym = Array.isArray(body.did_you_mean)
+    ? body.did_you_mean.filter((c): c is string => typeof c === 'string' && /^[A-Z]{3}$/.test(c)).slice(0, 3)
+    : []
+  const c = common(body)
+  return { heard: body.heard.trim().slice(0, 1000), did_you_mean: dym, limits: c.limits, cost_usd: c.cost_usd }
 }
 
 /** A label answer; null when it lacks the reading or the matches block. */
@@ -349,6 +422,38 @@ export const postAsk = async (question: string, o: AskOptions, d: Deps): Promise
 
 export const postVoice = async (wav: Blob, o: Pick<AskOptions, 'history' | 'productCode'>, d: Deps): Promise<AskResponse> =>
   post(VOICE_PATH, { body: buildVoiceForm(wav, o) }, parseAsk, d)
+
+/** POST /v1/live/voice with transcribe_only: the words only, for the person to edit before sending. */
+export const postTranscribe = async (wav: Blob, o: Pick<AskOptions, 'productCode'>, d: Deps): Promise<TranscribeResult> =>
+  post(VOICE_PATH, { body: buildTranscribeForm(wav, o) }, parseTranscribe, d)
+
+/** What a transcription failure says in the message box. */
+export function transcribeErrorText(e: unknown): string {
+  const err = e instanceof LiveError ? e : null
+  if (!err) return 'The recording could not be transcribed. Try again, or type your question.'
+  if (err.kind === 'rate_limited' || err.kind === 'patient_data' || err.kind === 'invalid_input' || err.kind === 'too_large') return err.message
+  if (err.kind === 'server' && err.detail) return err.detail
+  return `${err.message} Nothing was sent; type your question instead.`
+}
+
+export type SaveOutcome = 'saved' | 'unsupported' | 'failed'
+
+/** POST /v1/live/research/save {url, title, date}. 404 or 405 mean the server has no such route yet. */
+export async function postResearchSave(item: ResearchItem, d: Deps): Promise<SaveOutcome> {
+  if (!d.apiBase) return 'unsupported'
+  try {
+    const res = await d.fetcher(`${d.apiBase}${RESEARCH_SAVE_PATH}`, {
+      method: 'POST',
+      body: JSON.stringify({ url: item.url, title: item.title, date: item.date }),
+      headers: { 'content-type': 'application/json' },
+      credentials: 'omit',
+    })
+    if (res.status === 404 || res.status === 405) return 'unsupported'
+    return res.ok ? 'saved' : 'failed'
+  } catch {
+    return 'failed'
+  }
+}
 
 /** POST /v1/live/mentions: a three-letter code and short device terms; no key, no question text, no photo. */
 export const postMentions = async (code: string, terms: string[] | undefined, d: Deps): Promise<MentionsResult> => {

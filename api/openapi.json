@@ -473,6 +473,14 @@
       "Health": {
         "description": "``GET /v1/health`` body.",
         "properties": {
+          "features": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "description": "Optional website features this server offers (for example voice_transcribe_only). A missing name means the feature is not offered.",
+            "title": "Features",
+            "type": "object"
+          },
           "feedback_store": {
             "title": "Feedback Store",
             "type": "string"

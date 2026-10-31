@@ -7,12 +7,12 @@ import type { Thread } from '../types'
 import type { Recorder } from '../live/useRecorder'
 import { RecordingBar } from './RecordingBar'
 
-const DISCLAIMER =
+export const DISCLAIMER =
   'Signals for a person to review. Not medical advice; a named person makes every decision. Nothing is filed with FDA.'
-const DISCLAIMER_SHORT = 'Signals for review. Not medical advice.'
+export const DISCLAIMER_SHORT = 'Signals for review. Not medical advice.'
 
 // Recorded threads offered as starting points (ids from threads.json). Missing ids are skipped.
-const SUGGESTED = ['01-what-changed', '05-capa-need-evidence', '06-trap', '10-recalls', '23-mhra']
+export const SUGGESTED = ['01-what-changed', '05-capa-need-evidence', '06-trap', '10-recalls', '23-mhra']
 
 interface Props {
   threads: Thread[]
@@ -43,7 +43,7 @@ export interface ComposerLive {
 }
 
 /** The typed characters shown in bold and underlined inside a suggestion. */
-function Marked({ text, query }: { text: string; query: string }) {
+export function Marked({ text, query }: { text: string; query: string }) {
   return (
     <>
       {highlightParts(text, query).map((p, i) =>

@@ -738,6 +738,132 @@ def test_voice_wrong_request_types_are_422(tmp_path: Path) -> None:
     assert env.transcriber.received == []
 
 
+def test_voice_transcribe_only_returns_the_words_and_no_answer(tmp_path: Path) -> None:
+    env = Env(tmp_path)
+    wav = make_wav(2.0)
+    r = env.voice(wav, meta={"transcribe_only": True})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["heard"] == "What changed this week for LLZ?"
+    assert body["transcribe_only"] is True and body["mode"] == "live"
+    assert body["did_you_mean"] == [], "a real code is never corrected"
+    assert "answer" not in body and "recorded_note" not in body
+    assert env.spark.requests == [], "nothing is asked: the person edits the words first"
+    assert env.transcriber.received == [wav]
+    assert [s["model"] for s in body["trace"]] == ["muse-voice-transcribe-1.0"]
+    assert body["cost_usd"] > 0
+    assert body["limits"]["remaining_today"] == 9, "it counts toward the 10 voice questions"
+    assert forbidden_in(json.dumps(body)) == []
+
+
+def test_voice_transcribe_only_offers_did_you_mean_for_an_unknown_code(tmp_path: Path) -> None:
+    from maudesignal.connector.tiers import did_you_mean_codes
+
+    known = ConnectorData(work_dir=tmp_path / "work").known_product_codes()
+    assert "LLZ" in known
+    heard = "What changed this week for LLC?"
+    assert "LLC" not in known
+    env = Env(tmp_path, transcriber=FakeTranscriber(heard))
+    body = env.voice(meta={"transcribe_only": True}).json()
+    assert body["heard"] == heard, "the words are returned as heard, never rewritten"
+    assert body["did_you_mean"] == did_you_mean_codes(heard, known)
+    assert "LLZ" in body["did_you_mean"]
+
+
+def test_did_you_mean_codes_never_touches_real_codes_or_words() -> None:
+    from maudesignal.connector.tiers import did_you_mean_codes
+
+    known = {"LLZ", "QIH", "QAS"}
+    assert did_you_mean_codes("Heard QAH this week", known) == ["QAS", "QIH"]
+    assert did_you_mean_codes("What about LLZ and QIH?", known) == []
+    assert did_you_mean_codes("did the llc fail", known) == [], "lower-case words are left alone"
+    assert did_you_mean_codes("my QAH stopped", known) == [], "a personal device is left alone"
+
+
+def test_voice_transcribe_only_counts_toward_the_voice_limit(tmp_path: Path) -> None:
+    env = Env(tmp_path, config=LiveConfig(voice_per_day=2, burst_per_min=99))
+    assert env.voice(meta={"transcribe_only": True}).status_code == 200
+    assert env.voice().status_code == 200
+    third = env.voice(meta={"transcribe_only": True})
+    assert third.status_code == 429 and "Daily limit of 2 voice" in third.json()["message"]
+    assert len(env.transcriber.received) == 2
+
+
+def test_voice_transcribe_only_without_a_model_is_503_with_no_transcription(
+    tmp_path: Path,
+) -> None:
+    env = Env(tmp_path, live=False)
+    r = env.voice(meta={"transcribe_only": True})
+    assert r.status_code == 503 and r.json()["code"] == "unavailable"
+    assert "Type your question" in r.json()["message"]
+    assert env.transcriber.received == [] and env.spark.requests == []
+
+
+def test_voice_transcribe_only_stops_at_the_cost_cap(tmp_path: Path) -> None:
+    from tests.unit.test_connector_batch_o import FakeBlobStore
+
+    store = FakeBlobStore()
+    env = Env(tmp_path, store=store, config=LiveConfig(daily_usd=3.0, burst_per_min=99))
+    from maudesignal.connector.callcap import transcribe_hold_usd
+
+    assert env.voice(make_wav(2.0), meta={"transcribe_only": True}).status_code == 200
+    # reserved at the worst case first, then settled to the real cost the provider reported
+    assert 0 < store.ledger_usd(NOW.date()) < transcribe_hold_usd(2.0)
+    store.seed_ledger(2.90, NOW.date())  # the enforced cap: no room for one more hold
+    r = env.voice(meta={"transcribe_only": True})
+    assert r.status_code == 503 and "cost cap" in r.json()["message"]
+    assert len(env.transcriber.received) == 1, "no transcription once the cap is reached"
+
+
+@pytest.mark.parametrize(
+    ("transcriber", "status", "code"),
+    [
+        (FakeTranscriber(fail=True), 503, "unavailable"),
+        (FakeTranscriber("   "), 422, "invalid_input"),
+        (FakeTranscriber("Her MRN 4482910 and the LLZ failed"), 422, "patient_data"),
+    ],
+    ids=["transcriber-fails", "no-speech", "patient-data"],
+)
+def test_voice_transcribe_only_failures(
+    tmp_path: Path, transcriber: FakeTranscriber, status: int, code: str
+) -> None:
+    env = Env(tmp_path, transcriber=transcriber)
+    r = env.voice(meta={"transcribe_only": True})
+    assert r.status_code == status and r.json()["code"] == code
+    assert "4482910" not in r.text and "HTTP 500" not in r.text
+    assert env.spark.requests == []
+
+
+def test_voice_transcribe_only_can_be_switched_off(tmp_path: Path) -> None:
+    env = Env(
+        tmp_path,
+        config=LiveConfig(voice_per_day=1, burst_per_min=99, voice_transcribe_only=False),
+    )
+    r = env.voice(meta={"transcribe_only": True})
+    assert r.status_code == 422 and "switched off" in r.json()["message"]
+    assert env.transcriber.received == []
+    assert env.voice().status_code == 200, "a refused option does not use the daily count"
+    assert env.client.get("/v1/health").json()["features"] == {"voice_transcribe_only": False}
+
+
+def test_voice_transcribe_only_reads_its_environment_switch() -> None:
+    assert LiveConfig.from_env({}).voice_transcribe_only is True
+    for off in ("0", "false", "OFF", "no"):
+        env = {"MAUDESIGNAL_VOICE_TRANSCRIBE_ONLY": off}
+        assert LiveConfig.from_env(env).voice_transcribe_only is False
+    assert LiveConfig.from_env({"MAUDESIGNAL_VOICE_TRANSCRIBE_ONLY": "1"}).voice_transcribe_only
+    assert LiveConfig.from_env({"MAUDESIGNAL_VOICE_TRANSCRIBE_ONLY": "x"}).voice_transcribe_only
+
+
+def test_health_names_its_features_and_allows_the_web_origin(tmp_path: Path) -> None:
+    env = Env(tmp_path)
+    r = env.client.get("/v1/health", headers={"origin": ORIGIN})
+    assert r.json()["features"] == {"voice_transcribe_only": True}
+    assert r.headers["access-control-allow-origin"] == ORIGIN
+    other = env.client.get("/v1/health", headers={"origin": "https://evil.example"})
+    assert "access-control-allow-origin" not in other.headers
+
+
 def test_voice_oversize_request_is_413_before_reading(tmp_path: Path) -> None:
     env = Env(tmp_path)
     r = env.client.post(

@@ -137,6 +137,7 @@ REPO_URL = "https://github.com/kondapallysaicharan63-bot/maudesignal"
 API_BASE_URL = "https://maudesignal-api.vercel.app"
 TERMS_URL = f"{API_BASE_URL}/terms"
 CONNECT_PATH = "/v1/connect"
+HEALTH_PATH = "/v1/health"
 PUBLIC_URL_ENV = "MAUDESIGNAL_PUBLIC_URL"
 READ_ONLY = {"x-maudesignal-read-only": True, "x-maudesignal-scope": "read"}
 MCP_PATH = "/mcp"
@@ -265,6 +266,13 @@ class Health(BaseModel):
     limits_scope: str
     state_store: str
     feedback_store: str
+    features: dict[str, bool] = Field(
+        default_factory=dict,
+        description=(
+            "Optional website features this server offers (for example "
+            "voice_transcribe_only). A missing name means the feature is not offered."
+        ),
+    )
 
 
 class DemoLimits(BaseModel):
@@ -674,8 +682,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def _public_cors(
         request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
-        """CORS for the keyless route only, and only for origins listed in the environment."""
-        if not (request.url.path.startswith(PUBLIC_PREFIX) or request.url.path == CONNECT_PATH):
+        """CORS for the keyless routes only, and only for origins listed in the environment.
+
+        ``/v1/health`` is included so the website can read which optional features exist.
+        """
+        if not (
+            request.url.path.startswith(PUBLIC_PREFIX)
+            or request.url.path in (CONNECT_PATH, HEALTH_PATH)
+        ):
             return await call_next(request)
         origin = request.headers.get("origin", "").rstrip("/")
         allowed = bool(origin) and origin in web_origins
@@ -783,8 +797,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             )
         )
 
+    live_cfg = cfg.live_config or LiveConfig.from_env()
+
     @app.get(
-        "/v1/health",
+        HEALTH_PATH,
         response_model=Health,
         operation_id="health",
         summary="Service status (no key needed)",
@@ -800,6 +816,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             limits_scope="shared" if state.shared else "per_instance",
             state_store=state.backend,
             feedback_store=cfg.feedback_store.backend,
+            features={"voice_transcribe_only": live_cfg.voice_transcribe_only},
         )
 
     @app.get(
