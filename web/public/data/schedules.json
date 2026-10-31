@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "schedules": [
+    {
+      "id": "daily-monitor",
+      "label": "Daily monitor",
+      "cron": "17 11 * * *",
+      "workflow": ".github/workflows/monitor.yml",
+      "last_result": {
+        "date": "2026-08-31",
+        "headline": "New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+      }
+    },
+    {
+      "id": "ai-sweep",
+      "label": "AI device sweep",
+      "cron": "23 12 * * 1",
+      "workflow": ".github/workflows/ai-sweep.yml",
+      "last_result": {
+        "date": "2026-10-29T07:42:52Z",
+        "flagged": 6,
+        "checked": 181
+      }
+    }
+  ],
+  "notes": []
+}

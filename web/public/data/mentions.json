@@ -1,0 +1,82 @@
+{
+  "codes": {
+    "LLZ": {
+      "dropped": {
+        "off_topic": 0,
+        "personal_details": 0,
+        "quote_not_found": 0
+      },
+      "label": "news and public web",
+      "mentions": [],
+      "mode": "recorded",
+      "product_code": "LLZ",
+      "searched_utc": "2026-10-31T03:09:41Z",
+      "sources_tried": [
+        {
+          "n": 0,
+          "name": "GDELT DOC 2.0 (news index)",
+          "status": "failed: ConnectTimeout",
+          "url": "https://api.gdeltproject.org/api/v2/doc/doc"
+        },
+        {
+          "n": 0,
+          "name": "FDA press releases (RSS)",
+          "status": "ok",
+          "url": "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/press-releases/rss.xml"
+        },
+        {
+          "n": 0,
+          "name": "FDA recalls (RSS)",
+          "status": "ok",
+          "url": "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/recalls/rss.xml"
+        },
+        {
+          "n": 0,
+          "name": "FDA warning letters (RSS)",
+          "status": "failed: http 404",
+          "url": "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/warning-letters/rss.xml"
+        },
+        {
+          "n": 0,
+          "name": "MedTech Dive (RSS)",
+          "status": "ok",
+          "url": "https://www.medtechdive.com/feeds/news/"
+        }
+      ],
+      "trace": [
+        {
+          "ms": 6031,
+          "status": "failed: ConnectTimeout",
+          "step": "Search: GDELT DOC 2.0 (news index)"
+        },
+        {
+          "ms": 277,
+          "status": "ok",
+          "step": "Search: FDA press releases (RSS)"
+        },
+        {
+          "ms": 352,
+          "status": "ok",
+          "step": "Search: FDA recalls (RSS)"
+        },
+        {
+          "ms": 431,
+          "status": "failed: http 404",
+          "step": "Search: FDA warning letters (RSS)"
+        },
+        {
+          "ms": 228,
+          "status": "ok",
+          "step": "Search: MedTech Dive (RSS)"
+        },
+        {
+          "ms": 0,
+          "status": "0 page(s) tried",
+          "step": "Fetch pages and check each quote against the page text"
+        }
+      ]
+    }
+  },
+  "notes": [],
+  "schema_version": "1.0"
+}

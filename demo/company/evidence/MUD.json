@@ -1,0 +1,149 @@
+{
+ "schema_version": "1.0",
+ "product_code": "MUD",
+ "fetched_utc": "2026-10-30T03:07:05Z",
+ "window": {
+  "date_from": "20260904",
+  "date_to": "20261030",
+  "weeks": 8
+ },
+ "classification": {
+  "device_name": "Oximeter, Tissue Saturation",
+  "device_class": "2",
+  "regulation_number": "870.2700",
+  "query_url": "https://api.fda.gov/device/classification.json?search=product_code:MUD&limit=1"
+ },
+ "reports": {
+  "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code:MUD+AND+date_received:[20260904+TO+20261030]&limit=100",
+  "matched_total": 4,
+  "stored": 4,
+  "records": [
+   {
+    "report_id": "50926712",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "O3 Regional Oximeter",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Incorrect Measurement"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50926577",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "INVOS",
+    "manufacturer": "Covidien llc",
+    "product_problems": [
+     "Incorrect Measurement"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50923064",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "HEMOSPHERE FORESIGHT MODULE",
+    "manufacturer": "Edwards Lifesciences",
+    "product_problems": [
+     "Incorrect, Inadequate or Imprecise Result or Readings"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50854140",
+    "event_type": "malfunction",
+    "date_received": "20260922",
+    "report_source": "Manufacturer report",
+    "brand_name": "INVOS",
+    "manufacturer": "Covidien llc",
+    "product_problems": [
+     "Incorrect Measurement"
+    ],
+    "text": "It was reported that the device was not reading correctly. There was no patient involvement. Medtronic submits this report to comply with FDA regulations 21 CFR Parts 4 and 803. Medtronic has made reasonable efforts to provide as much relevant information as is available to the company as of the submission date of this report. This report does not constitute an admission or a conclusion by FDA, Medtronic, or its employees that the device, Medtronic, or its employee caused or contributed to the event described in the report. Any required fields that are unpopulated are blank because the information is currently unknown or unavailable. Medtronic will submit a supplemental report if additional relevant information becomes known."
+   }
+  ]
+ },
+ "recalls": {
+  "query_url": "https://api.fda.gov/device/recall.json?search=product_code:MUD&sort=event_date_initiated:desc&limit=100",
+  "matched_total": 7,
+  "stored": 7,
+  "records": [
+   {
+    "recall_number": "Z-3250-2026",
+    "event_number": "99370",
+    "recalling_firm": "Becton, Dickinson and Company",
+    "product_description": "ForeSight Elite Tissue Oximetry Cable REF HEMFSM10\nUDI-DI code: 00690103210927\n\nThe non-invasive ForeSight oximeter cable is intended for use as an adjunct monitor of absolute regional hemoglobin oxygen saturation of blood under the sensors in individuals at risk for reduced flow or no flow ischemic states. The ForeSight Oximeter Cable is also intended to monitor relative changes of total hemoglobin of blood under the sensors. The\nForeSight Oximeter Cable is intended to allow for the display of StO2 and relative change in total hemoglobin on the HemoSphere advanced monitor.",
+    "reason_for_recall": "Due to incorrect switching of Channel 1 and 2 on the module and flag labels on the tissue oximetry cables.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260811",
+    "cfres_id": "221435"
+   },
+   {
+    "recall_number": "Z-1731-2024",
+    "event_number": "93883",
+    "recalling_firm": "Covidien",
+    "product_description": "Medtronic Invos, Reusable Infant Sensor Adapter Cable for PM7100, REF: PMAC71RIC",
+    "reason_for_recall": "manufacturing defects to sensor cable connectors  may result in  error codes or non-functioning channel",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240109",
+    "cfres_id": "205778"
+   },
+   {
+    "recall_number": "Z-1732-2024",
+    "event_number": "93883",
+    "recalling_firm": "Covidien",
+    "product_description": "Medtronic Invos, Reusable  Sensor Cable for PM7100, REF: PMAC71RSC",
+    "reason_for_recall": "manufacturing defects to sensor cable connectors  may result in  error codes or non-functioning channel",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240109",
+    "cfres_id": "205779"
+   },
+   {
+    "recall_number": "Z-0789-2024",
+    "event_number": "93624",
+    "recalling_firm": "KENT IMAGING, INC.",
+    "product_description": "Snapshot NIR, REF: KD204",
+    "reason_for_recall": "Tissue oxygenation measurement system touchscreens may be unresponsive, which may prevent the viewing of oxygenation images.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20231030",
+    "cfres_id": "204983"
+   },
+   {
+    "recall_number": "Z-0834-2022",
+    "event_number": "89647",
+    "recalling_firm": "Edwards Lifesciences, LLC",
+    "product_description": "FORE-SIGHT ELITE Absolute Tissue Oximeter, REF:  01-06-3000, Contents: Monitor 1 EA., Accessory Kit 1 EA.",
+    "reason_for_recall": "The StO2 values may be inaccurately low when using either the FORE-SIGHT ELITE Tissue Oximeter\nModule or the FORE-SIGHT ELITE Absolute Tissue Oximeter Monitor with the Fore-Sight Elite large sensor in certain somatic locations (arms and legs).\nWhile the StO2 absolute values are impacted, the directional trend remains accurate, but may have a\nlarger magnitude change. Low StO2 values may lead to unintended or inappropriate treatment",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20220301",
+    "cfres_id": "192119"
+   },
+   {
+    "recall_number": "Z-0835-2022",
+    "event_number": "89647",
+    "recalling_firm": "Edwards Lifesciences, LLC",
+    "product_description": "FORE-SIGHT ELITE Tissue Oximeter module, REF:  HEMFSM10",
+    "reason_for_recall": "The StO2 values may be inaccurately low when using either the FORE-SIGHT ELITE Tissue Oximeter\nModule or the FORE-SIGHT ELITE Absolute Tissue Oximeter Monitor with the Fore-Sight Elite large sensor in certain somatic locations (arms and legs).\nWhile the StO2 absolute values are impacted, the directional trend remains accurate, but may have a\nlarger magnitude change. Low StO2 values may lead to unintended or inappropriate treatment",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20220301",
+    "cfres_id": "192179"
+   },
+   {
+    "recall_number": "Z-0458-2010",
+    "event_number": "53801",
+    "recalling_firm": "Nonin Medical, Inc",
+    "product_description": "Nonin Model 7600B cerebral oximeter pod.  Used with the Nonin Model 7600 Regional Oximeter with Equanox Technology and Bluetooth Wireless Technology.  Nonin Medical, Inc., 13700 First Avenue North, Plymouth, Minnesota  55441-5443 USA.",
+    "reason_for_recall": "A malfunction was detected with one of the components that, under rare circumstances, may result in the overheating of the POD.  This overheating, while unlikely to occur, has the potential to cause a burn if the POD is in direct contact with the patient.",
+    "recall_status": "Terminated",
+    "date_initiated": "20091023",
+    "cfres_id": "86537"
+   }
+  ]
+ },
+ "notes": []
+}

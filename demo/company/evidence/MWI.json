@@ -1,0 +1,2069 @@
+{
+ "schema_version": "1.0",
+ "product_code": "MWI",
+ "fetched_utc": "2026-10-30T03:07:06Z",
+ "window": {
+  "date_from": "20260904",
+  "date_to": "20261030",
+  "weeks": 8
+ },
+ "classification": {
+  "device_name": "Monitor, Physiological, Patient (Without Arrhythmia Detection Or Alarms)",
+  "device_class": "2",
+  "regulation_number": "870.2300",
+  "query_url": "https://api.fda.gov/device/classification.json?search=product_code:MWI&limit=1"
+ },
+ "reports": {
+  "query_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code:MWI+AND+date_received:[20260904+TO+20261030]&limit=100",
+  "matched_total": 97,
+  "stored": 97,
+  "records": [
+   {
+    "report_id": "50941662",
+    "event_type": "malfunction",
+    "date_received": "20260930",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "No Audible Alarm",
+     "Sensing Intermittently"
+    ],
+    "text": "The customer reported that the device has an audio speaker failure and tb-20 intermittent connection issues. There was no patient impact or consequence reported. Other, Other Text: Masimo has reached out to the customer to request the return of the device. The device has not been returned to Masimo to allow an analysis to be performed. If the device is returned for evaluation or new information is obtained, a follow up report will be submitted.Health Effect Impact Code: No adverse event; no patient impact"
+   },
+   {
+    "report_id": "50927241",
+    "event_type": "malfunction",
+    "date_received": "20260929",
+    "report_source": "Manufacturer report",
+    "brand_name": "Root",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Device Alarm System",
+     "Unexpected Shutdown"
+    ],
+    "text": "The customer reported that sometimes it has turned off by itself with no message or alarm. There was no patient impact or consequence reported. Other, Other Text: Masimo has reached out to the customer to request the return of the device. The device has not been returned to Masimo to allow an analysis to be performed. If the device is returned for evaluation or new information is obtained, a follow up report will be submitted.Health Effect Impact Code: No adverse event; no patient impact.E1. Initial Reporter Phone Number exceeded allowable field length, Initial Reporter Phone Number is as follows: (b)(6)."
+   },
+   {
+    "report_id": "50927224",
+    "event_type": "malfunction",
+    "date_received": "20260929",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Device Alarm System",
+     "Unexpected Shutdown"
+    ],
+    "text": "The customer reported that \"after power on the device turn off by itself with no alarm or error message\". There was no patient impact or consequence reported. Other, Other Text: The device has not been returned to the investigation facility to allow for an analysis to be performed. If the device is received for evaluation or new information is obtained, a follow up report will be submitted.Health Effect Impact Code: No adverse event; no patient impact."
+   },
+   {
+    "report_id": "50914635",
+    "event_type": "injury",
+    "date_received": "20260928",
+    "report_source": "User Facility report",
+    "brand_name": "Expression MR400 MRI Patient Monitoring System (Model MR400)",
+    "manufacturer": "Philips North America LLC",
+    "product_problems": [
+     "Unexpected Therapeutic Results",
+     "Adverse Event Without Identified Device or Use Problem"
+    ],
+    "text": "Patient underwent MRI scan with use of Phillips Expression MR400 MRI Patient Monitoring System. After the MRI, he was noted to have a left chest wall burn. Plastic Surgery noted a full thickness chest wall burn that later required surgical debridement and split thickness skin grafting. Manufacturer response for MONITOR,PHYSIOLOGICAL,PATIENT(WITHOUT ARRHYTHMIA DETECTION OR ALARMS), Expression MR400 MRI Patient Monitoring System (Model MR400) (per site reporter).Provided with IFU changes from \"[redacted]\"-last year not shared with \"[redacted]\"-our hospital when published."
+   },
+   {
+    "report_id": "50910730",
+    "event_type": "malfunction",
+    "date_received": "20260928",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97 with NIBP",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Unexpected Shutdown"
+    ],
+    "text": "The customer reported that the device will not power on most of the time. if it does turn on, it shuts off by itself. There was no patient impact or consequence reported. Other Text: The returned product was evaluated. The device powered on using both battery and AC power. However, the display became inactive, followed by an alarm condition consisting of one long beep and two short beeps, while the Home button flashed red continuously. An internal inspection identified a defective solder joint at the U15 chip on the MX-7 Tech Board, which prevented completion of the power-on sequence. Additionally, the device log files also recorded an ¿MMXBI Board Failure\" error message. The reported issue was confirmed. Health Effect Impact Code: No adverse event; no patient impact."
+   },
+   {
+    "report_id": "50907713",
+    "event_type": "malfunction",
+    "date_received": "20260926",
+    "report_source": "Manufacturer report",
+    "brand_name": "MR Patient Care Expression Model MR400 MRI Patient Monitoring System",
+    "manufacturer": "Invivo, a division of Philips Medical Systems",
+    "product_problems": [
+     "Output Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50903412",
+    "event_type": "malfunction",
+    "date_received": "20260925",
+    "report_source": "Manufacturer report",
+    "brand_name": "Expression IP5 Information Portal",
+    "manufacturer": "Invivo, a division of Philips Medical Systems",
+    "product_problems": [
+     "Application Program Freezes or Fails to Launch"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50902927",
+    "event_type": "malfunction",
+    "date_received": "20260925",
+    "report_source": "Manufacturer report",
+    "brand_name": "CSM Power Management Stand",
+    "manufacturer": "BAXTER HEALTHCARE CORPORATION",
+    "product_problems": [
+     "Melted",
+     "Failure to Power Up",
+     "Sparking",
+     "Electrical Overstress"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50902565",
+    "event_type": "malfunction",
+    "date_received": "20260925",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Unexpected Shutdown"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50902403",
+    "event_type": "malfunction",
+    "date_received": "20260925",
+    "report_source": "Manufacturer report",
+    "brand_name": "Expression MR400 MRI Patient Monitoring System (Model MR400)",
+    "manufacturer": "Invivo, a division of Philips Medical Systems",
+    "product_problems": [
+     "Incorrect Measurement"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50899390",
+    "event_type": "malfunction",
+    "date_received": "20260925",
+    "report_source": "Manufacturer report",
+    "brand_name": "Expression MR400 MRI Patient Monitoring System (Model MR400)",
+    "manufacturer": "Invivo, a division of Philips Medical Systems",
+    "product_problems": [
+     "Incorrect Measurement"
+    ],
+    "text": "Philips received a complaint on the Expression Patient Monitor (MR400) indicating that the Invasive blood pressure(IBP) is inaccurate. The device was not use on a patient at time of event, there was no adverse event reported. A Philips Remote Service Engineer (RSE) spoke to the customer and replicated the reported issue during the P1 accuracy test. The P1 port failed accuracy testing by reporting 221 when the expected value was 250, while the P2 port passed using the same setup. No error codes were present, and inspection of the pins inside the P1 port found no apparent damage or bending. The possible cause was a defective IBP connector, IBP-2G connector adapter, or IBP board assembly; the exact cause was not confirmed. Philips recommended part numbers to resolve the issue. The system does not meet specifications for the performed service, and the device was not returned to use. The investigation concludes that no further action is required at this time. If additional information is received the complaint file will be reopened."
+   },
+   {
+    "report_id": "50892052",
+    "event_type": "malfunction",
+    "date_received": "20260924",
+    "report_source": "Manufacturer report",
+    "brand_name": "MR Patient Care Expression Model MR400 MRI",
+    "manufacturer": "Philips Medizin Systeme Böblingen GmbH",
+    "product_problems": [
+     "Incorrect Measurement"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50878028",
+    "event_type": "malfunction",
+    "date_received": "20260924",
+    "report_source": "Manufacturer report",
+    "brand_name": "WIFI CSM NIBP",
+    "manufacturer": "BAXTER HEALTHCARE CORPORATION",
+    "product_problems": [
+     "Thermal Decomposition of Device",
+     "Sparking"
+    ],
+    "text": "Baxter received a report stating that a Connex Spot Monitor emitted sparks and burning smell. The power cable appeared to be blackened. The process step during which this occurred was unknown. There was no patient/user injury, medical intervention, symptom, or adverse event reported. The investigation is ongoing, however if any additional relevant information is identified following completion of the investigation, the additional relevant information will be submitted in a supplemental report."
+   },
+   {
+    "report_id": "50877613",
+    "event_type": "malfunction",
+    "date_received": "20260924",
+    "report_source": "Manufacturer report",
+    "brand_name": "Connex Vital Signs Monitor",
+    "manufacturer": "BAXTER HEALTHCARE CORPORATION",
+    "product_problems": [
+     "Overheating of Device"
+    ],
+    "text": "Baxter received a report stating that CVSM power cord had a scorched plug. The process step during which this occurred was unknown. There was no report of patient injury or medical intervention associated with this event. The investigation is ongoing, however if any additional relevant information is identified following completion of the investigation, the additional relevant information will be submitted in a supplemental report."
+   },
+   {
+    "report_id": "50877612",
+    "event_type": "malfunction",
+    "date_received": "20260924",
+    "report_source": "Manufacturer report",
+    "brand_name": "Power Management Stand",
+    "manufacturer": "BAXTER HEALTHCARE CORPORATION",
+    "product_problems": [
+     "Thermal Decomposition of Device",
+     "Sparking"
+    ],
+    "text": "Baxter received a report stating that a Power Management Stand emitted sparks and burning smell. The power cable appeared to be blackened. The process step during which this occurred was unknown. There was no patient/user injury, medical intervention, symptom, or adverse event reported. The Baxter technician found the power cord was defective. The reported problem has been verified. The Baxter technician arranged to get the power cord replaced for the customer to resolve the issue. Although there was no injury associated with this event, if the reported event were to recur it could lead to injury or death. Therefore, Baxter is reporting this complaint."
+   },
+   {
+    "report_id": "50877491",
+    "event_type": "malfunction",
+    "date_received": "20260924",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Sensing Intermittently"
+    ],
+    "text": "The customer reported that the device connects for 2 mins and stops reading. TB20 connection is loose. There was no patient impact or consequence reported. Other, Other Text: Masimo has reached out to the customer to request the return of the device. The device has not been returned to Masimo to allow an analysis to be performed. If the device is returned for evaluation or new information is obtained, a follow up report will be submitted.Health Effect Impact Code: No adverse event; no patient impact."
+   },
+   {
+    "report_id": "50877317",
+    "event_type": "malfunction",
+    "date_received": "20260924",
+    "report_source": "Manufacturer report",
+    "brand_name": "Root with NIBP and Temp",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Defective Alarm",
+     "Unexpected Shutdown"
+    ],
+    "text": "The customer reported that the device is turning on but shuts down after an hour when the AC is unplugged, with no message or alarm provided. There was no patient impact or consequence reported. Other, Other Text: Masimo has reached out to the customer to request the return of the device. The device has not been returned to Masimo to allow an analysis to be performed. If the device is returned for evaluation or new information is obtained, a follow up report will be submitted.Health Effect Impact Code: No adverse event; no patient impact"
+   },
+   {
+    "report_id": "50877254",
+    "event_type": "malfunction",
+    "date_received": "20260924",
+    "report_source": "Manufacturer report",
+    "brand_name": "Root",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Unexpected Shutdown"
+    ],
+    "text": "The customer reported that the device turned off while it's on the patient. Now it's on but customer would like to check on it to see if its safe to use. There was no patient impact or consequence reported. Other, Other Text: Masimo has reached out to the customer to request the return of the device. The device has not been returned to Masimo to allow an analysis to be performed. If the device is returned for evaluation or new information is obtained, a follow up report will be submitted.Health Effect Impact Code: No adverse event; no patient impact"
+   },
+   {
+    "report_id": "50877253",
+    "event_type": "malfunction",
+    "date_received": "20260924",
+    "report_source": "Manufacturer report",
+    "brand_name": "Root",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Unexpected Shutdown"
+    ],
+    "text": "The customer reported that the device turned off while it's on the patient. Now it's on but customer would like to check on it to see if its safe to use. There was no patient impact or consequence reported. Other, Other Text: Masimo has reached out to the customer to request the return of the device. The device has not been returned to Masimo to allow an analysis to be performed. If the device is returned for evaluation or new information is obtained, a follow up report will be submitted.Health Effect Impact Code: No adverse event; no patient impact"
+   },
+   {
+    "report_id": "50872148",
+    "event_type": "malfunction",
+    "date_received": "20260923",
+    "report_source": "Manufacturer report",
+    "brand_name": "Expression MR200 MRI Patient Monitor System",
+    "manufacturer": "Invivo, a division of Philips Medical Systems",
+    "product_problems": [
+     "Imprecise or Erratic Results"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50868930",
+    "event_type": "malfunction",
+    "date_received": "20260923",
+    "report_source": "Manufacturer report",
+    "brand_name": "Xper Flex Cardio Physiomonitoring System",
+    "manufacturer": "Philips Medical Systems",
+    "product_problems": [
+     "No Device Output"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50866242",
+    "event_type": "death",
+    "date_received": "20260923",
+    "report_source": "Manufacturer report",
+    "brand_name": "Expression MR400 MRI Patient Monitoring System (Model MR400)",
+    "manufacturer": "Invivo, a division of Philips Medical Systems",
+    "product_problems": [
+     "No Device Output"
+    ],
+    "text": "It was reported that while monitoring a sedated patient, the clinical staff noticed a \"CO2 hardware error\" message. Then, the patient was unable to be monitored and staffed noticed that the patient was non-responsive. The patient died, as attempts to revive the patient by the clinical staff were unsuccessful. No other clinical information or medical intervention was reported; therefore, good faith efforts are being performed. Philips is in process of obtaining additional information. A Follow-up report will be submitted upon completion of the investigation."
+   },
+   {
+    "report_id": "50864334",
+    "event_type": "malfunction",
+    "date_received": "20260923",
+    "report_source": "Manufacturer report",
+    "brand_name": "Root with NIBP and Temp",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Incorrect Measurement",
+     "Low Readings"
+    ],
+    "text": "The device was providing readings that were inaccurately low. There was no patient impact or consequence reported. Other Text: Masimo has reached out to the customer to request the return of the device. The device has not been returned to Masimo to allow an analysis to be performed. If the device is returned for evaluation or new information is obtained, a follow up report will be submitted.Health Effect Impact Code: No adverse event; no patient impact.E1. Initial Reporter Phone Number exceeded allowable field length, Initial Reporter Phone Number is as follows: (b)(6)."
+   },
+   {
+    "report_id": "50864166",
+    "event_type": "malfunction",
+    "date_received": "20260923",
+    "report_source": "Manufacturer report",
+    "brand_name": "WIFI CSM NIBP",
+    "manufacturer": "BAXTER HEALTHCARE CORPORATION",
+    "product_problems": [
+     "Overheating of Device"
+    ],
+    "text": "Baxter received a report stating that a Connex Spot Monitor that was charging in a wall socket located high on the wall first began making crackling noises and then started emitting smoke. They unplugged the device from the wall socket. A small hole had already burned into the device's power cord. All devices connected to the same socket were unplugged. The smoking stopped. The process step during which this occurred was unknown. The reporter did not know if there was any patient injury or death associated with this event. The investigation is ongoing, however if any additional relevant information is identified following completion of the investigation, the additional relevant information will be submitted in a supplemental report."
+   },
+   {
+    "report_id": "50857019",
+    "event_type": "malfunction",
+    "date_received": "20260922",
+    "report_source": "Manufacturer report",
+    "brand_name": "Expression MR400 MRI Patient Monitoring System (Model MR400)",
+    "manufacturer": "Invivo, a division of Philips Medical Systems",
+    "product_problems": [
+     "Incorrect Measurement"
+    ],
+    "text": "The customer reported NIBP reading too low. The device was not in use on a patient at the time of event, there was no adverse event reported. A Philips remote service engineer (RSE) spoke to the biomedical engineer (BMED) at the hospital. The BMED stated the unit had pressurization issues, won't pass leak tests, and blood pressure reading is bouncing all over the place. The RSE suggested doing an NIBP test - calibration under Test and Inspection Procedure - Service Guide. If the issue persisted, then they need to replace NIBP Assembly. The customer did not have MR400 Service Guide to do an NIBP Test, so the RSE emailed MR400 Service Guide. The customer has taken responsibility for servicing the device. No further action to be taken by Philips. Based on the information available in the case, the cause of the reported problem was not confirmed as the customer has taken responsibility for servicing the device. The alleged malfunction was not confirmed. If additional information is received, the complaint file will be reopened for further investigation."
+   },
+   {
+    "report_id": "50854945",
+    "event_type": "malfunction",
+    "date_received": "20260922",
+    "report_source": "Manufacturer report",
+    "brand_name": "WIFI CSM NIBP Masimo",
+    "manufacturer": "BAXTER HEALTHCARE CORPORATION",
+    "product_problems": [
+     "Overheating of Device"
+    ],
+    "text": "Baxter received a report stating that an unspecified quantity of CSM POWER CORDs had thermal damage. The process step during which this occurred was unknown. There was no patient injury or death reported with this event. The investigation is ongoing, however if any additional relevant information is identified following completion of the investigation, the additional relevant information will be submitted in a supplemental report."
+   },
+   {
+    "report_id": "50854727",
+    "event_type": "injury",
+    "date_received": "20260922",
+    "report_source": "Manufacturer report",
+    "brand_name": "Expression MR400 MRI Patient Monitoring System (Model MR400)",
+    "manufacturer": "Philips Medizin Systeme Böblingen GmbH",
+    "product_problems": [
+     "Excessive Heating"
+    ],
+    "text": "Philips received a complaint on an Expression Patient Monitor (MR400) indicating that during a patient scan, a patient was burned on their arm during a spinal scan, and upon inspection of the device, there was a burning smell coming from both the monitor display and the invasive pressure ports. It was also indicated that the arterial line vitals stopped working for a brief moment until they reconnected and started working again. No other clinical information or medical intervention was reported; therefore, good faith efforts are being performed. Philips is in the process of obtaining additional information concerning this event and the complaint is still under investigation. A final report will be submitted once the investigation is complete."
+   },
+   {
+    "report_id": "50835670",
+    "event_type": "malfunction",
+    "date_received": "20260921",
+    "report_source": "Manufacturer report",
+    "brand_name": "Root with NIBP and Temp",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Unexpected Shutdown"
+    ],
+    "text": "The customer reported that the device shuts off after powering despite sufficient battery charge. There was no patient impact or consequence reported. Other, Other Text: The device has not been returned to the investigation facility to allow for an analysis to be performed. When the device is received for evaluation, an analysis will be performed and/or or if new information is received a follow up report will be submitted.Health Effect Impact Code: No adverse event; no patient impact.E1. (b)(6)."
+   },
+   {
+    "report_id": "50832417",
+    "event_type": "malfunction",
+    "date_received": "20260919",
+    "report_source": "Manufacturer report",
+    "brand_name": "Root with NIBP and Temp",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Incorrect Measurement"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50832416",
+    "event_type": "malfunction",
+    "date_received": "20260919",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Defective Alarm",
+     "Unexpected Shutdown"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50832409",
+    "event_type": "malfunction",
+    "date_received": "20260919",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Unexpected Shutdown"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50832405",
+    "event_type": "malfunction",
+    "date_received": "20260919",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97 with NIBP",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Unexpected Shutdown"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50832346",
+    "event_type": "malfunction",
+    "date_received": "20260919",
+    "report_source": "Manufacturer report",
+    "brand_name": "Nomoline",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Incorrect Measurement",
+     "High Readings"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50832343",
+    "event_type": "malfunction",
+    "date_received": "20260919",
+    "report_source": "Manufacturer report",
+    "brand_name": "Root with NIBP and Temp",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Unexpected Shutdown"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50817399",
+    "event_type": "malfunction",
+    "date_received": "20260918",
+    "report_source": "Manufacturer report",
+    "brand_name": "Expression MRI Patient Monitor",
+    "manufacturer": "Invivo, a division of Philips Medical Systems",
+    "product_problems": [
+     "Low Readings"
+    ],
+    "text": "It was reported that the Non-Invasive Blood Pressure (NIBP) readings were low. The device was not in use on a patient at the time of the event, so there was no patient involvement. A Remote Service Engineer (RSE) spoke to the customer, who requested access to the NIBP calibration menu. The RSE provided the required password and instructions for accessing the calibration menu using a PS/2 (Personal System/2) keyboard and display. The RSE advised the customer that the device has been out of support/end of life since (b)(6) 2021. Based on the results of the analysis, it was determined that NIBP needed to be calibrated. The customer stated that they would perform the NIBP calibration and assume responsibility for servicing the device."
+   },
+   {
+    "report_id": "50802484",
+    "event_type": "other",
+    "date_received": "20260917",
+    "report_source": "Voluntary report",
+    "brand_name": "Wilhelm Monitor",
+    "manufacturer": "",
+    "product_problems": [
+     "Image Display Error/Artifact"
+    ],
+    "text": "We have received a product report involving a non-(b)(6) product and are sending you theinformation in accordance with 21 CFR 803.22. Below is a brief description of the informationreceived: Slave monitor is showing compressed image (incorrect resolution). Slave monitor system is WIlhelm, issues is internment, occurs across two theatres.System swapped with alternate Stealth (SN (b)(6)) with no impact to patient. This report reflects information received by FDA in the form of a notification per 803.22 (b)(2)."
+   },
+   {
+    "report_id": "50797011",
+    "event_type": "malfunction",
+    "date_received": "20260916",
+    "report_source": "Manufacturer report",
+    "brand_name": "Root with NIBP and Temp",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Incorrect Measurement"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50791686",
+    "event_type": "malfunction",
+    "date_received": "20260916",
+    "report_source": "Voluntary report",
+    "brand_name": "MCOT Heart Monitor",
+    "manufacturer": "PHILIPS NORTH AMERICA LLC.",
+    "product_problems": [
+     "Defective Device",
+     "Output Problem",
+     "Packaging Problem"
+    ],
+    "text": "My cardiologist ordered a Philips MCOT monitor for 30 days. I received the monitor andit worked intermittently for two weeks before giving out altogether. They sent anotherone that was not secured within the packaging and worked for two days before givingout altogether. I called them twice and sent them an email. They do not have a phonenumber that takes complaints. Their customer service department is very dismissive.They never responded to my email. Apparently, they are not treating this as an issue.Philips MCOT heart monitor.REFERENCE REPORT: CDRH-50791651_MW6002411.ANNEX A: 2588, 3007, 3005.ANNEX E: 4582.ANNEX F: 2199.ANNEX G: 4755.THIS REPORT CAPTURES MCOT HEART MONITOR #2."
+   },
+   {
+    "report_id": "50791651",
+    "event_type": "malfunction",
+    "date_received": "20260916",
+    "report_source": "Voluntary report",
+    "brand_name": "MCOT(MOBILE CARDIAC OUTPATIENT TELEMETRY) Heart Monitor",
+    "manufacturer": "PHILIPS NORTH AMERICA LLC.",
+    "product_problems": [
+     "Defective Device",
+     "Output Problem",
+     "Packaging Problem"
+    ],
+    "text": "My cardiologist ordered a Philips MCOT monitor for 30 days. I received the monitor andit worked intermittently for two weeks before giving out altogether. They sent anotherone that was not secured within the packaging and worked for two days before givingout altogether. I called them twice and sent them an email. They do not have a phonenumber that takes complaints. Their customer service department is very dismissive.They never responded to my email. Apparently, they are not treating this as an issue.Philips MCOT heart monitor.REFERENCE REPORT: CDRH-50791686_MW6002412.ANNEX A: 2588, 3007 3005.ANNEX E: 4582.ANNEX F: 2199.ANNEX G: 4755.THIS REPORT CAPTURES MCOT HEART MONITOR #1."
+   },
+   {
+    "report_id": "50783997",
+    "event_type": "malfunction",
+    "date_received": "20260916",
+    "report_source": "Manufacturer report",
+    "brand_name": "Root with NIBP and Temp",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Unexpected Shutdown"
+    ],
+    "text": "The customer reported that \"It turns OFF by itself .\" There was no patient impact or consequence reported. Other, Other Text: Masimo has reached out to the customer to request the return of the device. The device has not been returned to Masimo to allow an analysis to be performed. If the device is returned for evaluation or new information is obtained, a follow up report will be submitted.Health Effect Impact Code: No adverse event; no patient impact."
+   },
+   {
+    "report_id": "50782493",
+    "event_type": "malfunction",
+    "date_received": "20260916",
+    "report_source": "Manufacturer report",
+    "brand_name": "Root",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Incorrect Measurement"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50766050",
+    "event_type": "malfunction",
+    "date_received": "20260915",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Incorrect Measurement"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747945",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Root",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Incorrect Measurement",
+     "High Readings"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747933",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97 with NIBP",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Unexpected Shutdown"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747890",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Root with NIBP and Temp",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Unexpected Shutdown"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747245",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747243",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747242",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747241",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747240",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747234",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747233",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747232",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747218",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747217",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747216",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747215",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747214",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747213",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747212",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747211",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747210",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747205",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747204",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747203",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747202",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747201",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747196",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747191",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747190",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747173",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747172",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747171",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747170",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747169",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747167",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747166",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747165",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747164",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50747154",
+    "event_type": "malfunction",
+    "date_received": "20260913",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Break"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50738659",
+    "event_type": "malfunction",
+    "date_received": "20260911",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Unexpected Shutdown"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50726468",
+    "event_type": "malfunction",
+    "date_received": "20260911",
+    "report_source": "Manufacturer report",
+    "brand_name": "Root",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Unexpected Shutdown"
+    ],
+    "text": "The customer reported that the device kept turning off randomly so it was changed out. There was no patient impact or consequence reported. Other, Other Text: Masimo has reached out to the customer to request the return of the device. The device has not been returned to Masimo to allow an analysis to be performed. If the device is returned for evaluation or new information is obtained, a follow up report will be submitted.Health Effect Impact Code: No adverse event; no patient impact."
+   },
+   {
+    "report_id": "50724654",
+    "event_type": "malfunction",
+    "date_received": "20260910",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Unexpected Shutdown"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50724647",
+    "event_type": "malfunction",
+    "date_received": "20260910",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Unexpected Shutdown"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50716582",
+    "event_type": "malfunction",
+    "date_received": "20260910",
+    "report_source": "Manufacturer report",
+    "brand_name": "Expression MR400 MRI Patient Monitoring System (Model MR400)",
+    "manufacturer": "Invivo, a division of Philips Medical Systems",
+    "product_problems": [
+     "No Audible Alarm"
+    ],
+    "text": "Philips received a complaint on the Expression Patient Monitor (MR400) indicating that the customer was unable to hear ECG QRS tones during Preventive Maintenance (PM) verification procedure. The device was not in use on a patient at the time of the event, so there was no patient involvement. Analysis was performed a Philips Remote Service Engineer (RSE), who spoke to the customer. The customer needed the administrator password to change the HR tone in the settings menu, as the HR tones were not set up correctly. The customer was unable to access it due to not knowing the administrator password. A Philips Field Service Engineer (FSE) went onsite and found the new administrator password from a past install and provided it to the customer. Based on the results of the analysis, the product was confirmed to be operating per specifications, and the cause of the reported problem was the settings of the HR tone. The customer is now able to access Administrative Settings and will assume responsibility to correct the HR settings."
+   },
+   {
+    "report_id": "50707363",
+    "event_type": "malfunction",
+    "date_received": "20260910",
+    "report_source": "Manufacturer report",
+    "brand_name": "WIFI CSM NIBP",
+    "manufacturer": "BAXTER HEALTHCARE CORPORATION",
+    "product_problems": [
+     "Thermal Decomposition of Device",
+     "Overheating of Device"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50706312",
+    "event_type": "malfunction",
+    "date_received": "20260910",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Defective Alarm"
+    ],
+    "text": "The customer reported \"The unit would not alarm, the volume was on and the patient would desat but the unit would not alarm. It also has a loose pt cable connection.\" Other, Other Text: Masimo has reached out to the customer to request the return of the device. The device has not been returned to Masimo to allow an analysis to be performed. If the device is returned for evaluation or new information is obtained, a follow up report will be submitted. Health Effect Impact Code: No adverse event; no patient impact."
+   },
+   {
+    "report_id": "50684702",
+    "event_type": "malfunction",
+    "date_received": "20260909",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97 with NIBP",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Unexpected Shutdown"
+    ],
+    "text": "The customer reported that when powering on, turns off by itself, and only powers on with the power cord. Per customer, \"No error messages are displayed.\" There was no patient impact or consequence reported. Other, Other Text: The returned device was evaluated. During the evaluation, the device powered on using both battery and AC power. However, after displaying the splash screen, the display went blank, followed by an alarm state consisting of seven beeps. During evaluation it was determined a defective speaker prevented the device from completing the power-on sequence and generating the alarm. Additionally, an ¿Audio Speaker Fault\" error message was identified in the device log files. The reported issue was confirmed during testing.Health Effect Impact Code: No adverse event; no patient impact."
+   },
+   {
+    "report_id": "50684490",
+    "event_type": "malfunction",
+    "date_received": "20260909",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Defective Alarm",
+     "Unexpected Shutdown"
+    ],
+    "text": "The customer reported that the device is turning on and off with no error messages or alarms. There was no patient impact or consequence reported. Other, Other Text: The device has not been returned to the investigation facility to allow for an analysis to be performed. If the device is received for evaluation or new information is obtained, a follow up report will be submitted.Health Effect Impact Code: No adverse event; no patient impact."
+   },
+   {
+    "report_id": "50684343",
+    "event_type": "malfunction",
+    "date_received": "20260909",
+    "report_source": "Manufacturer report",
+    "brand_name": "Connex Spot Monitor Accessory Power Management Stand",
+    "manufacturer": "BAXTER HEALTHCARE CORPORATION",
+    "product_problems": [
+     "Fire"
+    ],
+    "text": "A customer contacted Technical Service to report that a Power Management Stand caught fire. The process step during which this occurred was unknown. There was no patient injury or death reported with this event. The investigation is ongoing, however if any additional relevant information is identified following completion of the investigation, the additional relevant information will be submitted in a supplemental report."
+   },
+   {
+    "report_id": "50677498",
+    "event_type": "injury",
+    "date_received": "20260908",
+    "report_source": "Manufacturer report",
+    "brand_name": "Expression MR400 MRI Patient Monitoring System (Model MR400)",
+    "manufacturer": "Invivo, a division of Philips Medical Systems",
+    "product_problems": [
+     "Device Handling Problem"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50645066",
+    "event_type": "malfunction",
+    "date_received": "20260907",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Incorrect Measurement"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50645063",
+    "event_type": "malfunction",
+    "date_received": "20260907",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Defective Alarm",
+     "Unexpected Shutdown"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50604987",
+    "event_type": "malfunction",
+    "date_received": "20260904",
+    "report_source": "Manufacturer report",
+    "brand_name": "Root",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Unexpected Shutdown"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50604926",
+    "event_type": "malfunction",
+    "date_received": "20260904",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Incorrect Measurement",
+     "Low Readings"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50604842",
+    "event_type": "malfunction",
+    "date_received": "20260904",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Incorrect Measurement",
+     "Low Readings"
+    ],
+    "text": ""
+   },
+   {
+    "report_id": "50604258",
+    "event_type": "malfunction",
+    "date_received": "20260904",
+    "report_source": "Manufacturer report",
+    "brand_name": "Rad-97",
+    "manufacturer": "Masimo - 15750 Alton Pkwy",
+    "product_problems": [
+     "Incorrect Measurement",
+     "Sensing Intermittently"
+    ],
+    "text": "The customer reported Intermittently cutting out with replace sensor on a known working setup. Found extra sensitive to interference and giving inaccurate SPO2% readings. There was no patient impact or consequence reported. Other, Other Text: Masimo has reached out to the customer to request the return of the device. The device has not been returned to Masimo to allow an analysis to be performed. If the device is returned for evaluation or new information is obtained, a follow up report will be submitted.Health Effect Impact Code: No adverse event; no patient impact."
+   }
+  ]
+ },
+ "recalls": {
+  "query_url": "https://api.fda.gov/device/recall.json?search=product_code:MWI&sort=event_date_initiated:desc&limit=100",
+  "matched_total": 85,
+  "stored": 85,
+  "records": [
+   {
+    "recall_number": "Z-3217-2026",
+    "event_number": "99641",
+    "recalling_firm": "Midmark Corporation",
+    "product_description": "Midmark IQvitals Zone, automatically and noninvasively measures systolic and diastolic blood pressure, pulse rate, temperature (temporal), and oxygen saturation (SpO2) for adult and pediatric patients, Model Number: 1-200-0320 with Kit Number: 4-000-0622",
+    "reason_for_recall": "A performance issue may result in inaccurate blood pressure readings when the Linear Deflation Method is used.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260821",
+    "cfres_id": "222051"
+   },
+   {
+    "recall_number": "Z-3218-2026",
+    "event_number": "99641",
+    "recalling_firm": "Midmark Corporation",
+    "product_description": "Midmark IQvitals Zone, automatically and noninvasively measures systolic and diastolic blood pressure, pulse rate, temperature (temporal), and oxygen saturation (SpO2) for adult and pediatric patients, Model Number: 1-200-03300 with Kit Number: 4-000-0624",
+    "reason_for_recall": "A performance issue may result in inaccurate blood pressure readings when the Linear Deflation Method is used.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260821",
+    "cfres_id": "222178"
+   },
+   {
+    "recall_number": "Z-3219-2026",
+    "event_number": "99641",
+    "recalling_firm": "Midmark Corporation",
+    "product_description": "Midmark IQvitals Zone, automatically and noninvasively measures systolic and diastolic blood pressure, pulse rate, temperature (temporal), and oxygen saturation (SpO2) for adult and pediatric patients, Model Number: 1-200-0350 with Kit Number: 4-000-0722",
+    "reason_for_recall": "A performance issue may result in inaccurate blood pressure readings when the Linear Deflation Method is used.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260821",
+    "cfres_id": "222180"
+   },
+   {
+    "recall_number": "Z-3220-2026",
+    "event_number": "99641",
+    "recalling_firm": "Midmark Corporation",
+    "product_description": "Midmark IQvitals Zone, automatically and noninvasively measures systolic and diastolic blood pressure, pulse rate, temperature (temporal), and oxygen saturation (SpO2) for adult and pediatric patients, Model Number: 1-200-0360 with Kit Number: 4-000-0724",
+    "reason_for_recall": "A performance issue may result in inaccurate blood pressure readings when the Linear Deflation Method is used.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260821",
+    "cfres_id": "222181"
+   },
+   {
+    "recall_number": "Z-3036-2026",
+    "event_number": "99536",
+    "recalling_firm": "GE Medical Systems Information Technologies Inc",
+    "product_description": "PORTRAIT CORE SERVICES SOFTWARE V1.1, Ref# 5700209",
+    "reason_for_recall": "Software issue may result in a loss of patient monitoring at the Hub and Central Viewer. In addition, all alarm settings could be reset to factory defaults following the update and will not follow the alarm settings previously configured for each patient or care area.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260720",
+    "cfres_id": "221789"
+   },
+   {
+    "recall_number": "Z-3037-2026",
+    "event_number": "99536",
+    "recalling_firm": "GE Medical Systems Information Technologies Inc",
+    "product_description": "PORTRAIT COMPUTE AND CORE SERVICES V1.2, Ref# 5700592",
+    "reason_for_recall": "Software issue may result in a loss of patient monitoring at the Hub and Central Viewer. In addition, all alarm settings could be reset to factory defaults following the update and will not follow the alarm settings previously configured for each patient or care area.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260720",
+    "cfres_id": "221790"
+   },
+   {
+    "recall_number": "Z-3038-2026",
+    "event_number": "99536",
+    "recalling_firm": "GE Medical Systems Information Technologies Inc",
+    "product_description": "PORTRAIT CORE SERVICES SOFTWARE V1.0.5, Ref# 5697353",
+    "reason_for_recall": "Software issue may result in a loss of patient monitoring at the Hub and Central Viewer. In addition, all alarm settings could be reset to factory defaults following the update and will not follow the alarm settings previously configured for each patient or care area.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260720",
+    "cfres_id": "221791"
+   },
+   {
+    "recall_number": "Z-3039-2026",
+    "event_number": "99536",
+    "recalling_firm": "GE Medical Systems Information Technologies Inc",
+    "product_description": "FRU (Field replaceable unit), PORTRAIT CORE SERVICES SW RELOAD V1.1, Ref# 5700225",
+    "reason_for_recall": "Software issue may result in a loss of patient monitoring at the Hub and Central Viewer. In addition, all alarm settings could be reset to factory defaults following the update and will not follow the alarm settings previously configured for each patient or care area.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260720",
+    "cfres_id": "222182"
+   },
+   {
+    "recall_number": "Z-2878-2026",
+    "event_number": "99475",
+    "recalling_firm": "GE Medical Systems Information Technologies Inc",
+    "product_description": "GE Healthcare Portrait Core Services SW V 1.2.0, REF 5700592",
+    "reason_for_recall": "Portrait Core Services Software version V1.2.0 Security Vulnerability",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260710",
+    "cfres_id": "221631"
+   },
+   {
+    "recall_number": "Z-1557-2026",
+    "event_number": "98407",
+    "recalling_firm": "Covidien LLC",
+    "product_description": "HealthCast \"Vital Sync\" Remote Patient Monitoring System which consists of:\nProduct Number:\nVSLBASE03P / VITALSYNCSW03\nModel / UDI-DI codes:\nVital Sync 3.3.1 / 10884521844933\nVital Sync 3.4.0 / 10884521844940\nVital Sync 3.4.1 / 10884521847569 (OUS Only)\nVital Sync 3.4.2 / 10884521856127\n\nProduct Number:\nVSLBASE04P / VITALSYNCSW04\nModel / UDI-DI codes:\nVital Sync 4.0.0 / 10884521849358\nVital Sync 4.0.2 / 10884521856134\n\nThe Vital Sync\" Informatics Manager is software that is intended to route and store medical device data and device diagnostic information from supported devices to the Virtual Patient Monitoring Platform, 3rd Party Annunciation Systems, Electronic Medical Record (EMR) and Clinical Information System (CIS).",
+    "reason_for_recall": "Due to complaints and investigations stating that alarms from the primary patient bedside monitor was not alarming/being transmitted and received on the remote patient monitoring system.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20260130",
+    "cfres_id": "218630"
+   },
+   {
+    "recall_number": "Z-1144-2026",
+    "event_number": "97879",
+    "recalling_firm": "Edan Diagnostics",
+    "product_description": "Brand Name: EDAN\nProduct Name: Vital Signs Monitor\nModel/Catalog Number: iM3s, iM3As, iM3Bs, iHM3s\nProduct Description: The iM3s series vital signs monitors including iM3s/iM3As/iM3Bs/iHM3s are intended to be used for measuring, storing, reviewing of, and generating prompts for multiple physiological parameters of adults and pediatrics.\nComponent: No",
+    "reason_for_recall": "As a result of receiving an FDA It Has Come to Our Attention Letter (IHCTOA Letter) regarding potential cybersecurity issues with various of the firm device.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20251024",
+    "cfres_id": "217958"
+   },
+   {
+    "recall_number": "Z-2071-2025",
+    "event_number": "97046",
+    "recalling_firm": "CHANGE HEALTHCARE CANADA COMPANY",
+    "product_description": "Change Healthcare Cardiology Hemo Software",
+    "reason_for_recall": "Due to complaints, software update may cause software to unexpectedly shutdown.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250522",
+    "cfres_id": "214331"
+   },
+   {
+    "recall_number": "Z-2072-2025",
+    "event_number": "97046",
+    "recalling_firm": "CHANGE HEALTHCARE CANADA COMPANY",
+    "product_description": "Change Healthcare Cardiology Hemodynamics Software",
+    "reason_for_recall": "Due to complaints, software update may cause software to unexpectedly shutdown.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250522",
+    "cfres_id": "214360"
+   },
+   {
+    "recall_number": "Z-1559-2025",
+    "event_number": "96478",
+    "recalling_firm": "Baxter Healthcare Corporation",
+    "product_description": "Welch Allyn CONNEX Accessory Power Management Stand:",
+    "reason_for_recall": "There were customer reports of devices which experienced battery-related fires. The investigation found that the devices in question were utilizing third-party, after-market batteries that are not approved by Baxter.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250324",
+    "cfres_id": "213002"
+   },
+   {
+    "recall_number": "Z-1565-2025",
+    "event_number": "96364",
+    "recalling_firm": "Baxter Healthcare Corporation",
+    "product_description": "Welch Allyn Spot Vital Signs 4400 Device, Product Code/Part Numbers:  \n1) 44WT-2; \n2) 44WT-3; \n3) 44WT-4; \n4) 44WT-6; \n5) 44WT-B; \n6) 44XT-2; \n7) 44XT-4; \n8) 44XT-6; \n9) 44XT-B.",
+    "reason_for_recall": "Undeclared natural rubber band within the packaging of certain configurations of reusable blood pressure cuffs.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250321",
+    "cfres_id": "212857"
+   },
+   {
+    "recall_number": "Z-1695-2025",
+    "event_number": "96616",
+    "recalling_firm": "Spectrum Medical Ltd.",
+    "product_description": "Brand Name: Quantum Informatics - VIPER\nProduct Name: Monitor, Physiological, Patient (Without Arrhythmia Detection or Alarms)\nProduct Description: VIPER is a software-only device (SaMD) that is intended to provide near real-time patient safety and clinical best practice solutions for the high-risk patient population in the operating room (OR). VIPER integrates multiple information feeds that supports the real-time distribution of critical patient information and the deployment of advanced active Patient Safety Systems and clinical Best Practice. By integrating compliance, complication, and sophisticated alerting systems, VIPER offers improved support for the avoidance of adverse events.",
+    "reason_for_recall": "Medical device software marketed without FDA clearance .",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250319",
+    "cfres_id": "213257"
+   },
+   {
+    "recall_number": "Z-1696-2025",
+    "event_number": "96616",
+    "recalling_firm": "Spectrum Medical Ltd.",
+    "product_description": "Brand Name: Quantum Informatics - VISION / LIVE VUE\nProduct Name: Monitor, Physiological, Patient (Without Arrhythmia Detection or Alarms)\nProduct Description: VISION / LIVE VUE is a software-only device (SaMD) that is intended to provide near real-time patient safety and clinical best practice solutions for the high-risk patient population in the operating room (OR). VISION / LIVE VUE integrates multiple information feeds that supports remote monitoring of near real-time critical patient information and the deployment of advanced active Patient Safety Systems and clinical Best Practice. By integrating compliance, critical care scoring systems, and sophisticated alerting systems, VISION / LIVE VUE offers improved support for ensuring compliance to hospital-specific protocols. The software solution also allows for big data queries, routine reporting, and review of quality performance metrics.",
+    "reason_for_recall": "Medical device software marketed without FDA clearance .",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20250319",
+    "cfres_id": "213258"
+   },
+   {
+    "recall_number": "Z-0918-2025",
+    "event_number": "96027",
+    "recalling_firm": "GE Medical Systems, LLC",
+    "product_description": "Portrait Core Services, a set of software services that enable the communication and interaction of the Portrait Mobile Monitoring Solution components and will integrate into existing healthcare facility infrastructure and clinical information systems, Model CSSXB",
+    "reason_for_recall": "There is a software issue that can result in the loss of patient monitoring on the Portrait Central Viewer Application after 425 days of continuous run-time.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20241206",
+    "cfres_id": "211806"
+   },
+   {
+    "recall_number": "Z-0957-2025",
+    "event_number": "96025",
+    "recalling_firm": "A L I Technologies Ltd",
+    "product_description": "McKesson Cardiology Hemo software",
+    "reason_for_recall": "Software defect concerning autosave mechanism may result in the clinician administering incorrect medication(s).",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20241202",
+    "cfres_id": "211804"
+   },
+   {
+    "recall_number": "Z-0958-2025",
+    "event_number": "96025",
+    "recalling_firm": "A L I Technologies Ltd",
+    "product_description": "Change Healthcare Cardiology Hemo software",
+    "reason_for_recall": "Software defect concerning autosave mechanism may result in the clinician administering incorrect medication(s).",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20241202",
+    "cfres_id": "211805"
+   },
+   {
+    "recall_number": "Z-0959-2025",
+    "event_number": "96025",
+    "recalling_firm": "A L I Technologies Ltd",
+    "product_description": "Change Healthcare Cardiology Hemodynamics software",
+    "reason_for_recall": "Software defect concerning autosave mechanism may result in the clinician administering incorrect medication(s).",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20241202",
+    "cfres_id": "211809"
+   },
+   {
+    "recall_number": "Z-0126-2025",
+    "event_number": "95284",
+    "recalling_firm": "CHANGE HEALTHCARE CANADA COMPANY",
+    "product_description": "Change Healthcare Cardiology Hemo.  Versions 14.2, 14.1.1, 14.2, 14.3, 14.3.2, 14.3, 15.0.1, 15.1.",
+    "reason_for_recall": "A potential issue has been identified in Change Healthcare Cardiology Hemo where incorrect data entry can lead to inaccurate hemodynamic calculations, potentially resulting in misdiagnosis and inappropriate treatment. This issue occurs when the unit of measurement (UOM) for hemoglobin is configured in a way that differs from the users understanding.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240821",
+    "cfres_id": "209897"
+   },
+   {
+    "recall_number": "Z-1926-2024",
+    "event_number": "94593",
+    "recalling_firm": "PHILIPS MEDICAL SYSTEMS NEDERLAND B.V.",
+    "product_description": "Philips Interventional Hemodynamic Application R.1.2X, R.1.3.0, R1.2.1. Software that enables invasive investigation of cardiac and vascular diseases.",
+    "reason_for_recall": "Potential for pressure wave data synchronization from two devices may not be correct.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20240502",
+    "cfres_id": "207659"
+   },
+   {
+    "recall_number": "Z-2581-2023",
+    "event_number": "92874",
+    "recalling_firm": "Baxter Healthcare Corporation",
+    "product_description": "Welch Allyn Connex Spot Monitor",
+    "reason_for_recall": "Product is being recalled due to the improper placement of a copper tape on the back of the liquid-crystal display.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20230810",
+    "cfres_id": "202793"
+   },
+   {
+    "recall_number": "Z-0004-2023",
+    "event_number": "90857",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "MR Patient Care Portal 5000 (Desktop Unit), Model Number 453564792561\n\nThis is a component of product number 866162.",
+    "reason_for_recall": "Device may intermittently fail to produce audio. Turning the unit off and on does not resolve the issue; disconnecting and reconnecting to AC power does not reliably resolve the issue.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20220906",
+    "cfres_id": "196075"
+   },
+   {
+    "recall_number": "Z-1041-2022",
+    "event_number": "89878",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "Philips Hemodynamic Application, Model Number 722463, Software Version Number: R1.2.2 and R1.2.3.  For visualization and analysis of patient hemodynamic data in the Philips Interventional Hemodynamic System.",
+    "reason_for_recall": "When a Neonatal patient is admitted, the Non-Invasive Blood Pressure is not set to Neonatal mode on the Philips Xperflex Cardio FC2010 patient monitor.  If the NIBP is not set to Neonatal, the cuff inflation pressure applied will be higher than 150 mmHg and the deflation pressure will be higher than 5 mmHg.  An applied cuff inflation pressure higher than 150mmHg or a deflation pressure higher than 5 could lead to bruising, mmHg nerve damage or bone deformity for a neonate.",
+    "recall_status": "Terminated",
+    "date_initiated": "20220222",
+    "cfres_id": "192768"
+   },
+   {
+    "recall_number": "Z-1517-2021",
+    "event_number": "87732",
+    "recalling_firm": "Philips North America Llc",
+    "product_description": "Philips Xper Flex Cardio (FC2010, Procedure Room and FC2020, Bedside Monitor) devices - intended for use by professional healthcare providers for complete physiologic/hemodynamic monitoring\n\nService numbers associated with FC2010:\nXper Flex Cardio 2010 Rev A 453564241901\nXper Flex Cardio 2010 Rev B 453564483321\nFlex Cardio FC2010 Rev C 453564621791\nXper Flex Cardio 2010 REV C RUEXCHANGE 453564675021\nXper Flex Cardio 2010 Rev D 453564669081\nXper Flex Cardio 2010 Rev D Russia 453564674581\nXper Flex Cardio FC2010 Rev E 453564845841\nXper Flex Cardio 2010 Rev E Russia 453564845881\n \nService numbers associated with FC2020:\nXper Flex Cardio 2020 Rev A 453564241911\nXper Flex Cardio 2020 Rev B 453564483331\nFlex Cardio FC2020 Rev C 453564621801\nXper Flex Cardio 2020 Rev D 453564675001\nXper Flex Cardio FC2020 Rev E 453564845861\n\nSoftware version number: 1.5.19 and 1.6.8",
+    "reason_for_recall": "Performance issues with the Xper Flex Cardio Physio Monitoring System include: potential delay of up to 10 seconds in displaying ECG, invasive blood pressure and other parameters; patient weight is rounded to the nearest whole kilogram;Xper IM software used with the Xper Flex Cardio Physio Monitoring System may periodically crash; No SpO2 numeric or plethysmography is displayed when SpO2 is connected o the Flex Cardio device; display of certain data from the FC2010 becomes frozen, i.e., waveforms cease sweeping and updating and the ECG, IBP, and respiration numeric\nvalues cease to update;e ECG, IBP, and respiration waveforms become flat lines and no audible alarms are produced for HR and IBP, upon start up, an unexpected non physiological ECG waveform,\nerratic heart rate numeric value, and non-physiological display of any other active waveforms may appear on the Boom Monitor",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20210329",
+    "cfres_id": "186883"
+   },
+   {
+    "recall_number": "Z-2810-2020",
+    "event_number": "86025",
+    "recalling_firm": "Philips North America, LLC",
+    "product_description": "Phillips 3.7V Rechargeable Li-Polymer Battery, Product #: 989803191341 - Product Usage: This battery is used in the Expression MR400 MRI Patient Monitoring System (Model MR400) is intended to monitor vital signs for patients undergoing MRI procedures and to provide signals for synchronization for the MRI scanner.",
+    "reason_for_recall": "A problem has been detected with the Philips LI-Polymer rechargeable battery when used with its approved charging station and module charger. When the battery is inserted into a charger bay, the LED indicatory lights solid red and the battery will not charge. This may result from poor electrical contact between the battery and charger.",
+    "recall_status": "Terminated",
+    "date_initiated": "20200618",
+    "cfres_id": "182528"
+   },
+   {
+    "recall_number": "Z-2811-2020",
+    "event_number": "86025",
+    "recalling_firm": "Philips North America, LLC",
+    "product_description": "Phillips Charging Station, Product #: 989803191021 - Product Usage: This charging station is used in the Expression MR400 MRI Patient Monitoring System (Model MR400) is intended to monitor vital signs for patients undergoing MRI procedures and to provide signals for synchronization for the MRI scanner.",
+    "reason_for_recall": "A problem has been detected with the Philips LI-Polymer rechargeable battery when used with its approved charging station and module charger. When the battery is inserted into a charger bay, the LED indicatory lights solid red and the battery will not charge. This may result from poor electrical contact between the battery and charger.",
+    "recall_status": "Terminated",
+    "date_initiated": "20200618",
+    "cfres_id": "182529"
+   },
+   {
+    "recall_number": "Z-2812-2020",
+    "event_number": "86025",
+    "recalling_firm": "Philips North America, LLC",
+    "product_description": "Phillips Module Charger, Product #: 989803191031 - Product Usage: This Module Charger is used in the Expression MR400 MRI Patient Monitoring System (Model MR400) is intended to monitor vital signs for patients undergoing MRI procedures and to provide signals for synchronization for the MRI scanner.",
+    "reason_for_recall": "A problem has been detected with the Philips LI-Polymer rechargeable battery when used with its approved charging station and module charger. When the battery is inserted into a charger bay, the LED indicatory lights solid red and the battery will not charge. This may result from poor electrical contact between the battery and charger.",
+    "recall_status": "Terminated",
+    "date_initiated": "20200618",
+    "cfres_id": "182530"
+   },
+   {
+    "recall_number": "Z-2244-2020",
+    "event_number": "85560",
+    "recalling_firm": "Philips North America, LLC",
+    "product_description": "Cardiovascular Monitoring Device accessory - Product Usage: The chest pneumograph (also referred to as the pneumatic bellows, respiration bellows, or respiration sensor) monitors bellows-derived respiration by detecting abdominal or chest wall motion. The chest pneumograph is an accessory to a MRI patient monitoring system or MRI gating solution. The Chest Pneumograph is indicated for use by healthcare professionals with the Wireless Sp02 (wSp02) Module or Toshiba KSB gating unit when bellows-derived respiration sensing is needed during MRI scans for gating.",
+    "reason_for_recall": "The labeling of the Philips Chest Pneumograph does not include a statement indicating that the product contains natural rubber latex.",
+    "recall_status": "Terminated",
+    "date_initiated": "20200413",
+    "cfres_id": "181238"
+   },
+   {
+    "recall_number": "Z-2245-2020",
+    "event_number": "85560",
+    "recalling_firm": "Philips North America, LLC",
+    "product_description": "Magnetic Resonance Imaging Diagnostic Device accessory - Product Usage: The chest pneumograph (also referred to as the pneumatic bellows, respiration bellows, or respiration sensor) monitors bellows-derived respiration by detecting abdominal or chest wall motion. The chest pneumograph is an accessory to a MRI patient monitoring system or MRI gating solution. The Chest Pneumograph is indicated for use by healthcare professionals with the Wireless Sp02 (wSp02) Module or Toshiba KSB gating unit when bellows-derived respiration sensing is needed during MRI scans for gating.",
+    "reason_for_recall": "The labeling of the Philips Chest Pneumograph does not include a statement indicating that the product contains natural rubber latex.",
+    "recall_status": "Terminated",
+    "date_initiated": "20200413",
+    "cfres_id": "181239"
+   },
+   {
+    "recall_number": "Z-1616-2020",
+    "event_number": "85090",
+    "recalling_firm": "Philips North America, LLC",
+    "product_description": "Expression MR400 MRI Patient Monitoring System \nModel Number: 866185\nSoftware version number: 01.03.00, 01.04.00, 01.05.00, and 01.07.00 - Product Usage: The Expression Model MR400 MRI Patient Monitoring Systems is intended for use by healthcare professionals to monitor vital signs of patients undergoing MRI procedures and to provide signals for the synchronization of the MRI scanner.",
+    "reason_for_recall": "Menu selections for users to access the oxygen (O2) sensor calibration were changed and not incorporated into the device s Instructions for Use. As a result, the instructions for performing the O2 sensor calibration are incorrect for customers performing this task with an MR400 device with software revisions:\n01 .03.00, 01.04.00, 01 .05.00 and 01 .07.00",
+    "recall_status": "Terminated",
+    "date_initiated": "20200220",
+    "cfres_id": "180059"
+   },
+   {
+    "recall_number": "Z-0235-2020",
+    "event_number": "83979",
+    "recalling_firm": "Mindray DS USA, Inc. dba Mindray North America",
+    "product_description": "Accutorr 3 Vital Signs Monitor with NIBP valve assembly board, p/n 115-017679-00, containing software version 8.1.5 - Product Usage: The monitor is intended for spot-check monitoring physiologic parameters, including Pulse Oximetry (SpO2), Pulse Rate (PR), Non Invasive Blood Pressure (NIBP), and Temperature (TEMP) on adult, pediatric, and neonatal patients in healthcare facilities by clinical physicians or appropriate medical staff under the direction of physicians",
+    "reason_for_recall": "NIBP valve assembly board subject to this recall includes enhancements that are not included in the current marketing clearance:1. Anti-motion feature\n2. NIBP hose blockage identification function",
+    "recall_status": "Terminated",
+    "date_initiated": "20191001",
+    "cfres_id": "176886"
+   },
+   {
+    "recall_number": "Z-0236-2020",
+    "event_number": "83979",
+    "recalling_firm": "Mindray DS USA, Inc. dba Mindray North America",
+    "product_description": "Accutorr 7 Vital Signs Monitor with NIBP valve assembly board, p/n 115-017679-00, containing software version 8.1.5 - Product Usage:  The monitor is intended for monitoring physiologic parameters, including Pulse Oximetry (SpO2), Pulse Rate (PR), Non Invasive Blood Pressure (NIBP). Temperature (TEMP) and Carbon Dioxide (CO2) on adult, pediatric, and neonatal patients in professional healthcare facilities by clinical physicians or appropriate medical staff under the direction of physicians",
+    "reason_for_recall": "NIBP valve assembly board subject to this recall includes enhancements that are not included in the current marketing clearance:1. Anti-motion feature\n2. NIBP hose blockage identification function",
+    "recall_status": "Terminated",
+    "date_initiated": "20191001",
+    "cfres_id": "176887"
+   },
+   {
+    "recall_number": "Z-0237-2020",
+    "event_number": "83979",
+    "recalling_firm": "Mindray DS USA, Inc. dba Mindray North America",
+    "product_description": "Rosie4 Vital Signs Monitor with NIBP valve assembly board, p/n 115-017679-00, containing software version 8.1.5 - Product Usage: The monitor is intended for monitoring physiologic parameters, including Pulse Oximetry (SpO2), Pulse Rate (PR), Non Invasive Blood Pressure (NIBP). Temperature (TEMP) and Carbon Dioxide (CO2) on adult, pediatric, and neonatal patients in professional healthcare facilities by clinical physicians or appropriate medical staff under the direction of physicians",
+    "reason_for_recall": "NIBP valve assembly board subject to this recall includes enhancements that are not included in the current marketing clearance:1. Anti-motion feature\n2. NIBP hose blockage identification function",
+    "recall_status": "Terminated",
+    "date_initiated": "20191001",
+    "cfres_id": "176888"
+   },
+   {
+    "recall_number": "Z-0238-2020",
+    "event_number": "83979",
+    "recalling_firm": "Mindray DS USA, Inc. dba Mindray North America",
+    "product_description": "Rosebud Vital Signs Monitor with NIBP valve assembly board, p/n 115-017679-00, containing software version 8.1.5 - Product Usage: The monitor is intended for spot-check monitoring physiologic parameters, including Pulse Oximetry (SpO2), Pulse Rate (PR), Non Invasive Blood Pressure (NIBP), and Temperature (TEMP) on adult, pediatric, and neonatal patients in healthcare facilities by clinical physicians or appropriate medical staff under the direction of physicians",
+    "reason_for_recall": "NIBP valve assembly board subject to this recall includes enhancements that are not included in the current marketing clearance:1. Anti-motion feature\n2. NIBP hose blockage identification function",
+    "recall_status": "Terminated",
+    "date_initiated": "20191001",
+    "cfres_id": "176889"
+   },
+   {
+    "recall_number": "Z-1926-2019",
+    "event_number": "82999",
+    "recalling_firm": "Infinium Medical, Inc",
+    "product_description": "CLEO Patient Monitor /Tranquility VS Patient Monitor",
+    "reason_for_recall": "The CLEO & Tranquility VS Patient Monitors 510(k) indications for use in the United States did not include the temperature monitor accessory option.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20190531",
+    "cfres_id": "173303"
+   },
+   {
+    "recall_number": "Z-3192-2018",
+    "event_number": "80761",
+    "recalling_firm": "Invivo Corporation",
+    "product_description": "Xper Flex Cardio Physiomonitoring System Model # 453564669081 Software Version 1.6.0.0388",
+    "reason_for_recall": "Released with an incorrect, older firmware version installed.  May result in intermittent loss of ECG monitoring, inaccurate ECG amplitude display and or auxiliary output, and inaccurate heart rate (HR) displayed due to QRS detection fault.",
+    "recall_status": "Terminated",
+    "date_initiated": "20180803",
+    "cfres_id": "166894"
+   },
+   {
+    "recall_number": "Z-1867-2018",
+    "event_number": "79611",
+    "recalling_firm": "Invivo Corporation",
+    "product_description": "PHILIPS Xper Flex Cardio Physiomonitoring System, Model Numbers:  453564241901, 453564483321, 453564621791, and 989803199561 (international only)\nThe Xper Flex Cardio physiomonitoring system is used to facilitate invasive investigation of heart and vascular, disease when non-invasive indicators warrant such. Its users, responsible to interpret the data made available, will be professional health care providers, such as physicians, registered nurses, cardiovascular technicians, radiology technicians, and other clinical health care providers.",
+    "reason_for_recall": "The real-time numeric value for ventricular end-diastolic pressure (EDP) displayed on the Live Display may be inaccurate.  Because ventricular pressure monitoring is only performed in the cardiac catheterization procedure room using the FC2010 device, the FC2020 device, which is used in the Pre or Post-Op Holding Areas, is not impacted by this issue.",
+    "recall_status": "Terminated",
+    "date_initiated": "20180314",
+    "cfres_id": "162767"
+   },
+   {
+    "recall_number": "Z-2115-2018",
+    "event_number": "80057",
+    "recalling_firm": "Invivo Corporation",
+    "product_description": "Xper Flex Cardio Physiomonitoring System\n\nThe Xper Flex Cardio physiomonitoring system is used to facilitate invasive investigation of heart and vascular, disease when non-invasive indicators warrant such.  The Xper Flex Cardio physiomonitoring system may be used to display and analyze surface ECG (electrocardiogram), respiration, invasive pressure, Sp02 (Pulse Oximetry), End Tidal C02 (carbon dioxide) and non-invasive pressure waveforms; surface body temperature and thermal cardiac output curves.",
+    "reason_for_recall": "While in Full Disclosure playback, a user may inadvertently close the Full Disclosure Control Window using the ESC key function, instead of pressing the  X  icon in the upper right corner of this window.",
+    "recall_status": "Open, Classified",
+    "date_initiated": "20171120",
+    "cfres_id": "164305"
+   },
+   {
+    "recall_number": "Z-0263-2018",
+    "event_number": "78585",
+    "recalling_firm": "Invivo Corporation",
+    "product_description": "Xper Flex Cardio Physiomonitoring system.\n\nUsed to facilitate invasive investigations of heart and vascular disease when non-invasive indicators warrant such.",
+    "reason_for_recall": "Intermittent communication between the host system and the FlexCardio",
+    "recall_status": "Terminated",
+    "date_initiated": "20170818",
+    "cfres_id": "159835"
+   },
+   {
+    "recall_number": "Z-0082-2018",
+    "event_number": "78465",
+    "recalling_firm": "Invivo Corporation",
+    "product_description": "Xper Flex Cardio PhysioMonitoring system \r\nThe Xper Flex Cardio physiomonitoring system is used to facilitate invasive investigation of heart and vascular disease when non-invasive indicators warrant such. Its users, responsible to interpret the data made available, will be professional health care providers, such as physicians, registered nurses, cardiovascular technicians, radiology technicians, and other clinical health care providers. The Xper Flex Cardio physiomonitoring system may be used to display and analyze surface ECG (electrocardiogram), respiration, invasive pressure, Sp02 (Pulse Oximetry), End Tidal C02 (carbon dioxide) and non-invasive pressure waveforms; surface body temperature and thermal cardiac output curves. The system is capable of processing/analyzing information such as multi-channel ECG signals and displaying a graphical ST segment map. The Xper Flex Cardio physiomonitoring system makes measurements that assist physicians and other clinicians to evaluate a patient's overall cardiopulmonary performance, conductive system and general vascular status.",
+    "reason_for_recall": "Intermittent communication between the host system and the Flex Cardio",
+    "recall_status": "Terminated",
+    "date_initiated": "20170811",
+    "cfres_id": "159623"
+   },
+   {
+    "recall_number": "Z-2604-2016",
+    "event_number": "74884",
+    "recalling_firm": "INNOKAS MEDICAL OY",
+    "product_description": "CARESCAPE VC150 Vital Signs Monitor; Intended to monitor a single patient's vital signs at the site of care.",
+    "reason_for_recall": "A software error on released software versions 1.6.12, 1.6.12F and 1.6.16 may give wrong time data to measurements.",
+    "recall_status": "Terminated",
+    "date_initiated": "20160727",
+    "cfres_id": "148676"
+   },
+   {
+    "recall_number": "Z-0264-2016",
+    "event_number": "72475",
+    "recalling_firm": "Innokas Medical Oy",
+    "product_description": "CARESCAPE VC150 Vital Signs Monitor\n\nMonitor vital signs in humans",
+    "reason_for_recall": "Monitor may shut down unintentionally without restarting.",
+    "recall_status": "Terminated",
+    "date_initiated": "20151022",
+    "cfres_id": "141170"
+   },
+   {
+    "recall_number": "Z-2760-2016",
+    "event_number": "73196",
+    "recalling_firm": "Invivo Corporation",
+    "product_description": "The system provides the ability to transmit patient data files for storage, viewing and analysis at distributed locations via the intranet or Internet, or may function as a stand-alone device.",
+    "reason_for_recall": "Display of SpO2 and Non-Invasive Blood Pressure (NIBP) Measurements May Freeze",
+    "recall_status": "Terminated",
+    "date_initiated": "20151019",
+    "cfres_id": "145526"
+   },
+   {
+    "recall_number": "Z-2266-2015",
+    "event_number": "71541",
+    "recalling_firm": "Philips Electronics North  America Corporation",
+    "product_description": "Invivo Expression MRI Patient Monitoring System.",
+    "reason_for_recall": "The device's labeling inaccurately indicates Endotracheal as a body temperature application site.  The FlexTEMP reusable temperature sensor is not intended to be used for endotracheal placement. The application site should be listed as Esophageal.",
+    "recall_status": "Terminated",
+    "date_initiated": "20150617",
+    "cfres_id": "138154"
+   },
+   {
+    "recall_number": "Z-1022-2015",
+    "event_number": "70068",
+    "recalling_firm": "INNOKAS MEDICAL OY",
+    "product_description": "VC150 Vital Signs Monitor (VC150 monitor equipped with Masimo SpO2 technique only); Innokas Medical CARESCAPE VC150 Rx Only Innokas Medical Oy. Catalog numbers 2067980-002, 2067980-006, 2067980-010, and 2067980-014.",
+    "reason_for_recall": "If the SpO2 or RRa value is violating the respective alarm limit at the time of switching to monitoring mode, the monitor does not issue visual and audible alarms.",
+    "recall_status": "Terminated",
+    "date_initiated": "20141203",
+    "cfres_id": "132205"
+   },
+   {
+    "recall_number": "Z-0958-2015",
+    "event_number": "69587",
+    "recalling_firm": "Invivo Corporation",
+    "product_description": "Philips Expression MR200 MRI Patient Monitoring System.",
+    "reason_for_recall": "The MR 200 devices failed the initial power up test due to capacitor short and hi-pot testing; possible loss of Patient Monitoring or User/Service Electrical Shock.",
+    "recall_status": "Terminated",
+    "date_initiated": "20141022",
+    "cfres_id": "130997"
+   },
+   {
+    "recall_number": "Z-2867-2016",
+    "event_number": "74296",
+    "recalling_firm": "Invivo Corporation",
+    "product_description": "Philips Expression Information Portal (IP5) Model 865471.   The IP5 is intended to be used as a secondary display control unit for the Expression MRI Patient Monitoring System and the Expression MR200 MRI Patient Monitoring System.",
+    "reason_for_recall": "Frozen Display Numerics and Disabled Menu Keys after extended run time.  This customer notification was sent August 22, 2014.",
+    "recall_status": "Terminated",
+    "date_initiated": "20140914",
+    "cfres_id": "147097"
+   },
+   {
+    "recall_number": "Z-0001-2015",
+    "event_number": "69192",
+    "recalling_firm": "Invivo Corporation",
+    "product_description": "Philips Expression MR200 MRI Patient Monitoring System Model 866120",
+    "reason_for_recall": "During production, excess metal (aluminum) debris was found stuck to the cling plastic that covers the device's pole assembly. The metallic debris could affect system performance due to the potential for a failure to power up or loss of power. This could result in the loss of monitoring and a delay in diagnosis of the patient.",
+    "recall_status": "Terminated",
+    "date_initiated": "20140908",
+    "cfres_id": "129828"
+   },
+   {
+    "recall_number": "Z-0069-2015",
+    "event_number": "69179",
+    "recalling_firm": "Invivo Corporation",
+    "product_description": "Philips Expression MR200 MRI Patient Monitoring System",
+    "reason_for_recall": "Failure to produce the Non-Invasive Blood Pressure (NIBP) Measurement.",
+    "recall_status": "Terminated",
+    "date_initiated": "20140905",
+    "cfres_id": "129808"
+   },
+   {
+    "recall_number": "Z-0042-2015",
+    "event_number": "69377",
+    "recalling_firm": "Mckesson Information Solutions LLC",
+    "product_description": "McKesson Cardiology\" Hemo intended for complete physiological/hemodynamic monitoring, clinical data acquisition, medical image and data processing, and analytical assessment.",
+    "reason_for_recall": "Software Error: The McKesson Cardiology Hemo calculation section incorrectly converts the Hemoglobin value before it is utilized in the applicable formula calculations.",
+    "recall_status": "Terminated",
+    "date_initiated": "20140827",
+    "cfres_id": "130364"
+   },
+   {
+    "recall_number": "Z-2234-2014",
+    "event_number": "68802",
+    "recalling_firm": "Nellcor Puritan Bennett Inc. (dba Covidien LP)",
+    "product_description": "Vital Sync\" VPMP & IM, software, V2.4. (DVD), packaged on a CD or other electronically controlled device.  CDs are packaged in clam shell jeweled cases within a carton box.\n\nThe Vital Sync Virtual Patient Monitoring Platform is intended to be used by healthcare professionals for the following purposes: 1) To remotely consult regarding a patients status; and 2) To remotely review near real-time patient data, waveforms and alarms in order to utilize this information to aid in clinical decisions and deliver patient care in a timely manner.",
+    "reason_for_recall": "Covidien is conducting a field correction of the Vital Sync Virtual Patient Monitoring Platform and Informatics Manager due to a mismatch between the alarm priority on the medical devices and the Vital Sync system.",
+    "recall_status": "Terminated",
+    "date_initiated": "20140717",
+    "cfres_id": "128766"
+   },
+   {
+    "recall_number": "Z-2235-2014",
+    "event_number": "68802",
+    "recalling_firm": "Nellcor Puritan Bennett Inc. (dba Covidien LP)",
+    "product_description": "Vital Sync RMS 1.0 when loaded with v2.4 software, packaged on a CD or other electronically controlled device.  CDs are packaged in clam shell jeweled cases within a carton box.\n\nThe Vital Sync Virtual Patient Monitoring Platform is intended to be used by healthcare professionals for the following purposes: 1) To remotely consult regarding a patients status; and 2) To remotely review near real-time patient data, waveforms and alarms in order to utilize this information to aid in clinical decisions and deliver patient care in a timely manner.",
+    "reason_for_recall": "Covidien is conducting a field correction of the Vital Sync Virtual Patient Monitoring Platform and Informatics Manager due to a mismatch between the alarm priority on the medical devices and the Vital Sync system.",
+    "recall_status": "Terminated",
+    "date_initiated": "20140717",
+    "cfres_id": "128767"
+   },
+   {
+    "recall_number": "Z-2270-2014",
+    "event_number": "68956",
+    "recalling_firm": "Invivo Corporation",
+    "product_description": "Philips IP5 Information Portal\n\nThe Expression Information Portal (Model IP5), a display and device controller for Philips MRI patient monitoring systems, is intended for use by trained health care professionals to remotely monitor the vital signs of patients undergoing MRI procedures.",
+    "reason_for_recall": "The wireless function of the IP5 radio could be interrupted causing loss of wireless communication between the IP5 and host monitoring system.",
+    "recall_status": "Terminated",
+    "date_initiated": "20140630",
+    "cfres_id": "129112"
+   },
+   {
+    "recall_number": "Z-0093-2015",
+    "event_number": "69380",
+    "recalling_firm": "Mckesson Information Solutions LLC",
+    "product_description": "McKesson Cardiology Hemo.\n\nMcKesson Cardiology\" Hemo is intended for complete physiological/hemodynamic monitoring, clinical data acquisition, medical image and data processing, and analytical assessment.",
+    "reason_for_recall": "McKesson Cardiology Hemo front-end parameter boxes must undergo annual\nmaintenance testing to establish the proper functioning of the parameter boxes,\nand to identify in a timely manner whether a parameter box is out of calibration.\n\nMcKesson has identified that its communication to customers regarding the\nrequired maintenance tests was insufficient. While each unit has an attached\nsticker i",
+    "recall_status": "Terminated",
+    "date_initiated": "20140625",
+    "cfres_id": "130368"
+   },
+   {
+    "recall_number": "Z-0983-2014",
+    "event_number": "67387",
+    "recalling_firm": "Invivo Corporation",
+    "product_description": "Invivo Corporation Expression Information Portal (Model IP5) is intended to be used as a secondary display control unit, where the device monitors the vital signs of a patient undergoing an MRI procedure from the MR control room, induction room, or recovery room and then outputs the measured patient data to a hospital information system (HIS).\n\nThe Expression Information Portal (Model IP5), a display and device controller for Philips MRI patient monitoring systems, is intended for use by trained health care professionals to remotely monitor the vital signs of patients undergoing MRI procedures.",
+    "reason_for_recall": "Invivo Corporation located at 12151 Research Parkway, Orlando, FL 32826 is recalling the Expression Information Portal (Model IP5). Upon power up, the IP5 may fail to produce audio.",
+    "recall_status": "Terminated",
+    "date_initiated": "20131204",
+    "cfres_id": "125382"
+   },
+   {
+    "recall_number": "Z-0633-2014",
+    "event_number": "66919",
+    "recalling_firm": "Welch Allyn Protocol, Inc",
+    "product_description": "The Propaq LT Series monitors. Model numbers 802LTAN, 802LT0N, and 802LTRN.\n\nThese devices are indicated for ECG, noninvasive blood pressure (NIBP), respiration and SpO2. The most likely locations for patients to be monitored by these devices are hospital general medical-surgical, telemetry, and intermediate care floors, hospital emergency departments, transport, emergency medical services, and other healthcare applications.\n\nintended to be used by clinicians and medically qualified personnel for single or multiparameter vital signs monitoring of ambulatory and nonambulatory patients, including neonate, pediatric and adult patients. These devices are indicated for ECG, noninvasive blood pressure (NIBP), respiration and SpO2. The most likely locations for patients to be monitored by these devices are hospital general medicalsurgical, telemetry, and intermediate care floors, hospital emergency departments, transport, emergency medical services, and other healthcare applications. The monitors can be used as stand-alone devices or as devices networked to an Acuity Central Station through wireless communication over a Welch Allyn FlexNet network.",
+    "reason_for_recall": "Welch Allyn will update Propaq 802 Series Vital Signs Monitor, models are 802LTAN, 802LTON and 802LTR with software because the fault conditions relating to hardware or software failure or electrical noise caused by proximal defibrillation activity could, in rare instances, potentially interrupt device operations.",
+    "recall_status": "Terminated",
+    "date_initiated": "20131121",
+    "cfres_id": "124195"
+   },
+   {
+    "recall_number": "Z-0810-2014",
+    "event_number": "66996",
+    "recalling_firm": "Medrad Mr Inc",
+    "product_description": "Medrad Veris MR Monitor units \n\nThe system is intended to monitor physiological parameters of patients within any healthcare environment. The user, responsible to interpret the monitored data made available, will be a professional healthcare provider. Physiological data, gas monitoring, system alarms, and patient analysis will be available to the care provider from the monitor.",
+    "reason_for_recall": "The main board, P/N 301641, installed in some Medrad Veris MR Monitor units may be faulty and could lead to unexpected shutdown of the system while in use, resulting in the loss of vital signs information from the monitor.",
+    "recall_status": "Terminated",
+    "date_initiated": "20131121",
+    "cfres_id": "124462"
+   },
+   {
+    "recall_number": "Z-1096-2014",
+    "event_number": "67424",
+    "recalling_firm": "Invivo Corporation",
+    "product_description": "Invivo Corporation  Expression IP5 Information Portal \n\n\nProduct Usage:\nThe Expression Information Portal (Model IP5) a display and device controller for Philips MRI patient monitoring systems, is intended for use by trained health care professional to remotely monitor the vital signs of patients undergoing MRI procedures. Available monitoring from the IP5 can include ECG, SpO2, non-invasive and invasive blood pressure, CO2, respiration, anesthetic agents, gases, and temperature parameters.",
+    "reason_for_recall": "Invivo Corporation located at 12151 Research Parkway, Orlando, FL 32826 is recalling their Expression Information Portal (Model IP5).  Three different IP5 devices lost audio during use.",
+    "recall_status": "Terminated",
+    "date_initiated": "20131003",
+    "cfres_id": "125437"
+   },
+   {
+    "recall_number": "Z-1817-2013",
+    "event_number": "65718",
+    "recalling_firm": "Sotera Wireless, Inc.",
+    "product_description": "ViSi Mobile Monitor, Catalog No. 92-10010\n\nThe ViSi Mobile Monitoring System is intended for use by clinicians and medically qualified personnel for single or multi-parameter vital signs monitoring of adult patients.",
+    "reason_for_recall": "Sotera Wireless, Inc. is recalling the ViSi Mobile Monitoring System due to the potential for the Chest Sensor to cause a blister wound.",
+    "recall_status": "Terminated",
+    "date_initiated": "20130523",
+    "cfres_id": "119956"
+   },
+   {
+    "recall_number": "Z-1818-2013",
+    "event_number": "65718",
+    "recalling_firm": "Sotera Wireless, Inc.",
+    "product_description": "ViSi Mobile Chest Sensor (3 lead-wire ECG, AAMI), Catalog No. 93-10014\n\nThe ViSi Mobile Monitoring System is intended for use by clinicians and medically qualified personnel for single or multi-parameter vital signs monitoring of adult patients.",
+    "reason_for_recall": "Sotera Wireless, Inc. is recalling the ViSi Mobile Monitoring System due to the potential for the Chest Sensor to cause a blister wound.",
+    "recall_status": "Terminated",
+    "date_initiated": "20130523",
+    "cfres_id": "119957"
+   },
+   {
+    "recall_number": "Z-1586-2013",
+    "event_number": "65411",
+    "recalling_firm": "Medrad Inc",
+    "product_description": "DC power cable (p/n 3010556) supplied with the MEDRAD(R) Veris MR Vital Signs Monitor: \n\nProduct Usage:\nMonitor, Physiological, Patient",
+    "reason_for_recall": "The firm is recalling these power cables due to a latent design reliability issue and the potential for shorting which can result in heating/melting of the cable jacket.",
+    "recall_status": "Terminated",
+    "date_initiated": "20130415",
+    "cfres_id": "118793"
+   },
+   {
+    "recall_number": "Z-0820-2013",
+    "event_number": "64111",
+    "recalling_firm": "Viterion TeleHealthcare Llc",
+    "product_description": "Viterion TeleHealth Monitor Model Number V100, Product Codes 09377512 (US) and 04480218 (UK).   Physiological patient monitor (without arrhythmia detection or alarms). Viterion V100, V100-BGM and V500 Telehealth Monitors transfer medical information.",
+    "reason_for_recall": "Viterion telehealth monitors do not transmit \"HI\" (above the meter's measurable range) and \"LO\" (below the meter's measurable range) blood glucose readings from Bayer's Contour Elite XL blood glucose meters, or from Roche's Accu-Chek Advantage 03 and 04 meters to healthcare professionals.",
+    "recall_status": "Terminated",
+    "date_initiated": "20121115",
+    "cfres_id": "115378"
+   },
+   {
+    "recall_number": "Z-0821-2013",
+    "event_number": "64111",
+    "recalling_firm": "Viterion TeleHealthcare Llc",
+    "product_description": "Viterion TeleHealth Monitor Model Number V100-BGM,  Product Code 81842478 (US) -- Physiological patient monitor (without arrhythmia detection or alarms) .  \nViterion V100, V100-BGM and V500 Telehealth Monitors transfer medical information.",
+    "reason_for_recall": "Viterion telehealth monitors do not transmit \"HI\" (above the meter's measurable range) and \"LO\" (below the meter's measurable range) blood glucose readings from Bayer's Contour Elite XL blood glucose meters, or from Roche's Accu-Chek Advantage 03 and 04 meters to healthcare professionals.",
+    "recall_status": "Terminated",
+    "date_initiated": "20121115",
+    "cfres_id": "115426"
+   },
+   {
+    "recall_number": "Z-0822-2013",
+    "event_number": "64111",
+    "recalling_firm": "Viterion TeleHealthcare Llc",
+    "product_description": "Viterion TeleHealth Monitor Model Number V500; Product Codes 08832984 (US) and 02080468 (UK) - Physiological patient monitor (without arrhythmia detection or alarms).  \n\nViterion V100, V100-BGM and V500 Telehealth Monitors transfer medical information.",
+    "reason_for_recall": "Viterion telehealth monitors do not transmit \"HI\" (above the meter's measurable range) and \"LO\" (below the meter's measurable range) blood glucose readings from Bayer's Contour Elite XL blood glucose meters, or from Roche's Accu-Chek Advantage 03 and 04 meters to healthcare professionals.",
+    "recall_status": "Terminated",
+    "date_initiated": "20121115",
+    "cfres_id": "115433"
+   },
+   {
+    "recall_number": "Z-0468-2013",
+    "event_number": "63643",
+    "recalling_firm": "Invivo Corporation",
+    "product_description": "Invivo Corporation Expression MRI Patient Monitoring System.\n\nThe Expression MRI Patient Monitoring System is intended for use by healthcare professionals to monitor vital signs for patients undergoing MRI procedures. The Patient Monitoring System also provides signals for synchronization to the MR scanner.",
+    "reason_for_recall": "Invivo Corporation located at 12151 Research Parkway, Orlando, FL 32826 is recalling the Expression MRI Patient Monitoring System because during transport of the systems cart with a docked Display Controller Unit (DCU), a caster (wheel) may become detached.  If this occurs, the cart can become unbalanced and may fall.",
+    "recall_status": "Terminated",
+    "date_initiated": "20121015",
+    "cfres_id": "114405"
+   },
+   {
+    "recall_number": "Z-0742-2013",
+    "event_number": "63800",
+    "recalling_firm": "Mindray DS USA, Inc. d.b.a. Mindray North America",
+    "product_description": "Mindray  DPM5 Monitor, a vital signs monitor used on human patients in healthcare facilities.",
+    "reason_for_recall": "Mindray has identified an issue with the DPM5 monitors where ST and Arrhythmia features may not be available.",
+    "recall_status": "Terminated",
+    "date_initiated": "20120905",
+    "cfres_id": "114790"
+   },
+   {
+    "recall_number": "Z-2377-2012",
+    "event_number": "62844",
+    "recalling_firm": "Capsule Tech Inc.",
+    "product_description": "Capsule Neuron Docking Station, a component in the DataCaptor Connectivity System\nCatalog Number DC-NU-DS-CK\n\nThe Capsule Neuron Docking Station is a component in the DataCaptor Connectivity System. The Capsule Neuron Docking Station provides connection for the Capsule Neuron UMPC which is a bedside device that enables automatic collection of vital signs data that can connect to the hospital network through a wired Ethernet connection or via a standard 802.11 b/g/n wireless network.",
+    "reason_for_recall": "Capsule Neuron Docking Station may experience a lost connection, resulting in loss of data or loss of power to the Caspsule Neuron",
+    "recall_status": "Terminated",
+    "date_initiated": "20120810",
+    "cfres_id": "111859"
+   },
+   {
+    "recall_number": "Z-0113-2012",
+    "event_number": "60025",
+    "recalling_firm": "Invivo Corporation",
+    "product_description": "Radio used in the Precess MRI Patient Monitoring System.  3160 (Precess) and HE97B, 94044, 94045 (radio and radio kits).\n\nLabel located on  the back of the WPU.     Product is labeled in part:  \"***Invivo Corporation 12601 Research Parkway, Orlando, FL 32826***Made in U.S.A.***REF 3160***SN***CAUTION:  Law in U.S.A. Canada and EU restricts this device to sale by or on the order of of a licensed medical practitioner only.***\"       \n\nLabel located on the bottom of the DCU.  Product is labeled in part:   ***Invivo Corporation 12601 Research Parkway Orlando, FL 32826 Made in U.S.A.***REF 3160DCU***SN***CAUTION:  Law in U.S.A. Canada and EU restricts this device to sale by or on the order of of a licensed medical practitioner only.***\"          \n\nDisplay Controller Unit (DCU) is labeled in part:  \"***Invivo***PRECESS***\".     \nWireless Processing Unit (WPU) is labeled in part:  \"***Invivo***\".     \n\nNOTE:  WPU AND DCU MAY HAVE THE SAME OR DIFFERENT  SERIAL NUMBERS.\n\nThe radio is responsible for wireless communication between the Wireless Processing Unit and the Display Controller Unit.  \n\nPrecess is intended for use by healthcare professionals to monitor vital signs for patients undergoing MRI procedures.",
+    "reason_for_recall": "Philips Invivo has determined that it is possible for the system's alarm limits and other device settings to spontaneously change without user intervention.  This problem is associated with intermittent and frequent loss of communication between the wireless Processing Unit and the Display Controller Unit.",
+    "recall_status": "Terminated",
+    "date_initiated": "20110923",
+    "cfres_id": "104268"
+   },
+   {
+    "recall_number": "Z-1036-2012",
+    "event_number": "60946",
+    "recalling_firm": "Viterion TeleHealthcare Llc",
+    "product_description": "Viterion 100-BGM TeleHealth Monitor, Model No. 09377512, Product Code/Part No. 81842478, Bayer HealthCare LLC 555 White Plains Road,  Tarrytown, NY 10591-5097 USA --- Manufactured in Japan for Bayer HealthCare LLC -- Common Name: Viterion100 TeleHealth Monitor -- Classification Name: Monitor, Physiological, Patient (Without Arrhythmia Detection or Alarms) [ref. 21CFR 870.2300]\n\nProduct Usage:\nThe Viterion 100 TeleHealth Monitor and related Data Server are physiological monitoring systems. The systems collect, accumulate and periodically transmit patient vital signs and other physiological data from a patient who may be remote from the healthcare practitioner to the practitioner, and provides communication between the patient and the practitioner. The physiological monitoring instrument, selected by the healthcare practitioner, operates in conjunction with the Patient Terminal located in the patients home, a hospital room, nursing home, or other healthcare facility. The Patient Terminal connects to the server via a conventional or cellular telephone line. The system is not a real-time monitoring system, and there is no requirement that a health care professional review the information at any specific interval or provide immediate feedback to patients. Rather, the system is intended to aid the physicians longer term management of patients. Patients are expected to take the same short term actions in response to physiological data as they ordinarily would in the absence of the Tele Health Monitor.",
+    "reason_for_recall": "Software defect; Specifically, blood glucose (BG) results from the Roche Aviva meter that are tagged by the user with either the meter hypoglycemic or general \"asterisk\" flags (*) will not be automatically transmitted through the Viterion 100-BGM monitor containing software version 3.2.0 or displayed to the health care provider through the data server.",
+    "recall_status": "Terminated",
+    "date_initiated": "20110525",
+    "cfres_id": "106852"
+   },
+   {
+    "recall_number": "Z-2183-2011",
+    "event_number": "58479",
+    "recalling_firm": "Remote Diagnostic Technologies Ltd.",
+    "product_description": "TEMPUS IC PROFESSIONAL Patient Monitor, Part No. 00-1002, Manufactured by:  Remote Diagnostics Technologies Ltd., The Old Coach House, Farleigh Wallop, Hants, UK RG25 2HT.\n\nIndicated for 3 Lead ECG monitoring and 12 Lead ECG recording, non-invasive blood pressure (NIBP), respiration, end-tidal C02 (ETCO 2), pulse oximetry (SP02) and tympanic temperature.",
+    "reason_for_recall": "It was discovered that when a 12 Lead ECG is recorded and monitoring is quickly restarted, the ECG can cease functioning.",
+    "recall_status": "Terminated",
+    "date_initiated": "20110325",
+    "cfres_id": "99439"
+   },
+   {
+    "recall_number": "Z-0106-2012",
+    "event_number": "58984",
+    "recalling_firm": "Invivo Corporation",
+    "product_description": "\"***Assembled for Invivo Corporation 12501 Research Parkway Orlando FL 32826***Made in U.S.A.***MRI Patient Monitoring System Model 865214***Use only with Model 989803169201 Power Adapter***REF 453564155341***SN US11401652***\".\n\nNote:  REF 453564155341, REF 453564181201, and 453564180091 are subject to recall.  REF is the firms Service Number which identifies the device. \n\nProduct Usage The Expression MRI Patient Monitoring System is intended for use by healthcare professionals to monitor vital signs for patients undergoing MRI procedures. The Patient Monitoring System also provides signals for synchronization of the MR scanner.",
+    "reason_for_recall": "Philips Invivo Corporation of Orlando, FL is recalling their Expression MRI Patient Monitoring System. During transport of the system's cart with a docked Display Controller Unit (DCU), a front caster (wheel) may become loose and fall off causing the cart to become unbalanced and fall.",
+    "recall_status": "Terminated",
+    "date_initiated": "20100830",
+    "cfres_id": "101549"
+   },
+   {
+    "recall_number": "Z-2403-2011",
+    "event_number": "58636",
+    "recalling_firm": "Capsule Tech Inc.",
+    "product_description": "Capsule Neuron UMPC is a component in the DataCaptor\" Connectivity System. \nCatalog Number: DC-NU-MPC\n\nCapsule Neuron\" UMPC is a bedside device that enables automatic collection of vital signs data that can local cache data and connect to the hospital network through a wired\nEthernet connection or via a standard 802.11 b/g/n wireless network, available in a fixed or mobile mounting option, running either DataCaptor continuous or periodic connectivity software\n\nThe DataCaptor\" System is indicated for use in data collection and clinical information management either directly or through networks with independent bedside devices. DataCaptor\" is not intended for monitoring purposes, nor is the software intended to control any of the clinical devices (independent bedside devices / information systems) it is connected to",
+    "reason_for_recall": "Software: \nData cached on the Neuron due to server unavailability is not being delivered to the server after server availability is restored.\nIf a compact flash failure occurs, the file system may be corrupted and result in system hangs, lock-ups or crashes.\nBatteries can discharge completely in a Capsule Neuron\" UMPC even though it is connected to power source",
+    "recall_status": "Terminated",
+    "date_initiated": "20100825",
+    "cfres_id": "99753"
+   },
+   {
+    "recall_number": "Z-1260-2010",
+    "event_number": "53869",
+    "recalling_firm": "Philips Healthcare Inc.",
+    "product_description": "DeviceLink Connectivity Hardware.\n\nSupports Philips specified manufacturers' devices including urimeters, ventilators, oximeters, patient monitors, infusion pumps and anesthesia machines.",
+    "reason_for_recall": "Power cords' prongs may crack or fail -- Philips was notified that FDA is investigating whether certain types of Electri-Cord Manufacturing Company power cords used with medical devices may be defective in that the power cord's prongs may crack and fail at/or inside the plug.  Potential for burns or electrical shock.",
+    "recall_status": "Terminated",
+    "date_initiated": "20091119",
+    "cfres_id": "87066"
+   },
+   {
+    "recall_number": "Z-1873-2009",
+    "event_number": "52721",
+    "recalling_firm": "Welch Allyn Protocol, Inc",
+    "product_description": "Welch Allyn Vital Sign Monitor 5300 Series/Class II. (VSM 300).\n\nThe VSM300 can monitor systolic and diastolic noninvasive blood pressure (NIBP), pulse rate, and mean arterial pressure (MAP). Units configured with the appropriate options can also simultaneously monitor temperature and noninvasive functional oxygen saturation of arteriolar hemoglobin (SpO2), and continuously monitor pulse rate.  The monitor provides programmable audible and visual alarms and automatic NIBP measurements at selectable intervals.",
+    "reason_for_recall": "The Welch Allyn VSM300 Vital Signs Monitor may experience a loss of audio which includes a loss of audio alarms.",
+    "recall_status": "Terminated",
+    "date_initiated": "20090728",
+    "cfres_id": "83814"
+   },
+   {
+    "recall_number": "Z-0971-2009",
+    "event_number": "50790",
+    "recalling_firm": "Invivo Corporation",
+    "product_description": "3.7 V Li-Polymer Battery, used in Precess MRI Compatible Patient Monitoring System and Achieva, Intera and Panorama 1.0T.  REF 9065 or REF 9067. Invivo Corporation, Orlando, FL 32826\n\nThese rechargeable batteries are used to supply power to patient monitoring system's wireless modules and gating/triggering systems' fiber optic modules.",
+    "reason_for_recall": "Battery Failure: The Invivo Lithium Polymer Wireless Module Battery Part Number 9065 and the Lithium Polymer Fiber Optic Module Battery Part Number 9067 is being recalled because the battery, itself,  when dropped from 3 feet/1 meter onto a hard surface can produce a flame and then emit smoke.  The firms investigation shows that the battery failure does not occur when a module is dropped with a ba",
+    "recall_status": "Terminated",
+    "date_initiated": "20080813",
+    "cfres_id": "77307"
+   },
+   {
+    "recall_number": "Z-1089-2007",
+    "event_number": "38128",
+    "recalling_firm": "Smiths Medical PM, Inc.",
+    "product_description": "BCI Advisor Vital Signs Monitor (Model/Catalog Number: 9200)",
+    "reason_for_recall": "Turn off unexpectedly/ Not turn on : monitors turned off unexpectedly sounding the critical failure alarm.  Advisor Vital Signs monitors that were off, would not turn back on.",
+    "recall_status": "Terminated",
+    "date_initiated": "20070605",
+    "cfres_id": "53006"
+   },
+   {
+    "recall_number": "Z-0215-2007",
+    "event_number": "36628",
+    "recalling_firm": "Welch Allyn Protocol, Inc",
+    "product_description": "Propaq LT vital signs monitor, Model 802LTON",
+    "reason_for_recall": "Potential to burn patient's finger. A Nellcor pulse oximetry (Sp02) sensor became hot when used with a Propaq LT.",
+    "recall_status": "Terminated",
+    "date_initiated": "20061022",
+    "cfres_id": "49026"
+   },
+   {
+    "recall_number": "Z-0216-2007",
+    "event_number": "36628",
+    "recalling_firm": "Welch Allyn Protocol, Inc",
+    "product_description": "Propaq LT vital signs monitor, Model 802LTRN",
+    "reason_for_recall": "Potential to burn patient's finger.  A Nellcor pulse oximetry (Sp02) sensor became hot when used with a Propaq LT.",
+    "recall_status": "Terminated",
+    "date_initiated": "20061022",
+    "cfres_id": "49027"
+   },
+   {
+    "recall_number": "Z-0258-2007",
+    "event_number": "36596",
+    "recalling_firm": "Medrad Inc",
+    "product_description": "Invasive Blood Pressure Interface Cables: a)\nMedrad 9500 Multigas monitor for MRI, Invasive Blood Pressure Interface Cable (Part # 3006314) for use with Abbott/Hospira IBP Transducer  b) Invasive Blood Pressure Interface Cable (Part # 3008772) for use with Braun IBP Transducers. The product is an accessory to patient physiological monitor.",
+    "reason_for_recall": "Interference problems: certain invasive blood pressure transducers connected to these cables are susceptible to interference if exposed to static magnetic field strengths exceeding 300 gauss.  In certain orientations, the transducer causes the invasive blood pressure readings on the physiological monitor to display inaccurate readings.",
+    "recall_status": "Terminated",
+    "date_initiated": "20060929",
+    "cfres_id": "48966"
+   },
+   {
+    "recall_number": "Z-0259-2007",
+    "event_number": "36596",
+    "recalling_firm": "Medrad Inc",
+    "product_description": "Veris Invasive Blood Pressure Interface Cables-Part # 3010478.  The product is an accessory to patient physiological monitor.",
+    "reason_for_recall": "Interference problems: certain invasive blood pressure transducers connected to these cables are susceptible to interference if exposed to static magnetic field strengths exceeding 300 gauss.  In certain orientations, the transducer causes the invasive blood pressure readings on the physiological monitor to display inaccurate readings.",
+    "recall_status": "Terminated",
+    "date_initiated": "20060929",
+    "cfres_id": "48970"
+   },
+   {
+    "recall_number": "Z-0305-06",
+    "event_number": "33936",
+    "recalling_firm": "Witt Biomedical Corporation",
+    "product_description": "Product is a CALYSTO Series IV Physio-monitoring & Information System model # M-S0053.",
+    "reason_for_recall": "Customer complained that a boom monitor came off the boom.  No patient or user injury was associated with the incident.",
+    "recall_status": "Terminated",
+    "date_initiated": "20050916",
+    "cfres_id": "42762"
+   },
+   {
+    "recall_number": "Z-0011-04",
+    "event_number": "26293",
+    "recalling_firm": "GE Medical Systems Information Technologies",
+    "product_description": "Power cord manufactured by ElectriCord Manufacturing Company , P/N 316579, used with DINAMAP Patient Monitors as Follows: DINAMAP PRO Series, DINAMAP PRO 1000 Monitor under both the Critikon and GE Medical Systems. The company name EliectriCord is on the power cord plug.",
+    "reason_for_recall": "Reports of broken plug ground pins on AC power cords for patient monitors.",
+    "recall_status": "Terminated",
+    "date_initiated": "20030430",
+    "cfres_id": "27445"
+   }
+  ]
+ },
+ "notes": []
+}

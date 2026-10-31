@@ -1,0 +1,2237 @@
+{
+  "schema_version": "1.0",
+  "generated_utc": "2026-10-31T02:23:43Z",
+  "banner": "Simulated company — sample data. Problem evidence is real FDA data.",
+  "alerts": [
+    {
+      "id": "sweep:DSI",
+      "product_code": "DSI",
+      "device_type": "Detector And Alarm, Arrhythmia",
+      "rule": "more serious than usual",
+      "rule_words": "More serious than usual: the share of injury or death reports rose by 15 points or more compared with the 4 weeks before.",
+      "source": {
+        "kind": "sweep",
+        "label": "AI device sweep",
+        "as_of": "2026-09-30"
+      },
+      "window": {
+        "this_week": {
+          "from": "2026-09-24",
+          "to": "2026-09-30",
+          "count": 10
+        },
+        "baseline_4wk": {
+          "from": "2026-08-27",
+          "to": "2026-09-23",
+          "count": 29,
+          "weekly_mean": 7.25
+        }
+      },
+      "numbers": [
+        {
+          "label": "Reports this week",
+          "value": 10,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADSI+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
+        },
+        {
+          "label": "Reports in the 4 weeks before",
+          "value": 29,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADSI+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        },
+        {
+          "label": "Weekly average of those 4 weeks",
+          "value": 7.25,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADSI+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        },
+        {
+          "label": "Injury or death reports this week",
+          "value": 2,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADSI+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
+        },
+        {
+          "label": "Injury or death reports in the 4 weeks before",
+          "value": 1,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADSI+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        }
+      ],
+      "reports": [
+        {
+          "report_id": "50951017",
+          "date_received": "2026-09-30",
+          "event_type": "Injury",
+          "quote": "Literature was reviewed regarding Implantable Cardiac Monitors (ICMs).",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50951017",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50951017"
+        },
+        {
+          "report_id": "50911495",
+          "date_received": "2026-09-28",
+          "event_type": "Injury",
+          "quote": "It was reported that the Implantable Cardiac Monitor (ICM) patient experienced an infection.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50911495",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50911495"
+        },
+        {
+          "report_id": "50944062",
+          "date_received": "2026-09-30",
+          "event_type": "Malfunction",
+          "quote": "It was reported that the Implantable Cardiac Monitor (ICM) experienced undersensing on Bradycardia and Atrial Tachycardia (AT)/ Atrial Fibrillation (AF) episodes.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50944062",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50944062"
+        },
+        {
+          "report_id": "50946354",
+          "date_received": "2026-09-30",
+          "event_type": "Malfunction",
+          "quote": "It was reported the device was presented with a speaker malfunction error message and it is unknown if there was still sound.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50946354",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50946354"
+        },
+        {
+          "report_id": "50931739",
+          "date_received": "2026-09-29",
+          "event_type": "Malfunction",
+          "quote": "Philips received a complaint on a CBL ECG 5 lead Grabber AAMI + SpO2, Tele indicating the lead set was not working and was unable to provide appropriate rhythm; the readings were inaccurate.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50931739",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50931739"
+        },
+        {
+          "report_id": "50937978",
+          "date_received": "2026-09-29",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50937978",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50937978"
+        },
+        {
+          "report_id": "50914723",
+          "date_received": "2026-09-28",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50914723",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50914723"
+        },
+        {
+          "report_id": "50896941",
+          "date_received": "2026-09-25",
+          "event_type": "Malfunction",
+          "quote": "It was reported that the Implantable Cardiac Monitor (ICM) did not record the full duration of a pause episode.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50896941",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50896941"
+        },
+        {
+          "report_id": "50882881",
+          "date_received": "2026-09-24",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50882881",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50882881"
+        },
+        {
+          "report_id": "50882902",
+          "date_received": "2026-09-24",
+          "event_type": "Malfunction",
+          "quote": "It was reported that the Implantable Cardiac Monitor (ICM) experienced oversensing.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50882902",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50882902"
+        }
+      ],
+      "reports_total": 10,
+      "reports_stored": 10,
+      "recalls": [
+        {
+          "id": "Z-2052-2026",
+          "date": "2026-03-26",
+          "reason": null,
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=219564"
+        },
+        {
+          "id": "Z-1793-2026",
+          "date": "2026-02-27",
+          "reason": "Multi-parameter command module has a circuit board issue and when in Auto mode, Cardiac Output (CO) measurement may activate early, resulting in Bad Curve error with no CO measurement or Irregular Curve error with CO",
+          "reason_truncated": true,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=218485"
+        },
+        {
+          "id": "Z-0849-2026",
+          "date": "2025-10-31",
+          "reason": "Potential issue where the IntelliVue monitors did not alarm.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=217156"
+        },
+        {
+          "id": "Z-0850-2026",
+          "date": "2025-10-31",
+          "reason": "Potential issue where the IntelliVue monitors did not alarm.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=217163"
+        },
+        {
+          "id": "Z-0851-2026",
+          "date": "2025-10-31",
+          "reason": "Potential issue where the IntelliVue monitors did not alarm.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=217164"
+        }
+      ],
+      "recalls_total": 82,
+      "k510": [],
+      "k510_total": 0,
+      "who_filed": {
+        "manufacturer": 10,
+        "user_facility": 0,
+        "other": 0
+      },
+      "next_steps": [
+        "Read the reports listed above and check whether they describe the same kind of problem.",
+        "Read the injury and death reports first, then the others.",
+        "Look at the recalls and 510(k) records listed for this device type.",
+        "Ask the device owner to decide whether a review should be opened. A person decides; nothing is filed with FDA."
+      ],
+      "owner": {
+        "name": "Yuki Sato (simulated)",
+        "status": "Needs review",
+        "device_id": "DMC-08",
+        "device_name": "Marlow Series 4"
+      },
+      "gate": {
+        "checked": 13,
+        "passed": 12,
+        "withheld": 1
+      },
+      "notes": []
+    },
+    {
+      "id": "sweep:IYN",
+      "product_code": "IYN",
+      "device_type": "System, Imaging, Pulsed Doppler, Ultrasonic",
+      "rule": "reports suddenly increased",
+      "rule_words": "Reports suddenly increased: at least 3 reports this week and at least 2 times the weekly average of the 4 weeks before.",
+      "source": {
+        "kind": "sweep",
+        "label": "AI device sweep",
+        "as_of": "2026-09-30"
+      },
+      "window": {
+        "this_week": {
+          "from": "2026-09-24",
+          "to": "2026-09-30",
+          "count": 21
+        },
+        "baseline_4wk": {
+          "from": "2026-08-27",
+          "to": "2026-09-23",
+          "count": 42,
+          "weekly_mean": 10.5
+        }
+      },
+      "numbers": [
+        {
+          "label": "Reports this week",
+          "value": 21,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AIYN+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
+        },
+        {
+          "label": "Reports in the 4 weeks before",
+          "value": 42,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AIYN+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        },
+        {
+          "label": "Weekly average of those 4 weeks",
+          "value": 10.5,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AIYN+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        },
+        {
+          "label": "This week compared with the weekly average (times)",
+          "value": 2.0,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AIYN+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
+        }
+      ],
+      "reports": [
+        {
+          "report_id": "50948876",
+          "date_received": "2026-09-30",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50948876",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50948876"
+        },
+        {
+          "report_id": "50949052",
+          "date_received": "2026-09-30",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50949052",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50949052"
+        },
+        {
+          "report_id": "50950965",
+          "date_received": "2026-09-30",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50950965",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50950965"
+        },
+        {
+          "report_id": "50952445",
+          "date_received": "2026-09-30",
+          "event_type": "Injury",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50952445",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50952445"
+        },
+        {
+          "report_id": "50928380",
+          "date_received": "2026-09-29",
+          "event_type": "Malfunction",
+          "quote": "One of the patient exams performed on the Juniper system displays an \"Unarchived\" error message and they are unable to send this study to PACS.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50928380",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50928380"
+        },
+        {
+          "report_id": "50934928",
+          "date_received": "2026-09-29",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50934928",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50934928"
+        },
+        {
+          "report_id": "50935160",
+          "date_received": "2026-09-29",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50935160",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50935160"
+        },
+        {
+          "report_id": "50938400",
+          "date_received": "2026-09-29",
+          "event_type": "Malfunction",
+          "quote": "It was reported that the EPIQ CVxi Ultrasound System froze with an error message during a TTEER (Transcatheter Tricuspid Edge-to-Edge Repair).",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50938400",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50938400"
+        },
+        {
+          "report_id": "50941403",
+          "date_received": "2026-09-29",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50941403",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50941403"
+        },
+        {
+          "report_id": "50919282",
+          "date_received": "2026-09-28",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50919282",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50919282"
+        }
+      ],
+      "reports_total": 21,
+      "reports_stored": 21,
+      "recalls": [
+        {
+          "id": "Z-0152-2027",
+          "date": "2026-09-24",
+          "reason": "Ultrasound system may: 1) Not recognize previous transducer registration, prevent scanning, require re-registration with Wi-Fi/cellular access, which may be unavailable outside of the hospital",
+          "reason_truncated": true,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222793"
+        },
+        {
+          "id": "Z-3249-2026",
+          "date": "2026-08-07",
+          "reason": "Due to software issue with ultrasound system, doppler sample is displayed shallower than its actual measurement location, potentially causing inaccurate blood flow velocity measurements and misdiagnosis.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222248"
+        },
+        {
+          "id": "Z-0883-2026",
+          "date": "2025-10-31",
+          "reason": "Ultrasound system compatibility issues with Apple devices running iOS 18 may cause a failure to perform live imagining.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=216707"
+        },
+        {
+          "id": "Z-0435-2026",
+          "date": "2025-10-09",
+          "reason": "GE HealthCare has become aware that the Instructions for Use within the user guide and service manual do not adequately state the required battery replacement intervals, end-of-life handling procedures, or general",
+          "reason_truncated": true,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=216679"
+        },
+        {
+          "id": "Z-0436-2026",
+          "date": "2025-10-09",
+          "reason": "GE HealthCare has become aware that the Instructions for Use within the user guide and service manual do not adequately state the required battery replacement intervals, end-of-life handling procedures, or general",
+          "reason_truncated": true,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=216680"
+        }
+      ],
+      "recalls_total": 100,
+      "k510": [
+        {
+          "k_number": "K152165",
+          "applicant": "Sonoscape Medical Corp.",
+          "decision_date": "2015-08-26",
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfpmn/pmn.cfm?ID=K152165"
+        }
+      ],
+      "k510_total": 1,
+      "who_filed": {
+        "manufacturer": 21,
+        "user_facility": 0,
+        "other": 0
+      },
+      "next_steps": [
+        "Read the reports listed above and check whether they describe the same kind of problem.",
+        "Check whether the extra reports share one cause, one software version or one site.",
+        "Look at the recalls and 510(k) records listed for this device type.",
+        "Ask the device owner to decide whether a review should be opened. A person decides; nothing is filed with FDA."
+      ],
+      "owner": {
+        "name": "Noor Haddad (simulated)",
+        "status": "Needs review",
+        "device_id": "DMC-06",
+        "device_name": "Brindle Series 6"
+      },
+      "gate": {
+        "checked": 9,
+        "passed": 9,
+        "withheld": 0
+      },
+      "notes": []
+    },
+    {
+      "id": "sweep:MQB",
+      "product_code": "MQB",
+      "device_type": null,
+      "rule": "more serious than usual",
+      "rule_words": "More serious than usual: the share of injury or death reports rose by 15 points or more compared with the 4 weeks before.",
+      "source": {
+        "kind": "sweep",
+        "label": "AI device sweep",
+        "as_of": "2026-09-30"
+      },
+      "window": {
+        "this_week": {
+          "from": "2026-09-24",
+          "to": "2026-09-30",
+          "count": 4
+        },
+        "baseline_4wk": {
+          "from": "2026-08-27",
+          "to": "2026-09-23",
+          "count": 1,
+          "weekly_mean": 0.25
+        }
+      },
+      "numbers": [
+        {
+          "label": "Reports this week",
+          "value": 4,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMQB+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
+        },
+        {
+          "label": "Reports in the 4 weeks before",
+          "value": 1,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMQB+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        },
+        {
+          "label": "Weekly average of those 4 weeks",
+          "value": 0.25,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMQB+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        },
+        {
+          "label": "Injury or death reports this week",
+          "value": 4,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMQB+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
+        },
+        {
+          "label": "Injury or death reports in the 4 weeks before",
+          "value": 0,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMQB+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        }
+      ],
+      "reports": [],
+      "reports_total": 4,
+      "reports_stored": null,
+      "recalls": [],
+      "recalls_total": 0,
+      "k510": [],
+      "k510_total": 2,
+      "who_filed": null,
+      "next_steps": [
+        "Open the openFDA links above to read this week's reports; none are stored in this workspace.",
+        "Read the injury and death reports first, then the others.",
+        "Look at the recalls and 510(k) records listed for this device type.",
+        "Ask the device owner to decide whether a review should be opened. A person decides; nothing is filed with FDA."
+      ],
+      "owner": null,
+      "gate": {
+        "checked": 0,
+        "passed": 0,
+        "withheld": 0
+      },
+      "notes": [
+        "No reports are stored for this device type in this workspace; use the openFDA links.",
+        "No recalls are stored for this device type."
+      ]
+    },
+    {
+      "id": "sweep:MUD",
+      "product_code": "MUD",
+      "device_type": "Oximeter, Tissue Saturation",
+      "rule": "reports suddenly increased",
+      "rule_words": "Reports suddenly increased: at least 3 reports this week and at least 2 times the weekly average of the 4 weeks before.",
+      "source": {
+        "kind": "sweep",
+        "label": "AI device sweep",
+        "as_of": "2026-09-30"
+      },
+      "window": {
+        "this_week": {
+          "from": "2026-09-24",
+          "to": "2026-09-30",
+          "count": 3
+        },
+        "baseline_4wk": {
+          "from": "2026-08-27",
+          "to": "2026-09-23",
+          "count": 5,
+          "weekly_mean": 1.25
+        }
+      },
+      "numbers": [
+        {
+          "label": "Reports this week",
+          "value": 3,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMUD+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
+        },
+        {
+          "label": "Reports in the 4 weeks before",
+          "value": 5,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMUD+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        },
+        {
+          "label": "Weekly average of those 4 weeks",
+          "value": 1.25,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMUD+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        },
+        {
+          "label": "This week compared with the weekly average (times)",
+          "value": 2.4,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMUD+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
+        }
+      ],
+      "reports": [
+        {
+          "report_id": "50923064",
+          "date_received": "2026-09-28",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50923064",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50923064"
+        },
+        {
+          "report_id": "50926577",
+          "date_received": "2026-09-28",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50926577",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50926577"
+        },
+        {
+          "report_id": "50926712",
+          "date_received": "2026-09-28",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50926712",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50926712"
+        }
+      ],
+      "reports_total": 3,
+      "reports_stored": 3,
+      "recalls": [
+        {
+          "id": "Z-3250-2026",
+          "date": "2026-08-11",
+          "reason": "Due to incorrect switching of Channel 1 and 2 on the module and flag labels on the tissue oximetry cables.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=221435"
+        },
+        {
+          "id": "Z-1731-2024",
+          "date": "2024-01-09",
+          "reason": "manufacturing defects to sensor cable connectors may result in error codes or non-functioning channel",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=205778"
+        },
+        {
+          "id": "Z-1732-2024",
+          "date": "2024-01-09",
+          "reason": "manufacturing defects to sensor cable connectors may result in error codes or non-functioning channel",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=205779"
+        },
+        {
+          "id": "Z-0789-2024",
+          "date": "2023-10-30",
+          "reason": "Tissue oxygenation measurement system touchscreens may be unresponsive, which may prevent the viewing of oxygenation images.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=204983"
+        },
+        {
+          "id": "Z-0834-2022",
+          "date": "2022-03-01",
+          "reason": "The StO2 values may be inaccurately low when using either the FORE-SIGHT ELITE Tissue Oximeter Module or the FORE-SIGHT ELITE Absolute Tissue Oximeter Monitor with the Fore-Sight Elite large sensor in certain somatic",
+          "reason_truncated": true,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=192119"
+        }
+      ],
+      "recalls_total": 7,
+      "k510": [],
+      "k510_total": 0,
+      "who_filed": {
+        "manufacturer": 3,
+        "user_facility": 0,
+        "other": 0
+      },
+      "next_steps": [
+        "Read the reports listed above and check whether they describe the same kind of problem.",
+        "Check whether the extra reports share one cause, one software version or one site.",
+        "Look at the recalls and 510(k) records listed for this device type.",
+        "Ask the device owner to decide whether a review should be opened. A person decides; nothing is filed with FDA."
+      ],
+      "owner": {
+        "name": "Ana Moreau (simulated)",
+        "status": "Needs review",
+        "device_id": "DMC-09",
+        "device_name": "Quillon Series 2"
+      },
+      "gate": {
+        "checked": 6,
+        "passed": 6,
+        "withheld": 0
+      },
+      "notes": []
+    },
+    {
+      "id": "sweep:OTE",
+      "product_code": "OTE",
+      "device_type": "Digital Breast Tomosynthesis",
+      "rule": "reports suddenly increased",
+      "rule_words": "Reports suddenly increased: at least 3 reports this week and at least 2 times the weekly average of the 4 weeks before.",
+      "source": {
+        "kind": "sweep",
+        "label": "AI device sweep",
+        "as_of": "2026-09-30"
+      },
+      "window": {
+        "this_week": {
+          "from": "2026-09-24",
+          "to": "2026-09-30",
+          "count": 15
+        },
+        "baseline_4wk": {
+          "from": "2026-08-27",
+          "to": "2026-09-23",
+          "count": 23,
+          "weekly_mean": 5.75
+        }
+      },
+      "numbers": [
+        {
+          "label": "Reports this week",
+          "value": 15,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOTE+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
+        },
+        {
+          "label": "Reports in the 4 weeks before",
+          "value": 23,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOTE+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        },
+        {
+          "label": "Weekly average of those 4 weeks",
+          "value": 5.75,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOTE+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        },
+        {
+          "label": "This week compared with the weekly average (times)",
+          "value": 2.61,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOTE+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
+        }
+      ],
+      "reports": [
+        {
+          "report_id": "50941595",
+          "date_received": "2026-09-30",
+          "event_type": "Malfunction",
+          "quote": "It was reported that a mammography system produced a loud noise described as \"like a spark\" during an exposure, followed by an electrical/burning smell.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50941595",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50941595"
+        },
+        {
+          "report_id": "50949312",
+          "date_received": "2026-09-30",
+          "event_type": "Malfunction",
+          "quote": "It was reported that a Dimensions system displayed an error related to high voltage arc detected, during a quality control testing.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50949312",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50949312"
+        },
+        {
+          "report_id": "50954697",
+          "date_received": "2026-09-30",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50954697",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50954697"
+        },
+        {
+          "report_id": "50910594",
+          "date_received": "2026-09-28",
+          "event_type": "Malfunction",
+          "quote": "Customer reported an incident involving a mammography system with a burning smell and smoke coming from the system while it was powered on, with GEN error codes 25:30 and 25:56 displayed.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50910594",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50910594"
+        },
+        {
+          "report_id": "50910600",
+          "date_received": "2026-09-28",
+          "event_type": "Malfunction",
+          "quote": "Manufacturer's Field Service Engineer (FSE) identified an issue with mammography system during a field inspection.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50910600",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50910600"
+        },
+        {
+          "report_id": "50914491",
+          "date_received": "2026-09-28",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50914491",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50914491"
+        },
+        {
+          "report_id": "50921263",
+          "date_received": "2026-09-28",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50921263",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50921263"
+        },
+        {
+          "report_id": "50925955",
+          "date_received": "2026-09-28",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50925955",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50925955"
+        },
+        {
+          "report_id": "50899349",
+          "date_received": "2026-09-25",
+          "event_type": "Malfunction",
+          "quote": "It was reported by the customer that prior to a patient procedure, the device experienced shorted stator windings within the motor assembly.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50899349",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50899349"
+        },
+        {
+          "report_id": "50902744",
+          "date_received": "2026-09-25",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50902744",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50902744"
+        }
+      ],
+      "reports_total": 15,
+      "reports_stored": 15,
+      "recalls": [
+        {
+          "id": "Z-2168-2026",
+          "date": "2026-04-08",
+          "reason": "Complaints have been received of systems developing loose, missing, or broken internal bolts over time.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=219089"
+        },
+        {
+          "id": "Z-2219-2025",
+          "date": "2025-06-11",
+          "reason": "Devices had an unapproved slabbing software function enabled for use.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=214390"
+        },
+        {
+          "id": "Z-3248-2024",
+          "date": "2024-08-19",
+          "reason": "Identified an issue with Selenia Dimensions 1.12.0 and 3Dimensions 2.3.0 system software when used in combination with C-View software in which the quality of the final C-View synthesized 2D image is impacted and may",
+          "reason_truncated": true,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=209902"
+        },
+        {
+          "id": "Z-1144-2023",
+          "date": "2023-01-16",
+          "reason": "C-Arm unexpected movement may cause blunt trauma should the tube arm impinge upon an individual",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=197684"
+        },
+        {
+          "id": "Z-0888-2016",
+          "date": "2016-02-12",
+          "reason": "A potential system fatal error may occur during tomosynthesis reconstruction with large breasts that cover nearly the entire detector surface and with a breast thickness larger than 90 mm.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=143817"
+        }
+      ],
+      "recalls_total": 5,
+      "k510": [],
+      "k510_total": 0,
+      "who_filed": {
+        "manufacturer": 15,
+        "user_facility": 0,
+        "other": 0
+      },
+      "next_steps": [
+        "Read the reports listed above and check whether they describe the same kind of problem.",
+        "Check whether the extra reports share one cause, one software version or one site.",
+        "Look at the recalls and 510(k) records listed for this device type.",
+        "Ask the device owner to decide whether a review should be opened. A person decides; nothing is filed with FDA."
+      ],
+      "owner": {
+        "name": "Callum Brodie (simulated)",
+        "status": "Needs review",
+        "device_id": "DMC-07",
+        "device_name": "Kestrel Series 7"
+      },
+      "gate": {
+        "checked": 11,
+        "passed": 11,
+        "withheld": 0
+      },
+      "notes": []
+    },
+    {
+      "id": "sweep:SIG",
+      "product_code": "SIG",
+      "device_type": null,
+      "rule": "new kind of problem",
+      "rule_words": "New kind of problem: reports in a device type that had none before, or a kind of event never seen before for that device type.",
+      "source": {
+        "kind": "sweep",
+        "label": "AI device sweep",
+        "as_of": "2026-09-30"
+      },
+      "window": {
+        "this_week": {
+          "from": "2026-09-24",
+          "to": "2026-09-30",
+          "count": 1
+        },
+        "baseline_4wk": {
+          "from": "2026-08-27",
+          "to": "2026-09-23",
+          "count": 0,
+          "weekly_mean": 0.0
+        }
+      },
+      "numbers": [
+        {
+          "label": "Reports this week",
+          "value": 1,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASIG+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
+        },
+        {
+          "label": "Reports in the 4 weeks before",
+          "value": 0,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASIG+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        },
+        {
+          "label": "Weekly average of those 4 weeks",
+          "value": 0.0,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASIG+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        },
+        {
+          "label": "Reports for this device type before the 4 weeks",
+          "value": 0,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASIG+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        }
+      ],
+      "reports": [],
+      "reports_total": 1,
+      "reports_stored": null,
+      "recalls": [],
+      "recalls_total": 0,
+      "k510": [],
+      "k510_total": 0,
+      "who_filed": null,
+      "next_steps": [
+        "Open the openFDA links above to read this week's reports; none are stored in this workspace.",
+        "Check whether the new kind of event or the first reports match anything already known for this device type.",
+        "Look at the recalls and 510(k) records listed for this device type.",
+        "Ask the device owner to decide whether a review should be opened. A person decides; nothing is filed with FDA."
+      ],
+      "owner": null,
+      "gate": {
+        "checked": 0,
+        "passed": 0,
+        "withheld": 0
+      },
+      "notes": [
+        "No reports are stored for this device type in this workspace; use the openFDA links.",
+        "No recalls are stored for this device type."
+      ]
+    },
+    {
+      "id": "brief:2026-08-31:LLZ",
+      "product_code": "LLZ",
+      "device_type": "System, Image Processing, Radiological",
+      "rule": "reports suddenly increased",
+      "rule_words": "Reports suddenly increased: at least 3 reports this week and at least 2 times the weekly average of the 4 weeks before.",
+      "source": {
+        "kind": "brief",
+        "label": "Demo snapshot brief",
+        "as_of": "2026-08-31"
+      },
+      "window": {
+        "this_week": {
+          "from": "2026-08-25",
+          "to": "2026-08-31",
+          "count": 33
+        },
+        "baseline_4wk": {
+          "from": "2026-07-28",
+          "to": "2026-08-24",
+          "count": 35,
+          "weekly_mean": 8.75
+        }
+      },
+      "numbers": [
+        {
+          "label": "Reports this week",
+          "value": 33,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260825+TO+20260831%5D&count=event_type.exact"
+        },
+        {
+          "label": "Reports in the 4 weeks before",
+          "value": 35,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260728+TO+20260824%5D&count=event_type.exact"
+        },
+        {
+          "label": "Weekly average of those 4 weeks",
+          "value": 8.75,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260728+TO+20260824%5D&count=event_type.exact"
+        },
+        {
+          "label": "This week compared with the weekly average (times)",
+          "value": 3.77,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260825+TO+20260831%5D&count=event_type.exact"
+        }
+      ],
+      "reports": [
+        {
+          "report_id": "50515470",
+          "date_received": "2026-08-31",
+          "event_type": "Malfunction",
+          "quote": "Philips identified a software defect in ISCV (IntelliSpace Cardiovascular) system wherein unable to fetch images for some records.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50515470",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50515470"
+        },
+        {
+          "report_id": "50516576",
+          "date_received": "2026-08-31",
+          "event_type": "Malfunction",
+          "quote": "Philips identified a software defect in ISCV (Intelli Space Cardiovascular) system wherein the user could not log into system.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50516576",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50516576"
+        },
+        {
+          "report_id": "50516578",
+          "date_received": "2026-08-31",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50516578",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50516578"
+        },
+        {
+          "report_id": "50516613",
+          "date_received": "2026-08-31",
+          "event_type": "Malfunction",
+          "quote": "Philips identified a software defect in ISCV (IntelliSpace Cardiovascular) system wherein the user was unable to retrieve images from Vue Picture Archiving and Communication System (PACS).",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50516613",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50516613"
+        },
+        {
+          "report_id": "50517192",
+          "date_received": "2026-08-31",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50517192",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50517192"
+        },
+        {
+          "report_id": "50517935",
+          "date_received": "2026-08-31",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50517935",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50517935"
+        },
+        {
+          "report_id": "50519907",
+          "date_received": "2026-08-31",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50519907",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50519907"
+        },
+        {
+          "report_id": "50519908",
+          "date_received": "2026-08-31",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50519908",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50519908"
+        },
+        {
+          "report_id": "50519912",
+          "date_received": "2026-08-31",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50519912",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50519912"
+        },
+        {
+          "report_id": "50519913",
+          "date_received": "2026-08-31",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50519913",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50519913"
+        }
+      ],
+      "reports_total": 33,
+      "reports_stored": 33,
+      "recalls": [
+        {
+          "id": "Z-0186-2027",
+          "date": "2026-09-05",
+          "reason": "Following a Chromium-based web-browser, report and displayed images may not match.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222843"
+        },
+        {
+          "id": "Z-3166-2026",
+          "date": "2026-07-31",
+          "reason": "Under certain conditions historical imaging data migrated from a legacy system may become incorrectly associated with a different patient.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222118"
+        },
+        {
+          "id": "Z-3167-2026",
+          "date": "2026-07-31",
+          "reason": "Under certain conditions historical imaging data migrated from a legacy system may become incorrectly associated with a different patient.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222119"
+        },
+        {
+          "id": "Z-3168-2026",
+          "date": "2026-07-31",
+          "reason": "Under certain conditions historical imaging data migrated from a legacy system may become incorrectly associated with a different patient.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222120"
+        },
+        {
+          "id": "Z-3169-2026",
+          "date": "2026-07-31",
+          "reason": "Under certain conditions historical imaging data migrated from a legacy system may become incorrectly associated with a different patient.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222121"
+        }
+      ],
+      "recalls_total": 561,
+      "k510": [
+        {
+          "k_number": "K263048",
+          "applicant": "Siemens Healthineers AG",
+          "decision_date": "2026-09-29",
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfpmn/pmn.cfm?ID=K263048"
+        },
+        {
+          "k_number": "K261874",
+          "applicant": "Syneris",
+          "decision_date": "2026-09-23",
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfpmn/pmn.cfm?ID=K261874"
+        },
+        {
+          "k_number": "K262442",
+          "applicant": "Replasia BV",
+          "decision_date": "2026-09-22",
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfpmn/pmn.cfm?ID=K262442"
+        },
+        {
+          "k_number": "K261855",
+          "applicant": "Elucid Bioimaging, Inc.",
+          "decision_date": "2026-09-18",
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfpmn/pmn.cfm?ID=K261855"
+        },
+        {
+          "k_number": "K261861",
+          "applicant": "Mdsim S.A.",
+          "decision_date": "2026-09-15",
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfpmn/pmn.cfm?ID=K261861"
+        }
+      ],
+      "k510_total": 209,
+      "who_filed": {
+        "manufacturer": 33,
+        "user_facility": 0,
+        "other": 0
+      },
+      "next_steps": [
+        "Read the reports listed above and check whether they describe the same kind of problem.",
+        "Check whether the extra reports share one cause, one software version or one site.",
+        "Look at the recalls and 510(k) records listed for this device type.",
+        "Ask the device owner to decide whether a review should be opened. A person decides; nothing is filed with FDA."
+      ],
+      "owner": {
+        "name": "Mara Ellison (simulated)",
+        "status": "Testing in progress",
+        "device_id": "DMC-01",
+        "device_name": "Vellmar ViewStation"
+      },
+      "gate": {
+        "checked": 15,
+        "passed": 15,
+        "withheld": 0
+      },
+      "notes": []
+    },
+    {
+      "id": "company:DMC-03",
+      "product_code": "QIH",
+      "device_type": "Automated Radiological Image Processing Software",
+      "rule": null,
+      "rule_words": "No weekly rule fired for this device type. It is shown because the simulated owner marked the device Needs review.",
+      "source": {
+        "kind": "company",
+        "label": "Our devices (simulated)",
+        "as_of": "2026-10-20"
+      },
+      "window": {
+        "this_week": {
+          "from": "2026-09-24",
+          "to": "2026-09-30",
+          "count": 0
+        },
+        "baseline_4wk": {
+          "from": "2026-08-27",
+          "to": "2026-09-23",
+          "count": 0,
+          "weekly_mean": 0.0
+        }
+      },
+      "numbers": [
+        {
+          "label": "Reports this week",
+          "value": 0,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQIH+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
+        },
+        {
+          "label": "Reports in the 4 weeks before",
+          "value": 0,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQIH+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        },
+        {
+          "label": "Weekly average of those 4 weeks",
+          "value": 0.0,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQIH+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        }
+      ],
+      "reports": [],
+      "reports_total": 0,
+      "reports_stored": 0,
+      "recalls": [
+        {
+          "id": "Z-2767-2026",
+          "date": "2026-05-07",
+          "reason": "User measurement value reported by diagnostic bioimaging software intended to measure/visualize cardiovascular structures may be larger (0.8% to 34.4%) than the actual anatomical dimension, if all the following occur:",
+          "reason_truncated": true,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=220230"
+        },
+        {
+          "id": "Z-2111-2021",
+          "date": "2021-05-19",
+          "reason": "The firm is aware of a issue with ultrasound software that results in unintended video frames being included.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=187913"
+        }
+      ],
+      "recalls_total": 2,
+      "k510": [
+        {
+          "k_number": "K262134",
+          "applicant": "Deep Reasoning Ai, Inc.",
+          "decision_date": "2026-10-07",
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfpmn/pmn.cfm?ID=K262134"
+        },
+        {
+          "k_number": "K261733",
+          "applicant": "UAB Ligence",
+          "decision_date": "2026-10-07",
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfpmn/pmn.cfm?ID=K261733"
+        },
+        {
+          "k_number": "K260523",
+          "applicant": "Medis Medical Imaging Systems BV",
+          "decision_date": "2026-10-05",
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfpmn/pmn.cfm?ID=K260523"
+        },
+        {
+          "k_number": "K260055",
+          "applicant": "Siemens Medical Solutions USA, Inc.",
+          "decision_date": "2026-09-25",
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfpmn/pmn.cfm?ID=K260055"
+        },
+        {
+          "k_number": "K262390",
+          "applicant": "Visiana",
+          "decision_date": "2026-09-22",
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfpmn/pmn.cfm?ID=K262390"
+        }
+      ],
+      "k510_total": 12,
+      "who_filed": {
+        "manufacturer": 0,
+        "user_facility": 0,
+        "other": 0
+      },
+      "next_steps": [
+        "Open the openFDA links above to read this week's reports; none are stored in this workspace.",
+        "Compare the device type's recent reports and recalls with what the owner already knows.",
+        "Look at the recalls and 510(k) records listed for this device type.",
+        "Ask the device owner to decide whether a review should be opened. A person decides; nothing is filed with FDA."
+      ],
+      "owner": {
+        "name": "Iris Tanaka (simulated)",
+        "status": "Needs review",
+        "device_id": "DMC-03",
+        "device_name": "Lumenar Renal Assist"
+      },
+      "gate": {
+        "checked": 7,
+        "passed": 7,
+        "withheld": 0
+      },
+      "notes": []
+    },
+    {
+      "id": "company:DMC-06",
+      "product_code": "IYN",
+      "device_type": "System, Imaging, Pulsed Doppler, Ultrasonic",
+      "rule": "reports suddenly increased",
+      "rule_words": "Reports suddenly increased: at least 3 reports this week and at least 2 times the weekly average of the 4 weeks before.",
+      "source": {
+        "kind": "company",
+        "label": "Our devices (simulated)",
+        "as_of": "2026-10-30"
+      },
+      "window": {
+        "this_week": {
+          "from": "2026-09-24",
+          "to": "2026-09-30",
+          "count": 21
+        },
+        "baseline_4wk": {
+          "from": "2026-08-27",
+          "to": "2026-09-23",
+          "count": 42,
+          "weekly_mean": 10.5
+        }
+      },
+      "numbers": [
+        {
+          "label": "Reports this week",
+          "value": 21,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AIYN+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
+        },
+        {
+          "label": "Reports in the 4 weeks before",
+          "value": 42,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AIYN+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        },
+        {
+          "label": "Weekly average of those 4 weeks",
+          "value": 10.5,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AIYN+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        },
+        {
+          "label": "This week compared with the weekly average (times)",
+          "value": 2.0,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AIYN+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
+        }
+      ],
+      "reports": [
+        {
+          "report_id": "50948876",
+          "date_received": "2026-09-30",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50948876",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50948876"
+        },
+        {
+          "report_id": "50949052",
+          "date_received": "2026-09-30",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50949052",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50949052"
+        },
+        {
+          "report_id": "50950965",
+          "date_received": "2026-09-30",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50950965",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50950965"
+        },
+        {
+          "report_id": "50952445",
+          "date_received": "2026-09-30",
+          "event_type": "Injury",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50952445",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50952445"
+        },
+        {
+          "report_id": "50928380",
+          "date_received": "2026-09-29",
+          "event_type": "Malfunction",
+          "quote": "One of the patient exams performed on the Juniper system displays an \"Unarchived\" error message and they are unable to send this study to PACS.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50928380",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50928380"
+        },
+        {
+          "report_id": "50934928",
+          "date_received": "2026-09-29",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50934928",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50934928"
+        },
+        {
+          "report_id": "50935160",
+          "date_received": "2026-09-29",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50935160",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50935160"
+        },
+        {
+          "report_id": "50938400",
+          "date_received": "2026-09-29",
+          "event_type": "Malfunction",
+          "quote": "It was reported that the EPIQ CVxi Ultrasound System froze with an error message during a TTEER (Transcatheter Tricuspid Edge-to-Edge Repair).",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50938400",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50938400"
+        },
+        {
+          "report_id": "50941403",
+          "date_received": "2026-09-29",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50941403",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50941403"
+        },
+        {
+          "report_id": "50919282",
+          "date_received": "2026-09-28",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50919282",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50919282"
+        }
+      ],
+      "reports_total": 21,
+      "reports_stored": 21,
+      "recalls": [
+        {
+          "id": "Z-0152-2027",
+          "date": "2026-09-24",
+          "reason": "Ultrasound system may: 1) Not recognize previous transducer registration, prevent scanning, require re-registration with Wi-Fi/cellular access, which may be unavailable outside of the hospital",
+          "reason_truncated": true,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222793"
+        },
+        {
+          "id": "Z-3249-2026",
+          "date": "2026-08-07",
+          "reason": "Due to software issue with ultrasound system, doppler sample is displayed shallower than its actual measurement location, potentially causing inaccurate blood flow velocity measurements and misdiagnosis.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222248"
+        },
+        {
+          "id": "Z-0883-2026",
+          "date": "2025-10-31",
+          "reason": "Ultrasound system compatibility issues with Apple devices running iOS 18 may cause a failure to perform live imagining.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=216707"
+        },
+        {
+          "id": "Z-0435-2026",
+          "date": "2025-10-09",
+          "reason": "GE HealthCare has become aware that the Instructions for Use within the user guide and service manual do not adequately state the required battery replacement intervals, end-of-life handling procedures, or general",
+          "reason_truncated": true,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=216679"
+        },
+        {
+          "id": "Z-0436-2026",
+          "date": "2025-10-09",
+          "reason": "GE HealthCare has become aware that the Instructions for Use within the user guide and service manual do not adequately state the required battery replacement intervals, end-of-life handling procedures, or general",
+          "reason_truncated": true,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=216680"
+        }
+      ],
+      "recalls_total": 100,
+      "k510": [
+        {
+          "k_number": "K152165",
+          "applicant": "Sonoscape Medical Corp.",
+          "decision_date": "2015-08-26",
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfpmn/pmn.cfm?ID=K152165"
+        }
+      ],
+      "k510_total": 1,
+      "who_filed": {
+        "manufacturer": 21,
+        "user_facility": 0,
+        "other": 0
+      },
+      "next_steps": [
+        "Read the reports listed above and check whether they describe the same kind of problem.",
+        "Check whether the extra reports share one cause, one software version or one site.",
+        "Look at the recalls and 510(k) records listed for this device type.",
+        "Ask the device owner to decide whether a review should be opened. A person decides; nothing is filed with FDA."
+      ],
+      "owner": {
+        "name": "Noor Haddad (simulated)",
+        "status": "Needs review",
+        "device_id": "DMC-06",
+        "device_name": "Brindle Series 6"
+      },
+      "gate": {
+        "checked": 9,
+        "passed": 9,
+        "withheld": 0
+      },
+      "notes": []
+    },
+    {
+      "id": "company:DMC-07",
+      "product_code": "OTE",
+      "device_type": "Digital Breast Tomosynthesis",
+      "rule": "reports suddenly increased",
+      "rule_words": "Reports suddenly increased: at least 3 reports this week and at least 2 times the weekly average of the 4 weeks before.",
+      "source": {
+        "kind": "company",
+        "label": "Our devices (simulated)",
+        "as_of": "2026-10-30"
+      },
+      "window": {
+        "this_week": {
+          "from": "2026-09-24",
+          "to": "2026-09-30",
+          "count": 15
+        },
+        "baseline_4wk": {
+          "from": "2026-08-27",
+          "to": "2026-09-23",
+          "count": 23,
+          "weekly_mean": 5.75
+        }
+      },
+      "numbers": [
+        {
+          "label": "Reports this week",
+          "value": 15,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOTE+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
+        },
+        {
+          "label": "Reports in the 4 weeks before",
+          "value": 23,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOTE+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        },
+        {
+          "label": "Weekly average of those 4 weeks",
+          "value": 5.75,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOTE+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        },
+        {
+          "label": "This week compared with the weekly average (times)",
+          "value": 2.61,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOTE+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
+        }
+      ],
+      "reports": [
+        {
+          "report_id": "50941595",
+          "date_received": "2026-09-30",
+          "event_type": "Malfunction",
+          "quote": "It was reported that a mammography system produced a loud noise described as \"like a spark\" during an exposure, followed by an electrical/burning smell.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50941595",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50941595"
+        },
+        {
+          "report_id": "50949312",
+          "date_received": "2026-09-30",
+          "event_type": "Malfunction",
+          "quote": "It was reported that a Dimensions system displayed an error related to high voltage arc detected, during a quality control testing.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50949312",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50949312"
+        },
+        {
+          "report_id": "50954697",
+          "date_received": "2026-09-30",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50954697",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50954697"
+        },
+        {
+          "report_id": "50910594",
+          "date_received": "2026-09-28",
+          "event_type": "Malfunction",
+          "quote": "Customer reported an incident involving a mammography system with a burning smell and smoke coming from the system while it was powered on, with GEN error codes 25:30 and 25:56 displayed.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50910594",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50910594"
+        },
+        {
+          "report_id": "50910600",
+          "date_received": "2026-09-28",
+          "event_type": "Malfunction",
+          "quote": "Manufacturer's Field Service Engineer (FSE) identified an issue with mammography system during a field inspection.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50910600",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50910600"
+        },
+        {
+          "report_id": "50914491",
+          "date_received": "2026-09-28",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50914491",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50914491"
+        },
+        {
+          "report_id": "50921263",
+          "date_received": "2026-09-28",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50921263",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50921263"
+        },
+        {
+          "report_id": "50925955",
+          "date_received": "2026-09-28",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50925955",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50925955"
+        },
+        {
+          "report_id": "50899349",
+          "date_received": "2026-09-25",
+          "event_type": "Malfunction",
+          "quote": "It was reported by the customer that prior to a patient procedure, the device experienced shorted stator windings within the motor assembly.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50899349",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50899349"
+        },
+        {
+          "report_id": "50902744",
+          "date_received": "2026-09-25",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50902744",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50902744"
+        }
+      ],
+      "reports_total": 15,
+      "reports_stored": 15,
+      "recalls": [
+        {
+          "id": "Z-2168-2026",
+          "date": "2026-04-08",
+          "reason": "Complaints have been received of systems developing loose, missing, or broken internal bolts over time.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=219089"
+        },
+        {
+          "id": "Z-2219-2025",
+          "date": "2025-06-11",
+          "reason": "Devices had an unapproved slabbing software function enabled for use.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=214390"
+        },
+        {
+          "id": "Z-3248-2024",
+          "date": "2024-08-19",
+          "reason": "Identified an issue with Selenia Dimensions 1.12.0 and 3Dimensions 2.3.0 system software when used in combination with C-View software in which the quality of the final C-View synthesized 2D image is impacted and may",
+          "reason_truncated": true,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=209902"
+        },
+        {
+          "id": "Z-1144-2023",
+          "date": "2023-01-16",
+          "reason": "C-Arm unexpected movement may cause blunt trauma should the tube arm impinge upon an individual",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=197684"
+        },
+        {
+          "id": "Z-0888-2016",
+          "date": "2016-02-12",
+          "reason": "A potential system fatal error may occur during tomosynthesis reconstruction with large breasts that cover nearly the entire detector surface and with a breast thickness larger than 90 mm.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=143817"
+        }
+      ],
+      "recalls_total": 5,
+      "k510": [],
+      "k510_total": 0,
+      "who_filed": {
+        "manufacturer": 15,
+        "user_facility": 0,
+        "other": 0
+      },
+      "next_steps": [
+        "Read the reports listed above and check whether they describe the same kind of problem.",
+        "Check whether the extra reports share one cause, one software version or one site.",
+        "Look at the recalls and 510(k) records listed for this device type.",
+        "Ask the device owner to decide whether a review should be opened. A person decides; nothing is filed with FDA."
+      ],
+      "owner": {
+        "name": "Callum Brodie (simulated)",
+        "status": "Needs review",
+        "device_id": "DMC-07",
+        "device_name": "Kestrel Series 7"
+      },
+      "gate": {
+        "checked": 11,
+        "passed": 11,
+        "withheld": 0
+      },
+      "notes": []
+    },
+    {
+      "id": "company:DMC-08",
+      "product_code": "DSI",
+      "device_type": "Detector And Alarm, Arrhythmia",
+      "rule": "more serious than usual",
+      "rule_words": "More serious than usual: the share of injury or death reports rose by 15 points or more compared with the 4 weeks before.",
+      "source": {
+        "kind": "company",
+        "label": "Our devices (simulated)",
+        "as_of": "2026-10-30"
+      },
+      "window": {
+        "this_week": {
+          "from": "2026-09-24",
+          "to": "2026-09-30",
+          "count": 10
+        },
+        "baseline_4wk": {
+          "from": "2026-08-27",
+          "to": "2026-09-23",
+          "count": 29,
+          "weekly_mean": 7.25
+        }
+      },
+      "numbers": [
+        {
+          "label": "Reports this week",
+          "value": 10,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADSI+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
+        },
+        {
+          "label": "Reports in the 4 weeks before",
+          "value": 29,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADSI+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        },
+        {
+          "label": "Weekly average of those 4 weeks",
+          "value": 7.25,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADSI+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        },
+        {
+          "label": "Injury or death reports this week",
+          "value": 2,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADSI+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
+        },
+        {
+          "label": "Injury or death reports in the 4 weeks before",
+          "value": 1,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADSI+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        }
+      ],
+      "reports": [
+        {
+          "report_id": "50951017",
+          "date_received": "2026-09-30",
+          "event_type": "Injury",
+          "quote": "Literature was reviewed regarding Implantable Cardiac Monitors (ICMs).",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50951017",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50951017"
+        },
+        {
+          "report_id": "50911495",
+          "date_received": "2026-09-28",
+          "event_type": "Injury",
+          "quote": "It was reported that the Implantable Cardiac Monitor (ICM) patient experienced an infection.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50911495",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50911495"
+        },
+        {
+          "report_id": "50944062",
+          "date_received": "2026-09-30",
+          "event_type": "Malfunction",
+          "quote": "It was reported that the Implantable Cardiac Monitor (ICM) experienced undersensing on Bradycardia and Atrial Tachycardia (AT)/ Atrial Fibrillation (AF) episodes.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50944062",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50944062"
+        },
+        {
+          "report_id": "50946354",
+          "date_received": "2026-09-30",
+          "event_type": "Malfunction",
+          "quote": "It was reported the device was presented with a speaker malfunction error message and it is unknown if there was still sound.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50946354",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50946354"
+        },
+        {
+          "report_id": "50931739",
+          "date_received": "2026-09-29",
+          "event_type": "Malfunction",
+          "quote": "Philips received a complaint on a CBL ECG 5 lead Grabber AAMI + SpO2, Tele indicating the lead set was not working and was unable to provide appropriate rhythm; the readings were inaccurate.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50931739",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50931739"
+        },
+        {
+          "report_id": "50937978",
+          "date_received": "2026-09-29",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50937978",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50937978"
+        },
+        {
+          "report_id": "50914723",
+          "date_received": "2026-09-28",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50914723",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50914723"
+        },
+        {
+          "report_id": "50896941",
+          "date_received": "2026-09-25",
+          "event_type": "Malfunction",
+          "quote": "It was reported that the Implantable Cardiac Monitor (ICM) did not record the full duration of a pause episode.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50896941",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50896941"
+        },
+        {
+          "report_id": "50882881",
+          "date_received": "2026-09-24",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50882881",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50882881"
+        },
+        {
+          "report_id": "50882902",
+          "date_received": "2026-09-24",
+          "event_type": "Malfunction",
+          "quote": "It was reported that the Implantable Cardiac Monitor (ICM) experienced oversensing.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50882902",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50882902"
+        }
+      ],
+      "reports_total": 10,
+      "reports_stored": 10,
+      "recalls": [
+        {
+          "id": "Z-2052-2026",
+          "date": "2026-03-26",
+          "reason": null,
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=219564"
+        },
+        {
+          "id": "Z-1793-2026",
+          "date": "2026-02-27",
+          "reason": "Multi-parameter command module has a circuit board issue and when in Auto mode, Cardiac Output (CO) measurement may activate early, resulting in Bad Curve error with no CO measurement or Irregular Curve error with CO",
+          "reason_truncated": true,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=218485"
+        },
+        {
+          "id": "Z-0849-2026",
+          "date": "2025-10-31",
+          "reason": "Potential issue where the IntelliVue monitors did not alarm.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=217156"
+        },
+        {
+          "id": "Z-0850-2026",
+          "date": "2025-10-31",
+          "reason": "Potential issue where the IntelliVue monitors did not alarm.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=217163"
+        },
+        {
+          "id": "Z-0851-2026",
+          "date": "2025-10-31",
+          "reason": "Potential issue where the IntelliVue monitors did not alarm.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=217164"
+        }
+      ],
+      "recalls_total": 82,
+      "k510": [],
+      "k510_total": 0,
+      "who_filed": {
+        "manufacturer": 10,
+        "user_facility": 0,
+        "other": 0
+      },
+      "next_steps": [
+        "Read the reports listed above and check whether they describe the same kind of problem.",
+        "Read the injury and death reports first, then the others.",
+        "Look at the recalls and 510(k) records listed for this device type.",
+        "Ask the device owner to decide whether a review should be opened. A person decides; nothing is filed with FDA."
+      ],
+      "owner": {
+        "name": "Yuki Sato (simulated)",
+        "status": "Needs review",
+        "device_id": "DMC-08",
+        "device_name": "Marlow Series 4"
+      },
+      "gate": {
+        "checked": 13,
+        "passed": 12,
+        "withheld": 1
+      },
+      "notes": []
+    },
+    {
+      "id": "company:DMC-09",
+      "product_code": "MUD",
+      "device_type": "Oximeter, Tissue Saturation",
+      "rule": "reports suddenly increased",
+      "rule_words": "Reports suddenly increased: at least 3 reports this week and at least 2 times the weekly average of the 4 weeks before.",
+      "source": {
+        "kind": "company",
+        "label": "Our devices (simulated)",
+        "as_of": "2026-10-30"
+      },
+      "window": {
+        "this_week": {
+          "from": "2026-09-24",
+          "to": "2026-09-30",
+          "count": 3
+        },
+        "baseline_4wk": {
+          "from": "2026-08-27",
+          "to": "2026-09-23",
+          "count": 5,
+          "weekly_mean": 1.25
+        }
+      },
+      "numbers": [
+        {
+          "label": "Reports this week",
+          "value": 3,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMUD+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
+        },
+        {
+          "label": "Reports in the 4 weeks before",
+          "value": 5,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMUD+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        },
+        {
+          "label": "Weekly average of those 4 weeks",
+          "value": 1.25,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMUD+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        },
+        {
+          "label": "This week compared with the weekly average (times)",
+          "value": 2.4,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMUD+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
+        }
+      ],
+      "reports": [
+        {
+          "report_id": "50923064",
+          "date_received": "2026-09-28",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50923064",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50923064"
+        },
+        {
+          "report_id": "50926577",
+          "date_received": "2026-09-28",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50926577",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50926577"
+        },
+        {
+          "report_id": "50926712",
+          "date_received": "2026-09-28",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50926712",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50926712"
+        }
+      ],
+      "reports_total": 3,
+      "reports_stored": 3,
+      "recalls": [
+        {
+          "id": "Z-3250-2026",
+          "date": "2026-08-11",
+          "reason": "Due to incorrect switching of Channel 1 and 2 on the module and flag labels on the tissue oximetry cables.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=221435"
+        },
+        {
+          "id": "Z-1731-2024",
+          "date": "2024-01-09",
+          "reason": "manufacturing defects to sensor cable connectors may result in error codes or non-functioning channel",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=205778"
+        },
+        {
+          "id": "Z-1732-2024",
+          "date": "2024-01-09",
+          "reason": "manufacturing defects to sensor cable connectors may result in error codes or non-functioning channel",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=205779"
+        },
+        {
+          "id": "Z-0789-2024",
+          "date": "2023-10-30",
+          "reason": "Tissue oxygenation measurement system touchscreens may be unresponsive, which may prevent the viewing of oxygenation images.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=204983"
+        },
+        {
+          "id": "Z-0834-2022",
+          "date": "2022-03-01",
+          "reason": "The StO2 values may be inaccurately low when using either the FORE-SIGHT ELITE Tissue Oximeter Module or the FORE-SIGHT ELITE Absolute Tissue Oximeter Monitor with the Fore-Sight Elite large sensor in certain somatic",
+          "reason_truncated": true,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=192119"
+        }
+      ],
+      "recalls_total": 7,
+      "k510": [],
+      "k510_total": 0,
+      "who_filed": {
+        "manufacturer": 3,
+        "user_facility": 0,
+        "other": 0
+      },
+      "next_steps": [
+        "Read the reports listed above and check whether they describe the same kind of problem.",
+        "Check whether the extra reports share one cause, one software version or one site.",
+        "Look at the recalls and 510(k) records listed for this device type.",
+        "Ask the device owner to decide whether a review should be opened. A person decides; nothing is filed with FDA."
+      ],
+      "owner": {
+        "name": "Ana Moreau (simulated)",
+        "status": "Needs review",
+        "device_id": "DMC-09",
+        "device_name": "Quillon Series 2"
+      },
+      "gate": {
+        "checked": 6,
+        "passed": 6,
+        "withheld": 0
+      },
+      "notes": []
+    },
+    {
+      "id": "company:DMC-12",
+      "product_code": "MWI",
+      "device_type": "Monitor, Physiological, Patient (Without Arrhythmia Detection Or Alarms)",
+      "rule": null,
+      "rule_words": "No weekly rule fired for this device type. It is shown because the simulated owner marked the device Needs review.",
+      "source": {
+        "kind": "company",
+        "label": "Our devices (simulated)",
+        "as_of": "2026-10-30"
+      },
+      "window": {
+        "this_week": {
+          "from": "2026-09-24",
+          "to": "2026-09-30",
+          "count": 19
+        },
+        "baseline_4wk": {
+          "from": "2026-08-27",
+          "to": "2026-09-23",
+          "count": 97,
+          "weekly_mean": 24.25
+        }
+      },
+      "numbers": [
+        {
+          "label": "Reports this week",
+          "value": 19,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMWI+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
+        },
+        {
+          "label": "Reports in the 4 weeks before",
+          "value": 97,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMWI+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        },
+        {
+          "label": "Weekly average of those 4 weeks",
+          "value": 24.25,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMWI+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
+        }
+      ],
+      "reports": [
+        {
+          "report_id": "50941662",
+          "date_received": "2026-09-30",
+          "event_type": "Malfunction",
+          "quote": "The customer reported that the device has an audio speaker failure and tb-20 intermittent connection issues.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50941662",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50941662"
+        },
+        {
+          "report_id": "50927224",
+          "date_received": "2026-09-29",
+          "event_type": "Malfunction",
+          "quote": "The customer reported that \"after power on the device turn off by itself with no alarm or error message\".",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50927224",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50927224"
+        },
+        {
+          "report_id": "50927241",
+          "date_received": "2026-09-29",
+          "event_type": "Malfunction",
+          "quote": "The customer reported that sometimes it has turned off by itself with no message or alarm.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50927241",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50927241"
+        },
+        {
+          "report_id": "50910730",
+          "date_received": "2026-09-28",
+          "event_type": "Malfunction",
+          "quote": "The customer reported that the device will not power on most of the time.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50910730",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50910730"
+        },
+        {
+          "report_id": "50914635",
+          "date_received": "2026-09-28",
+          "event_type": "Injury",
+          "quote": "After the MRI, he was noted to have a left chest wall burn.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50914635",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50914635"
+        },
+        {
+          "report_id": "50907713",
+          "date_received": "2026-09-26",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50907713",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50907713"
+        },
+        {
+          "report_id": "50899390",
+          "date_received": "2026-09-25",
+          "event_type": "Malfunction",
+          "quote": "The device was not use on a patient at time of event, there was no adverse event reported.",
+          "quote_note": null,
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50899390",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50899390"
+        },
+        {
+          "report_id": "50902403",
+          "date_received": "2026-09-25",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50902403",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50902403"
+        },
+        {
+          "report_id": "50902565",
+          "date_received": "2026-09-25",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50902565",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50902565"
+        },
+        {
+          "report_id": "50902927",
+          "date_received": "2026-09-25",
+          "event_type": "Malfunction",
+          "quote": null,
+          "quote_note": "No sentence of this report could be quoted (no narrative text, or no usable sentence).",
+          "openfda_url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50902927",
+          "maude_url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=50902927"
+        }
+      ],
+      "reports_total": 19,
+      "reports_stored": 19,
+      "recalls": [
+        {
+          "id": "Z-3217-2026",
+          "date": "2026-08-21",
+          "reason": "A performance issue may result in inaccurate blood pressure readings when the Linear Deflation Method is used.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222051"
+        },
+        {
+          "id": "Z-3218-2026",
+          "date": "2026-08-21",
+          "reason": "A performance issue may result in inaccurate blood pressure readings when the Linear Deflation Method is used.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222178"
+        },
+        {
+          "id": "Z-3219-2026",
+          "date": "2026-08-21",
+          "reason": "A performance issue may result in inaccurate blood pressure readings when the Linear Deflation Method is used.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222180"
+        },
+        {
+          "id": "Z-3220-2026",
+          "date": "2026-08-21",
+          "reason": "A performance issue may result in inaccurate blood pressure readings when the Linear Deflation Method is used.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=222181"
+        },
+        {
+          "id": "Z-3036-2026",
+          "date": "2026-07-20",
+          "reason": "Software issue may result in a loss of patient monitoring at the Hub and Central Viewer.",
+          "reason_truncated": false,
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=221789"
+        }
+      ],
+      "recalls_total": 85,
+      "k510": [],
+      "k510_total": 0,
+      "who_filed": {
+        "manufacturer": 18,
+        "user_facility": 1,
+        "other": 0
+      },
+      "next_steps": [
+        "Read the reports listed above and check whether they describe the same kind of problem.",
+        "Compare the device type's recent reports and recalls with what the owner already knows.",
+        "Look at the recalls and 510(k) records listed for this device type.",
+        "Ask the device owner to decide whether a review should be opened. A person decides; nothing is filed with FDA."
+      ],
+      "owner": {
+        "name": "Joss Whitaker (simulated)",
+        "status": "Needs review",
+        "device_id": "DMC-12",
+        "device_name": "Pelham Series 9"
+      },
+      "gate": {
+        "checked": 12,
+        "passed": 12,
+        "withheld": 0
+      },
+      "notes": []
+    }
+  ],
+  "notes": []
+}
