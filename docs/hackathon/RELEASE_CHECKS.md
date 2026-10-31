@@ -117,8 +117,13 @@ dark. Per combination:
   labelled recorded run, no uncaught page error, and no "Live answer" badge on stored text.
 
 Known gaps, reported as KNOWN_GAP and not counted as passes: WebKit has no fake microphone in
-Playwright; Firefox may not either (the page's own message is quoted); "Check any device type"
-is a KNOWN_GAP when the runner cannot reach openFDA and the page says so within its 8 s limit.
+Playwright; Firefox may not either (the page's own message is quoted). On chromium a missing
+recording bar is a FAIL, not a gap. "Check any device type" is a KNOWN_GAP only when the page
+says the API did not answer **and** a direct GET of the local API's public check also fails;
+if the direct GET answers 200 (or no `--api` was given to test it) the scenario FAILS.
+The camera upload in recorded mode needs at least one possible-match card and a confirm click;
+the only accepted lenient outcome is an explicit `no-match` or `search-failed` element on the
+page (an error or silence is a FAIL).
 Screenshots are in the `e2e-report` artifact (`screenshots/`, failures prefixed `FAILED-`).
 
 ### `live` (`scripts/release/live_check.py`)
@@ -133,7 +138,17 @@ report lists each call's real `cost_usd`, mode and time, and the total. A call t
 `recorded` fails the job (the key was set). The injection answer is checked for key-shaped
 strings, copied skill text (same 60-character windows as the API check) and gate output. The job
 is skipped otherwise; the merged report then holds one line "live job" as NOT_PRESENT (not
-required, with the reason), so it is visibly not run and never a pass.
+required, with the reason), so it is visibly not run and never a pass. A question the $0.60
+budget no longer allows (including the injection question) is a FAIL line `skipped: budget`.
+
+**Ledger and daily guard.** The live job's $0.60 is its own per-run ledger: a fresh ledger
+directory of the local API started inside the job. It is separate from the global ledger of the
+deployed API (which the job never calls), so neither counts against the other. The total per day
+is therefore limited by the number of live runs, and `gate-live` stops the live job when 3 live
+release runs already happened today (UTC): it lists today's runs of `release-check.yml` through
+the REST API with `GITHUB_TOKEN` (`actions: read`), counts those on branches whose name contains
+`live` (not counting the current run) and sets `run_live=false` at 3 or more. If the list cannot
+be fetched the job also stops (an error line, no guess).
 
 ## Smoke test (`smoke/**`)
 
@@ -147,10 +162,10 @@ in the manual run). Artifact: **`smoke-report`** (`smoke.json`, `smoke.md`, `smo
 | service | `/v1/health` 200; `/privacy` and `/terms` 200; `/v1/connect` hands out a demo key; a call without a key is 401 |
 | keyed calls | the demo key from `/v1/connect` always (`what_changed_this_week` LLZ, recalls, audit 403); each key in the secret `MAUDESIGNAL_SMOKE_KEYS` (what changed LLZ, audit chain verified, MCP `tools/list`). If the secret is empty the keyed checks are **BLOCKED: keys not provided**, never PASS |
 | numbers | when the LLZ answer is the stored demo snapshot, it must still say "33 reports" and "8.75" (`EXPECTED_LLZ_SNAPSHOT` in `compare.py`); live openFDA answers are a KNOWN_GAP (their numbers move daily) |
-| live | one chat question, one photo, one spoken question on `/v1/live/*`; mode, `cost_usd` and time of each are in the report. An answer shown as `recorded` is a KNOWN_GAP (live model off or the daily cap reached), with the note the API gave |
-| feedback | a `?r=TEST-smoke` visit ping and a TEST feedback entry ("TEST smoke entry"). If the secret `MAUDESIGNAL_ADMIN_KEY_SMOKE` exists they are deleted through `/v1/admin/delete-test` (TEST codes only); otherwise the report says **BLOCKED: TEST entries remain** for Charan to delete |
-| web | the page and `?r=TEST-smoke` load; script and style file names and a short hash of each (the bundle hash); no key in the bundle; a Playwright pass in chromium at 1440 and 390 (chat, camera upload, alert panel), opened with `?r=TEST-smoke`; every `/v1/visit` ping is blocked in the browser and its body checked to carry `TEST-smoke`, so the pass writes no visit to production. Its live calls (`cost_usd`) are added to the cost total |
-| load | 20 virtual users for 120 s (`load_test.py`): `GET /v1/public/check_device_type`, `GET /v1/health` and at most 10 live asks in total. Reported: p50 / p95 / max per kind, the error rate (no answer or HTTP 5xx; 429 is counted separately because the server limits the public check per address), live asks, total live cost and the last `remaining_today` the API reported. The run fails above 2% errors |
+| live | one chat question, one photo, one spoken question on `/v1/live/*`; mode, `cost_usd` and time of each are in the report. An answer shown as `recorded` is a KNOWN_GAP (live model off or the daily cap reached), with the note the API gave. Every call is first reserved in the run's budget (see below); a call it refuses is a FAIL line `skipped: budget` |
+| feedback | a `?r=TEST-0` visit ping and a TEST feedback entry ("TEST smoke entry"). The server treats a code as TEST only if it matches `^test[0-9._~-]*$` (case-insensitive), so the refs are `TEST-0` (smoke) and `TEST-1` (release check); `TEST-smoke` would not be deleted. If the secret `MAUDESIGNAL_ADMIN_KEY_SMOKE` exists they are deleted through `/v1/admin/delete-test`, and the effect is checked: the answer's `deleted` counts (`visits`, `feedback`) must be at least the entries this run wrote (1 and 1), and `/v1/admin/summary` must no longer list `TEST-0`. Without the secret the report says **BLOCKED: TEST entries remain** for Charan to delete |
+| web | the page and `?r=TEST-0` load; script and style file names and a short hash of each (the bundle hash); no key in the bundle; a Playwright pass in chromium at 1440 and 390 (chat, camera upload, alert panel), opened with `?r=TEST-0`; every `/v1/visit` ping is blocked in the browser and its body checked to carry `TEST-0`, so the pass writes no visit to production. Its `/v1/live/*` calls go through the same budget (a route handler reserves each one and aborts what does not fit, which is reported as `skipped: budget`); their `cost_usd` is added to the cost total |
+| load | 20 virtual users for 120 s (`load_test.py`): `GET /v1/public/check_device_type`, `GET /v1/health` and live asks only within what is left of the run's budget (never more than 10 in total across the whole run); every other slot is a public `check_device_type` call. Reported: p50 / p95 / max per kind, the error rate (no answer or HTTP 5xx; 429 is counted separately because the server limits the public check per address), live asks, total live cost and the last `remaining_today` the API reported. The run fails above 2% errors |
 
 The run never prints a key. On GitHub Actions it prints `::add-mask::` for each key and the
 admin key separately (GitHub masks the secret only as the whole comma-joined string). With any
@@ -158,6 +173,15 @@ secret present the API URL must be https on `maudesignal-api*.vercel.app`; other
 exits with code 2 before sending anything (a `workflow_dispatch` input cannot redirect the keys).
 Responses and the web bundle are scanned for the secrets given to the run and for key-shaped
 strings.
+
+**Spend budget per smoke run** (`scripts/release/budget.py`): one `Budget` object is shared by the
+live checks, the web quick pass and the load test. In total at most **$0.60**, **10** live asks,
+**2** photos and **1** spoken question. Before each live call the budget checks the cost already
+summed from `cost_usd`, plus the holds of calls in flight, plus this call's maximum hold ($0.12
+ask, $0.12 voice, $0.15 photo, the per-request caps of the app); if that passes $0.60, or the
+count of its kind is used up, the call is not made and the report gets a FAIL line
+`skipped: budget` (never silent). The browser pass receives what is left as `--live-budget`.
+The numbers (spent, used, refused) are in the report metrics under `budget`.
 
 The cost line "cap ledger: cost reported by the responses" is informational (KNOWN_GAP, not
 required): it sums `cost_usd` from the live checks, the load test and the browser pass, and
@@ -182,6 +206,7 @@ quotes the last `remaining_today`. It confirms nothing by itself.
 | Name | Where | Used by | If missing |
 |---|---|---|---|
 | `META_MODEL_API_KEY` | repository secret | `gate-live` (presence only) and `live` | the live job does not run |
+| `GITHUB_TOKEN` | provided by Actions | `gate-live` (counts today's live runs, `actions: read`) | the live job does not run |
 | `MAUDESIGNAL_SMOKE_KEYS` | repository secret (optional) | smoke | keyed checks BLOCKED |
 | `MAUDESIGNAL_ADMIN_KEY_SMOKE` | repository secret (optional) | smoke | TEST entries remain; reported |
 
@@ -195,6 +220,8 @@ limited by the app's own cap.
   only in the `live` job (one question) and in the smoke run; the other injection checks prove
   that the server never returns keys, prompt text or ungated sentences, not how a model
   behaves.
+* `smoke.yml` and the `e2e` job of `release-check.yml` install the same pinned `playwright==1.63.0`
+  and `pillow==12.3.0` (a unit test compares the two files); change both together.
 * The e2e job runs on GitHub's Ubuntu runners; Safari on a device is not tested, only WebKit.
 * Coverage is measured on `tests/unit` (the browser tests are a separate job).
 * The Playwright scenarios use the app's visible labels and test ids; a renamed control makes a

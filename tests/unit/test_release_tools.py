@@ -660,3 +660,186 @@ def test_report_job_stubs_a_skipped_live_job() -> None:
     rc = yaml.safe_load((WORKFLOWS / "release-check.yml").read_text())
     merge = json.dumps(rc["jobs"]["report"])
     assert "needs.live.result" in merge and "NOT_PRESENT" in merge and "live job" in merge
+
+
+# --------------------------------------------------------------------------------------------
+# TEST refs, the shared spend budget, delete-test effect, live_check budget, pinned installs
+# --------------------------------------------------------------------------------------------
+
+# A copy of the server's rule (src/maudesignal/connector/feedback.py on track-c-live).
+SERVER_TEST_CODE = re.compile(r"^test[0-9._~-]*$", re.IGNORECASE)
+
+
+def test_test_refs_match_the_server_rule() -> None:
+    import api_contract
+    import e2e_web
+    import smoke
+
+    assert SERVER_TEST_CODE.fullmatch("TEST-0") and SERVER_TEST_CODE.fullmatch("TEST-1")
+    assert not SERVER_TEST_CODE.fullmatch("TEST-smoke")  # the old refs were not TEST codes
+    assert not SERVER_TEST_CODE.fullmatch("TEST-release")
+    assert smoke.TEST_REF == e2e_web.TEST_REF == "TEST-0"
+    assert api_contract.TEST_REF == "TEST-1"
+    assert not SERVER_TEST_CODE.fullmatch(api_contract.KEEP_REF)  # the survivor is not a TEST code
+
+
+def test_visits_all_test_uses_the_matching_ref() -> None:
+    import e2e_web
+
+    ok, _ = e2e_web.visits_all_test([json.dumps({"ref": "TEST-0", "page": "x"})])
+    assert ok
+    bad, _ = e2e_web.visits_all_test([json.dumps({"ref": "TEST-smoke"})])
+    assert not bad
+
+
+def test_budget_holds_counts_and_dollars() -> None:
+    import budget
+
+    b = budget.Budget()
+    assert b.reserve("voice") and not b.reserve("voice")  # one voice question per run
+    assert b.refused == ["voice"]
+    b.settle("voice", 0.10)
+    assert b.reserve("photo") and b.reserve("photo") and not b.reserve("photo")  # 2 photos
+    b.settle("photo", 0.14)
+    b.settle("photo", 0.14)
+    # spent 0.38; an ask holds 0.12 -> 0.50 fits; once it settled at 0.12 a second ask would
+    # reach 0.62 (> 0.60) and is refused
+    assert b.reserve("ask")
+    b.settle("ask", 0.12)
+    assert not b.reserve("ask")
+    assert b.snapshot()["spent_usd"] == pytest.approx(0.50)
+
+
+def test_budget_counts_holds_of_calls_in_flight() -> None:
+    import budget
+
+    b = budget.Budget()
+    taken = sum(1 for _ in range(10) if b.reserve("ask"))  # nothing settled yet: holds add up
+    assert taken == 5  # 5 x 0.12 = 0.60
+    assert b.remaining_usd() == pytest.approx(0.0)
+
+
+def test_budget_absorb_adds_browser_calls() -> None:
+    import budget
+
+    b = budget.Budget()
+    b.absorb(0.2, {"ask": 2, "photo": 1})
+    assert b.remaining_counts() == {"ask": 8, "photo": 1, "voice": 1}
+    assert b.spent == pytest.approx(0.2)
+
+
+def test_run_load_uses_public_checks_when_the_budget_is_short() -> None:
+    import budget
+
+    clock = {"t": 0.0}
+
+    def sleep(seconds: float) -> None:
+        clock["t"] += seconds
+
+    asks: list[str] = []
+    publics: list[str] = []
+
+    def send(method: str, url: str, **kw: Any) -> netutil.Response:
+        if url.endswith("/v1/live/ask"):
+            asks.append(url)
+            return netutil.Response(200, {}, json.dumps({"cost_usd": 0.25}).encode(), 50)
+        if "check_device_type" in url:
+            publics.append(url)
+        return netutil.Response(200, {}, b"{}", 5)
+
+    b = budget.Budget()
+    load_test.run_load(
+        "http://x",
+        vus=1,
+        seconds=200,
+        max_live_asks=10,
+        think_s=1.0,
+        send=send,
+        clock=lambda: clock["t"],
+        sleep=sleep,
+        budget=b,
+    )
+    # each ask really cost 0.25: two fit; a third (0.50 + a 0.12 hold = 0.62) is refused
+    assert len(asks) == 2
+    assert b.refused  # recorded, so the smoke run can write 'skipped: budget'
+    assert len(publics) > 20
+
+
+def test_smoke_delete_test_checks_counts_and_summary(monkeypatch: pytest.MonkeyPatch) -> None:
+    import smoke
+
+    def run(deleted: dict[str, int], codes: list[dict[str, Any]]) -> rpt.Report:
+        def fake(method: str, url: str, **kw: Any) -> netutil.Response:
+            if url.endswith("/v1/admin/delete-test"):
+                return netutil.Response(200, {}, json.dumps({"deleted": deleted}).encode(), 1)
+            if url.endswith("/v1/admin/summary"):
+                return netutil.Response(200, {}, json.dumps({"codes": codes}).encode(), 1)
+            return netutil.Response(201 if url.endswith("/v1/feedback") else 204, {}, b"", 1)
+
+        monkeypatch.setattr(smoke, "request", fake)
+        rep = rpt.Report("t")
+        smoke.Smoke("https://a", "", rep, []).test_entries("adminkey")
+        return rep
+
+    assert run({"visits": 1, "feedback": 1}, [{"code": "someone-7"}]).exit_code() == 0
+    assert run({"visits": 0, "feedback": 1}, []).exit_code() != 0
+    assert run({"visits": 1, "feedback": 1}, [{"code": "TEST-0"}]).exit_code() != 0
+
+
+def test_smoke_live_records_a_fail_line_when_the_budget_is_short(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import budget
+    import smoke
+
+    calls: list[str] = []
+
+    def fake(method: str, url: str, **kw: Any) -> netutil.Response:
+        calls.append(url)
+        return netutil.Response(200, {}, b"{}", 1)
+
+    monkeypatch.setattr(smoke, "request", fake)
+    rep = rpt.Report("t")
+    smoke.Smoke("https://a", "", rep, [], budget.Budget(max_usd=0.05)).live()
+    assert calls == []  # not even one call fits
+    lines = [c for c in rep.checks if c.detail == "skipped: budget"]
+    assert len(lines) == 3 and all(c.status == rpt.FAIL for c in lines)
+
+
+def test_live_check_records_skipped_budget_for_the_injection_question(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    import live_check
+
+    def fake(method: str, url: str, **kw: Any) -> netutil.Response:
+        body = {"mode": "live", "cost_usd": 0.30, "answer": {"spoken_text": "x"}, "heard": "q"}
+        return netutil.Response(200, {}, json.dumps(body).encode(), 1)
+
+    monkeypatch.setattr(live_check, "request", fake)
+    monkeypatch.setenv("META_MODEL_API_KEY", "set-for-test")
+    live_check.main(["--base", "http://x", "--out-dir", str(tmp_path)])
+    doc = json.loads((tmp_path / "live-check.json").read_text())
+    names = {c["name"]: c for c in doc["checks"]}
+    assert names["prompt-injection question"]["detail"] == "skipped: budget"
+    assert names["prompt-injection question"]["status"] == rpt.FAIL
+
+
+def test_smoke_and_release_install_the_same_pinned_playwright_and_pillow() -> None:
+    def pins(name: str) -> set[str]:
+        text = (WORKFLOWS / name).read_text()
+        return set(re.findall(r"(playwright==[0-9.]+|pillow==[0-9.]+)", text))
+
+    smoke_pins = pins("smoke.yml")
+    assert len(smoke_pins) == 2, smoke_pins
+    assert smoke_pins == pins("release-check.yml")
+
+
+def test_gate_live_stops_after_three_live_runs_today() -> None:
+    import yaml
+
+    rc = yaml.safe_load((WORKFLOWS / "release-check.yml").read_text())
+    gate = rc["jobs"]["gate-live"]
+    text = json.dumps(gate)
+    assert gate["permissions"]["actions"] == "read"
+    assert "GITHUB_TOKEN" in text and "actions/workflows/release-check.yml/runs" in text
+    assert '"MAX_LIVE_RUNS_PER_DAY": "3"' in text

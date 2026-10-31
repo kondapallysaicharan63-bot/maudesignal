@@ -7,7 +7,11 @@ name: Release check
 #
 # Costs: the python, web, api-contract and e2e jobs call no model and need no secret. The live job
 # runs only when the branch name contains "live" and the repository secret META_MODEL_API_KEY
-# exists; the app's own cap (MAUDESIGNAL_LIVE_DAILY_USD) is set to $0.60 there.
+# exists; the app's own cap (MAUDESIGNAL_LIVE_DAILY_USD) is set to $0.60 there. That cap is a
+# per-run ledger on a fresh directory of the local API in the job: it is separate from the
+# deployed API's global ledger, which this job never touches. So the day's total is limited by the
+# number of live runs, and gate-live stops the live job when 3 live release runs already
+# happened today (UTC), counted through the GitHub API with GITHUB_TOKEN.
 
 on:
   push:
@@ -126,7 +130,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-          pip install -r api/requirements.txt "uvicorn>=0.30" pillow
+          pip install -r api/requirements.txt "uvicorn>=0.30" "playwright==1.63.0" "pillow==12.3.0"
           python -m playwright install --with-deps chromium firefox webkit
       - name: Install web packages and axe-core (accessibility scan)
         working-directory: web
@@ -173,6 +177,9 @@ jobs:
   gate-live:
     name: Decide whether the live job runs
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     outputs:
       run_live: ${{ steps.decide.outputs.run_live }}
     steps:
@@ -180,13 +187,39 @@ jobs:
         env:
           HAS_KEY: ${{ secrets.META_MODEL_API_KEY != '' }}
           BRANCH: ${{ github.ref_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          MAX_LIVE_RUNS_PER_DAY: "3"
         run: |
-          if [ "$HAS_KEY" = "true" ] && [[ "$BRANCH" == *live* ]]; then
-            echo "run_live=true" >> "$GITHUB_OUTPUT"
-            echo "live job: will run (secret present, branch name contains 'live')"
-          else
+          if [ "$HAS_KEY" != "true" ] || [[ "$BRANCH" != *live* ]]; then
             echo "run_live=false" >> "$GITHUB_OUTPUT"
             echo "live job: will not run (needs the secret and a branch name containing 'live')"
+            exit 0
+          fi
+          # Daily guard: this workflow's live job has its own $0.60 ledger per run, so the number
+          # of live runs per day is what limits the total. Count today's (UTC) runs of this
+          # workflow on branches containing 'live', not counting this run.
+          today=$(date -u +%Y-%m-%d)
+          runs=$(curl -sS --fail-with-body \
+            -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$REPO/actions/workflows/release-check.yml/runs?created=%3E%3D$today&per_page=100") || {
+              echo "run_live=false" >> "$GITHUB_OUTPUT"
+              echo "::error::live job: stopped, today's runs could not be listed (no guess is made)"
+              exit 0
+            }
+          earlier=$(echo "$runs" | python3 -c "
+          import json, os, sys
+          me = int(os.environ['RUN_ID'])
+          runs = json.load(sys.stdin).get('workflow_runs', [])
+          print(sum(1 for r in runs if 'live' in (r.get('head_branch') or '') and r.get('id') != me))
+          ")
+          if [ "$earlier" -ge "$MAX_LIVE_RUNS_PER_DAY" ]; then
+            echo "run_live=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::live job: stopped, $earlier live release runs already today (limit $MAX_LIVE_RUNS_PER_DAY)"
+          else
+            echo "run_live=true" >> "$GITHUB_OUTPUT"
+            echo "live job: will run (secret present, branch contains 'live', $earlier earlier live run(s) today, limit $MAX_LIVE_RUNS_PER_DAY)"
           fi
 
   live:
@@ -267,7 +300,7 @@ jobs:
           from report import NOT_PRESENT, Report
           rep = Report("live job")
           rep.add("live job", NOT_PRESENT,
-                  "not run: it needs the Meta key secret and a branch name containing 'live'",
+                  "not run: it needs the Meta key secret, a branch name containing 'live' and fewer than 3 live release runs today",
                   group="live", required=False)
           rep.write(Path("parts"), "live-check")
           PYEOF

@@ -1,9 +1,9 @@
 name: Smoke test (live URLs)
 
 # Post-deploy check of the deployed API and web app. Push to a branch named smoke/** (any
-# commit), or run it by hand. It makes a few real model calls through the live API (at most
-# 10 live questions in the load test plus one question, one photo and one spoken question), so
-# it spends from the app's own daily cap, and it writes TEST entries that it deletes only when
+# commit), or run it by hand. It makes a few real model calls through the live API, so it
+# spends from the app's own daily cap; one shared budget limits a run to $0.60, 10 live asks,
+# 2 photos and 1 spoken question in total (live checks, browser pass and load test together), and it writes TEST entries that it deletes only when
 # the secret MAUDESIGNAL_ADMIN_KEY_SMOKE exists. Keys never appear in the log or the report.
 # How to read the report: docs/hackathon/RELEASE_CHECKS.md.
 #
@@ -52,7 +52,7 @@ jobs:
       - name: Install Playwright and Chromium
         run: |
           python -m pip install --upgrade pip
-          pip install playwright pillow
+          pip install "playwright==1.63.0" "pillow==12.3.0"
           python -m playwright install --with-deps chromium
       - name: Smoke test, quick web pass and light load test
         env:

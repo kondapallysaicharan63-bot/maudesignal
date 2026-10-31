@@ -41,6 +41,7 @@ from typing import Any
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
+from budget import KIND_OF_PATH, SKIPPED_BUDGET, Budget  # noqa: E402
 from compare import axe_blocks, count_axe  # noqa: E402
 from report import FAIL, KNOWN_GAP, NOT_PRESENT, PASS, Report  # noqa: E402
 
@@ -64,7 +65,13 @@ AXE_VIEWS = (
 )
 
 
-TEST_REF = "TEST-smoke"
+TEST_REF = "TEST-0"
+
+
+def live_kind(url: str) -> str:
+    """Budget kind (ask, photo, voice) of a /v1/live/<path> URL; empty when it is none of them."""
+    tail = url.split("/v1/live/")[-1].split("?")[0].strip("/") if "/v1/live/" in url else ""
+    return KIND_OF_PATH.get(tail, "")
 
 
 def visit_ref(post_data: str | None) -> str | None:
@@ -123,6 +130,8 @@ class Env:
         self.api_calls: list[str] = []
         self.visit_bodies: list[str | None] = []
         self.live_calls: list[dict[str, Any]] = []
+        self.budget: Budget | None = getattr(args, "budget", None)
+        self.budget_held: list[str] = []  # kinds reserved and not yet settled
         page.on("pageerror", lambda e: self.page_errors.append(str(e)[:200]))
         page.on("request", lambda r: self.api_calls.append(f"{r.method} {r.url}"))
         page.on("response", self._note_live)
@@ -137,6 +146,28 @@ class Env:
             entry["mode"] = doc.get("mode")
             entry["cost_usd"] = float(doc.get("cost_usd") or 0.0)
         self.live_calls.append(entry)
+        kind = live_kind(resp.url)
+        if self.budget is not None and kind in self.budget_held:
+            self.budget_held.remove(kind)
+            self.budget.settle(kind, float(entry.get("cost_usd", 0.0)))
+
+    def guard_live(self) -> None:
+        """Smoke only: count every /v1/live/* call in the shared budget; abort what does not fit."""
+
+        def handler(route: Any) -> None:
+            kind = live_kind(route.request.url)
+            if self.budget is None or kind == "":
+                route.continue_()
+            elif self.budget.reserve(kind):
+                self.budget_held.append(kind)
+                route.continue_()
+            else:
+                self.live_calls.append(
+                    {"path": kind, "status": 0, "cost_usd": 0.0, "refused": True}
+                )
+                route.abort("blockedbyclient")
+
+        self.page.context.route("**/v1/live/**", handler)
 
     def block_visits(self) -> None:
         """Stop /v1/visit pings reaching the server; keep their bodies to check the ref."""
@@ -249,6 +280,23 @@ def s_ai_sweep(env: Env) -> str:
     return "sweep view shows flagged count"
 
 
+def direct_check(env: Env) -> int | None:
+    """HTTP status of a direct GET of the local API's public check for LLZ (0 = no answer).
+
+    None when no ``--api`` was given, so the page's complaint cannot be compared with the API.
+    """
+    api = str(getattr(env.args, "api", "") or "").rstrip("/")
+    if not api:
+        return None
+    try:
+        resp = env.page.request.get(
+            f"{api}/v1/public/check_device_type?product_code=LLZ", timeout=20_000
+        )
+    except Exception:
+        return 0
+    return int(resp.status)
+
+
 def s_check_device(env: Env) -> str:
     """Check any device type with LLZ against the local API: a result or an honest message."""
     env.open_workflow("Check any device type")
@@ -258,10 +306,21 @@ def s_check_device(env: Env) -> str:
     text = env.page.locator("main").inner_text()
     if re.search(r"did not answer|No result is shown", text):
         env.shot("check-device-honest-failure")
+        direct = direct_check(env)
+        if direct == 200:
+            raise AssertionError(
+                "the page said the API did not answer, but a direct GET of the local API's "
+                "public check answered HTTP 200: the page, not the source, is at fault"
+            )
+        if direct is None:
+            raise AssertionError(
+                "the page said the API did not answer and no --api was given to test it directly"
+            )
         raise SkipError(
             KNOWN_GAP,
-            "the API did not answer within the page's 8 s limit (openFDA unreachable from this "
-            "runner); the page said so and showed no result. Not counted as a pass.",
+            f"the API did not answer within the page's 8 s limit and a direct GET of its public "
+            f"check also failed (HTTP {direct}; openFDA unreachable from this runner); the page "
+            "said so and showed no result. Not counted as a pass.",
         )
     if "LLZ" not in text:
         raise AssertionError("the answer does not name the device type")
@@ -338,11 +397,15 @@ def s_camera_upload(env: Env) -> str:
     )
     cards = env.page.locator("[data-testid=match-card]").count()
     if cards == 0:
-        text = env.page.locator("main, body").first.inner_text().lower()
-        if "match" not in text and "photo" not in text:
-            raise AssertionError("no matches and no honest message after the photo")
+        explicit = env.page.locator("[data-testid=no-match], [data-testid=search-failed]")
+        if explicit.count() == 0:
+            env.shot("camera-NO-CARDS")
+            raise AssertionError(
+                "no possible-match card and no explicit no-match / search-failed element after "
+                "the photo (an error or silence is not an accepted outcome)"
+            )
         env.shot("camera-no-match")
-        return "no match cards; an honest message is shown"
+        return f"no match cards; explicit element shown: {explicit.first.inner_text()[:80]!r}"
     if env.page.get_by_test_id("confirmed-block").count():
         raise AssertionError("a match was confirmed before a person chose one")
     env.page.get_by_role("button", name="Confirm this match").first.click()
@@ -363,6 +426,10 @@ def s_mic(env: Env) -> str:
         problem = env.page.locator("[data-testid=voice-note], [data-testid=camera-problem]")
         if problem.count():
             said = problem.first.inner_text()[:80]
+            if env.engine == "chromium":
+                raise AssertionError(
+                    f"chromium has a fake microphone but no recording bar appeared; page said: {said}"
+                ) from exc
             raise SkipError(KNOWN_GAP, f"no fake microphone here; page said: {said}") from exc
         raise
     env.page.wait_for_timeout(1500)
@@ -774,9 +841,21 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--test-ref",
         default="",
-        help="smoke suite: the TEST ref the visit pings must carry (default TEST-smoke)",
+        help="smoke suite: the TEST ref the visit pings must carry (default TEST-0)",
+    )
+    ap.add_argument(
+        "--live-budget",
+        default="",
+        help="smoke suite: 'usd,asks,photos,voice' left in the run's shared budget; every "
+        "/v1/live/* call the browser makes is counted in it and refused when it does not fit",
     )
     args = ap.parse_args(argv)
+    args.budget = None
+    if args.live_budget:
+        usd, asks, photos, voice = args.live_budget.split(",")
+        args.budget = Budget(
+            max_usd=float(usd), limits={"ask": int(asks), "photo": int(photos), "voice": int(voice)}
+        )
     if args.suite == "smoke":
         args.engines, args.schemes = "chromium", "light"
     rep = Report("e2e" if args.suite == "full" else "smoke web quick pass")
@@ -810,6 +889,8 @@ def main(argv: list[str] | None = None) -> int:
                         env = Env(engine, width, scheme, page, args, rep)
                         if smoke:  # a smoke run must not write visits to the real server
                             env.block_visits()
+                            if args.budget is not None:
+                                env.guard_live()
                         try:
                             if group == "scenario":
                                 env.open()
@@ -831,6 +912,9 @@ def main(argv: list[str] | None = None) -> int:
     if smoke:
         ok, why = visits_all_test(visit_bodies, args.test_ref or TEST_REF)
         rep.add("no non-TEST visit ping is sent", PASS if ok else FAIL, why, group="scenario")
+    for c in live_calls:
+        if c.get("refused"):
+            rep.add(f"live {c['path']} call from the browser", FAIL, SKIPPED_BUDGET, group="live")
     rep.metrics["live_calls"] = live_calls
     rep.metrics["live_cost_usd"] = round(sum(c.get("cost_usd", 0.0) for c in live_calls), 6)
     if args.suite == "full":

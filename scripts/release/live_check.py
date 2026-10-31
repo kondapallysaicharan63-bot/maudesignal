@@ -216,6 +216,8 @@ def main(argv: list[str] | None = None) -> int:
             "no gate output on the injection answer",
             group="injection",
         )
+    else:
+        rep.add("prompt-injection question", FAIL, "skipped: budget", group="live")
 
     rep.metrics.update(total_cost_usd=round(spent, 6), hard_cap_usd=HARD_CAP_USD, calls=rows)
     rep.add(

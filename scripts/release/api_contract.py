@@ -45,6 +45,9 @@ from report import FAIL, KNOWN_GAP, NOT_PRESENT, Report  # noqa: E402
 
 CORE_TOOLS = ("what_changed_this_week", "check_device_type", "ask", "get_report", "recalls")
 OPTIONAL_TOOLS = ("lookup_device",)
+TEST_REF = "TEST-1"  # matches the server rule ^test[0-9._~-]*$ (case-insensitive)
+KEEP_REF = "release-keep"  # not a TEST code: delete-test must leave it alone
+
 PROMPT_SKILLS = (
     "safety-copilot",
     "dossier-narrative",
@@ -980,7 +983,7 @@ class Contract:
             "blocker": "",
             "one_thing": "",
             "consent": "no_quote",
-            "ref": "TEST-release",
+            "ref": TEST_REF,
             "page": "release-check",
         }
         r = self.post("/v1/feedback", self.fresh({"Origin": self.origin}), json_body=good)
@@ -1033,7 +1036,7 @@ class Contract:
             group="feedback",
         )
         r = self.post(
-            "/v1/visit", self.fresh(), json_body={"ref": "TEST-release", "page": "release-check"}
+            "/v1/visit", self.fresh(), json_body={"ref": TEST_REF, "page": "release-check"}
         )
         self.rep.ok(
             "visit: a TEST ping is accepted (204)",
@@ -1051,22 +1054,72 @@ class Contract:
             self.get("/v1/admin/summary", self.k()).status in (401, 403),
             group="feedback",
         )
-        r = self.get("/v1/admin/summary", self.fresh({"X-Admin-Key": self.keys.get("admin", "")}))
+        admin = {"X-Admin-Key": self.keys.get("admin", "")}
+        # A non-TEST entry (local API, in-memory store): delete-test must leave it alone.
+        keep = {**good, "comment": "release-check entry that must survive", "ref": KEEP_REF}
+        r = self.post("/v1/feedback", self.fresh(), json_body=keep)
+        self.rep.ok(
+            f"feedback: a non-TEST entry ({KEEP_REF}) is stored before delete-test (201)",
+            r.status == 201,
+            f"HTTP {r.status} {r.text[:100]}",
+            group="feedback",
+        )
+        r = self.get("/v1/admin/summary", self.fresh(admin))
         self.rep.ok(
             "admin summary with the test admin key answers (200)",
             r.status == 200,
             f"HTTP {r.status}",
             group="feedback",
         )
-        r = self.post(
-            "/v1/admin/delete-test", self.fresh({"X-Admin-Key": self.keys.get("admin", "")})
-        )
+        before = self.code_entry(r, KEEP_REF)
+        test_before = self.code_entry(r, TEST_REF)
         self.rep.ok(
-            "admin delete-test removes only TEST entries (200)",
-            r.status == 200,
-            f"HTTP {r.status} {r.text[:100]}",
+            f"admin summary lists {TEST_REF} with this run's visit and feedback entry",
+            bool(test_before)
+            and int(test_before.get("visits", 0)) >= 1
+            and len(test_before.get("feedback") or []) >= 1,
+            f"visits listed for {TEST_REF}: {test_before.get('visits')}",
             group="feedback",
         )
+        r = self.post("/v1/admin/delete-test", self.fresh(admin))
+        deleted = (r.json() or {}).get("deleted") if isinstance(r.json(), dict) else None
+        deleted = deleted if isinstance(deleted, dict) else {}
+        d_visits, d_feedback = deleted.get("visits"), deleted.get("feedback")
+        self.rep.ok(
+            "admin delete-test deletes at least the entries this run wrote (answer counts)",
+            r.status == 200
+            and isinstance(d_visits, int)
+            and isinstance(d_feedback, int)
+            and d_visits >= 1  # one TEST visit ping was written above
+            and d_feedback >= 1,  # one TEST feedback entry was stored above
+            f"HTTP {r.status} deleted={deleted or r.text[:100]}",
+            group="feedback",
+        )
+        r = self.get("/v1/admin/summary", self.fresh(admin))
+        self.rep.ok(
+            f"after delete-test {TEST_REF} is gone from the admin summary",
+            r.status == 200 and not self.code_entry(r, TEST_REF),
+            f"HTTP {r.status}; still listed: {bool(self.code_entry(r, TEST_REF))}",
+            group="feedback",
+        )
+        after = self.code_entry(r, KEEP_REF)
+        n_before = len(before.get("feedback") or [])
+        n_after = len(after.get("feedback") or [])
+        self.rep.ok(
+            f"after delete-test the non-TEST entry ({KEEP_REF}) survives with its count unchanged",
+            bool(before) and bool(after) and n_after == n_before,
+            f"feedback entries before {n_before}, after {n_after}",
+            group="feedback",
+        )
+
+    @staticmethod
+    def code_entry(r: Response, code: str) -> dict[str, Any]:
+        """The ``codes`` entry of an admin summary answer for ``code`` (empty when absent)."""
+        body = r.json() if r.status == 200 and isinstance(r.json(), dict) else {}
+        for c in body.get("codes") or []:
+            if isinstance(c, dict) and c.get("code") == code:
+                return c
+        return {}
 
     def check_server_log(self, path: Path) -> None:
         """The API's own log holds no test key and no key-shaped string (run after the rest)."""

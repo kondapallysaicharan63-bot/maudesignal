@@ -34,6 +34,7 @@ from typing import Any
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
+from budget import Budget  # noqa: E402
 from netutil import Response, percentile, request  # noqa: E402
 from report import FAIL, PASS, Report  # noqa: E402
 
@@ -90,8 +91,13 @@ def run_load(
     send: Callable[..., Response] = request,
     clock: Callable[[], float] = time.monotonic,
     sleep: Callable[[float], None] = time.sleep,
+    budget: Budget | None = None,
 ) -> list[Sample]:
-    """Run the virtual users and return every call as a sample."""
+    """Run the virtual users and return every call as a sample.
+
+    With a ``budget`` every live ask is reserved first (dollar hold and count); a refused ask
+    becomes a public ``check_device_type`` call instead, so spending never passes the budget.
+    """
     samples: list[Sample] = []
     lock = threading.Lock()
     live_left = [max_live_asks]
@@ -101,6 +107,9 @@ def run_load(
     def take_live_slot() -> bool:
         with lock:
             if live_left[0] <= 0:
+                return False
+            if budget is not None and not budget.reserve("ask"):
+                live_left[0] = 0  # the budget is short: no more live asks in this run
                 return False
             live_left[0] -= 1
             return True
@@ -113,6 +122,8 @@ def run_load(
             if isinstance(body, dict):
                 cost = float(body.get("cost_usd") or 0.0)
                 remaining = (body.get("limits") or {}).get("remaining_today")
+        if kind == "live_ask" and budget is not None:
+            budget.settle("ask", cost)
         with lock:
             samples.append((kind, r.status, r.elapsed_ms, cost, remaining))
 
@@ -127,7 +138,7 @@ def run_load(
                         "POST", base + "/v1/live/ask", json_body={"question": QUESTION}, timeout=90
                     ),
                 )
-            elif i % 2 == 0:
+            elif i % 2 == 0 or i % 7 == 0:  # a refused live slot becomes a public check
                 code = next(codes)
                 one(
                     "public_check",

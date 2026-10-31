@@ -37,25 +37,34 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 
+from budget import KIND_OF_PATH, SKIPPED_BUDGET, Budget  # noqa: E402
 from compare import llz_snapshot_diffs  # noqa: E402
 from leaks import contains_any, find_key_shapes  # noqa: E402
 from load_test import evaluate, run_load, summarize  # noqa: E402
 from media import load_voice  # noqa: E402
 from netutil import Response, multipart, request  # noqa: E402
-from report import BLOCKED, FAIL, KNOWN_GAP, SKIPPED, Report  # noqa: E402
+from report import BLOCKED, FAIL, KNOWN_GAP, PASS, SKIPPED, Report  # noqa: E402
 
 VOICE_FILES = ("question-a.wav", "question.wav", "question-c.wav")
 LABEL_PHOTO = ROOT / "demo" / "vision" / "labels" / "label-caresens-n.jpg"
 QUESTION = "What changed this week for LLZ?"
-TEST_REF = "TEST-smoke"
+TEST_REF = "TEST-0"
 
 
 class Smoke:
     """One run against one API and (optionally) one web app."""
 
-    def __init__(self, api: str, web: str, rep: Report, secrets: list[str]) -> None:
-        """Remember the targets, the report and the secret values that must never appear."""
+    def __init__(
+        self,
+        api: str,
+        web: str,
+        rep: Report,
+        secrets: list[str],
+        budget: Budget | None = None,
+    ) -> None:
+        """Remember the targets, the report, the secret values and the one shared budget."""
         self.api, self.web, self.rep, self.secrets = api.rstrip("/"), web.rstrip("/"), rep, secrets
+        self.budget = budget if budget is not None else Budget()
         self.live_cost = 0.0
         self.web_live_cost = 0.0  # cost_usd of the live calls the browser pass made
         self.remaining: list[int] = []
@@ -203,11 +212,12 @@ class Smoke:
                 tools=names,
             )
 
-    def note_live(self, name: str, r: Response) -> None:
-        """Log mode, cost and the remaining count of one live call."""
+    def note_live(self, name: str, r: Response, kind: str) -> None:
+        """Log mode, cost and the remaining count of one live call; settle its budget hold."""
         b = r.json() if isinstance(r.json(), dict) else {}
         cost = float(b.get("cost_usd") or 0.0)
         self.live_cost += cost
+        self.budget.settle(kind, cost)
         left = (b.get("limits") or {}).get("remaining_today")
         if isinstance(left, int):
             self.remaining.append(left)
@@ -232,11 +242,22 @@ class Smoke:
             )
         self.clean(f"{name}: no key in the response", r)
 
+    def skipped_budget(self, name: str) -> None:
+        """A live call the budget refused: a FAIL line, never silent."""
+        self.rep.add(name, FAIL, SKIPPED_BUDGET, group="live")
+
     def live(self) -> None:
-        """One chat question, one photo, one spoken question on /v1/live/*."""
-        r = request("POST", self.api + "/v1/live/ask", json_body={"question": QUESTION}, timeout=90)
-        self.note_live("live chat question", r)
-        if LABEL_PHOTO.is_file():
+        """One chat question, one photo, one spoken question on /v1/live/* (budget-checked)."""
+        if self.budget.reserve("ask"):
+            r = request(
+                "POST", self.api + "/v1/live/ask", json_body={"question": QUESTION}, timeout=90
+            )
+            self.note_live("live chat question", r, "ask")
+        else:
+            self.skipped_budget("live chat question")
+        if not LABEL_PHOTO.is_file():
+            self.rep.add("live photo", FAIL, f"{LABEL_PHOTO.name} not found", group="live")
+        elif self.budget.reserve("photo"):
             body, ctype = multipart(
                 {"image": (LABEL_PHOTO.name, LABEL_PHOTO.read_bytes(), "image/jpeg")}
             )
@@ -249,13 +270,14 @@ class Smoke:
                     headers={"Content-Type": ctype},
                     timeout=120,
                 ),
+                "photo",
             )
         else:
-            self.rep.add("live photo", FAIL, f"{LABEL_PHOTO.name} not found", group="live")
+            self.skipped_budget("live photo")
         voice = load_voice(ROOT, VOICE_FILES)
         if voice is None:
             self.rep.add("live voice question", FAIL, "no WAV found in demo/voice", group="live")
-        else:
+        elif self.budget.reserve("voice"):
             body, ctype = multipart({"audio": ("q.wav", voice[1], "audio/wav")})
             self.note_live(
                 "live voice question",
@@ -266,14 +288,17 @@ class Smoke:
                     headers={"Content-Type": ctype},
                     timeout=120,
                 ),
+                "voice",
             )
+        else:
+            self.skipped_budget("live voice question")
         self.rep.metrics["live_cost_usd_so_far"] = round(self.live_cost, 6)
 
     def test_entries(self, admin_key: str) -> None:
         """A TEST visit and TEST feedback; deleted when the admin key is given."""
         r = request("POST", self.api + "/v1/visit", json_body={"ref": TEST_REF, "page": "smoke"})
         self.rep.ok(
-            "?r=TEST-smoke visit ping accepted (204)",
+            "?r=TEST-0 visit ping accepted (204)",
             r.status == 204,
             f"HTTP {r.status}",
             group="feedback",
@@ -306,10 +331,30 @@ class Smoke:
             )
             return
         r = request("POST", self.api + "/v1/admin/delete-test", headers={"X-Admin-Key": admin_key})
+        deleted = (r.json() or {}).get("deleted") if isinstance(r.json(), dict) else None
+        deleted = deleted if isinstance(deleted, dict) else {}
+        n_visits, n_feedback = deleted.get("visits"), deleted.get("feedback")
+        # This run wrote one visit and one feedback entry, so at least one of each must go.
+        counts_ok = (
+            r.status == 200
+            and isinstance(n_visits, int)
+            and isinstance(n_feedback, int)
+            and n_visits >= 1
+            and n_feedback >= 1
+        )
         self.rep.ok(
-            "TEST entries deleted by /v1/admin/delete-test",
-            r.status == 200,
-            f"HTTP {r.status} {r.text[:120]}",
+            "/v1/admin/delete-test deleted at least the entries this run wrote (1 visit, 1 feedback)",
+            counts_ok,
+            f"HTTP {r.status}; deleted={deleted or r.text[:100]}",
+            group="feedback",
+        )
+        s2 = request("GET", self.api + "/v1/admin/summary", headers={"X-Admin-Key": admin_key})
+        codes = (s2.json() or {}).get("codes") if isinstance(s2.json(), dict) else None
+        left = [c for c in (codes or []) if isinstance(c, dict) and c.get("code") == TEST_REF]
+        self.rep.ok(
+            f"{TEST_REF} is gone from /v1/admin/summary after the delete",
+            s2.status == 200 and isinstance(codes, list) and not left,
+            f"HTTP {s2.status}; {len(left)} entry/entries still listed for {TEST_REF}",
             group="feedback",
         )
 
@@ -324,7 +369,7 @@ class Smoke:
         )
         r2 = request("GET", self.web + f"/?r={TEST_REF}")
         self.rep.ok(
-            "web page with ?r=TEST-smoke loads", r2.status == 200, f"HTTP {r2.status}", group="web"
+            "web page with ?r=TEST-0 loads", r2.status == 200, f"HTTP {r2.status}", group="web"
         )
         assets = sorted(set(re.findall(r'(?:src|href)="(\./assets/[^"]+\.(?:js|css))"', r.text)))
         self.rep.ok(
@@ -361,6 +406,12 @@ class Smoke:
             str(out_dir),
             "--stem",
             "smoke-web",
+            # the browser pass spends from the same budget: what is left after the live checks
+            "--live-budget",
+            ",".join(
+                [f"{self.budget.remaining_usd():.6f}"]
+                + [str(self.budget.remaining_counts()[k]) for k in ("ask", "photo", "voice")]
+            ),
         ]
         proc = subprocess.run(cmd, capture_output=True, text=True, check=False)  # noqa: S603
         path = out_dir / "smoke-web.json"
@@ -376,6 +427,12 @@ class Smoke:
 
         doc = json.loads(path.read_text("utf-8"))
         self.web_live_cost = float(doc.get("metrics", {}).get("live_cost_usd") or 0.0)
+        web_counts = {"ask": 0, "photo": 0, "voice": 0}
+        for call in doc.get("metrics", {}).get("live_calls", []):
+            kind = KIND_OF_PATH.get(str(call.get("path", "")).split("?")[0].strip("/"))
+            if kind and not call.get("refused"):
+                web_counts[kind] += 1
+        self.budget.absorb(self.web_live_cost, web_counts)
         self.rep.metrics["web_pass_live_calls"] = doc.get("metrics", {}).get("live_calls", [])
         for c in doc["checks"]:
             self.rep.add(
@@ -388,15 +445,35 @@ class Smoke:
 
     def load(self, vus: int, seconds: float, max_live: int) -> None:
         """The light load test; the cap total comes from the cost of every live ask."""
-        samples = run_load(self.api, vus=vus, seconds=seconds, max_live_asks=max_live)
+        # live asks only within what is left of the shared budget; the rest are public checks
+        allowed = min(max_live, self.budget.remaining_counts()["ask"])
+        refused_before = len(self.budget.refused)
+        samples = run_load(
+            self.api, vus=vus, seconds=seconds, max_live_asks=allowed, budget=self.budget
+        )
+        if len(self.budget.refused) > refused_before:
+            self.rep.add(
+                "load: live asks within the shared budget",
+                FAIL,
+                f"{SKIPPED_BUDGET} ({len(self.budget.refused) - refused_before} live ask(s) refused; "
+                "public checks were made instead)",
+                group="load",
+            )
         stats = summarize(samples)
         stats.update(vus=vus, seconds=seconds)
         sub = Report("load")
-        evaluate(sub, stats, 0.02, 1.0, max_live)
+        evaluate(sub, stats, 0.02, self.budget.max_usd, allowed)
         for c in sub.checks:
             self.rep.add(f"load: {c.name}", c.status, c.detail, group="load", required=c.required)
         self.rep.metrics["load"] = stats
         total = self.live_cost + float(stats["live_cost_usd"]) + self.web_live_cost
+        self.rep.metrics["budget"] = self.budget.snapshot()
+        self.rep.add(
+            "total live cost stayed within the per-run budget",
+            PASS if total <= self.budget.max_usd + 1e-9 else FAIL,
+            f"${total:.4f} of ${self.budget.max_usd:.2f}",
+            group="load",
+        )
         self.rep.metrics["live_cost_usd_total"] = round(total, 6)
         self.rep.metrics["live_cost_parts"] = {
             "live_checks": round(self.live_cost, 6),
