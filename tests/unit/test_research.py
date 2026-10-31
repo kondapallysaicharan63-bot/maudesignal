@@ -524,7 +524,7 @@ def test_flag_off_is_byte_identical(tmp_path: Path, monkeypatch: pytest.MonkeyPa
     assert r.status_code == 422 and "research" in r.json()["message"]  # unknown field, as before
     assert transport.sent == []
     assert "research" not in env.ask().json()
-    assert "features" not in env.client.get("/v1/health").json()
+    assert "research" not in env.client.get("/v1/health").json().get("features", {})
     body = {"url": "https://a.example.com", "person_action": True}
     s = env.client.post(SAVE, json=body)
     missing = env.client.post("/v1/live/no-such-route", json=body)
@@ -552,7 +552,10 @@ def test_flag_on_research_beside_answer_never_inside(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     env, transport = make_env(tmp_path, monkeypatch, on=True)
-    assert env.client.get("/v1/health").json()["features"] == {"research": True}
+    assert env.client.get("/v1/health").json()["features"] == {
+        "voice_transcribe_only": True,
+        "research": True,
+    }
     page = env.client.get("/privacy").text
     assert "Research mode (switched on here)" in page and "GDELT news index" in page
     plain = env.ask().json()

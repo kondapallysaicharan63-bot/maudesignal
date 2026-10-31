@@ -1010,8 +1010,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             feedback_store=cfg.feedback_store.backend,
             features={"voice_transcribe_only": live_cfg.voice_transcribe_only},
         )
-        if research_enabled():  # off: the body (and the OpenAPI schema) stay exactly as before
-            return JSONResponse(body.model_dump() | {"features": {"research": True}})
+        if research_enabled():  # off: the research feature is simply absent
+            return JSONResponse(
+                body.model_dump() | {"features": {**body.features, "research": True}}
+            )
         return body
 
     @app.get(
