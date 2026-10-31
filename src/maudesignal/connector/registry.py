@@ -22,6 +22,7 @@ REPORT_ID_PATTERN = r"^[A-Za-z0-9-]{1,24}$"
 
 GUIDANCE = (
     "Read-only MaudeSignal tools over openFDA device data, for quality and regulatory review. "
+    "Speak the text content; every fact in structuredContent has an openFDA or record link. "
     "Always cite the FDA links given in each answer. This is not medical advice, and nothing "
     "is filed with FDA. Confirm the product code with the person before guessing one: use "
     "lookup_device, or ask. When an answer is labelled recorded, say 'recorded' and give its "
@@ -62,7 +63,9 @@ REPORT_DESCRIPTION = (
 RECALLS_DESCRIPTION = (
     "Use this to list FDA recalls on file for a product code, newest first. Read-only. Reads "
     "the stored openFDA recall snapshot (top five as facts, each with its openFDA link); "
-    "no recalls on file does not mean none exist. Example questions: 'Show recalls for LLZ.'; "
+    "no recalls on file does not mean none exist. For a code with no stored recalls that is "
+    "not otherwise known, it may check openFDA to confirm the code exists. "
+    "Example questions: 'Show recalls for LLZ.'; "
     "'Has QIH had a recall?'; 'Who recalled POK devices?'."
 )
 LOOKUP_DESCRIPTION = (
@@ -251,7 +254,7 @@ TOOL_SPECS: tuple[ToolSpec, ...] = (
         "FDA recalls for a product code",
         RECALLS_DESCRIPTION,
         (Param("product_code", _CODE, pattern=PRODUCT_CODE_PATTERN, hint=CODE_HINT),),
-        open_world=False,
+        open_world=True,
     ),
     ToolSpec(
         "lookup_device",

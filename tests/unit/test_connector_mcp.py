@@ -97,7 +97,7 @@ def test_tools_list_has_six_read_only_tools(data: ConnectorData, tmp_path: Path)
         "check_device_type": True,
         "ask": True,
         "get_report": False,
-        "recalls": False,
+        "recalls": True,
         "lookup_device": True,
     }
 

@@ -223,6 +223,18 @@ class LiveCheckData(BaseModel):
     change: str
 
 
+class RecallsAnswer(ToolAnswer):
+    """``recalls``: the normal answer plus the close known codes, when the code is unknown."""
+
+    suggestions: list[str] = Field(
+        default_factory=list,
+        description=(
+            'Close known product codes ("did you mean"), shown to the person and never '
+            "applied; empty when there are none. Same values as the suggestions in an error."
+        ),
+    )
+
+
 class PublicCheckAnswer(ToolAnswer):
     """The keyless web answer: the normal answer plus the full figures behind it."""
 

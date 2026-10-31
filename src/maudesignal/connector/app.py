@@ -39,7 +39,12 @@ from maudesignal.connector.ask import (
 from maudesignal.connector.blob_store import RecordStore, store_from_env
 from maudesignal.connector.data import ConnectorData
 from maudesignal.connector.docs_page import render_docs_page
-from maudesignal.connector.errors import ConnectorError, InvalidInputError, NotFoundError
+from maudesignal.connector.errors import (
+    ConnectorError,
+    InvalidInputError,
+    NotFoundError,
+    field_name,
+)
 from maudesignal.connector.feedback import mount_feedback
 from maudesignal.connector.legal_pages import render_privacy, render_terms
 from maudesignal.connector.lookup import OpenFdaSearcher, Searcher, lookup_device
@@ -59,6 +64,7 @@ from maudesignal.connector.models import (
     LiveCheckData,
     LookupAnswer,
     PublicCheckAnswer,
+    RecallsAnswer,
     ToolAnswer,
 )
 from maudesignal.connector.notify import Notifier, notifier_from_env
@@ -604,8 +610,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def _invalid(_: Request, exc: RequestValidationError) -> Response:
         messages: list[str] = []
         names: list[str] = []
-        for err in exc.errors():
-            name = str(err["loc"][-1]) if err.get("loc") else ""
+        errs = exc.errors()
+        if any(str(e.get("type")) == "json_invalid" for e in errs):
+            return _error(422, "invalid_input", "The request body is not valid JSON.")
+        for err in errs:
+            name = field_name(err.get("loc"))
             helpful = explain_error(name, str(err.get("type", "")))
             if helpful is not None and helpful not in messages:
                 messages.append(helpful)
@@ -840,7 +849,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get(
         "/v1/tools/recalls",
-        response_model=ToolAnswer,
+        response_model=RecallsAnswer,
         operation_id="recalls",
         summary="FDA recalls for a product code",
         description=RECALLS_DESCRIPTION,

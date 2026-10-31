@@ -8,7 +8,7 @@
     "note": "Read-only key. Never send a key in the URL.",
     "type": "api-key"
   },
-  "description": "Read-only MaudeSignal tools over openFDA device data, for quality and regulatory review. Always cite the FDA links given in each answer. This is not medical advice, and nothing is filed with FDA. Confirm the product code with the person before guessing one: use lookup_device, or ask. When an answer is labelled recorded, say 'recorded' and give its date. Never present withheld sentences as fact; they were not verified. A person confirms every device match.",
+  "description": "Read-only MaudeSignal tools over openFDA device data, for quality and regulatory review. Speak the text content; every fact in structuredContent has an openFDA or record link. Always cite the FDA links given in each answer. This is not medical advice, and nothing is filed with FDA. Confirm the product code with the person before guessing one: use lookup_device, or ask. When an answer is labelled recorded, say 'recorded' and give its date. Never present withheld sentences as fact; they were not verified. A person confirms every device match.",
   "name": "maudesignal-connector",
   "protocolVersion": "2025-06-18",
   "readOnly": true,
@@ -836,11 +836,11 @@
       "annotations": {
         "destructiveHint": false,
         "idempotentHint": true,
-        "openWorldHint": false,
+        "openWorldHint": true,
         "readOnlyHint": true,
         "title": "FDA recalls for a product code"
       },
-      "description": "Use this to list FDA recalls on file for a product code, newest first. Read-only. Reads the stored openFDA recall snapshot (top five as facts, each with its openFDA link); no recalls on file does not mean none exist. Example questions: 'Show recalls for LLZ.'; 'Has QIH had a recall?'; 'Who recalled POK devices?'.",
+      "description": "Use this to list FDA recalls on file for a product code, newest first. Read-only. Reads the stored openFDA recall snapshot (top five as facts, each with its openFDA link); no recalls on file does not mean none exist. For a code with no stored recalls that is not otherwise known, it may check openFDA to confirm the code exists. Example questions: 'Show recalls for LLZ.'; 'Has QIH had a recall?'; 'Who recalled POK devices?'.",
       "inputSchema": {
         "additionalProperties": false,
         "properties": {

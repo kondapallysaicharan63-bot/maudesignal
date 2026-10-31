@@ -44,6 +44,7 @@ from starlette.requests import ClientDisconnect
 
 from maudesignal.common.logging import get_logger
 from maudesignal.connector.blob_store import BlobRef, RecordStore, StoreError
+from maudesignal.connector.errors import field_name
 from maudesignal.connector.notify import Notifier
 from maudesignal.connector.security import RateLimiter
 
@@ -517,7 +518,7 @@ def mount_feedback(
         try:
             return json.loads(b"".join(chunks)), None
         except ValueError:
-            return None, _err(422, "invalid_input", "Body must be a JSON object.")
+            return None, _err(422, "invalid_input", "The request body is not valid JSON.")
 
     def without_empty_ref(payload: Any) -> Any:
         """Treat a missing, null or empty ``ref`` as absent so the default label applies."""
@@ -526,7 +527,7 @@ def mount_feedback(
         return payload
 
     def bad_fields(exc: ValidationError) -> Response:
-        where = ", ".join(sorted({str(x["loc"][-1]) for x in exc.errors() if x.get("loc")}))
+        where = ", ".join(sorted({n for x in exc.errors() if (n := field_name(x.get("loc")))}))
         return _err(422, "invalid_input", f"Invalid input: {where or 'request'}.")
 
     def day_and_id(received: datetime) -> tuple[str, str]:

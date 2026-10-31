@@ -15,7 +15,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, TypeVar
 
 from maudesignal.common.exceptions import OpenFDAAPIError
 from maudesignal.connector import links
@@ -23,7 +23,7 @@ from maudesignal.connector.data import ConnectorData
 from maudesignal.connector.errors import InvalidInputError, NotFoundError, SourceUnavailableError
 from maudesignal.connector.forbidden import is_clean
 from maudesignal.connector.guidance import either, suggest_codes, unknown_code_error
-from maudesignal.connector.models import Fact, Provenance, ToolAnswer
+from maudesignal.connector.models import Fact, Provenance, RecallsAnswer, ToolAnswer
 from maudesignal.connector.speech import compose, plain, plural, speak_date, speak_range, were
 from maudesignal.monitor.digest import CHANGE_LABELS
 from maudesignal.monitor.live_check import LiveCheck, LiveCheckError, normalize_code
@@ -58,7 +58,10 @@ OMITTED_SPEAKABLE = (
 )
 
 
-def screen(answer: ToolAnswer) -> ToolAnswer:
+_A = TypeVar("_A", bound=ToolAnswer)
+
+
+def screen(answer: _A) -> _A:
     """Final guard on every outgoing answer: no forbidden term in speakable or facts.
 
     Stored source text (a narrative, a recall reason, a firm name) is passed on word for
@@ -479,11 +482,12 @@ def _first_sentence(text: str, limit: int = 160) -> str:
 
 def recalls(
     data: ConnectorData, product_code: str, *, code_exists: CodeChecker | None = None
-) -> ToolAnswer:
+) -> RecallsAnswer:
     """Stored FDA recalls for a product code, newest first (top five as facts).
 
-    Suggestions ("did you mean") appear only when the code is not stored and the openFDA
-    classification check says it does not exist (``False``). A real code, or a check that
+    Suggestions ("did you mean", distance 1 only; also the structured ``suggestions`` list)
+    appear only when the code is not stored and the openFDA classification check says it does
+    not exist (``False``). A real code, or a check that
     could not run (``None``), gets no suggestion and is never called unknown.
 
     Raises:
@@ -515,7 +519,7 @@ def recalls(
                 "Confirm the code with the person."
             )
         return screen(
-            ToolAnswer(
+            RecallsAnswer(
                 tool="recalls",
                 speakable=compose(said),
                 facts=[
@@ -526,6 +530,7 @@ def recalls(
                     )
                 ],
                 provenance=prov,
+                suggestions=close,
             )
         )
     latest = rows[0]
@@ -566,5 +571,5 @@ def recalls(
             )
         )
     return screen(
-        ToolAnswer(tool="recalls", speakable=compose(parts), facts=facts, provenance=prov)
+        RecallsAnswer(tool="recalls", speakable=compose(parts), facts=facts, provenance=prov)
     )

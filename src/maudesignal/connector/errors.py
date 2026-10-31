@@ -46,3 +46,15 @@ class SourceUnavailableError(ConnectorError):
     """A live source could not be reached and nothing stored can stand in (maps to 502)."""
 
     code = "source_unavailable"
+
+
+def field_name(loc: object) -> str:
+    """The input name in a validation error location, never a list index or a section name.
+
+    ``("body", "product_code")`` gives ``product_code``; ``("body", 1)`` (a JSON syntax error
+    position) and ``("body",)`` give an empty string.
+    """
+    if not isinstance(loc, list | tuple):
+        return ""
+    names = [x for x in loc if isinstance(x, str) and x not in ("body", "query", "path")]
+    return names[-1] if names else ""

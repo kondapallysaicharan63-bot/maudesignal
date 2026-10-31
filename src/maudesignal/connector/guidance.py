@@ -4,7 +4,7 @@ HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
 Every message is fixed text (it never repeats a caller's value, except a three-letter product
 code that already passed the letters-only check). Suggestions are the closest product codes the
-connector knows by edit distance; they are shown to the person and never applied automatically,
+connector knows at edit distance 1; they are shown to the person and never applied automatically,
 and a code that is known (stored data, openFDA reports or listed in the openFDA device
 classification) is never corrected.
 """
@@ -16,8 +16,8 @@ from collections.abc import Iterable
 from maudesignal.connector.errors import UnknownProductCodeError
 
 MAX_SUGGESTIONS = 3
-#: Farthest edit distance still offered as "did you mean" (three-letter codes: 1 is a typo).
-MAX_DISTANCE = 2
+#: Farthest edit distance still offered as "did you mean": one slip only (distance 2 is dropped).
+MAX_DISTANCE = 1
 
 CODE_HINT = "A product code is three letters, for example LLZ or QIH."
 K_HINT = "K-numbers look like K123456 (the letter K and six digits)."
@@ -44,7 +44,7 @@ def edit_distance(a: str, b: str) -> int:
 def suggest_codes(code: str, known: Iterable[str]) -> list[str]:
     """Up to three known codes closest to ``code`` (empty when it is itself known or far).
 
-    Only the closest tier is returned, nearest first, ties in alphabetical order.
+    Only distance-1 matches are returned, in alphabetical order.
     """
     code = code.upper()
     pool = sorted({k.upper() for k in known})
@@ -52,10 +52,7 @@ def suggest_codes(code: str, known: Iterable[str]) -> list[str]:
         return []
     scored = [(edit_distance(code, k), k) for k in pool]
     scored = [(d, k) for d, k in scored if d <= MAX_DISTANCE]
-    if not scored:
-        return []
-    best = min(d for d, _ in scored)
-    return [k for d, k in sorted(scored) if d == best][:MAX_SUGGESTIONS]
+    return [k for _, k in sorted(scored)][:MAX_SUGGESTIONS]
 
 
 def either(items: list[str]) -> str:

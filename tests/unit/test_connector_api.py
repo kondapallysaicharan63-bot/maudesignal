@@ -77,7 +77,7 @@ def test_contract_per_tool(
     extra = (
         {"status", "confirmed", "note", "searched_with", "matches", "device_types"}
         if tool == "lookup_device"
-        else set()
+        else {"suggestions"} if tool == "recalls" else set()
     )
     assert set(body) == common | extra
     assert body["tool"] == tool
