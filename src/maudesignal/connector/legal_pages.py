@@ -18,7 +18,8 @@ from maudesignal.connector.ask import (
     MIN_QUESTION_CHARS,
     live_mode_allowed,
 )
-from maudesignal.connector.globalcap import global_daily_usd, largest_request_usd
+from maudesignal.connector.callcap import MAX_CALL_HOLD_USD, enforced_cap
+from maudesignal.connector.globalcap import global_daily_usd
 from maudesignal.connector.models import ADVISORY
 from maudesignal.connector.security import DEFAULT_DEMO_RATE_PER_MIN, DEMO_PER_DAY
 
@@ -82,7 +83,7 @@ def live_routes_line() -> str:
             "the image."
         )
     return (
-        "<strong>Live routes are OFF in this deployment</strong> (no model key or no shared "
+        "<strong>Live routes are OFF in this deployment</strong> (no model key or no private "
         "spend ledger is configured). The website's ask, voice and label routes return "
         "recorded answers and nothing is sent to Meta."
     )
@@ -125,7 +126,7 @@ def render_privacy(
         shared_store: True when an Upstash Redis store is configured.
     """
     redis = (
-        "Upstash Redis is configured here: rate-limit counters, the daily cost ledger, a "
+        "Upstash Redis is configured here: rate-limit counters, the per-key daily totals, a "
         "six-hour cache of keyless check answers and the audit log are held there."
         if shared_store
         else "No Upstash Redis store is configured here: rate-limit counters and the audit log "
@@ -154,9 +155,9 @@ of birth, which is a guard and not a guarantee.</p>
 
 <h2>Where data is processed and stored</h2>
 <p>On Vercel in the United States (function region iad1, Washington DC). Vercel Blob (private)
-holds website feedback and visit records and the live-call spend ledger: one small object per paid
-live request with two dollar amounts (its hold and its real cost) and no text, no address and no
-key. {html.escape(redis)}</p>
+holds website feedback and visit records and the live-call spend ledger: one small object per
+Meta call with its dollar amounts (its worst-case hold and, once the call succeeded, its real
+cost) and no text, no address and no key. {html.escape(redis)}</p>
 
 <h2>Subprocessors</h2>
 <ul>
@@ -169,9 +170,10 @@ key. {html.escape(redis)}</p>
 </ul>
 
 <h2>Public data sources</h2>
-<p>openFDA (api.fda.gov) is queried live with a product code only (and, for a device label read
-live, with the text fields read from the label). MHRA (UK) alerts come from a stored copy
-previously fetched from the GOV.UK search API; this service does not call GOV.UK when you use it.
+<p>openFDA (api.fda.gov) is queried live with a product code only (and, to match a device label,
+with the device name, model and manufacturer read from the label). MHRA (UK) alerts come from a
+stored copy previously fetched from the GOV.UK search API; this service does not call GOV.UK when
+you use it.
 The website's outside-mentions search sends a product code and device search terms (no personal
 details; the route refuses text that looks like patient data) to public sources: GDELT, FDA
 press-release, recall, MedWatch and medical-device feeds, and MedTech Dive. No model is called
@@ -243,15 +245,15 @@ def render_terms(
     if total_daily_usd is None:
         total_daily_usd = global_daily_usd()
     live_ask, live_voice, live_label, live_mentions, live_burst = _live_limits()
-    largest = largest_request_usd()
+    hold = MAX_CALL_HOLD_USD
+    cap = enforced_cap(total_daily_usd)
     per_instance_item = ""
     if os.environ.get("MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP", "").strip() == "1":
         per_instance_item = (
-            "<li><strong>This deployment runs with the per-instance override on.</strong> With no "
-            "shared ledger configured, the cost cap above is kept in memory on each server "
-            "instance and starts again on a cold start, and the keyed <code>ask</code> tool has "
-            "no cap across keys. The total over all instances can therefore pass "
-            f"${total_daily_usd:.2f} per UTC day.</li>"
+            "<li><strong>This deployment runs with the local-only override on.</strong> With no "
+            "private ledger store, the spend ledger below is kept in the memory of one server "
+            "process and starts again on a cold start, so the total over several instances can "
+            f"pass ${total_daily_usd:.2f} per UTC day.</li>"
         )
     body = f"""
 <h1>Terms</h1>
@@ -290,23 +292,24 @@ reached, <code>ask</code> returns a recorded answer instead of a live one.</li>
 <h2>Live website routes and the daily cost cap</h2>
 <ul>
 <li>The website's live routes (<code>/v1/live/ask</code>, <code>/v1/live/voice</code>,
-<code>/v1/live/label</code>) and the keyed <code>ask</code> tool share ONE cost cap of
-${total_daily_usd:.2f} per UTC day, counted in a shared ledger (the private Blob store, or Redis
-if the operator set it up). With neither, live calls are off and recorded answers are shown.</li>
-<li>Before each paid call the request writes its own ledger entry with its hold (at most
-${largest:.2f} for one request), then adds up every entry of the day. If the total would pass
-${total_daily_usd:.2f} minus the largest single-request cap (${largest:.2f}), the entry is
-removed and a recorded answer is shown, so requests that start together still end at or under
-${total_daily_usd:.2f}. After the call the request overwrites only its own entry with the real
-cost, and every entry counts as the larger of its hold and its real cost. A model call only
-starts if the worst case of one call still fits inside the request's hold. A call that fails or
-times out after it was sent is not recorded as costing anything, so its entry keeps its whole
-hold in the count (it may have been billed). The count can only be too high, never too low;
-should a cost ever be above its hold, the difference is written as its own entry, and if that
-fails no later live call is made.</li>
+<code>/v1/live/label</code>) and the keyed <code>ask</code> tool share ONE cost rule with a hard
+ceiling of ${total_daily_usd:.2f} per UTC day.</li>
+<li>Before every single model call (each Muse Spark reply, including each tool round and each
+repair round, each voice transcription and each SAM image) the service works out the most that
+one call could cost: the size of the prompt times the input price plus the reply limit times the
+output price. It writes that worst-case amount as its own entry in a private ledger, adds up
+every entry of the day, and makes the call only if the total, its own entry included, stays at
+or under the limit. Otherwise it removes its entry and shows a recorded answer.</li>
+<li>Only after a successful reply that reports its usage is the entry lowered to the real cost.
+A call that fails, times out, or returns no usage stays counted at its worst case for the rest of
+the day, even if it was never billed. The count can therefore be too high, never too low.</li>
+<li>Calls that start at the same moment can each pass the check, so the limit enforced is
+${total_daily_usd:.2f} minus the largest worst case one call may have (${hold:.2f}; a call whose
+worst case is higher is not made): ${cap:.2f}. Live calls normally stop at about ${cap:.2f}, and
+the total can never pass ${total_daily_usd:.2f}.</li>
+<li>If the ledger cannot be read, listed or written, no call is made and a recorded answer is
+shown. With no private ledger store, live calls are off.</li>
 {per_instance_item}
-<li>If the ledger cannot be read or written, no live call is made and a recorded answer is
-shown.</li>
 <li>Per address per UTC day: {live_ask} live questions, {live_voice} voice questions,
 {live_label} label reads and {live_mentions} outside-mentions searches; at most {live_burst}
 live requests per minute. Each is counted with the address stored only as a salted hash.</li>

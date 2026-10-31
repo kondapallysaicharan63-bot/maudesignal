@@ -126,13 +126,14 @@ def main(argv: list[str] | None = None) -> int:
     if not os.environ.get("META_MODEL_API_KEY"):
         print("META_MODEL_API_KEY is not set: nothing was run.")
         return 2
+    # One process, its own in-memory per-call ledger (cap: HARD_CAP_USD minus one call's hold).
+    os.environ.setdefault("MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP", "1")
     cfg = LiveConfig(
         ask_per_day=10,
         voice_per_day=10,
         label_per_day=10,
         burst_per_min=100,
         daily_usd=HARD_CAP_USD,
-        instance_divisor=1,
         ask_usd=ASK_CAP,
         voice_usd=VOICE_CAP,
         label_usd=LABEL_CAP,

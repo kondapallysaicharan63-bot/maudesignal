@@ -23,7 +23,7 @@ from maudesignal.connector.security import (  # noqa: E402
     RateLimiter,
     sha256_hex,
 )
-from tests.unit.test_connector import fake_check  # noqa: E402
+from tests.unit.test_connector import fake_check, fake_meter  # noqa: E402
 
 K1 = "charan-key-NOT-A-REAL-SECRET-0123456789"
 K2 = "review-key-NOT-A-REAL-SECRET-0123456789"
@@ -58,7 +58,9 @@ def client(
     demo_limit: int = 10,
     clock: Clock | None = None,
 ) -> TestClient:
-    runtime = AskRuntime(live_enabled=lambda: live is not None, ledger_dir=tmp_path / "led")
+    runtime = AskRuntime(
+        live_enabled=lambda: live is not None, ledger_dir=tmp_path / "led", meter=fake_meter()
+    )
     if live is not None:
         runtime.agent_factory = live
     settings = Settings(

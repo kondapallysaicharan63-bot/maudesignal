@@ -18,6 +18,8 @@ import pytest
 from maudesignal.common.exceptions import OpenFDAAPIError
 from maudesignal.connector import tools
 from maudesignal.connector.ask import AskRuntime, ask
+from maudesignal.connector.blob_store import MemoryStore
+from maudesignal.connector.callcap import CallLedger, CallMeter
 from maudesignal.connector.data import ConnectorData
 from maudesignal.connector.errors import InvalidInputError, NotFoundError, SourceUnavailableError
 from maudesignal.connector.forbidden import forbidden_in
@@ -305,6 +307,11 @@ SCRIPT = json.dumps(
 )
 
 
+def fake_meter() -> CallMeter:
+    """A per-call meter on an in-memory ledger (cap 2.90), for tests that run a fake live model."""
+    return CallMeter(CallLedger(MemoryStore(), cap_usd=2.9))
+
+
 def live_runtime(tmp_path: Path, client: FakeClient, daily_usd: float = 5.0) -> AskRuntime:
     def factory(d: ConnectorData, guard: SpendGuard) -> CopilotAgent:
         return CopilotAgent(guard.wrap(client), d.tool_context())
@@ -314,6 +321,7 @@ def live_runtime(tmp_path: Path, client: FakeClient, daily_usd: float = 5.0) -> 
         live_enabled=lambda: True,
         caps=SpendCaps(session_usd=1.0, session_calls=20, daily_usd=daily_usd),
         ledger_dir=tmp_path / "led",
+        meter=fake_meter(),
     )
 
 
@@ -351,7 +359,12 @@ def test_live_ask_model_failure_falls_back_without_leaking_error(tmp_path: Path)
     def factory(_: ConnectorData, __: SpendGuard) -> CopilotAgent:
         raise RuntimeError(f"upstream said bad key {KEY}")
 
-    rt = AskRuntime(agent_factory=factory, live_enabled=lambda: True, ledger_dir=tmp_path / "led")
+    rt = AskRuntime(
+        agent_factory=factory,
+        live_enabled=lambda: True,
+        ledger_dir=tmp_path / "led",
+        meter=fake_meter(),
+    )
     a = ask(d, "What changed this week for LLZ?", key_id="abc", runtime=rt)
     assert a.provenance.kind == "recorded_answer"
     assert KEY not in json.dumps(a.model_dump())

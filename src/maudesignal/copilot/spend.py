@@ -33,7 +33,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 from maudesignal.common.exceptions import MaudeSignalError
 from maudesignal.copilot.meta_provider import SPARK_USD_PER_M_INPUT, SPARK_USD_PER_M_OUTPUT
@@ -62,6 +62,13 @@ def worst_case_call_usd() -> float:
         + WORST_CALL_OUTPUT_TOKENS * SPARK_USD_PER_M_OUTPUT / 1e6,
         6,
     )
+
+
+class ChatMeter(Protocol):
+    """Runs one chat call under the daily per-call reservation (see ``connector.callcap``)."""
+
+    def chat(self, create: Callable[..., Any], kwargs: dict[str, Any]) -> Any:
+        """Reserve the call's worst case, call ``create(**kwargs)``, settle on success."""
 
 
 class SpendLimitError(MaudeSignalError):
@@ -186,6 +193,9 @@ class SpendGuard:
     session_usd: float = 0.0
     session_calls: int = 0
     cap_hit_logged: bool = False
+    #: When set, every chat call made through :meth:`wrap` is reserved per call on the daily
+    #: ledger before it is sent (the live website and the keyed ask tool set it).
+    meter: ChatMeter | None = None
     _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     def remaining(self) -> Remaining:
@@ -299,7 +309,8 @@ class _GuardedCompletions:
 
     def create(self, **kwargs: Any) -> Any:
         self._guard.check("chat")
-        resp = self._inner.create(**kwargs)
+        meter = self._guard.meter
+        resp = meter.chat(self._inner.create, kwargs) if meter else self._inner.create(**kwargs)
         usage = getattr(resp, "usage", None)
         tokens_in = int(getattr(usage, "prompt_tokens", 0) or 0)
         tokens_out = int(getattr(usage, "completion_tokens", 0) or 0)

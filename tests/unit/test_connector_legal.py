@@ -259,11 +259,14 @@ def test_terms_show_the_total_cap(tmp_path: Path) -> None:
     text = _client(tmp_path).get("/terms").text
     flat = " ".join(text.split())
     assert "$2.00 per key per UTC day" in flat
-    assert "ONE cost cap of $3.00 per UTC day" in flat
-    assert "minus the largest single-request cap" in flat
-    assert "The count can only be too high, never too low" in flat
-    assert "keeps its whole hold in the count" in flat
-    assert "per-instance override" not in flat  # only shown when the override is set
+    assert "ONE cost rule with a hard ceiling of $3.00 per UTC day" in flat
+    assert "Before every single model call" in flat
+    assert "the most that one call could cost" in flat
+    assert "stays counted at its worst case for the rest of the day" in flat
+    assert "too high, never too low" in flat
+    assert "$3.00 minus the largest worst case one call may have ($0.10" in flat
+    assert "normally stop at about $2.90" in flat
+    assert "local-only override" not in flat  # only shown when the override is set
 
 
 def test_terms_say_so_when_the_per_instance_override_is_on(
@@ -271,8 +274,8 @@ def test_terms_say_so_when_the_per_instance_override_is_on(
 ) -> None:
     monkeypatch.setenv("MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP", "1")
     flat = " ".join(_client(tmp_path).get("/terms").text.split())
-    assert "per-instance override on" in flat
-    assert "can therefore pass $3.00 per UTC day" in flat
+    assert "local-only override on" in flat
+    assert "pass $3.00 per UTC day" in flat
 
 
 def test_privacy_statements_match_the_code(tmp_path: Path) -> None:

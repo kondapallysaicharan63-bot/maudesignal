@@ -24,9 +24,11 @@ Rules enforced here:
 * Per-address daily limits (ask 30, voice 10, label 5 by default) plus a per-minute burst
   limit. The address is only ever a peppered HMAC id, in memory or in Upstash; it is never
   stored in a record or logged.
-* One global daily cost cap for all live calls (``MAUDESIGNAL_LIVE_DAILY_USD``), shared when
-  Upstash is configured, else per instance divided by ``MAUDESIGNAL_LIVE_INSTANCE_DIVISOR``,
-  and a cap per request. A live call is never made once a cap is reached.
+* One daily cost rule for every Meta call (``callcap``): each model call (every Spark
+  completion, each Voice Transcribe, each SAM call) reserves its worst case in the private
+  Blob store before it is sent and is released to the real cost only after a successful reply;
+  a failed or timed-out call stays counted at its worst case. Hard ceiling
+  ``MAUDESIGNAL_LIVE_DAILY_USD`` (3.00); calls normally stop at that minus one call's hold.
 * No model key, a cap reached, or a model error gives a recorded answer, labelled recorded.
   A recorded answer is never presented as live.
 * Uploads are checked (size, type, duration, pixels) before any model call and held in
@@ -40,7 +42,6 @@ Rules enforced here:
 
 from __future__ import annotations
 
-import contextlib
 import hashlib
 import hmac
 import io
@@ -49,7 +50,7 @@ import os
 import re
 import secrets
 import time
-from collections.abc import Awaitable, Callable, Iterator
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
@@ -72,6 +73,7 @@ from maudesignal.connector.ask import (
     ask_detailed,
     recorded_voice_answer,
 )
+from maudesignal.connector.callcap import CallMeter, CallRefusedError, enforced_cap
 from maudesignal.connector.data import PROJECT_ROOT, ConnectorData
 from maudesignal.connector.errors import InvalidInputError, SourceUnavailableError
 from maudesignal.connector.feedback import clean_ref, looks_like_phi
@@ -86,7 +88,6 @@ from maudesignal.connector.globalcap import (
     LABEL_USD_ENV,
     LEDGER_ID,
     VOICE_USD_ENV,
-    largest_request_usd,
 )
 from maudesignal.connector.mentions import (
     LABEL,
@@ -99,12 +100,7 @@ from maudesignal.connector.mentions import (
 from maudesignal.connector.models import ToolAnswer
 from maudesignal.connector.readonly import make_read_only
 from maudesignal.connector.security import RateLimiter
-from maudesignal.connector.store import (
-    RESERVING_LEDGERS,
-    ConnectorState,
-    MemoryLedger,
-    UpstashError,
-)
+from maudesignal.connector.store import ConnectorState, MemoryLedger
 from maudesignal.copilot.agent import CopilotAgent
 from maudesignal.copilot.spend import (
     DailyLedger,
@@ -146,7 +142,6 @@ VOICE_PER_DAY_ENV = "MAUDESIGNAL_LIVE_VOICE_PER_DAY"
 LABEL_PER_DAY_ENV = "MAUDESIGNAL_LIVE_LABEL_PER_DAY"
 MENTIONS_PER_DAY_ENV = "MAUDESIGNAL_LIVE_MENTIONS_PER_DAY"
 BURST_PER_MIN_ENV = "MAUDESIGNAL_LIVE_PER_MIN"
-DIVISOR_ENV = "MAUDESIGNAL_LIVE_INSTANCE_DIVISOR"
 PEPPER_ENV = "MAUDESIGNAL_KEY_PEPPER"
 
 DEFAULT_ASK_PER_DAY = 30
@@ -154,7 +149,6 @@ DEFAULT_VOICE_PER_DAY = 10
 DEFAULT_LABEL_PER_DAY = 5
 DEFAULT_MENTIONS_PER_DAY = 10
 DEFAULT_BURST_PER_MIN = 10
-DEFAULT_DIVISOR = 2
 
 # Upload and body limits.
 MAX_JSON_BYTES = 64 * 1024
@@ -232,7 +226,6 @@ class LiveConfig:
     label_per_day: int = DEFAULT_LABEL_PER_DAY
     burst_per_min: int = DEFAULT_BURST_PER_MIN
     daily_usd: float = DEFAULT_DAILY_USD
-    instance_divisor: int = DEFAULT_DIVISOR
     ask_usd: float = DEFAULT_ASK_USD
     voice_usd: float = DEFAULT_VOICE_USD
     label_usd: float = DEFAULT_LABEL_USD
@@ -248,27 +241,11 @@ class LiveConfig:
             label_per_day=_int_env(e, LABEL_PER_DAY_ENV, DEFAULT_LABEL_PER_DAY),
             burst_per_min=_int_env(e, BURST_PER_MIN_ENV, DEFAULT_BURST_PER_MIN),
             daily_usd=_float_env(e, DAILY_USD_ENV, DEFAULT_DAILY_USD),
-            instance_divisor=_int_env(e, DIVISOR_ENV, DEFAULT_DIVISOR),
             ask_usd=_float_env(e, ASK_USD_ENV, DEFAULT_ASK_USD),
             voice_usd=_float_env(e, VOICE_USD_ENV, DEFAULT_VOICE_USD),
             label_usd=_float_env(e, LABEL_USD_ENV, DEFAULT_LABEL_USD),
             mentions_per_day=_int_env(e, MENTIONS_PER_DAY_ENV, DEFAULT_MENTIONS_PER_DAY),
         )
-
-    def effective_daily_usd(self, *, shared: bool, race_margin: float = 0.0) -> float:
-        """The cap this instance enforces.
-
-        The whole value when the ledger is shared and atomic (Redis), a share of it when it is
-        per instance, and the value minus ``race_margin`` (the largest per-request cap) when
-        the shared ledger is the Blob object set (one object per request, listed and summed).
-        """
-        if not shared:
-            return round(self.daily_usd / self.instance_divisor, 6)
-        return max(0.0, round(self.daily_usd - race_margin, 6))
-
-    def largest_request_usd(self, env: dict[str, str] | None = None) -> float:
-        """The biggest per-request cap of the live routes and the keyed ask tool."""
-        return max(self.ask_usd, self.voice_usd, self.label_usd, largest_request_usd(env))
 
 
 class Transcriber:
@@ -430,18 +407,23 @@ class _DeadlineSearcher:
 
 @dataclass
 class LiveAskRuntime(AskRuntime):
-    """``AskRuntime`` whose cost ledger is the one global live ledger."""
+    """``AskRuntime`` whose Meta calls all go through the one per-call daily ledger."""
 
     live_ledger: DailyLedger = field(default_factory=MemoryLedger)
 
-    def global_ledger(self) -> DailyLedger | None:
-        """None: the live routes already use the global ledger as their only ledger."""
-        return None
-
     def ledger_for(self, key_id: str) -> DailyLedger:
-        """The shared live ledger (Redis or Blob when configured), never a file."""
-        shared = self.state.ledger(key_id) if self.state else None
-        return shared or self.live_ledger
+        """A throwaway per-request ledger: the live routes keep no per-key daily total."""
+        return self.live_ledger
+
+
+class _MeteredSam:
+    """SAM client whose every segmentation call reserves its worst case first."""
+
+    def __init__(self, inner: Any, meter: CallMeter) -> None:
+        self._inner, self._meter = inner, meter
+
+    def segment(self, image: Any, prompt: str) -> Any:
+        return self._meter.sam(lambda: self._inner.segment(image, prompt))
 
 
 # ---------------------------------------------------------------------------
@@ -508,11 +490,6 @@ class MentionsIn(BaseModel):
 
 
 _MENTIONS_NOTES = {
-    "cap": "Today's shared live budget is used up, so no live search was made.",
-    "live_off": (
-        "Live calls are switched off on this server because there is no shared spend ledger, "
-        "so no live search was made."
-    ),
     "unreachable": "None of the public sources could be reached just now.",
 }
 
@@ -951,18 +928,17 @@ def mount_live(
     cfg = config or LiveConfig.from_env(env)
     clock_now = now or (lambda: datetime.now(UTC))
     today: Callable[[], date] = lambda: clock_now().date()  # noqa: E731
-    mode = state.global_mode
-    daily_cap = cfg.effective_daily_usd(
-        shared=mode != "none",
-        race_margin=cfg.largest_request_usd(env) if mode != "none" else 0.0,
-    )
-    ledger: DailyLedger = state.global_ledger(LEDGER_ID, today=today) or MemoryLedger(today=today)
-    # Fail closed: with no shared ledger (no Upstash, no private Blob store) the cap would be per
-    # instance and reset on a cold start, so no live call is made unless the operator accepts that.
+    # Fail closed: every Meta call reserves its worst case in the private Blob store first, so
+    # with no such store no live call is made (unless the local-only per-process override is
+    # set, which keeps the same ledger in this process's memory).
     per_instance_ok = (env if env is not None else os.environ).get(
         "MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP", ""
     ).strip() == "1"
-    no_shared_ledger = mode == "none" and not per_instance_ok
+    call_ledger = state.call_ledger(
+        today=today, allow_memory=per_instance_ok, cap_usd=enforced_cap(cfg.daily_usd)
+    )
+    no_shared_ledger = call_ledger is None
+    meter = CallMeter(call_ledger) if call_ledger is not None else None
     burst = make_limiter("live-burst", cfg.burst_per_min, 60.0)
     counters = {
         "ask": state.daily_counter("live-ask", cfg.ask_per_day, today=today),
@@ -992,11 +968,12 @@ def mount_live(
             caps=SpendCaps(
                 session_usd=request_usd,
                 session_calls=20,
-                daily_usd=daily_cap,
+                daily_usd=cfg.daily_usd,
                 call_reserve_usd=worst_case_call_usd(),
             ),
             state=state,
-            live_ledger=ledger,
+            live_ledger=MemoryLedger(today=today),
+            meter=meter,
         )
 
     def limits(remaining: int) -> dict[str, Any]:
@@ -1084,30 +1061,7 @@ def mount_live(
             return "live_off" if _key() else "no_model"
         if no_shared_ledger:
             return "live_off"
-        try:
-            if ledger.spent_today() >= daily_cap - 1e-9:
-                return "cap"
-        except UpstashError:
-            return "cap"
         return None
-
-    @contextlib.contextmanager
-    def held(request_usd: float) -> Iterator[bool]:
-        """Hold a request's budget on a shared ledger; False when today's cap is reached."""
-        hold = 0.0
-        ok = True
-        try:
-            if isinstance(ledger, RESERVING_LEDGERS):
-                try:
-                    ok = ledger.reserve(request_usd, daily_cap)
-                except UpstashError:
-                    ok = False
-                if ok:
-                    hold = request_usd
-            yield ok
-        finally:
-            if hold and isinstance(ledger, RESERVING_LEDGERS):
-                ledger.release(hold)
 
     def log(endpoint: str, mode: str, started: float, status: int = 200) -> None:
         """One line per request: no address, no text, no bytes."""
@@ -1164,26 +1118,18 @@ def mount_live(
 
     def do_mentions(body: MentionsIn) -> tuple[dict[str, Any], str | None]:
         """``(body_without_limits, recorded_reason)``; the reason is None for a live result."""
-        reason: str | None = "live_off" if no_shared_ledger else None
-        try:
-            if reason is None and ledger.spent_today() >= daily_cap - 1e-9:
-                reason = "cap"
-        except UpstashError:
-            reason = "cap"  # fails closed: an unreadable ledger is a stored result
-        if reason is None:
-            # No model is called and nothing costs money, so there is no hold (a hold would be
-            # two more ledger writes for a free route): the read-only check above is the gate.
-            found = search_mentions(
-                body.product_code,
-                body.device_terms,
-                be.mentions_fetcher(),
-                clock=be.clock,
-                now=clock_now,
-                sleep=be.sleep,
-            )
-            if found.network_ok:
-                return found.as_dict() | {"label": LABEL, "mode": "live"}, None
-            reason = "unreachable"
+        # No Meta call is made and nothing costs money, so the spend ledger is not used.
+        found = search_mentions(
+            body.product_code,
+            body.device_terms,
+            be.mentions_fetcher(),
+            clock=be.clock,
+            now=clock_now,
+            sleep=be.sleep,
+        )
+        if found.network_ok:
+            return found.as_dict() | {"label": LABEL, "mode": "live"}, None
+        reason = "unreachable"
         stored = load_recorded(be.mentions_dir, body.product_code) or empty_recorded(
             body.product_code, clock_now()
         )
@@ -1248,47 +1194,40 @@ def mount_live(
         transcribe_cost = 0.0
         if reason is None and deadline - be.clock() < MIN_CALL_BUDGET_S * 2:
             reason = "timeout"
-        if reason is None:
-            with held(cfg.voice_usd) as ok:
-                if not ok:
-                    reason = "cap"
-                else:
-                    t0 = be.clock()
-                    try:
-                        transcriber = be.transcriber(
-                            min(VOICE_TRANSCRIBE_TIMEOUT_S, deadline - be.clock())
-                        )
-                        transcript = transcriber.transcribe_bytes(wav)
-                        ms = (be.clock() - t0) * 1000
-                        transcribe_cost = estimate_cost_usd(seconds)
-                        ledger.add(transcribe_cost, 1)
-                        heard = transcript.text.strip()
-                        trace.append(_step("Muse Voice Transcribe", VOICE_MODEL, ms, "ok"))
-                    except VoiceTranscribeError as exc:
-                        reason = "no_transcript"
-                        trace.append(
-                            _step(
-                                "Muse Voice Transcribe",
-                                VOICE_MODEL,
-                                (be.clock() - t0) * 1000,
-                                "failed",
-                                f"transcription failed ({type(exc).__name__})",
-                            )
-                        )
-                    except Exception as exc:  # noqa: BLE001 - never fail the visitor on this
-                        logger.warning(
-                            "live_voice_transcribe_failed", error_type=type(exc).__name__
-                        )
-                        reason = "no_transcript"
-                        trace.append(
-                            _step(
-                                "Muse Voice Transcribe",
-                                VOICE_MODEL,
-                                (be.clock() - t0) * 1000,
-                                "failed",
-                                f"transcription failed ({type(exc).__name__})",
-                            )
-                        )
+        if reason is None and meter is not None:
+            t0 = be.clock()
+            try:
+                transcriber = be.transcriber(min(VOICE_TRANSCRIBE_TIMEOUT_S, deadline - be.clock()))
+                transcript = meter.transcribe(seconds, lambda: transcriber.transcribe_bytes(wav))
+                ms = (be.clock() - t0) * 1000
+                transcribe_cost = estimate_cost_usd(seconds)
+                heard = transcript.text.strip()
+                trace.append(_step("Muse Voice Transcribe", VOICE_MODEL, ms, "ok"))
+            except CallRefusedError:
+                reason = "cap"
+            except VoiceTranscribeError as exc:
+                reason = "no_transcript"
+                trace.append(
+                    _step(
+                        "Muse Voice Transcribe",
+                        VOICE_MODEL,
+                        (be.clock() - t0) * 1000,
+                        "failed",
+                        f"transcription failed ({type(exc).__name__})",
+                    )
+                )
+            except Exception as exc:  # noqa: BLE001 - never fail the visitor on this
+                logger.warning("live_voice_transcribe_failed", error_type=type(exc).__name__)
+                reason = "no_transcript"
+                trace.append(
+                    _step(
+                        "Muse Voice Transcribe",
+                        VOICE_MODEL,
+                        (be.clock() - t0) * 1000,
+                        "failed",
+                        f"transcription failed ({type(exc).__name__})",
+                    )
+                )
         if heard is None:
             if not trace:  # no transcription was tried: say why
                 trace.append(
@@ -1447,68 +1386,61 @@ def mount_live(
             trace.append(_step("Muse Spark read", SPARK_MODEL, 0, "skipped", _REASON_NOTES[reason]))
             return recorded_label_response(reason, _REASON_NOTES[reason], trace, 0.0)
         cost = 0.0
-        with held(cfg.label_usd) as ok:
-            if not ok:
-                note = _REASON_NOTES["cap"]
-                trace.append(_step("Muse Spark read", SPARK_MODEL, 0, "skipped", note))
-                return recorded_label_response("cap", note, trace, 0.0)
-            guard = SpendGuard(
-                session_id="live-label",
-                caps=SpendCaps(
-                    session_usd=cfg.label_usd,
-                    session_calls=4,
-                    daily_usd=daily_cap,
-                    call_reserve_usd=worst_case_call_usd(),
-                ),
-                ledger=ledger,
-                db=None,
+        guard = SpendGuard(
+            session_id="live-label",
+            caps=SpendCaps(
+                session_usd=cfg.label_usd,
+                session_calls=4,
+                daily_usd=cfg.daily_usd,
+                call_reserve_usd=worst_case_call_usd(),
+            ),
+            ledger=MemoryLedger(today=today),
+            db=None,
+            meter=meter,
+        )
+        deadline = t_start + LABEL_BUDGET_S
+        sam = be.sam(SAM_CALL_TIMEOUT_S)
+        result: LabelResult | None = None
+        steps: list[dict[str, Any]] = []
+        failure: str | None = None
+        try:
+            client = guard.wrap(be.spark_client(deadline, be.clock))
+            metered_sam: Any = None
+            if sam is not None and meter is not None:
+                metered_sam = _DeadlineSam(
+                    _MeteredSam(sam, meter),  # type: ignore[arg-type]
+                    t_start + SAM_PROMPT_DEADLINE_S,
+                    be.clock,
+                )
+            result, steps = read_label_timed(
+                jpeg, client=client, sam=metered_sam, model=SPARK_MODEL
             )
-            deadline = t_start + LABEL_BUDGET_S
-            sam = be.sam(SAM_CALL_TIMEOUT_S)
-            result: LabelResult | None = None
-            steps: list[dict[str, Any]] = []
-            failure: str | None = None
-            try:
-                client = guard.wrap(be.spark_client(deadline, be.clock))
-                result, steps = read_label_timed(
-                    jpeg,
-                    client=client,
-                    sam=(
-                        _DeadlineSam(sam, t_start + SAM_PROMPT_DEADLINE_S, be.clock)  # type: ignore[arg-type]
-                        if sam is not None
-                        else None
-                    ),
-                    model=SPARK_MODEL,
-                )
-            except SpendLimitError:
+        except SpendLimitError:
+            failure = _REASON_NOTES["cap"]
+        except Exception as exc:  # noqa: BLE001 - any model failure falls back to a recording
+            logger.warning("live_label_read_failed", error_type=type(exc).__name__)
+            timed_out = be.clock() >= deadline - MIN_CALL_BUDGET_S or "TimeoutError" in str(exc)
+            if "SpendLimitError" in str(exc) or "CallRefused" in str(exc):
                 failure = _REASON_NOTES["cap"]
-            except Exception as exc:  # noqa: BLE001 - any model failure falls back to a recording
-                logger.warning("live_label_read_failed", error_type=type(exc).__name__)
-                timed_out = be.clock() >= deadline - MIN_CALL_BUDGET_S or "TimeoutError" in str(exc)
-                if "SpendLimitError" in str(exc):
-                    failure = _REASON_NOTES["cap"]
-                elif timed_out:
-                    failure = "The live read took longer than the time limit."
-                else:
-                    failure = _REASON_NOTES["model_error"]
-            if result is not None:
-                cost = result.cost_usd
-                with contextlib.suppress(Exception):
-                    if result.sam_cost_usd:  # chat cost was recorded by the guard already
-                        ledger.add(result.sam_cost_usd, 1)
-            if result is None or failure:
-                trace.append(
-                    _step(
-                        "Muse Spark read",
-                        SPARK_MODEL,
-                        (be.clock() - t_start) * 1000,
-                        "failed",
-                        failure,
-                    )
+            elif timed_out:
+                failure = "The live read took longer than the time limit."
+            else:
+                failure = _REASON_NOTES["model_error"]
+        if result is not None:
+            cost = result.cost_usd
+        if result is None or failure:
+            trace.append(
+                _step(
+                    "Muse Spark read",
+                    SPARK_MODEL,
+                    (be.clock() - t_start) * 1000,
+                    "failed",
+                    failure,
                 )
-                return recorded_label_response(
-                    "model_error", failure or _REASON_NOTES["model_error"], trace, cost
-                )
+            )
+            return recorded_label_response(
+                "model_error", failure or _REASON_NOTES["model_error"], trace, cost
+            )
         trace.extend(_label_read_steps(steps))
         withheld = [n for n in ("lot", "serial") if result.fields.get(n) and result.fields[n].value]
         reading = result.to_dict()

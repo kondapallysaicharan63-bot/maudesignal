@@ -22,6 +22,7 @@ from maudesignal.connector.speech import compose
 from maudesignal.copilot.agent import CopilotAgent
 from maudesignal.copilot.spend import SpendCaps
 from maudesignal.copilot.tools import TOOL_SCHEMAS, TOOLS
+from tests.unit.test_connector import fake_meter
 
 REPORT_ID = "50426770"
 
@@ -114,6 +115,7 @@ def test_ask_cannot_write_a_capa_draft_even_if_the_model_calls_draft_capa(tmp_pa
         live_enabled=lambda: True,
         caps=SpendCaps(session_usd=1.0, session_calls=20, daily_usd=5.0),
         ledger_dir=tmp_path / "led",
+        meter=fake_meter(),
     )
     a = ask(d, "Draft a CAPA for LLZ please", key_id="abc", runtime=rt)
     assert _count(db_file, "capa_drafts") == before == 0
@@ -187,6 +189,7 @@ def live_rt(tmp_path: Path, client: Any) -> AskRuntime:
         live_enabled=lambda: True,
         caps=SpendCaps(session_usd=1.0, session_calls=20, daily_usd=5.0),
         ledger_dir=tmp_path / "led",
+        meter=fake_meter(),
     )
 
 

@@ -6,7 +6,7 @@ Meta, Muse or anyone else has reviewed or endorsed the connector.
 
 # Form answers
 
-**Status: Submitted to Meta's Muse Connector Program — pending review (submitted Oct 30). Not approved or listed.**
+**Status: Submitted to Meta's Muse Connector Program — pending review.**
 
 Field names and limits on the live form may differ from the headings below; read the form first
 and paste from here.
@@ -126,9 +126,12 @@ Defaults in the code (each can be changed by the operator with an environment va
 * 10 wrong or missing keys per address per minute, then 429 (`MAUDESIGNAL_FAILED_AUTH_PER_MIN`).
 * 10 keyless device-type checks per address per hour (`MAUDESIGNAL_PUBLIC_CHECK_PER_HOUR`).
 * `ask`: at most $0.25 per call and $2.00 per key per UTC day (`MAUDESIGNAL_API_REQUEST_USD`,
-  `MAUDESIGNAL_API_DAILY_USD`). Every live model call, the keyed `ask` tool and the website's live
-  routes together, also counts against ONE global cap of $3.00 per UTC day
-  (`MAUDESIGNAL_LIVE_DAILY_USD`; see "Cost" under "Live routes"); past a cap the closest recorded
+  `MAUDESIGNAL_API_DAILY_USD`; a per-key total that only counts real cost after a call). Every
+  Meta call, from the keyed `ask` tool and from the website's live routes alike, also goes through
+  ONE daily rule with a hard ceiling of $3.00 per UTC day (`MAUDESIGNAL_LIVE_DAILY_USD`): each model
+  call reserves its worst case first and is released to its real cost only after a successful
+  reply (see "Cost" under "Live Muse for the public website"). Live calls normally stop at about
+  $2.90, which is $3.00 minus one call's largest hold ($0.10). Past a cap the closest recorded
   answer is returned. With two keys, set `MAUDESIGNAL_API_DAILY_USD=1.50` (or less) as well, and
   keep `MAUDESIGNAL_KEY_PEPPER` set (see "Two keys").
 * Feedback form: 5 per hour per address; visits 60 per hour per address.
@@ -142,7 +145,8 @@ or wanted. Hosted on Vercel, United States (function region iad1). Question text
 (only its SHA-256 and length). IP addresses are never stored by this code: before any rate limit
 sees one it is turned into a salted one-way hash, and only that hash is the limit key (in memory,
 or in the operator's Redis store for at most twice the limit window). Feedback records (no email addresses; no names except where the person chose to be quoted by name and role, see the Data questionnaire) and visit records are kept until 2026-12-31.
-Meta receives an `ask` question only when live ask is on. Details: `/privacy`.
+Meta receives the question text for live ask, the audio for live voice and the photo for live
+label, only when `META_MODEL_API_KEY` is set. Details: `/privacy`.
 
 ## Privacy URL
 
@@ -169,11 +173,11 @@ An original mark (the words MAUDE and SIGNAL above a pulse line); no Meta or FDA
 |---|---|
 | What is the service? | A read-only connector to public FDA adverse-event data (openFDA). MHRA (UK) alerts are shown only as labelled regulator context. |
 | Does it collect personal or patient data? | No, none is collected or wanted. No accounts, names or emails. |
-| Where is data processed and stored? | Vercel, United States (function region iad1, Washington DC). Vercel Blob (private) holds website feedback and visit records and the live-call spend ledger: one small object per paid live request with two dollar amounts (its hold and its real cost) and no text, no address and no key. |
+| Where is data processed and stored? | Vercel, United States (function region iad1, Washington DC). Vercel Blob (private) holds website feedback and visit records and also the spend ledger: one small object per Meta call with its dollar amounts (its worst-case hold and, once the call succeeded, its real cost). Amounts only: no text, no address, no key and no user data. |
 | Subprocessors? | Vercel Inc. (hosting, logs, Blob). Meta Platforms (Meta Model API) only when a model key is set on the server: for the `ask` tool (full keys only; the demo key never calls it) and for the website's live ask, voice and label routes. Upstash (Redis) and Resend (email) only if the operator configures them. |
-| Does Meta receive user input? | Only when live answers are on: the text of an `ask` or voice question (voice also sends the audio clip to Muse Voice), or a label photo (the re-encoded image goes to SAM 3.1 and Muse Spark). Each is sent once to produce the answer and is not stored by this service. When live answers are off, nothing is sent to Meta and recorded answers are shown. `/privacy` states which applies at request time. |
-| Which public sources are queried? | openFDA (api.fda.gov) is queried live with a product code only (and, for a live device label read, with the text fields read from the label). MHRA (UK) alerts come from a stored copy previously fetched from the GOV.UK search API; this service does not call GOV.UK when you use it. The website's outside-mentions search sends a product code and device search terms (no personal details) to GDELT, FDA press-release, recall, MedWatch and medical-device feeds, and MedTech Dive; no model is called for it. |
-| What is logged? | Key id (a peppered one-way hash, never the key), tool name, time, status. If the key has a label (for example a reviewer's name) the label is logged next to the key id. Calls made with the public demo key are logged the same way, with the label `demo`. Spend on `ask` is kept as a daily total per key id (not per call); the global live-call ledger keeps one small object per paid request (its hold and real cost in dollars; no text, no address, no key). Question text is not logged; during a live `ask` it is held briefly in the server instance's temporary working database and replaced by its SHA-256 when the answer is done. |
+| Does Meta receive user input? | Only when `META_MODEL_API_KEY` is set on the server: the question text for live ask (and for the `ask` tool with a full key), the audio clip for live voice (Muse Voice Transcribe, then the transcript text goes to Muse Spark), and the photo for live label (the re-encoded image goes to SAM 3.1 and Muse Spark). Each is sent once to produce the answer and is not stored by this service. With no key, nothing is sent to Meta and recorded answers are shown. `/privacy` states which applies at request time. |
+| Which public sources are queried? | openFDA (api.fda.gov) is queried live with a product code and, for label matching, with the device name, model and manufacturer read from the label. MHRA (UK) alerts come from a stored copy previously fetched from the GOV.UK search API; this service does not call GOV.UK when you use it. The website's outside-mentions search fetches public news and FDA feeds (GDELT, FDA press-release, recall, MedWatch and medical-device feeds, and MedTech Dive) with a product code and device search terms (no personal details); no model is called for it. |
+| What is logged? | Key id (a peppered one-way hash, never the key), tool name, time, status. If the key has a label (for example a reviewer's name) the label is logged next to the key id. Calls made with the public demo key are logged the same way, with the label `demo`. Spend on `ask` is kept as a daily total per key id (not per call); the spend ledger keeps one small object per Meta call (its worst-case hold and real cost in dollars; no text, no address, no key). Question text is not logged; during a live `ask` it is held briefly in the server instance's temporary working database and replaced by its SHA-256 when the answer is done. |
 | What do feedback and visits store? | New feedback stores rating, comments, role, quote consent, referral code, page and time - no names and no email addresses. Feedback sent before 31 October 2026 could include a name the person typed; names are removed from those entries except where the person chose to be quoted by name and role. Visits: referral code, page, time. |
 | Are IP addresses stored? | No. Before any rate limit sees an address it is turned into a salted one-way hash (HMAC-SHA256); only that hash is the limit key, in memory or, if a Redis store is configured, in that store for at most twice the limit window. (Vercel, as host, keeps its own request logs.) |
 | Retention? | Request logs follow Vercel's runtime-log retention for this plan. Feedback and visit records are kept until 2026-12-31 and then deleted, earlier on request. |
@@ -268,15 +272,15 @@ installed the root manifest, tell the owner before going on: the fix is a projec
 | `MAUDESIGNAL_PUBLIC_CHECK_PER_HOUR` | default `10` | Keyless checks per address per hour. |
 | `MAUDESIGNAL_API_DAILY_USD` / `MAUDESIGNAL_API_REQUEST_USD` | defaults `2.00` / `0.25` | Cost cap of `ask` per key per UTC day, and per call. |
 | `OPENFDA_API_KEY` | optional | Used only on the server for live openFDA checks (higher quota). Never in a response. |
-| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | optional | Add an Upstash Redis database (Vercel Marketplace, or upstash.com) and copy its REST URL and token. When both are set, the rate limits, the daily cost ledger, the six-hour cache and the audit log are shared by every instance. If the integration names them differently, add these two names by hand. |
-| `BLOB_READ_WRITE_TOKEN` | the private Blob store's token | Also makes the global daily cost ledger durable and shared when Upstash is not configured (see below). |
-| `MAUDESIGNAL_LIVE_DAILY_USD` | default `3.00` | The one global cap for every live model call per UTC day. |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | optional | Add an Upstash Redis database (Vercel Marketplace, or upstash.com) and copy its REST URL and token. When both are set, the rate limits, the per-key daily totals, the six-hour cache and the audit log are shared by every instance. Redis holds no part of the global spend ledger. If the integration names them differently, add these two names by hand. |
+| `BLOB_READ_WRITE_TOKEN` | the private Blob store's token | Also holds the spend ledger (one object per Meta call). Without it live Meta calls are off. |
+| `MAUDESIGNAL_LIVE_DAILY_USD` | default `3.00` | The hard ceiling for every Meta call per UTC day. Calls stop at this minus $0.10 (one call's largest hold). |
 | `MAUDESIGNAL_DEMO_KEYS` | optional | Public demo keys, same format as `MAUDESIGNAL_API_KEYS`; not secret. |
 | `MAUDESIGNAL_DEMO_RATE_PER_MIN` | default `10` | Demo key requests per minute (and 200 per day). |
 | `MAUDESIGNAL_CONTACT_EMAIL` | an address you choose to publish | Shown on `/privacy` and `/terms` at runtime; never in git. |
 | `MAUDESIGNAL_PUBLIC_URL` | optional, e.g. `https://maudesignal-api.vercel.app` | Base URL that `GET /v1/connect` reports. |
 | `META_MODEL_API_KEY` | optional | Leave **unset** until you accept the cost: `ask` then answers from recorded runs. |
-| `MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP` | `1` only if you set the model key without Upstash | Explicit acceptance that the cap and limits are per instance. Not needed with Upstash. |
+| `MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP` | `1` only for local runs without a Blob store | Keeps the same ledger in this one process's memory (resets on restart; several instances do not share it). Never set it on Vercel. |
 
 Production traffic must reach the function without a Vercel login page: in Project > Settings >
 Deployment Protection, make sure Production is not behind Vercel Authentication (or use a custom
@@ -347,12 +351,12 @@ For the Muse connector form: base URL = `$BASE`, auth = API key in the header `X
   `ask` or the model, so it cannot spend Meta credit. A stored-snapshot fallback (openFDA
   unreachable, code is stored) has `check: null` and is not cached.
 * Shared state (optional, `store.py`): with the two Upstash variables set, the per-key rate limit,
-  the per-address limits, the daily cost ledger of `ask`, the six-hour cache and the audit log live
+  the per-address limits, the per-key daily total of `ask`, the six-hour cache and the audit log live
   in Redis; otherwise in memory of one instance (reset on a cold start). `GET /v1/health` says which.
   Tested with a mocked REST client only; **not run against a real Upstash database.** If Redis
   fails: rate limits fall back to the instance's memory, the cache is skipped, the audit append is
-  logged and skipped (the request still answers; `/v1/audit/recent` answers 503), and the cost
-  ledger raises so `ask` falls back to a recorded answer instead of spending without a cap. If the ledger write fails after a model call has already
+  logged and skipped (the request still answers; `/v1/audit/recent` answers 503), and the per-key
+  total raises so `ask` falls back to a recorded answer instead of spending without a cap. If the per-key write fails after a model call has already
   been paid for, it is retried once, then a CRITICAL log line `connector_spend_not_recorded` carries the
   uncounted USD amount and day (no key, no token) so the operator can reconcile it. A cached public
   answer that no longer parses is treated as a miss; the cache key is versioned (`public-check:v1:`).
@@ -594,17 +598,16 @@ and window number exactly what the gate recomputed.
 
 ## Known limits (read before turning the live key on)
 
-1. **Without a shared store, rate limits and the daily cost cap are per server instance.** The
-   per-minute limiter is in memory and the spend ledger is a file in the instance's temporary
-   folder; on Vercel each instance has its own and both reset on a cold start. `/v1/health` reports
-   `limits_scope: per_instance`. Live Muse Spark calls are therefore **off in code** unless
-   either (a) `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are both set (cap and limits
-   are then shared; tested with a mocked client only), or (b) the operator sets
-   `MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP=1`. A model key alone returns recorded answers
-   (`provenance.kind = recorded_answer`). When the key is set but live mode is not allowed, the
-   recorded answer says live calls are switched off on this server (`live_off`); with no key it says
-   none is configured (`no_model`). Before enabling live mode, also put a hard spending limit on the
-   Meta key itself.
+1. **Without a shared store, rate limits are per server instance.** The per-minute limiter is in
+   memory; on Vercel each instance has its own and it resets on a cold start. `/v1/health` reports
+   `limits_scope: per_instance`. The daily Meta spend is different: it is kept in the private Blob
+   store, one object per model call (see "Cost"), and live Muse Spark calls are **off in code**
+   unless `BLOB_READ_WRITE_TOKEN` is set (or, for a local run only, the operator sets
+   `MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP=1`, which keeps that ledger in one process's memory). A
+   model key alone returns recorded answers (`provenance.kind = recorded_answer`). When the key is
+   set but live mode is not allowed, the recorded answer says live calls are switched off on this
+   server (`live_off`); with no key it says none is configured (`no_model`). Before enabling live
+   mode, also put a hard spending limit on the Meta key itself.
    `MAUDESIGNAL_TRUST_FORWARDED=1`: use the first `X-Forwarded-For` entry as the client address
    for rate limiting. **Set it on Vercel** (its edge sets the header); leave it unset anywhere
    else, where the header is caller-controlled and the socket address is used instead.
@@ -612,9 +615,7 @@ and window number exactly what the gate recomputed.
    the real proxy only): by default uvicorn rewrites the client address from `X-Forwarded-For`
    when the peer is `127.0.0.1`, which lets a caller behind a local reverse proxy rotate it.
    With Upstash the per-key limit uses fixed one-minute windows (up to twice the limit can pass
-   across a window edge); the in-memory limiter is sliding. The daily cost cap reserves the per-call
-   cap in Redis before each model call and releases it afterwards, so concurrent instances cannot
-   all pass a read-only check.
+   across a window edge); the in-memory limiter is sliding.
    Other settings: `MAUDESIGNAL_KEY_PEPPER` (server-side secret for the key ids that appear in
    ledger file names and audit session ids; set it), `MAUDESIGNAL_FAILED_AUTH_PER_MIN` (wrong or
    missing keys per client address per minute before 429, default 10). Plain keys shorter than 32
@@ -646,7 +647,7 @@ and window number exactly what the gate recomputed.
 
 # Part 2. MCP server
 
-Submission status: Submitted to Meta's Muse Connector Program — pending review (submitted Oct 30). Not approved or listed.
+Submission status: Submitted to Meta's Muse Connector Program — pending review.
 
 ## Feedback and visits (private)
 
@@ -727,84 +728,60 @@ or `invalid_input`, 429 `rate_limited` with `retry_after_s` and a `Retry-After` 
   (`MAUDESIGNAL_LIVE_PER_MIN`, default 10). The address is only ever a peppered HMAC
   (`MAUDESIGNAL_KEY_PEPPER`), held in memory or in Upstash; it is never in a record and never
   logged. A request that fails validation does not use the daily count.
-- *Cost:* one global cap for every live call, **$3.00 per UTC day** (`MAUDESIGNAL_LIVE_DAILY_USD`),
-  shared by the website routes (ask, voice, label, mentions) and the keyed `ask` tool. Per-request
-  caps: ask 0.25, voice 0.30, label 0.30 (`MAUDESIGNAL_LIVE_ASK_USD`, `_VOICE_USD`, `_LABEL_USD`);
-  mentions costs nothing (no model) and
-  only checks that the cap is not yet reached. The ledger is, in this order: (1) Upstash
-  Redis when configured (atomic, the whole value is enforced); (2) otherwise **one small object
-  per request under each UTC day in the private Blob store** (`BLOB_READ_WRITE_TOKEN`), shared by
-  every instance and kept across cold starts; (3) only without either, a per-instance memory
-  ledger with the cap divided by `MAUDESIGNAL_LIVE_INSTANCE_DIVISOR` (default 2), which resets on a
-  cold start and is not a hard cap; **the live website routes and the outside-mentions search do
-  not run in this third case** (recorded answers only) unless the operator sets
-  `MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP=1`, so a model key with neither Upstash nor a Blob store never
-  spends. **With that override set there is no hard $3 cap**: each instance counts in memory,
-  resets on a cold start, and the keyed `ask` has no cap across keys; the terms page says so
-  whenever the override is set. It is not set in `vercel.json`. With Upstash the enforced cap is also the daily total minus the largest per-request cap
-  (kept for the same reason as below).
-  **Blob ledger design (append-only, one object per request):** there is no shared counter.
-  Each paid request owns exactly one object, `ledger/<UTC-day>/<uuid>.json`.
-  1. *Reserve, before the model call:* the request writes its object `{"hold_usd": h}` (h is the
-     request's cap: ask 0.25, voice 0.30, label 0.30, keyed ask 0.25), then lists the day's
-     prefix and sums every object, its own included: `max(hold_usd, actual_usd)` for EVERY
-     object, settled or not. If the sum is over the enforced
-     cap, the request deletes its own object (failing that, overwrites it with zeros; failing
-     that, the hold stays, which only over-counts) and a recorded answer is shown. Two requests
-     that reserve at the same moment each write before they list, so the later listing sees both.
-  2. *Real cost never passes the hold:* before every model call the spend guard refuses to start
-     it unless the worst case of one call (8,000 output tokens plus 40,000 input tokens at the
-     Spark list prices, about $0.08) still fits in what is left of the request's cap. So a
-     request's real cost `a` is at most its hold `h`. Voice reserves twice on the same ledger
-     (once for the clip, once for the answer); the ledger keeps a stack of reservations per
-     execution context and settles both.
-     *Settle, after the call:* the request overwrites only its own object with
-     `{"hold_usd": h, "actual_usd": a, "settled": true}`. The object still counts `max(h, a)`,
-     so settling never lowers it and a failed settle write changes nothing in the total
-     (a CRITICAL log line `connector_spend_settle_failed` carries the amounts, no key and no
-     address). Should a ever be above h, the excess is written as a new append-only object; if
-     that write fails too, the ledger refuses every later hold (fails closed) until the instance
-     restarts (one ledger object per app state, so this holds for the keyed `ask` too), and logs
-     `connector_spend_excess_not_recorded`. A request whose call was sent but raised or timed
-     out before its cost was recorded (timeout, 5xx, dropped connection) settles at actual 0 and
-     still counts its whole hold, because the count is `max(hold, actual)`; so does a request
-     that dies mid-call. The count can only be too high, never too low. The price of this: every
-     paid request uses up its full hold for the day (voice uses two, 0.30 + 0.29), so about ten
-     live requests fit under the 2.70 threshold whatever they really cost. Tested:
-     `tests/unit/test_connector_ledger_cap.py` (a call that raises after it was sent keeps its
-     hold; 200 requests that each bill $0.10 with nothing recorded are cut off under $3).
-     **With Redis as the global ledger** the same rule holds: a hold is never given back and
-     only the part of a real cost above the hold is added, so a failed Redis write after a paid
-     call cannot lower the day's total. For the keyed `ask`, the global ledger is written
-     before the per-key ledger, so a per-key failure cannot hide a paid call from the global
-     total.
-  3. *Enforced threshold:* `MAUDESIGNAL_LIVE_DAILY_USD` minus the largest single-request cap
-     (default 3.00 - 0.30 = 2.70). Two requests that both pass the check have each counted the
-     other's hold, so together they end at or under the threshold; because a never passes h, the
-     day ends at or under $3.00. Tested with a deterministic two-instance interleave (A puts, B
-     puts, A lists, B lists) with the process lock patched to a no-op, ten requests that each
-     spend up to their hold, settle-failure tests (including a above h) and a voice-route test;
-     a fake store only, **not a real Blob store**.
-  4. *Fail closed:* if the list, a read, the write or the listing limit (20 pages) fails before
-     the call, no model call starts and the answer is a recorded one (the keyed `ask` tool
-     reports reason `cap`). Without Blob or Upstash configured, live calls stay off.
-  5. *Known limit:* this relies on a completed write showing up in the next listing of the store.
-     **Required before live is turned on, and not yet done:** measure put-then-list consistency (a write is listed at once) against the real private store and record the result here. Not measured against a real store: measure one day's listing and reads once before turning
-     live on. Settled objects never change, so each instance reads them once and keeps the amount
-     in memory; objects not yet settled are read every time, eight at a time. A deleted object can disappear between a listing and its
-     read; that object is a refused request's own hold and is skipped.
-  A model call that was paid for but whose cost could not be recorded when no reservation was
-  held is logged as `connector_spend_not_recorded` (USD amount and day only) for the operator to
-  reconcile. No call starts once a cap is reached.
-  **Blob operations.** Every Blob list, put, delete counts as an "advanced operation" on Vercel.
-  A live request does one list and one read per ledger object in the room check, one put, one
-  list, one read per object and (if refused) one delete or overwrite per reserve, and one
-  overwrite to settle; a mentions request does one list and the same reads. A listing that
-  is longer than 20 pages (20,000 objects) fails closed (recorded answer) instead of being summed
-  partly. The monthly allowance for advanced operations depends on the Vercel plan and was not
-  checked here: look it up in the Vercel dashboard (Usage, Blob) before the review. If it runs out
-  the ledger cannot be read or written, so live answers become recorded answers and feedback
-  writes fail; nothing is spent.
+- *Cost:* ONE rule for every Meta call, with a hard ceiling of **$3.00 per UTC day**
+  (`MAUDESIGNAL_LIVE_DAILY_USD`), shared by the website routes (ask, voice, label) and the keyed
+  `ask` tool. In plain words: before each single model call the service reserves that call's
+  worst-case cost; after a successful reply it lowers the reservation to the real cost; a call
+  that fails, times out or returns no usage stays counted at its worst case for the rest of the
+  day. Live calls normally stop at about $2.90, which is $3.00 minus one call's largest hold.
+  Outside mentions makes no Meta call and does not use the ledger. Per-request caps (ask 0.25,
+  voice 0.30, label 0.30; `MAUDESIGNAL_LIVE_ASK_USD`, `_VOICE_USD`, `_LABEL_USD`) only bound one
+  visitor's request and write nothing to the ledger.
+  **How it works** (`src/maudesignal/connector/callcap.py`; the only code that enforces the daily total):
+  1. *What a call is.* Every Muse Spark chat completion (each tool round, the final answer and the
+     repair round), every Voice Transcribe call and every SAM call. The keyed `ask` tool, live ask,
+     live voice (transcription, then the answer) and live label (SAM, then the Spark read) all go
+     through the same function.
+  2. *Worst case of one call.* Spark: the prompt's size (UTF-8 bytes divided by 3, plus a flat
+     8,000 tokens per image) times the input price, plus `max_tokens` times the output price
+     (`max_tokens` is always set on the call, 8,000 by default). SAM: the per-image price
+     ($0.0025). Transcription: the audio seconds, rounded up plus one, times the per-second price.
+     A call whose worst case is above **$0.10** is not made (the largest real holds are about
+     $0.04 for an ask turn and $0.07 for a label read).
+  3. *Reserve.* Write `ledger/<UTC-day>/<uuid>.json` = `{"hold_usd": worst_case}` to the private Blob
+     store, list the day's prefix, and add up each object's counted value: `actual_usd` when the
+     object has `settled_ok` true, else `hold_usd`. If the sum, this call's object included, is
+     above the cap, delete this call's own object and make no call (a recorded answer is shown).
+     If the write, the list, a read or the corrupt-entry check fails, no call is made either.
+  4. *Settle.* Only if the provider returned a successful reply with usage, overwrite this call's own
+     object with `{"hold_usd", "actual_usd", "settled_ok": true}`. On any exception, timeout, missing
+     usage or failed overwrite the object stays as it is and counts its worst case forever. The real
+     cost never exceeds the worst case, so the day's total can only be over-counted. If usage ever
+     did exceed the hold, the real cost is stored and a warning `call_cost_above_hold` is logged.
+  5. *Enforced cap.* Two calls that reserve at the same moment can each pass, so the cap the ledger
+     enforces is **$3.00 minus the largest possible single hold ($0.10) = $2.90**. Two such calls
+     together end at or under $3.00.
+  6. *Per-key totals.* The per-key daily total of the keyed `ask` tool (`MAUDESIGNAL_API_DAILY_USD`)
+     is a separate, smaller limit that counts real cost after a call. It holds nothing and
+     releases nothing in the global ledger.
+  Tested (`tests/unit/test_call_ledger.py`, fake store, no network): hold arithmetic; the hold is on
+  the ledger before the call; hold 0.08 settles to 0.03 and is counted 0.03; an exception after the
+  send, a timeout, a failed settle write and a reply without usage all keep the hold; a failed
+  list, write or read, and a reached cap, give a recorded answer with no call; a deterministic
+  two-instance interleave with a lagging listing (no process lock) ends at $3.00 exactly and never
+  above; a randomized run of 1,000 calls with random failures never counts above $3.00 and never
+  counts less than what was really billed. All with a fake store, **not a real Blob store**.
+  **Known limit, not yet measured:** the rule relies on a completed write showing up in the next
+  listing of the store. Before turning live on, measure put-then-list consistency against the real
+  private store once and record the result here. A listing longer than 20 pages (20,000 objects)
+  fails closed. A deleted object can disappear between a listing and its read; that object is a
+  refused call's own hold and is skipped.
+  **Blob operations.** Each Meta call costs one put, one list, one read per object not yet settled,
+  one overwrite to settle and (if refused) one list and one delete. These count as "advanced
+  operations" on Vercel; the monthly allowance depends on the plan and was not checked here: look it
+  up in the Vercel dashboard (Usage, Blob) before the review. If it runs out the ledger cannot be
+  read or written, so live answers become recorded answers and feedback writes fail; nothing is
+  spent.
 - *Fallback:* with no `META_MODEL_API_KEY`, a cap reached, or any model error, the answer is a
   recorded run and says so (`mode: "recorded"`, with the recorded question or sample photo
   named). A recorded answer is never shown as live. Voice: if the clip cannot be transcribed, a
@@ -884,8 +861,8 @@ not on the page), `personal_details` (an email, phone, age, a title with a name,
 service never uses). Every mention has `badge` "Unverified — not checked against FDA records" and
 is never mixed with claim-gated FDA facts; `source_kind` is the fixed value for FDA-hosted pages (listed in
 `mentions.py`), otherwise `news` or `web`. At most 10 mentions; the whole search ends in under 50 s. Limits: 10 per address
-per UTC day, inside the global cost cap (a read-only check, no hold; refused when the cap is reached or
-the ledger cannot be read). When the cap, the limit or the network stops a live search, the stored
+per UTC day. It makes no Meta call, so it costs nothing and does not use the spend ledger. When the
+limit or the network stops a live search, the stored
 file `demo/mentions/<CODE>.json` answers with `mode: "recorded"` and a `recorded_note`; with no
 file the lists are empty and the note says so. `.github/workflows/mentions-record.yml` writes
 `LLZ.json` (and any codes in the request) when `demo/mentions/REQUEST` changes on `track-c-live`;

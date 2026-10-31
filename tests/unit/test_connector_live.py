@@ -335,8 +335,10 @@ def test_ask_model_error_falls_back_and_never_shows_a_fake_live_answer(tmp_path:
 
 
 def test_global_cost_cap_gives_recorded_and_no_model_call(tmp_path: Path) -> None:
-    # A cap of about 1.5 calls (a call costs $0.000338 here): the first answer is live, then
-    # the cap is reached, so the next request is answered from a recording.
+    # An empty ledger lets the first answer through; once the day's counted total leaves no
+    # room for one more call's worst case, the next request is answered from a recording.
+    from tests.unit.test_connector_batch_o import FakeBlobStore
+
     one_call = json.dumps(
         {
             "sentences": [
@@ -344,14 +346,17 @@ def test_global_cost_cap_gives_recorded_and_no_model_call(tmp_path: Path) -> Non
             ]
         }
     )
+    store = FakeBlobStore()
     env = Env(
         tmp_path,
         spark=RecordingSpark(one_call),
-        config=LiveConfig(daily_usd=0.0005, instance_divisor=1, burst_per_min=99),
+        store=store,
+        config=LiveConfig(daily_usd=3.0, burst_per_min=99),
     )
     first = env.ask().json()
     assert first["mode"] == "live"
     calls = len(env.spark.requests)
+    store.seed_ledger(2.89, NOW.date())  # the Env clock's day; the enforced cap is 2.90
     second = env.ask().json()
     assert second["mode"] == "recorded" and "cost cap" in second["recorded_note"]
     assert len(env.spark.requests) == calls, "no live call once the cap is reached"
@@ -364,22 +369,17 @@ def test_request_cap_is_checked_per_call(tmp_path: Path) -> None:
     assert body["mode"] == "recorded"  # a request budget of 0 never starts a call
 
 
-def test_effective_cap_is_divided_per_instance_and_whole_when_shared() -> None:
-    cfg = LiveConfig(daily_usd=3.0, instance_divisor=2)
-    assert cfg.effective_daily_usd(shared=False) == 1.5
-    assert cfg.effective_daily_usd(shared=True) == 3.0
+def test_live_config_reads_the_environment_and_keeps_defaults_for_bad_values() -> None:
     assert LiveConfig.from_env({}).daily_usd == 3.0 and LiveConfig.from_env({}).ask_per_day == 30
     env = {
         "MAUDESIGNAL_LIVE_DAILY_USD": "5",
-        "MAUDESIGNAL_LIVE_INSTANCE_DIVISOR": "4",
         "MAUDESIGNAL_LIVE_ASK_PER_DAY": "7",
         "MAUDESIGNAL_LIVE_VOICE_PER_DAY": "x",
         "MAUDESIGNAL_LIVE_LABEL_PER_DAY": "-2",
     }
     got = LiveConfig.from_env(env)
-    assert (got.daily_usd, got.instance_divisor, got.ask_per_day) == (5.0, 4, 7)
+    assert (got.daily_usd, got.ask_per_day) == (5.0, 7)
     assert (got.voice_per_day, got.label_per_day) == (10, 5)  # invalid values keep defaults
-    assert got.effective_daily_usd(shared=False) == 1.25
 
 
 def test_shared_ledger_and_counters_when_upstash_is_configured(tmp_path: Path) -> None:
@@ -390,7 +390,7 @@ def test_shared_ledger_and_counters_when_upstash_is_configured(tmp_path: Path) -
     assert env.ask().status_code == 429  # the daily count lives in Redis
     keys = list(fake.kv)
     assert any(":daily:live-ask:" in k for k in keys)
-    assert any(":spend:live-global:" in k for k in keys)  # the cost ledger is the shared one
+    assert not any("live-global" in k for k in keys), "no global ledger in Redis"
     assert not any("testclient" in k for k in keys), "the raw address is never a Redis key"
 
 
@@ -1168,14 +1168,12 @@ def test_live_fails_closed_without_a_shared_ledger(
     """Model key set, but no Upstash and no Blob store: recorded answers, no model call."""
     monkeypatch.delenv("MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP", raising=False)
     env = Env(tmp_path)
-    assert env.state.global_mode == "none"
+    assert not env.state.has_call_ledger
     r = env.ask()
     assert r.status_code == 200 and r.json()["mode"] == "recorded"
     assert env.spark.requests == [], "the model was never called"
     v = env.voice()
     assert v.status_code == 200 and v.json()["mode"] == "recorded"
     assert env.spark.requests == []
-    m = env.client.post("/v1/live/mentions", json={"product_code": "LLZ"})
-    assert m.status_code == 200 and m.json()["mode"] == "recorded"
     monkeypatch.setenv("MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP", "1")
     assert Env(tmp_path).ask().json()["mode"] == "live"

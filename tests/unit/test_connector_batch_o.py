@@ -19,29 +19,15 @@ import pytest
 pytest.importorskip("fastapi")
 
 from maudesignal.connector import mentions as mn  # noqa: E402
-from maudesignal.connector.ask import AskRuntime  # noqa: E402
 from maudesignal.connector.blob_store import (  # noqa: E402
     BlobRef,
-    MemoryStore,
     ObjectGoneError,
     StoreError,
 )
-from maudesignal.connector.data import ConnectorData  # noqa: E402
 from maudesignal.connector.forbidden import forbidden_in  # noqa: E402
-from maudesignal.connector.globalcap import LEDGER_ID, blob_enforced_cap  # noqa: E402
 from maudesignal.connector.live import LiveConfig  # noqa: E402
-from maudesignal.connector.store import (  # noqa: E402
-    BlobLedger,
-    BlobLedgerError,
-    ConnectorState,
-    _Reservation,
-)
-from maudesignal.copilot.spend import DailyLedger, SpendCaps  # noqa: E402
 from tests.unit.test_connector import (
     KEY,
-    SCRIPT,
-    FakeClient,
-    live_runtime,
 )  # noqa: E402
 from tests.unit.test_connector_live import (  # noqa: E402
     ORIGIN,
@@ -139,273 +125,25 @@ class FakeBlobStore:
         with self.lock:
             self.items.pop(ref.pathname, None)
 
-    def seed_ledger(self, usd: float, day: date = DAY, name: str = LEDGER_ID) -> None:
-        """Replace the day's ledger entries with one settled request that cost ``usd``."""
+    def seed_ledger(self, usd: float, day: date = DAY, name: str = "") -> None:
+        """Replace the day's ledger entries with one settled call that cost ``usd``."""
         prefix = f"ledger/{day.isoformat()}/"
         for p in [p for p in self.items if p.startswith(prefix)]:
             del self.items[p]
         self._seeds += 1  # a settled object never changes: a new seed is a new object
         self.items[f"{prefix}{'0' * 31}{self._seeds:x}.json"] = json.dumps(
-            {"hold_usd": usd, "actual_usd": usd, "settled": True}
+            {"hold_usd": usd, "actual_usd": usd, "settled_ok": True}
         ).encode()
 
-    def ledger_usd(self, day: date = DAY, name: str = LEDGER_ID) -> float:
-        """What the ledger counts for the day: max(hold, actual) for every object."""
+    def ledger_usd(self, day: date = DAY, name: str = "") -> float:
+        """What the ledger counts for the day: actual if settled_ok, else the hold."""
         prefix = f"ledger/{day.isoformat()}/"
         total = 0.0
         for p, raw in self.items.items():
             if p.startswith(prefix):
                 rec = json.loads(raw)
-                hold, actual = rec.get("hold_usd", 0.0), rec.get("actual_usd", 0.0)
-                total += max(hold, actual)
+                total += rec["actual_usd"] if rec.get("settled_ok") is True else rec["hold_usd"]
         return total
-
-
-def ledger(store: FakeBlobStore, **kw: Any) -> BlobLedger:
-    return BlobLedger(store, LEDGER_ID, today=lambda: DAY, **kw)
-
-
-# --- 1. durable global ledger (append-only: one object per request) ---------------------------
-
-
-def test_blob_ledger_reserves_then_settles_with_the_real_cost() -> None:
-    store = FakeBlobStore()
-    led = ledger(store)
-    assert led.spent_today() == 0.0  # no objects is a new day
-    assert led.reserve(0.25, 2.7) is True
-    (path,) = store.items
-    assert path.startswith("ledger/2026-10-30/") and path.endswith(".json")
-    assert json.loads(store.items[path]) == {"hold_usd": 0.25}  # written before the call
-    assert store.ledger_usd() == 0.25
-    led.add(0.04, 1)  # the real cost
-    assert json.loads(store.items[path]) == {"hold_usd": 0.25}  # nothing written per call
-    led.release(0.25)  # settle: only our own object is overwritten
-    assert list(store.items) == [path]
-    assert json.loads(store.items[path]) == {"hold_usd": 0.25, "actual_usd": 0.04, "settled": True}
-    assert store.overwrites == 1 and store.puts == 1
-    assert led.spent_today() == pytest.approx(0.25)  # max(hold, actual): the hold stays
-
-
-def test_blob_ledger_refuses_a_hold_over_the_cap_and_removes_its_own_object() -> None:
-    store = FakeBlobStore()
-    store.seed_ledger(2.6)
-    led = ledger(store)
-    assert led.reserve(0.25, 2.7) is False
-    assert store.ledger_usd() == 2.6 and len(store.items) == 1  # our object is gone again
-    assert led.release(0.25) is None  # nothing is held: a no-op
-
-
-def test_a_refused_hold_that_cannot_be_deleted_is_zeroed_or_kept() -> None:
-    store = FakeBlobStore()
-    store.seed_ledger(2.6)
-    store.fail_delete = True
-    assert ledger(store).reserve(0.25, 2.7) is False
-    assert store.ledger_usd() == 2.6  # zeroed in place: a refusal started no model call
-    store2 = FakeBlobStore()
-    store2.seed_ledger(2.6)
-    store2.fail_delete = store2.fail_overwrite = True
-    assert ledger(store2).reserve(0.25, 2.7) is False
-    assert store2.ledger_usd() == pytest.approx(2.85)  # kept: it can only over-count
-
-
-def test_a_hold_that_loses_the_race_is_taken_back() -> None:
-    store = FakeBlobStore()
-    store.seed_ledger(2.5)
-    fired: list[int] = []
-
-    def other_writes(path: str) -> None:
-        if (
-            "ledger/2026-10-30/" in path
-            and not fired
-            and path != f"ledger/2026-10-30/{'0' * 32}.json"
-        ):
-            fired.append(1)  # another instance's hold lands right after ours
-            store.items[f"ledger/2026-10-30/{'b' * 32}.json"] = b'{"hold_usd": 0.25}'
-
-    store.after_put = other_writes
-    assert ledger(store).reserve(0.25, 2.8) is False  # 2.5 + 0.25 + 0.25 > 2.8
-    assert store.ledger_usd() == pytest.approx(2.75)  # only the other hold is left; ours is gone
-
-
-def test_cold_start_keeps_the_total() -> None:
-    store = FakeBlobStore()
-    assert ledger(store).reserve(1.0, 2.7)
-    fresh = ledger(store)  # a new object, as after a cold start: only the store remembers
-    assert fresh.spent_today() == 1.0  # an unsettled hold still counts
-    assert fresh.reserve(1.0, 2.7) and not fresh.reserve(1.0, 2.7)
-
-
-def _interleaved(
-    store: FakeBlobStore, cap: float, hold: float
-) -> tuple[bool, bool, BlobLedger, BlobLedger]:
-    """The worst-case order: A puts, B puts, A lists, B lists, then each decides.
-
-    ``a.reserve`` runs for real; B's steps are driven from hooks on A's put and A's listing,
-    using the same helpers ``reserve`` uses, so both listings happen before either hold is
-    taken back.
-    """
-    a, b = ledger(store), ledger(store)
-    day = DAY.isoformat()
-    state: dict[str, Any] = {}
-
-    def after_a_put(_path: str) -> None:
-        if "b_path" not in state:
-            state["b_path"] = ""  # set first: B's own put fires this hook again
-            state["b_path"] = b._write_new(day, {"hold_usd": hold})  # B puts
-
-    def after_a_list(_prefix: str) -> None:
-        if "b_ok" not in state:  # B lists (A has already listed), before A decides
-            store.after_list = None
-            total, _refs = b._sum(day)
-            state["b_ok"] = total <= cap + 1e-9
-            if state["b_ok"]:
-                b._push(_Reservation(day, state["b_path"], hold))
-            else:
-                b._drop(day, state["b_path"])
-
-    store.after_put, store.after_list = after_a_put, after_a_list
-    got_a = a.reserve(hold, cap)
-    store.after_put = store.after_list = None
-    return got_a, bool(state["b_ok"]), a, b
-
-
-def test_two_instances_interleaved_with_room_for_only_one_both_are_refused(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Deterministic two-instance interleave; the process lock is patched to a no-op.
-
-    Both write their hold before either lists, so each listing sees both holds. With room for
-    one only (cap 0.30, holds 0.25) they cannot both pass, and what stays is within the cap.
-    """
-    monkeypatch.setattr(DailyLedger, "_lock", _NoLock())  # the ledger must not rely on a lock
-    store = FakeBlobStore()
-    got_a, got_b, _, _ = _interleaved(store, cap=0.30, hold=0.25)
-    assert not (got_a and got_b)
-    assert store.ledger_usd() <= 0.30 + 1e-9
-    assert store.ledger_usd() == pytest.approx(0.25 * (got_a + got_b))
-
-
-def test_two_instances_interleaved_that_both_pass_end_under_the_daily_total(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(DailyLedger, "_lock", _NoLock())
-    store = FakeBlobStore()
-    store.seed_ledger(2.0)
-    cap = blob_enforced_cap({})  # 3.00 minus the largest single-request cap = 2.70
-    got_a, got_b, a, b = _interleaved(store, cap=cap, hold=0.30)
-    assert got_a is True and got_b is True  # 2.00 + 0.30 + 0.30 = 2.60 <= 2.70
-    a.add(0.30, 1)
-    b.add(0.30, 1)  # each pays its full hold
-    a.release(0.30)
-    b.release(0.30)
-    assert store.ledger_usd() == pytest.approx(2.60)
-    assert store.ledger_usd() <= 3.0
-    # one more small request fits under the enforced cap, the next large one does not
-    assert ledger(store).reserve(0.10, cap) is True
-    assert ledger(store).reserve(0.30, cap) is False
-
-
-def test_concurrent_reservations_never_pass_the_cap() -> None:
-    store = FakeBlobStore()
-    results: list[bool] = []
-    guard = threading.Lock()
-
-    def worker() -> None:
-        ok = ledger(store).reserve(0.25, 2.7)  # separate objects, as separate requests
-        with guard:
-            results.append(ok)
-
-    threads = [threading.Thread(target=worker) for _ in range(40)]
-    for t in threads:
-        t.start()
-    for t in threads:
-        t.join()
-    # no process lock exists: overlapping holds may refuse each other (fail closed), never pass
-    assert sum(results) <= 10
-    assert store.ledger_usd() <= 2.7
-    assert store.ledger_usd() == pytest.approx(0.25 * sum(results))
-
-
-def test_settle_failure_keeps_the_hold_and_can_only_over_count() -> None:
-    store = FakeBlobStore()
-    led = ledger(store)
-    assert led.reserve(0.25, 2.7)
-    led.add(0.04, 1)
-    store.fail_overwrite = True  # the write after the paid call fails
-    led.release(0.25)
-    (path,) = store.items
-    assert json.loads(store.items[path]) == {"hold_usd": 0.25}  # the hold is still in place
-    assert store.ledger_usd() == 0.25  # counted at the hold, never lower
-    assert ledger(store).spent_today() == 0.25
-    assert led.release(0.25) is None  # a second settle has nothing to do
-
-
-def test_add_without_a_reservation_writes_its_own_object() -> None:
-    store = FakeBlobStore()
-    led = ledger(store)
-    assert led.add(0.05, 1) == pytest.approx(0.05)
-    (rec,) = (json.loads(v) for v in store.items.values())
-    assert rec["hold_usd"] == 0.0 and rec["actual_usd"] == 0.05
-    store.fail_put = True
-    with pytest.raises(BlobLedgerError):
-        led.add(0.05, 1)
-
-
-def test_unreadable_unwritable_or_corrupt_ledger_fails_closed() -> None:
-    store = FakeBlobStore()
-    store.fail_list = True
-    with pytest.raises(BlobLedgerError):
-        ledger(store).reserve(0.25, 2.7)
-    with pytest.raises(BlobLedgerError):
-        ledger(store).spent_today()
-    store.fail_list = False
-    store.fail_put = True
-    with pytest.raises(BlobLedgerError):
-        ledger(store).reserve(0.25, 2.7)
-    store.fail_put = False
-    store.items["ledger/2026-10-30/garbage.json"] = b"not json"
-    with pytest.raises(BlobLedgerError):
-        ledger(store).reserve(0.25, 2.7)  # an unparseable entry is an error, never zero
-    with pytest.raises(BlobLedgerError):
-        ledger(store).spent_today()
-    assert "ledger/2026-10-30/garbage.json" in store.items
-    # our own holds are not left counting after the failed sums: deleted, or zeroed in place
-    others = [json.loads(v) for k, v in store.items.items() if not k.endswith("garbage.json")]
-    assert all(o == {"hold_usd": 0.0, "actual_usd": 0.0} for o in others)
-
-
-def test_a_failed_read_after_our_write_takes_the_hold_back() -> None:
-    store = FakeBlobStore()
-    store.after_put = lambda _p: setattr(store, "fail_list", True)
-    with pytest.raises(BlobLedgerError):
-        ledger(store).reserve(0.25, 2.7)
-    store.fail_list = False
-    store.after_put = None
-    assert len(store.items) in (0, 1)  # deleted, or zeroed/kept if deleting failed
-    assert store.ledger_usd() <= 0.25
-
-
-def test_enforced_cap_is_the_daily_total_minus_the_largest_request() -> None:
-    assert blob_enforced_cap({}) == pytest.approx(3.0 - 0.30)
-    env = {"MAUDESIGNAL_LIVE_DAILY_USD": "3", "MAUDESIGNAL_API_REQUEST_USD": "0.5"}
-    assert blob_enforced_cap(env) == pytest.approx(2.5)
-    cfg = LiveConfig(daily_usd=3.0, ask_usd=0.25, voice_usd=0.3, label_usd=0.3)
-    assert cfg.effective_daily_usd(shared=True, race_margin=cfg.largest_request_usd({})) == 2.7
-
-
-def test_state_picks_blob_only_for_a_private_blob_store() -> None:
-    state = ConnectorState()
-    assert state.global_mode == "none" and state.global_ledger("x") is None
-    state.attach_blob(MemoryStore())
-    assert state.global_mode == "none"
-    state.attach_blob(FakeBlobStore())
-    assert state.global_mode == "blob" and isinstance(state.global_ledger("x"), BlobLedger)
-
-
-def test_without_blob_or_upstash_live_calls_stay_off(tmp_path: Path) -> None:
-    env = Env(tmp_path, config=LiveConfig(daily_usd=3.0, burst_per_min=1000, ask_per_day=1000))
-    body = env.ask().json()
-    assert body["mode"] == "recorded" and not env.spark.requests
 
 
 def blob_env(tmp_path: Path, store: FakeBlobStore, **kw: Any) -> Env:
@@ -415,122 +153,6 @@ def blob_env(tmp_path: Path, store: FakeBlobStore, **kw: Any) -> Env:
         config=LiveConfig(daily_usd=3.0, burst_per_min=1000, ask_per_day=1000),
         **kw,
     )
-
-
-def test_live_ask_reserves_before_the_call_and_settles_on_the_shared_ledger(tmp_path: Path) -> None:
-    store = FakeBlobStore()
-    seen_during_call: list[float] = []
-    env = blob_env(tmp_path, store)
-    original = env.spark._create
-
-    def watching(**kwargs: Any) -> Any:
-        seen_during_call.append(store.ledger_usd())  # the hold is already on the ledger
-        return original(**kwargs)
-
-    env.spark.chat.completions.create = watching  # type: ignore[assignment]
-    body = env.ask().json()
-    assert body["mode"] == "live"
-    assert seen_during_call and seen_during_call[0] >= 0.25
-    after = store.ledger_usd()
-    assert after == pytest.approx(0.25)  # max(hold, actual): the hold stays after settling
-    assert 0 < body["cost_usd"] <= after + 1e-5  # the real cost never passes the hold
-    assert len(store.items) == 1  # one object for the one request
-
-
-def test_cold_start_keeps_the_cap_through_the_route(tmp_path: Path) -> None:
-    store = FakeBlobStore()
-    store.seed_ledger(2.6)  # yesterday's instance left this behind; the enforced cap is 2.70
-    env = blob_env(tmp_path, store)  # a brand new app, as after a cold start
-    body = env.ask().json()
-    assert body["mode"] == "recorded" and not env.spark.requests
-    assert store.ledger_usd() == 2.6  # nothing was held or added
-
-
-def test_unreadable_ledger_gives_a_recorded_answer_and_no_model_call(tmp_path: Path) -> None:
-    store = FakeBlobStore()
-    env = blob_env(tmp_path, store)
-    store.fail_list = True
-    body = env.ask().json()
-    assert body["mode"] == "recorded" and not env.spark.requests
-    store.fail_list = False
-    store.fail_put = True
-    assert env.ask().json()["mode"] == "recorded" and not env.spark.requests
-
-
-def test_settle_failure_through_the_route_leaves_the_hold(tmp_path: Path) -> None:
-    store = FakeBlobStore()
-    env = blob_env(tmp_path, store)
-    store.fail_overwrite = True
-    body = env.ask().json()
-    assert body["mode"] == "live"  # the answer was already paid for and is shown
-    assert store.ledger_usd() >= 0.25  # but the day's count kept the hold, never less
-    store.fail_overwrite = False
-
-
-def test_total_never_exceeds_the_daily_cap_over_many_asks(tmp_path: Path) -> None:
-    store = FakeBlobStore()
-    store.seed_ledger(2.40)
-    env = blob_env(tmp_path, store)
-    modes = []
-    for _ in range(30):
-        modes.append(env.ask().json()["mode"])
-        assert store.ledger_usd() <= 3.0
-    assert "live" in modes  # room for one more hold below the enforced cap of 2.70
-    store.seed_ledger(2.69)  # the hold no longer fits: stored answers from here on
-    calls = len(env.spark.requests)
-    assert [env.ask().json()["mode"] for _ in range(5)] == ["recorded"] * 5
-    assert len(env.spark.requests) == calls and store.ledger_usd() == 2.69
-
-
-def test_keyed_ask_counts_against_the_same_global_ledger(tmp_path: Path) -> None:
-    store = FakeBlobStore()
-    state = ConnectorState()
-    state.attach_blob(store)
-    today = datetime.now(UTC).date()
-    d = ConnectorData(work_dir=tmp_path / "w")
-    client = FakeClient(SCRIPT)
-    rt = live_runtime(tmp_path, client)
-    rt.state = state
-    from maudesignal.connector.ask import ask
-
-    a = ask(d, "How many LLZ reports this week?", key_id="abc", runtime=rt)
-    assert a.provenance.kind == "live_model"
-    spent = store.ledger_usd(today)
-    key_spent = rt.ledger_for("abc").spent_today()
-    assert 0 < key_spent <= spent  # the global ledger counts max(hold, actual) >= the real cost
-    assert spent == pytest.approx(rt.caps.session_usd)
-    # the global cap is shared with the live routes: at the cap the keyed tool answers recorded
-    store.seed_ledger(2.69, today)
-    calls = client.n
-    b = ask(d, "How many LLZ reports this week?", key_id="abc", runtime=rt)
-    assert b.provenance.kind == "recorded_answer" and client.n == calls
-    store.fail_list = True
-    from maudesignal.connector import ask as ask_mod
-
-    reasons: list[str] = []
-    real = ask_mod._outcome_recorded
-
-    def spy(best: Any, reason: str, *a: Any, **kw: Any) -> Any:
-        reasons.append(reason)
-        return real(best, reason, *a, **kw)
-
-    ask_mod._outcome_recorded = spy  # type: ignore[assignment]
-    try:
-        c = ask(d, "How many LLZ reports this week?", key_id="abc", runtime=rt)
-    finally:
-        ask_mod._outcome_recorded = real  # type: ignore[assignment]
-    assert c.provenance.kind == "recorded_answer" and client.n == calls  # fail closed
-    assert reasons == ["cap"]  # not "model_error": the ledger, not the model, was unavailable
-
-
-class _NoLock:
-    """A process lock that does nothing (proves the ledger does not rely on one)."""
-
-    def __enter__(self) -> None:
-        return None
-
-    def __exit__(self, *exc: object) -> None:
-        return None
 
 
 # --- 3. outside mentions -------------------------------------------------------------------
@@ -827,26 +449,15 @@ def test_route_falls_back_to_the_stored_file_when_nothing_is_reachable(tmp_path:
     )
 
 
-def test_mentions_are_inside_the_global_cost_cap_even_without_a_model(tmp_path: Path) -> None:
+def test_mentions_make_no_meta_call_and_write_nothing_to_the_ledger(tmp_path: Path) -> None:
     store = FakeBlobStore()
-    store.seed_ledger(2.70)  # the enforced cap is 2.70
-    make_recorded(tmp_path / "stored")
+    store.seed_ledger(2.90)  # the daily ledger is full: a free route does not care
     http = standard_http()
-    env = blob_env(tmp_path, store, fetcher=http, mentions_dir=tmp_path / "stored")
-    b = env.client.post("/v1/live/mentions", json={"product_code": "LLZ"}).json()
-    assert b["mode"] == "recorded" and "budget is used up" in b["recorded_note"]
-    assert http.requested == [], "no fetch starts once the cap is reached"
-    assert store.ledger_usd() == 2.70
-    store.fail_list = True  # unreadable ledger: fail closed
-    assert (
-        env.client.post("/v1/live/mentions", json={"product_code": "LLZ"}).json()["mode"]
-        == "recorded"
-    )
-    store.fail_list = False
-    store.seed_ledger(1.0)
+    env = blob_env(tmp_path, store, fetcher=http)
     ok = env.client.post("/v1/live/mentions", json={"product_code": "LLZ"}).json()
-    assert ok["mode"] == "live" and store.ledger_usd() == 1.0
-    assert len(store.items) == 1  # a free route writes nothing to the ledger
+    assert ok["mode"] == "live" and http.requested
+    assert len(store.items) == 1 and store.ledger_usd() == 2.90
+    assert not env.spark.requests
 
 
 def test_mentions_per_ip_limit_is_ten_per_day(tmp_path: Path) -> None:
@@ -1195,14 +806,16 @@ def test_no_address_key_or_query_text_in_logs_or_the_ledger(
     for needle in ("testclient", KEY, "secret device phrase", "unique-question-marker"):
         assert needle not in stored_text
     ledger_docs = [json.loads(v) for k, v in store.items.items() if k.startswith("ledger/")]
-    assert ledger_docs and all(set(d) == {"hold_usd", "actual_usd", "settled"} for d in ledger_docs)
+    assert ledger_docs and all(
+        set(d) in ({"hold_usd"}, {"hold_usd", "actual_usd", "settled_ok"}) for d in ledger_docs
+    )
 
 
 def test_no_redis_key_or_limiter_key_contains_the_raw_address(tmp_path: Path) -> None:
     """Failed-key counters and the public-check limiter see only a peppered hash."""
     import httpx
 
-    from maudesignal.connector.store import UpstashClient
+    from maudesignal.connector.store import ConnectorState, UpstashClient
     from tests.unit.test_connector_store import TOKEN, URL, FakeRedis
 
     fake = FakeRedis()
@@ -1289,35 +902,3 @@ def test_blob_listing_longer_than_the_page_limit_fails_closed() -> None:
     assert len(store.list_prefix("ledger/")) == bs.MAX_LIST_PAGES  # exports keep the old cut-off
     with pytest.raises(bs.StoreError):
         store.list_prefix("ledger/", strict=True)
-
-
-def test_blob_ledger_add_writes_once_and_does_not_list_again() -> None:
-    store = FakeBlobStore()
-    led = ledger(store)
-    assert led.reserve(0.25, 3.0)
-    lists = 0
-    orig = store.list_prefix
-
-    def counting(prefix: str, *, strict: bool = False) -> list[BlobRef]:
-        nonlocal lists
-        lists += 1
-        return orig(prefix, strict=strict)
-
-    store.list_prefix = counting  # type: ignore[method-assign]
-    total = led.add(0.1, 1)  # no I/O at all: the cost is kept for the settle
-    assert lists == 0 and store.puts == 1 and total == pytest.approx(0.1)
-    assert store.ledger_usd() == pytest.approx(0.25)  # in flight: still counted at the hold
-    led.release(0.25)
-    assert store.ledger_usd() == pytest.approx(0.25)  # settled: max(hold, actual) = the hold
-
-
-def test_upstash_mode_also_keeps_the_margin_for_the_keyed_ask() -> None:
-    from types import SimpleNamespace
-
-    rt = AskRuntime(
-        agent_factory=lambda d, g: None,  # type: ignore[arg-type, return-value]
-        live_enabled=lambda: True,
-        caps=SpendCaps(session_usd=0.25, session_calls=20, daily_usd=3.0),
-        state=SimpleNamespace(global_mode="upstash"),  # type: ignore[arg-type]
-    )
-    assert rt.global_cap() == pytest.approx(2.7)  # 3.00 minus the largest request cap (0.30)

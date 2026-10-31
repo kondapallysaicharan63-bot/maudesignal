@@ -18,7 +18,7 @@ from maudesignal.connector.data import PROJECT_ROOT, ConnectorData  # noqa: E402
 from maudesignal.connector.models import ADVISORY  # noqa: E402
 from maudesignal.connector.openapi import build_spec, render  # noqa: E402
 from maudesignal.connector.security import KeyStore, RateLimiter  # noqa: E402
-from tests.unit.test_connector import KEY, fake_check, offline  # noqa: E402
+from tests.unit.test_connector import KEY, fake_check, fake_meter, offline  # noqa: E402
 
 H = {"X-API-Key": KEY}
 TOOL_CALLS: list[tuple[str, str, dict[str, Any]]] = [
@@ -124,7 +124,12 @@ def test_cost_cap_falls_back_to_recorded_answer_over_http(
     def boom(*_: Any) -> Any:
         raise AssertionError("no live call after the cap")
 
-    rt = AskRuntime(agent_factory=boom, live_enabled=lambda: True, ledger_dir=tmp_path / "led")
+    rt = AskRuntime(
+        agent_factory=boom,
+        live_enabled=lambda: True,
+        ledger_dir=tmp_path / "led",
+        meter=fake_meter(),
+    )
     key_id = KeyStoreId.of(KEY)
     rt.ledger_for(key_id).add(rt.caps.daily_usd + 1, 1)
     c = TestClient(

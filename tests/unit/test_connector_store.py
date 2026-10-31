@@ -287,28 +287,12 @@ def test_ledger_add_logs_critical_with_the_amount_when_redis_fails_after_the_spe
     assert TOKEN not in dumped and "abc" not in dumped
 
 
-def test_two_interleaved_guards_cannot_both_pass_the_last_of_the_daily_budget() -> None:
-    """Reserve-before-call: instance B is refused while A's call is still running."""
-    fake = FakeRedis()
-    day = date(2026, 10, 29)
-    a = UpstashLedger(make_state(fake)._client, "abc", today=lambda: day)  # type: ignore[arg-type]
-    b = UpstashLedger(make_state(fake)._client, "abc", today=lambda: day)  # type: ignore[arg-type]
-    assert a.reserve(0.25, 0.30) is True  # A holds its per-call cap, then calls the model
-    assert b.reserve(0.25, 0.30) is False  # B's hold would pass the cap: refused, nothing held
-    assert a.spent_today() == pytest.approx(0.25)
-    a.add(0.04, 1)  # A's real cost
-    a.release(0.25)
-    assert a.spent_today() == pytest.approx(0.04)
-    assert b.reserve(0.25, 0.30) is True  # the rest of the budget is available again
-    b.release(0.25)
-
-
-def test_release_failure_is_logged_not_raised() -> None:
-    fake = FakeRedis()
-    led = UpstashLedger(make_state(fake)._client, "abc", today=lambda: date(2026, 10, 29))  # type: ignore[arg-type]
-    assert led.reserve(0.25, 2.0)
-    fake.fail = True
-    led.release(0.25)  # must not raise
+def test_per_key_ledger_has_no_hold_and_no_release() -> None:
+    """The per-key total only counts real spend after a call; there is nothing to give back."""
+    led = UpstashLedger(make_state(FakeRedis())._client, "abc", today=lambda: date(2026, 10, 29))  # type: ignore[arg-type]
+    assert not hasattr(led, "reserve") and not hasattr(led, "release")
+    led.add(0.04, 1)
+    assert led.spent_today() == pytest.approx(0.04)
 
 
 def test_rate_limit_bucket_and_time_left_use_one_clock_read() -> None:

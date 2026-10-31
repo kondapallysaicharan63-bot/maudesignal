@@ -76,7 +76,7 @@
   <ul>
     <li>Per key: {{RATE}} requests per minute{{WINDOW}}. Past that: <code>429</code> with <code>Retry-After</code>.</li>
     <li><code>ask</code>: at most ${{REQUEST_USD}} of model cost per call and ${{DAILY_USD}} per key per UTC day. After the cap, <code>ask</code> returns the closest recorded answer, labelled recorded.</li>
-    <li>State (rate limits, daily cost ledger, six-hour cache, audit log) is {{SCOPE}}.</li>
+    <li>State (rate limits, per-key daily totals, six-hour cache, audit log) is {{SCOPE}}.</li>
   </ul>
 
   <h2 id="provenance">Data provenance</h2>

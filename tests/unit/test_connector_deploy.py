@@ -24,7 +24,8 @@ from maudesignal.connector.models import ADVISORY  # noqa: E402
 from maudesignal.connector.security import KeyStore, RateLimiter  # noqa: E402
 from maudesignal.connector.store import ConnectorState  # noqa: E402
 from maudesignal.monitor.live_check import LiveCheck  # noqa: E402
-from tests.unit.test_connector import KEY, NOW, fake_check  # noqa: E402
+from tests.unit.test_connector import KEY, NOW, fake_check, fake_meter  # noqa: E402
+from tests.unit.test_connector_batch_o import FakeBlobStore  # noqa: E402
 from tests.unit.test_connector_safety import (  # noqa: E402
     BLOCKED,
     BLOCKED_SCRIPT,
@@ -59,7 +60,9 @@ def make(
     keys: str = KEY,
     runtime: AskRuntime | None = None,
     origins: tuple[str, ...] = (ORIGIN,),
+    store: Any = None,
 ) -> TestClient:
+    extra: dict[str, Any] = {} if store is None else {"feedback_store": store}
     settings = Settings(
         keys=KeyStore.from_env({"MAUDESIGNAL_API_KEYS": keys}),
         limiter=RateLimiter(limit),
@@ -71,6 +74,7 @@ def make(
         now=lambda: NOW,
         state=state or ConnectorState(),
         web_origins=origins,
+        **extra,
     )
     return TestClient(create_app(settings), raise_server_exceptions=False)
 
@@ -339,43 +343,44 @@ def test_in_memory_health_says_per_instance(data: ConnectorData, tmp_path: Path)
     assert h["state_store"] == "in_memory_per_instance" and h["limits_scope"] == "per_instance"
 
 
-def test_live_ask_needs_the_override_unless_a_shared_store_is_configured(
+def test_live_ask_needs_a_private_ledger_store_or_the_local_override(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.delenv("MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP", raising=False)
-    monkeypatch.delenv("UPSTASH_REDIS_REST_URL", raising=False)
-    monkeypatch.delenv("UPSTASH_REDIS_REST_TOKEN", raising=False)
-    monkeypatch.setenv("META_MODEL_API_KEY", "x" * 12)
-    assert live_mode_allowed() is False
+    monkeypatch.delenv("BLOB_READ_WRITE_TOKEN", raising=False)
     monkeypatch.setenv("UPSTASH_REDIS_REST_URL", URL)
-    assert live_mode_allowed() is False  # URL without token is not a store
     monkeypatch.setenv("UPSTASH_REDIS_REST_TOKEN", TOKEN)
+    monkeypatch.setenv("META_MODEL_API_KEY", "x" * 12)
+    assert live_mode_allowed() is False  # Redis holds no spend ledger any more
+    monkeypatch.setenv("BLOB_READ_WRITE_TOKEN", "vercel_blob_rw_test")
+    assert live_mode_allowed() is True  # the private Blob store keeps the per-call ledger
+    monkeypatch.delenv("BLOB_READ_WRITE_TOKEN")
+    monkeypatch.setenv("MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP", "1")
     assert live_mode_allowed() is True
     monkeypatch.delenv("META_MODEL_API_KEY")
     assert live_mode_allowed() is False  # a store alone never switches the model on
 
 
-def test_shared_ledger_is_used_by_ask_and_a_redis_outage_falls_back_to_recorded(
+def test_per_key_daily_total_stays_in_redis_and_the_global_ledger_is_never_there(
     tmp_path: Path,
 ) -> None:
     fake = FakeRedis()
     state = make_state(fake)
+    store = FakeBlobStore()
+    state.attach_blob(store)
     d = ConnectorData(work_dir=tmp_path / "w")
     rt = live_rt(tmp_path, OneAnswerClient(BLOCKED_SCRIPT))
     rt.state = state
-    c = make(d, tmp_path, runtime=rt, state=state)
+    rt.meter = None  # use the state's private Blob ledger, as in production
+    c = make(d, tmp_path, runtime=rt, state=state, store=store)
     ok = c.post("/v1/tools/ask", json={"question": "How many LLZ reports this week?"}, headers=H)
     assert ok.json()["provenance"]["kind"] == "live_model"
-    assert any(k.startswith("maudesignal:connector:spend:") for k in fake.kv)
-    per_key = [
-        float(v)
-        for k, v in fake.kv.items()
-        if k.endswith(":usd") and ":spend:" in k and ":live-global:" not in k
-    ]
-    glob = [float(v) for k, v in fake.kv.items() if k.endswith(":usd") and ":live-global:" in k]
-    assert per_key and all(u < rt.caps.session_usd for u in per_key)  # the key's hold was released
-    assert glob and all(u >= rt.caps.session_usd - 1e-9 for u in glob)  # the global hold stays
-    fake.fail = True  # cap cannot be read: no live spend, the recorded answer is returned
+    usd_keys = [k for k in fake.kv if k.endswith(":usd")]
+    assert usd_keys and all(":spend:" in k and "live-global" not in k for k in usd_keys)
+    assert all(float(fake.kv[k]) < rt.caps.session_usd for k in usd_keys)  # real cost, no hold
+    docs = [json.loads(v) for k, v in store.items.items() if k.startswith("ledger/")]
+    assert docs and all(set(x) <= {"hold_usd", "actual_usd", "settled_ok"} for x in docs)
+    fake.fail = True  # the key's total cannot be read: no live spend, a recorded answer
     down = c.post("/v1/tools/ask", json={"question": "What changed this week for LLZ?"}, headers=H)
     assert down.status_code == 200 and down.json()["provenance"]["kind"] == "recorded_answer"
 
@@ -600,7 +605,12 @@ def test_public_route_never_spends_model_credit_and_exposes_no_ask(tmp_path: Pat
         raise AssertionError("the model must not be called from the public route")
 
     d = ConnectorData(work_dir=tmp_path / "w")
-    rt = AskRuntime(agent_factory=boom, live_enabled=lambda: True, ledger_dir=tmp_path / "led")
+    rt = AskRuntime(
+        agent_factory=boom,
+        live_enabled=lambda: True,
+        ledger_dir=tmp_path / "led",
+        meter=fake_meter(),
+    )
     c = make(d, tmp_path, runtime=rt)
     assert public(c).status_code == 200
     assert c.post("/v1/public/ask", json={"question": "hello there"}).status_code in (404, 405)

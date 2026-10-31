@@ -33,22 +33,14 @@ from typing import Any
 
 from maudesignal.common.logging import get_logger
 from maudesignal.connector import links
+from maudesignal.connector.callcap import CallMeter
 from maudesignal.connector.data import ConnectorData
 from maudesignal.connector.errors import InvalidInputError, SourceUnavailableError
 from maudesignal.connector.forbidden import is_clean
-from maudesignal.connector.globalcap import (
-    LEDGER_ID as GLOBAL_LEDGER_ID,
-)
-from maudesignal.connector.globalcap import blob_enforced_cap, global_daily_usd
 from maudesignal.connector.models import Fact, Provenance, ToolAnswer, WithheldSentence
 from maudesignal.connector.readonly import make_read_only
 from maudesignal.connector.speech import compose, plural, speak_date
-from maudesignal.connector.store import (
-    RESERVING_LEDGERS,
-    ConnectorState,
-    UpstashError,
-    shared_store_configured,
-)
+from maudesignal.connector.store import ConnectorState
 from maudesignal.connector.tools import Clock, _stamp, utc_now
 from maudesignal.copilot.agent import CopilotAgent, CopilotResult
 from maudesignal.copilot.spend import (
@@ -171,17 +163,16 @@ ALLOW_PER_INSTANCE_ENV = "MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP"
 
 
 def live_mode_allowed() -> bool:
-    """True only when the model key is set AND the spend cap is shared or accepted per instance.
+    """True only when the model key is set AND a per-call spend ledger can be kept.
 
-    Without a shared store the daily cost cap is a file on one server instance and the rate
-    limit is in memory, so on serverless hosting both reset on a cold start: live Muse Spark
-    calls then need the explicit override ``MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP=1``. With the
-    Upstash variables set (``store.py``) the cap and the limits are shared by every instance
-    and the override is not needed. A model key alone, with neither, returns recorded answers.
+    Every Meta call reserves its worst-case cost in the private Blob store first (see
+    ``callcap``). Without that store the daily total cannot be kept across serverless
+    instances, so live Muse Spark calls need the explicit local-only override
+    ``MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP=1`` (an in-memory ledger of this one process). A model
+    key alone returns recorded answers.
     """
     return bool(os.environ.get("META_MODEL_API_KEY")) and (
-        shared_store_configured()
-        or bool(os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip())
+        bool(os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip())
         or os.environ.get(ALLOW_PER_INSTANCE_ENV, "").strip() == "1"
     )
 
@@ -192,26 +183,6 @@ def _env_float(name: str, default: float) -> float:
     except ValueError:
         return default
     return value if value >= 0 else default
-
-
-class _TeeLedger(DailyLedger):
-    """A key's ledger whose spend is also added to the global live ledger."""
-
-    def __init__(self, primary: DailyLedger, shared: DailyLedger) -> None:
-        super().__init__(Path(os.devnull))
-        self._primary, self._shared = primary, shared
-
-    def spent_today(self) -> float:
-        return self._primary.spent_today()
-
-    def add(self, usd: float, calls: int) -> float:
-        # The global ledger first, and always: if the per-key write raises, the paid call must
-        # still reach the global total.
-        try:
-            self._shared.add(usd, calls)
-        finally:
-            total = self._primary.add(usd, calls)
-        return total
 
 
 @dataclass
@@ -235,24 +206,21 @@ class AskRuntime:
         )
     )
     state: ConnectorState | None = None
+    #: An explicit per-call reservation (tests, and the live website routes).
+    meter: CallMeter | None = None
 
-    def global_ledger(self) -> DailyLedger | None:
-        """The global live ledger (Redis or Blob) every live call is also counted against.
-
-        One object per state, so its "a cost could not be recorded" flag outlives a request.
-        """
-        return self.state.global_ledger(GLOBAL_LEDGER_ID) if self.state else None
-
-    def global_cap(self) -> float:
-        """The cap enforced on the global ledger (minus the largest request cap)."""
-        if self.state is not None and self.state.global_mode in ("blob", "upstash"):
-            # Also with Redis: the guard checks the budget before a call, so the last call of
-            # a request can pass the hold by one call's cost; the margin keeps the total under.
-            return blob_enforced_cap()
-        return global_daily_usd()
+    def call_meter(self) -> CallMeter | None:
+        """The per-call reservation every Meta call goes through (``None``: live is off)."""
+        if self.meter is not None:
+            return self.meter
+        if self.state is None:
+            return None
+        local = os.environ.get(ALLOW_PER_INSTANCE_ENV, "").strip() == "1"
+        ledger = self.state.call_ledger(allow_memory=local)
+        return CallMeter(ledger) if ledger is not None else None
 
     def ledger_for(self, key_id: str) -> DailyLedger:
-        """The UTC-day spend ledger of one API key (kept apart per key).
+        """The UTC-day spend ledger of one API key (kept apart per key; a per-key cap only).
 
         With a shared store the ledger is in Redis. Otherwise it is a file on the server
         instance, so on serverless hosting it is per instance and resets on a cold start;
@@ -595,6 +563,18 @@ def recorded_voice_answer(data: ConnectorData, reason: str = "no_transcript") ->
     return _outcome_recorded(best, reason, data, started)
 
 
+def _fallback(
+    data: ConnectorData, q: str, spoken: bool, reason: str, started: float, attempt_ms: float
+) -> AskOutcome:
+    """The recorded answer for ``q`` (labelled with why), or an error when nothing is stored."""
+    if not data.transcripts():
+        raise SourceUnavailableError(
+            "No live answer is available and no recorded answers are stored."
+        )
+    best, _ = _recorded_pool(data, q, voice=spoken)
+    return _outcome_recorded(best, reason, data, started, attempt_ms)
+
+
 def ask(
     data: ConnectorData,
     question: str,
@@ -661,39 +641,21 @@ def ask_detailed(
     if not allow_live:
         reason = "demo_key"
     elif runtime.live_enabled():
-        key_ledger = runtime.ledger_for(key_id)
-        glob = runtime.global_ledger()
+        meter = runtime.call_meter()
+        if meter is None:
+            return _fallback(data, q, spoken, "live_off", started, 0.0)
         guard = SpendGuard(
             session_id=f"api-{key_id}",
             caps=runtime.caps,
-            ledger=_TeeLedger(key_ledger, glob) if glob is not None else key_ledger,
+            ledger=runtime.ledger_for(key_id),
             db=data.db,
+            meter=meter,
         )
-        hold = 0.0
-        ghold = 0.0
-        ledger = key_ledger
         try:
             guard.check("connector.ask")
-            if isinstance(ledger, RESERVING_LEDGERS):
-                # Shared ledger: reserve the per-call cap first so instances running at the
-                # same moment cannot all pass a read-only check; released in `finally`.
-                if not ledger.reserve(runtime.caps.session_usd, runtime.caps.daily_usd):
-                    raise SpendLimitError("daily_usd", "Today's live-call budget is used up.")
-                hold = runtime.caps.session_usd
-            if glob is not None and isinstance(glob, RESERVING_LEDGERS):
-                # The global daily cap ($3 by default) covers the live website routes and this
-                # keyed tool together. Fails closed: an unreadable ledger is a recorded answer.
-                try:
-                    reserved = glob.reserve(runtime.caps.session_usd, runtime.global_cap())
-                except UpstashError:  # includes BlobLedgerError: unreadable ledger, no spend
-                    raise SpendLimitError(
-                        "global_usd", "The global live-call ledger is not available."
-                    ) from None
-                if not reserved:
-                    raise SpendLimitError("global_usd", "The global live-call budget is used up.")
-                ghold = runtime.caps.session_usd
             # One live ask at a time per instance: the copilot appends to the audit chain on
-            # its own connection, and the redaction below recomputes that chain.
+            # its own connection, and the redaction below recomputes that chain. Every chat call
+            # of the agent (tool rounds, final answer, repair) reserves its own worst case.
             with data.live_ask_lock:
                 agent = runtime.agent_factory(data, guard)
                 make_read_only(agent)  # whatever the factory built: no tool that writes
@@ -725,14 +687,4 @@ def ask_detailed(
             logger.warning("connector_ask_live_failed", error_type=type(exc).__name__)
             reason = "model_error"
             attempt_ms = round((time.perf_counter() - started) * 1000.0, 1)
-        finally:
-            if hold and isinstance(ledger, RESERVING_LEDGERS):
-                ledger.release(hold)
-            if ghold and glob is not None and isinstance(glob, RESERVING_LEDGERS):
-                glob.release(ghold)
-    if not data.transcripts():
-        raise SourceUnavailableError(
-            "No live answer is available and no recorded answers are stored."
-        )
-    best, _ = _recorded_pool(data, q, voice=spoken)
-    return _outcome_recorded(best, reason, data, started, attempt_ms)
+    return _fallback(data, q, spoken, reason, started, attempt_ms)
