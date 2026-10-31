@@ -83,7 +83,7 @@ def main(argv: list[str] | None = None) -> int:
     total = parse_coverage_total(out)
     rep.metrics.update(pytest=counts, coverage_percent=total, coverage_floor=args.cov_floor)
     rep.add(
-        "pytest (unit, full)",
+        "pytest tests/unit (tests/e2e, the Streamlit UI tests, is not run here)",
         PASS if code == 0 and counts.get("passed", 0) > 0 and not counts.get("failed") else FAIL,
         f"exit {code}: {counts}",
         group="python",

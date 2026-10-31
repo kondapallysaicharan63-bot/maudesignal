@@ -642,7 +642,7 @@ def test_workflow_triggers_and_secret_rules() -> None:
     assert "META_MODEL_API_KEY" in decide and "*live*" in decide
     live = json.dumps(jobs["live"])
     assert '"MAUDESIGNAL_LIVE_DAILY_USD": "0.60"' in live  # the app's own cap
-    assert '"MAUDESIGNAL_LIVE_INSTANCE_DIVISOR": "1"' in live  # so the cap is exactly $0.60
+    assert "INSTANCE_DIVISOR" not in live  # no code reads it; the doc does not claim it
     # the Meta key is read from a secret only by those two jobs, and never in an echo
     for job_name, job in jobs.items():
         if job_name not in ("live", "gate-live"):
@@ -652,3 +652,11 @@ def test_workflow_triggers_and_secret_rules() -> None:
     )
     # every job feeds the report job
     assert set(jobs["report"]["needs"]) >= {"python", "web", "api-contract", "e2e", "live"}
+
+
+def test_report_job_stubs_a_skipped_live_job() -> None:
+    import yaml
+
+    rc = yaml.safe_load((WORKFLOWS / "release-check.yml").read_text())
+    merge = json.dumps(rc["jobs"]["report"])
+    assert "needs.live.result" in merge and "NOT_PRESENT" in merge and "live job" in merge

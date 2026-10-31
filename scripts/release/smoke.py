@@ -42,7 +42,7 @@ from leaks import contains_any, find_key_shapes  # noqa: E402
 from load_test import evaluate, run_load, summarize  # noqa: E402
 from media import load_voice  # noqa: E402
 from netutil import Response, multipart, request  # noqa: E402
-from report import BLOCKED, FAIL, KNOWN_GAP, PASS, SKIPPED, Report  # noqa: E402
+from report import BLOCKED, FAIL, KNOWN_GAP, SKIPPED, Report  # noqa: E402
 
 VOICE_FILES = ("question-a.wav", "question.wav", "question-c.wav")
 LABEL_PHOTO = ROOT / "demo" / "vision" / "labels" / "label-caresens-n.jpg"
@@ -57,6 +57,7 @@ class Smoke:
         """Remember the targets, the report and the secret values that must never appear."""
         self.api, self.web, self.rep, self.secrets = api.rstrip("/"), web.rstrip("/"), rep, secrets
         self.live_cost = 0.0
+        self.web_live_cost = 0.0  # cost_usd of the live calls the browser pass made
         self.remaining: list[int] = []
         self.demo_key = ""
 
@@ -349,7 +350,9 @@ class Smoke:
             sys.executable,
             str(HERE / "e2e_web.py"),
             "--url",
-            self.web,
+            f"{self.web}/?r={TEST_REF}",  # every visit ping is a TEST entry (and is blocked)
+            "--test-ref",
+            TEST_REF,
             "--suite",
             "smoke",
             "--widths",
@@ -372,6 +375,8 @@ class Smoke:
         import json
 
         doc = json.loads(path.read_text("utf-8"))
+        self.web_live_cost = float(doc.get("metrics", {}).get("live_cost_usd") or 0.0)
+        self.rep.metrics["web_pass_live_calls"] = doc.get("metrics", {}).get("live_calls", [])
         for c in doc["checks"]:
             self.rep.add(
                 f"web quick pass: {c['name']}",
@@ -391,18 +396,42 @@ class Smoke:
         for c in sub.checks:
             self.rep.add(f"load: {c.name}", c.status, c.detail, group="load", required=c.required)
         self.rep.metrics["load"] = stats
-        total = self.live_cost + float(stats["live_cost_usd"])
+        total = self.live_cost + float(stats["live_cost_usd"]) + self.web_live_cost
         self.rep.metrics["live_cost_usd_total"] = round(total, 6)
-        left = [
-            x for x in [stats.get("last_remaining_today"), *self.remaining[-1:]] if x is not None
-        ]
+        self.rep.metrics["live_cost_parts"] = {
+            "live_checks": round(self.live_cost, 6),
+            "load_test": round(float(stats["live_cost_usd"]), 6),
+            "web_quick_pass": round(self.web_live_cost, 6),
+        }
+        seen = [*self.remaining]
+        if stats.get("last_remaining_today") is not None:
+            seen.append(stats["last_remaining_today"])
         self.rep.add(
-            "cap ledger: spend this run, from the responses",
-            PASS,
-            f"${total:.4f} spent across live calls; last remaining_today in a response: {left[0] if left else 'not reported'}",
+            "cap ledger: cost reported by the responses (informational)",
+            KNOWN_GAP,
+            f"${total:.4f} summed from cost_usd of live checks, load test and web pass; "
+            f"last remaining_today: {seen[-1] if seen else 'not reported'}",
             group="load",
+            required=False,
             live_cost_usd_total=round(total, 6),
         )
+
+
+API_HOST_ALLOWED = "maudesignal-api*.vercel.app"
+
+
+def api_allowed(url: str) -> bool:
+    """True when the API URL is https on a host that matches ``maudesignal-api*.vercel.app``."""
+    from fnmatch import fnmatchcase
+    from urllib.parse import urlsplit
+
+    parts = urlsplit(url)
+    return parts.scheme == "https" and fnmatchcase(parts.hostname or "", API_HOST_ALLOWED)
+
+
+def mask_lines(secrets: list[str]) -> list[str]:
+    """GitHub ``::add-mask::`` commands, one per secret value (each key, not the joined list)."""
+    return [f"::add-mask::{v}" for v in secrets if v]
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -419,6 +448,16 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     keys = [k.strip() for k in os.environ.get("MAUDESIGNAL_SMOKE_KEYS", "").split(",") if k.strip()]
     admin = os.environ.get("MAUDESIGNAL_ADMIN_KEY_SMOKE", "").strip()
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        for line in mask_lines([*keys, admin]):  # GitHub masks only the whole joined string
+            print(line, flush=True)
+    if (keys or admin) and not api_allowed(args.api):
+        print(
+            f"refusing to send keys to {args.api!r}: with secrets present the API must be "
+            f"https on {API_HOST_ALLOWED}",
+            file=sys.stderr,
+        )
+        return 2
     rep = Report("smoke (live URLs)")
     rep.metrics.update(
         api=args.api, web=args.web, smoke_keys_given=len(keys), admin_key_given=bool(admin)

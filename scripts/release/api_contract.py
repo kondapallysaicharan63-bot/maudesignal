@@ -41,7 +41,7 @@ from leaks import (  # noqa: E402
     skill_files,
 )
 from netutil import Response, multipart, request  # noqa: E402
-from report import FAIL, NOT_PRESENT, PASS, Report  # noqa: E402
+from report import FAIL, KNOWN_GAP, NOT_PRESENT, Report  # noqa: E402
 
 CORE_TOOLS = ("what_changed_this_week", "check_device_type", "ask", "get_report", "recalls")
 OPTIONAL_TOOLS = ("lookup_device",)
@@ -911,16 +911,40 @@ class Contract:
         )
         self.rep.add(
             "label: EXIF stripped before the model",
-            "KNOWN_GAP" if r.status != 200 else PASS,
-            "needs the model call path; here the server answers before it (no Meta key in "
-            "this job), so only the pre-model checks above ran.",
+            KNOWN_GAP,  # never PASS over HTTP: no Meta key here, so the model call never runs
+            "needs the model call path; here the server answers in recorded mode before it, "
+            f"so only the pre-model checks above ran (HTTP {r.status}). The in-process check "
+            "'label: re-encoded photo carries no EXIF' covers the bytes the model would get.",
             group="live",
             required=False,
         )
+        self.check_exif_in_process()
         r = self.post("/v1/live/mentions", self.fresh(), json_body={"product_code": "LL1"})
         self.rep.ok(
             "mentions: bad product code is 422", r.status == 422, f"HTTP {r.status}", group="live"
         )
+
+    def check_exif_in_process(self) -> None:
+        """Run the connector's own image cleaner on a photo with EXIF and inspect its output.
+
+        The output is what the model is sent, so it must carry no EXIF, GPS or marker string.
+
+        Needs ``maudesignal.connector.live`` (merged API branch); NOT_PRESENT otherwise.
+        """
+        name = "label: re-encoded photo carries no EXIF"
+        try:
+            from maudesignal.connector.live import clean_image
+        except Exception as exc:  # the API branch is not part of this tree
+            self.rep.add(
+                name,
+                NOT_PRESENT,
+                f"maudesignal.connector.live not importable ({type(exc).__name__})",
+                group="live",
+                required=False,
+            )
+            return
+        ok, why = exif_gone(clean_image, self.jpeg_with_exif())
+        self.rep.ok(name, ok, why, group="live")
 
     def gate_status_ok(self, label: str, body: dict[str, Any]) -> None:
         """Every spoken sentence of a live answer carries a link, and the advice line is set."""
@@ -1197,6 +1221,26 @@ def check_mentions_injection(rep: Report, windows: set[str], secrets_: list[str]
         f"{leaks} {n}",
         group="injection",
     )
+
+
+def exif_gone(clean: Any, jpeg: bytes) -> tuple[bool, str]:
+    """True when ``clean(jpeg, "image/jpeg")`` returns a JPEG with no EXIF block or marker."""
+    from PIL import Image
+
+    if TEST_JPEG_EXIF_MARK.encode() not in jpeg:
+        return False, "the test photo does not carry the marker; the check would prove nothing"
+    out = clean(jpeg, "image/jpeg")[0]
+    with Image.open(io.BytesIO(out)) as img:
+        tags = len(img.getexif())
+        has_exif_info = "exif" in img.info
+    problems = []
+    if TEST_JPEG_EXIF_MARK.encode() in out:
+        problems.append("marker string survives")
+    if tags or has_exif_info:
+        problems.append(f"EXIF block survives ({tags} tags)")
+    if b"Exif\x00\x00" in out:
+        problems.append("Exif header bytes survive")
+    return not problems, "; ".join(problems) or f"{len(jpeg)} -> {len(out)} bytes, no EXIF"
 
 
 def load_keys(path: Path) -> dict[str, str]:

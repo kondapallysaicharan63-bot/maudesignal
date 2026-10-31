@@ -64,6 +64,37 @@ AXE_VIEWS = (
 )
 
 
+TEST_REF = "TEST-smoke"
+
+
+def visit_ref(post_data: str | None) -> str | None:
+    """The ``ref`` field of a /v1/visit request body, or None when absent or not JSON."""
+    try:
+        doc = json.loads(post_data or "")
+    except ValueError:
+        return None
+    ref = doc.get("ref") if isinstance(doc, dict) else None
+    return ref if isinstance(ref, str) else None
+
+
+def visits_all_test(bodies: list[str | None], ref: str = TEST_REF) -> tuple[bool, str]:
+    """True when every captured /v1/visit body carries ``ref`` (an empty list is fine)."""
+    bad = [b for b in bodies if visit_ref(b) != ref]
+    return (
+        not bad,
+        f"{len(bodies)} visit ping(s) captured and blocked; {len(bad)} without ref {ref}",
+    )
+
+
+def chat_verdict(sentences: int, unlinked: int, error: bool, held: bool) -> tuple[bool, str]:
+    """Judge one chat answer: sentences must exist (or an error / withheld line) and be linked."""
+    if sentences == 0 and not error and not held:
+        return False, "no answer sentence, no error and no withheld line is shown"
+    if unlinked:
+        return False, f"{unlinked} of {sentences} sentence(s) carry no gate link"
+    return True, f"sentences={sentences} (all linked) error={error} withheld_line={held}"
+
+
 class SkipError(Exception):
     """A scenario that cannot run here: carries the status to record and why."""
 
@@ -90,8 +121,31 @@ class Env:
         self.page, self.args, self.rep = page, args, rep
         self.page_errors: list[str] = []
         self.api_calls: list[str] = []
+        self.visit_bodies: list[str | None] = []
+        self.live_calls: list[dict[str, Any]] = []
         page.on("pageerror", lambda e: self.page_errors.append(str(e)[:200]))
         page.on("request", lambda r: self.api_calls.append(f"{r.method} {r.url}"))
+        page.on("response", self._note_live)
+
+    def _note_live(self, resp: Any) -> None:
+        """Record mode and cost_usd of every /v1/live/* answer the page receives."""
+        if "/v1/live/" not in resp.url:
+            return
+        entry: dict[str, Any] = {"path": resp.url.split("/v1/live/")[1][:20], "status": resp.status}
+        with contextlib.suppress(Exception):
+            doc = resp.json()
+            entry["mode"] = doc.get("mode")
+            entry["cost_usd"] = float(doc.get("cost_usd") or 0.0)
+        self.live_calls.append(entry)
+
+    def block_visits(self) -> None:
+        """Stop /v1/visit pings reaching the server; keep their bodies to check the ref."""
+
+        def handler(route: Any) -> None:
+            self.visit_bodies.append(route.request.post_data)
+            route.fulfill(status=204, body="")
+
+        self.page.context.route("**/v1/visit", handler)
 
     @property
     def tag(self) -> str:
@@ -229,13 +283,41 @@ def s_chat(env: Env) -> str:
         raise AssertionError("the turn has no Recorded run / Live answer badge and no error")
     if state["badge"] == "Recorded run" and not state["note"]:
         raise AssertionError("a recorded run is shown without saying why")
-    has_answer, has_error = state["sentences"] > 0, bool(state["error"])
+    sentences, unlinked, held = chat_counts(env)
+    ok, why = chat_verdict(sentences, unlinked, bool(state["error"]), held)
+    if not ok:
+        env.shot("chat-FAILED")
+        raise AssertionError(why)
     env.ask("And which device types?")
     env.page.wait_for_function(
         "document.querySelectorAll('[data-testid=live-turn]').length >= 2", timeout=45_000
     )
     env.shot("chat")
-    return f"two turns; answer={has_answer} error={has_error}"
+    return f"two turns; first turn: {why}"
+
+
+def chat_counts(env: Env) -> tuple[int, int, bool]:
+    """Wait for the first answer to finish writing; return (sentences, unlinked, withheld line)."""
+    page = env.page
+    page.wait_for_selector(
+        "[data-testid=answer-sentences] li, [data-testid=turn-error], "
+        "[data-testid=held-back], [data-testid=limit-banner]",
+        timeout=60_000,
+    )
+    last, stable = (-1, -1), 0
+    for _ in range(60):  # sentences are written word by word; wait until the count settles
+        sentences = page.locator("[data-testid=answer-sentences] li").count()
+        linked = page.locator(
+            "[data-testid=answer-sentences] li [data-testid=sentence-links]"
+        ).count()
+        now = (sentences, linked)
+        stable = stable + 1 if now == last else 0
+        last = now
+        if stable >= 3 and linked == sentences:
+            break
+        page.wait_for_timeout(1000)
+    held = page.locator("[data-testid=held-back]").count() > 0
+    return last[0], last[0] - last[1], held
 
 
 def s_camera_upload(env: Env) -> str:
@@ -689,6 +771,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--widths", default="1440,390")
     ap.add_argument("--schemes", default="light,dark")
     ap.add_argument("--stem", default="e2e")
+    ap.add_argument(
+        "--test-ref",
+        default="",
+        help="smoke suite: the TEST ref the visit pings must carry (default TEST-smoke)",
+    )
     args = ap.parse_args(argv)
     if args.suite == "smoke":
         args.engines, args.schemes = "chromium", "light"
@@ -697,6 +784,9 @@ def main(argv: list[str] | None = None) -> int:
     from playwright.sync_api import sync_playwright
 
     axe_totals: dict[str, int] = {}
+    smoke = args.suite == "smoke"
+    visit_bodies: list[str | None] = []
+    live_calls: list[dict[str, Any]] = []
     with sync_playwright() as pw:
         for engine in args.engines.split(","):
             try:
@@ -718,6 +808,8 @@ def main(argv: list[str] | None = None) -> int:
                         page = ctx.new_page()
                         page.set_default_timeout(30_000)
                         env = Env(engine, width, scheme, page, args, rep)
+                        if smoke:  # a smoke run must not write visits to the real server
+                            env.block_visits()
                         try:
                             if group == "scenario":
                                 env.open()
@@ -732,8 +824,15 @@ def main(argv: list[str] | None = None) -> int:
                         finally:
                             for k, v in (getattr(env, "axe_totals", {}) or {}).items():
                                 axe_totals[k] = axe_totals.get(k, 0) + v
+                            visit_bodies += env.visit_bodies
+                            live_calls += env.live_calls
                             ctx.close()
             browser.close()
+    if smoke:
+        ok, why = visits_all_test(visit_bodies, args.test_ref or TEST_REF)
+        rep.add("no non-TEST visit ping is sent", PASS if ok else FAIL, why, group="scenario")
+    rep.metrics["live_calls"] = live_calls
+    rep.metrics["live_cost_usd"] = round(sum(c.get("cost_usd", 0.0) for c in live_calls), 6)
     if args.suite == "full":
         rep.metrics["axe_violations_all_views_all_combinations"] = axe_totals
     rep.write(Path(args.out_dir), args.stem)

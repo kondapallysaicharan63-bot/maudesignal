@@ -213,7 +213,6 @@ jobs:
           MAUDESIGNAL_LIVE_ASK_USD: "0.12"
           MAUDESIGNAL_LIVE_VOICE_USD: "0.12"
           MAUDESIGNAL_LIVE_LABEL_USD: "0.15"
-          MAUDESIGNAL_LIVE_INSTANCE_DIVISOR: "1"
         run: |
           python scripts/release/serve_api.py prepare --profile e2e \
             --keys-file "$RUNNER_TEMP/keys.json" --env-file "$RUNNER_TEMP/api.env" \
@@ -254,10 +253,25 @@ jobs:
       - name: Merge the job reports
         env:
           NEEDS: ${{ toJSON(needs) }}
+          LIVE_RESULT: ${{ needs.live.result }}
         run: |
           mkdir -p release-out
           cp -r parts/screenshots release-out/ 2>/dev/null || true
           inputs="parts/python-job.json parts/web-job.json parts/api-contract.json parts/e2e.json"
+          if [ ! -f parts/live-check.json ] && [ "$LIVE_RESULT" = "skipped" ]; then
+            # a skipped live job gets its own line in the report: not run, never a pass
+            python - <<'PYEOF'
+          import sys
+          sys.path.insert(0, "scripts/release")
+          from pathlib import Path
+          from report import NOT_PRESENT, Report
+          rep = Report("live job")
+          rep.add("live job", NOT_PRESENT,
+                  "not run: it needs the Meta key secret and a branch name containing 'live'",
+                  group="live", required=False)
+          rep.write(Path("parts"), "live-check")
+          PYEOF
+          fi
           if [ -f parts/live-check.json ]; then inputs="$inputs parts/live-check.json"; fi
           python scripts/release/report.py merge $inputs \
             --json release-out/release-report.json --md release-out/release-report.md \
