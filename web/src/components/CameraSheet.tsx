@@ -10,6 +10,7 @@ import { frameToJpeg, PHOTO_ENCODE_FAILED_TEXT, PHOTO_TOO_BIG_TEXT, PhotoError }
 export function cameraFallbackText(e: unknown): string {
   const name = (e as { name?: string } | null)?.name ?? ''
   if (name === 'insecure') return 'Camera needs a secure (https) page — choose a photo instead'
+  if (name === 'timeout') return 'Camera did not start — choose a photo instead'
   if (name === 'unsupported') return 'This browser has no camera access — choose a photo instead'
   if (name === 'NotFoundError' || name === 'DevicesNotFoundError' || name === 'OverconstrainedError') return 'No camera found — choose a photo instead'
   if (name === 'NotReadableError') return 'Camera in use by another program — choose a photo instead'
@@ -19,6 +20,39 @@ export function cameraFallbackText(e: unknown): string {
 const named = (name: string): Error => Object.assign(new Error(name), { name })
 
 /** Asks for the camera: back camera preferred, any camera if that is refused as impossible. */
+/** How long the camera may take to start before the page falls back to the file picker. */
+export const CAMERA_START_TIMEOUT_MS = 4000
+
+/**
+ * `start()` raced against a timeout: some browsers never settle getUserMedia (a prompt left open, a refusal that is
+ * never reported). On timeout this rejects with name "timeout", and a stream that arrives later is stopped at once.
+ */
+export function startWithin(start: () => Promise<MediaStream>, ms: number = CAMERA_START_TIMEOUT_MS): Promise<MediaStream> {
+  return new Promise<MediaStream>((resolve, reject) => {
+    let done = false
+    const timer = setTimeout(() => {
+      done = true
+      reject(named('timeout'))
+    }, ms)
+    start().then(
+      (s) => {
+        if (done) s.getTracks().forEach((t) => t.stop()) // too late: switch the camera off again
+        else {
+          done = true
+          clearTimeout(timer)
+          resolve(s)
+        }
+      },
+      (e: unknown) => {
+        if (done) return
+        done = true
+        clearTimeout(timer)
+        reject(e)
+      },
+    )
+  })
+}
+
 export async function openCamera(md: MediaDevices | undefined = typeof navigator === 'undefined' ? undefined : navigator.mediaDevices, secure: boolean = typeof window === 'undefined' || window.isSecureContext !== false): Promise<MediaStream> {
   if (!secure) throw named('insecure')
   if (!md?.getUserMedia) throw named('unsupported')
@@ -53,7 +87,7 @@ export function CameraSheet({ onUse, onClose, onFail }: {
 
   useEffect(() => {
     let alive = true
-    openCamera()
+    startWithin(() => openCamera())
       .then((s) => {
         if (!alive) {
           s.getTracks().forEach((t) => t.stop())

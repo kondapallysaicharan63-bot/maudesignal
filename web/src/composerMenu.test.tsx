@@ -7,7 +7,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import evidence from '../public/data/evidence.json'
 import threads from '../public/data/threads.json'
-import { CameraSheet, cameraFallbackText, openCamera } from './components/CameraSheet'
+import { CameraSheet, cameraFallbackText, openCamera, startWithin } from './components/CameraSheet'
 import { LiveChatView } from './components/LiveChat'
 import { MessageBox } from './components/MessageBox'
 import { menuMove } from './components/PlusMenu'
@@ -156,6 +156,23 @@ describe('menu keys, waveform and timer helpers', () => {
     expect(cameraFallbackText({ name: 'NotAllowedError' })).toBe('Camera blocked — choose a photo instead')
     expect(cameraFallbackText({ name: 'NotFoundError' })).toBe('No camera found — choose a photo instead')
     expect(cameraFallbackText({ name: 'insecure' })).toContain('secure')
+  })
+  it('gives up when the camera never starts, and switches off a stream that arrives late', async () => {
+    vi.useFakeTimers()
+    try {
+      let late: (s: MediaStream) => void = () => undefined
+      const stop = vi.fn()
+      const p = startWithin(() => new Promise<MediaStream>((r) => (late = r)), 4000)
+      const out = p.catch((e: Error) => e.name)
+      vi.advanceTimersByTime(4001)
+      expect(await out).toBe('timeout')
+      late({ getTracks: () => [{ stop }] } as unknown as MediaStream)
+      await Promise.resolve()
+      expect(stop).toHaveBeenCalled()
+      expect(cameraFallbackText({ name: 'timeout' })).toBe('Camera did not start — choose a photo instead')
+    } finally {
+      vi.useRealTimers()
+    }
   })
   it('asks for the back camera first and any camera when that is impossible', async () => {
     await expect(openCamera(undefined, false)).rejects.toMatchObject({ name: 'insecure' })

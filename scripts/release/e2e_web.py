@@ -1011,13 +1011,31 @@ def s_camera_take_photo(env: Env) -> str:
     return "live preview at once; Shutter, Retake, Use photo; thumbnail above the box"
 
 
+REFUSED_REASON = "Camera blocked — choose a photo instead"
+#: WebKit may leave getUserMedia pending instead of refusing; the page then gives up after 4 s with this reason.
+STALLED_REASON = "Camera did not start — choose a photo instead"
+#: Refuses the camera in every engine: replaces getUserMedia on the prototype and on the instance (WebKit keeps it
+#: on the prototype and ignores a plain assignment on some versions), and adds mediaDevices if it is missing.
+REFUSE_CAMERA_JS = """
+(() => {
+  const refuse = () => Promise.reject(new DOMException('refused by the test', 'NotAllowedError'));
+  try {
+    if (window.MediaDevices && MediaDevices.prototype)
+      Object.defineProperty(MediaDevices.prototype, 'getUserMedia', { value: refuse, configurable: true, writable: true });
+  } catch (e) {}
+  try {
+    if (!navigator.mediaDevices)
+      Object.defineProperty(navigator, 'mediaDevices', { value: {}, configurable: true });
+    Object.defineProperty(navigator.mediaDevices, 'getUserMedia', { value: refuse, configurable: true, writable: true });
+  } catch (e) {}
+})();
+"""
+
+
 def s_camera_refused(env: Env) -> str:
     """Camera refused: the file picker opens with a short reason."""
     page = env.page
-    page.add_init_script(
-        "navigator.mediaDevices && (navigator.mediaDevices.getUserMedia ="
-        " () => Promise.reject(new DOMException('refused by the test', 'NotAllowedError')));"
-    )
+    page.add_init_script(REFUSE_CAMERA_JS)
     mock_health(env)
     env.open()
     need_menu(env)
@@ -1032,9 +1050,12 @@ def s_camera_refused(env: Env) -> str:
     except Exception:
         opened = False
     note = page.get_by_test_id("photo-note")
-    note.wait_for(timeout=5_000)
-    if "Camera blocked — choose a photo instead" not in note.inner_text():
-        raise AssertionError(f"reason not shown: {note.inner_text()[:120]!r}")
+    # the page gives the camera 4 s to start before it falls back, so allow a little more than that
+    note.wait_for(timeout=10_000)
+    said = note.inner_text()
+    reasons = [REFUSED_REASON] + ([STALLED_REASON] if env.engine == "webkit" else [])
+    if not any(r in said for r in reasons):
+        raise AssertionError(f"reason not shown: {said[:120]!r}")
     if page.get_by_test_id("camera-sheet").count():
         raise AssertionError("the camera dialog stayed open after the camera was refused")
     if not opened:  # the browser blocked the automatic picker: the note's button opens it
@@ -1046,6 +1067,35 @@ def s_camera_refused(env: Env) -> str:
         + ("" if opened else " (from the note's button)")
         + " with the reason"
     )
+
+
+def s_camera_stalls(env: Env) -> str:
+    """The camera never starts (getUserMedia never settles): after 4 s the file picker path with a reason."""
+    page = env.page
+    page.add_init_script(
+        REFUSE_CAMERA_JS.replace(
+            "Promise.reject(new DOMException('refused by the test', 'NotAllowedError'))",
+            "new Promise(() => {})",
+        )
+    )
+    mock_health(env)
+    env.open()
+    need_menu(env)
+    if env.width == 390:
+        raise SkipError(
+            NOT_PRESENT, "phones open their own camera app; no in-page camera", required=False
+        )
+    menu_item(env, "take-photo")
+    page.wait_for_selector("[data-testid=camera-sheet]", timeout=5_000)
+    note = page.get_by_test_id("photo-note")
+    note.wait_for(timeout=10_000)
+    if STALLED_REASON not in note.inner_text():
+        raise AssertionError(f"reason not shown: {note.inner_text()[:120]!r}")
+    if page.get_by_test_id("camera-sheet").count():
+        raise AssertionError("the camera dialog stayed open after the camera did not start")
+    with page.expect_file_chooser(timeout=6_000):
+        page.get_by_test_id("photo-note-pick").click()
+    return "camera did not start in 4 s -> dialog closed, reason shown, file picker opens"
 
 
 def s_thumbnail_remove(env: Env) -> str:
@@ -1168,6 +1218,7 @@ COMPOSER_SCENARIOS: tuple[tuple[str, Callable[[Env], str]], ...] = (
     ("voice: stop, transcript in box, edit, send", s_voice_transcript_send),
     ("photo: take photo (live camera / phone camera)", s_camera_take_photo),
     ("photo: camera refused, file picker with reason", s_camera_refused),
+    ("photo: camera never starts, falls back after 4 s", s_camera_stalls),
     ("photo: thumbnail remove", s_thumbnail_remove),
     ("research toggle hidden without the feature", s_research_hidden),
     ("voice: 1:00 limit pauses, no request until Stop", s_voice_limit),
