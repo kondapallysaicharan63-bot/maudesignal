@@ -258,6 +258,7 @@ _DATA_SOURCE = re.compile(
     r"\bwhere (?:does|do|is) (?:the |this |your )?data\b|\bdata (?:come|comes) from\b"
     r"|\bwhat (?:is|are) (?:the |your )?(?:data )?sources?\b|\bwhere do you get\b"
     r"|\bwhat data do you use\b|\bhow (?:fresh|current|old) is (?:the |your )?data\b"
+    r"|\bwhat (?:data )?sources? do you\b"
 )
 _PRIVACY = re.compile(
     r"\bprivacy\b|\bdo you (?:store|keep|save|log|record) (?:my|the)\b"
@@ -305,7 +306,8 @@ _OPEN = re.compile(
     r"|\bstud(?:y|ies)\b|\bpapers?\b|\bmhra\b|\bwhat kind\b|\bwhat type\b|\bwhich problems?\b"
     r"|\bhow many\b.*\b(?:injur|death|malfunction|software|mention|describe)"
     r"|\b(?:injur(?:y|ies)|deaths?|malfunctions?)\b|\bsoftware\b|\bai related\b|\bfailures?\b"
-    r"|\bdraft\b|\bwrite\b|\bplan\b|\bstrategy\b|\bimpact\b|\bif\b"
+    r"|\bdraft\b|\bwrite\b|\bplan\b|\bstrategy\b|\bimpact\b|\bif\b|\brelat"
+    r"|\blinked\b|\bconnect(?:ed|ion)\b"
 )
 _ALERTS = re.compile(
     r"\balerts?\b|\bnotifications?\b|\bwhat(?:s| is) flagged\b|\bflagged\b"

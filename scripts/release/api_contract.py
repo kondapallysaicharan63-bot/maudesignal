@@ -805,19 +805,35 @@ class Contract:
     def check_live_routes(self) -> None:
         """Live ask, voice and label: validation, size limits, EXIF, recorded fallback."""
         a = self.fresh()
-        r = self.post("/v1/live/ask", a, json_body={"question": "What changed this week for LLZ?"})
+        for label, question, tier in (
+            ("greeting", "namaste", "canned"),
+            ("simple lookup", "Recalls for QIH", "direct"),
+        ):
+            g = self.post("/v1/live/ask", self.fresh(), json_body={"question": question})
+            gb = g.json() or {}
+            self.rep.ok(
+                f"live ask: a {label} is chat tier {tier}, no model call, $0",
+                g.status == 200 and gb.get("tier") == tier and gb.get("cost_usd") == 0,
+                f"HTTP {g.status} tier={gb.get('tier')} cost={gb.get('cost_usd')}",
+                group="live",
+            )
+        r = self.post(
+            "/v1/live/ask",
+            a,
+            json_body={"question": "Which kinds of problems do the LLZ reports describe?"},
+        )
         b = r.json() or {}
         self.rep.ok(
             "live ask without a model key answers (200 recorded, or a clean 503)",
             r.status in (200, 503) and (r.status == 503 or b.get("mode") == "recorded"),
-            f"HTTP {r.status} mode={b.get('mode')}",
+            f"HTTP {r.status} mode={b.get('mode')} tier={b.get('tier')}",
             group="live",
         )
         if r.status == 200:
             self.gate_status_ok("live ask", b)
             hist = [
                 {
-                    "question": "What changed this week for LLZ?",
+                    "question": "Which kinds of problems do the LLZ reports describe?",
                     "answer": b["answer"]["spoken_text"],
                 }
             ]

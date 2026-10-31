@@ -5,13 +5,16 @@ import threads from '../../public/data/threads.json'
 import type { Evidence, Thread } from '../types'
 import {
   answerText,
+  badgeText,
   buildAskBody,
   buildLabelForm,
   buildVoiceForm,
   checkQuestion,
   heldBackLine,
+  isFreeTier,
   LiveError,
   mapError,
+  openLabel,
   parseAsk,
   parseLabelResponse,
   postAsk,
@@ -265,6 +268,33 @@ describe('response parsing', () => {
     expect(r.heard).toBe('What changed?')
     expect(r.limits?.remaining_today).toBe(7)
     expect(r.cost_usd).toBeNull()
+  })
+  it('reads the chat tier, badge, chips, did-you-mean and the page to open; drops anything else', () => {
+    const r = parseAsk({
+      ...ok,
+      mode: 'direct',
+      tier: 'direct',
+      badge: 'Direct FDA lookup — no AI',
+      suggestions: ['Recalls for LLZ', 3, '', 'a'.repeat(300)],
+      did_you_mean: ['LLZ', 'not a code'],
+      open: { view: 'check-device', code: 'QAS' },
+    })!
+    expect(r.mode).toBe('direct')
+    expect(r.tier).toBe('direct')
+    expect(r.badge).toBe('Direct FDA lookup — no AI')
+    expect(r.suggestions).toEqual(['Recalls for LLZ', 'a'.repeat(120)])
+    expect(r.did_you_mean).toEqual(['LLZ'])
+    expect(r.open).toEqual({ view: 'check-device', code: 'QAS' })
+    expect(badgeText(r)).toBe('Direct FDA lookup — no AI')
+    expect(isFreeTier(r)).toBe(true)
+    expect(openLabel(r.open)).toBe('Open Check any device type for QAS')
+    const bad = parseAsk({ ...ok, tier: 'premium', open: { view: 'javascript:alert(1)' } })!
+    expect(bad.tier).toBeUndefined()
+    expect(bad.open).toBeUndefined()
+    expect(bad.suggestions).toEqual([])
+    expect(badgeText(bad)).toBe('Live answer')
+    expect(badgeText({ ...bad, mode: 'recorded' })).toBe('Recorded run')
+    expect(openLabel({ view: 'alerts' })).toBeNull()
   })
   it('rejects an answer without the answer block', () => {
     expect(parseAsk({ mode: 'live' })).toBeNull()

@@ -197,7 +197,7 @@ CORS on the server: only the origins in `MAUDESIGNAL_WEB_ORIGINS`, no credential
 
 | Call | Body |
 |---|---|
-| `POST /v1/live/ask` | JSON `{question: str 3..500, history?: [{question, answer}] (last 4; the page cuts each answer to 600 chars, the server does too), product_code?, ref?}` |
+| `POST /v1/live/ask` | JSON `{question: str 2..500, history?: [{question, answer}] (last 4; the page cuts each answer to 600 chars, the server does too), product_code?, ref?}` |
 | `POST /v1/live/voice` | multipart: part `audio` = WAV PCM16 mono 16000 Hz, at most 60 s and 4 MB (made in the browser: `MediaRecorder` -> `AudioContext.decodeAudioData` -> mono -> 16 kHz -> WAV, `src/live/audio.ts`); optional part `meta` = JSON `{history?, product_code?}` |
 | `POST /v1/live/label` | multipart: part `image` = JPEG or PNG, at most 4 MB (Vercel refuses larger bodies before the app runs, with no CORS headers). The page draws every photo, camera or upload, on a canvas with the long side at most 1600 px and sends a fresh JPEG at quality 0.85 (no EXIF), retrying at 0.7 then 0.55 if the result is over 4 MB and showing a message if it is still too big; the original file bytes are never sent. The server re-encodes it again and never stores it |
 
@@ -233,6 +233,15 @@ What the page does on each outcome:
 | 422 `patient_data` / `invalid_input` | the server's message, no answer |
 | network error, timeout (70 s; 60 s for a photo), 5xx, unreadable answer | the closest stored run, labelled "Recorded run", note says why |
 | microphone / camera permission denied or none present | a plain message, and the recorded voice / label runs |
+
+**Chat tiers (Oct 31, `track-chat-tiers`; docs/hackathon/CHAT_TIERS.md).** `POST /v1/live/ask` also returns
+`tier: "canned"|"direct"|"cache"|"live"` and, for tiers 1 to 3, `badge` (shown in place of the mode badge),
+`cost_usd: 0`, `suggestions: [str]` (up to 4 chips; a chip is sent only when clicked), and optionally
+`did_you_mean: ["LLZ"]` (never applied), `open: {view: "check-device"|"our-devices"|"ai-sweep"|"alerts", code?}`
+(a button that opens that page; `alerts` has no button) and `answered_at` (cache: when Muse Spark first answered).
+`mode` is `"canned"` or `"direct"` for tiers 1 and 2 and the stored `"live"` for a cache hit. Tiers 1 to 3 do not
+use a daily live question (`limits.remaining_today` is unchanged). A response without `tier` (an older server) is
+drawn as before. The cost line reads "Cost of this answer: $0.0000 (no model call)" for tiers 1 to 3.
 
 The stub used by the browser tests is `qa/live_stub.py`; it implements this contract, checks the WAV header and the
 JPEG (no EXIF) and logs request bodies at `GET /__log`. Run `python3 qa/e2e_live.py` from `web/`.
