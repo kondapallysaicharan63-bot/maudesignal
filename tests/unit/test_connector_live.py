@@ -177,6 +177,7 @@ class Env:
             ),
             searcher=lambda _t: self.searcher,
             clock=lambda: self.clock.mono,
+            sleep=lambda _s: None,
         )
         if fetcher is not None:
             self.backends.mentions_fetcher = lambda: fetcher

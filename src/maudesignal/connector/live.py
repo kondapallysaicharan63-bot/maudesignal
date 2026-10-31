@@ -347,6 +347,7 @@ class LiveBackends:
     sam: Callable[[float], SamClient | None] = default_sam
     searcher: Callable[[float], Searcher] = default_searcher
     clock: Callable[[], float] = time.monotonic
+    sleep: Callable[[float], None] = time.sleep  # waits between feed retries
     vision_dir: Path = field(default_factory=lambda: PROJECT_ROOT / "demo" / "vision")
     mentions_fetcher: Callable[[], Fetcher] = HttpFetcher
     mentions_dir: Path = field(default_factory=lambda: PROJECT_ROOT / "demo" / "mentions")
@@ -1167,6 +1168,7 @@ def mount_live(
                 be.mentions_fetcher(),
                 clock=be.clock,
                 now=clock_now,
+                sleep=be.sleep,
             )
             if found.network_ok:
                 return found.as_dict() | {"label": LABEL, "mode": "live"}, None

@@ -607,7 +607,6 @@ def standard_http() -> FakeHttp:
             ),
             "https://www.fda.gov/": (500, ""),
             "https://www.medtechdive.com/": (200, "<rss><channel></channel></rss>"),
-            "https://www.massdevice.com/": (200, "not xml"),
             "https://news.example.com/a": (200, page(GOOD_SENTENCE)),
             # b: the headline offered by the source is NOT on the fetched page
             "https://news.example.com/b": (
@@ -632,7 +631,11 @@ def standard_http() -> FakeHttp:
 
 def run_search(http: FakeHttp) -> mn.SearchResult:
     return mn.search_mentions(
-        "llz", ["image processing"], http, now=lambda: datetime(2026, 10, 31, 1, 0, tzinfo=UTC)
+        "llz",
+        ["image processing"],
+        http,
+        now=lambda: datetime(2026, 10, 31, 1, 0, tzinfo=UTC),
+        sleep=lambda _s: None,
     )
 
 
@@ -672,7 +675,8 @@ def test_sources_tried_report_each_status_and_search_terms_are_not_echoed() -> N
     status = {s["name"]: s["status"] for s in r.sources_tried}
     assert status["GDELT DOC 2.0 (news index)"] == "ok"
     assert status["FDA press releases (RSS)"].startswith("failed")
-    assert status["MassDevice (RSS)"].startswith("failed")
+    assert status["FDA MedWatch safety alerts (RSS)"].startswith("failed")
+    assert "MassDevice (RSS)" not in status
     assert all("?" not in s["url"] and "LLZ" not in s["url"] for s in r.sources_tried)
     assert all(set(s) == {"name", "url", "status", "n"} for s in r.sources_tried)
     assert all({"step", "ms", "status"} <= set(t) for t in r.trace)
@@ -938,6 +942,225 @@ def test_record_script_parses_requests_and_the_request_file_is_off() -> None:
     wf = (root / ".github" / "workflows" / "mentions-record.yml").read_text()
     assert "branches: [track-c-live]" in wf and 'paths: ["demo/mentions/REQUEST"]' in wf
     assert "secrets." not in wf and "META_MODEL_API_KEY" not in wf
+
+
+# --- 3b. outside mentions: each source parser, GDELT retries, honest empty result -------------
+
+ATOM = (
+    "<?xml version='1.0'?><feed xmlns='http://www.w3.org/2005/Atom'>"
+    "<entry><title>MedWatch alert about LLZ imaging software</title>"
+    "<link href='https://www.fda.gov/safety/medwatch/1'/>"
+    "<summary>The LLZ imaging software may show the wrong image order.</summary>"
+    "<updated>2026-10-30T10:00:00Z</updated></entry></feed>"
+)
+SAFETY_SENTENCE = "The LLZ imaging software may show the wrong image order."
+
+
+def _src(name: str) -> mn.Source:
+    return next(s for s in mn.SOURCES if s.name == name)
+
+
+def test_massdevice_and_the_dead_warning_letter_feed_are_not_searched() -> None:
+    names = [s.name for s in mn.SOURCES]
+    assert not any("MassDevice" in n for n in names)
+    assert not any("warning" in n.lower() for n in names)
+    assert not any("massdevice" in s.url for s in mn.SOURCES)
+    assert not any("warning-letters" in s.url for s in mn.SOURCES)
+    assert "FDA MedWatch safety alerts (RSS)" in names
+    assert "FDA medical device safety communications (RSS)" in names
+
+
+def test_gdelt_parser_reads_articles_dates_and_rejects_garbage() -> None:
+    src = _src("GDELT DOC 2.0 (news index)")
+    cands = mn.parse_gdelt(json.dumps(GDELT), src)
+    assert [c.url for c in cands][:2] == [
+        "https://news.example.com/a",
+        "https://news.example.com/b",
+    ]
+    assert cands[0].date == "2026-10-30" and cands[0].title == GOOD_SENTENCE
+    assert mn.parse_gdelt(json.dumps({"articles": []}), src) == []
+    assert mn.parse_gdelt(json.dumps({"articles": [{"title": "no url"}, 5]}), src) == []
+    with pytest.raises(ValueError):
+        mn.parse_gdelt("<html>rate limited</html>", src)
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "FDA press releases (RSS)",
+        "FDA recalls (RSS)",
+        "FDA MedWatch safety alerts (RSS)",
+        "FDA medical device safety communications (RSS)",
+        "MedTech Dive (RSS)",
+    ],
+)
+def test_every_rss_source_parses_rss_and_atom_and_rejects_garbage(name: str) -> None:
+    src = _src(name)
+    assert src.style == "rss"
+    items = mn.parse_rss(rss([("LLZ headline here", "https://x.example.com/1", "body text")]), src)
+    assert [(c.url, c.title, c.summary, c.date) for c in items] == [
+        ("https://x.example.com/1", "LLZ headline here", "body text", "2026-10-30")
+    ]
+    atom = mn.parse_rss(ATOM, src)
+    assert atom[0].url == "https://www.fda.gov/safety/medwatch/1" and atom[0].date == "2026-10-30"
+    assert atom[0].summary == SAFETY_SENTENCE
+    with pytest.raises(ValueError):
+        mn.parse_rss("not xml at all", src)
+
+
+def test_medwatch_and_device_feeds_give_official_mentions_end_to_end() -> None:
+    http = FakeHttp(
+        {
+            "https://api.gdeltproject.org/": (200, json.dumps({"articles": []})),
+            "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/medwatch/": (
+                200,
+                ATOM,
+            ),
+            "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/medical-devices/": (
+                200,
+                rss([("Nothing relevant", "https://www.fda.gov/safety/x", "no code here at all")]),
+            ),
+            "https://www.fda.gov/safety/medwatch/1": (
+                200,
+                page(f"MedWatch alert about LLZ imaging software. {SAFETY_SENTENCE}"),
+            ),
+        }
+    )
+    r = run_search(http)
+    # the sentence the feed offered first (its headline) is the one found on the page
+    assert [m["quote"] for m in r.mentions] == ["MedWatch alert about LLZ imaging software."]
+    assert r.mentions[0]["source_kind"] == "official" and r.mentions[0]["date"] == "2026-10-30"
+    status = {s["name"]: (s["status"], s["n"]) for s in r.sources_tried}
+    assert status["FDA MedWatch safety alerts (RSS)"] == ("ok", 1)
+    assert status["FDA medical device safety communications (RSS)"] == ("ok", 0)
+
+
+class Flaky:
+    """GDELT answers with the given statuses in turn; everything else is a network error."""
+
+    def __init__(self, answers: list[Any]) -> None:
+        self.answers = list(answers)
+        self.gdelt_calls = 0
+        self.timeouts: list[float] = []
+
+    def get(self, url: str, timeout_s: float) -> tuple[int, str]:
+        if not url.startswith("https://api.gdeltproject.org/"):
+            raise ConnectionError("no route")
+        self.gdelt_calls += 1
+        self.timeouts.append(timeout_s)
+        answer = self.answers.pop(0)
+        if isinstance(answer, Exception):
+            raise answer
+        return answer
+
+
+def _gdelt_only() -> tuple[mn.Source, ...]:
+    return (_src("GDELT DOC 2.0 (news index)"),)
+
+
+def test_gdelt_uses_a_20_second_timeout_and_two_retries_with_backoff() -> None:
+    src = _src("GDELT DOC 2.0 (news index)")
+    assert src.timeout_s == 20.0 and src.retries == 2
+    assert all(s.retries == 0 and s.timeout_s == mn.FEED_TIMEOUT_S for s in mn.SOURCES[1:])
+    http = Flaky([TimeoutError(), (429, ""), (200, json.dumps({"articles": []}))])
+    waits: list[float] = []
+    r = mn.search_mentions(
+        "LLZ",
+        [],
+        http,
+        sources=_gdelt_only(),
+        sleep=waits.append,
+        now=lambda: datetime(2026, 10, 31, tzinfo=UTC),
+    )
+    assert http.gdelt_calls == 3 and http.timeouts[0] == 20.0
+    assert waits == [2.0, 4.0]  # backoff before the 2nd and the 3rd try
+    assert r.sources_tried == [
+        {"name": src.name, "url": mn._public_url(src), "status": "ok", "n": 0}
+    ]
+
+
+def test_gdelt_gives_up_after_three_tries_and_says_so() -> None:
+    http = Flaky([TimeoutError(), (503, ""), (429, "")])
+    r = mn.search_mentions(
+        "LLZ",
+        [],
+        http,
+        sources=_gdelt_only(),
+        sleep=lambda _s: None,
+        now=lambda: datetime(2026, 10, 31, tzinfo=UTC),
+    )
+    assert http.gdelt_calls == 3
+    assert r.sources_tried[0]["status"] == "failed: http 429 (after 3 tries)"
+    assert r.network_ok is False
+
+
+def test_gdelt_does_not_retry_a_reply_that_retrying_cannot_fix() -> None:
+    for answer in ((404, ""), (200, "<html>no json</html>")):
+        http = Flaky([answer])
+        r = mn.search_mentions(
+            "LLZ",
+            [],
+            http,
+            sources=_gdelt_only(),
+            sleep=lambda _s: None,
+            now=lambda: datetime(2026, 10, 31, tzinfo=UTC),
+        )
+        assert http.gdelt_calls == 1
+        assert r.sources_tried[0]["status"].startswith("failed")
+
+
+def test_gdelt_retries_stay_inside_the_time_budget() -> None:
+    clock = {"t": 0.0}
+
+    class Slow:
+        calls = 0
+
+        def get(self, url: str, timeout_s: float) -> tuple[int, str]:
+            Slow.calls += 1
+            clock["t"] += timeout_s  # each try uses its whole timeout, then fails
+            raise TimeoutError
+
+    r = mn.search_mentions(
+        "LLZ",
+        [],
+        Slow(),
+        sources=_gdelt_only(),
+        clock=lambda: clock["t"],
+        sleep=lambda s: clock.__setitem__("t", clock["t"] + s),
+        now=lambda: datetime(2026, 10, 31, tzinfo=UTC),
+    )
+    assert clock["t"] < 50.0  # the whole route stays under its limit
+    assert clock["t"] <= mn.FEED_PHASE_BUDGET_S + mn.GDELT_TIMEOUT_S
+    assert r.sources_tried[0]["status"].startswith("failed: TimeoutError")
+
+
+def test_nothing_found_still_lists_every_source_with_status_count_and_date() -> None:
+    http = FakeHttp(
+        {
+            "https://api.gdeltproject.org/": (200, json.dumps({"articles": []})),
+            "https://www.fda.gov/": (200, rss([])),
+            "https://www.medtechdive.com/": (503, ""),
+        }
+    )
+    r = run_search(http)
+    assert r.mentions == [] and r.network_ok
+    body = r.as_dict()
+    assert body["searched_utc"] == "2026-10-31T01:00:00Z"
+    assert [s["name"] for s in body["sources_tried"]] == [s.name for s in mn.SOURCES]
+    assert all({"name", "status", "n"} <= set(s) for s in body["sources_tried"])
+    assert body["summary"].startswith("0 found in these sources (2026-10-31 UTC): ")
+    for s in mn.SOURCES:
+        assert s.name in body["summary"]
+    assert "MedTech Dive (RSS) (failed: http 503)" in body["summary"]
+
+
+def test_stored_file_without_a_summary_gets_one_from_its_sources() -> None:
+    doc = mn.load_recorded(Path("demo/mentions"), "LLZ")
+    assert doc is not None
+    assert doc["summary"].startswith("0 found in these sources (2026-10-31 UTC): ")
+    assert mn.empty_recorded("LLZ", datetime(2026, 10, 31, tzinfo=UTC))["summary"].startswith(
+        "0 found"
+    )
 
 
 # --- security: nothing personal or secret in logs, ledgers or records -------------------------

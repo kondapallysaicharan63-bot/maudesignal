@@ -887,10 +887,19 @@ branch, so no live result or cost figure is claimed here.
 ## Outside mentions (`POST /v1/live/mentions`, no key, no model)
 
 Body `{product_code (3 letters), device_terms? (max 5 strings of 2 to 60 characters)}`. It looks
-for the code and terms in free public sources only (GDELT DOC 2.0 for news, FDA press-release,
-recall and warning-letter feeds, two public medical-device news feeds), labelled **news and public
-web**. The feed URLs were not reachable from the build sandbox, so `sources_tried` reports each
-source's real status (`ok`, `failed: ...`) instead of assuming it. Each candidate page is
+for the code and terms in free public sources only: GDELT DOC 2.0 for news (20 s timeout per
+try, up to 2 retries after a timeout, a network error, HTTP 429 or a 5xx, with waits of 2 s and 4 s,
+all inside a 32 s feed phase), FDA press-release, recall, MedWatch safety-alert and
+medical-device feeds, and the MedTech Dive feed, labelled **news and public web**. MassDevice was
+dropped (it answered HTTP 403 in the recorded run). FDA warning letters were dropped too: the
+feed address used before answered HTTP 404 in the recorded run of 2026-10-31 and no stable feed
+for them could be confirmed (the list on fda.gov is a script-driven table); nothing is claimed
+about them. The MedWatch and medical-device feed addresses follow the pattern of the working FDA
+press-release and recall feeds and were **not reachable from the build sandbox**, so
+`sources_tried` reports each source's real status (`ok`, `failed: ...`) and result count
+instead of assuming it, and the body has `searched_utc` and a `summary` line such as "0 found in
+these sources (2026-10-31 UTC): <each source and its status>." for the page to show when nothing
+matches. Each candidate page is
 fetched; a mention is kept only if its quoted sentence is found word for word in the fetched page
 text. Dropped, with counts in `dropped`: `quote_not_found` (the source offered a sentence that is
 not on the page), `personal_details` (an email, phone, age, a title with a name, "patient

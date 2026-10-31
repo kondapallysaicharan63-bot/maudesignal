@@ -174,7 +174,8 @@ live, with the text fields read from the label). MHRA (UK) alerts come from a st
 previously fetched from the GOV.UK search API; this service does not call GOV.UK when you use it.
 The website's outside-mentions search sends a product code and device search terms (no personal
 details; the route refuses text that looks like patient data) to public sources: GDELT, FDA
-public safety-communication and warning feeds, and no model is called for it.</p>
+press-release, recall, MedWatch and medical-device feeds, and MedTech Dive. No model is called
+for it.</p>
 
 <h2>What is logged</h2>
 <ul>

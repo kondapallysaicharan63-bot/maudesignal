@@ -3,12 +3,12 @@
 HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
 ``search_mentions`` looks for a product code or device terms in free public sources only
-(GDELT DOC 2.0 for news, FDA press-release / recall / warning-letter feeds, and public news
-RSS). No paid API, no login, no scraping behind a login. For each candidate it fetches the page
-and keeps a mention only when the quoted sentence is found word for word in the fetched page
-text. A sentence that looks like personal data is dropped, and so is one with a term this
-service never uses. Every kept mention carries the badge ``BADGE`` and is never mixed with
-claim-gated FDA facts. No model is called.
+(GDELT DOC 2.0 for news, FDA press-release / recall / MedWatch safety-alert / medical-device
+feeds, and public news RSS). No paid API, no login, no scraping behind a login. For each
+candidate it fetches the page and keeps a mention only when the quoted sentence is found word
+for word in the fetched page text. A sentence that looks like personal data is dropped,
+and so is one with a term this service never uses. Every kept mention carries the badge
+``BADGE`` and is never mixed with claim-gated FDA facts. No model is called.
 
 The fetcher is injected (``Fetcher``), so tests run with fake HTTP; the real one refuses
 non-http(s) URLs and addresses that are not public.
@@ -45,8 +45,13 @@ MAX_CANDIDATES_PER_SOURCE = 8
 MAX_PAGES = 14
 MAX_PAGE_BYTES = 1_500_000
 FEED_TIMEOUT_S = 6.0
+GDELT_TIMEOUT_S = 20.0
+GDELT_RETRIES = 2
+RETRY_BACKOFF_S = (2.0, 4.0)  # waits before the 2nd and 3rd try
+#: The feeds (with their retries) must be done by now, leaving time to fetch pages.
+FEED_PHASE_BUDGET_S = 32.0
 PAGE_TIMEOUT_S = 6.0
-TOTAL_BUDGET_S = 45.0
+TOTAL_BUDGET_S = 45.0  # the whole search; the route's own limit is under 50 s
 MIN_CALL_S = 2.0
 WORKERS = 6
 MIN_SENTENCE = 40
@@ -64,8 +69,16 @@ class Source:
     kind: Kind
     url: str  # may hold {query}
     style: Literal["gdelt", "rss"]
+    timeout_s: float = FEED_TIMEOUT_S
+    retries: int = 0  # extra tries after a timeout, a network error, HTTP 429 or a 5xx
 
 
+_FDA_RSS = "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/"
+
+#: FDA warning letters have no RSS feed that could be confirmed: the address used before
+#: (``.../rss-feeds/warning-letters/rss.xml``) answered HTTP 404 in the recorded run of
+#: 2026-10-31, and the warning-letter list on fda.gov is a script-driven table, not a feed.
+#: It is therefore not searched, and the response never lists it.
 SOURCES: tuple[Source, ...] = (
     Source(
         "GDELT DOC 2.0 (news index)",
@@ -73,29 +86,19 @@ SOURCES: tuple[Source, ...] = (
         "https://api.gdeltproject.org/api/v2/doc/doc?query={query}&mode=ArtList"
         "&format=json&maxrecords=10&timespan=3months&sort=DateDesc",
         "gdelt",
+        timeout_s=GDELT_TIMEOUT_S,
+        retries=GDELT_RETRIES,
     ),
+    Source("FDA press releases (RSS)", "official", _FDA_RSS + "press-releases/rss.xml", "rss"),
+    Source("FDA recalls (RSS)", "official", _FDA_RSS + "recalls/rss.xml", "rss"),
+    Source("FDA MedWatch safety alerts (RSS)", "official", _FDA_RSS + "medwatch/rss.xml", "rss"),
     Source(
-        "FDA press releases (RSS)",
+        "FDA medical device safety communications (RSS)",
         "official",
-        "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/"
-        "press-releases/rss.xml",
-        "rss",
-    ),
-    Source(
-        "FDA recalls (RSS)",
-        "official",
-        "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/recalls/rss.xml",
-        "rss",
-    ),
-    Source(
-        "FDA warning letters (RSS)",
-        "official",
-        "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/"
-        "warning-letters/rss.xml",
+        _FDA_RSS + "medical-devices/rss.xml",
         "rss",
     ),
     Source("MedTech Dive (RSS)", "news", "https://www.medtechdive.com/feeds/news/", "rss"),
-    Source("MassDevice (RSS)", "news", "https://www.massdevice.com/feed/", "rss"),
 )
 
 
@@ -397,16 +400,25 @@ class SearchResult:
     trace: list[dict[str, Any]] = field(default_factory=list)
     network_ok: bool = False
 
+    def summary(self) -> str:
+        """One honest line: how many were found, in which sources, on which UTC date."""
+        return summarize(len(self.mentions), self.searched_utc, self.sources_tried)
+
     def as_dict(self) -> dict[str, Any]:
         """The response body parts this module owns."""
         return {
             "product_code": self.product_code,
             "searched_utc": self.searched_utc,
             "sources_tried": self.sources_tried,
+            "summary": self.summary(),
             "mentions": self.mentions,
             "dropped": self.dropped,
             "trace": self.trace,
         }
+
+
+class _RetryError(Exception):
+    """Internal: this try failed in a way worth another try (429, 5xx)."""
 
 
 def _host_kind(url: str, default: Kind) -> Kind:
@@ -423,6 +435,7 @@ def search_mentions(
     now: Callable[[], datetime] = lambda: datetime.now(UTC),
     budget_s: float = TOTAL_BUDGET_S,
     sources: tuple[Source, ...] = SOURCES,
+    sleep: Callable[[float], None] = time.sleep,
 ) -> SearchResult:
     """Search the free sources and keep only mentions whose sentence is on the fetched page.
 
@@ -434,6 +447,7 @@ def search_mentions(
         now: UTC clock (tests).
         budget_s: Total time allowed; no call starts when less than a few seconds remain.
         sources: The sources to try.
+        sleep: Waits between tries (tests pass a no-op).
     """
     code = product_code.upper()
     terms = list(dict.fromkeys([code, *[t.strip() for t in device_terms if t.strip()]]))[
@@ -448,39 +462,47 @@ def search_mentions(
 
     def run_source(src: Source) -> tuple[dict[str, Any], list[Candidate], float]:
         t0 = clock()
+        info: dict[str, Any] = {"name": src.name, "url": _public_url(src), "n": 0}
         if left() < MIN_CALL_S:
-            return (
-                {"name": src.name, "url": _public_url(src), "status": "skipped: time", "n": 0},
-                [],
-                0.0,
-            )
+            return info | {"status": "skipped: time"}, [], 0.0
         query = quote_plus(" OR ".join(f'"{t}"' for t in terms) + " sourcelang:english")
         url = src.url.replace("{query}", query)
-        try:
-            status, body = fetcher.get(url, min(FEED_TIMEOUT_S, left()))
-            if status != 200:
-                raise ValueError(f"http {status}")
-            cands = parse_gdelt(body, src) if src.style == "gdelt" else parse_rss(body, src)
-        except Exception as exc:  # noqa: BLE001 - one source failing never stops the others
-            note = str(exc) if isinstance(exc, ValueError) else type(exc).__name__
-            return (
-                {
-                    "name": src.name,
-                    "url": _public_url(src),
-                    "status": f"failed: {note}"[:80],
-                    "n": 0,
-                },
-                [],
-                clock() - t0,
-            )
+        feed_deadline = t0 + FEED_PHASE_BUDGET_S
+        tries = 1 + src.retries
+        note = "no try"
+        cands: list[Candidate] | None = None
+        for attempt in range(tries):
+            room = min(left(), feed_deadline - clock())
+            if room < MIN_CALL_S:
+                note = note if attempt else "time"
+                break
+            try:
+                status, body = fetcher.get(url, min(src.timeout_s, room))
+                if status != 200:
+                    note = f"http {status}"
+                    if status != 429 and status < 500:
+                        break  # a 4xx other than 429 will not change on a retry
+                    raise _RetryError
+                cands = parse_gdelt(body, src) if src.style == "gdelt" else parse_rss(body, src)
+                break
+            except _RetryError:
+                pass
+            except ValueError as exc:  # the reply could not be read: retrying will not help
+                note = str(exc)
+                break
+            except Exception as exc:  # noqa: BLE001 - one source failing never stops the others
+                note = type(exc).__name__
+            if attempt + 1 < tries:
+                sleep(
+                    min(RETRY_BACKOFF_S[min(attempt, len(RETRY_BACKOFF_S) - 1)], max(0.0, left()))
+                )
+        if cands is None:
+            tried = "" if tries == 1 else f" (after {attempt + 1} tries)"
+            return info | {"status": f"failed: {note}{tried}"[:80]}, [], clock() - t0
         if src.style == "rss":  # a feed lists everything: keep items that mention a term
             cands = [c for c in cands if matched_terms(f"{c.title} {c.summary}", patterns)]
         cands = cands[:MAX_CANDIDATES_PER_SOURCE]
-        return (
-            {"name": src.name, "url": _public_url(src), "status": "ok", "n": len(cands)},
-            cands,
-            clock() - t0,
-        )
+        return info | {"status": "ok", "n": len(cands)}, cands, clock() - t0
 
     with ThreadPoolExecutor(max_workers=WORKERS) as pool:
         fetched = list(pool.map(run_source, sources))
@@ -586,6 +608,13 @@ def response_body(
     return body
 
 
+def summarize(found: int, searched_utc: str, sources_tried: list[dict[str, Any]]) -> str:
+    """One line for the UI: how many were found, where, on which date, with each status."""
+    names = "; ".join(f"{i.get('name')} ({i.get('status')})" for i in sources_tried)
+    when = f" ({searched_utc[:10]} UTC)" if searched_utc else ""
+    return f"{found} found in these sources{when}: {names or 'none'}."
+
+
 def load_recorded(directory: Path, code: str) -> dict[str, Any] | None:
     """The stored file ``<dir>/<CODE>.json`` when it exists and has the expected shape."""
     path = directory / f"{code.upper()}.json"
@@ -600,6 +629,9 @@ def load_recorded(directory: Path, code: str) -> dict[str, Any] | None:
         if isinstance(m, dict) and is_clean(str(m.get("quote", ""))):
             clean.append(m | {"badge": BADGE})
     doc["mentions"] = clean[:MAX_MENTIONS]
+    doc["summary"] = summarize(
+        len(doc["mentions"]), str(doc.get("searched_utc") or ""), doc.get("sources_tried") or []
+    )
     return doc
 
 
@@ -609,6 +641,7 @@ def empty_recorded(code: str, now: datetime) -> dict[str, Any]:
         "product_code": code.upper(),
         "searched_utc": "",
         "sources_tried": [],
+        "summary": "0 found: no stored search exists for this product code.",
         "mentions": [],
         "dropped": {"quote_not_found": 0, "personal_details": 0, "off_topic": 0},
         "trace": [],
