@@ -72,7 +72,7 @@ Status: **approved by Charan on Oct 29** (design system kept; deploy steps go to
 - **Outside mentions re-recorded** (request `1c207c0`, bot commit `9d45690` on `track-c-live`, searched 2026-10-31 17:38 UTC): 0 mentions found for LLZ. Sources tried: GDELT DOC 2.0 (failed: TimeoutError after 3 tries), FDA press releases RSS (ok, 0), FDA recalls RSS (ok, 0), FDA MedWatch safety alerts RSS (ok, 0), FDA medical devices feed RSS (failed: http 404), MedTech Dive RSS (ok, 0).
 - **Label-reader workflow** ran on the `hackathon-day2` merge: about $0.09 (estimate), nothing saved.
 - **Deploys used today: 4.** Today's paid Meta spend is about $0.50 (estimate).
-- **Owner's new rules:** one agent per track; flags; at most 2 more deploys, each only after the owner says yes.
+- **Owner's new rules:** one agent per track; flags: every new feature ships behind an on/off setting so it can be switched off instead of reverted; at most 2 more deploys, each only after the owner says yes.
 - **Tracks A–E started** (Track D: docs and wording on `track-d-docs`, this entry).
 
 ### Open items needing Charan

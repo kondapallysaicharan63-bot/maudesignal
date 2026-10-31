@@ -385,7 +385,7 @@ openFDA pipeline below predates the event. The file-by-file list is in
 
 ## Tests
 
-**1147 unit tests pass, 78% line + branch coverage** (2026-10-30); all 21 test types
+**2227 unit tests pass, 83.31% line + branch coverage** (2026-10-31); all 21 test types
 are reported in [docs/hackathon/TESTING.md](docs/hackathon/TESTING.md)
 (`pytest tests/unit`; CI also runs ruff, black and `mypy --strict` on Python
 3.11 and 3.12).
