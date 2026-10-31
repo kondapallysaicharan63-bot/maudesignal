@@ -68,8 +68,9 @@ def test_medical_rule_needs_a_body_word_and_no_regulatory_word() -> None:
     assert is_medical(normalise("can you diagnose this rash"))
     assert not is_medical(normalise("can you diagnose this signal"))
     assert not is_medical(normalise("is it dangerous for my team"), has_code=True)
-    # a strong first-person clinical pattern wins over a code or a regulatory word
-    assert is_medical(normalise("is it safe for me"), has_code=True)
+    # a code or a regulatory word always wins (coordinator decision, round 4)
+    assert not is_medical(normalise("is it safe for me"), has_code=True)
+    assert is_medical(normalise("is it safe for me"))
 
 
 QUALIFIED = [
@@ -257,11 +258,13 @@ def test_leftover_lists_what_a_template_would_ignore() -> None:
 # --- round 3: strong first-person medical patterns ----------------------------------------------
 
 STRONG_MEDICAL = [
-    "My pacemaker was recalled, should I get surgery?",
-    "Is my insulin pump that was recalled safe for me?",
+    "Can you diagnose this rash?",
+    "Is it safe for me to get an MRI with my pacemaker?",
+    # CGM is not a known product code; after "my" it is read as a personal device
     "Should I stop using my CGM?",
     "I have chest pain after my MRI, what should I do?",
-    "I have a fever since the LLZ scan, should I go to the hospital?",
+    "Should I get surgery for my pacemaker?",
+    "Is this safe for my baby?",
 ]
 
 
@@ -283,6 +286,57 @@ def test_team_and_regulatory_questions_stay_tier_four(q: str) -> None:
     assert route(q, KNOWN).tier == "live", q
 
 
+#: Round 4: a code, an id or a regulatory word sends these to Muse Spark (its prompt declines
+#: medical advice). The first three were refused as medical in round 3; they now go to tier 4
+#: on purpose.
+REGULATORY_WINS = [
+    "My pacemaker was recalled, should I get surgery?",
+    "Is my insulin pump that was recalled safe for me?",
+    "I have a fever since the LLZ scan, should I go to the hospital?",
+    "We have a spike in burn reports for QIH; what should I do?",
+    "What should I do about the rash of complaints for LLZ?",
+    "Is the recall fix safe for my team to deploy?",
+    "Is this safe for my workflow?",
+    "Should I get a new one of these LLZ systems for our clinic?",
+    "Should I stop using QAH?",
+]
+
+
+@pytest.mark.parametrize("q", REGULATORY_WINS)
+def test_code_id_or_regulatory_word_wins_over_medical(q: str) -> None:
+    assert route(q, KNOWN | {"HGM"}).tier == "live", q
+
+
+@pytest.mark.parametrize(
+    "q",
+    [
+        "How many recalls for LLZ?",
+        "number of recalls for LLZ",
+        "total recalls for QIH",
+        "LLZ recalls dikhao",
+        "QIH recalls chupinchandi",
+        "any warnings?",
+    ],
+)
+def test_more_plain_lookups_hit_tier_two(q: str) -> None:
+    assert route(q, KNOWN).tier == "direct", q
+
+
+@pytest.mark.parametrize("q", ["is LLZ ok", "show all recalls for LLZ", "ok recalls for QIH"])
+def test_all_and_ok_are_not_filler(q: str) -> None:
+    assert route(q, KNOWN).tier == "live", q
+
+
+def test_recall_total_template_states_the_total(tmp_path: Path) -> None:
+    from maudesignal.connector.direct import answer
+
+    d = ConnectorData(work_dir=tmp_path / "w")
+    a = answer(d, route("How many recalls for QIH?", d.known_product_codes()))
+    assert a.sentences[0].text.startswith(
+        "The stored snapshot holds 2 recalls for product code QIH"
+    )
+
+
 # --- round 3: filler is narrow, facts first ---------------------------------------------------
 
 HELD_BACK = [
@@ -292,6 +346,7 @@ HELD_BACK = [
     "The tool misread images.",
     "Overall, the system failed twice.",
     "Here is what happened to the pump.",
+    "The scanner became unusable.",
 ]
 
 
@@ -306,6 +361,7 @@ def test_factual_sentences_are_never_filler(t: str) -> None:
         "Here is what I found.",
         "A named human must review this.",
         "Not medical advice.",
+        "Nothing is filed with FDA.",
         "I checked the stored records.",
         "Overall, a good question.",
     ],

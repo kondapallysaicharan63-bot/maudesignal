@@ -295,7 +295,9 @@ _REGULATORY = re.compile(
     r"|\b510 ?\(?k\)?|\bk\d{6}\b|\bproduct codes?\b|\bmdr\b|\badverse\b|\bsignals?\b"
     r"|\bclearance\b|\bmanufacturers?\b|\bcapa\b|\bsurveillance\b|\bcomplaints?\b"
     r"|\bspike\b|\btrend\b|\bpsur\b|\baudit\b|\bregulat\w*|\breportab\w*|\bquality\b"
-    r"|\bfiled\b|\bfiling\b|\bsubmission\b|\bvigilance\b"
+    r"|\bfiled\b|\bfiling\b|\bsubmission\b|\bvigilance\b|\bfirms?\b|\bdeploy\w*"
+    r"|\bworkflows?\b|\bclinical operations\b|\bour clinic\b|\bteams?\b|\bpurchas\w*"
+    r"|\bbuy\w*|\bprocure\w*|\bvendors?\b|\bfix\b"
 )
 _SAFETY_JUDGEMENT = re.compile(
     r"^(?:is|are) (?:the |this |that |it |these )?[\w\s()-]{0,40}? (?:safe|unsafe|dangerous)"
@@ -470,29 +472,34 @@ _SYMPTOM = (
     r"(?:chest pain|pain|fever|rash|bleeding|headache|dizzy|dizziness|nausea|swelling|"
     r"infection|lump|shortness of breath|palpitations|burn|bruise|numbness|symptoms?)"
 )
-#: Unmistakable first-person clinical questions: they get the medical reply even when they
-#: name a recall or a code ("My pacemaker was recalled, should I get surgery?").
+_FAMILY = (
+    r"(?:baby|child|kid|kids|son|daughter|mother|father|mom|dad|wife|husband|family|body" r"|heart)"
+)
+#: Strong personal-medical patterns. They give the medical reply only when the message also
+#: names no product code, report id or K-number and no regulatory word (``is_medical``).
 _STRONG_MEDICAL = re.compile(
-    r"\bshould i (?:get|have|undergo|need) (?:a |an )?(?:surgery|operation|it removed|it "
-    r"replaced|it taken out|a new one)\b"
-    r"|\b(?:stop|keep|start) (?:using|taking|wearing) my\b|\bsafe for (?:me|my \w+)\b"
+    r"\bshould i (?:get|have|undergo) (?:a |an )?(?:surgery|operation)\b"
+    r"|\b(?:stop|keep) (?:using|taking|wearing) my\b"
     r"|\bi (?:have|feel|got|am having|m having|ve got) (?:a |an |some )?" + _SYMPTOM + r"\b"
-    r"|\bwhat should i do\b.*\b" + _SYMPTOM + r"\b|\b" + _SYMPTOM + r"\b.*\bwhat should i do\b"
-    r"|\bshould i (?:be worried|go to (?:the )?(?:doctor|hospital|er))\b"
+    r"|\bsafe for me\b|\bsafe for my " + _FAMILY + r"\b"
+    r"|\bdiagnos\w*|\bdos(?:e|age)\b"
 )
 
 
 def is_medical(norm: str, *, has_code: bool = False) -> bool:
-    """A request for medical advice: a clinical ask about a body or a patient, not regulatory.
+    """A request for medical advice, answered with the fixed refusal (tier 1).
 
-    "Should we start a CAPA for LLZ?" or "Should I worry about the LLZ spike?" are regulatory
-    questions (a product code or a regulatory word), so they are never refused as medical,
-    unless a strong first-person clinical pattern matches (``_STRONG_MEDICAL``).
+    All must hold: a strong personal-medical pattern (``_STRONG_MEDICAL``) or a first-person
+    clinical ask about a body or a patient; no product code, report id or K-number
+    (``has_code``); no regulatory word (recall, report, complaint, CAPA, spike, firm, deploy,
+    workflow, team, buy ...). Everything else goes to Muse Spark, whose prompt declines medical
+    advice: "We have a spike in burn reports for QIH; what should I do?" or "Is this safe for
+    my workflow?" are never refused here.
     """
-    if _STRONG_MEDICAL.search(norm):
-        return True
     if has_code or _REGULATORY.search(norm):
         return False
+    if _STRONG_MEDICAL.search(norm):
+        return True
     asks = _MEDICAL.search(norm) or _CLINICAL_ASK.search(norm)
     return bool(asks) and _BODY.search(norm) is not None
 
@@ -534,9 +541,9 @@ def canned_intent(norm: str, *, has_code: bool = False) -> str | None:
 _FILLER = _wordset("""
     a an the please pls plz kindly show give tell me us can could would will you u i want to
     see list get find look up lookup check for of about on in what whats is are any there do
-    does have has all just quick ok okay hi hello hey namaste ji garu sir madam and info
+    does have has just quick hi hello hey namaste ji garu sir madam and info
     information details product code codes device devices type fda openfda stored data
-    maudesignal let know kripya kripaya dayachesi
+    maudesignal let know kripya kripaya dayachesi dikhao dikhaiye chupinchu chupinchandi
     """)
 #: The words each intent's own template answers; anything else is a qualifier it ignores.
 _INTENT_WORDS: dict[str, frozenset[str]] = {
@@ -549,7 +556,7 @@ _INTENT_WORDS: dict[str, frozenset[str]] = {
         "know watch this week"
     ),
     "check_code": _wordset("check status summary overview tell about show how is hows doing look"),
-    "recalls": _wordset("recall recalls recalled"),
+    "recalls": _wordset("recall recalls recalled number total count how many"),
     "report": _wordset("report mdr record event id number no key open"),
     "k510": _wordset("510 k 510k clearance number"),
     "who_filed": _wordset(
@@ -642,7 +649,17 @@ def route(
     norm = normalise(question)
     original = unicodedata.normalize("NFKC", question)
     codes, unclear = _codes_in(original, known)
-    named = bool(codes or unclear)
+    # For the medical rule an unknown capitalised word counts as a product code when it is one
+    # letter from a known one ("QAH"), unless it follows "my" (a personal device: "my CGM").
+    code_like = (
+        bool(codes)
+        or any(
+            suggest_codes(u, known) and not re.search(rf"\bmy {u.lower()}\b", norm) for u in unclear
+        )
+        or _K.search(norm) is not None
+        or _REPORT.search(norm) is not None
+    )
+    named = code_like
     intent = canned_intent(norm, has_code=named)
     if intent is not None:
         return Route("canned", intent, suggestions=SUGGESTIONS)

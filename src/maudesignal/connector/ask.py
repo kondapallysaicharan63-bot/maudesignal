@@ -333,7 +333,7 @@ _ADVISORY = re.compile(
 )
 #: Verbs that state what happened (past tense / passive): a sentence with one is factual.
 _EVENT_VERB = re.compile(
-    r"\b(?:was|were|had|has been|have been|is being|got|did|caused|showed|shows|reported)\b"
+    r"\b(?:was|were|had|has been|have been|is being|got|did|became|caused|showed|shows|reported)\b"
     r"|\b\w{3,}(?:ed|en)\b",
     re.IGNORECASE,
 )
@@ -395,10 +395,10 @@ def is_connective(text: str) -> bool:
     t = " ".join(text.split())
     if not t or any(c.isdigit() for c in t):
         return False
-    if _FACT_WORD.search(t) or _CODE_IN_SENTENCE.search(t):
-        return False  # facts first: an advisory wrapper never hides a fact
     if _ADVISORY.search(t):
-        return True
+        return True  # one whole, anchored advisory line ("Nothing is filed with FDA.")
+    if _FACT_WORD.search(t) or _CODE_IN_SENTENCE.search(t):
+        return False
     verbs = [m.group(0).lower() for m in _EVENT_VERB.finditer(t)]
     if any(v not in _TRANSITION_PAST for v in verbs):
         return False  # something happened: factual; when unsure, held back is the safe default

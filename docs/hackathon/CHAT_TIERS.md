@@ -25,17 +25,21 @@ number, a fact about a device, or the words approved, validated, compliant, safe
 test checks this). A greeting before a real question ("hi, what changed for LLZ?") is dropped
 and the question is routed on its own.
 
-**Medical advice vs regulatory questions.** The fixed medical reply is used only when the
-message asks something clinical (should I take or stop, diagnose, dose, safe or dangerous, ...)
-about a body or a patient (I, me, my, kids, pacemaker, MRI, rash, ...) and names no product code
-and no regulatory word (CAPA, recall, report, MAUDE, MDR, signal, complaint, spike, 510(k), ...).
-"Should we start a CAPA for LLZ?" or "Should I worry about the LLZ spike?" go to Muse Spark;
-"Is it safe for me to get an MRI with my pacemaker?" gets the medical reply. Strong first-person
-clinical patterns win even when a recall or a code is named: "should I get surgery", "stop using
-my …", "I have <symptom>", "safe for me", "what should I do" with a symptom ("My pacemaker was
-recalled, should I get surgery?", "Should I stop using my CGM?"). Team and regulatory questions
-("Should we start a CAPA for LLZ?", "What should I do about the LLZ spike?") stay at tier 4. "Is X safe" with a
-regulatory word ("is it safe to close the CAPA") also goes to Muse Spark.
+**Medical advice vs regulatory questions.** The fixed medical reply is used only when all of
+these hold (`tiers.is_medical`): (a) a strong personal-medical pattern ("should I get / have
+surgery", "stop / keep using my …", "I have <symptom>", "safe for me", "safe for my baby / child
+/ mother / heart …", "diagnose", dose / dosage) or a first-person clinical ask about a body or a
+patient; (b) no product code, report id or K-number; (c) no regulatory word (recall, report,
+complaint, CAPA, MAUDE, MDR, signal, spike, trend, 510(k), firm, manufacturer, deploy, workflow,
+team, our clinic, purchase / buy, fix ...). Everything else goes to Muse Spark, whose compact
+prompt declines medical advice (a paid call is the accepted cost). So "Can you diagnose this
+rash?", "Is it safe for me to get an MRI with my pacemaker?" and "I have chest pain after my MRI,
+what should I do?" get the reply, while "My pacemaker was recalled, should I get surgery?", "We
+have a spike in burn reports for QIH; what should I do?", "Is this safe for my workflow?" and
+"Should we start a CAPA for LLZ?" go to tier 4. An unknown capitalised word counts as a code for
+this rule when it is one letter from a known code, unless it follows "my" ("Should I stop using
+my CGM?": CGM is not a known code in the stored data, so it is read as a personal device and gets
+the reply).
 
 The privacy reply says that greetings and simple lookups use no model, that when live answers
 are on an open question is sent to Meta's Muse Spark, and that MaudeSignal keeps only a hash of
@@ -58,7 +62,10 @@ unchanged.
 intent's own words (for example "recall, recalls" for recalls; "what, changed, this, week, new,
 latest" for what changed), the product code / report id / K-number, and a small fixed set of
 filler words (articles, please, show / give / tell me, for, of, about, what, is, any, can you,
-"ji", "garu", "kripya", "dayachesi" and similar; `tiers._FILLER`). Any leftover word sends the
+"ji", "garu", "kripya", "dayachesi", "dikhao", "chupinchandi" and similar; `tiers._FILLER`; "all"
+and "ok" are not filler, so "is LLZ ok" and "show all recalls" go to tier 4). The recalls
+template states the total, so "how many", "number of", "total" and "count" are its own words;
+"warnings" is an alerts word. Any leftover word sends the
 question to Muse Spark: a year, a number other than the id, "first", "newest", "this year", "this
 month", a firm name ("by Abbott"), "older", "from user facilities", or any word in another script
 that is not a known filler ("ఈ సంవత్సరం"). "this week" is allowed only for what changed and
@@ -113,13 +120,14 @@ ledger entry is written).
 
 A sentence that passed the gate with no claims and states no fact is not listed as "held back";
 it is simply not shown (`ask.is_connective`). The test is narrow and, when unsure, a sentence
-is held back. It is filler only when: it has no digit; it names nothing from the gate's
-vocabulary (device, scanner, tool, system, recall, report, death, failure, product code, a
-capitalised three-letter code ...), checked first; it has no verb saying something happened
-("was", "were", "had", a past participle such as "withdrawn" or "misread", except transition
-words like "checked", "found", "stored"); and it is either a short transition ("Here is what I
-found.") or one whole, anchored advisory line ("A named human must review this.", "Not medical
-advice."). "A named human must review the deaths reported for this scanner.", "This is not
+is held back. It is filler only when it has no digit and either (1) it is one whole, anchored
+advisory line ("A named human must review this.", "Not medical advice.", "Nothing is filed with
+FDA."), checked first, or (2) it names nothing from the gate's vocabulary (device, scanner,
+tool, system, recall, report, death, failure, product code, a capitalised three-letter code
+...), has no verb saying something happened ("was", "were", "had", "became", a past participle
+such as "withdrawn" or "misread", except transition words like "checked", "found", "stored")
+and is a short transition ("Here is what I
+found."). "A named human must review the deaths reported for this scanner.", "This is not
 medical advice; stop using the device immediately.", "The scanner was withdrawn." and "The tool
 misread images." are listed as held back. The recorded demo's "A named human must review the
 supporting reports before any regulatory decision." names reports, so it is now listed as held
