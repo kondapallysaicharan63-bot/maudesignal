@@ -60,12 +60,15 @@ def main() -> int:
                 page.get_by_test_id("copy-cursor-config").click()
                 clip = page.evaluate("navigator.clipboard.readText()")
                 check(f"{tag}: copy puts the cursor snippet on the clipboard", clip == page.get_by_test_id("code-cursor").inner_text())
-                check(f"{tag}: three prompts listed", page.locator("[data-testid=mcp-prompts] li").count() == 3)
+                check(f"{tag}: three example questions listed", page.locator("[data-testid=example-questions] li").count() == 3)
                 check(f"{tag}: status line", "pending review." in page.get_by_test_id("connect-status").inner_text())
                 over = page.evaluate("document.documentElement.scrollWidth - document.documentElement.clientWidth")
                 report[f"{tag}: x_overflow_px"] = over
                 check(f"{tag}: no sideways scroll", over == 0)
-                page.screenshot(path=str(OUT / f"M2b-connect-{tag}.png"), full_page=True)
+                # The Connect view scrolls inside the chat pane, so scroll each section into view and shoot it.
+                for sec in ("connect-status", "connect-steps", "demo-key-block", "snippet-claude-desktop", "snippet-cursor", "snippet-muse", "example-questions", "link-privacy"):
+                    page.get_by_test_id(sec).scroll_into_view_if_needed()
+                    page.screenshot(path=str(OUT / f"M2b-connect-{tag}-{sec}.png"))
                 ctx.close()
         browser.close()
     srv.shutdown()

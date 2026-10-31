@@ -143,30 +143,30 @@ export function configSnippets(i: ConnectInfo): Snippet[] {
     {
       id: 'claude-desktop',
       title: 'Claude Desktop',
-      where: 'Paste into claude_desktop_config.json (Settings, Developer, Edit Config), then restart Claude Desktop. Needs Node.js for npx.',
+      where: 'Paste into claude_desktop_config.json (Settings, Developer, Edit Config), or merge the maudesignal entry into your existing mcpServers, then restart Claude Desktop. Needs Node.js for npx.',
       text: JSON.stringify(desktop, null, 2),
       isJson: true,
     },
     {
       id: 'cursor',
       title: 'Cursor',
-      where: 'Paste into .cursor/mcp.json in your project (or ~/.cursor/mcp.json for all projects).',
+      where: 'Paste into .cursor/mcp.json in your project (or ~/.cursor/mcp.json for all projects), or merge the maudesignal entry into your existing mcpServers.',
       text: JSON.stringify(cursor, null, 2),
       isJson: true,
     },
     {
       id: 'muse',
       title: 'Meta Muse',
-      where: 'In Muse, add a custom connector and fill the two fields with these values.',
+      where: 'In Muse, add a custom connector and enter these values.',
       text: `MCP URL: ${i.mcp_url}\nHeader: ${header}\nValue: ${key}`,
       isJson: false,
     },
   ]
 }
 
-/** The three MCP prompts, one line each. */
-export const MCP_PROMPTS: { id: string; title: string; line: string }[] = [
-  { id: 'morning-brief', title: 'Morning brief', line: 'What changed in the stored reports, recalls and 510(k)s for the devices you watch since the last check.' },
-  { id: 'check-this-device', title: 'Check this device', line: 'Look up one device and list its stored reports, recalls and clearances with their sources.' },
-  { id: 'does-this-apply-to-us', title: 'Does this apply to us', line: 'Compare a recall or alert with your own device list and show which devices match, for a person to review.' },
+/** Example questions to try once connected, one line each; each maps to an existing connector tool. */
+export const EXAMPLE_QUESTIONS: { id: string; title: string; line: string }[] = [
+  { id: 'what-changed', title: 'What changed this week for LLZ?', line: 'Uses what_changed_this_week: the latest stored week for a product code, labelled with its dates.' },
+  { id: 'check-device-type', title: 'Check product code QAS on openFDA.', line: 'Uses check_device_type: live openFDA report counts for any product code.' },
+  { id: 'recalls', title: 'Show recalls for LLZ.', line: 'Uses recalls: stored openFDA recalls for a product code, newest first.' },
 ]

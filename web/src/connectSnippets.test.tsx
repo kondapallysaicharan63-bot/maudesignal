@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
-// DOM tests: the copy-paste config snippets and the MCP prompts on the Connect page.
+// DOM tests: the copy-paste config snippets and the example questions on the Connect page.
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ConnectView } from './components/ConnectView'
-import { configSnippets, FALLBACK_INFO, KEY_PLACEHOLDER, MCP_PROMPTS } from './connect'
+import { configSnippets, FALLBACK_INFO, KEY_PLACEHOLDER, EXAMPLE_QUESTIONS } from './connect'
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
@@ -69,15 +69,15 @@ describe('config snippets', () => {
     }
     expect(q('copy-claude-desktop-config')!.textContent).toBe('Copied')
   })
-  it('keeps the steps, status line, limits note, privacy and terms links; lists the three prompts', () => {
+  it('keeps the steps, status line, limits note, privacy and terms links; lists the example questions', () => {
     act(() => root.render(<ConnectView apiBase={null} />))
     expect(host.querySelectorAll('[data-testid=connect-steps] li')).toHaveLength(3)
     expect(q('connect-status')!.textContent).toContain("Submitted to Meta's Muse Connector Program — pending review.")
     expect(q('no-demo-key')!.textContent).toContain('rate-limited')
     expect(q('link-privacy')).not.toBeNull()
     expect(q('link-terms')).not.toBeNull()
-    expect(MCP_PROMPTS.map((p) => p.title)).toEqual(['Morning brief', 'Check this device', 'Does this apply to us'])
-    expect(host.querySelectorAll('[data-testid=mcp-prompts] li')).toHaveLength(3)
+    expect(EXAMPLE_QUESTIONS.map((p) => p.title)).toEqual(['What changed this week for LLZ?', 'Check product code QAS on openFDA.', 'Show recalls for LLZ.'])
+    expect(host.querySelectorAll('[data-testid=example-questions] li')).toHaveLength(3)
   })
   it('configSnippets marks JSON ones', () => {
     expect(configSnippets(FALLBACK_INFO).map((s) => s.isJson)).toEqual([true, true, false])

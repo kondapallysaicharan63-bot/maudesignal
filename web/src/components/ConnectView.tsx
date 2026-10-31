@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ASK_FOR_KEY, configSnippets, connectSteps, KEY_PLACEHOLDER, MCP_PROMPTS, fetchConnect, FALLBACK_INFO, type ConnectInfo } from '../connect'
+import { ASK_FOR_KEY, configSnippets, connectSteps, KEY_PLACEHOLDER, EXAMPLE_QUESTIONS, fetchConnect, FALLBACK_INFO, type ConnectInfo } from '../connect'
 import { Icon } from '../icons'
 
 type Fetcher = (url: string, init?: RequestInit) => Promise<Response>
@@ -130,11 +130,11 @@ export function ConnectView({ apiBase, fetcher }: { apiBase: string | null; fetc
         ))}
       </article>
 
-      <article className="rounded-md border border-rule bg-surface p-4" aria-label="MCP prompts" data-testid="mcp-prompts">
-        <h2 className="t-title m-0">Three prompts</h2>
+      <article className="rounded-md border border-rule bg-surface p-4" aria-label="Example questions" data-testid="example-questions">
+        <h2 className="t-title m-0">Example questions</h2>
         <ul className="m-0 mt-2 list-none space-y-2 p-0">
-          {MCP_PROMPTS.map((p) => (
-            <li key={p.id} data-testid={`prompt-${p.id}`} className="text-[17px]">
+          {EXAMPLE_QUESTIONS.map((p) => (
+            <li key={p.id} data-testid={`example-${p.id}`} className="text-[17px]">
               <span className="font-semibold">{p.title}.</span> <span className="text-ink-2">{p.line}</span>
             </li>
           ))}
