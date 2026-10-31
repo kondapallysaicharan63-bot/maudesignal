@@ -28,7 +28,7 @@ A report has four verdicts, computed by `report.py`:
 | FAIL | any required check failed (a report with no checks is a FAIL) |
 | BLOCKED | no failure, and at least one check is BLOCKED |
 | PASS | no failure, nothing blocked, and at least one check passed |
-| INFO | none of the above: the part holds only informational or KNOWN_GAP lines and nothing passed |
+| INFO | none of the above: the part holds only KNOWN_GAP lines or non-required SKIPPED/NOT_PRESENT lines, and nothing passed |
 
 The merged `overall()` verdict ignores INFO parts: FAIL if any part failed (or none ran), else
 BLOCKED if any part was blocked, else PASS if at least one part is not INFO, and INFO only when
@@ -170,8 +170,9 @@ Responses and the web bundle are scanned for the secrets given to the run and fo
 strings. The key scans in `smoke.py` (`Smoke.clean`: no secret value and no key-shaped string in the
 responses) are the only checks that go through `Smoke.scan`. `clean` handles a non-200 response
 first: when the status is 0 or anything other than 200 there is nothing to scan, so the line is
-FAIL `no answer to check (HTTP <status>)`, never a pass; `scan` keeps the same test as a second guard. A live answer whose `cost_usd` is not a non-negative number (missing,
-a string, a boolean, negative, NaN or infinite) is counted at the full cap of its kind.
+FAIL `no answer to check (HTTP <status>)`, never a pass; `scan` keeps the same test as a second guard. A live answer whose `cost_usd` is not a
+non-negative number (missing, a string, a boolean, negative, NaN or infinite) is counted at the
+full cap of its kind.
 
 **Spend budget per smoke run** (`scripts/release/budget.py`): one `Budget` object is shared by the
 live checks and the load test, and the web quick pass is kept out of live spending. In total at

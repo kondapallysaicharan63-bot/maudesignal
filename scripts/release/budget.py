@@ -2,13 +2,14 @@
 
 HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
-A smoke run may spend at most ``MAX_USD`` and make at most ``MAX_ASKS`` live asks,
-``MAX_PHOTOS`` live photos and ``MAX_VOICE`` live spoken questions in total. Before each live
-call the caller reserves it (``reserve``): the call is allowed only when the cost already
-spent, plus the holds of calls still in flight, plus this call's maximum hold, stays within the
-dollar limit, and the count for its kind is not used up. After the call, ``settle`` adds the
-real ``cost_usd``. A refused call is never silent: the caller records a FAIL line
-``skipped: budget`` (see ``SKIPPED_BUDGET``).
+A smoke run (``Smoke``) may spend at most ``MAX_USD`` and make at most ``SMOKE_LIMITS`` calls:
+1 live ask, 0 live photos and 1 spoken question. ``LIMITS`` (``MAX_ASKS``, ``MAX_PHOTOS``,
+``MAX_VOICE``) is the default for any other ``Budget``, such as a standalone load test.
+Before each live call the caller reserves it (``reserve``): the call is allowed only when the
+cost already spent, plus the holds of calls still in flight, plus this call's maximum hold,
+stays within the dollar limit, and the count for its kind is not used up. After the call,
+``settle`` adds the real ``cost_usd``. A refused call is never silent: the caller
+records a FAIL line ``skipped: budget`` (see ``SKIPPED_BUDGET``).
 
 The holds are the DEPLOYED API's default per-request caps (``connector/globalcap.py`` on
 track-c-live: ask 0.25, voice 0.30, label 0.30), the most one call can cost there. They are NOT

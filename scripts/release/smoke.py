@@ -297,8 +297,9 @@ class Smoke:
         """One chat question and one spoken question; a photo only when ``with_photo``.
 
         Every call is budget-checked. A photo is held at $0.30, so with the $0.60 run budget it
-        does not fit beside the question and the spoken question ($0.55); by default no photo is
-        sent and the report says so. The browser pass runs in recorded mode (route mocks).
+        does not fit beside the question and the spoken question ($0.55); ``main()`` passes
+        ``with_photo=False``: no photo is sent and the report says so. ``with_photo=True`` is refused
+        by the 0-photo smoke budget (a FAIL ``skipped: budget`` line). The browser pass runs in recorded mode (route mocks).
         """
         if self.budget.reserve("ask"):
             r = request(
