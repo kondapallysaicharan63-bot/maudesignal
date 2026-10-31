@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ASK_FOR_KEY, connectSteps, fetchConnect, FALLBACK_INFO, type ConnectInfo } from '../connect'
+import { ASK_FOR_KEY, configSnippets, connectSteps, KEY_PLACEHOLDER, MCP_PROMPTS, fetchConnect, FALLBACK_INFO, type ConnectInfo } from '../connect'
 import { Icon } from '../icons'
 
 type Fetcher = (url: string, init?: RequestInit) => Promise<Response>
@@ -109,6 +109,36 @@ export function ConnectView({ apiBase, fetcher }: { apiBase: string | null; fetc
             </li>
           ))}
         </ol>
+      </article>
+
+      <article className="rounded-md border border-rule bg-surface p-4" aria-label="Config snippets" data-testid="config-snippets">
+        <h2 className="t-title m-0">Copy-paste setup</h2>
+        {!i.demo_key && <p className="m-0 mt-1 text-[16px] text-ink-2">Replace {KEY_PLACEHOLDER} with your key.</p>}
+        {configSnippets(i).map((sn) => (
+          <section key={sn.id} className="mt-3 border-t border-rule pt-3" aria-label={sn.title} data-testid={`snippet-${sn.id}`}>
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="m-0 text-[17px] font-semibold">{sn.title}</h3>
+              <CopyButton text={sn.text} label={`${sn.title} config`} />
+            </div>
+            <p className="m-0 mt-1 text-[16px] text-ink-2" data-testid={`where-${sn.id}`}>
+              {sn.where}
+            </p>
+            <pre className="ms-code m-0 mt-2 overflow-x-auto whitespace-pre-wrap break-all rounded-md border border-rule p-3 !text-[15px]" data-testid={`code-${sn.id}`} tabIndex={0}>
+              {sn.text}
+            </pre>
+          </section>
+        ))}
+      </article>
+
+      <article className="rounded-md border border-rule bg-surface p-4" aria-label="MCP prompts" data-testid="mcp-prompts">
+        <h2 className="t-title m-0">Three prompts</h2>
+        <ul className="m-0 mt-2 list-none space-y-2 p-0">
+          {MCP_PROMPTS.map((p) => (
+            <li key={p.id} data-testid={`prompt-${p.id}`} className="text-[17px]">
+              <span className="font-semibold">{p.title}.</span> <span className="text-ink-2">{p.line}</span>
+            </li>
+          ))}
+        </ul>
       </article>
 
       <p className="m-0 flex flex-wrap items-center gap-x-5 text-[17px]">

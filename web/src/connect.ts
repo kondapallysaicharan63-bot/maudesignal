@@ -120,3 +120,53 @@ export function connectSteps(i: ConnectInfo): { n: number; text: string }[] {
     { n: 3, text: `Paste the key into the ${i.key_header} header field. There is no sign-in with an account (OAuth is not available).` },
   ]
 }
+
+export const KEY_PLACEHOLDER = '<your key>'
+
+export interface Snippet {
+  id: 'claude-desktop' | 'cursor' | 'muse'
+  title: string
+  /** One line: which file or screen to paste it into. */
+  where: string
+  /** The text to copy. JSON for Claude Desktop and Cursor, plain lines for Muse. */
+  text: string
+  isJson: boolean
+}
+
+/** The three copy-paste snippets. The key is the demo key when the API gave one, else the placeholder. */
+export function configSnippets(i: ConnectInfo): Snippet[] {
+  const key = i.demo_key ?? KEY_PLACEHOLDER
+  const header = i.key_header
+  const desktop = { mcpServers: { maudesignal: { command: 'npx', args: ['mcp-remote', i.mcp_url, '--header', `${header}:${key}`] } } }
+  const cursor = { mcpServers: { maudesignal: { url: i.mcp_url, headers: { [header]: key } } } }
+  return [
+    {
+      id: 'claude-desktop',
+      title: 'Claude Desktop',
+      where: 'Paste into claude_desktop_config.json (Settings, Developer, Edit Config), then restart Claude Desktop. Needs Node.js for npx.',
+      text: JSON.stringify(desktop, null, 2),
+      isJson: true,
+    },
+    {
+      id: 'cursor',
+      title: 'Cursor',
+      where: 'Paste into .cursor/mcp.json in your project (or ~/.cursor/mcp.json for all projects).',
+      text: JSON.stringify(cursor, null, 2),
+      isJson: true,
+    },
+    {
+      id: 'muse',
+      title: 'Meta Muse',
+      where: 'In Muse, add a custom connector and fill the two fields with these values.',
+      text: `MCP URL: ${i.mcp_url}\nHeader: ${header}\nValue: ${key}`,
+      isJson: false,
+    },
+  ]
+}
+
+/** The three MCP prompts, one line each. */
+export const MCP_PROMPTS: { id: string; title: string; line: string }[] = [
+  { id: 'morning-brief', title: 'Morning brief', line: 'What changed in the stored reports, recalls and 510(k)s for the devices you watch since the last check.' },
+  { id: 'check-this-device', title: 'Check this device', line: 'Look up one device and list its stored reports, recalls and clearances with their sources.' },
+  { id: 'does-this-apply-to-us', title: 'Does this apply to us', line: 'Compare a recall or alert with your own device list and show which devices match, for a person to review.' },
+]
