@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Icon } from '../icons'
-import { heldBackLine, LIMIT_TEXT, NOT_MEDICAL_ADVICE, VOICE_NOTE, type AskResponse } from '../live/api'
+import { badgeText, heldBackLine, isFreeTier, LIMIT_TEXT, NOT_MEDICAL_ADVICE, openLabel, VOICE_NOTE, type AskResponse, type OpenView } from '../live/api'
 import { speechSupported } from '../live/speech'
 import type { LiveChat as Chat, LiveTurn } from '../live/useLiveChat'
 import type { Thread } from '../types'
@@ -58,8 +58,14 @@ function Sentence({ text, links, onDone }: { text: string; links: { label: strin
   )
 }
 
+/** Badge colours: green for a live answer, amber for a recorded run, the quiet surface for tiers 1 to 3. */
+function badgeClass(resp: AskResponse): string {
+  if (isFreeTier(resp)) return 'bg-sunk text-ink ws-pill--ring'
+  return resp.mode === 'recorded' ? 'bg-warning-soft text-warning' : 'bg-success-soft text-success'
+}
+
 /** The trace steps appear one by one as the run is shown, then the answer is written out word by word. */
-function Answer({ turn, chat }: { turn: LiveTurn; chat: Chat }) {
+function Answer({ turn, chat, onAsk, onOpen }: { turn: LiveTurn; chat: Chat; onAsk: (q: string) => void; onOpen?: (o: OpenView) => void }) {
   const resp = turn.resp as AskResponse
   const steps = resp.trace
   const [shownSteps, setSteps] = useState(reduced() ? steps.length : 0)
@@ -74,12 +80,14 @@ function Answer({ turn, chat }: { turn: LiveTurn; chat: Chat }) {
   const held = heldBackLine(resp.answer.withheld)
   const allShown = stepsDone && upTo > sentences.length
   const recorded = resp.mode === 'recorded'
+  const free = isFreeTier(resp)
   const speaking = chat.speakingId === turn.id
+  const open = openLabel(resp.open)
   return (
-    <div data-testid="live-answer" data-mode={resp.mode}>
+    <div data-testid="live-answer" data-mode={resp.mode} data-tier={resp.tier ?? 'live'}>
       <p className="m-0 flex flex-wrap items-center gap-2">
-        <span className={`ws-pill ${recorded ? 'bg-warning-soft text-warning' : 'bg-success-soft text-success'}`} data-testid="mode-badge">
-          {recorded ? 'Recorded run' : 'Live answer'}
+        <span className={`ws-pill ${badgeClass(resp)}`} data-testid="mode-badge">
+          {badgeText(resp)}
         </span>
         {resp.limits && !recorded && (
           <span className="text-[15px] text-ink-2" data-testid="limits">
@@ -106,7 +114,7 @@ function Answer({ turn, chat }: { turn: LiveTurn; chat: Chat }) {
               ))}
             </ul>
           )}
-          {sentences.length === 0 && !held && !recorded && <p className="m-0 mt-2 text-ink-2">No sentence passed the claim gate for this question.</p>}
+          {sentences.length === 0 && !held && !recorded && !free && <p className="m-0 mt-2 text-ink-2">No sentence passed the claim gate for this question.</p>}
           {allShown && held && (
             <p className="ws-wrap m-0 mt-2 text-[16px] text-ink-2" data-testid="held-back">
               {held}
@@ -127,8 +135,32 @@ function Answer({ turn, chat }: { turn: LiveTurn; chat: Chat }) {
               {speaking ? 'Stop' : 'Read aloud'}
             </button>
           )}
-          {typeof resp.cost_usd === 'number' && <span className="ms-num">Cost of this answer: ${resp.cost_usd.toFixed(4)}</span>}
+          {typeof resp.cost_usd === 'number' && (
+            <span className="ms-num" data-testid="answer-cost">
+              Cost of this answer: ${resp.cost_usd.toFixed(4)}
+              {free ? ' (no model call)' : ''}
+            </span>
+          )}
+          {resp.tier === 'cache' && resp.answered_at && <span data-testid="answered-at">First answered {resp.answered_at.slice(11, 16)} UTC</span>}
         </p>
+      )}
+      {allShown && open && onOpen && resp.open && (
+        <p className="m-0 mt-2">
+          <button type="button" className="ms-btn ms-btn--secondary" style={{ height: 40 }} onClick={() => onOpen(resp.open as OpenView)} data-testid="open-view">
+            {open}
+          </button>
+        </p>
+      )}
+      {allShown && resp.suggestions.length > 0 && (
+        <ul className="m-0 mt-2 flex list-none flex-wrap gap-2 p-0" aria-label="Suggested questions" data-testid="suggestions">
+          {resp.suggestions.map((q) => (
+            <li key={q}>
+              <button type="button" className="ms-btn ms-btn--secondary" style={{ height: 36 }} onClick={() => onAsk(q)} data-testid="suggestion-chip">
+                <span className="ws-wrap">{q}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
       )}
       <p className="m-0 mt-2 text-[15px] text-ink-2" data-testid="not-advice">
         {NOT_MEDICAL_ADVICE}
@@ -162,7 +194,13 @@ function Typing({ voice }: { voice: boolean }) {
   )
 }
 
-function TurnView({ turn, chat, onRecordedVoice }: { turn: LiveTurn; chat: Chat; onRecordedVoice: () => void }) {
+function TurnView({ turn, chat, onRecordedVoice, onAsk, onOpen }: {
+  turn: LiveTurn
+  chat: Chat
+  onRecordedVoice: () => void
+  onAsk: (q: string) => void
+  onOpen?: (o: OpenView) => void
+}) {
   return (
     <article className="space-y-3" data-testid="live-turn" data-status={turn.status}>
       <div className="ml-auto max-w-[85%] rounded-md bg-sunk px-4 py-3" data-testid="user-bubble">
@@ -189,7 +227,7 @@ function TurnView({ turn, chat, onRecordedVoice }: { turn: LiveTurn; chat: Chat;
       {turn.status === 'done' && turn.resp && (
         <>
           {turn.via === 'voice' && turn.resp.heard && <span className="sr-only">Heard: {turn.resp.heard}</span>}
-          <Answer turn={turn} chat={chat} />
+          <Answer turn={turn} chat={chat} onAsk={onAsk} onOpen={onOpen} />
         </>
       )}
     </article>
@@ -197,11 +235,13 @@ function TurnView({ turn, chat, onRecordedVoice }: { turn: LiveTurn; chat: Chat;
 }
 
 /** The conversation: your questions as bubbles, a typing indicator with the live steps, then the checked answer. */
-export function LiveChatView({ chat, threads, onStarter, onRecordedVoice }: {
+export function LiveChatView({ chat, threads, onStarter, onRecordedVoice, onOpen }: {
   chat: Chat
   threads: Thread[]
   onStarter: (q: string) => void
   onRecordedVoice: () => void
+  /** Opens a page an answer points to (Check any device type, Our devices, the AI sweep). */
+  onOpen?: (o: OpenView) => void
 }) {
   const end = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -216,7 +256,8 @@ export function LiveChatView({ chat, threads, onStarter, onRecordedVoice }: {
         <p className="ms-kicker">Live</p>
         <h1 className="t-title-lg m-0">Ask Muse Spark</h1>
         <p className="mt-1 max-w-xl text-ink-2">
-          Type a question or press the mic. Muse Spark answers from stored records only, and every sentence passes the claim gate before you see it.
+          Type a question or press the mic. Greetings and simple lookups are answered directly at no cost; open questions go to Muse Spark. Every FDA
+          fact passes the claim gate before you see it.
         </p>
         <p className="m-0 mt-2 flex flex-wrap items-center gap-2">
           {speechSupported() && (
@@ -273,7 +314,7 @@ export function LiveChatView({ chat, threads, onStarter, onRecordedVoice }: {
       )}
       <div role="log" aria-live="polite" aria-label="Conversation" className="space-y-8">
         {chat.turns.map((t) => (
-          <TurnView key={t.id} turn={t} chat={chat} onRecordedVoice={onRecordedVoice} />
+          <TurnView key={t.id} turn={t} chat={chat} onRecordedVoice={onRecordedVoice} onAsk={onStarter} onOpen={onOpen} />
         ))}
       </div>
       <div ref={end} />

@@ -129,6 +129,11 @@ export function ChatPane(p: Props) {
         threads={data.threads.threads}
         onStarter={(q) => void live.ask(q)}
         onRecordedVoice={() => p.onCapture('voice')}
+        onOpen={(o) => {
+          if (o.view === 'check-device') p.onCode(o.code ?? '')
+          else if (o.view === 'our-devices') p.onDevice?.(null)
+          else if (o.view === 'ai-sweep') p.onWorkflow('ai-sweep')
+        }}
       />
     )
   } else if (p.view.kind === 'connect') {

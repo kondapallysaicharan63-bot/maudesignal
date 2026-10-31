@@ -5,13 +5,16 @@ import threads from '../../public/data/threads.json'
 import type { Evidence, Thread } from '../types'
 import {
   answerText,
+  badgeText,
   buildAskBody,
   buildLabelForm,
   buildVoiceForm,
   checkQuestion,
   heldBackLine,
+  isFreeTier,
   LiveError,
   mapError,
+  openLabel,
   parseAsk,
   parseLabelResponse,
   postAsk,
@@ -172,7 +175,8 @@ describe('history trimming and question checks', () => {
 
   it('checks the question length the way the server does', () => {
     expect(checkQuestion('  hi?  ')).toBe('hi?')
-    expect(() => checkQuestion('hi')).toThrow(/at least 3/)
+    expect(checkQuestion('hi')).toBe('hi') // a greeting is answered by the server's fixed reply
+    expect(() => checkQuestion(' x ')).toThrow(/at least 2/)
     expect(() => checkQuestion('   ')).toThrow(LiveError)
     expect(() => checkQuestion('x'.repeat(501))).toThrow(/500/)
     expect(checkQuestion('x'.repeat(500))).toHaveLength(500)
@@ -191,7 +195,7 @@ describe('payload builders', () => {
     expect((body.history as { answer: string }[])[0].answer).toHaveLength(600)
     expect(body.product_code).toBe('QIH')
     expect(body.ref).toBe('dr-x')
-    expect(() => buildAskBody('no')).toThrow(LiveError)
+    expect(() => buildAskBody('n')).toThrow(LiveError)
   })
 
   it('voice form: part "audio" is the WAV; part "meta" only when there is something to say', async () => {
@@ -265,6 +269,33 @@ describe('response parsing', () => {
     expect(r.limits?.remaining_today).toBe(7)
     expect(r.cost_usd).toBeNull()
   })
+  it('reads the chat tier, badge, chips, did-you-mean and the page to open; drops anything else', () => {
+    const r = parseAsk({
+      ...ok,
+      mode: 'direct',
+      tier: 'direct',
+      badge: 'Direct FDA lookup — no AI',
+      suggestions: ['Recalls for LLZ', 3, '', 'a'.repeat(300)],
+      did_you_mean: ['LLZ', 'not a code'],
+      open: { view: 'check-device', code: 'QAS' },
+    })!
+    expect(r.mode).toBe('direct')
+    expect(r.tier).toBe('direct')
+    expect(r.badge).toBe('Direct FDA lookup — no AI')
+    expect(r.suggestions).toEqual(['Recalls for LLZ', 'a'.repeat(120)])
+    expect(r.did_you_mean).toEqual(['LLZ'])
+    expect(r.open).toEqual({ view: 'check-device', code: 'QAS' })
+    expect(badgeText(r)).toBe('Direct FDA lookup — no AI')
+    expect(isFreeTier(r)).toBe(true)
+    expect(openLabel(r.open)).toBe('Open Check any device type for QAS')
+    const bad = parseAsk({ ...ok, tier: 'premium', open: { view: 'javascript:alert(1)' } })!
+    expect(bad.tier).toBeUndefined()
+    expect(bad.open).toBeUndefined()
+    expect(bad.suggestions).toEqual([])
+    expect(badgeText(bad)).toBe('Live answer')
+    expect(badgeText({ ...bad, mode: 'recorded' })).toBe('Recorded run')
+    expect(openLabel({ view: 'alerts' })).toBeNull()
+  })
   it('rejects an answer without the answer block', () => {
     expect(parseAsk({ mode: 'live' })).toBeNull()
     expect(parseAsk(null)).toBeNull()
@@ -329,7 +360,7 @@ describe('network layer with a fake fetch', () => {
   it('sends nothing without an API address, and refuses a bad question or image before sending', async () => {
     const f = vi.fn()
     expect(await postAsk('What changed?', {}, { apiBase: null, fetcher: f }).catch((e: LiveError) => e)).toMatchObject({ kind: 'not_configured' })
-    expect(await postAsk('no', {}, { apiBase: 'https://x.example', fetcher: f }).catch((e: LiveError) => e)).toMatchObject({ kind: 'invalid_input' })
+    expect(await postAsk('n', {}, { apiBase: 'https://x.example', fetcher: f }).catch((e: LiveError) => e)).toMatchObject({ kind: 'invalid_input' })
     expect(await postLabel(new Blob([], { type: 'image/jpeg' }), { apiBase: 'https://x.example', fetcher: f }).catch((e: LiveError) => e)).toMatchObject({ kind: 'invalid_input' })
     expect(await postLabel(new Blob([new Uint8Array(4 * 1024 * 1024 + 1)], { type: 'image/jpeg' }), { apiBase: 'https://x.example', fetcher: f }).catch((e: LiveError) => e)).toMatchObject({ kind: 'too_large' })
     expect(f).not.toHaveBeenCalled()

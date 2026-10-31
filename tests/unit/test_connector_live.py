@@ -150,7 +150,11 @@ class Env:
         store: Any = None,
         fetcher: Any = None,
         mentions_dir: Path | None = None,
+        tiers: bool = False,
     ) -> None:
+        # ``tiers`` is off by default here: these tests pin the Muse Spark path (tier 4) with
+        # questions such as "What changed this week for LLZ?", which the chat tiers answer
+        # directly. tests/unit/test_chat_tiers_routes.py covers the routes with tiers on.
         self.clock = Clock()
         self.spark = spark or RecordingSpark()
         self.label_spark = FakeClient([label_payload() for _ in range(8)])
@@ -193,6 +197,7 @@ class Env:
             feedback_store=self.store,
             live=self.backends,
             live_config=config or LiveConfig(daily_usd=3.0, burst_per_min=1000),
+            chat_tiers=tiers,
         )
         self.client = TestClient(create_app(settings), raise_server_exceptions=False)
 

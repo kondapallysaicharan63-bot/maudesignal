@@ -10,7 +10,8 @@ export const ASK_PATH = '/v1/live/ask'
 export const VOICE_PATH = '/v1/live/voice'
 export const LABEL_PATH = '/v1/live/label'
 
-export const MIN_QUESTION = 3
+/** Two characters, so a plain "hi" gets the server's fixed reply (tier 1). */
+export const MIN_QUESTION = 2
 export const MAX_QUESTION = 500
 export const MAX_HISTORY = 4
 export const MAX_HISTORY_ANSWER = 600
@@ -56,8 +57,15 @@ export interface LiveAnswer {
   withheld: Withheld[]
   spoken_text: string
 }
+/** Which chat tier answered (see docs/hackathon/CHAT_TIERS.md): fixed reply, direct lookup, earlier answer, Muse Spark. */
+export type Tier = 'canned' | 'direct' | 'cache' | 'live'
+/** A page of this app the answer points to (the server names it; unknown views are ignored). */
+export interface OpenView {
+  view: 'check-device' | 'our-devices' | 'ai-sweep' | 'alerts'
+  code?: string
+}
 interface Common {
-  mode: 'live' | 'recorded'
+  mode: 'live' | 'recorded' | 'canned' | 'direct'
   recorded_note?: string
   not_medical_advice: boolean
   trace: LiveTraceStep[]
@@ -67,6 +75,17 @@ interface Common {
 export interface AskResponse extends Common {
   heard?: string
   answer: LiveAnswer
+  /** Absent from older servers: then the answer came from Muse Spark (or a recorded run). */
+  tier?: Tier
+  /** "No FDA facts in this message", "Direct FDA lookup — no AI", "Answered earlier today". */
+  badge?: string
+  /** Follow-up questions offered as chips (each is sent only when the person clicks it). */
+  suggestions: string[]
+  /** Known product codes one letter away from an unknown one; never applied by themselves. */
+  did_you_mean?: string[]
+  open?: OpenView
+  /** For a reused answer: when Muse Spark first answered it (UTC). */
+  answered_at?: string
 }
 export interface LiveField {
   value?: string | null
@@ -200,8 +219,12 @@ const traceOf = (v: unknown): LiveTraceStep[] =>
       }))
     : []
 
+const MODES = ['recorded', 'canned', 'direct'] as const
+const TIERS: Tier[] = ['canned', 'direct', 'cache', 'live']
+const VIEWS: OpenView['view'][] = ['check-device', 'our-devices', 'ai-sweep', 'alerts']
+
 const common = (b: Record<string, unknown>): Common => ({
-  mode: b.mode === 'recorded' ? 'recorded' : 'live',
+  mode: (MODES as readonly unknown[]).includes(b.mode) ? (b.mode as Common['mode']) : 'live',
   ...(typeof b.recorded_note === 'string' ? { recorded_note: b.recorded_note } : {}),
   not_medical_advice: true,
   trace: traceOf(b.trace),
@@ -227,11 +250,23 @@ export function parseAsk(body: unknown): AskResponse | null {
   if (!Array.isArray(a.speakable)) return null
   const speakable = a.speakable.filter(isObj).map((s) => ({ text: String(s.text ?? ''), links: linksOf(s.links) })).filter((s) => s.text)
   const withheld = (Array.isArray(a.withheld) ? a.withheld.filter(isObj) : []).map((w) => ({ reason: String(w.reason ?? 'held back by the claim gate') }))
+  const strings = (v: unknown, max: number): string[] =>
+    Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string' && x.trim() !== '').map((x) => x.trim().slice(0, 120)).slice(0, max) : []
   const out: AskResponse = {
     ...common(body),
     answer: { speakable, withheld, spoken_text: typeof a.spoken_text === 'string' ? a.spoken_text : speakable.map((s) => s.text).join(' ') },
+    suggestions: strings(body.suggestions, 4),
   }
   if (typeof body.heard === 'string' && body.heard.trim()) out.heard = body.heard.trim()
+  if (TIERS.includes(body.tier as Tier)) out.tier = body.tier as Tier
+  if (typeof body.badge === 'string' && body.badge.trim()) out.badge = body.badge.trim().slice(0, 80)
+  const dym = strings(body.did_you_mean, 3).filter((c) => /^[A-Z]{3}$/.test(c))
+  if (dym.length) out.did_you_mean = dym
+  if (isObj(body.open) && VIEWS.includes(body.open.view as OpenView['view'])) {
+    const code = typeof body.open.code === 'string' && /^[A-Z]{3}$/.test(body.open.code) ? body.open.code : undefined
+    out.open = { view: body.open.view as OpenView['view'], ...(code ? { code } : {}) }
+  }
+  if (typeof body.answered_at === 'string' && body.answered_at) out.answered_at = body.answered_at.slice(0, 20)
   return out
 }
 
@@ -341,3 +376,24 @@ export function heldBackLine(w: Withheld[]): string | null {
 
 /** "1.2 s" or "340 ms" */
 export const fmtStepMs = (ms: number): string => (ms >= 1000 ? `${(ms / 1000).toFixed(1)} s` : `${Math.round(ms)} ms`)
+
+/** True for an answer no model wrote (tiers 1 to 3): shown with its badge and $0. */
+export const isFreeTier = (r: AskResponse): boolean => r.tier === 'canned' || r.tier === 'direct' || r.tier === 'cache'
+
+/** The badge text of an answer: the server's for tiers 1 to 3, otherwise the live or recorded badge. */
+export function badgeText(r: AskResponse): string {
+  if (isFreeTier(r) && r.badge) return r.badge
+  if (r.tier === 'canned') return 'No FDA facts in this message'
+  if (r.tier === 'direct') return 'Direct FDA lookup — no AI'
+  if (r.tier === 'cache') return 'Answered earlier today'
+  return r.mode === 'recorded' ? 'Recorded run' : 'Live answer'
+}
+
+/** "Open Check any device type for QAS" and so on; null for a view this page cannot open. */
+export function openLabel(o: OpenView | undefined): string | null {
+  if (!o) return null
+  if (o.view === 'check-device') return o.code ? `Open Check any device type for ${o.code}` : 'Open Check any device type'
+  if (o.view === 'our-devices') return 'Open Our devices'
+  if (o.view === 'ai-sweep') return 'Open the AI device sweep'
+  return null
+}

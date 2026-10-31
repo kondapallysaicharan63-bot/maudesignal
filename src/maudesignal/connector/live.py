@@ -64,7 +64,8 @@ from starlette.concurrency import run_in_threadpool
 from starlette.requests import ClientDisconnect
 
 from maudesignal.common.logging import get_logger
-from maudesignal.connector import links
+from maudesignal.connector import chat, links
+from maudesignal.connector.answer_cache import AnswerCache
 from maudesignal.connector.ask import (
     _REASON_NOTES,
     AgentFactory,
@@ -75,6 +76,7 @@ from maudesignal.connector.ask import (
 )
 from maudesignal.connector.callcap import CallMeter, CallRefusedError, enforced_cap
 from maudesignal.connector.data import PROJECT_ROOT, ConnectorData
+from maudesignal.connector.direct import answer as direct_answer
 from maudesignal.connector.errors import InvalidInputError, SourceUnavailableError
 from maudesignal.connector.feedback import clean_ref, looks_like_phi
 from maudesignal.connector.forbidden import is_clean
@@ -101,6 +103,7 @@ from maudesignal.connector.models import ToolAnswer
 from maudesignal.connector.readonly import make_read_only
 from maudesignal.connector.security import RateLimiter
 from maudesignal.connector.store import ConnectorState, MemoryLedger
+from maudesignal.connector.tiers import cacheable
 from maudesignal.copilot.agent import CopilotAgent
 from maudesignal.copilot.spend import (
     DailyLedger,
@@ -452,10 +455,14 @@ class _CommonIn(BaseModel):
         return value.upper() if value else None
 
 
+#: Shortest typed message: two characters, so "hi" gets its canned reply (tier 1).
+MIN_MESSAGE_CHARS = 2
+
+
 class AskIn(_CommonIn):
     """Body of ``POST /v1/live/ask``."""
 
-    question: str = Field(min_length=3, max_length=MAX_QUESTION_CHARS)
+    question: str = Field(min_length=MIN_MESSAGE_CHARS, max_length=MAX_QUESTION_CHARS)
     ref: str | None = Field(default=None, max_length=200)
 
     @field_validator("ref", mode="before")
@@ -909,6 +916,7 @@ def mount_live(
     config: LiveConfig | None = None,
     now: Callable[[], datetime] | None = None,
     env: dict[str, str] | None = None,
+    tiers: bool = True,
 ) -> None:
     """Add the three live routes and their CORS handling to ``app``.
 
@@ -923,6 +931,9 @@ def mount_live(
         config: Limits; read from the environment when omitted.
         now: UTC clock (tests).
         env: Environment (tests).
+        tiers: Chat tiers for typed questions (canned, direct, cache before Muse Spark).
+            Tiers 1 to 3 cost nothing, use no daily live-question allowance and never touch
+            the per-call spend ledger.
     """
     be = backends or LiveBackends()
     cfg = config or LiveConfig.from_env(env)
@@ -954,6 +965,7 @@ def mount_live(
             "so the shared per-address daily limits are multiplied by the number of instances",
         )
     pepper = (pepper_src or secrets.token_hex(16)).encode("utf-8")
+    live_cache = AnswerCache(state, "live", now=clock_now, version=data.version)
 
     def who(request: Request) -> str:
         """Peppered HMAC of the caller address: all the limiters and counters ever see."""
@@ -1063,15 +1075,33 @@ def mount_live(
             return "live_off"
         return None
 
-    def log(endpoint: str, mode: str, started: float, status: int = 200) -> None:
+    def log(
+        endpoint: str, mode: str, started: float, status: int = 200, tier: str | None = None
+    ) -> None:
         """One line per request: no address, no text, no bytes."""
         logger.info(
             "live_request",
             endpoint=endpoint,
             mode=mode,
+            tier=tier,
             status=status,
             ms=int((be.clock() - started) * 1000),
         )
+
+    def free_answer(body: AskIn) -> dict[str, Any] | None:
+        """A tier 1, 2 or 3 answer (no model, $0), or None when Muse Spark must answer."""
+        t0 = be.clock()
+        r = chat.route_for(data, body.question, body.product_code, has_history=bool(body.history))
+        if r.tier == "canned":
+            return chat.canned_body(r, (be.clock() - t0) * 1000.0)
+        if r.tier == "direct":
+            found = direct_answer(data, r)
+            return chat.direct_body(found, (be.clock() - t0) * 1000.0)
+        if cacheable(body.question, r, has_history=bool(body.history)):
+            hit = live_cache.get(body.question, body.product_code)
+            if hit is not None:
+                return chat.cached_body(hit, (be.clock() - t0) * 1000.0)
+        return None
 
     # --- ask ---------------------------------------------------------------------------
 
@@ -1101,6 +1131,12 @@ def mount_live(
             return _err(422, "invalid_input", "Body must be a JSON object.")
         if phi_in([body.question, *history_texts(body.history)]):
             return _err(422, "patient_data", PHI_MESSAGE)
+        if tiers:
+            free = await run_in_threadpool(free_answer, body)
+            if free is not None:
+                free["limits"] = limits(counters["ask"].peek(who(request)))
+                log("ask", free["mode"], started, tier=free["tier"])
+                return JSONResponse(free, headers={"Cache-Control": "no-store"})
         refused, remaining = daily_refusal(request, "ask")
         if refused is not None:
             return refused
@@ -1111,7 +1147,15 @@ def mount_live(
         except SourceUnavailableError:
             return _err(503, "unavailable", "No answer is available right now.")
         response = _ask_response(outcome, limits(remaining))
-        log("ask", response["mode"], started)
+        if tiers and outcome.live:
+            r = chat.route_for(
+                data, body.question, body.product_code, has_history=bool(body.history)
+            )
+            if cacheable(body.question, r, has_history=bool(body.history)) and chat.has_fact(
+                response
+            ):
+                live_cache.put(body.question, body.product_code, chat.cache_entry(response))
+        log("ask", response["mode"], started, tier="live")
         return JSONResponse(response, headers={"Cache-Control": "no-store"})
 
     # --- outside mentions (no model; free public sources; inside the global cost cap) -------
@@ -1167,6 +1211,7 @@ def mount_live(
     def _ask_response(outcome: AskOutcome, lim: dict[str, Any]) -> dict[str, Any]:
         out: dict[str, Any] = {
             "mode": "live" if outcome.live else "recorded",
+            "tier": "live",
             "not_medical_advice": NOT_MEDICAL_ADVICE,
             "answer": answer_block(outcome.answer),
             "trace": ask_trace(outcome),

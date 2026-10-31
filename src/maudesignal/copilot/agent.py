@@ -57,6 +57,28 @@ _SCHEMA_META_KEYS = ("$schema", "$id", "title", "description")
 _FENCE = re.compile(r"^```(?:json)?\s*|\s*```$", re.MULTILINE)
 
 
+#: Markers around the short live prompt inside ``skills/safety-copilot/SKILL.md``.
+COMPACT_START = "<!-- live-compact-prompt:start -->"
+COMPACT_END = "<!-- live-compact-prompt:end -->"
+
+
+def split_prompts(skill_md: str) -> tuple[str, str | None]:
+    """``(full_prompt, compact_prompt)`` from a SKILL.md text.
+
+    The compact prompt is the text between :data:`COMPACT_START` and :data:`COMPACT_END`
+    (None when the markers are absent). The full prompt is the whole file without that block,
+    so other callers are never sent the compact text twice.
+    """
+    start, end = skill_md.find(COMPACT_START), skill_md.find(COMPACT_END)
+    if start < 0 or end < start:
+        return skill_md, None
+    compact = skill_md[start + len(COMPACT_START) : end].strip()
+    full = (
+        skill_md[:start].rstrip() + "\n\n" + skill_md[end + len(COMPACT_END) :].lstrip()
+    ).strip()
+    return full, compact or None
+
+
 def default_skills_root() -> Path:
     """Repo-level ``skills/`` directory."""
     return Path(__file__).resolve().parents[3] / "skills"
@@ -245,8 +267,45 @@ class CopilotAgent:
         self._reasoning_effort = reasoning_effort
         self._allowed_tools = allowed_tools
         self._response_format = response_format_from_schema(self._skill.output_schema)
+        self._system_prompt, self._compact_prompt = split_prompts(self._skill.system_prompt)
+        self._repair_with_tools = True
+        self._max_tool_result_chars: int | None = None
         self._history: list[dict[str, Any]] = []
         self._on_event: EventFn | None = None
+
+    def configure_lean(
+        self,
+        *,
+        reasoning_effort: str,
+        max_tool_rounds: int,
+        max_tokens: int,
+        max_tool_result_chars: int,
+    ) -> None:
+        """Cheaper settings for the public chat (tier 4): compact prompt, fewer calls.
+
+        * the short prompt between the live-compact markers of SKILL.md (if present);
+        * ``reasoning_effort`` (``low`` or ``medium``) and a lower ``max_tokens``;
+        * at most ``max_tool_rounds`` tool rounds;
+        * the repair turn (still only when the gate blocked a sentence) asks for the corrected
+          JSON directly, without another tool round;
+        * each tool result sent back to the model is cut to ``max_tool_result_chars``.
+
+        Temperature stays 0. The gate is unchanged.
+        """
+        if reasoning_effort not in REASONING_EFFORTS:
+            raise ValueError(f"reasoning_effort must be one of {REASONING_EFFORTS}")
+        if self._compact_prompt:
+            self._system_prompt = self._compact_prompt
+        self._reasoning_effort = reasoning_effort
+        self._max_tool_rounds = max(1, max_tool_rounds)
+        self._max_tokens = max_tokens
+        self._repair_with_tools = False
+        self._max_tool_result_chars = max_tool_result_chars
+
+    @property
+    def system_prompt(self) -> str:
+        """The system prompt sent with every call."""
+        return self._system_prompt
 
     @property
     def context(self) -> ToolContext:
@@ -318,7 +377,7 @@ class CopilotAgent:
 
     def _ask(self, question: str) -> CopilotResult:
         messages: list[dict[str, Any]] = [
-            {"role": "system", "content": self._skill.system_prompt},
+            {"role": "system", "content": self._system_prompt},
             *self._history,
             {"role": "user", "content": question},
         ]
@@ -343,7 +402,10 @@ class CopilotAgent:
             repairs += 1
             self._emit("repair", blocked=report.blocked)
             messages.append({"role": "user", "content": _repair_message(report)})
-            content = self._run_until_answer(messages, result)
+            if self._repair_with_tools:
+                content = self._run_until_answer(messages, result)
+            else:
+                content = self._final_answer(messages, result)
             repaired, ok = self._parse_or_retry(content, messages, result)
             if not ok:
                 break
@@ -401,12 +463,16 @@ class CopilotAgent:
                 else:
                     out = call_tool(self._ctx, tc.function.name, tc.function.arguments)
                 payload = json.dumps(out, default=str)
+                cap = self._max_tool_result_chars
+                sent = payload
+                if cap is not None and len(payload) > cap:
+                    sent = payload[:cap] + f" ... [cut: {len(payload) - cap} more characters]"
                 try:
                     args = json.loads(tc.function.arguments or "{}")
                 except ValueError:
                     args = {"_raw": tc.function.arguments}
                 result.tool_calls.append(ToolCallTrace(tc.function.name, args, payload[:300]))
-                messages.append({"role": "tool", "tool_call_id": tc.id, "content": payload})
+                messages.append({"role": "tool", "tool_call_id": tc.id, "content": sent})
         # Tool budget exhausted: ask for the answer without tools.
         messages.append({"role": "user", "content": "Answer now with the JSON object only."})
         return self._final_answer(messages, result)
