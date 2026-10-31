@@ -19,6 +19,7 @@ from maudesignal.connector.models import ADVISORY  # noqa: E402
 from maudesignal.connector.openapi import build_spec, render  # noqa: E402
 from maudesignal.connector.security import KeyStore, RateLimiter  # noqa: E402
 from tests.unit.test_connector import KEY, fake_check, fake_meter, offline  # noqa: E402
+from tests.unit.test_connector_lookup import ROW_802, FakeSearcher  # noqa: E402
 
 H = {"X-API-Key": KEY}
 TOOL_CALLS: list[tuple[str, str, dict[str, Any]]] = [
@@ -27,6 +28,7 @@ TOOL_CALLS: list[tuple[str, str, dict[str, Any]]] = [
     ("POST", "ask", {"json": {"question": "What changed this week for LLZ?"}}),
     ("GET", "get_report", {"report_id": "50426770"}),
     ("GET", "recalls", {"product_code": "LLZ"}),
+    ("GET", "lookup_device", {"k_number": "K123456"}),
 ]
 
 
@@ -44,6 +46,7 @@ def make_client(
         data=data,
         ask_runtime=AskRuntime(live_enabled=lambda: False, ledger_dir=tmp_path / "led"),
         live_checker=fake_check,
+        lookup_searcher=FakeSearcher(k510=[ROW_802]),
     )
     return TestClient(create_app(settings), raise_server_exceptions=False)
 
@@ -70,7 +73,13 @@ def test_contract_per_tool(
     r = call(make_client(data, tmp_path), method, tool, spec, headers=H)
     assert r.status_code == 200, r.text
     body = r.json()
-    assert set(body) == {"tool", "speakable", "facts", "advisory", "provenance", "withheld"}
+    common = {"tool", "speakable", "facts", "advisory", "provenance", "withheld"}
+    extra = (
+        {"status", "confirmed", "note", "searched_with", "matches", "device_types"}
+        if tool == "lookup_device"
+        else {"suggestions"} if tool == "recalls" else set()
+    )
+    assert set(body) == common | extra
     assert body["tool"] == tool
     assert body["advisory"] == ADVISORY
     assert body["speakable"] and isinstance(body["facts"], list)
@@ -249,7 +258,7 @@ def test_key_never_appears_in_any_response_or_log(
     seen += [r.text, json.dumps(dict(r.headers))]
     out = capsys.readouterr()
     seen += [out.out, out.err, caplog.text, *rec.lines]
-    assert sum("connector_request" in line for line in rec.lines) == 9, "every request is logged"
+    assert sum("connector_request" in line for line in rec.lines) == 10, "every request is logged"
     for blob in seen:
         assert KEY not in blob and KEY[:8] not in blob and (KEY + "x") not in blob
 

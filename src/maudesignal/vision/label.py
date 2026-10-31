@@ -29,8 +29,12 @@ from typing import Any, Literal
 
 from PIL import Image
 
+from maudesignal.common.device_ids import (  # noqa: F401  (re-exported)
+    gtin_check_digit_ok,
+    normalize_k_number,
+    parse_udi,
+)
 from maudesignal.extraction.skill_loader import LoadedSkill
-from maudesignal.vision.fda_pdf import normalize_k_number
 from maudesignal.vision.images import crop_with_margin, encode, fit, open_image
 from maudesignal.vision.openfda510k import Fda510kRecord, OpenFda510k, OpenFdaError
 from maudesignal.vision.sam import SamBox, SamClient, SamError, SamResult, best_record
@@ -76,32 +80,6 @@ class LabelField:
         return bool(self.value) and self.legibility not in ("not_present", "illegible")
 
 
-def gtin_check_digit_ok(digits: str) -> bool:
-    """GS1 mod-10 check digit for GTIN-8/12/13/14."""
-    d = re.sub(r"\D", "", digits or "")
-    if len(d) not in (8, 12, 13, 14):
-        return False
-    body, check = d[:-1], int(d[-1])
-    total = sum(int(c) * (3 if i % 2 == 0 else 1) for i, c in enumerate(reversed(body)))
-    return (10 - total % 10) % 10 == check
-
-
-def parse_udi(udi: str) -> dict[str, str]:
-    """Split a human-readable GS1 UDI ``(01)...(17)...`` into application identifiers."""
-    return {m.group(1): m.group(2).strip() for m in re.finditer(r"\((\d{2,4})\)([^(]*)", udi)}
-
-
-#: GS1 application identifiers that may be stored: device id, production and expiry date.
-#: Lot (10), serial (21) and every other identifier stay in the session only.
-UDI_STORED_AIS = ("01", "11", "17")
-
-
-def udi_without_session_ais(udi: str) -> str:
-    """The human-readable UDI rebuilt from AIs 01 / 11 / 17 only (never lot or serial)."""
-    parsed = parse_udi(udi)
-    return "".join(f"({ai}){parsed[ai]}" for ai in UDI_STORED_AIS if parsed.get(ai))
-
-
 @dataclass
 class LabelResult:
     """Everything the UI needs to show a label reading honestly."""
@@ -145,14 +123,7 @@ class LabelResult:
     def to_dict(self, *, include_session_fields: bool = False) -> dict[str, Any]:
         """JSON form. Lot / serial are omitted unless ``include_session_fields``."""
         fields = {
-            k: {
-                "value": (
-                    udi_without_session_ais(v.value)
-                    if k == "udi" and not include_session_fields
-                    else v.value
-                ),
-                "legibility": v.legibility,
-            }
+            k: {"value": v.value, "legibility": v.legibility}
             for k, v in self.fields.items()
             if include_session_fields or k not in SESSION_ONLY_FIELDS
         }

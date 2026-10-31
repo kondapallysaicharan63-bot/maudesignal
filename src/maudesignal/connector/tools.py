@@ -15,19 +15,22 @@ from __future__ import annotations
 import re
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, TypeVar
 
 from maudesignal.common.exceptions import OpenFDAAPIError
 from maudesignal.connector import links
 from maudesignal.connector.data import ConnectorData
 from maudesignal.connector.errors import InvalidInputError, NotFoundError, SourceUnavailableError
 from maudesignal.connector.forbidden import is_clean
-from maudesignal.connector.models import Fact, Provenance, ToolAnswer
+from maudesignal.connector.guidance import either, suggest_codes, unknown_code_error
+from maudesignal.connector.models import Fact, Provenance, RecallsAnswer, ToolAnswer
 from maudesignal.connector.speech import compose, plain, plural, speak_date, speak_range, were
 from maudesignal.monitor.digest import CHANGE_LABELS
 from maudesignal.monitor.live_check import LiveCheck, LiveCheckError, normalize_code
 
 LiveChecker = Callable[[str], LiveCheck]
+#: True: the code is in the openFDA classification list; False: it is not; None: could not tell.
+CodeChecker = Callable[[str], bool | None]
 Clock = Callable[[], datetime]
 
 TOOL_NAMES = (
@@ -36,6 +39,7 @@ TOOL_NAMES = (
     "ask",
     "get_report",
     "recalls",
+    "lookup_device",
 )
 
 _REPORT_ID = re.compile(r"^[A-Za-z0-9-]{1,24}$")
@@ -54,7 +58,10 @@ OMITTED_SPEAKABLE = (
 )
 
 
-def screen(answer: ToolAnswer) -> ToolAnswer:
+_A = TypeVar("_A", bound=ToolAnswer)
+
+
+def screen(answer: _A) -> _A:
     """Final guard on every outgoing answer: no forbidden term in speakable or facts.
 
     Stored source text (a narrative, a recall reason, a firm name) is passed on word for
@@ -300,6 +307,7 @@ def what_changed_this_week(
     *,
     live_checker: LiveChecker,
     now: Clock = utc_now,
+    code_exists: CodeChecker | None = None,
 ) -> ToolAnswer:
     """What changed in the latest stored week; a code outside the stored set is checked live.
 
@@ -308,6 +316,8 @@ def what_changed_this_week(
         product_code: Optional three-letter FDA product code.
         live_checker: Live openFDA check (used only for a code not in the stored set).
         now: Clock (tests).
+        code_exists: Looks the code up in the openFDA classification list (only asked when the
+            live check finds no reports and the code is not otherwise known).
 
     Raises:
         InvalidInputError: The code is not three letters.
@@ -319,16 +329,37 @@ def what_changed_this_week(
     stored = {str(s["product_code"]) for s in data.digest()["signals"]}
     if code in stored:
         return screen(_stored_what_changed(data, code))
-    return _live(code, "what_changed_this_week", live_checker, now)
+    return _live(data, code, "what_changed_this_week", live_checker, now, code_exists)
 
 
-def _live(code: str, tool: str, live_checker: LiveChecker, now: Clock) -> ToolAnswer:
+def _live(
+    data: ConnectorData,
+    code: str,
+    tool: str,
+    live_checker: LiveChecker,
+    now: Clock,
+    code_exists: CodeChecker | None = None,
+) -> ToolAnswer:
     try:
         check = live_checker(code)
     except OpenFDAAPIError as exc:
         raise SourceUnavailableError(
             "openFDA could not be reached just now; try again shortly."
         ) from exc
+    known = data.known_product_codes()
+    if (
+        code not in known
+        and check.window is None
+        and check.prior_report_count == 0
+        and check.current_count == 0
+        and code_exists is not None
+        and code_exists(code) is False
+    ):
+        # No stored data and no report on openFDA ever: a typo, unless FDA lists the code in its
+        # device classification (many real codes have no reports). Suggestions are only shown,
+        # never applied. If the classification list cannot be read, the code is not called
+        # unknown.
+        raise unknown_code_error(code, known)
     return screen(_live_answer(tool, check, now()))
 
 
@@ -343,6 +374,7 @@ def check_device_type(
     *,
     live_checker: LiveChecker,
     now: Clock = utc_now,
+    code_exists: CodeChecker | None = None,
 ) -> ToolAnswer:
     """Live openFDA counts for any product code, with the detector's rules.
 
@@ -351,7 +383,7 @@ def check_device_type(
     """
     code = _code(product_code)
     try:
-        return _live(code, "check_device_type", live_checker, now)
+        return _live(data, code, "check_device_type", live_checker, now, code_exists)
     except SourceUnavailableError:
         if code not in {str(s["product_code"]) for s in data.digest()["signals"]}:
             raise
@@ -448,8 +480,15 @@ def _first_sentence(text: str, limit: int = 160) -> str:
     return cut if len(cut) <= limit else cut[:limit].rsplit(" ", 1)[0] + "..."
 
 
-def recalls(data: ConnectorData, product_code: str) -> ToolAnswer:
+def recalls(
+    data: ConnectorData, product_code: str, *, code_exists: CodeChecker | None = None
+) -> RecallsAnswer:
     """Stored FDA recalls for a product code, newest first (top five as facts).
+
+    Suggestions ("did you mean", distance 1 only; also the structured ``suggestions`` list)
+    appear only when the code is not stored and the openFDA classification check says it does
+    not exist (``False``). A real code, or a check that
+    could not run (``None``), gets no suggestion and is never called unknown.
 
     Raises:
         InvalidInputError: The code is not three letters.
@@ -463,15 +502,26 @@ def recalls(data: ConnectorData, product_code: str) -> ToolAnswer:
     prov = snapshot_provenance(data, None, recalls=True)
     all_link = links.product_recalls_link(code)
     if not rows:
+        # recalls is stored-only, so a typo is not an error here: the answer still opens the
+        # openFDA link, and close known codes are offered as a question, never applied.
+        known = data.known_product_codes()
+        close: list[str] = []
+        if code not in known and code_exists is not None and code_exists(code) is False:
+            close = suggest_codes(code, known)
+        said = [
+            f"The stored demo snapshot holds no recalls for product code {code}.",
+            "That does not mean none exist; open the openFDA link to check.",
+        ]
+        if close:
+            said.append(f"{code} isn't a product code we know - did you mean {either(close)}?")
+            prov.note = (
+                f"{prov.note or ''} Possible codes, not applied: {', '.join(close)}. "
+                "Confirm the code with the person."
+            )
         return screen(
-            ToolAnswer(
+            RecallsAnswer(
                 tool="recalls",
-                speakable=compose(
-                    [
-                        f"The stored demo snapshot holds no recalls for product code {code}.",
-                        "That does not mean none exist; open the openFDA link to check.",
-                    ]
-                ),
+                speakable=compose(said),
                 facts=[
                     Fact(
                         text=f"openFDA recall query for product code {code}.",
@@ -480,6 +530,7 @@ def recalls(data: ConnectorData, product_code: str) -> ToolAnswer:
                     )
                 ],
                 provenance=prov,
+                suggestions=close,
             )
         )
     latest = rows[0]
@@ -520,5 +571,5 @@ def recalls(data: ConnectorData, product_code: str) -> ToolAnswer:
             )
         )
     return screen(
-        ToolAnswer(tool="recalls", speakable=compose(parts), facts=facts, provenance=prov)
+        RecallsAnswer(tool="recalls", speakable=compose(parts), facts=facts, provenance=prov)
     )

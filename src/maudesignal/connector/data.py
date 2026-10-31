@@ -54,6 +54,8 @@ class ConnectorData:
             work_dir: Where the writable database copy goes (default a temp folder).
         """
         self._db_src = db_path or root / "data" / "demo" / "maudesignal_demo.db"
+        self._sweep = root / "demo" / "sweep" / "ai-device-sweep.json"
+        self._known_codes: frozenset[str] | None = None
         self._digest_dir = digest_dir or root / "digests"
         self._transcripts_dir = transcripts_dir or root / "demo" / "transcripts"
         self._manifest = manifest_path or root / "data" / "demo" / "SEED_MANIFEST.json"
@@ -159,6 +161,43 @@ class ConnectorData:
                 db = self.db
                 self._digest = digest_to_dict(digest_from_database(db, detect_from_database(db)))
         return self._digest
+
+    def known_product_codes(self) -> frozenset[str]:
+        """Product codes the connector has a sign of.
+
+        Sources: stored reports, the device catalog, the stored digest and the stored AI-device
+        sweep. Used only to offer "did you mean"
+        and to tell a code nobody has reported on from a typo; it never rewrites an input.
+        There is no offline copy of the full openFDA classification list in this repository.
+        """
+        if self._known_codes is not None:
+            return self._known_codes
+        codes: set[str] = set()
+        try:
+            digest = self.digest()
+            codes.update(str(x["product_code"]) for x in digest.get("signals", []))
+            codes.update(str(c) for c in (digest.get("device_types") or {}))
+        except (OSError, ValueError, KeyError):
+            pass
+        try:
+            con = sqlite3.connect(f"file:{self._db_src}?mode=ro", uri=True)
+            try:
+                for table in ("raw_reports", "device_catalog"):
+                    rows = con.execute(f"SELECT DISTINCT product_code FROM {table}").fetchall()
+                    codes.update(str(r[0]) for r in rows if r[0])
+            finally:
+                con.close()
+        except sqlite3.Error:
+            pass
+        try:
+            sweep = json.loads(self._sweep.read_text(encoding="utf-8"))
+            codes.update(
+                str(r["product_code"]) for r in sweep.get("rows", []) if r.get("product_code")
+            )
+        except (OSError, ValueError, KeyError, AttributeError):
+            pass
+        self._known_codes = frozenset(c.upper() for c in codes if len(c) == 3)
+        return self._known_codes
 
     def transcripts(self) -> list[dict[str, Any]]:
         """Recorded copilot runs (real Muse Spark runs, gate verdicts included)."""

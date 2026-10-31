@@ -192,6 +192,10 @@
             "title": "Docs Url",
             "type": "string"
           },
+          "instructions": {
+            "title": "Instructions",
+            "type": "string"
+          },
           "mcp_url": {
             "title": "Mcp Url",
             "type": "string"
@@ -203,6 +207,13 @@
           "privacy_url": {
             "title": "Privacy Url",
             "type": "string"
+          },
+          "prompts": {
+            "items": {
+              "$ref": "#/components/schemas/ConnectPrompt"
+            },
+            "title": "Prompts",
+            "type": "array"
           },
           "steps": {
             "items": {
@@ -225,9 +236,38 @@
           "auth_header",
           "demo_key",
           "demo_limits",
-          "steps"
+          "steps",
+          "prompts",
+          "instructions"
         ],
         "title": "ConnectInfo",
+        "type": "object"
+      },
+      "ConnectPrompt": {
+        "description": "One MCP prompt, as listed by ``prompts/list``.",
+        "properties": {
+          "arguments": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Arguments",
+            "type": "array"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "arguments"
+        ],
+        "title": "ConnectPrompt",
         "type": "object"
       },
       "DemoLimits": {
@@ -269,6 +309,20 @@
           "message": {
             "title": "Message",
             "type": "string"
+          },
+          "suggestions": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggestions"
           }
         },
         "required": [
@@ -539,6 +593,384 @@
         "title": "LiveCheckData",
         "type": "object"
       },
+      "LookupAnswer": {
+        "additionalProperties": false,
+        "description": "``lookup_device``: possible FDA records for a described device. A person confirms.",
+        "properties": {
+          "advisory": {
+            "default": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+            "title": "Advisory",
+            "type": "string"
+          },
+          "confirmed": {
+            "description": "Always null. This tool never picks a record; a person confirms one or none.",
+            "title": "Confirmed",
+            "type": "null"
+          },
+          "device_types": {
+            "items": {
+              "$ref": "#/components/schemas/LookupDeviceType"
+            },
+            "title": "Device Types",
+            "type": "array"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/Fact"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "matches": {
+            "description": "At most 3.",
+            "items": {
+              "$ref": "#/components/schemas/LookupMatch"
+            },
+            "title": "Matches",
+            "type": "array"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "searched_with": {
+            "description": "Which of your inputs were used for the search.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Searched With",
+            "type": "array"
+          },
+          "speakable": {
+            "description": "1 to 3 plain sentences, no markdown, written to be read aloud.",
+            "title": "Speakable",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "needs_person_to_confirm",
+              "no_match_found",
+              "search_failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "withheld": {
+            "description": "Only ask() uses this; gate-withheld sentences.",
+            "items": {
+              "$ref": "#/components/schemas/WithheldSentence"
+            },
+            "title": "Withheld",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tool",
+          "speakable",
+          "provenance",
+          "status"
+        ],
+        "title": "LookupAnswer",
+        "type": "object"
+      },
+      "LookupDeviceType": {
+        "additionalProperties": false,
+        "description": "What openFDA shows for a product code of the top possible matches.",
+        "properties": {
+          "check_link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "openFDA link for this week's report count.",
+            "title": "Check Link"
+          },
+          "device_type_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Type Name"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "product_code": {
+            "title": "Product Code",
+            "type": "string"
+          },
+          "recent_recalls_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Recall records started in the window below (null if openFDA failed).",
+            "title": "Recent Recalls Count"
+          },
+          "recent_recalls_link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recent Recalls Link"
+          },
+          "recent_recalls_window": {
+            "title": "Recent Recalls Window",
+            "type": "string"
+          },
+          "report_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "All adverse-event reports for the code.",
+            "title": "Report Count"
+          },
+          "report_count_link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Count Link"
+          },
+          "this_week_change": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Same deterministic check as check_device_type, in plain words.",
+            "title": "This Week Change"
+          },
+          "this_week_reports": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "This Week Reports"
+          }
+        },
+        "required": [
+          "product_code",
+          "device_type_name",
+          "this_week_change",
+          "this_week_reports",
+          "recent_recalls_count",
+          "recent_recalls_window",
+          "recent_recalls_link",
+          "report_count",
+          "report_count_link",
+          "check_link"
+        ],
+        "title": "LookupDeviceType",
+        "type": "object"
+      },
+      "LookupLink": {
+        "additionalProperties": false,
+        "description": "A public openFDA link behind a lookup result.",
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "url"
+        ],
+        "title": "LookupLink",
+        "type": "object"
+      },
+      "LookupMatch": {
+        "additionalProperties": false,
+        "description": "One possible FDA record for the device that was described. Never chosen for the person.",
+        "properties": {
+          "applicant": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Applicant, owner or maker named on the record.",
+            "title": "Applicant"
+          },
+          "decision_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "510(k) decision date as openFDA gives it.",
+            "title": "Decision Date"
+          },
+          "device_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Name"
+          },
+          "exact_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "k_number or gtin when an id you gave equals the record, else null.",
+            "title": "Exact Id"
+          },
+          "k_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "510(k) number when the record is a 510(k).",
+            "title": "K Number"
+          },
+          "links": {
+            "items": {
+              "$ref": "#/components/schemas/LookupLink"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "product_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Code"
+          },
+          "rank": {
+            "description": "1 is the best-scoring possible match; it is not a decision.",
+            "title": "Rank",
+            "type": "integer"
+          },
+          "record_id": {
+            "description": "K-number, UDI record key or registration number.",
+            "title": "Record Id",
+            "type": "string"
+          },
+          "score": {
+            "title": "Score",
+            "type": "integer"
+          },
+          "source": {
+            "description": "510k, udi or registrationlisting.",
+            "title": "Source",
+            "type": "string"
+          },
+          "why_matched": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Why Matched",
+            "type": "array"
+          },
+          "why_not_matched": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Why Not Matched",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rank",
+          "source",
+          "record_id",
+          "k_number",
+          "device_name",
+          "applicant",
+          "product_code",
+          "decision_date",
+          "exact_id",
+          "score",
+          "why_matched",
+          "why_not_matched",
+          "links"
+        ],
+        "title": "LookupMatch",
+        "type": "object"
+      },
       "Provenance": {
         "additionalProperties": false,
         "description": "Where the data came from and how fresh it is.",
@@ -659,6 +1091,59 @@
         "title": "PublicCheckAnswer",
         "type": "object"
       },
+      "RecallsAnswer": {
+        "additionalProperties": false,
+        "description": "``recalls``: the normal answer plus the close known codes, when the code is unknown.",
+        "properties": {
+          "advisory": {
+            "default": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+            "title": "Advisory",
+            "type": "string"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/Fact"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "speakable": {
+            "description": "1 to 3 plain sentences, no markdown, written to be read aloud.",
+            "title": "Speakable",
+            "type": "string"
+          },
+          "suggestions": {
+            "description": "Close known product codes (\"did you mean\"), shown to the person and never applied; empty when there are none. Same values as the suggestions in an error.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Suggestions",
+            "type": "array"
+          },
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "withheld": {
+            "description": "Only ask() uses this; gate-withheld sentences.",
+            "items": {
+              "$ref": "#/components/schemas/WithheldSentence"
+            },
+            "title": "Withheld",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tool",
+          "speakable",
+          "provenance"
+        ],
+        "title": "RecallsAnswer",
+        "type": "object"
+      },
       "ToolAnswer": {
         "additionalProperties": false,
         "description": "What every tool returns.",
@@ -755,7 +1240,7 @@
       "name": "MaudeSignal (open source)",
       "url": "https://github.com/kondapallysaicharan63-bot/maudesignal/issues"
     },
-    "description": "Read-only MaudeSignal tools for a Meta Muse connector. Each answer has a short speakable summary, facts that each carry an openFDA or record link, a fixed advisory line and provenance (stored demo snapshot with dates, or live openFDA with the query time). Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA. Every key is read-only. Sentences from ask are checked by a deterministic claim gate; withheld sentences are listed separately and are never part of the speakable text. Limits: the per-key rate limit and the per-key daily cost cap are shared by every server instance when an Upstash Redis store is configured (GET /v1/health says which); otherwise they live in each instance's memory and temporary storage, are per instance and reset on a cold start. In that case live Muse Spark answers stay switched off unless the operator sets an explicit per-instance override; ask then returns the closest recorded answer, labelled recorded. Repeated wrong keys from one address get 429. /v1/public/check_device_type needs no key (per-address limit, six-hour cache) and never calls the model.",
+    "description": "How to use this server: Read-only MaudeSignal tools over openFDA device data, for quality and regulatory review. Speak the text content; every fact in structuredContent has an openFDA or record link. Always cite the FDA links given in each answer. This is not medical advice, and nothing is filed with FDA. Confirm the product code with the person before guessing one: use lookup_device, or ask. When an answer is labelled recorded, say 'recorded' and give its date. Never present withheld sentences as fact; they were not verified. A person confirms every device match. Read-only MaudeSignal tools for a Meta Muse connector. Each answer has a short speakable summary, facts that each carry an openFDA or record link, a fixed advisory line and provenance (stored demo snapshot with dates, or live openFDA with the query time). Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA. Every key is read-only. Sentences from ask are checked by a deterministic claim gate; withheld sentences are listed separately and are never part of the speakable text. Limits: the per-key rate limit and the per-key daily cost cap are shared by every server instance when an Upstash Redis store is configured (GET /v1/health says which); otherwise they live in each instance's memory and temporary storage, are per instance and reset on a cold start. In that case live Muse Spark answers stay switched off unless the operator sets an explicit per-instance override; ask then returns the closest recorded answer, labelled recorded. Repeated wrong keys from one address get 429. /v1/public/check_device_type needs no key (per-address limit, six-hour cache) and never calls the model.",
     "termsOfService": "https://maudesignal-api.vercel.app/terms",
     "title": "MaudeSignal connector API",
     "version": "0.1.0"
@@ -960,7 +1445,7 @@
     },
     "/v1/tools/ask": {
       "post": {
-        "description": "Read-only (POST only because the question is in the body). Muse Spark answers through deterministic tools over stored records; every sentence passes the claim gate. Withheld sentences are listed in `withheld` and are never in `speakable`. With no model key, or after the key's daily cost cap, the closest recorded answer is returned and labelled recorded.",
+        "description": "Use this for a free-text question about stored MAUDE reports, recalls, 510(k)s or the MDR clock when no other tool fits. Read-only (POST only because the question is in the body). Muse Spark answers through deterministic tools over stored records; every sentence passes the claim gate. Withheld sentences are listed in `withheld` and are never in `speakable`. With no model key, or after the key's daily cost cap, the closest recorded answer is returned and labelled recorded. Example questions: 'What changed this week for LLZ?'; 'Which recalls are on file for QIH?'; 'When is a malfunction report due to FDA?'.",
         "operationId": "ask",
         "requestBody": {
           "content": {
@@ -1039,7 +1524,7 @@
     },
     "/v1/tools/check_device_type": {
       "get": {
-        "description": "Read-only. Live openFDA report counts for any product code, using the same four rules, windows and thresholds as the weekly detector.",
+        "description": "Use this to check any device type on openFDA right now, by three-letter product code. Read-only. Gives live report counts for the latest week against the four weeks before, using the same four rules, windows and thresholds as the weekly detector. Each fact has an openFDA link. Example questions: 'Is anything unusual with QIH right now?'; 'Check product code LLZ on openFDA.'; 'How many reports did POK get this week?'.",
         "operationId": "check_device_type",
         "parameters": [
           {
@@ -1122,7 +1607,7 @@
     },
     "/v1/tools/get_report": {
       "get": {
-        "description": "Read-only. Key fields and the start of the narrative of one stored report.",
+        "description": "Use this to read one stored MAUDE report when you have its report id. Read-only. Gives key fields and the start of the narrative, word for word, with the openFDA record link. Only reports in the stored demo snapshot are found; a missing report may still be on openFDA. Example questions: 'Show me report 50426770.'; 'What does MAUDE report 50426770 say?'.",
         "operationId": "get_report",
         "parameters": [
           {
@@ -1203,9 +1688,203 @@
         "x-maudesignal-scope": "read"
       }
     },
+    "/v1/tools/lookup_device": {
+      "get": {
+        "description": "Use this when a person has a device in hand (a photographed label, a model name, a K-number or UDI) and needs the matching FDA records. Read-only; no model call. Give what was read from the photo or label (device_name, model, manufacturer, k_number, udi or gtin, product_code; at least one) and get up to 3 possible FDA records from openFDA (510(k), registration & listing, UDI), each with why_matched and why_not_matched, plus this week's change, recent recalls and the report count for the top product code, each with its openFDA link. status is needs_person_to_confirm, no_match_found or search_failed. `confirmed` is always null: a person confirms one record, or none. Example questions: 'I photographed a label: Welch Allyn 802 LTR - which FDA records match?'; 'Which device is K123456?'; 'Find the FDA record for UDI (01)00380740000004(17)261231.'.",
+        "operationId": "lookup_device",
+        "parameters": [
+          {
+            "description": "Device name as read from the label.",
+            "in": "query",
+            "name": "device_name",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Device name as read from the label.",
+              "title": "Device Name"
+            }
+          },
+          {
+            "description": "Model, catalog or reference number.",
+            "in": "query",
+            "name": "model",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Model, catalog or reference number.",
+              "title": "Model"
+            }
+          },
+          {
+            "description": "Maker named on the label.",
+            "in": "query",
+            "name": "manufacturer",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maker named on the label.",
+              "title": "Manufacturer"
+            }
+          },
+          {
+            "description": "510(k) number printed on the label: K plus six digits.",
+            "in": "query",
+            "name": "k_number",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^\\s*[Kk][\\s-]?[0-9]{6}\\s*$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "510(k) number printed on the label: K plus six digits.",
+              "title": "K Number"
+            }
+          },
+          {
+            "description": "Printed UDI, e.g. (01)0038074...(17)261231.",
+            "in": "query",
+            "name": "udi",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Printed UDI, e.g. (01)0038074...(17)261231.",
+              "title": "Udi"
+            }
+          },
+          {
+            "description": "GTIN (8, 12, 13 or 14 digits).",
+            "in": "query",
+            "name": "gtin",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 20,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "GTIN (8, 12, 13 or 14 digits).",
+              "title": "Gtin"
+            }
+          },
+          {
+            "description": "Three-letter FDA product code.",
+            "in": "query",
+            "name": "product_code",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^[A-Za-z]{3}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Three-letter FDA product code.",
+              "title": "Product Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LookupAnswer"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Missing or invalid X-API-Key."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Input not usable."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Rate limit reached; see Retry-After."
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Look up possible FDA records for a device",
+        "tags": [
+          "tools"
+        ],
+        "x-maudesignal-read-only": true,
+        "x-maudesignal-scope": "read"
+      }
+    },
     "/v1/tools/recalls": {
       "get": {
-        "description": "Read-only. Stored openFDA recalls for a product code, newest first.",
+        "description": "Use this to list FDA recalls on file for a product code, newest first. Read-only. Reads the stored openFDA recall snapshot (top five as facts, each with its openFDA link); no recalls on file does not mean none exist. For a code with no stored recalls that is not otherwise known, it may check openFDA to confirm the code exists. Example questions: 'Show recalls for LLZ.'; 'Has QIH had a recall?'; 'Who recalled POK devices?'.",
         "operationId": "recalls",
         "parameters": [
           {
@@ -1226,7 +1905,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ToolAnswer"
+                  "$ref": "#/components/schemas/RecallsAnswer"
                 }
               }
             },
@@ -1278,7 +1957,7 @@
     },
     "/v1/tools/what_changed_this_week": {
       "get": {
-        "description": "Read-only. Latest stored week from the demo snapshot (labelled with its dates). A product code outside the stored set is checked live on openFDA.",
+        "description": "Use this to see which device types had a change in adverse-event reports in the latest stored week, or one product code if given. Read-only. Answers come from the stored demo snapshot, labelled with its dates; a product code outside the stored set is checked live on openFDA. Each fact has an openFDA link. Example questions: 'What changed for LLZ this week?'; 'Anything new in the stored week?'; 'Did MYN change?'.",
         "operationId": "what_changed_this_week",
         "parameters": [
           {

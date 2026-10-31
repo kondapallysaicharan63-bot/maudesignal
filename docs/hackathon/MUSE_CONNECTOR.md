@@ -87,7 +87,7 @@ leave it unset to switch the demo key off). It is public by design and must neve
 `GET /v1/connect` shows the first demo key when it was entered as a plain key.
 
 * Can: call every read tool (`what_changed_this_week`, `check_device_type`, `ask`, `get_report`,
-  `recalls`) over REST and MCP.
+  `recalls`, `lookup_device`) over REST and MCP.
 * Cannot: read the audit list (HTTP 403), start a live model call (`ask` returns a recorded answer,
   labelled recorded, whatever the server's model settings), or reach any admin route.
 * Limits, per demo key: `MAUDESIGNAL_DEMO_RATE_PER_MIN` requests per minute (default 10) and 200
@@ -108,9 +108,74 @@ To enable it: in Vercel > Project > Settings > Environment Variables (Production
 | `ask` | A free-text question (3 to 500 characters) answered through deterministic tools; every sentence passes the claim gate; withheld sentences are listed apart. | **Live Muse Spark only when live ask is on; with it off, a recorded answer, labelled `recorded_answer`.** |
 | `get_report` | Key fields and the start of the narrative of one stored report. | stored snapshot |
 | `recalls` | Stored openFDA recalls for a product code, newest first. | stored snapshot |
+| `lookup_device` | For what a model read from a device photo (any of `device_name`, `model`, `manufacturer`, `k_number`, `udi`, `gtin`, `product_code`; at least one): up to 3 possible FDA records from openFDA 510(k), registration & listing and UDI, each with `why_matched`, `why_not_matched` and links; plus, for the top product code(s), this week's change (same check as `check_device_type`), recalls started in the last two years (count and link) and the report count (count and link). `status` is `needs_person_to_confirm`, `no_match_found` or `search_failed` (with a `note`). `confirmed` is always `null`: the tool never picks a record, a person confirms one or none. No model call; read-only; the demo key may use it. | live openFDA |
 
 `check_device_type` has a keyless twin, `GET /v1/public/check_device_type`, limited per address and
 never calling a model.
+
+### Tool descriptions
+
+Each tool description (the same text in `tools/list`, the OpenAPI document and the manifest)
+starts with "Use this ..." to say when to pick the tool, says it is read-only, and ends with
+example questions: `what_changed_this_week` ("What changed for LLZ this week?"),
+`check_device_type` ("Is anything unusual with QIH right now?"), `lookup_device` ("I photographed
+a label: Welch Allyn 802 LTR - which FDA records match?"), `recalls` ("Show recalls for LLZ."),
+`get_report` ("Show me report 50426770.") and `ask` ("What changed this week for LLZ?"). The input
+schemas were not changed.
+
+### MCP prompts
+
+`prompts/list` and `prompts/get` (also listed by `GET /v1/connect` under `prompts`). A prompt only
+returns one user message that asks the model to call the connector's own read-only tools; it reads
+no data. Every message tells the model to cite the FDA links, that this is not medical advice, and
+to say "recorded" for recorded answers.
+
+| Prompt | Arguments | Message asks the model to |
+|---|---|---|
+| `morning_brief` | `product_codes` (comma-separated, up to 10, upper-cased, duplicates dropped) | call `what_changed_this_week` for each code and summarise with links |
+| `check_this_device` | `text` (name, model, maker, K-number or UDI, up to 500 characters) | call `lookup_device`, list up to 3 possible matches with why, and ask the person to confirm one record, or none, before going further |
+| `does_this_apply_to_us` | `product_code`; `our_device_description` (optional) | call `check_device_type`, `what_changed_this_week` and `recalls`, and present the problem patterns as questions for the person's own records, never as a verdict |
+
+A bad prompt call is a JSON-RPC error `-32602` whose message names the argument (for example
+"product_codes is required for this prompt.").
+
+### Server instructions
+
+Sent in the MCP `initialize` reply (`instructions`), used as the manifest `description`, and put
+at the start of the OpenAPI `info.description` (one text, `GUIDANCE` in `connector/registry.py`):
+always cite the FDA links given in each answer; not medical advice and nothing is filed with FDA;
+confirm the product code with the person before guessing one (use `lookup_device` or ask); when an
+answer is labelled recorded, say "recorded" and its date; never present withheld sentences as
+fact; a person confirms every device match.
+
+### Error format
+
+Same JSON on every route: `{"error": {"code": "...", "message": "..."}}`, with
+`"suggestions": ["..."]` added only when there is something to offer. Over MCP the message is the
+text of an `isError: true` tool result. Messages are fixed text. The one value a message repeats is a three-letter product code that already passed the letters-only check (the unknown-code message). An empty body, a body that cannot be parsed as JSON or one sent without a JSON content type gets `The request body is not valid JSON.`; valid JSON that is not an object (such as `[1, 2]`) gets `The request body must be a JSON object.`; a wrong field is named, never an index.
+
+| Case | Message |
+|---|---|
+| Product code not three letters | A product code is three letters, for example LLZ or QIH. |
+| Three-letter code with no stored data, no openFDA reports and no openFDA classification entry (`unknown_product_code`) | QAH isn't a product code we know - did you mean QAQ, QAS or QIH? ... (up to 3 known codes one edit away, also in `suggestions`; with none one edit away, e.g. ZZZ: `ZZZ isn't a product code we know.` and no suggestions). Both are probed against the shipped data in `tests/unit/test_connector_m2c.py`. |
+| Malformed K-number | K-numbers look like K123456 (the letter K and six digits). |
+| UDI / GTIN fails the GS1 check digit | The GTIN ... does not pass the GS1 check digit test ... Re-read the digits from the label. |
+| Report id not letters, digits, dashes | A report id is letters, digits and dashes, up to 24 characters. |
+| Missing input | `<name> is required.` plus what it should be |
+| Question too short or long | `question is too long: the limit is 500 characters.` (or at least 3) |
+| Input longer than its limit | `<name> is too long: the limit is N characters.` |
+
+"Known" codes are those in the stored reports, the device catalog, the stored digest and the stored
+AI-device sweep (`ConnectorData.known_product_codes`; `demo/sweep` is in the Vercel
+`includeFiles`, so the deployed set matches the tests); this repository holds no offline copy of the
+full openFDA classification list. A suggestion is only shown, never applied. When a live check finds
+no report for a code that is not known, the connector makes one more openFDA query on
+`device/classification.json` (`product_code:XXX`). If FDA lists the code, the answer is the normal
+200 "openFDA returned no reports for XXX" with its link and no suggestions. Only a code that is
+also absent from the classification list gets `unknown_product_code` (422). If the classification
+query fails, the 200 answer stands and the code is not called unknown. `recalls` (stored data only)
+never fails on such a code: it keeps its "no recalls on file" answer and, when known codes one edit away exist, adds the "did you mean"
+sentence, a provenance note and the same codes in the answer's `suggestions` list. Because it may query `device/classification.json` to confirm the code, `recalls` is marked `openWorldHint: true`.
 
 ## Example prompts
 
@@ -119,6 +184,7 @@ never calling a model.
 3. Show recalls for LLZ.
 4. Get report 50426770.
 5. Ask: what changed this week for LLZ? (with live ask off this returns the closest recorded answer)
+6. I photographed this label: Welch Allyn 802 LTR, which FDA records match? (Muse reads the photo itself, then calls `lookup_device`; the answer lists possible matches, or says none were found, and says a person confirms. Not yet run against live openFDA: a bare name such as `Welch Allyn 802 LTR` with no maker may return `no_match_found`; adding `manufacturer` helps.)
 
 ## Rate limits and cost caps
 
@@ -275,7 +341,7 @@ installed the root manifest, tell the owner before going on: the fix is a projec
 | `MAUDESIGNAL_FAILED_AUTH_PER_MIN` | default `10` | Wrong or missing keys per address per minute before 429. |
 | `MAUDESIGNAL_PUBLIC_CHECK_PER_HOUR` | default `10` | Keyless checks per address per hour. |
 | `MAUDESIGNAL_API_DAILY_USD` / `MAUDESIGNAL_API_REQUEST_USD` | defaults `2.00` / `0.25` | Cost cap of `ask` per key per UTC day, and per call. |
-| `OPENFDA_API_KEY` | optional | Used only on the server for live openFDA checks (higher quota). Never in a response. |
+| `OPENFDA_API_KEY` | optional (set it in production) | Used only on the server for live openFDA checks (higher quota). Never in a response. One `lookup_device` call makes about 20 openFDA requests (up to 7 searches, plus classification, the live check, recall and event queries for up to 2 product codes); without a key openFDA allows 240 requests a minute and 1,000 a day per IP. |
 | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | optional | Add an Upstash Redis database (Vercel Marketplace, or upstash.com) and copy its REST URL and token. When both are set, the rate limits, the per-key daily totals, the six-hour cache and the audit log are shared by every instance. Redis holds no part of the global spend ledger. If the integration names them differently, add these two names by hand. |
 | `BLOB_READ_WRITE_TOKEN` | the private Blob store's token | Also holds the spend ledger (one object per Meta call). Without it live Meta calls are off. |
 | `MAUDESIGNAL_LIVE_DAILY_USD` | default `3.00` | The hard ceiling for every Meta call per UTC day. Calls stop at this minus $0.10 (one call's largest hold). |
@@ -343,7 +409,7 @@ For the Muse connector form: base URL = `$BASE`, auth = API key in the header `X
   with the example requests and responses from the real runs below (`api/examples.json`).
 * `GET /openapi.json` (no key): the OpenAPI 3.1 spec; `api/openapi.json` is the committed copy and a
   test fails if the two differ (regenerate: `python3.12 -m maudesignal.connector.openapi`).
-* `GET /v1/health` (no key), the five tools under `/v1/tools/` (key), `GET /v1/audit/recent` (key).
+* `GET /v1/health` (no key), the six tools under `/v1/tools/` (key), `GET /v1/audit/recent` (key).
 * `GET /v1/public/check_device_type?product_code=` (**no key**), for the web workspace, where a
   browser gets 403 from openFDA directly. Same live check and the same four rules as the keyed
   tool (`monitor/live_check.py`), same query links, plus a `check` field equal to
@@ -561,8 +627,8 @@ Other checks in the same run: `GET /` and `GET /docs-page` returned `200 text/ht
 
 ## What it is
 
-Five read-only tools (REST and MCP, same code):
-`what_changed_this_week`, `check_device_type`, `ask`, `get_report`, `recalls`.
+Six read-only tools (REST and MCP, same code):
+`what_changed_this_week`, `check_device_type`, `ask`, `get_report`, `recalls`, `lookup_device`.
 Every answer has: a short speakable summary, facts that each carry an openFDA or record link,
 the fixed advisory line ("Advisory triage aid for quality and regulatory review; not medical
 advice; nothing is filed with FDA."), and provenance (stored demo snapshot with its dates, or
@@ -904,7 +970,7 @@ asks for confirmation, then runs.
 
 ## 2.1 The MCP server (`POST /mcp`)
 
-Same five tools as the REST routes, same process, same code path. Each REST route and each
+Same six tools as the REST routes, same process, same code path. Each REST route and each
 `tools/call` goes through one `dispatch` function in `connector/app.py`, so the answer, the audit
 entry and the cost cap are shared.
 
@@ -913,13 +979,13 @@ entry and the cost cap are shared.
 | Endpoint | `https://maudesignal-api.vercel.app/mcp` |
 | Transport | Streamable HTTP, **stateless**: one JSON-RPC message per `POST`, a JSON reply, no session id, no event stream. `GET`, `DELETE`, `PUT`, `PATCH` on `/mcp` return 405. |
 | Protocol version | `2025-06-18` (header `MCP-Protocol-Version` may be `2025-06-18` or `2025-03-26`; anything else is 400) |
-| Methods | `initialize`, `ping`, `tools/list`, `tools/call`; notifications and client replies get 202 with no body. Batches are refused (protocol 2025-06-18 removed them). |
+| Methods | `initialize`, `ping`, `tools/list`, `tools/call`, `prompts/list`, `prompts/get`; notifications and client replies get 202 with no body. Batches are refused (protocol 2025-06-18 removed them). |
 | Auth | `X-API-Key: <key>` **or** `Authorization: Bearer <key>` (the Bearer form also works on the REST routes). A key in the URL is refused (400). Wrong or missing key: 401; repeated wrong keys from one address: 429. |
 | Limits | The same per-key rate limit as REST (every HTTP request to `/mcp` counts once, also `tools/list`), the same per-key daily cost cap for `ask`, the same audit log (`GET /v1/audit/recent`). |
 | Browsers | A request that carries an `Origin` header is refused (403) unless the origin is listed in `MAUDESIGNAL_WEB_ORIGINS` (the MCP DNS-rebinding guard). Server-side clients send no `Origin`. |
-| Tool annotations | `readOnlyHint: true`, `destructiveHint: false`, `idempotentHint: true` on all five; `openWorldHint: true` on `what_changed_this_week`, `check_device_type` and `ask` (they can reach live openFDA or the live model), `false` on `get_report` and `recalls`. |
-| Result | `content`: one text item, the speakable summary. `structuredContent`: the full answer (`tool`, `speakable`, `facts` with links, `advisory`, `provenance`, `withheld`), identical to the REST body of the same call (a test compares them for all five). `outputSchema` is the answer model. |
-| Errors | Unknown tool or malformed call: JSON-RPC error `-32602`; unknown method `-32601`; bad JSON `-32700` (HTTP 400). A tool that cannot answer (invalid input, report not stored, openFDA unreachable) returns `isError: true` with a fixed, key-free message. |
+| Tool annotations | `readOnlyHint: true`, `destructiveHint: false`, `idempotentHint: true` on all six; `openWorldHint: true` on `what_changed_this_week`, `check_device_type`, `ask`, `lookup_device` and `recalls` (they can reach live openFDA or the live model), `false` on `get_report`. |
+| Result | `content`: one text item, the speakable summary. `structuredContent`: the full answer (`tool`, `speakable`, `facts` with links, `advisory`, `provenance`, `withheld`), identical to the REST body of the same call (a test compares them for all six). `outputSchema` is the common answer model, except that `lookup_device` has its own (adds `status`, `confirmed`, `note`, `searched_with`, `matches` and `device_types`) and `recalls` has its own (`RecallsAnswer`, which adds `suggestions`, a list of strings that is empty when there are none; the same in REST and OpenAPI). `tests/unit/test_connector_schema_contract.py` validates every tool's `structuredContent` against its advertised `outputSchema` and every REST body against its OpenAPI response schema. |
+| Errors | Unknown tool or malformed call: JSON-RPC error `-32602`; unknown method `-32601`; bad JSON `-32700` (HTTP 400). A tool that cannot answer (invalid input, report not stored, openFDA unreachable) returns `isError: true` with a fixed, key-free message; `lookup_device` instead returns `status` `search_failed` with a `note` (`isError` false). |
 | Manifest | `api/mcp-manifest.json`, also served at `GET /mcp-manifest.json` without a key. Generated by `python3.12 -m maudesignal.connector.manifest` from the same tool registry (`connector/registry.py`) that builds `tools/list` and supplies the REST descriptions; a test fails if the file drifts or if REST and MCP descriptions differ. |
 
 Why not the `mcp` Python SDK: this server only needs request/response, and a serverless
@@ -946,6 +1012,10 @@ any 20-character piece of them. The REST twin of that test is in `test_connector
 
 ### Real local transcript (MCP client over HTTP)
 
+> This transcript was recorded before MCP prompts and the new server instructions were added: its
+> `initialize` reply shows the older instructions string and no `prompts` capability, and its
+> tool list has five tools. The current `initialize` reply is described in the sections above.
+
 Captured with a short Python client using `httpx` against `uvicorn api.index:app --no-access-log
 --no-proxy-headers` on 127.0.0.1:8766, with a throw-away key made in the client process and passed
 to the server's environment (never printed, and the client asserts it is absent from every
@@ -968,7 +1038,7 @@ HTTP 200
   check_device_type: readOnlyHint=True destructiveHint=False openWorldHint=True inputs=['product_code']
   ask: readOnlyHint=True destructiveHint=False openWorldHint=True inputs=['question']
   get_report: readOnlyHint=True destructiveHint=False openWorldHint=False inputs=['report_id']
-  recalls: readOnlyHint=True destructiveHint=False openWorldHint=False inputs=['product_code']
+  recalls: readOnlyHint=True destructiveHint=False openWorldHint=True inputs=['product_code']
 
 ### tools/call recalls LLZ
 HTTP 200

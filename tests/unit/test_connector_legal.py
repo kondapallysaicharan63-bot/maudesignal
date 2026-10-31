@@ -183,7 +183,7 @@ def test_no_email_address_in_the_page_source() -> None:
 
 def test_icon_files() -> None:
     d = PROJECT_ROOT / "docs" / "hackathon"
-    svg = (d / "maudesignal-icon.svg").read_text()
+    svg = (d / "maudesignal-icon-alt.svg").read_text()
     assert 'width="512"' in svg and 'height="512"' in svg and 'viewBox="0 0 512 512"' in svg
     assert "<script" not in svg and "href=" not in svg
     png = (d / "maudesignal-icon.png").read_bytes()

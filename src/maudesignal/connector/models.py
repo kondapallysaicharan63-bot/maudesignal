@@ -88,11 +88,91 @@ class ToolAnswer(BaseModel):
     )
 
 
+LookupStatus = Literal["needs_person_to_confirm", "no_match_found", "search_failed"]
+
+
+class LookupLink(BaseModel):
+    """A public openFDA link behind a lookup result."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    label: str
+    url: str
+
+    @field_validator("url")
+    @classmethod
+    def _https(cls, value: str) -> str:
+        if not value.startswith("https://"):
+            raise ValueError("every link is https")
+        return value
+
+
+class LookupMatch(BaseModel):
+    """One possible FDA record for the device that was described. Never chosen for the person."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    rank: int = Field(description="1 is the best-scoring possible match; it is not a decision.")
+    source: str = Field(description="510k, udi or registrationlisting.")
+    record_id: str = Field(description="K-number, UDI record key or registration number.")
+    k_number: str | None = Field(description="510(k) number when the record is a 510(k).")
+    device_name: str | None
+    applicant: str | None = Field(description="Applicant, owner or maker named on the record.")
+    product_code: str | None
+    decision_date: str | None = Field(description="510(k) decision date as openFDA gives it.")
+    exact_id: str | None = Field(
+        description="k_number or gtin when an id you gave equals the record, else null."
+    )
+    score: int
+    why_matched: list[str]
+    why_not_matched: list[str]
+    links: list[LookupLink]
+
+
+class LookupDeviceType(BaseModel):
+    """What openFDA shows for a product code of the top possible matches."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    product_code: str
+    device_type_name: str | None
+    this_week_change: str | None = Field(
+        description="Same deterministic check as check_device_type, in plain words."
+    )
+    this_week_reports: int | None
+    recent_recalls_count: int | None = Field(
+        description="Recall records started in the window below (null if openFDA failed)."
+    )
+    recent_recalls_window: str
+    recent_recalls_link: str | None
+    report_count: int | None = Field(description="All adverse-event reports for the code.")
+    report_count_link: str | None
+    check_link: str | None = Field(description="openFDA link for this week's report count.")
+    note: str | None = None
+
+
+class LookupAnswer(ToolAnswer):
+    """``lookup_device``: possible FDA records for a described device. A person confirms."""
+
+    status: LookupStatus
+    confirmed: None = Field(
+        default=None,
+        description="Always null. This tool never picks a record; a person confirms one or none.",
+    )
+    note: str | None = None
+    searched_with: list[str] = Field(
+        default_factory=list, description="Which of your inputs were used for the search."
+    )
+    matches: list[LookupMatch] = Field(default_factory=list, description="At most 3.")
+    device_types: list[LookupDeviceType] = Field(default_factory=list)
+
+
 class ErrorBody(BaseModel):
     """Error detail (never contains a key)."""
 
     code: str
     message: str
+    suggestions: list[str] | None = None
 
 
 class ErrorResponse(BaseModel):
@@ -141,6 +221,18 @@ class LiveCheckData(BaseModel):
     current_event_type_counts: list[list[Any]]
     queries: list[list[str]]
     change: str
+
+
+class RecallsAnswer(ToolAnswer):
+    """``recalls``: the normal answer plus the close known codes, when the code is unknown."""
+
+    suggestions: list[str] = Field(
+        default_factory=list,
+        description=(
+            'Close known product codes ("did you mean"), shown to the person and never '
+            "applied; empty when there are none. Same values as the suggestions in an error."
+        ),
+    )
 
 
 class PublicCheckAnswer(ToolAnswer):

@@ -25,6 +25,7 @@ from maudesignal.connector.registry import TOOL_SPECS  # noqa: E402
 from maudesignal.connector.security import KeyStore, RateLimiter  # noqa: E402
 from tests.unit.test_connector import KEY, fake_check  # noqa: E402
 from tests.unit.test_connector_api import TOOL_CALLS, call  # noqa: E402
+from tests.unit.test_connector_lookup import ROW_802, FakeSearcher  # noqa: E402
 from tests.unit.test_connector_safety import (  # noqa: E402
     BLOCKED,
     BLOCKED_SCRIPT,
@@ -51,6 +52,7 @@ def make_client(
         data=data,
         ask_runtime=runtime or AskRuntime(live_enabled=lambda: False, ledger_dir=tmp_path / "led"),
         live_checker=fake_check,
+        lookup_searcher=FakeSearcher(k510=[ROW_802]),
     )
     return TestClient(create_app(settings), raise_server_exceptions=False)
 
@@ -71,17 +73,20 @@ def test_initialize_and_notification(data: ConnectorData, tmp_path: Path) -> Non
     assert r.status_code == 200
     res = r.json()["result"]
     assert res["protocolVersion"] == "2025-06-18"
-    assert res["capabilities"] == {"tools": {"listChanged": False}}
+    assert res["capabilities"] == {
+        "tools": {"listChanged": False},
+        "prompts": {"listChanged": False},
+    }
     assert "Mcp-Session-Id" not in r.headers and "mcp-session-id" not in r.headers
     note = c.post("/mcp", json={"jsonrpc": "2.0", "method": "notifications/initialized"}, headers=H)
     assert note.status_code == 202 and note.content == b""
     assert rpc(c, "ping").json()["result"] == {}
 
 
-def test_tools_list_has_five_read_only_tools(data: ConnectorData, tmp_path: Path) -> None:
+def test_tools_list_has_six_read_only_tools(data: ConnectorData, tmp_path: Path) -> None:
     tools = rpc(make_client(data, tmp_path), "tools/list").json()["result"]["tools"]
     assert [t["name"] for t in tools] == [t for _, t, _ in TOOL_CALLS]
-    assert len(tools) == 5
+    assert len(tools) == 6
     for t in tools:
         a = t["annotations"]
         assert a["readOnlyHint"] is True and a["destructiveHint"] is False
@@ -92,7 +97,8 @@ def test_tools_list_has_five_read_only_tools(data: ConnectorData, tmp_path: Path
         "check_device_type": True,
         "ask": True,
         "get_report": False,
-        "recalls": False,
+        "recalls": True,
+        "lookup_device": True,
     }
 
 

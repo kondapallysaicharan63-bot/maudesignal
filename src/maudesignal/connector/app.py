@@ -2,7 +2,7 @@
 
 HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
-Every endpoint is read-only. ``GET /v1/health`` needs no key; the five tool
+Every endpoint is read-only. ``GET /v1/health`` needs no key; the six tool
 endpoints need an ``X-API-Key`` header, count against a per-key rate limit and, for
 ``ask``, a per-key daily cost cap. Error bodies never contain the key.
 """
@@ -26,7 +26,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from starlette.concurrency import run_in_threadpool
 from starlette.requests import ClientDisconnect
 
-from maudesignal.common.exceptions import OpenFDAAPIError
+from maudesignal.common.exceptions import MaudeSignalError, OpenFDAAPIError
 from maudesignal.common.logging import get_logger
 from maudesignal.connector import tools
 from maudesignal.connector.asgi import RejectKeyInQuery
@@ -41,11 +41,18 @@ from maudesignal.connector.ask import (
 from maudesignal.connector.blob_store import RecordStore, store_from_env
 from maudesignal.connector.data import ConnectorData
 from maudesignal.connector.docs_page import render_docs_page
-from maudesignal.connector.errors import ConnectorError, InvalidInputError, NotFoundError
+from maudesignal.connector.errors import (
+    ConnectorError,
+    InvalidInputError,
+    NotFoundError,
+    body_shape_message,
+    field_name,
+)
 from maudesignal.connector.feedback import mount_feedback
 from maudesignal.connector.globalcap import global_daily_usd
 from maudesignal.connector.legal_pages import render_privacy, render_terms
 from maudesignal.connector.live import LiveBackends, LiveConfig, mount_live
+from maudesignal.connector.lookup import OpenFdaSearcher, Searcher, lookup_device
 from maudesignal.connector.manifest import build_manifest
 from maudesignal.connector.mcp_server import (
     PARSE_ERROR,
@@ -60,18 +67,25 @@ from maudesignal.connector.models import (
     ErrorBody,
     ErrorResponse,
     LiveCheckData,
+    LookupAnswer,
     PublicCheckAnswer,
+    RecallsAnswer,
     ToolAnswer,
 )
 from maudesignal.connector.notify import Notifier, notifier_from_env
+from maudesignal.connector.prompts import PROMPT_SPECS
 from maudesignal.connector.registry import (
     ASK_DESCRIPTION,
     CHECK_DESCRIPTION,
+    GUIDANCE,
+    LOOKUP_DESCRIPTION,
+    LOOKUP_PATTERN_K,
     PRODUCT_CODE_PATTERN,
     RECALLS_DESCRIPTION,
     REPORT_DESCRIPTION,
     REPORT_ID_PATTERN,
     WHAT_CHANGED_DESCRIPTION,
+    explain_error,
 )
 from maudesignal.connector.security import (
     DEFAULT_DEMO_RATE_PER_MIN,
@@ -86,7 +100,7 @@ from maudesignal.connector.store import (
     UpstashError,
     verify_chain,
 )
-from maudesignal.connector.tools import Clock, LiveChecker, utc_now
+from maudesignal.connector.tools import Clock, CodeChecker, LiveChecker, utc_now
 from maudesignal.ingestion.openfda_client import OpenFDAClient
 from maudesignal.monitor.live_check import LiveCheck, check_product_code, normalize_code
 
@@ -128,7 +142,9 @@ DEMO_LABEL = "demo"
 MAX_MCP_BODY_BYTES = 64 * 1024
 
 DESCRIPTION = (
-    "Read-only MaudeSignal tools for a Meta Muse connector. Each answer has a short speakable "
+    "How to use this server: "
+    + GUIDANCE
+    + " Read-only MaudeSignal tools for a Meta Muse connector. Each answer has a short speakable "
     "summary, facts that each carry an openFDA or record link, a fixed advisory line and "
     "provenance (stored demo snapshot with dates, or live openFDA with the query time). "
     "Advisory triage aid for quality and regulatory review; not medical advice; nothing is "
@@ -206,6 +222,9 @@ class Settings:
     data: ConnectorData = field(default_factory=ConnectorData)
     ask_runtime: AskRuntime | None = None
     live_checker: LiveChecker = _default_live_checker
+    lookup_searcher: Searcher | None = None  # None: real openFDA (tests pass a fake)
+    #: Is the code in openFDA's device classification? None: ask openFDA through the searcher.
+    code_exists: CodeChecker | None = None
     now: Clock = utc_now
     state: ConnectorState = field(default_factory=ConnectorState.from_env)
     web_origins: tuple[str, ...] = field(default_factory=_origins_from_env)
@@ -250,6 +269,14 @@ class DemoLimits(BaseModel):
     note: str
 
 
+class ConnectPrompt(BaseModel):
+    """One MCP prompt, as listed by ``prompts/list``."""
+
+    name: str
+    description: str
+    arguments: list[str]
+
+
 class ConnectInfo(BaseModel):
     """``GET /v1/connect`` body."""
 
@@ -262,6 +289,8 @@ class ConnectInfo(BaseModel):
     demo_key: str | None
     demo_limits: DemoLimits
     steps: list[str]
+    prompts: list[ConnectPrompt]
+    instructions: str
 
 
 class ApiError(Exception):
@@ -290,9 +319,23 @@ def _client_address(request: Request) -> str:
     return str(request.client.host) if request.client else "unknown"
 
 
-def _error(status: int, code: str, message: str, headers: dict[str, str] | None = None) -> Response:
-    body = ErrorResponse(error=ErrorBody(code=code, message=message))
-    return JSONResponse(status_code=status, content=body.model_dump(), headers=headers)
+LOOKUP_FIELDS = ("device_name", "model", "manufacturer", "k_number", "udi", "gtin", "product_code")
+LOOKUP_AUDIT_CHARS = 100
+
+
+def _error(
+    status: int,
+    code: str,
+    message: str,
+    headers: dict[str, str] | None = None,
+    suggestions: list[str] | None = None,
+) -> Response:
+    body = ErrorResponse(
+        error=ErrorBody(code=code, message=message, suggestions=suggestions or None)
+    )
+    return JSONResponse(
+        status_code=status, content=body.model_dump(exclude_none=True), headers=headers
+    )
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -460,6 +503,25 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         record_audit(audit_id, tool, inputs, answer, None, label)
         return answer
 
+    def code_exists(code: str) -> bool | None:
+        """One openFDA classification query: does FDA list this product code?
+
+        None when openFDA cannot be reached (the caller then does not call the code unknown).
+        """
+        if cfg.code_exists is not None:
+            return cfg.code_exists(code)
+        own = cfg.lookup_searcher is None
+        searcher: Searcher = cfg.lookup_searcher or OpenFdaSearcher(
+            os.environ.get("OPENFDA_API_KEY") or None
+        )
+        try:
+            return bool(searcher.query("classification", f"product_code:{code}", limit=1).results)
+        except MaudeSignalError:
+            return None
+        finally:
+            if own and isinstance(searcher, OpenFdaSearcher):
+                searcher.close()
+
     def dispatch(request: Request, name: str, args: dict[str, str]) -> ToolAnswer:
         """Run one tool with its audit entry; REST routes and ``/mcp`` both call this."""
         key_id = str(request.state.audit_id)
@@ -470,7 +532,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 name,
                 {"product_code": code or ""},
                 lambda: tools.what_changed_this_week(
-                    cfg.data, code, live_checker=cfg.live_checker, now=cfg.now
+                    cfg.data,
+                    code,
+                    live_checker=cfg.live_checker,
+                    now=cfg.now,
+                    code_exists=code_exists,
                 ),
             )
         if name == "check_device_type":
@@ -479,7 +545,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 name,
                 {"product_code": args["product_code"]},
                 lambda: tools.check_device_type(
-                    cfg.data, args["product_code"], live_checker=cfg.live_checker, now=cfg.now
+                    cfg.data,
+                    args["product_code"],
+                    live_checker=cfg.live_checker,
+                    now=cfg.now,
+                    code_exists=code_exists,
                 ),
             )
         if name == "ask":
@@ -509,8 +579,26 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 request,
                 name,
                 {"product_code": args["product_code"]},
-                lambda: tools.recalls(cfg.data, args["product_code"]),
+                lambda: tools.recalls(cfg.data, args["product_code"], code_exists=code_exists),
             )
+        if name == "lookup_device":
+            given = {k: args[k] for k in LOOKUP_FIELDS if args.get(k)}
+            audit_inputs = {k: v[:LOOKUP_AUDIT_CHARS] for k, v in given.items()}
+
+            def run_lookup() -> ToolAnswer:
+                own = cfg.lookup_searcher is None
+                searcher: Searcher = cfg.lookup_searcher or OpenFdaSearcher(
+                    os.environ.get("OPENFDA_API_KEY") or None
+                )
+                try:
+                    return lookup_device(
+                        **given, searcher=searcher, live_checker=cfg.live_checker, now=cfg.now
+                    )
+                finally:
+                    if own and isinstance(searcher, OpenFdaSearcher):
+                        searcher.close()
+
+            return audited(request, name, audit_inputs, run_lookup)
         raise InvalidInputError("Unknown tool.")
 
     @app.exception_handler(ApiError)
@@ -525,12 +613,33 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             status = 404
         else:  # SourceUnavailableError and any other connector error
             status = 502
-        return _error(status, exc.code, str(exc))
+        return _error(status, exc.code, str(exc), suggestions=exc.suggestions)
 
     @app.exception_handler(RequestValidationError)
     async def _invalid(_: Request, exc: RequestValidationError) -> Response:
-        where = ", ".join(sorted({str(e["loc"][-1]) for e in exc.errors() if e.get("loc")}))
-        return _error(422, "invalid_input", f"Invalid input: {where or 'request'}.")
+        messages: list[str] = []
+        names: list[str] = []
+        errs = exc.errors()
+        if any(str(e.get("type")) == "json_invalid" for e in errs):
+            return _error(422, "invalid_input", "The request body is not valid JSON.")
+        if any(
+            tuple(e.get("loc") or ()) == ("body",)
+            and str(e.get("type")) in ("missing", "model_attributes_type")
+            for e in errs
+        ):
+            return _error(422, "invalid_input", body_shape_message(exc.body))
+        for err in errs:
+            name = field_name(err.get("loc"))
+            helpful = explain_error(name, str(err.get("type", "")))
+            if helpful is not None and helpful not in messages:
+                messages.append(helpful)
+            elif helpful is None and name and name not in names:
+                names.append(name)
+        if messages:
+            return _error(422, "invalid_input", " ".join(messages))
+        if not names:
+            return _error(422, "invalid_input", "The request could not be read.")
+        return _error(422, "invalid_input", f"Invalid input: {', '.join(sorted(names))}.")
 
     @app.exception_handler(Exception)
     async def _unexpected(_: Request, exc: Exception) -> Response:
@@ -612,6 +721,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "Send the key in the X-API-Key header (the demo key above works for a first try).",
                 "Call a tool, for example what_changed_this_week with product_code LLZ.",
             ],
+            prompts=[
+                ConnectPrompt(
+                    name=p.name,
+                    description=p.description,
+                    arguments=[a.name for a in p.arguments],
+                )
+                for p in PROMPT_SPECS
+            ],
+            instructions=GUIDANCE,
         )
 
     @app.get("/", response_class=HTMLResponse, include_in_schema=False)
@@ -748,7 +866,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get(
         "/v1/tools/recalls",
-        response_model=ToolAnswer,
+        response_model=RecallsAnswer,
         operation_id="recalls",
         summary="FDA recalls for a product code",
         description=RECALLS_DESCRIPTION,
@@ -758,6 +876,58 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     def recalls(request: Request, key_id: key_dep, product_code: code_param) -> ToolAnswer:
         return dispatch(request, "recalls", {"product_code": product_code})
+
+    @app.get(
+        "/v1/tools/lookup_device",
+        response_model=LookupAnswer,
+        operation_id="lookup_device",
+        summary="Look up possible FDA records for a device",
+        description=LOOKUP_DESCRIPTION,
+        tags=["tools"],
+        responses=_ERRORS,
+        openapi_extra=READ_ONLY,
+    )
+    def lookup_device_route(
+        request: Request,
+        key_id: key_dep,
+        device_name: Annotated[
+            str | None, Query(max_length=200, description="Device name as read from the label.")
+        ] = None,
+        model: Annotated[
+            str | None, Query(max_length=100, description="Model, catalog or reference number.")
+        ] = None,
+        manufacturer: Annotated[
+            str | None, Query(max_length=200, description="Maker named on the label.")
+        ] = None,
+        k_number: Annotated[
+            str | None,
+            Query(
+                pattern=LOOKUP_PATTERN_K,
+                description="510(k) number printed on the label: K plus six digits.",
+            ),
+        ] = None,
+        udi: Annotated[
+            str | None,
+            Query(max_length=200, description="Printed UDI, e.g. (01)0038074...(17)261231."),
+        ] = None,
+        gtin: Annotated[
+            str | None, Query(max_length=20, description="GTIN (8, 12, 13 or 14 digits).")
+        ] = None,
+        product_code: Annotated[
+            str | None,
+            Query(pattern=PRODUCT_CODE_PATTERN, description="Three-letter FDA product code."),
+        ] = None,
+    ) -> ToolAnswer:
+        values = {
+            "device_name": device_name,
+            "model": model,
+            "manufacturer": manufacturer,
+            "k_number": k_number,
+            "udi": udi,
+            "gtin": gtin,
+            "product_code": product_code,
+        }
+        return dispatch(request, "lookup_device", {k: v for k, v in values.items() if v})
 
     @app.get(
         "/v1/public/check_device_type",
@@ -814,7 +984,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return seen[-1]
 
         try:
-            base = tools.check_device_type(cfg.data, code, live_checker=live, now=cfg.now)
+            base = tools.check_device_type(
+                cfg.data, code, live_checker=live, now=cfg.now, code_exists=code_exists
+            )
         except ConnectorError as exc:
             record_audit(PUBLIC_ACTOR, "public_check_device_type", inputs, None, exc.code)
             raise
