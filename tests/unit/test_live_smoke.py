@@ -71,6 +71,7 @@ def test_full_run_with_fakes_writes_a_clean_result(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     monkeypatch.setenv("META_MODEL_API_KEY", "KEY-NOT-REAL-should-never-be-written")
+    monkeypatch.setenv("MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP", "1")
     mod = load_script()
     env = Env(tmp_path)
     real_settings = app_module.Settings

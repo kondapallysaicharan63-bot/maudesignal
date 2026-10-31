@@ -754,7 +754,7 @@
   "paths": {
     "/v1/audit/recent": {
       "get": {
-        "description": "Read-only. The last entries (default 20, at most 200) of the append-only, hash-chained log of tool calls: tool, inputs, answer SHA-256, gate counts, provenance and the caller's key id (a keyed hash held by the server; never the key). An `ask` question is stored as its SHA-256 and length, not its text. `chain.verified` is recomputed on every call.",
+        "description": "Read-only. The last entries (default 20, at most 200) of the append-only, hash-chained log of tool calls: tool, inputs, answer SHA-256, gate counts, provenance and the caller's key id (a keyed hash held by the server; never the key). An `ask` question is stored as its SHA-256 and length, not its text. `chain.verified` is recomputed on every call. Full keys only: the public demo key gets 403.",
         "operationId": "audit_recent",
         "parameters": [
           {

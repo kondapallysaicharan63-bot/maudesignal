@@ -396,6 +396,7 @@ class BlobLedger(DailyLedger):
         """Create the ledger ``name`` on ``store``."""
         super().__init__(Path(os.devnull), today=today)
         self._store, self._name = store, name
+        self._known_total = 0.0  # last total read by this instance (for the running log only)
 
     def _prefix(self, day: str) -> str:
         return f"{LEDGER_PREFIX}/{self._name}/{day}/"
@@ -408,7 +409,7 @@ class BlobLedger(DailyLedger):
         """Today's total and the refs, from one listing. Fails closed on any surprise."""
         prefix = self._prefix(day)
         try:
-            refs = self._store.list_prefix(prefix)
+            refs = self._store.list_prefix(prefix, strict=True)
         except StoreError:
             raise BlobLedgerError("ledger store unreachable") from None
         total = 0
@@ -422,7 +423,8 @@ class BlobLedger(DailyLedger):
                 raise BlobLedgerError("ledger object unreadable")
             micros = int(m.group("micros"))
             total += -micros if m.group("kind") == "r" else micros
-        return max(0.0, total / _MICROS), refs
+        self._known_total = max(0.0, total / _MICROS)
+        return self._known_total, refs
 
     def _write(self, day: str, kind: str, usd: float, calls: int = 0) -> str:
         path = self._entry(day, kind, usd, calls)
@@ -486,11 +488,17 @@ class BlobLedger(DailyLedger):
             )
 
     def add(self, usd: float, calls: int) -> float:
-        """Add real spend for today (a new object of its own) and return today's total."""
+        """Add real spend for today (a new object of its own).
+
+        Returns the running total as last read by this instance plus ``usd``. It does no extra
+        listing (each listing is a Blob "advanced" operation); the reserve step reads the
+        authoritative total.
+        """
         day = self._today().isoformat()
         try:
             self._write(day, "a", float(usd), int(calls))
-            return round(self._list(day)[0], 6)
+            self._known_total += float(usd)
+            return round(self._known_total, 6)
         except BlobLedgerError as exc:
             logger.critical(
                 "connector_spend_not_recorded",

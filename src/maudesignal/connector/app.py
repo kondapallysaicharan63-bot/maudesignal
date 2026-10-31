@@ -812,16 +812,23 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "hash-chained log of tool calls: tool, inputs, answer SHA-256, gate counts, "
             "provenance and the caller's key id (a keyed hash held by the server; never "
             "the key). An `ask` question is stored as its SHA-256 and length, not its text. "
-            "`chain.verified` is recomputed on every call."
+            "`chain.verified` is recomputed on every call. Full keys only: the public demo key "
+            "gets 403."
         ),
         tags=["service"],
         responses=_ERRORS | {503: {"model": ErrorResponse, "description": "Audit store down."}},
         openapi_extra=READ_ONLY,
     )
     def audit_recent(
+        request: Request,
         key_id: key_dep,
         limit: Annotated[int, Query(ge=1, le=200, description="How many entries.")] = 20,
     ) -> AuditRecent:
+        if getattr(request.state, "key_demo", False):
+            # The audit list shows key labels and other callers' inputs: full keys only.
+            raise ApiError(
+                403, "demo_key", "The public demo key cannot read the audit list. Use a full key."
+            )
         try:
             rows = state.audit_recent(limit)
         except UpstashError as exc:

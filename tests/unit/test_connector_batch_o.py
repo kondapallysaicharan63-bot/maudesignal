@@ -100,7 +100,7 @@ class FakeBlobStore:
         if self.after_put:
             self.after_put(pathname)
 
-    def list_prefix(self, prefix: str) -> list[BlobRef]:
+    def list_prefix(self, prefix: str, *, strict: bool = False) -> list[BlobRef]:
         if self.fail_list:
             raise StoreError("blob store unreachable")
         with self.lock:
@@ -748,7 +748,8 @@ def make_recorded(directory: Path) -> None:
     )
 
 
-def test_route_live_shape_and_label(tmp_path: Path) -> None:
+def test_route_live_shape_and_label(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP", "1")
     env = Env(tmp_path, fetcher=standard_http())
     r = env.client.post(
         "/v1/live/mentions", json={"product_code": "llz", "device_terms": ["image processing"]}
@@ -901,7 +902,8 @@ def test_record_script_parses_requests_and_the_request_file_is_off() -> None:
     assert set(mod.parse_request("0\n")) == {"LLZ"}
     got = mod.parse_request("1 qih\njak=heart monitor;ecg  # note\n# only a comment\n")
     assert set(got) == {"LLZ", "QIH", "JAK"} and got["JAK"] == ["heart monitor", "ecg"]
-    assert (root / "demo" / "mentions" / "REQUEST").read_text().strip() == "0"
+    first = (root / "demo" / "mentions" / "REQUEST").read_text().split()[:1]
+    assert first in (["0"], ["1"])  # off, or on for one free recording run
     wf = (root / ".github" / "workflows" / "mentions-record.yml").read_text()
     assert "branches: [track-c-live]" in wf and 'paths: ["demo/mentions/REQUEST"]' in wf
     assert "secrets." not in wf and "META_MODEL_API_KEY" not in wf
@@ -1328,3 +1330,59 @@ def test_http_fetcher_has_a_wall_clock_deadline_for_slow_pages(
     with pytest.raises(TimeoutError):
         f.get("https://slow.example/", 0.15)
     assert time.monotonic() - started < 1.0
+
+
+# --- fix round: demo key and the audit list, blob listing, running total, Upstash margin -------
+
+
+def test_demo_key_cannot_read_the_audit_list(tmp_path: Path) -> None:
+    env = {"MAUDESIGNAL_API_KEYS": f"charan={KEY_A}", "MAUDESIGNAL_DEMO_KEYS": DEMO}
+    c, _spark, _settings = keyed_client(tmp_path, env)
+    r = c.get("/v1/audit/recent", headers={"X-API-Key": DEMO})
+    assert r.status_code == 403 and "charan" not in r.text
+    assert c.get("/v1/audit/recent", headers={"X-API-Key": KEY_A}).status_code == 200
+
+
+def test_blob_listing_longer_than_the_page_limit_fails_closed() -> None:
+    import httpx
+
+    from maudesignal.connector import blob_store as bs
+
+    page = {"blobs": [{"pathname": "ledger/x/1.json", "url": "u"}], "hasMore": True, "cursor": "c"}
+    transport = httpx.MockTransport(lambda _req: httpx.Response(200, json=page))
+    store = bs.VercelBlobStore("tok", client=httpx.Client(transport=transport))
+    assert len(store.list_prefix("ledger/")) == bs.MAX_LIST_PAGES  # exports keep the old cut-off
+    with pytest.raises(bs.StoreError):
+        store.list_prefix("ledger/", strict=True)
+
+
+def test_blob_ledger_add_writes_once_and_does_not_list_again() -> None:
+    store = FakeBlobStore()
+    led = ledger(store)
+    assert led.reserve(0.25, 3.0)
+    lists = 0
+    orig = store.list_prefix
+
+    def counting(prefix: str, *, strict: bool = False) -> list[BlobRef]:
+        nonlocal lists
+        lists += 1
+        return orig(prefix, strict=strict)
+
+    store.list_prefix = counting  # type: ignore[method-assign]
+    total = led.add(0.1, 1)
+    assert lists == 0 and total == pytest.approx(0.35)
+    assert store.ledger_usd() == pytest.approx(0.35)
+
+
+def test_upstash_mode_also_keeps_the_margin_for_the_keyed_ask() -> None:
+    from types import SimpleNamespace
+
+    from maudesignal.connector.ask import AskRuntime
+
+    rt = AskRuntime(
+        agent_factory=lambda d, g: None,  # type: ignore[arg-type, return-value]
+        live_enabled=lambda: True,
+        caps=SpendCaps(session_usd=0.25, session_calls=20, daily_usd=3.0),
+        state=SimpleNamespace(global_mode="upstash"),  # type: ignore[arg-type]
+    )
+    assert rt.global_cap() == pytest.approx(2.7)  # 3.00 minus the largest request cap (0.30)

@@ -70,8 +70,10 @@ STATIC_ANSWERS: tuple[tuple[str, str], ...] = (
     (
         "Who else handles data (subprocessors)?",
         "Vercel (hosting, runtime logs and Blob storage). Meta Model API: only when live "
-        "answers are switched on, for the live ask, voice and label routes; the question text, "
-        "the audio clip or the image is sent once to produce the answer and is not stored by "
+        "answers are switched on, for the live ask, voice and label routes and for the "
+        "connector's ask tool (REST and MCP) for full keys (the public demo key never calls "
+        "it); the question text, the audio clip or the image is sent once to produce the answer "
+        "and is not stored by "
         "this service. Resend (email): only if the operator turns on email for new feedback; "
         "the email carries the feedback fields, no name and no address. Public data sources "
         "that this service reads: openFDA, GOV.UK (MHRA alerts), GDELT and FDA public feeds "
@@ -81,13 +83,18 @@ STATIC_ANSWERS: tuple[tuple[str, str], ...] = (
     (
         "What is logged, and for how long?",
         "Per tool call: a key id (a keyed hash of the key, never the key), the tool name, the"
-        " time, the status and the cost. Never the text of a question: for ask, only a hash "
-        "and a length are recorded. Feedback is stored without names (role and quote consent "
-        "only). A page visit stores the referral code, the page and the time. This service "
+        " time, the status; live-call cost is kept only as a daily total in the spend ledger. "
+        "Never the text of a question: for ask, only a hash "
+        "and a length are recorded. New feedback is stored without names. Older entries keep "
+        "the name only where the person chose to be quoted by name and role; all other names "
+        "were removed. Feedback has a role and a quote consent. A page visit stores the "
+        "referral code, the page and the time. This service "
         "never stores an IP address: before any rate limit or counter sees it, the address is"
-        " replaced by a keyed hash, which is held in memory (or in the operator's Redis "
-        "store, if one is set up) only to apply limits, for at most twice the limit window "
-        "(two days for daily counters). Vercel's own request logs may include the address; "
+        " replaced by a keyed hash, which is held in the memory of the server instance only to "
+        "apply limits, until that instance stops (or, with the operator's Redis store, for "
+        "at most twice the limit window). Holders of a full key can read the recent audit "
+        "list (tool names, inputs, times and key labels); the public demo key cannot. Vercel's "
+        "own request logs may include the address; "
         "they are kept by Vercel for Vercel's runtime-log retention for this plan. Feedback "
         "and visits are kept until the hackathon review ends, then deleted on request or by "
         "30 November 2026.",
@@ -140,8 +147,9 @@ def render_privacy(env: dict[str, str] | None = None) -> str:
     deletion = (
         "<tr><th scope='row'>How do I ask for deletion?</th><td>Write to "
         f"<a href='{html.escape(href)}'>{html.escape(text)}</a> and give the referral code "
-        "you were sent (feedback and visits carry no name, so the code is how an entry is "
-        "found). Entries are deleted on request.</td></tr>"
+        "you were sent (new feedback and visits carry no name, so the code is how an entry is "
+        "found; older entries keep a name only where the person chose to be quoted by name and "
+        "role). Entries are deleted on request.</td></tr>"
     )
     body = (
         "<h1>Privacy</h1>"

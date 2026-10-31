@@ -56,7 +56,7 @@ class RecordStore(Protocol):
         and the name-redaction step use it; feedback and visits never do).
         """
 
-    def list_prefix(self, prefix: str) -> list[BlobRef]:
+    def list_prefix(self, prefix: str, *, strict: bool = False) -> list[BlobRef]:
         """Every stored object whose pathname starts with ``prefix``."""
 
     def get(self, ref: BlobRef) -> bytes:
@@ -82,7 +82,7 @@ class MemoryStore:
         with self._lock:
             self._items[pathname] = data
 
-    def list_prefix(self, prefix: str) -> list[BlobRef]:
+    def list_prefix(self, prefix: str, *, strict: bool = False) -> list[BlobRef]:
         """Objects under ``prefix``."""
         with self._lock:
             return [BlobRef(p, p) for p in sorted(self._items) if p.startswith(prefix)]
@@ -147,7 +147,7 @@ class VercelBlobStore:
             logger.error("blob_put_failed", status=r.status_code)
             raise StoreError(f"blob store answered {r.status_code}")
 
-    def list_prefix(self, prefix: str) -> list[BlobRef]:
+    def list_prefix(self, prefix: str, *, strict: bool = False) -> list[BlobRef]:
         """List objects under ``prefix`` (follows the cursor)."""
         refs: list[BlobRef] = []
         cursor: str | None = None
@@ -168,7 +168,9 @@ class VercelBlobStore:
                 refs.append(BlobRef(str(b["pathname"]), str(b.get("downloadUrl") or b["url"])))
             cursor = payload.get("cursor")
             if not payload.get("hasMore") or not cursor:
-                break
+                return refs
+        if strict:  # the listing is cut off: a sum over it would be wrong, so fail closed
+            raise StoreError("blob listing is longer than the page limit")
         return refs
 
     def get(self, ref: BlobRef) -> bytes:

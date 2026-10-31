@@ -502,6 +502,10 @@ class MentionsIn(BaseModel):
 
 _MENTIONS_NOTES = {
     "cap": "Today's shared live budget is used up, so no live search was made.",
+    "live_off": (
+        "Live calls are switched off on this server because there is no shared spend ledger, "
+        "so no live search was made."
+    ),
     "unreachable": "None of the public sources could be reached just now.",
 }
 
@@ -943,9 +947,15 @@ def mount_live(
     mode = state.global_mode
     daily_cap = cfg.effective_daily_usd(
         shared=mode != "none",
-        race_margin=cfg.largest_request_usd(env) if mode == "blob" else 0.0,
+        race_margin=cfg.largest_request_usd(env) if mode != "none" else 0.0,
     )
     ledger: DailyLedger = state.global_ledger(LEDGER_ID, today=today) or MemoryLedger(today=today)
+    # Fail closed: with no shared ledger (no Upstash, no private Blob store) the cap would be per
+    # instance and reset on a cold start, so no live call is made unless the operator accepts that.
+    per_instance_ok = (env if env is not None else os.environ).get(
+        "MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP", ""
+    ).strip() == "1"
+    no_shared_ledger = mode == "none" and not per_instance_ok
     burst = make_limiter("live-burst", cfg.burst_per_min, 60.0)
     counters = {
         "ask": state.daily_counter("live-ask", cfg.ask_per_day, today=today),
@@ -971,7 +981,7 @@ def mount_live(
         """Ask settings for one request: its cost cap and the time its model calls may take."""
         return LiveAskRuntime(
             agent_factory=be.agent_factory(be.clock() + budget_s, be.clock),
-            live_enabled=be.live_enabled,
+            live_enabled=lambda: be.live_enabled() and not no_shared_ledger,
             caps=SpendCaps(session_usd=request_usd, session_calls=20, daily_usd=daily_cap),
             state=state,
             live_ledger=ledger,
@@ -1060,6 +1070,8 @@ def mount_live(
         """Why no live call can start (``None`` when one can)."""
         if not be.live_enabled():
             return "live_off" if _key() else "no_model"
+        if no_shared_ledger:
+            return "live_off"
         try:
             if ledger.spent_today() >= daily_cap - 1e-9:
                 return "cap"
@@ -1140,9 +1152,9 @@ def mount_live(
 
     def do_mentions(body: MentionsIn) -> tuple[dict[str, Any], str | None]:
         """``(body_without_limits, recorded_reason)``; the reason is None for a live result."""
-        reason: str | None = None
+        reason: str | None = "live_off" if no_shared_ledger else None
         try:
-            if ledger.spent_today() >= daily_cap - 1e-9:
+            if reason is None and ledger.spent_today() >= daily_cap - 1e-9:
                 reason = "cap"
         except UpstashError:
             reason = "cap"  # fails closed: an unreadable ledger is a stored result

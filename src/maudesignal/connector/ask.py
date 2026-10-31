@@ -235,8 +235,10 @@ class AskRuntime:
         return self.state.global_ledger(GLOBAL_LEDGER_ID) if self.state else None
 
     def global_cap(self) -> float:
-        """The cap enforced on the global ledger (minus the largest request on Blob)."""
-        if self.state is not None and self.state.global_mode == "blob":
+        """The cap enforced on the global ledger (minus the largest request cap)."""
+        if self.state is not None and self.state.global_mode in ("blob", "upstash"):
+            # Also with Redis: the guard checks the budget before a call, so the last call of
+            # a request can pass the hold by one call's cost; the margin keeps the total under.
             return blob_enforced_cap()
         return global_daily_usd()
 

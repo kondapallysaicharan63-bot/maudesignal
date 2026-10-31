@@ -47,6 +47,14 @@ from maudesignal.vision.sam import SamClient  # noqa: E402
 from tests.unit.test_connector import GOOD, KEY, SCRIPT, fake_check  # noqa: E402
 from tests.unit.test_connector_store import FakeRedis, make_state  # noqa: E402
 from tests.unit.test_label_match import FakeSearcher  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def _per_instance_cap_accepted(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Most tests use a MemoryStore (no shared ledger); the operator override lets them run."""
+    monkeypatch.setenv("MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP", "1")
+
+
 from tests.unit.test_vision import (  # noqa: E402
     LABEL_BOX,
     LABEL_PNG,
@@ -1151,3 +1159,22 @@ def test_errors_are_not_cached_and_keep_the_older_envelope_too(tmp_path: Path) -
     assert r.status_code == 422 and r.headers["cache-control"] == "no-store"
     assert r.json()["code"] == "invalid_input"
     assert r.json()["error"]["code"] == "invalid_input"
+
+
+def test_live_fails_closed_without_a_shared_ledger(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Model key set, but no Upstash and no Blob store: recorded answers, no model call."""
+    monkeypatch.delenv("MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP", raising=False)
+    env = Env(tmp_path)
+    assert env.state.global_mode == "none"
+    r = env.ask()
+    assert r.status_code == 200 and r.json()["mode"] == "recorded"
+    assert env.spark.requests == [], "the model was never called"
+    v = env.voice()
+    assert v.status_code == 200 and v.json()["mode"] == "recorded"
+    assert env.spark.requests == []
+    m = env.client.post("/v1/live/mentions", json={"product_code": "LLZ"})
+    assert m.status_code == 200 and m.json()["mode"] == "recorded"
+    monkeypatch.setenv("MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP", "1")
+    assert Env(tmp_path).ask().json()["mode"] == "live"
