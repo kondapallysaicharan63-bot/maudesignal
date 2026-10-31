@@ -663,6 +663,7 @@ def main() -> int:
 
             # 4b. recorded stub mode: the camera answer is the recorded shape, labelled, and still counts against the daily counter
             stub.mode = "recorded"
+            stub.live_left = 20  # earlier checks used the counter up; start from a known value
             left_before = stub.live_left
             page = new_page(browser, 1440, 900, "light")
             open_live(page)
