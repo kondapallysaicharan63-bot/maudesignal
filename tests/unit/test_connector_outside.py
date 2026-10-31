@@ -186,7 +186,8 @@ def test_schema_contract_mcp_and_rest(data: ConnectorData, monkeypatch: pytest.M
     schema = spec["paths"][PATH]["post"]["responses"]["200"]["content"]["application/json"]
     r = c.post(PATH, json={"product_code": "QIH"}, headers=H)
     jsonschema.validate(r.json(), {**schema["schema"], "components": spec["components"]})
-    assert build_manifest()["tools"][-1]["outputSchema"] == tool["outputSchema"]
+    # The committed manifest always describes the default deployment (Research off).
+    assert "outside_mentions" not in [t["name"] for t in build_manifest()["tools"]]
 
 
 def test_question_comes_from_the_skill_file(

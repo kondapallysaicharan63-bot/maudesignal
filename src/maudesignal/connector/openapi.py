@@ -15,6 +15,7 @@ from typing import Any
 
 from maudesignal.connector.app import Settings, create_app
 from maudesignal.connector.data import PROJECT_ROOT
+from maudesignal.connector.research import research_forced_off
 from maudesignal.connector.security import KeyStore, RateLimiter
 
 OPENAPI_PATH = PROJECT_ROOT / "api" / "openapi.json"
@@ -22,8 +23,9 @@ OPENAPI_PATH = PROJECT_ROOT / "api" / "openapi.json"
 
 def build_spec() -> dict[str, Any]:
     """The OpenAPI document (no environment is read: the spec never depends on keys)."""
-    app = create_app(Settings(keys=KeyStore([]), limiter=RateLimiter(), audit_full_text=False))
-    spec: dict[str, Any] = app.openapi()
+    with research_forced_off():
+        app = create_app(Settings(keys=KeyStore([]), limiter=RateLimiter(), audit_full_text=False))
+        spec: dict[str, Any] = app.openapi()
     return spec
 
 

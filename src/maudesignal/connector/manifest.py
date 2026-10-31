@@ -22,6 +22,7 @@ from maudesignal.connector.mcp_server import (
     tool_list,
 )
 from maudesignal.connector.models import ADVISORY
+from maudesignal.connector.research import research_forced_off
 
 MANIFEST_PATH = PROJECT_ROOT / "api" / "mcp-manifest.json"
 MANIFEST_VERSION = "0.1.0"
@@ -29,6 +30,11 @@ MANIFEST_VERSION = "0.1.0"
 
 def build_manifest() -> dict[str, Any]:
     """The manifest: server, endpoint, auth and the same tools ``tools/list`` returns."""
+    with research_forced_off():
+        return _build_manifest()
+
+
+def _build_manifest() -> dict[str, Any]:
     return {
         "name": SERVER_NAME,
         "title": SERVER_TITLE,

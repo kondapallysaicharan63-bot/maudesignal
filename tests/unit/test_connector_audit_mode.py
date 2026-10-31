@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -98,6 +99,7 @@ def make_client(
         lookup_searcher=FakeSearcher(k510=[ROW_802]),
         state=state,
         audit_full_text=full_text,
+        now=lambda: datetime(2026, 10, 31, 12, 0, tzinfo=UTC),
     )
     return TestClient(create_app(settings), raise_server_exceptions=False), state
 

@@ -62,11 +62,11 @@ has passed the same patient-data check as the website routes.
 
 ## Changelog
 
-- 1.2.0 (2026-11-01): merges two parallel 1.1.0 changes into one version. Adds the
+- 1.2.0 (2026-10-31): merges two parallel 1.1.0 changes into one version. Adds the
   "Connector question (outside_mentions)" section: the two question templates the connector
   tool `outside_mentions` sends (without and with a topic). The instructions sent to the model
   and the output schema are unchanged from 1.1.0 below.
-- 1.1.0 (2026-11-01): `summary_text` is always `null` (schema: `"type": "null"`); only links
+- 1.1.0 (2026-10-31): `summary_text` is always `null` (schema: `"type": "null"`); only links
   are shown. No retry after a 400; Research is off unless `MAUDESIGNAL_RESEARCH` is set, and
   should be switched on only after probe 2 confirms `max_tool_calls` is honoured.
 - 1.0.0 (2026-10-31): initial version. Instructions for Muse Spark 1.3 with the built-in

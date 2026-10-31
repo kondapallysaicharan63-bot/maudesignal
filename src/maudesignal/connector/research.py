@@ -56,10 +56,11 @@ Rules:
 
 from __future__ import annotations
 
+import contextlib
 import os
 import re
 import threading
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Protocol
@@ -127,6 +128,21 @@ NOTE_OFF = "Web search is switched off for now; showing news links only."
 # ---------------------------------------------------------------------------
 # Settings
 # ---------------------------------------------------------------------------
+
+
+@contextlib.contextmanager
+def research_forced_off() -> Iterator[None]:
+    """Hide ``MAUDESIGNAL_RESEARCH`` while the committed API files are generated.
+
+    The OpenAPI spec and MCP manifest in ``api/`` always describe the default deployment
+    (Research off), whatever the generating shell has set.
+    """
+    saved = os.environ.pop(RESEARCH_ENV, None)
+    try:
+        yield
+    finally:
+        if saved is not None:
+            os.environ[RESEARCH_ENV] = saved
 
 
 def research_enabled(env: dict[str, str] | None = None) -> bool:
