@@ -129,7 +129,7 @@ def recorded_body(kind: str) -> dict[str, Any]:
             "source": "510k",
             "k_number": None,
             "record_id": "sample",
-            "owner": "Sample applicant",
+            "applicant": "Sample applicant",
             "device_name": "Smoke-test sample device",
             "product_code": None,
             "why_matched": ["recorded sample for the smoke test"],
@@ -137,7 +137,9 @@ def recorded_body(kind: str) -> dict[str, Any]:
             "links": [_MOCK_LINK],
         }
         return base | {
-            "reading": {},
+            # same shape as the real /v1/live/label answer (connector/live.py): the web app
+            # rejects a reading without a "fields" object
+            "reading": {"legibility": "legible", "fields": {}},
             "matches": {"status": "needs_person_to_confirm", "candidates": [cand]},
             "confirmed": None,
         }
