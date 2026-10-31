@@ -412,6 +412,7 @@ def test_server_instructions_in_initialize_and_openapi(data: ConnectorData, tmp_
         "say 'recorded'",
         "Never present withheld sentences as fact",
         "A person confirms every device match",
+        "Web results are not FDA records.",
     ):
         assert phrase.lower() in ins.lower(), phrase
     assert forbidden_in(ins) == []

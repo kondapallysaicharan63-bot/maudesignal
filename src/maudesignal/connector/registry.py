@@ -27,7 +27,7 @@ GUIDANCE = (
     "is filed with FDA. Confirm the product code with the person before guessing one: use "
     "lookup_device, or ask. When an answer is labelled recorded, say 'recorded' and give its "
     "date. Never present withheld sentences as fact; they were not verified. A person confirms "
-    "every device match."
+    "every device match. Web results are not FDA records."
 )
 
 WHAT_CHANGED_DESCRIPTION = (

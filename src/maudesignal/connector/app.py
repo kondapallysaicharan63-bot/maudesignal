@@ -40,6 +40,7 @@ from maudesignal.connector.ask import (
 )
 from maudesignal.connector.blob_store import RecordStore, store_from_env
 from maudesignal.connector.chat import ask_with_tiers
+from maudesignal.connector.clients import ClientCounter, panel_enabled
 from maudesignal.connector.data import ConnectorData
 from maudesignal.connector.docs_page import render_docs_page
 from maudesignal.connector.errors import (
@@ -239,6 +240,8 @@ class Settings:
     live_config: LiveConfig | None = None
     #: Chat tiers for ``ask`` (canned, direct, cache before Muse Spark); see ``tiers.py``.
     chat_tiers: bool = field(default_factory=lambda: os.environ.get(CHAT_TIERS_ENV, "1") != "0")
+    #: Per-client call counts for the private /admin panel (``MAUDESIGNAL_CLIENTS_PANEL``).
+    clients_panel: bool = field(default_factory=panel_enabled)
 
 
 class AskRequest(BaseModel):
@@ -385,6 +388,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     demo_daily = state.daily_counter("demo-key-day", DEMO_PER_DAY, today=lambda: cfg.now().date())
     web_origins = frozenset(cfg.web_origins)
+    clients = ClientCounter(cfg.feedback_store, enabled=cfg.clients_panel, now=cfg.now)
 
     app = FastAPI(
         title="MaudeSignal connector API",
@@ -533,6 +537,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def dispatch(request: Request, name: str, args: dict[str, str]) -> ToolAnswer:
         """Run one tool with its audit entry; REST routes and ``/mcp`` both call this."""
         key_id = str(request.state.audit_id)
+        demo = bool(getattr(request.state, "key_demo", False))
+        # One count per call for the private /admin panel; never fails or holds the call long.
+        clients.record(
+            key_id,
+            "demo" if demo else ("MCP" if request.url.path == MCP_PATH else "REST"),
+            getattr(request.state, "key_label", None),
+        )
         if name == "what_changed_this_week":
             code = args.get("product_code")
             return audited(
@@ -765,6 +776,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 shared_store=state.backend == "upstash_redis",
                 live_on=live_mode_allowed()
                 and (state.has_call_ledger or os.environ.get(ALLOW_PER_INSTANCE_ENV) == "1"),
+                clients_on=clients.enabled,
             )
         )
 
@@ -1105,6 +1117,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         client_address=_client_address,
         failed_auth=failed_auth,
         make_limiter=state.rate_limiter,
+        clients=clients,
     )
     mount_live(
         app,

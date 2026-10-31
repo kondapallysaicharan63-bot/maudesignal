@@ -8,7 +8,7 @@
     "note": "Read-only key. Never send a key in the URL.",
     "type": "api-key"
   },
-  "description": "Read-only MaudeSignal tools over openFDA device data, for quality and regulatory review. Speak the text content; every fact in structuredContent has an openFDA or record link. Always cite the FDA links given in each answer. This is not medical advice, and nothing is filed with FDA. Confirm the product code with the person before guessing one: use lookup_device, or ask. When an answer is labelled recorded, say 'recorded' and give its date. Never present withheld sentences as fact; they were not verified. A person confirms every device match.",
+  "description": "Read-only MaudeSignal tools over openFDA device data, for quality and regulatory review. Speak the text content; every fact in structuredContent has an openFDA or record link. Always cite the FDA links given in each answer. This is not medical advice, and nothing is filed with FDA. Confirm the product code with the person before guessing one: use lookup_device, or ask. When an answer is labelled recorded, say 'recorded' and give its date. Never present withheld sentences as fact; they were not verified. A person confirms every device match. Web results are not FDA records.",
   "name": "maudesignal-connector",
   "protocolVersion": "2025-06-18",
   "readOnly": true,

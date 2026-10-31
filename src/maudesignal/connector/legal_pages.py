@@ -118,6 +118,7 @@ def render_privacy(
     public_per_hour: int,
     shared_store: bool,
     live_on: bool | None = None,
+    clients_on: bool = True,
 ) -> str:
     """The privacy page (it answers a connector data questionnaire).
 
@@ -126,6 +127,7 @@ def render_privacy(
         public_per_hour: Keyless checks per address per hour in force.
         shared_store: True when an Upstash Redis store is configured.
         live_on: Whether live Meta calls are on here; ``None`` reads the environment.
+        clients_on: Whether per-client call counts are kept (``MAUDESIGNAL_CLIENTS_PANEL``).
     """
     redis = (
         "Upstash Redis is configured here: rate-limit counters, the per-key daily totals, a "
@@ -138,6 +140,15 @@ def render_privacy(
         "If the operator has set an email notifier (Resend), a new feedback entry is also "
         "emailed to the operator; this is off unless that is configured."
     )
+    clients = (
+        "<li>Per-client call counts (for the operator's private admin page): for each tool call "
+        "with a key, a short one-way id of the key (never the key or any part of it), the key's "
+        "label if it has one, whether it came over REST, MCP or the public demo key, and the "
+        "time. No question, tool input, answer, address or user agent is kept with it.</li>"
+        if clients_on
+        else "<li>Per-client call counts are switched off here: none are kept.</li>"
+    )
+    clients_kept = " and per-client call counts" if clients_on else ""
     body = f"""
 <h1>Privacy</h1>
 <p class="meta">MaudeSignal connector API. Last updated {LAST_UPDATED}.</p>
@@ -157,9 +168,9 @@ of birth, which is a guard and not a guarantee.</p>
 
 <h2>Where data is processed and stored</h2>
 <p>On Vercel in the United States (function region iad1, Washington DC). Vercel Blob (private)
-holds website feedback and visit records and the live-call spend ledger: one small object per
-Meta call with its dollar amounts (its worst-case hold and, once the call succeeded, its real
-cost) and no text, no address and no key. {html.escape(redis)}</p>
+holds website feedback and visit records{clients_kept} and the live-call spend ledger: one
+small object per Meta call with its dollar amounts (its worst-case hold and, once the call
+succeeded, its real cost) and no text, no address and no key. {html.escape(redis)}</p>
 
 <h2>Subprocessors</h2>
 <ul>
@@ -199,6 +210,7 @@ no names and no email addresses. Feedback sent before 31 October 2026 could incl
 person typed; names are removed from those entries except where the person chose to be quoted by
 name and role.</li>
 <li>Visits store: referral code, page and time.</li>
+{clients}
 <li>IP addresses are never stored by this code. Before any rate limit sees an address it is turned
 into a salted one-way hash (HMAC-SHA256); only that hash is used as the limit key, in memory or, if
 a Redis store is configured, in that store, for at most twice the limit window. Vercel, as host,
@@ -207,8 +219,8 @@ this code does not copy them.</li>
 </ul>
 
 <h2>Retention</h2>
-<p>Request logs follow Vercel's runtime-log retention for this plan. Feedback and visit records are
-kept until {RETENTION_DATE} and then deleted, earlier on request.</p>
+<p>Request logs follow Vercel's runtime-log retention for this plan. Feedback and visit
+records{clients_kept} are kept until {RETENTION_DATE} and then deleted, earlier on request.</p>
 
 <h2>Sale, advertising, cookies</h2>
 <p>No sale of data, no advertising and no tracking cookies. This site sets no cookies.</p>
