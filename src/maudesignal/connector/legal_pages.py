@@ -289,7 +289,11 @@ ${largest:.2f} for one request), then adds up every entry of the day. If the tot
 ${total_daily_usd:.2f} minus the largest single-request cap (${largest:.2f}), the entry is
 removed and a recorded answer is shown, so requests that start together still end at or under
 ${total_daily_usd:.2f}. After the call the request overwrites only its own entry with the real
-cost. If that write fails the hold stays, so the count can only be too high, never too low.</li>
+cost. A model call only starts if the worst case of one call still fits inside the request's
+hold, so a request cannot cost more than its hold. If the write that records the real cost
+fails the hold stays, so the count can only be too high, never too low; should a cost ever be
+above its hold, the difference is written as its own entry, and if that fails no later live call
+is made.</li>
 <li>If the ledger cannot be read or written, no live call is made and a recorded answer is
 shown.</li>
 <li>Per address per UTC day: {live_ask} live questions, {live_voice} voice questions,

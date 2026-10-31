@@ -169,11 +169,11 @@ An original mark (the words MAUDE and SIGNAL above a pulse line); no Meta or FDA
 |---|---|
 | What is the service? | A read-only connector to public FDA adverse-event data (openFDA). MHRA (UK) alerts are shown only as labelled regulator context. |
 | Does it collect personal or patient data? | No, none is collected or wanted. No accounts, names or emails. |
-| Where is data processed and stored? | Vercel, United States (function region iad1, Washington DC). Vercel Blob (private) holds only website feedback and visit records. |
-| Subprocessors? | Vercel Inc. (hosting, logs, Blob). Meta Platforms (Meta Model API) only when `ask` runs live with a server-side model key. Upstash (Redis) and Resend (email) only if the operator configures them. |
-| Does Meta receive user input? | Only the text of an `ask` question, only when live ask is on. When off, `ask` returns recorded answers and nothing is sent to Meta. `/privacy` states which applies at request time. |
-| Which public sources are queried? | openFDA (api.fda.gov) is queried live with a product code only. MHRA (UK) alerts come from a stored copy previously fetched from the GOV.UK search API; this service does not call GOV.UK when you use it. |
-| What is logged? | Key id (a peppered one-way hash, never the key), tool name, time, status. If the key has a label (for example a reviewer's name) the label is logged next to the key id. Calls made with the public demo key are logged the same way, with the label `demo`. Spend on `ask` is kept as a daily total per key id (not per call). Question text is not logged; during a live `ask` it is held briefly in the server instance's temporary working database and replaced by its SHA-256 when the answer is done. |
+| Where is data processed and stored? | Vercel, United States (function region iad1, Washington DC). Vercel Blob (private) holds website feedback and visit records and the live-call spend ledger: one small object per paid live request with two dollar amounts (its hold and its real cost) and no text, no address and no key. |
+| Subprocessors? | Vercel Inc. (hosting, logs, Blob). Meta Platforms (Meta Model API) only when a model key is set on the server: for the `ask` tool (full keys only; the demo key never calls it) and for the website's live ask, voice and label routes. Upstash (Redis) and Resend (email) only if the operator configures them. |
+| Does Meta receive user input? | Only when live answers are on: the text of an `ask` or voice question (voice also sends the audio clip to Muse Voice), or a label photo (the re-encoded image goes to SAM 3.1 and Muse Spark). Each is sent once to produce the answer and is not stored by this service. When live answers are off, nothing is sent to Meta and recorded answers are shown. `/privacy` states which applies at request time. |
+| Which public sources are queried? | openFDA (api.fda.gov) is queried live with a product code only (and, for a live device label read, with the text fields read from the label). MHRA (UK) alerts come from a stored copy previously fetched from the GOV.UK search API; this service does not call GOV.UK when you use it. The website's outside-mentions search sends a product code and device search terms (no personal details) to GDELT, FDA press-release, recall, MedWatch and medical-device feeds, and MedTech Dive; no model is called for it. |
+| What is logged? | Key id (a peppered one-way hash, never the key), tool name, time, status. If the key has a label (for example a reviewer's name) the label is logged next to the key id. Calls made with the public demo key are logged the same way, with the label `demo`. Spend on `ask` is kept as a daily total per key id (not per call); the global live-call ledger keeps one small object per paid request (its hold and real cost in dollars; no text, no address, no key). Question text is not logged; during a live `ask` it is held briefly in the server instance's temporary working database and replaced by its SHA-256 when the answer is done. |
 | What do feedback and visits store? | New feedback stores rating, comments, role, quote consent, referral code, page and time - no names and no email addresses. Feedback sent before 31 October 2026 could include a name the person typed; names are removed from those entries except where the person chose to be quoted by name and role. Visits: referral code, page, time. |
 | Are IP addresses stored? | No. Before any rate limit sees an address it is turned into a salted one-way hash (HMAC-SHA256); only that hash is the limit key, in memory or, if a Redis store is configured, in that store for at most twice the limit window. (Vercel, as host, keeps its own request logs.) |
 | Retention? | Request logs follow Vercel's runtime-log retention for this plan. Feedback and visit records are kept until 2026-12-31 and then deleted, earlier on request. |
@@ -210,54 +210,6 @@ counted apart.
 ---
 
 # Deploy and behaviour
-
-## Form answers (single source for the Meta connector form)
-
-**Submission status: Not submitted.** This section is the one place the connector form answers
-live; the pages `/privacy` and `/terms` and the answers below are written from the same text
-(`src/maudesignal/connector/legal_pages.py`, checked by a test). Field names on the live form may
-differ: read the live form before pasting anything, and correct what differs here.
-
-| Field | Answer |
-|---|---|
-| Connector name | MaudeSignal |
-| Icon | `docs/hackathon/maudesignal-icon.svg` (vector) and `docs/hackathon/maudesignal-icon.png` (512 x 512). Original artwork: a pulse line across a report page. No Meta and no FDA logo. |
-| Short description | Read-only triage aid for U.S. FDA device adverse-event reports (MAUDE), recalls and device-type checks. Each fact carries its openFDA link. Advisory only; not medical advice; nothing is filed with FDA. |
-| Long description | Five read-only tools over public openFDA device data: what changed this week (a stored snapshot, with its dates), a live openFDA check of any three-letter product code using the weekly detector's rules, a question tool answered by Muse Spark through deterministic tools where every sentence goes through a claim gate and sentences that cannot be verified are marked and never spoken as fact, one stored report, and recalls for a product code. Every answer carries a fixed advisory line and its data source (stored snapshot with dates, or live openFDA with the query time). For quality and regulatory professionals at medical-device companies; not for patients; not clinical decision support. |
-| Endpoint (MCP) | `https://maudesignal-api.vercel.app/mcp` (MCP over streamable HTTP, stateless, protocol 2025-06-18). `GET /v1/connect` (no key) returns this URL, the OpenAPI URL, the header name, the demo key and three steps. |
-| Endpoint (REST) | `https://maudesignal-api.vercel.app/v1/tools/<tool>` |
-| OpenAPI URL | `https://maudesignal-api.vercel.app/openapi.json` (OpenAPI 3.1; `info.termsOfService` points to `/terms`) |
-| Authentication | API key in the `X-API-Key` header (`Authorization: Bearer <key>` also works). No OAuth. Several keys can be listed in `MAUDESIGNAL_API_KEYS`, each revocable by deleting its entry; an entry may be labelled `label=KEY` so logs show the label (for example `charan=...,meta-review=...`). **How a reviewer gets a key:** Charan sends the `meta-review` key to the reviewer privately, never in the form, a chat transcript or the repository. For a first try without any key request, a public **demo key** is shown by `GET /v1/connect` when the operator sets `MAUDESIGNAL_DEMO_KEYS`. |
-| Tools (all read-only) | `what_changed_this_week`: this week's change for a product code, from the stored snapshot (dates shown). `check_device_type`: a live openFDA check of any three-letter product code. `ask`: a question answered by Muse Spark through read-only tools, every sentence checked by the claim gate, or the closest recorded answer, labelled. `get_report`: one stored report by id. `recalls`: recalls for a product code with their openFDA links. |
-| Example prompts | 1. "What changed this week for LLZ?" 2. "Check device type QIH against live openFDA." 3. "Show recalls for LLZ." 4. "Get report 50426770." 5. "How many LLZ reports were filed in the last stored week, and what is the link?" |
-| Rate limits | Keyed: 30 requests per key per minute (`MAUDESIGNAL_RATE_LIMIT_PER_MIN`) and a per-key daily cost cap on `ask` (`MAUDESIGNAL_API_DAILY_USD`, default $2.00; $0.25 per call). Demo key: 10 per minute (`MAUDESIGNAL_DEMO_RATE_PER_MIN`) and 200 per day, on every read tool, and it never starts a live model call (`ask` returns a recorded answer, labelled). Keyless public check: 10 per address per hour. Live website routes: ask 30, voice 10, label 5, mentions 10 per address per day. **Global cap:** all live model calls together, the website routes and the keyed `ask` tool, stop at **$3.00 per UTC day** (`MAUDESIGNAL_LIVE_DAILY_USD`); after that, answers come from recorded runs, labelled recorded. The shared ledger is one stored record per request, so concurrent requests cannot erase each other's entries; it was tested with a fake store only (limits and the one known assumption are in the cost section of Part 2). |
-| Data handling | Public openFDA data only (de-identified by FDA); no personal or patient data collected; no accounts. Question text is not logged (hash and length only). See the Data questionnaire below and `/privacy`. |
-| Privacy policy | `https://maudesignal-api.vercel.app/privacy` |
-| Terms | `https://maudesignal-api.vercel.app/terms` |
-| Support contact | The address in `MAUDESIGNAL_CONTACT_EMAIL` (shown at runtime on `/privacy` and `/terms`; never written in git), and GitHub issues: `https://github.com/kondapallysaicharan63-bot/maudesignal/issues` |
-| Writes / side effects | None. No tool writes anywhere; nothing is filed with FDA. |
-| Category / audience | Quality and regulatory professionals at medical-device companies (B2B). |
-| Anything else the form asks | Not known. Leave blank or ask the owner; do not invent. |
-
-## Data questionnaire
-
-The same answers as `/privacy` (one text, two places).
-
-| Question | Answer |
-|---|---|
-| What does this service do with data? | It gives read-only access to public FDA device data (openFDA: adverse-event reports, recalls, 510(k) records) and, where a result says so, to device alerts from the UK MHRA, always labelled as UK. It is an advisory triage aid for quality and regulatory review. |
-| Is any personal or patient data collected? | No. The data served is public and already de-identified by FDA. There are no accounts and no sign-up. Do not type patient or personal details into a question: the live routes refuse text that looks like a name with a title, an age, an email address or a phone number, and nothing is kept when they do. |
-| Where is data processed and stored? | The service's functions run on Vercel in region iad1 (Washington, D.C., United States), as set in the project's vercel.json. Feedback entries, page-visit entries and the daily spend records are stored in a private Vercel Blob store. The region of that store is chosen when the store is created in the Vercel dashboard; the code does not check it, so this page does not state it. The other services named below (Meta Model API, Resend, GDELT, and Upstash if the operator sets it up) process what they receive in their own locations, which this service does not control. |
-| Who else handles data (subprocessors)? | Vercel (hosting, runtime logs and Blob storage). Meta Model API: only when live answers are switched on, for the live ask, voice and label routes and for the connector's ask tool (REST and MCP) for full keys (the public demo key never calls it); the question text, the audio clip or the image is sent once to produce the answer and is not stored by this service. Resend (email): only if the operator turns on email for new feedback; the email carries the feedback fields, no name and no address. Public data sources that this service reads: openFDA, GOV.UK (MHRA alerts), GDELT and FDA public feeds (for the outside-mentions search). These send us public data; we send them a product code or a search term, never a person's details. |
-| What is logged, and for how long? | Per tool call: a key id (a keyed hash of the key, never the key), the tool name, the time, the status; live-call cost is kept only as a daily total in the spend ledger. Never the text of a question: for ask, only a hash and a length are recorded. New feedback is stored without names. Older entries keep the name only where the person chose to be quoted by name and role; all other names were removed. Feedback has a role and a quote consent. A page visit stores the referral code, the page and the time. This service never stores an IP address: before any rate limit or counter sees it, the address is replaced by a keyed hash, which is held in the memory of the server instance only to apply limits, until that instance stops (or, with the operator's Redis store, for at most twice the limit window). Holders of a full key can read the recent audit list (tool names, inputs, times and key labels); the public demo key cannot. Vercel's own request logs may include the address; they are kept by Vercel for Vercel's runtime-log retention for this plan. Feedback and visits are kept until the hackathon review ends, then deleted on request or by 30 November 2026. |
-| Cookies, tracking, sale of data, advertising? | No tracking cookies. No sale of data. No advertising and no use of data for ads. The separate web app may use Vercel Web Analytics for page-view counts, which sets no cookies. |
-| Not medical advice, nothing filed | Nothing here is medical advice or clinical decision support. Nothing is filed with FDA or any other regulator. This is not an FDA-cleared device. It is an open-source project by Saicharan Kondapally. |
-| How do I ask for deletion? | Write to the contact address (shown on `/privacy`, read from `MAUDESIGNAL_CONTACT_EMAIL` at runtime; if it is not set, the GitHub issues URL is shown) and give the referral code you were sent. New feedback and visits carry no name, so the code is how an entry is found (older entries keep a name only where the person chose to be quoted by name and role). Entries are deleted on request. |
-
-Retention detail: logs live as long as Vercel keeps runtime logs on the plan in use; the number of
-days is not stated here because it depends on the plan and was not checked. The daily spend record
-is a set of small objects, one per request, under one UTC day in the private Blob store (each name
-holds a dollar figure and a call count; no personal data).
 
 ## Part 1. Deploy the REST API (a second Vercel project)
 
@@ -788,7 +740,7 @@ or `invalid_input`, 429 `rate_limited` with `retry_after_s` and a `Retry-After` 
   not run in this third case** (recorded answers only) unless the operator sets
   `MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP=1`, so a model key with neither Upstash nor a Blob store never
   spends. With Upstash the enforced cap is also the daily total minus the largest per-request cap
-  (the guard checks the budget before a call, so one call can pass its hold by its own cost).
+  (kept for the same reason as below).
   **Blob ledger design (append-only, one object per request):** there is no shared counter.
   Each paid request owns exactly one object, `ledger/<UTC-day>/<uuid>.json`.
   1. *Reserve, before the model call:* the request writes its object `{"hold_usd": h}` (h is the
@@ -798,23 +750,34 @@ or `invalid_input`, 429 `rate_limited` with `retry_after_s` and a `Retry-After` 
      cap, the request deletes its own object (failing that, overwrites it with zeros; failing
      that, the hold stays, which only over-counts) and a recorded answer is shown. Two requests
      that reserve at the same moment each write before they list, so the later listing sees both.
-  2. *Settle, after the call:* the request overwrites only its own object with
+  2. *Real cost never passes the hold:* before every model call the spend guard refuses to start
+     it unless the worst case of one call (8,000 output tokens plus 40,000 input tokens at the
+     Spark list prices, about $0.08) still fits in what is left of the request's cap. So a
+     request's real cost `a` is at most its hold `h`. Voice reserves twice on the same ledger
+     (once for the clip, once for the answer); the ledger keeps a stack of reservations per
+     instance and settles both.
+     *Settle, after the call:* the request overwrites only its own object with
      `{"hold_usd": h, "actual_usd": a, "settled": true}`. If that write fails the object keeps
-     `{"hold_usd": h}` and stays unsettled, so it keeps counting at least h: the day's sum can
-     only be too high, never too low (a CRITICAL log line `connector_spend_settle_failed` carries
-     the amounts, no key and no address). A request that dies mid-call also leaves its hold in
-     place for the day.
+     `{"hold_usd": h}` and stays unsettled, so it keeps counting at least h, which is at least a
+     (a CRITICAL log line `connector_spend_settle_failed` carries the amounts, no key and no
+     address). Should a ever be above h, the excess is written as a new append-only object; if
+     that write fails too, the ledger refuses every later hold (fails closed) until the instance
+     restarts, and logs `connector_spend_excess_not_recorded`. A request that dies mid-call also
+     leaves its hold in place for the day.
   3. *Enforced threshold:* `MAUDESIGNAL_LIVE_DAILY_USD` minus the largest single-request cap
      (default 3.00 - 0.30 = 2.70). Two requests that both pass the check have each counted the
-     other's hold, so together they end at or under the threshold, and a final call that costs a
-     little more than its hold still ends at or under $3.00. Tested with a deterministic
-     two-instance interleave (A puts, B puts, A lists, B lists) with the process lock patched to a
-     no-op, and with a settle-failure test; a fake store only, **not a real Blob store**.
+     other's hold, so together they end at or under the threshold; because a never passes h, the
+     day ends at or under $3.00. Tested with a deterministic two-instance interleave (A puts, B
+     puts, A lists, B lists) with the process lock patched to a no-op, ten requests that each
+     spend up to their hold, settle-failure tests (including a above h) and a voice-route test;
+     a fake store only, **not a real Blob store**.
   4. *Fail closed:* if the list, a read, the write or the listing limit (20 pages) fails before
      the call, no model call starts and the answer is a recorded one (the keyed `ask` tool
      reports reason `cap`). Without Blob or Upstash configured, live calls stay off.
   5. *Known limit:* this relies on a completed write showing up in the next listing of the store.
-     Not measured against a real store. A deleted object can disappear between a listing and its
+     Not measured against a real store: measure one day's listing and reads once before turning
+     live on. Settled objects never change, so each instance reads them once and keeps the amount
+     in memory; objects not yet settled are read every time, eight at a time. A deleted object can disappear between a listing and its
      read; that object is a refused request's own hold and is skipped.
   A model call that was paid for but whose cost could not be recorded when no reservation was
   held is logged as `connector_spend_not_recorded` (USD amount and day only) for the operator to

@@ -90,6 +90,8 @@ class FakeBlobStore:
         self.after_list: Any = None
         self.puts = 0
         self.overwrites = 0
+        self._seeds = 0
+        self.gets = 0
 
     def put_json(self, pathname: str, record: dict[str, Any], *, overwrite: bool = False) -> None:
         if self.fail_put:
@@ -142,7 +144,8 @@ class FakeBlobStore:
         prefix = f"ledger/{day.isoformat()}/"
         for p in [p for p in self.items if p.startswith(prefix)]:
             del self.items[p]
-        self.items[f"{prefix}{'0' * 32}.json"] = json.dumps(
+        self._seeds += 1  # a settled object never changes: a new seed is a new object
+        self.items[f"{prefix}{'0' * 31}{self._seeds:x}.json"] = json.dumps(
             {"hold_usd": usd, "actual_usd": usd, "settled": True}
         ).encode()
 
@@ -256,7 +259,7 @@ def _interleaved(
             total, _refs = b._sum(day)
             state["b_ok"] = total <= cap + 1e-9
             if state["b_ok"]:
-                b._set_mine(_Reservation(day, state["b_path"], hold))
+                b._push(_Reservation(day, state["b_path"], hold))
             else:
                 b._drop(day, state["b_path"])
 
@@ -967,7 +970,7 @@ def test_massdevice_and_the_dead_warning_letter_feed_are_not_searched() -> None:
     assert not any("massdevice" in s.url for s in mn.SOURCES)
     assert not any("warning-letters" in s.url for s in mn.SOURCES)
     assert "FDA MedWatch safety alerts (RSS)" in names
-    assert "FDA medical device safety communications (RSS)" in names
+    assert "FDA medical devices feed (RSS)" in names
 
 
 def test_gdelt_parser_reads_articles_dates_and_rejects_garbage() -> None:
@@ -990,7 +993,7 @@ def test_gdelt_parser_reads_articles_dates_and_rejects_garbage() -> None:
         "FDA press releases (RSS)",
         "FDA recalls (RSS)",
         "FDA MedWatch safety alerts (RSS)",
-        "FDA medical device safety communications (RSS)",
+        "FDA medical devices feed (RSS)",
         "MedTech Dive (RSS)",
     ],
 )
@@ -1032,7 +1035,7 @@ def test_medwatch_and_device_feeds_give_official_mentions_end_to_end() -> None:
     assert r.mentions[0]["source_kind"] == "official" and r.mentions[0]["date"] == "2026-10-30"
     status = {s["name"]: (s["status"], s["n"]) for s in r.sources_tried}
     assert status["FDA MedWatch safety alerts (RSS)"] == ("ok", 1)
-    assert status["FDA medical device safety communications (RSS)"] == ("ok", 0)
+    assert status["FDA medical devices feed (RSS)"] == ("ok", 0)
 
 
 class Flaky:

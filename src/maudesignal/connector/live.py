@@ -106,7 +106,13 @@ from maudesignal.connector.store import (
     UpstashError,
 )
 from maudesignal.copilot.agent import CopilotAgent
-from maudesignal.copilot.spend import DailyLedger, SpendCaps, SpendGuard, SpendLimitError
+from maudesignal.copilot.spend import (
+    DailyLedger,
+    SpendCaps,
+    SpendGuard,
+    SpendLimitError,
+    worst_case_call_usd,
+)
 from maudesignal.copilot.voice import (
     AudioValidationError,
     Transcript,
@@ -983,7 +989,12 @@ def mount_live(
         return LiveAskRuntime(
             agent_factory=be.agent_factory(be.clock() + budget_s, be.clock),
             live_enabled=lambda: be.live_enabled() and not no_shared_ledger,
-            caps=SpendCaps(session_usd=request_usd, session_calls=20, daily_usd=daily_cap),
+            caps=SpendCaps(
+                session_usd=request_usd,
+                session_calls=20,
+                daily_usd=daily_cap,
+                call_reserve_usd=worst_case_call_usd(),
+            ),
             state=state,
             live_ledger=ledger,
         )
@@ -1443,7 +1454,12 @@ def mount_live(
                 return recorded_label_response("cap", note, trace, 0.0)
             guard = SpendGuard(
                 session_id="live-label",
-                caps=SpendCaps(session_usd=cfg.label_usd, session_calls=4, daily_usd=daily_cap),
+                caps=SpendCaps(
+                    session_usd=cfg.label_usd,
+                    session_calls=4,
+                    daily_usd=daily_cap,
+                    call_reserve_usd=worst_case_call_usd(),
+                ),
                 ledger=ledger,
                 db=None,
             )

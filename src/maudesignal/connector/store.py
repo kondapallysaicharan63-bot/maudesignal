@@ -29,6 +29,7 @@ import threading
 import time
 import uuid
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from contextvars import ContextVar
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
@@ -356,6 +357,10 @@ _RESERVATIONS: ContextVar[tuple[tuple[int, _Reservation], ...]] = ContextVar(
 )
 
 
+#: Threads used to read the day's ledger objects in parallel.
+_SUM_WORKERS = 8
+
+
 class BlobLedgerError(UpstashError):
     """The Blob ledger could not be read or written.
 
@@ -389,9 +394,11 @@ class BlobLedger(DailyLedger):
        list, so the later listing sees both. If the list, a read or the write fails, the
        reserve fails closed (:class:`BlobLedgerError`) and no model call is made.
     2. **Settle** (after the call, in :meth:`release`): overwrite only our own object with
-       ``{"hold_usd": h, "actual_usd": a, "settled": true}``. If that write fails the object
-       keeps its hold and stays unsettled, so it still counts at least ``h`` and the day's sum
-       can only be too high, never too low (a loud log line says so).
+       ``{"hold_usd": h, "actual_usd": a, "settled": true}``. The spend guard keeps ``a <= h``
+       (it refuses a call unless the worst case of one call still fits in the request cap),
+       so if that write fails the object keeps its hold and still counts at least ``a``. If
+       ``a > h`` ever happens, the excess goes into a new append-only object; if that write
+       fails too, the ledger refuses every later hold.
 
     A request that dies mid-call leaves its hold in place for the rest of the day, which also
     only over-counts. The cap passed to :meth:`reserve` is the daily total minus the largest
@@ -412,6 +419,8 @@ class BlobLedger(DailyLedger):
         """Create the ledger on ``store`` (``name`` is accepted for symmetry and unused)."""
         super().__init__(Path(os.devnull), today=today)
         self._store = store
+        self._settled: dict[str, float] = {}  # pathname -> actual USD, settled objects only
+        self._broken = False  # a paid call's cost could not be recorded: no more holds
 
     # -- helpers --------------------------------------------------------------------------
 
@@ -420,14 +429,50 @@ class BlobLedger(DailyLedger):
         return f"{LEDGER_PREFIX}/{day}/"
 
     def _mine(self) -> _Reservation | None:
-        for key, res in _RESERVATIONS.get():
+        """Our innermost open reservation (a voice request opens two: outer, then the ask)."""
+        for key, res in reversed(_RESERVATIONS.get()):
             if key == id(self):
                 return res
         return None
 
-    def _set_mine(self, res: _Reservation | None) -> None:
-        others = tuple(item for item in _RESERVATIONS.get() if item[0] != id(self))
-        _RESERVATIONS.set(others if res is None else (*others, (id(self), res)))
+    def _push(self, res: _Reservation) -> None:
+        _RESERVATIONS.set((*_RESERVATIONS.get(), (id(self), res)))
+
+    def _pop(self) -> _Reservation | None:
+        """Remove and return our innermost reservation, leaving the outer ones in place."""
+        items = list(_RESERVATIONS.get())
+        for i in range(len(items) - 1, -1, -1):
+            if items[i][0] == id(self):
+                res = items.pop(i)[1]
+                _RESERVATIONS.set(tuple(items))
+                return res
+        return None
+
+    def _read_object(self, ref: BlobRef) -> float | None:
+        """One object's counted USD (``None`` when it vanished). Settled objects are cached."""
+        cached = self._settled.get(ref.pathname)
+        if cached is not None:
+            return cached
+        try:
+            raw = json.loads(self._store.get(ref))
+        except ObjectGoneError:
+            return None  # a refused request took its own hold back after we listed
+        except (StoreError, ValueError):
+            raise BlobLedgerError("ledger object unreadable") from None
+        try:
+            hold = float(raw.get("hold_usd", 0.0))
+            actual = float(raw.get("actual_usd", 0.0))
+            settled = raw.get("settled") is True
+        except (TypeError, AttributeError, ValueError):
+            raise BlobLedgerError("ledger object unreadable") from None
+        if not (math.isfinite(hold) and math.isfinite(actual)) or hold < 0 or actual < 0:
+            raise BlobLedgerError("ledger object unreadable")
+        # A settled request counts what it really cost; an unsettled one (still running,
+        # died, or its settle write failed) counts at least its hold.
+        if settled:
+            self._settled[ref.pathname] = actual  # a settled object never changes again
+            return actual
+        return max(hold, actual)
 
     def _sum(self, day: str) -> tuple[float, list[BlobRef]]:
         """The day's total and its objects: ``max(hold, actual)`` summed. Fails closed."""
@@ -435,25 +480,19 @@ class BlobLedger(DailyLedger):
             refs = self._store.list_prefix(self._prefix(day), strict=True)
         except StoreError:
             raise BlobLedgerError("ledger store unreachable") from None
+        for gone in [k for k in self._settled if not k.startswith(self._prefix(day))]:
+            del self._settled[gone]  # an earlier day: no longer needed
+        todo = [r for r in refs if r.pathname not in self._settled]
+        values: dict[str, float | None] = {}
+        if len(todo) > 1:
+            with ThreadPoolExecutor(max_workers=min(_SUM_WORKERS, len(todo))) as pool:
+                for ref, value in zip(todo, pool.map(self._read_object, todo), strict=True):
+                    values[ref.pathname] = value
         total = 0.0
         for ref in refs:
-            try:
-                raw = json.loads(self._store.get(ref))
-            except ObjectGoneError:
-                continue  # a refused request took its own hold back after we listed
-            except (StoreError, ValueError):
-                raise BlobLedgerError("ledger object unreadable") from None
-            try:
-                hold = float(raw.get("hold_usd", 0.0))
-                actual = float(raw.get("actual_usd", 0.0))
-                settled = raw.get("settled") is True
-            except (TypeError, AttributeError, ValueError):
-                raise BlobLedgerError("ledger object unreadable") from None
-            if not (math.isfinite(hold) and math.isfinite(actual)) or hold < 0 or actual < 0:
-                raise BlobLedgerError("ledger object unreadable")
-            # A settled request counts what it really cost; an unsettled one (still running,
-            # died, or its settle write failed) counts at least its hold.
-            total += actual if settled else max(hold, actual)
+            value = values[ref.pathname] if ref.pathname in values else self._read_object(ref)
+            if value is not None:
+                total += value
         return round(total, 6), refs
 
     def _write_new(self, day: str, record: dict[str, Any]) -> str:
@@ -488,6 +527,8 @@ class BlobLedger(DailyLedger):
 
     def reserve(self, usd: float, daily_cap: float) -> bool:
         """Hold ``usd`` before a model call. False (nothing held) if the day would pass the cap."""
+        if self._broken:
+            raise BlobLedgerError("an earlier cost could not be recorded")
         day, hold = self._today().isoformat(), round(float(usd), 6)
         path = self._write_new(day, {"hold_usd": hold})
         try:
@@ -500,7 +541,7 @@ class BlobLedger(DailyLedger):
         if total > daily_cap + 1e-9:
             self._drop(day, path)
             return False
-        self._set_mine(_Reservation(day, path, hold))
+        self._push(_Reservation(day, path, hold))
         return True
 
     def add(self, usd: float, calls: int) -> float:
@@ -524,18 +565,20 @@ class BlobLedger(DailyLedger):
         return round(float(usd), 6)
 
     def release(self, usd: float) -> None:
-        """Settle our reservation: overwrite our own object with the hold and the real cost.
+        """Settle our innermost reservation: overwrite our own object with hold and real cost.
 
-        On a failed write the object keeps its hold (the sum can only be too high); the amounts
-        are logged so the operator can reconcile a cost above the hold.
+        The spend guard keeps real cost at or under the hold, so a failed overwrite leaves a
+        hold that is at least the cost. If it ever is not (``actual > hold``) the excess is
+        written as a new append-only object; if that write fails too, the cost is logged and
+        this ledger refuses every later hold (fails closed) so spend cannot continue unseen.
         """
-        res = self._mine()
+        res = self._pop()
         if res is None:
             return
-        self._set_mine(None)
         record = {"hold_usd": res.hold_usd, "actual_usd": res.actual_usd, "settled": True}
         try:
             self._store.overwrite_json(res.pathname, record)
+            return
         except StoreError:
             logger.critical(
                 "connector_spend_settle_failed",
@@ -543,6 +586,14 @@ class BlobLedger(DailyLedger):
                 actual_usd=res.actual_usd,
                 day=res.day,
             )
+        excess = round(res.actual_usd - res.hold_usd, 6)
+        if excess <= 0:
+            return  # the unsettled object still counts its hold, which is at least the cost
+        try:
+            self._write_new(res.day, {"hold_usd": 0.0, "actual_usd": excess, "settled": True})
+        except BlobLedgerError:
+            self._broken = True
+            logger.critical("connector_spend_excess_not_recorded", excess_usd=excess, day=res.day)
 
 
 #: Ledgers on which a hold can be placed before a model call (atomic or confirmed).

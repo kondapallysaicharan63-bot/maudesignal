@@ -75,6 +75,13 @@ class Source:
 
 _FDA_RSS = "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/"
 
+#: NOT CHECKED from the build sandbox (its proxy refused fda.gov and GDELT): the ``medwatch`` and
+#: ``medical-devices`` feed addresses below, and the feed title of the latter, must be confirmed
+#: from a networked machine during the free recording. The label says "feed" and nothing more
+#: about what the device feed contains. GDELT gets up to three tries only when the earlier ones
+#: fail fast: after a 20 s timeout plus backoffs, the third no longer fits in
+#: ``FEED_PHASE_BUDGET_S``, so a slow GDELT gets two.
+
 #: FDA warning letters have no RSS feed that could be confirmed: the address used before
 #: (``.../rss-feeds/warning-letters/rss.xml``) answered HTTP 404 in the recorded run of
 #: 2026-10-31, and the warning-letter list on fda.gov is a script-driven table, not a feed.
@@ -93,7 +100,7 @@ SOURCES: tuple[Source, ...] = (
     Source("FDA recalls (RSS)", "official", _FDA_RSS + "recalls/rss.xml", "rss"),
     Source("FDA MedWatch safety alerts (RSS)", "official", _FDA_RSS + "medwatch/rss.xml", "rss"),
     Source(
-        "FDA medical device safety communications (RSS)",
+        "FDA medical devices feed (RSS)",
         "official",
         _FDA_RSS + "medical-devices/rss.xml",
         "rss",

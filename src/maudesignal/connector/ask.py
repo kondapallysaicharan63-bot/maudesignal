@@ -57,6 +57,7 @@ from maudesignal.copilot.spend import (
     SpendGuard,
     SpendLimitError,
     closest_recorded,
+    worst_case_call_usd,
 )
 
 logger = get_logger(__name__)
@@ -220,6 +221,7 @@ class AskRuntime:
             session_usd=_env_float("MAUDESIGNAL_API_REQUEST_USD", DEFAULT_REQUEST_USD),
             session_calls=DEFAULT_REQUEST_CALLS,
             daily_usd=_env_float("MAUDESIGNAL_API_DAILY_USD", DEFAULT_DAILY_USD),
+            call_reserve_usd=worst_case_call_usd(),
         )
     )
     ledger_dir: Path = field(

@@ -47,6 +47,22 @@ DEFAULT_SESSION_USD = 1.00
 DEFAULT_SESSION_CALLS = 20
 DEFAULT_DAILY_USD = 10.00
 
+#: Worst case of ONE live Spark call, used to keep a request's real spend at or under its
+#: cap: the output cap every live agent/label call uses (``max_tokens=8000``) and a generous
+#: prompt size. A guard with ``call_reserve_usd`` set refuses to start a call unless that much
+#: of the session budget is still free, so the call in flight can never push past the cap.
+WORST_CALL_OUTPUT_TOKENS = 8000
+WORST_CALL_INPUT_TOKENS = 40000
+
+
+def worst_case_call_usd() -> float:
+    """Highest plausible cost of one live Spark call (8000 output + 40000 input tokens)."""
+    return round(
+        WORST_CALL_INPUT_TOKENS * SPARK_USD_PER_M_INPUT / 1e6
+        + WORST_CALL_OUTPUT_TOKENS * SPARK_USD_PER_M_OUTPUT / 1e6,
+        6,
+    )
+
 
 class SpendLimitError(MaudeSignalError):
     """A cap was reached; the Meta call was not made."""
@@ -69,6 +85,9 @@ class SpendCaps:
     session_usd: float = DEFAULT_SESSION_USD
     session_calls: int = DEFAULT_SESSION_CALLS
     daily_usd: float = DEFAULT_DAILY_USD
+    #: Session budget that must still be free before a call may start (0 = off). Live routes
+    #: set it to :func:`worst_case_call_usd` so real spend never exceeds ``session_usd``.
+    call_reserve_usd: float = 0.0
 
     @classmethod
     def from_env(cls, env: dict[str, str] | None = None) -> SpendCaps:
@@ -191,7 +210,7 @@ class SpendGuard:
             cap, msg = "session_calls", (
                 f"This session used its {self.caps.session_calls} live Meta calls."
             )
-        elif r.session_usd <= 0:
+        elif r.session_usd <= 0 or r.session_usd + 1e-9 < self.caps.call_reserve_usd:
             cap, msg = "session_usd", (
                 f"This session reached its ${self.caps.session_usd:.2f} live-call budget."
             )
