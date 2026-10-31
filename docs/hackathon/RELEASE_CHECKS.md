@@ -124,7 +124,10 @@ dark. Per combination:
   `/v1/live/voice` request; Pause holds the timer and Resume restarts it; Stop puts the transcript in the box,
   it is edited and one ask carries the edited text; Take photo opens the live camera at 1440 and the phone
   camera input (`capture=environment`) at 390; a refused camera falls back to the file picker with "Camera
-  blocked — choose a photo instead"; the thumbnail's remove button drops the photo (no `/v1/live/label`
+  blocked — choose a photo instead" (WebKit: KNOWN_GAP when Playwright's WebKit ignores the refusal stub and
+  the camera request stays pending; the refusal is then checked in chromium and firefox only); a camera that
+  does not start (an open "Allow camera?" prompt) keeps the dialog open and after about 4 s offers "Use a
+  photo instead", which opens the file picker (the dialog never closes on time alone); the thumbnail's remove button drops the photo (no `/v1/live/label`
   request); "Research the web" is hidden unless `/v1/health` lists `features.research`; at 1:00 (Playwright
   clock) the recording pauses and no voice request is made until Stop; without `voice_transcribe_only` in
   health, "Ask by voice" records nothing and opens the recorded run;

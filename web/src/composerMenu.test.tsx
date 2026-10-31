@@ -7,7 +7,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import evidence from '../public/data/evidence.json'
 import threads from '../public/data/threads.json'
-import { CameraSheet, cameraFallbackText, openCamera, startWithin } from './components/CameraSheet'
+import { CameraSheet, cameraDenied, cameraFallbackText, openCamera } from './components/CameraSheet'
 import { LiveChatView } from './components/LiveChat'
 import { MessageBox } from './components/MessageBox'
 import { menuMove } from './components/PlusMenu'
@@ -157,22 +157,13 @@ describe('menu keys, waveform and timer helpers', () => {
     expect(cameraFallbackText({ name: 'NotFoundError' })).toBe('No camera found — choose a photo instead')
     expect(cameraFallbackText({ name: 'insecure' })).toContain('secure')
   })
-  it('gives up when the camera never starts, and switches off a stream that arrives late', async () => {
-    vi.useFakeTimers()
-    try {
-      let late: (s: MediaStream) => void = () => undefined
-      const stop = vi.fn()
-      const p = startWithin(() => new Promise<MediaStream>((r) => (late = r)), 4000)
-      const out = p.catch((e: Error) => e.name)
-      vi.advanceTimersByTime(4001)
-      expect(await out).toBe('timeout')
-      late({ getTracks: () => [{ stop }] } as unknown as MediaStream)
-      await Promise.resolve()
-      expect(stop).toHaveBeenCalled()
-      expect(cameraFallbackText({ name: 'timeout' })).toBe('Camera did not start — choose a photo instead')
-    } finally {
-      vi.useRealTimers()
-    }
+  it('reads a refusal from the Permissions API; anything else asks as usual', async () => {
+    const perms = (state: string) => ({ query: async () => ({ state }) }) as unknown as Permissions
+    expect(await cameraDenied(perms('denied'))).toBe(true)
+    expect(await cameraDenied(perms('prompt'))).toBe(false)
+    expect(await cameraDenied(perms('granted'))).toBe(false)
+    expect(await cameraDenied({ query: async () => Promise.reject(new TypeError('camera')) } as unknown as Permissions)).toBe(false)
+    expect(await cameraDenied(undefined)).toBe(false)
   })
   it('asks for the back camera first and any camera when that is impossible', async () => {
     await expect(openCamera(undefined, false)).rejects.toMatchObject({ name: 'insecure' })
@@ -652,10 +643,71 @@ describe('web research under an answer', () => {
 describe('the camera dialog on its own', () => {
   it('Escape closes it', async () => {
     const onClose = vi.fn()
-    await act(async () => root.render(<CameraSheet onUse={() => undefined} onClose={onClose} onFail={() => undefined} />))
+    await act(async () => root.render(<CameraSheet onUse={() => undefined} onClose={onClose} onFail={() => undefined} onPickFile={() => undefined} />))
     await flush()
     await keyOn(document.querySelector('[role="dialog"]'), 'Escape')
     expect(onClose).toHaveBeenCalled()
+  })
+})
+
+describe('the camera dialog never closes on time alone', () => {
+  const stream = () => {
+    const stop = vi.fn()
+    return { stop, s: { getTracks: () => [{ stop }] } as unknown as MediaStream }
+  }
+  const sheet = (h: { onFail?: (r: string) => void; onPickFile?: () => void; onClose?: () => void } = {}) =>
+    act(async () =>
+      root.render(
+        <CameraSheet onUse={() => undefined} onClose={h.onClose ?? (() => undefined)} onFail={h.onFail ?? (() => undefined)} onPickFile={h.onPickFile ?? (() => undefined)} slowAfterMs={40} />,
+      ),
+    )
+
+  it('a slow start (an open "Allow camera?" prompt) keeps the dialog open, offers a photo, and still shows a late stream', async () => {
+    let allow: (s: MediaStream) => void = () => undefined
+    ;(navigator.mediaDevices.getUserMedia as ReturnType<typeof vi.fn>).mockReturnValueOnce(new Promise<MediaStream>((r) => (allow = r)))
+    const onFail = vi.fn()
+    await sheet({ onFail })
+    await flush()
+    await flush()
+    expect(q('camera-sheet')).not.toBeNull()
+    expect(q('camera-slow')?.textContent).toBe('Camera not started yet')
+    expect(q('camera-use-file')?.textContent).toContain('Use a photo instead')
+    expect(onFail).not.toHaveBeenCalled()
+    const { stop, s } = stream()
+    await act(async () => allow(s))
+    await flush()
+    expect(q('camera-waiting')).toBeNull()
+    expect((q('camera-shutter') as HTMLButtonElement).disabled).toBe(false)
+    expect(stop).not.toHaveBeenCalled()
+  })
+
+  it('"Use a photo instead" opens the file picker; a stream that arrives afterwards is switched off', async () => {
+    let allow: (s: MediaStream) => void = () => undefined
+    ;(navigator.mediaDevices.getUserMedia as ReturnType<typeof vi.fn>).mockReturnValueOnce(new Promise<MediaStream>((r) => (allow = r)))
+    const onPickFile = vi.fn(() => void act(async () => root.render(<div />)))
+    await sheet({ onPickFile })
+    await flush()
+    await flush()
+    await click(q('camera-use-file'))
+    await flush()
+    expect(onPickFile).toHaveBeenCalled()
+    const { stop, s } = stream()
+    await act(async () => allow(s))
+    await flush()
+    expect(stop).toHaveBeenCalled()
+  })
+
+  it('a refusal the browser already knows (Permissions API "denied") falls back at once, without asking', async () => {
+    Object.defineProperty(navigator, 'permissions', { configurable: true, value: { query: async () => ({ state: 'denied' }) } })
+    const onFail = vi.fn()
+    try {
+      await sheet({ onFail })
+      await flush()
+      expect(onFail).toHaveBeenCalledWith('Camera blocked — choose a photo instead')
+      expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled()
+    } finally {
+      Object.defineProperty(navigator, 'permissions', { configurable: true, value: undefined })
+    }
   })
 })
 
