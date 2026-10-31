@@ -189,6 +189,42 @@ describe('first screen and the placeholder wording', () => {
   })
 })
 
+describe('the composer switch (VITE_FEATURE_COMPOSER_MENU, ?composer=classic)', () => {
+  const pane = (composerMenu: boolean) =>
+    renderToStaticMarkup(
+      <ChatPane
+        view={{ kind: 'new' }}
+        data={data([])}
+        withheld={null}
+        onWorkflow={() => {}}
+        onThread={() => {}}
+        onRun={() => {}}
+        onVision={() => {}}
+        onCode={() => {}}
+        onCapture={() => {}}
+        onBrief={() => {}}
+        onAlert={() => {}}
+        expanded={false}
+        onToggleExpand={() => {}}
+        composerMenu={composerMenu}
+      />,
+    )
+  it('off: the earlier composer with its camera and mic buttons, no + menu', () => {
+    const raw = pane(false)
+    expect(raw).toContain('data-testid="composer-camera"')
+    expect(raw).toContain('data-testid="composer-mic"')
+    expect(raw).not.toContain('data-testid="composer-plus"')
+  })
+  it('on: one + button, no separate camera or mic button', () => {
+    const raw = pane(true)
+    expect(raw).toContain('data-testid="composer-plus"')
+    expect(raw).toContain('aria-haspopup="menu"')
+    expect(raw).not.toContain('data-testid="composer-camera"')
+    expect(raw).not.toContain('data-testid="composer-mic"')
+    expect(raw).toContain('placeholder="Ask a question"')
+  })
+})
+
 describe('sidebar Our devices row follows the active company', () => {
   const side = (company?: unknown) =>
     renderToStaticMarkup(

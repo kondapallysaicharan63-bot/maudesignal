@@ -118,6 +118,16 @@ dark. Per combination:
   alert panel, Our devices (and "Make it yours" when present, otherwise NOT_PRESENT, not
   required), the CAPA-need evidence PDF link (the file must start with `%PDF-`), the feedback
   form (the local API must answer 201), the Connect-to-Muse page;
+* the message box with the "+" menu (`VITE_FEATURE_COMPOSER_MENU`, on by default; NOT_PRESENT and not
+  required on a build with the earlier composer), with route mocks and fake media only: the menu by
+  keyboard (Enter opens, arrows and End move, Escape closes and focus returns to "+"); voice Cancel makes no
+  `/v1/live/voice` request; Pause holds the timer and Resume restarts it; Stop puts the transcript in the box,
+  it is edited and one ask carries the edited text; Take photo opens the live camera at 1440 and the phone
+  camera input (`capture=environment`) at 390; a refused camera falls back to the file picker with "Camera
+  blocked — choose a photo instead"; the thumbnail's remove button drops the photo (no `/v1/live/label`
+  request); "Research the web" is hidden unless `/v1/health` lists `features.research`; at 1:00 (Playwright
+  clock) the recording pauses and no voice request is made until Stop; without `voice_transcribe_only` in
+  health, "Ask by voice" records nothing and opens the recorded run;
 * no sideways scroll on every main view;
 * axe-core (installed from npm in the job) on five views: serious or critical violations fail,
   and all counts by impact are in the report (`axe_violations_all_views_all_combinations`);

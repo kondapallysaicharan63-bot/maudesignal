@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { CaptureMode } from '../capture'
+import { composerMenuOn } from '../composerFlag'
+import { useApiFeatures } from '../live/features'
 import { knownCodes } from '../typeahead'
 import { DEMO_WORKFLOWS, demoSnapshotLabel, WORKFLOWS } from '../data'
 import type { AlertItem } from '../dashboard'
@@ -9,6 +11,7 @@ import type { WorkflowDef, WorkflowId, WorkspaceData } from '../types'
 import { ConnectView } from './ConnectView'
 import { CaptureView } from './CaptureView'
 import { Composer } from './Composer'
+import { MessageBox } from './MessageBox'
 import { LiveChatView } from './LiveChat'
 import { NO_LIVE, type LiveChat } from '../live/useLiveChat'
 import { useRecorder } from '../live/useRecorder'
@@ -67,6 +70,8 @@ interface Props {
   onLive?: () => void
   /** The API address (null: stored data only); the Connect page asks it for the connector details. */
   apiBase?: string | null
+  /** Test hook: forces the message box with the + menu on or off (default: VITE_FEATURE_COMPOSER_MENU and ?composer=classic). */
+  composerMenu?: boolean
 }
 
 function StoredList({ def, data, onThread }: { def: WorkflowDef; data: WorkspaceData; onThread: (id: string) => void }) {
@@ -108,6 +113,10 @@ export function ChatPane(p: Props) {
   const { data } = p
   const live = p.live ?? NO_LIVE
   const onLive = p.onLive ?? (() => undefined)
+  // The message box with the + menu (on by default); off, the earlier composer renders exactly as before.
+  const [menuOn] = useState(() => p.composerMenu ?? composerMenuOn())
+  // Optional API features (web research, transcribe-only voice), read from GET /v1/health; none without the API.
+  const features = useApiFeatures(menuOn && live.enabled ? (p.apiBase ?? null) : null)
   // The microphone: one click starts, the next stops; the clip becomes a 16 kHz WAV and is sent as a spoken question.
   const recorder = useRecorder({
     onResult: (r) => {
@@ -129,6 +138,7 @@ export function ChatPane(p: Props) {
         threads={data.threads.threads}
         onStarter={(q) => void live.ask(q)}
         onRecordedVoice={() => p.onCapture('voice')}
+        onRecordedLabel={() => p.onCapture('label')}
         onOpen={(o) => {
           if (o.view === 'check-device') p.onCode(o.code ?? '')
           else if (o.view === 'our-devices') p.onDevice?.(null)
@@ -217,6 +227,36 @@ export function ChatPane(p: Props) {
       >
         <div className={['mx-auto pb-40 lg:pb-28', p.view.kind === 'new' ? 'max-w-6xl' : 'max-w-3xl'].join(' ')}>{body}</div>
       </div>
+      {menuOn ? (
+        <MessageBox
+          threads={data.threads.threads}
+          onThread={p.onThread}
+          viewKey={viewKey(p.view)}
+          codes={codes}
+          onCode={p.onCode}
+          onCamera={() => p.onCapture('label')}
+          onMic={() => p.onCapture('voice')}
+          onSample={() => p.onCapture('label')}
+          live={
+            live.enabled
+              ? {
+                  busy: live.busy,
+                  features,
+                  onAsk: (q, o) => {
+                    const refused = live.ask(q, { research: o.research })
+                    if (!refused) onLive()
+                    return refused
+                  },
+                  onPhoto: (jpeg, followUp) => {
+                    live.askPhoto(jpeg, followUp)
+                    onLive()
+                  },
+                  transcribe: live.transcribe,
+                }
+              : null
+          }
+        />
+      ) : (
       <Composer
         threads={data.threads.threads}
         onThread={p.onThread}
@@ -241,6 +281,7 @@ export function ChatPane(p: Props) {
             : null
         }
       />
+      )}
     </main>
   )
 }

@@ -172,6 +172,11 @@ button {
   background: var(--accent);
 }
 
+/* The alert buddy's speech bubble is hidden while the message box is in use (focus, menu, camera, recording). */
+body[data-composer-active] .ms-buddy-bubble {
+  display: none;
+}
+
 /* "Your company" banner: success tint (amber stays for the simulated company). */
 .ms-banner--mine {
   background: var(--success-soft);

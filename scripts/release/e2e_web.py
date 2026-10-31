@@ -19,6 +19,15 @@ yours" when present), the CAPA-need evidence PDF link, the feedback form (submit
 local API), the Connect-to-Muse page, no sideways scroll on every view, and an axe-core scan of
 the main views (serious or critical violations fail; the counts are reported).
 
+The message box with the "+" menu (``VITE_FEATURE_COMPOSER_MENU``, on by default) has its own
+scenarios, all with route mocks and fake media (no model call): the menu by keyboard (open,
+arrows, Escape returns focus); voice Cancel sends no ``/v1/live/voice`` request; Pause and
+Resume hold and restart the timer; Stop puts the transcript in the box, it is edited, and one
+ask request carries the edited text; Take photo opens the live camera on a computer and the
+phone camera input at 390; a refused camera falls back to the file picker with a reason; the
+thumbnail's remove button drops the photo; "Research the web" is hidden when ``/v1/health``
+does not offer it. On a build with the earlier composer they are NOT_PRESENT, not required.
+
 Error states use route mocking: openFDA down, Meta down, daily cap reached (429), slow network,
 offline. Each must show an honest message, no crash and no invented data.
 
@@ -179,10 +188,15 @@ def chat_verdict(sentences: int, unlinked: int, error: bool, held: bool) -> tupl
 class SkipError(Exception):
     """A scenario that cannot run here: carries the status to record and why."""
 
-    def __init__(self, status: str, why: str) -> None:
-        """Keep the status (KNOWN_GAP or NOT_PRESENT) and the reason."""
+    def __init__(self, status: str, why: str, required: bool | None = None) -> None:
+        """Keep the status (KNOWN_GAP or NOT_PRESENT), the reason and whether it is required.
+
+        ``required`` defaults to "everything but KNOWN_GAP"; a feature that is switched off by
+        design (the "+" menu on a classic build) passes ``required=False``.
+        """
         super().__init__(why)
         self.status, self.why = status, why
+        self.required = status != KNOWN_GAP if required is None else required
 
 
 class Env:
@@ -625,11 +639,16 @@ def s_chat_live_mocked(env: Env) -> str:
 def s_camera_upload(env: Env) -> str:
     """Upload a photo: possible matches appear, a person confirms one (never automatic)."""
     env.open()
-    env.page.get_by_test_id("composer-camera").click()
     jpeg = make_jpeg()
-    env.page.get_by_test_id("image-input").set_input_files(
-        {"name": "label.jpg", "mimeType": "image/jpeg", "buffer": jpeg}
-    )
+    photo = {"name": "label.jpg", "mimeType": "image/jpeg", "buffer": jpeg}
+    if has_menu(env):  # + menu -> Upload photo -> thumbnail -> Send photo
+        with env.page.expect_file_chooser(timeout=10_000) as chooser:
+            menu_item(env, "upload-photo")
+        chooser.value.set_files(photo)
+        env.page.wait_for_selector("[data-testid=photo-thumb]", timeout=15_000)
+    else:
+        env.page.get_by_test_id("composer-camera").click()
+        env.page.get_by_test_id("image-input").set_input_files(photo)
     send = env.page.get_by_role("button", name="Send photo")
     if send.count() and send.first.is_visible():  # builds that ask before sending
         send.first.click()
@@ -662,6 +681,24 @@ def s_mic(env: Env) -> str:
     if env.engine == "webkit":
         raise SkipError(KNOWN_GAP, "WebKit has no fake audio device in Playwright; not tested here")
     env.open()
+    if has_menu(env):
+        start_voice(env)
+        env.page.wait_for_timeout(1500)
+        env.page.get_by_test_id("voice-stop").click()
+        env.page.wait_for_function(
+            "(() => { const t = document.querySelector(\"textarea[aria-label='Ask a question']\");"
+            " return (t && t.value.trim().length > 0)"
+            " || !!document.querySelector('[data-testid=voice-problem], [data-testid=live-turn]') })()",
+            timeout=60_000,
+        )
+        env.shot("mic")
+        box = env.page.locator(COMPOSER)
+        if box.count() and box.input_value().strip():
+            return "recorded 1.5 s of fake audio; the transcript is in the box, nothing sent"
+        problem = env.page.locator("[data-testid=voice-problem]")
+        if problem.count():
+            return "recorded 1.5 s of fake audio; honest message: " + problem.inner_text()[:100]
+        return "recorded 1.5 s of fake audio; the page answered (one-call voice)"
     env.page.get_by_test_id("composer-mic").click()
     try:
         env.page.wait_for_selector("[data-testid=recording-bar]", timeout=8_000)
@@ -683,6 +720,459 @@ def s_mic(env: Env) -> str:
     )
     env.shot("mic")
     return "recorded 1.5 s of fake audio; the page answered"
+
+
+# --- the message box with the "+" menu (route mocks, fake media; no model call) ----------------
+
+PLUS = "[data-testid=composer-plus]"
+VOICE_ROUTE = "**/v1/live/voice"
+HEALTH_ROUTE = "**/v1/health"
+HEARD = "What changed this week for LLZ?"
+EDITED = "What changed this week for LLZ, by problem kind?"
+CORS_ANY = {"access-control-allow-origin": "*"}
+
+
+def has_menu(env: Env) -> bool:
+    """True when this build shows the message box with the "+" menu."""
+    return env.page.locator(PLUS).count() > 0
+
+
+def need_menu(env: Env) -> None:
+    """Skip (not required) on a build with the earlier composer (the switch is off)."""
+    if not has_menu(env):
+        raise SkipError(
+            NOT_PRESENT,
+            "earlier composer in this build (VITE_FEATURE_COMPOSER_MENU off or ?composer=classic)",
+            required=False,
+        )
+
+
+def menu_item(env: Env, item: str) -> None:
+    """Open the "+" menu and choose one item by its id."""
+    env.page.locator(PLUS).click()
+    env.page.get_by_test_id(f"menu-{item}").click()
+
+
+def mock_health(env: Env, *, research: bool = False, transcribe_only: bool = True) -> None:
+    """Answer GET /v1/health with the optional features under test."""
+    features: dict[str, bool] = {"voice_transcribe_only": transcribe_only}
+    if research:
+        features["research"] = True
+    body = {"status": "ok", "service": "maudesignal-connector", "features": features}
+    env.page.route(
+        HEALTH_ROUTE,
+        lambda r: r.fulfill(
+            status=200, headers=CORS_ANY, content_type="application/json", body=json.dumps(body)
+        ),
+    )
+
+
+def transcribe_body() -> dict[str, Any]:
+    """A transcribe-only voice answer (the words only, no answer)."""
+    return {
+        "mode": "live",
+        "transcribe_only": True,
+        "not_medical_advice": True,
+        "heard": HEARD,
+        "did_you_mean": [],
+        "trace": [
+            {
+                "step": "Muse Voice Transcribe",
+                "model": "muse-voice-transcribe-1.0",
+                "ms": 0,
+                "status": "ok",
+            }
+        ],
+        "cost_usd": None,
+        "limits": {"remaining_today": 9, "resets_utc": "2026-11-01T00:00:00Z"},
+    }
+
+
+def mock_voice(env: Env) -> list[str]:
+    """Answer /v1/live/voice with a transcript; returns the list the requests are counted in."""
+    seen: list[str] = []
+
+    def handler(route: Any) -> None:
+        seen.append(route.request.method)
+        route.fulfill(
+            status=200,
+            headers=CORS_ANY,
+            content_type="application/json",
+            body=json.dumps(transcribe_body()),
+        )
+
+    env.page.route(VOICE_ROUTE, handler)
+    return seen
+
+
+def start_voice(env: Env) -> None:
+    """Choose Ask by voice in the + menu; the recording bar replaces the box (or a gap is reported)."""
+    menu_item(env, "voice")
+    try:
+        env.page.wait_for_selector("[data-testid=voice-bar]", timeout=8_000)
+    except Exception as exc:
+        problem = env.page.locator("[data-testid=voice-problem]")
+        said = problem.first.inner_text()[:80] if problem.count() else "no message"
+        if env.engine == "chromium":
+            raise AssertionError(
+                f"chromium has a fake microphone but no recording bar appeared; page said: {said}"
+            ) from exc
+        raise SkipError(KNOWN_GAP, f"no fake microphone here; page said: {said}") from exc
+
+
+def voice_engine(env: Env) -> None:
+    """WebKit has no fake microphone in Playwright."""
+    if env.engine == "webkit":
+        raise SkipError(KNOWN_GAP, "WebKit has no fake audio device in Playwright; not tested here")
+
+
+def s_plus_menu(env: Env) -> str:
+    """The "+" menu by keyboard: Enter opens on the first item, arrows move, Escape closes."""
+    mock_health(env)
+    env.open()
+    need_menu(env)
+    page = env.page
+    for old in ("composer-camera", "composer-mic"):
+        if page.get_by_test_id(old).count():
+            raise AssertionError(f"the separate {old} button is still shown next to the + menu")
+    env.shot("composer-closed")
+    plus = page.locator(PLUS)
+    if plus.get_attribute("aria-haspopup") != "menu" or not plus.get_attribute("aria-label"):
+        raise AssertionError("the + button is not a labelled menu button")
+    plus.focus()
+    page.keyboard.press("Enter")
+    page.wait_for_selector("[role=menu]", timeout=5_000)
+    if plus.get_attribute("aria-expanded") != "true":
+        raise AssertionError("aria-expanded is not true while the menu is open")
+    items = page.locator("[role=menu] [role^=menuitem]")
+    names = [items.nth(i).inner_text().split("\n")[0] for i in range(items.count())]
+    for want in ("Take photo", "Upload photo", "Try a sample label", "Ask by voice"):
+        if want not in names:
+            raise AssertionError(f"menu item {want!r} missing: {names}")
+
+    def focused() -> str:
+        return str(
+            page.evaluate("document.activeElement && document.activeElement.innerText") or ""
+        )
+
+    if "Take photo" not in (focused() or ""):
+        raise AssertionError("Enter did not put focus on the first item")
+    page.keyboard.press("ArrowDown")
+    if "Upload photo" not in (focused() or ""):
+        raise AssertionError("ArrowDown did not move to the next item")
+    page.keyboard.press("End")
+    if "Ask by voice" not in (focused() or ""):
+        raise AssertionError("End did not move to the last item")
+    env.shot("composer-menu-open")
+    page.keyboard.press("Escape")
+    page.wait_for_selector("[role=menu]", state="detached", timeout=5_000)
+    back = page.evaluate("document.activeElement && document.activeElement.dataset.testid")
+    if back != "composer-plus":
+        raise AssertionError(f"focus did not return to the + button (it is on {back!r})")
+    return f"menu of {len(names)} items; Enter, ArrowDown, End, Escape and focus return work"
+
+
+def s_voice_cancel(env: Env) -> str:
+    """Cancel discards the recording: no /v1/live/voice request is made."""
+    voice_engine(env)
+    seen = mock_voice(env)
+    mock_health(env)
+    env.open()
+    need_menu(env)
+    start_voice(env)
+    env.page.wait_for_timeout(1200)
+    env.page.get_by_test_id("voice-cancel").click()
+    env.page.wait_for_selector("[data-testid=message-box]", timeout=5_000)
+    env.page.wait_for_timeout(800)
+    if seen:
+        raise AssertionError(f"{len(seen)} /v1/live/voice request(s) after Cancel")
+    if env.page.locator(COMPOSER).input_value():
+        raise AssertionError("text appeared in the box after Cancel")
+    return "recording cancelled; no /v1/live/voice request; the box is back and empty"
+
+
+def _timer(env: Env) -> str:
+    return env.page.get_by_test_id("voice-timer").inner_text().strip()
+
+
+def s_voice_pause_resume(env: Env) -> str:
+    """Pause holds the timer; Resume starts it again (MediaRecorder pause and resume)."""
+    voice_engine(env)
+    seen = mock_voice(env)
+    mock_health(env)
+    env.open()
+    need_menu(env)
+    start_voice(env)
+    env.page.wait_for_timeout(2200)
+    env.shot("recording")
+    pause = env.page.get_by_test_id("voice-pause")
+    if pause.count() == 0:
+        raise SkipError(KNOWN_GAP, "this browser's MediaRecorder cannot pause", required=False)
+    pause.click()
+    env.page.wait_for_selector("[data-testid=voice-bar][data-state=paused]", timeout=5_000)
+    held = _timer(env)
+    env.page.wait_for_timeout(2200)
+    if _timer(env) != held:
+        raise AssertionError(f"the timer moved while paused ({held} -> {_timer(env)})")
+    env.shot("recording-paused")
+    if env.page.get_by_test_id("voice-pause").get_attribute("aria-label") != "Resume recording":
+        raise AssertionError("the pause button does not offer Resume while paused")
+    env.page.get_by_test_id("voice-pause").click()
+    env.page.wait_for_selector("[data-testid=voice-bar][data-state=recording]", timeout=5_000)
+    env.page.wait_for_timeout(2200)
+    resumed = _timer(env)
+    if resumed == held:
+        raise AssertionError("the timer did not start again after Resume")
+    env.page.get_by_test_id("voice-cancel").click()
+    if seen:
+        raise AssertionError("a voice request was sent although the recording was cancelled")
+    return f"paused at {held}, held for 2 s, resumed and reached {resumed}"
+
+
+def s_voice_transcript_send(env: Env) -> str:
+    """Stop -> the transcript is in the box -> edited -> Send: one ask with the edited text."""
+    voice_engine(env)
+    voice = mock_voice(env)
+    asked: list[dict[str, Any]] = []
+
+    def ask(route: Any) -> None:
+        with contextlib.suppress(ValueError):
+            asked.append(json.loads(route.request.post_data or "{}"))
+        route.fulfill(
+            status=200,
+            headers=CORS_ANY,
+            content_type="application/json",
+            body=json.dumps(mocked_live_body()),
+        )
+
+    env.page.route(ASK_PATH, ask)
+    mock_health(env)
+    env.open()
+    need_menu(env)
+    start_voice(env)
+    env.page.wait_for_timeout(1500)
+    env.page.get_by_test_id("voice-stop").click()
+    box = env.page.locator(COMPOSER)
+    env.page.wait_for_function(
+        "want => { const t = document.querySelector(\"textarea[aria-label='Ask a question']\");"
+        " return !!t && t.value === want }",
+        arg=HEARD,
+        timeout=20_000,
+    )
+    if asked:
+        raise AssertionError("an ask was sent before the person pressed Send")
+    if len(voice) != 1:
+        raise AssertionError(f"{len(voice)} voice requests for one recording")
+    env.shot("transcript-in-box")
+    box.fill(EDITED)
+    box.press("Enter")
+    env.page.wait_for_selector("[data-testid=live-turn]", timeout=30_000)
+    env.page.wait_for_timeout(500)
+    if len(asked) != 1:
+        raise AssertionError(f"{len(asked)} ask requests after one Send")
+    if asked[0].get("question") != EDITED:
+        raise AssertionError(f"the ask carried {asked[0].get('question')!r}, not the edited text")
+    return "transcript placed in the box; edited; one ask with the edited text; one voice request"
+
+
+def s_camera_take_photo(env: Env) -> str:
+    """Take photo: the live camera at once on a computer; the phone's camera input at 390."""
+    mock_health(env)
+    env.open()
+    need_menu(env)
+    page = env.page
+    if env.width == 390:
+        with page.expect_file_chooser(timeout=10_000) as chooser:
+            menu_item(env, "take-photo")
+        el = chooser.value.element
+        if el.get_attribute("capture") != "environment" or el.get_attribute("accept") != "image/*":
+            raise AssertionError("the phone camera input lacks accept=image/* capture=environment")
+        if page.get_by_test_id("camera-sheet").count():
+            raise AssertionError("an examples page or preview opened before the phone camera")
+        return "phone: the camera input (capture=environment) opened directly, no examples page"
+    menu_item(env, "take-photo")
+    page.wait_for_selector("[data-testid=camera-sheet]", timeout=10_000)
+    page.wait_for_function(
+        "(() => { const v = document.querySelector('[data-testid=camera-live]');"
+        " return !!v && v.readyState >= 2 && v.videoWidth > 0 })()",
+        timeout=15_000,
+    )
+    if page.locator("[data-testid=camera-sheet] img").count():
+        raise AssertionError("an example image is shown on the take-photo path")
+    env.shot("camera-preview")
+    page.get_by_test_id("camera-shutter").click()
+    page.wait_for_selector("[data-testid=camera-shot]", timeout=10_000)
+    page.get_by_test_id("camera-retake").click()
+    page.wait_for_selector("[data-testid=camera-shot]", state="detached", timeout=5_000)
+    page.get_by_test_id("camera-shutter").click()
+    page.get_by_test_id("camera-use").click()
+    page.wait_for_selector("[data-testid=photo-thumb]", timeout=10_000)
+    env.shot("thumbnail-from-camera")
+    return "live preview at once; Shutter, Retake, Use photo; thumbnail above the box"
+
+
+def s_camera_refused(env: Env) -> str:
+    """Camera refused: the file picker opens with a short reason."""
+    page = env.page
+    page.add_init_script(
+        "navigator.mediaDevices && (navigator.mediaDevices.getUserMedia ="
+        " () => Promise.reject(new DOMException('refused by the test', 'NotAllowedError')));"
+    )
+    mock_health(env)
+    env.open()
+    need_menu(env)
+    if env.width == 390:
+        with page.expect_file_chooser(timeout=10_000):
+            menu_item(env, "take-photo")
+        return "phone: the camera input opens directly (no permission prompt from the page)"
+    opened = True
+    try:
+        with page.expect_file_chooser(timeout=6_000):
+            menu_item(env, "take-photo")
+    except Exception:
+        opened = False
+    note = page.get_by_test_id("photo-note")
+    note.wait_for(timeout=5_000)
+    if "Camera blocked — choose a photo instead" not in note.inner_text():
+        raise AssertionError(f"reason not shown: {note.inner_text()[:120]!r}")
+    if page.get_by_test_id("camera-sheet").count():
+        raise AssertionError("the camera dialog stayed open after the camera was refused")
+    if not opened:  # the browser blocked the automatic picker: the note's button opens it
+        with page.expect_file_chooser(timeout=6_000):
+            page.get_by_test_id("photo-note-pick").click()
+    env.shot("camera-refused")
+    return (
+        "camera refused -> file picker"
+        + ("" if opened else " (from the note's button)")
+        + " with the reason"
+    )
+
+
+def s_thumbnail_remove(env: Env) -> str:
+    """An attached photo shows as a thumbnail; its remove button drops it and nothing is sent."""
+    labels: list[str] = []
+    page = env.page
+    page.route(LABEL_PATH, lambda r: (labels.append("x"), r.abort())[1])
+    mock_health(env)
+    env.open()
+    need_menu(env)
+    with page.expect_file_chooser(timeout=10_000) as chooser:
+        menu_item(env, "upload-photo")
+    chooser.value.set_files({"name": "label.jpg", "mimeType": "image/jpeg", "buffer": make_jpeg()})
+    page.wait_for_selector("[data-testid=photo-thumb] img", timeout=15_000)
+    env.shot("thumbnail")
+    remove = page.get_by_test_id("photo-remove")
+    if not remove.get_attribute("aria-label"):
+        raise AssertionError("the remove button has no label")
+    remove.click()
+    page.wait_for_selector("[data-testid=photo-thumb]", state="detached", timeout=5_000)
+    page.wait_for_timeout(500)
+    if labels:
+        raise AssertionError("a label request was sent for a removed photo")
+    return "thumbnail shown; remove dropped it; no /v1/live/label request"
+
+
+def s_research_hidden(env: Env) -> str:
+    """The Research the web item appears only when GET /v1/health offers it."""
+    page = env.page
+    mock_health(env, research=False)
+    env.open()
+    need_menu(env)
+    page.locator(PLUS).click()
+    page.wait_for_selector("[role=menu]", timeout=5_000)
+    if page.get_by_test_id("menu-research").count():
+        raise AssertionError("the research item is shown although health does not offer it")
+    page.keyboard.press("Escape")
+    page.unroute(HEALTH_ROUTE)
+    mock_health(env, research=True)
+    env.open()
+    page.locator(PLUS).click()
+    item = page.get_by_test_id("menu-research")
+    item.wait_for(timeout=10_000)
+    if (
+        item.get_attribute("role") != "menuitemcheckbox"
+        or item.get_attribute("aria-checked") != "false"
+    ):
+        raise AssertionError("the research item is not an unchecked menuitemcheckbox")
+    return "hidden without features.research; an on/off item when offered"
+
+
+def s_voice_limit(env: Env) -> str:
+    """At 1:00 the recording pauses and waits: no voice request until the person presses Stop."""
+    voice_engine(env)
+    seen = mock_voice(env)
+    mock_health(env)
+    env.page.clock.install()
+    env.open()
+    need_menu(env)
+    start_voice(env)
+    env.page.wait_for_timeout(800)
+    env.page.clock.fast_forward("00:46")
+    env.page.wait_for_function(
+        "(() => { const e = document.querySelector('[data-testid=voice-limit]');"
+        " return !!e && e.textContent.includes('Stops at 1:00') })()",
+        timeout=10_000,
+    )
+    env.page.clock.fast_forward("00:16")
+    env.page.wait_for_selector("[data-testid=voice-bar][data-limit=true]", timeout=10_000)
+    said = env.page.get_by_test_id("voice-limit").inner_text()
+    if "Limit reached" not in said:
+        raise AssertionError(f"the limit is not explained: {said!r}")
+    env.page.wait_for_timeout(1000)
+    if seen:
+        raise AssertionError("a voice request was sent at the limit before Stop was pressed")
+    env.shot("recording-limit")
+    env.page.get_by_test_id("voice-stop").click()
+    env.page.wait_for_function(
+        "want => { const t = document.querySelector(\"textarea[aria-label='Ask a question']\");"
+        " return !!t && t.value === want }",
+        arg=HEARD,
+        timeout=20_000,
+    )
+    if len(seen) != 1:
+        raise AssertionError(f"{len(seen)} voice requests after one Stop")
+    return "paused at 1:00 with the limit message; no voice request until Stop; then one"
+
+
+def s_voice_unavailable(env: Env) -> str:
+    """Without voice_transcribe_only in /v1/health, voice never records: it opens the recorded run."""
+    seen = mock_voice(env)
+    env.page.route(
+        HEALTH_ROUTE,
+        lambda r: r.fulfill(
+            status=200,
+            headers=CORS_ANY,
+            content_type="application/json",
+            body=json.dumps({"status": "ok", "features": {}}),
+        ),
+    )
+    env.open()
+    need_menu(env)
+    env.page.locator(PLUS).click()
+    hint = env.page.get_by_test_id("menu-voice").inner_text()
+    if "Voice needs the live service" not in hint:
+        raise AssertionError(f"the voice item does not say it needs the live service: {hint!r}")
+    env.page.get_by_test_id("menu-voice").click()
+    env.page.wait_for_timeout(1000)
+    if env.page.get_by_test_id("voice-bar").count():
+        raise AssertionError("a recording started although transcribe-only is not offered")
+    if seen:
+        raise AssertionError("a voice request was sent although transcribe-only is not offered")
+    return "voice item says it needs the live service; opens the recorded run; nothing recorded or sent"
+
+
+COMPOSER_SCENARIOS: tuple[tuple[str, Callable[[Env], str]], ...] = (
+    ("+ menu: open, keyboard, Escape", s_plus_menu),
+    ("voice: cancel sends nothing", s_voice_cancel),
+    ("voice: pause and resume", s_voice_pause_resume),
+    ("voice: stop, transcript in box, edit, send", s_voice_transcript_send),
+    ("photo: take photo (live camera / phone camera)", s_camera_take_photo),
+    ("photo: camera refused, file picker with reason", s_camera_refused),
+    ("photo: thumbnail remove", s_thumbnail_remove),
+    ("research toggle hidden without the feature", s_research_hidden),
+    ("voice: 1:00 limit pauses, no request until Stop", s_voice_limit),
+    ("voice: unavailable without transcribe-only", s_voice_unavailable),
+)
 
 
 def s_alert_bell(env: Env) -> str:
@@ -861,6 +1351,7 @@ SCENARIOS: tuple[tuple[str, Callable[[Env], str]], ...] = (
     ("Connect to Muse page", s_connect),
     ("no sideways scroll", s_no_sideways_scroll),
     ("axe-core accessibility", s_axe),
+    *COMPOSER_SCENARIOS,
 )
 SMOKE = (
     "chat (recorded mode, two turns)",
@@ -1040,7 +1531,7 @@ def run_scenario(rep: Report, env: Env, name: str, fn: Callable[[Env], str], gro
         else:
             rep.add(label, PASS, detail, group=group)
     except SkipError as skip:
-        rep.add(label, skip.status, skip.why, group=group, required=skip.status != KNOWN_GAP)
+        rep.add(label, skip.status, skip.why, group=group, required=skip.required)
     except Exception as exc:
         with contextlib.suppress(Exception):
             env.shot("FAILED-" + re.sub(r"\W+", "-", name))

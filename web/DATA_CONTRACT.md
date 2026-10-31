@@ -243,6 +243,37 @@ What the page does on each outcome:
 use a daily live question (`limits.remaining_today` is unchanged). A response without `tier` (an older server) is
 drawn as before. The cost line reads "Cost of this answer: $0.0000 (no model call)" for tiers 1 to 3.
 
+**Message box with the "+" menu (Oct 31, `track-a-composer`).** Switch: build-time `VITE_FEATURE_COMPOSER_MENU`
+(default on; `0`/`false`/`off`/`no` turns it off) and run-time `?composer=classic`; off, the earlier composer
+renders unchanged. Code: `src/components/MessageBox.tsx`, `PlusMenu.tsx`, `VoiceBar.tsx`, `CameraSheet.tsx`.
+
+- `GET /v1/health` now has `features: {name: true}` and answers the web origins with CORS. The page reads it once;
+  a name that is absent (or not exactly `true`) means the feature is not offered. Known names:
+  `voice_transcribe_only` (this track) and `research` (built by another track).
+- `POST /v1/live/voice` with `meta = {"transcribe_only": true}` returns only the words:
+  `{mode: "live", transcribe_only: true, heard, did_you_mean: ["LLZ"], trace: [1 Voice Transcribe step], cost_usd,
+  limits, not_medical_advice}`. No question is asked and no answer is written; the page puts `heard` in the box and
+  sends nothing until the person presses Send (the edited text goes to `/v1/live/ask`). It uses one of the 10 daily
+  voice questions and goes through the per-call cost ledger exactly like a full voice question (reserved before,
+  settled after). `did_you_mean` lists known codes one letter from an unknown capitalised three-letter word that was
+  heard; a real code is never offered for correction; the page swaps the word only when the person clicks
+  "Use LLZ". Errors: `503 {code: "unavailable", message}` (no model key, live calls off, cost cap, transcription
+  failed; the message is shown and ends "Type your question instead"), `422` no speech / patient data, `429` the
+  daily voice limit (the server's message is shown). Server switch: `MAUDESIGNAL_VOICE_TRANSCRIBE_ONLY` (default on;
+  off, the option is refused with 422 and health says `voice_transcribe_only: false`). Until health confirms it
+  (pending, failed or an older API), "Ask by voice" says "Voice needs the live service" and opens the recorded voice
+  run; the message box never sends a recording as a question by itself. At 1:00 a recording pauses ("Limit reached
+  — press Stop to use it or ✕ to discard"); nothing is sent and no voice question is used until Stop.
+- "Research the web" (shown only with `features.research === true`) adds `research: true` to the ask body. An answer
+  may then carry `research: {status, items: [{title, url, date, source}], label}`, shown under the answer headed
+  exactly "Web research — not FDA records, not verified by the gate"; each title is a link (`target=_blank`,
+  `rel=noopener noreferrer`) with its date and source. "Save to audit" posts `{url, title, date}` to
+  `POST /v1/live/research/save` and shows "Saved"; a 404 hides the button. Both routes belong to another track.
+- A photo (camera, phone camera or file) is attached as a thumbnail with a remove button; Send posts it to
+  `/v1/live/label` as one conversation turn. Words typed with it are asked after the reading returns (the turn says
+  "Your question is sent after the photo reading"), with `product_code` set to the top match's code when it has one,
+  otherwise as typed. Nothing is confirmed for the person.
+
 The stub used by the browser tests is `qa/live_stub.py`; it implements this contract, checks the WAV header and the
 JPEG (no EXIF) and logs request bodies at `GET /__log`. Run `python3 qa/e2e_live.py` from `web/`.
 

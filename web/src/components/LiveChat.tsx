@@ -4,7 +4,9 @@ import { badgeText, heldBackLine, isFreeTier, LIMIT_TEXT, NOT_MEDICAL_ADVICE, op
 import { speechSupported } from '../live/speech'
 import type { LiveChat as Chat, LiveTurn } from '../live/useLiveChat'
 import type { Thread } from '../types'
+import { LiveLabelResult } from './CameraPanel'
 import { LiveTrace } from './LiveTrace'
+import { ResearchSection } from './ResearchSection'
 
 const reduced = (): boolean => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
@@ -144,6 +146,7 @@ function Answer({ turn, chat, onAsk, onOpen }: { turn: LiveTurn; chat: Chat; onA
           {resp.tier === 'cache' && resp.answered_at && <span data-testid="answered-at">First answered {resp.answered_at.slice(11, 16)} UTC</span>}
         </p>
       )}
+      {allShown && resp.research && <ResearchSection block={resp.research} onSave={chat.saveResearch} />}
       {allShown && open && onOpen && resp.open && (
         <p className="m-0 mt-2">
           <button type="button" className="ms-btn ms-btn--secondary" style={{ height: 40 }} onClick={() => onOpen(resp.open as OpenView)} data-testid="open-view">
@@ -194,13 +197,54 @@ function Typing({ voice }: { voice: boolean }) {
   )
 }
 
-function TurnView({ turn, chat, onRecordedVoice, onAsk, onOpen }: {
+/** A label photo sent from the message box: the picture, then the reading and the possible matches. */
+function PhotoTurn({ turn, onRecordedLabel }: { turn: LiveTurn; onRecordedLabel?: () => void }) {
+  return (
+    <article className="space-y-3" data-testid="live-turn" data-status={turn.status} data-via="photo">
+      <div className="ml-auto w-fit max-w-[85%] rounded-md bg-sunk p-2" data-testid="user-bubble">
+        {turn.image ? (
+          <img src={turn.image} alt="Your photo of a device label" className="block max-h-40 w-auto max-w-full rounded-sm" />
+        ) : (
+          <p className="m-0 px-2 py-1">Photo of a device label</p>
+        )}
+        {turn.followUp && (
+          <>
+            <p className="ws-wrap m-0 mt-2 whitespace-pre-wrap px-1">{turn.followUp}</p>
+            <p className="m-0 mt-1 px-1 text-[15px] text-ink-2" data-testid="photo-followup-note">
+              {turn.status === 'pending' ? 'Your question is sent after the photo reading.' : 'Your question was sent after the photo reading.'}
+            </p>
+          </>
+        )}
+      </div>
+      {turn.status === 'pending' && (
+        <p role="status" aria-live="polite" className="m-0 text-[16px] text-ink-2" data-testid="label-busy">
+          Reading the label: SAM 3.1 finds it, Muse Spark reads it, openFDA is searched, then the claim gate checks the result…
+        </p>
+      )}
+      {turn.status === 'error' && (
+        <div role="alert" className="ms-banner ms-banner--warn" data-testid="turn-error">
+          <span className="ws-wrap">{turn.error}</span>
+          {turn.offerRecordedLabel && onRecordedLabel && (
+            <button type="button" className="ms-btn ms-btn--secondary mt-2" style={{ height: 40 }} onClick={onRecordedLabel}>
+              Open the recorded label runs
+            </button>
+          )}
+        </div>
+      )}
+      {turn.status === 'done' && turn.label && <LiveLabelResult res={turn.label} />}
+    </article>
+  )
+}
+
+function TurnView({ turn, chat, onRecordedVoice, onRecordedLabel, onAsk, onOpen }: {
   turn: LiveTurn
   chat: Chat
   onRecordedVoice: () => void
+  onRecordedLabel?: () => void
   onAsk: (q: string) => void
   onOpen?: (o: OpenView) => void
 }) {
+  if (turn.via === 'photo') return <PhotoTurn turn={turn} onRecordedLabel={onRecordedLabel} />
   return (
     <article className="space-y-3" data-testid="live-turn" data-status={turn.status}>
       <div className="ml-auto max-w-[85%] rounded-md bg-sunk px-4 py-3" data-testid="user-bubble">
@@ -235,11 +279,13 @@ function TurnView({ turn, chat, onRecordedVoice, onAsk, onOpen }: {
 }
 
 /** The conversation: your questions as bubbles, a typing indicator with the live steps, then the checked answer. */
-export function LiveChatView({ chat, threads, onStarter, onRecordedVoice, onOpen }: {
+export function LiveChatView({ chat, threads, onStarter, onRecordedVoice, onRecordedLabel, onOpen }: {
   chat: Chat
   threads: Thread[]
   onStarter: (q: string) => void
   onRecordedVoice: () => void
+  /** A photo turn that failed offers the stored label runs. */
+  onRecordedLabel?: () => void
   /** Opens a page an answer points to (Check any device type, Our devices, the AI sweep). */
   onOpen?: (o: OpenView) => void
 }) {
@@ -314,7 +360,7 @@ export function LiveChatView({ chat, threads, onStarter, onRecordedVoice, onOpen
       )}
       <div role="log" aria-live="polite" aria-label="Conversation" className="space-y-8">
         {chat.turns.map((t) => (
-          <TurnView key={t.id} turn={t} chat={chat} onRecordedVoice={onRecordedVoice} onAsk={onStarter} onOpen={onOpen} />
+          <TurnView key={t.id} turn={t} chat={chat} onRecordedVoice={onRecordedVoice} onRecordedLabel={onRecordedLabel} onAsk={onStarter} onOpen={onOpen} />
         ))}
       </div>
       <div ref={end} />
