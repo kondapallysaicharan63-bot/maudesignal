@@ -143,30 +143,30 @@ export function configSnippets(i: ConnectInfo): Snippet[] {
     {
       id: 'claude-desktop',
       title: 'Claude Desktop',
-      where: 'Paste into claude_desktop_config.json (Settings, Developer, Edit Config), or merge the maudesignal entry into your existing mcpServers, then restart Claude Desktop. Needs Node.js for npx.',
+      where: 'Paste into claude_desktop_config.json, then restart Claude Desktop.',
       text: JSON.stringify(desktop, null, 2),
       isJson: true,
     },
     {
       id: 'cursor',
       title: 'Cursor',
-      where: 'Paste into .cursor/mcp.json in your project (or ~/.cursor/mcp.json for all projects), or merge the maudesignal entry into your existing mcpServers.',
+      where: 'Paste into .cursor/mcp.json in your project.',
       text: JSON.stringify(cursor, null, 2),
       isJson: true,
     },
     {
       id: 'muse',
       title: 'Meta Muse',
-      where: 'In Muse, add a custom connector and enter these values.',
+      where: 'In Muse, add a custom connector with these values.',
       text: `MCP URL: ${i.mcp_url}\nHeader: ${header}\nValue: ${key}`,
       isJson: false,
     },
   ]
 }
 
-/** Example questions to try once connected, one line each; each maps to an existing connector tool. */
+/** The three MCP prompts the connector lists (prompts/list), one line each with its arguments. Names and arguments match the connector. */
 export const EXAMPLE_QUESTIONS: { id: string; title: string; line: string }[] = [
-  { id: 'what-changed', title: 'What changed this week for LLZ?', line: 'Uses what_changed_this_week: the latest stored week for a product code, labelled with its dates.' },
-  { id: 'check-device-type', title: 'Check product code QAS on openFDA.', line: 'Uses check_device_type: live openFDA report counts for any product code.' },
-  { id: 'recalls', title: 'Show recalls for LLZ.', line: 'Uses recalls: stored openFDA recalls for a product code, newest first.' },
+  { id: 'morning_brief', title: 'morning_brief', line: 'What changed this week for your device types. Argument: product_codes (for example LLZ,QIH).' },
+  { id: 'check_this_device', title: 'check_this_device', line: 'Possible FDA records for a device from a photo or typed in. Argument: text (name, model, maker, K-number or UDI).' },
+  { id: 'does_this_apply_to_us', title: 'does_this_apply_to_us', line: 'Problem patterns for a product code, as questions for your records. Arguments: product_code, our_device_description (optional).' },
 ]

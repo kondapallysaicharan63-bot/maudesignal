@@ -44,7 +44,9 @@ describe('config snippets', () => {
   it('each snippet has a one-line where-to-paste note and a Copy button', () => {
     act(() => root.render(<ConnectView apiBase={null} />))
     for (const id of ['claude-desktop', 'cursor', 'muse']) {
-      expect(q(`where-${id}`)!.textContent!.length).toBeGreaterThan(20)
+      const n = q(`where-${id}`)!.textContent!
+      expect(n.length).toBeGreaterThan(20)
+      expect(n.length).toBeLessThan(90)
     }
     expect(q('where-claude-desktop')!.textContent).toContain('claude_desktop_config.json')
     expect(q('where-cursor')!.textContent).toContain('.cursor/mcp.json')
@@ -76,7 +78,11 @@ describe('config snippets', () => {
     expect(q('no-demo-key')!.textContent).toContain('rate-limited')
     expect(q('link-privacy')).not.toBeNull()
     expect(q('link-terms')).not.toBeNull()
-    expect(EXAMPLE_QUESTIONS.map((p) => p.title)).toEqual(['What changed this week for LLZ?', 'Check product code QAS on openFDA.', 'Show recalls for LLZ.'])
+    expect(EXAMPLE_QUESTIONS.map((p) => p.title)).toEqual(['morning_brief', 'check_this_device', 'does_this_apply_to_us'])
+    expect(EXAMPLE_QUESTIONS[0].line).toContain('product_codes')
+    expect(EXAMPLE_QUESTIONS[1].line).toContain('text')
+    expect(EXAMPLE_QUESTIONS[2].line).toContain('product_code')
+    expect(EXAMPLE_QUESTIONS[2].line).toContain('our_device_description')
     expect(host.querySelectorAll('[data-testid=example-questions] li')).toHaveLength(3)
   })
   it('configSnippets marks JSON ones', () => {

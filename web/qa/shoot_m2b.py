@@ -60,11 +60,25 @@ def main() -> int:
                 page.get_by_test_id("copy-cursor-config").click()
                 clip = page.evaluate("navigator.clipboard.readText()")
                 check(f"{tag}: copy puts the cursor snippet on the clipboard", clip == page.get_by_test_id("code-cursor").inner_text())
-                check(f"{tag}: three example questions listed", page.locator("[data-testid=example-questions] li").count() == 3)
+                check(f"{tag}: three prompts listed", page.locator("[data-testid=example-questions] li").count() == 3)
                 check(f"{tag}: status line", "pending review." in page.get_by_test_id("connect-status").inner_text())
                 over = page.evaluate("document.documentElement.scrollWidth - document.documentElement.clientWidth")
                 report[f"{tag}: x_overflow_px"] = over
                 check(f"{tag}: no sideways scroll", over == 0)
+                # Strong check: no element inside the chat pane, and no <pre> anywhere, is wider than its box.
+                wide = page.evaluate(
+                    """() => {
+                        const bad = [];
+                        const pane = document.querySelector('main[aria-label=Chat], main[aria-label=Home]');
+                        const els = new Set([...(pane ? pane.querySelectorAll('*') : []), ...document.querySelectorAll('pre')]);
+                        if (pane) els.add(pane);
+                        els.forEach((e) => { if (e.classList.contains('sr-only')) return; /* 1px clipped screen-reader text, hidden on purpose */ if (e.scrollWidth > e.clientWidth + 1) bad.push(e.tagName + '.' + String(e.className).slice(0, 40) + ' ' + e.scrollWidth + '>' + e.clientWidth); });
+                        return { n: els.size, bad };
+                    }"""
+                )
+                report[f"{tag}: elements_checked"] = wide["n"]
+                report[f"{tag}: wide_elements"] = wide["bad"]
+                check(f"{tag}: no element in the chat pane or pre has scrollWidth > clientWidth + 1", not wide["bad"] and wide["n"] > 10)
                 # The Connect view scrolls inside the chat pane, so scroll each section into view and shoot it.
                 for sec in ("connect-status", "connect-steps", "demo-key-block", "snippet-claude-desktop", "snippet-cursor", "snippet-muse", "example-questions", "link-privacy"):
                     page.get_by_test_id(sec).scroll_into_view_if_needed()

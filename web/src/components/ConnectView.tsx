@@ -130,12 +130,12 @@ export function ConnectView({ apiBase, fetcher }: { apiBase: string | null; fetc
         ))}
       </article>
 
-      <article className="rounded-md border border-rule bg-surface p-4" aria-label="Example questions" data-testid="example-questions">
-        <h2 className="t-title m-0">Example questions</h2>
+      <article className="rounded-md border border-rule bg-surface p-4" aria-label="Ready-made prompts" data-testid="example-questions">
+        <h2 className="t-title m-0">Ready-made prompts</h2>
         <ul className="m-0 mt-2 list-none space-y-2 p-0">
           {EXAMPLE_QUESTIONS.map((p) => (
-            <li key={p.id} data-testid={`example-${p.id}`} className="text-[17px]">
-              <span className="font-semibold">{p.title}</span> <span className="text-ink-2">{p.line}</span>
+            <li key={p.id} data-testid={`example-${p.id}`} className="ws-wrap text-[17px]">
+              <code className="ms-code font-semibold">{p.title}</code> <span className="text-ink-2">{p.line}</span>
             </li>
           ))}
         </ul>
