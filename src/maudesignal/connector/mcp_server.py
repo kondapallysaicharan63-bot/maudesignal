@@ -20,9 +20,16 @@ from typing import Any
 
 from maudesignal.common.logging import get_logger
 from maudesignal.connector.errors import ConnectorError
-from maudesignal.connector.models import AskAnswer, LookupAnswer, RecallsAnswer, ToolAnswer
+from maudesignal.connector.models import (
+    AskAnswer,
+    LookupAnswer,
+    OutsideMentionsAnswer,
+    RecallsAnswer,
+    ToolAnswer,
+)
 from maudesignal.connector.prompts import get_prompt, prompt_list
-from maudesignal.connector.registry import GUIDANCE, SPECS_BY_NAME, mcp_tools
+from maudesignal.connector.registry import GUIDANCE, active_specs, mcp_tools, spec_for
+from maudesignal.connector.research import research_enabled
 
 logger = get_logger(__name__)
 
@@ -37,8 +44,10 @@ INVALID_REQUEST = -32600
 METHOD_NOT_FOUND = -32601
 INVALID_PARAMS = -32602
 
-#: Runs a checked tool call: ``(tool name, string arguments) -> ToolAnswer``.
-ToolRunner = Callable[[str, dict[str, str]], ToolAnswer]
+#: What a tool returns: a gated answer, or (``outside_mentions``) the web research block.
+Answer = ToolAnswer | OutsideMentionsAnswer
+#: Runs a checked tool call: ``(tool name, string arguments) -> Answer``.
+ToolRunner = Callable[[str, dict[str, str]], Answer]
 
 
 def output_schema() -> dict[str, Any]:
@@ -47,12 +56,20 @@ def output_schema() -> dict[str, Any]:
     return schema
 
 
-def tool_list() -> list[dict[str, Any]]:
-    """The ``tools/list`` entries."""
-    lookup: dict[str, Any] = LookupAnswer.model_json_schema()
-    recalls: dict[str, Any] = RecallsAnswer.model_json_schema()
-    ask: dict[str, Any] = AskAnswer.model_json_schema()
-    return mcp_tools(output_schema(), {"lookup_device": lookup, "recalls": recalls, "ask": ask})
+def tool_list(research_on: bool | None = None) -> list[dict[str, Any]]:
+    """The ``tools/list`` entries; ``outside_mentions`` only when web research is on.
+
+    Args:
+        research_on: Whether ``MAUDESIGNAL_RESEARCH`` is on; ``None`` reads the environment.
+    """
+    on = research_enabled() if research_on is None else research_on
+    overrides: dict[str, dict[str, Any]] = {
+        "lookup_device": LookupAnswer.model_json_schema(),
+        "recalls": RecallsAnswer.model_json_schema(),
+        "ask": AskAnswer.model_json_schema(),
+        "outside_mentions": OutsideMentionsAnswer.model_json_schema(),
+    }
+    return mcp_tools(output_schema(), overrides, active_specs(on))
 
 
 def rpc_error(request_id: Any, code: int, message: str) -> dict[str, Any]:
@@ -70,7 +87,7 @@ def _tool_error(request_id: Any, message: str) -> dict[str, Any]:
     return _result(request_id, {"content": content, "isError": True})
 
 
-def answer_result(answer: ToolAnswer) -> dict[str, Any]:
+def answer_result(answer: Answer) -> dict[str, Any]:
     """``tools/call`` result for an answer: speakable text plus the full answer."""
     return {
         "content": [{"type": "text", "text": answer.speakable}],
@@ -91,7 +108,7 @@ def _prompt(request_id: Any, params: Any) -> dict[str, Any]:
 def _call(request_id: Any, params: Any, run: ToolRunner) -> dict[str, Any]:
     if not isinstance(params, dict) or not isinstance(params.get("name"), str):
         return rpc_error(request_id, INVALID_PARAMS, "tools/call needs a tool name.")
-    spec = SPECS_BY_NAME.get(params["name"])
+    spec = spec_for(params["name"], research_enabled())
     if spec is None:
         return rpc_error(request_id, INVALID_PARAMS, "Unknown tool.")
     try:

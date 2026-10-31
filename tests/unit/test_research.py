@@ -155,9 +155,10 @@ def test_fee_and_hold() -> None:
 def test_instructions_come_from_the_skill() -> None:
     text = research.load_instructions()
     assert "web_search tool at most twice" in text and "## " not in text
+    assert "{topic}" not in text  # the connector question templates are never instructions
     assert (Path(__file__).resolve().parents[2] / "skills/web-research/VERSION").read_text(
         encoding="utf-8"
-    ).strip() == "1.0.0"
+    ).strip() == "1.1.0"
 
 
 def test_build_request_shape() -> None:

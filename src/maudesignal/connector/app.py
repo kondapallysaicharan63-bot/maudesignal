@@ -28,7 +28,7 @@ from starlette.requests import ClientDisconnect
 
 from maudesignal.common.exceptions import MaudeSignalError, OpenFDAAPIError
 from maudesignal.common.logging import get_logger
-from maudesignal.connector import tools
+from maudesignal.connector import outside, research, tools
 from maudesignal.connector.answer_cache import AnswerCache
 from maudesignal.connector.asgi import RejectKeyInQuery
 from maudesignal.connector.ask import (
@@ -45,15 +45,22 @@ from maudesignal.connector.data import ConnectorData
 from maudesignal.connector.docs_page import render_docs_page
 from maudesignal.connector.errors import (
     ConnectorError,
+    DemoKeyRefusedError,
     InvalidInputError,
     NotFoundError,
     body_shape_message,
     field_name,
 )
-from maudesignal.connector.feedback import mount_feedback
+from maudesignal.connector.feedback import looks_like_phi, mount_feedback
 from maudesignal.connector.globalcap import global_daily_usd
+from maudesignal.connector.guidance import unknown_code_error
 from maudesignal.connector.legal_pages import render_privacy, render_terms
-from maudesignal.connector.live import LiveBackends, LiveConfig, mount_live
+from maudesignal.connector.live import (
+    LiveBackends,
+    LiveConfig,
+    default_research_transport,
+    mount_live,
+)
 from maudesignal.connector.lookup import OpenFdaSearcher, Searcher, lookup_device
 from maudesignal.connector.manifest import build_manifest
 from maudesignal.connector.mcp_server import (
@@ -62,6 +69,7 @@ from maudesignal.connector.mcp_server import (
     handle_message,
     rpc_error,
 )
+from maudesignal.connector.mentions import Fetcher, HttpFetcher
 from maudesignal.connector.models import (
     AskAnswer,
     AuditEntry,
@@ -71,6 +79,7 @@ from maudesignal.connector.models import (
     ErrorResponse,
     LiveCheckData,
     LookupAnswer,
+    OutsideMentionsAnswer,
     PublicCheckAnswer,
     RecallsAnswer,
     ToolAnswer,
@@ -83,10 +92,12 @@ from maudesignal.connector.registry import (
     GUIDANCE,
     LOOKUP_DESCRIPTION,
     LOOKUP_PATTERN_K,
+    OUTSIDE_DESCRIPTION,
     PRODUCT_CODE_PATTERN,
     RECALLS_DESCRIPTION,
     REPORT_DESCRIPTION,
     REPORT_ID_PATTERN,
+    TOPIC_MAX_CHARS,
     WHAT_CHANGED_DESCRIPTION,
     explain_error,
 )
@@ -243,6 +254,12 @@ class Settings:
     chat_tiers: bool = field(default_factory=lambda: os.environ.get(CHAT_TIERS_ENV, "1") != "0")
     #: Per-client call counts for the private /admin panel (``MAUDESIGNAL_CLIENTS_PANEL``).
     clients_panel: bool = field(default_factory=panel_enabled)
+    #: ``outside_mentions`` web research (tests pass a fake; default: ``research.run_research``).
+    research_runner: outside.ResearchRunner | None = None
+    #: Responses API transport for ``outside_mentions`` (``None``: the real one when live is on).
+    research_transport: Callable[[], research.ResearchTransport | None] | None = None
+    #: GDELT backup fetcher factory for ``outside_mentions``.
+    research_fetcher: Callable[[], Fetcher] | None = HttpFetcher
 
 
 class AskRequest(BaseModel):
@@ -255,6 +272,23 @@ class AskRequest(BaseModel):
         max_length=MAX_QUESTION_CHARS,
         description="A question about stored MAUDE reports, recalls, 510(k)s or the MDR clock.",
         examples=["What changed this week for LLZ?"],
+    )
+
+
+class OutsideMentionsRequest(BaseModel):
+    """Body of ``outside_mentions``."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    product_code: str = Field(
+        pattern=PRODUCT_CODE_PATTERN, description="Three-letter FDA product code, e.g. LLZ."
+    )
+    topic: str | None = Field(
+        default=None,
+        min_length=2,
+        max_length=TOPIC_MAX_CHARS,
+        description="Optional short topic, e.g. software update (no patient details).",
+        examples=["software update"],
     )
 
 
@@ -393,6 +427,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     demo_daily = state.daily_counter("demo-key-day", DEMO_PER_DAY, today=lambda: cfg.now().date())
     web_origins = frozenset(cfg.web_origins)
+    outside_daily = state.daily_counter(
+        "outside-mentions", outside.per_key_day(), today=lambda: cfg.now().date()
+    )
     clients = ClientCounter(
         cfg.feedback_store, enabled=cfg.clients_panel, now=cfg.now, redis=state.redis_client
     )
@@ -541,7 +578,85 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if own and isinstance(searcher, OpenFdaSearcher):
                 searcher.close()
 
+    def research_transport() -> research.ResearchTransport | None:
+        if cfg.research_transport is not None:
+            return cfg.research_transport()
+        if not live_mode_allowed():
+            return None
+        return default_research_transport(research.TIMEOUT_S)
+
+    def run_outside(request: Request, args: dict[str, str]) -> OutsideMentionsAnswer:
+        """``outside_mentions``: web research block for a product code (full keys only)."""
+        if getattr(request.state, "key_demo", False):
+            raise DemoKeyRefusedError(outside.DEMO_REFUSAL)
+        code = normalize_code(args["product_code"])
+        topic = " ".join(args.get("topic", "").split()) or None
+        if topic is not None and looks_like_phi(topic):
+            raise InvalidInputError(
+                "topic looks like it holds patient details (an email, phone, ID or date of "
+                "birth). Remove them and try again."
+            )
+        known = cfg.data.known_product_codes()
+        if code not in known and code_exists(code) is False:
+            raise unknown_code_error(code, known)  # no paid search for a typo
+        key_id = str(request.state.audit_id)
+        inputs = {"product_code": code} | (
+            {
+                "topic_sha256": hashlib.sha256(topic.lower().encode("utf-8")).hexdigest(),
+                "topic_length": str(len(topic)),
+            }
+            if topic
+            else {}
+        )
+        ok, _left = outside_daily.hit(key_id)
+        if not ok:
+            answer = outside.limit_answer(outside_daily.limit)
+        else:
+            local = os.environ.get(ALLOW_PER_INSTANCE_ENV, "").strip() == "1"
+            answer = outside.outside_mentions(
+                code,
+                topic,
+                runner=cfg.research_runner or research.run_research,
+                transport=research_transport(),
+                ledger=state.call_ledger(allow_memory=local),
+                news_fetcher=cfg.research_fetcher,
+                fee_per_search=research.search_fee_usd(),
+            )
+        canonical = answer.model_dump_json()
+        payload: dict[str, Any] = {
+            "tool": "outside_mentions",
+            "inputs": inputs,  # the topic is kept as its hash and length, never its text
+            "error": None,
+            "answer_sha256": hashlib.sha256(canonical.encode("utf-8")).hexdigest(),
+            "research": {
+                "status": answer.status,
+                "items": len(answer.items),
+                "cost_usd": answer.cost_usd,
+            },
+        }
+        label = getattr(request.state, "key_label", None)
+        actor = f"connector:key:{label}:{key_id}" if label else f"connector:key:{key_id}"
+        try:
+            state.audit_append(
+                actor=actor,
+                action="tool:outside_mentions",
+                entity_id="outside_mentions",
+                payload=payload,
+            )
+        except UpstashError as exc:
+            logger.error("connector_audit_append_failed", error=str(exc))
+        return answer
+
     def dispatch(request: Request, name: str, args: dict[str, str]) -> ToolAnswer:
+        """A gated tool (every tool but ``outside_mentions``) for the REST routes."""
+        answer = dispatch_any(request, name, args)
+        if not isinstance(answer, ToolAnswer):
+            raise InvalidInputError("Unknown tool.")
+        return answer
+
+    def dispatch_any(
+        request: Request, name: str, args: dict[str, str]
+    ) -> ToolAnswer | OutsideMentionsAnswer:
         """Run one tool with its audit entry; REST routes and ``/mcp`` both call this."""
         key_id = str(request.state.audit_id)
         demo = bool(getattr(request.state, "key_demo", False))
@@ -628,6 +743,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                         searcher.close()
 
             return audited(request, name, audit_inputs, run_lookup)
+        if name == "outside_mentions" and research_enabled():
+            return run_outside(request, args)
         raise InvalidInputError("Unknown tool.")
 
     @app.exception_handler(ApiError)
@@ -638,6 +755,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def _connector_error(_: Request, exc: ConnectorError) -> Response:
         if isinstance(exc, InvalidInputError):
             status = 422
+        elif isinstance(exc, DemoKeyRefusedError):
+            status = 403
         elif isinstance(exc, NotFoundError):
             status = 404
         else:  # SourceUnavailableError and any other connector error
@@ -785,6 +904,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 live_on=live_mode_allowed()
                 and (state.has_call_ledger or os.environ.get(ALLOW_PER_INSTANCE_ENV) == "1"),
                 clients_on=clients.enabled,
+                research_on=research_enabled(),
             )
         )
 
@@ -961,6 +1081,38 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         }
         return dispatch(request, "lookup_device", {k: v for k, v in values.items() if v})
 
+    def research_gate() -> None:
+        """While web research is off the route does not exist: 404 before anything else."""
+        if not research_enabled():
+            raise ApiError(404, "not_found", "Not found.")
+
+    @app.post(
+        "/v1/tools/outside_mentions",
+        response_model=OutsideMentionsAnswer,
+        operation_id="outside_mentions",
+        summary="Outside mentions on the web (not FDA records)",
+        description=OUTSIDE_DESCRIPTION,
+        tags=["tools"],
+        responses=_ERRORS
+        | {
+            403: {"model": ErrorResponse, "description": "Not available with the demo key."},
+            404: {"model": ErrorResponse, "description": "Web research is switched off."},
+        },
+        openapi_extra=READ_ONLY,
+        include_in_schema=research_enabled(),
+        dependencies=[Depends(research_gate)],  # runs before the key check and the body
+    )
+    def outside_mentions_route(
+        request: Request, key_id: key_dep, body: OutsideMentionsRequest
+    ) -> OutsideMentionsAnswer:
+        args = {"product_code": body.product_code}
+        if body.topic:
+            args["topic"] = body.topic
+        answer = dispatch_any(request, "outside_mentions", args)
+        if not isinstance(answer, OutsideMentionsAnswer):  # pragma: no cover - by construction
+            raise ApiError(500, "internal_error", "Something went wrong on the server.")
+        return answer
+
     @app.get(
         "/v1/public/check_device_type",
         response_model=PublicCheckAnswer,
@@ -1111,8 +1263,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 rpc_error(None, -32600, "Batches are not supported."), status_code=400
             )
 
-        def run(name: str, args: dict[str, str]) -> ToolAnswer:
-            return dispatch(request, name, args)
+        def run(name: str, args: dict[str, str]) -> ToolAnswer | OutsideMentionsAnswer:
+            return dispatch_any(request, name, args)
 
         reply = await run_in_threadpool(handle_message, message, run)
         if reply is None:

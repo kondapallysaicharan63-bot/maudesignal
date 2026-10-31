@@ -1,10 +1,10 @@
 # Skill: web-research
 
-**Version:** 1.0.0 (HACKATHON-BUILT — Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026)
+**Version:** 1.1.0 (HACKATHON-BUILT — Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026)
 **Model:** Meta Muse Spark (`muse-spark-1.3`, Standard tier) via the Meta Model API
 Responses endpoint, with the built-in `web_search` tool
 **Consumers:** `maudesignal.connector.research.run_research` (website Research mode, behind
-`MAUDESIGNAL_RESEARCH`; later the connector tool)
+`MAUDESIGNAL_RESEARCH`) and the connector tool `outside_mentions` (`connector/outside.py`)
 **Output schema:** `schemas/output.schema.json` describes the research block the code builds
 from the reply (url citations and search sources). It is NOT sent as a `response_format`:
 the model answers in plain text with url citations, and the code keeps only links.
@@ -38,6 +38,16 @@ The `input` is the visitor's question, with "Device type (FDA product code): XXX
 when the visitor chose a product code. The question has already passed the patient-data
 check of the live routes.
 
+## Connector question (outside_mentions)
+
+The connector tool `outside_mentions` has no free-text question: it builds the `input` from
+one of the two lines below (the code reads the quoted lines in this order and fills
+`{topic}`), then appends the product code as above. The topic is at most 120 characters and
+has passed the same patient-data check as the website routes.
+
+> Find recent public web pages about safety problems, recalls, field safety notices or adverse events for medical devices of this FDA product code.
+> Find recent public web pages about this topic for medical devices of this FDA product code: {topic}
+
 ## How the code uses the reply
 
 - Items come from `url_citation` annotations of the final message first, then from
@@ -52,6 +62,9 @@ check of the live routes.
 
 ## Changelog
 
+- 1.1.0 (2026-10-31): "Connector question (outside_mentions)" section: the two question
+  templates the connector tool `outside_mentions` sends (without and with a topic). The
+  instructions sent to the model are unchanged.
 - 1.0.0 (2026-10-31): initial version. Instructions for Muse Spark 1.3 with the built-in
   `web_search` tool (at most two searches, low reasoning, 3000 output tokens), and the research
   block schema. Probe 1 (run 41246131207) showed the tool is accepted on `muse-spark-1.3`.

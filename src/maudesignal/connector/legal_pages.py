@@ -119,6 +119,7 @@ def render_privacy(
     shared_store: bool,
     live_on: bool | None = None,
     clients_on: bool = True,
+    research_on: bool = False,
 ) -> str:
     """The privacy page (it answers a connector data questionnaire).
 
@@ -128,6 +129,7 @@ def render_privacy(
         shared_store: True when an Upstash Redis store is configured.
         live_on: Whether live Meta calls are on here; ``None`` reads the environment.
         clients_on: Whether per-client call counts are kept (``MAUDESIGNAL_CLIENTS_PANEL``).
+        research_on: Whether web research is on (``MAUDESIGNAL_RESEARCH``).
     """
     redis = (
         "Upstash Redis is configured here: rate-limit counters, the per-key daily totals, a "
@@ -147,6 +149,14 @@ def render_privacy(
         "time. No question, tool input, answer, address or user agent is kept with it.</li>"
         if clients_on
         else "<li>Per-client call counts are switched off here: none are kept.</li>"
+    )
+    web = (
+        "Web research is ON here: the outside_mentions tool (full keys only) sends the product "
+        "code and the optional topic, and the website's Research mode sends the question, to "
+        "Muse Spark with its web search tool. Web results are labelled as not FDA records and "
+        "are not verified."
+        if research_on
+        else "Web research is off here: nothing is sent for a web search."
     )
     clients_kept = " and per-client call counts" if clients_on else ""
     # With Upstash configured the counts live in Redis, not in Blob.
@@ -181,7 +191,7 @@ succeeded, its real cost) and no text, no address and no key. {html.escape(redis
 <li>Vercel Inc.: hosting, runtime logs and Blob storage.</li>
 <li>Meta Platforms: Meta Model API, only when a model key is set on the server: for the
 <code>ask</code> tool (full keys only) and for the website's live ask, voice and label routes.
-{live_ask_line(live_on)} {live_routes_line(live_on)}</li>
+{live_ask_line(live_on)} {live_routes_line(live_on)} {html.escape(web)}</li>
 <li>Upstash: only if a Redis store is configured (see above).</li>
 <li>Resend: only if an email notifier is configured. {html.escape(resend)}</li>
 </ul>

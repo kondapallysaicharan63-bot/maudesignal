@@ -48,6 +48,12 @@ class SourceUnavailableError(ConnectorError):
     code = "source_unavailable"
 
 
+class DemoKeyRefusedError(ConnectorError):
+    """The public demo key may not use this tool (maps to 403)."""
+
+    code = "demo_key"
+
+
 def field_name(loc: object) -> str:
     """The input name in a validation error location, never a list index or a section name.
 
