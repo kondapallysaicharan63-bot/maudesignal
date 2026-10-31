@@ -53,21 +53,36 @@ MAX_TRACKED_CLIENTS = 10_000
 WINDOW_SECONDS = 60.0
 
 _HEX64 = re.compile(r"^[0-9a-f]{64}$")
-_LABELLED = re.compile(r"^([A-Za-z0-9_-]{1,32})=(.+)$")
+_LABEL = re.compile(r"[A-Za-z0-9_-]{1,32}")
+
+
+class KeyConfigError(ValueError):
+    """A key list entry is malformed (for example a bad label). The message never holds a key."""
 
 
 def split_label(item: str) -> tuple[str | None, str]:
     """Split ``label=KEY`` into ``(label, KEY)``; anything else is ``(None, item)``.
 
-    An entry counts as labelled only when the part after ``=`` is a ``sha256:`` digest or
-    at least ``MIN_KEY_CHARS`` long, so a plain key that happens to contain ``=`` (base64
-    padding, for example) is kept whole instead of being cut at the ``=``.
+    The text before the first ``=`` is a label when it is 1 to 32 letters, digits, ``-`` or
+    ``_`` and something follows the ``=``; the label is never part of the key. A plain key that
+    ends in base64 padding (``=``) has nothing after its ``=`` and is kept whole.
+
+    Raises:
+        KeyConfigError: The part after the first ``=`` looks like a key (a ``sha256:`` digest or
+            ``MIN_KEY_CHARS`` or more characters) but the part before it is not a valid label.
     """
-    m = _LABELLED.match(item)
-    if m:
-        rest = m.group(2).strip()
-        if rest.lower().startswith("sha256:") or len(rest) >= MIN_KEY_CHARS:
-            return m.group(1), rest
+    head, sep, rest = item.partition("=")
+    rest = rest.strip()
+    if not sep or not rest.strip("="):
+        return None, item
+    head = head.strip()
+    if _LABEL.fullmatch(head):
+        return head, rest
+    if rest.lower().startswith("sha256:") or len(rest) >= MIN_KEY_CHARS:
+        raise KeyConfigError(
+            "A key entry has an invalid label. A label is 1 to 32 letters, digits, - or _, "
+            "written LABEL=KEY."
+        )
     return None, item
 
 
@@ -83,7 +98,10 @@ class KeyMatch:
 def first_plain_key(raw: str) -> str | None:
     """The first entry's plain key (label removed), or None if it is a digest or too short."""
     first = next((e.strip() for e in raw.split(",") if e.strip()), "")
-    first = split_label(first)[1]
+    try:
+        first = split_label(first)[1]
+    except KeyConfigError:
+        return None
     if not first or first.lower().startswith("sha256:") or len(first) < MIN_KEY_CHARS:
         return None
     return first
@@ -93,15 +111,22 @@ def parse_entries(raw: str) -> tuple[list[tuple[str, str | None]], int]:
     """Split a comma-separated key list into ``(digest, label)`` pairs.
 
     Returns the pairs and the number of plain keys refused for being too short. Entries are
-    ``KEY``, ``sha256:<hex>``, ``label=KEY`` or ``label=sha256:<hex>``.
+    ``KEY``, ``sha256:<hex>``, ``label=KEY`` or ``label=sha256:<hex>``, separated by commas
+    (whitespace around entries is ignored).
+
+    Raises:
+        KeyConfigError: An entry has an invalid label (the message names the entry number).
     """
     out: list[tuple[str, str | None]] = []
     too_short = 0
-    for entry in raw.split(","):
+    for number, entry in enumerate(raw.split(","), start=1):
         item = entry.strip()
         if not item:
             continue
-        label, item = split_label(item)
+        try:
+            label, item = split_label(item)
+        except KeyConfigError as exc:
+            raise KeyConfigError(f"Entry {number}: {exc}") from None
         if item.lower().startswith("sha256:"):
             out.append((item[7:].strip().lower(), label))
         elif len(item) < MIN_KEY_CHARS:

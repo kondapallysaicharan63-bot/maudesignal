@@ -42,7 +42,7 @@ from maudesignal.connector.globalcap import (
 from maudesignal.connector.globalcap import blob_enforced_cap, global_daily_usd
 from maudesignal.connector.models import Fact, Provenance, ToolAnswer, WithheldSentence
 from maudesignal.connector.readonly import make_read_only
-from maudesignal.connector.speech import compose, speak_date
+from maudesignal.connector.speech import compose, plural, speak_date
 from maudesignal.connector.store import (
     RESERVING_LEDGERS,
     ConnectorState,
@@ -86,7 +86,7 @@ _LEADS = {
     "live_off": f"Live answers are switched off on this server, so {_RECORDED}",
     "model_error": f"The live model is not available just now, so {_RECORDED}",
     "timeout": f"This request ran out of time, so {_RECORDED}",
-    "demo_key": f"The demo key never starts a live model call, so {_RECORDED}",
+    "demo_key": f"The public demo key never starts a live model call, so {_RECORDED}",
     "no_transcript": (
         "Your recording could not be turned into text, so this is a recorded answer to a "
         "different spoken question"
@@ -313,7 +313,7 @@ def _speakable(lead: str | None, passed: list[str], withheld: int) -> str:
         parts.append(
             "One sentence was left out because it could not be verified or tied to a source."
             if withheld == 1
-            else f"{withheld} sentences were left out because they could not be verified "
+            else f"{plural(withheld, 'sentence')} were left out because they could not be verified "
             "or tied to a source."
         )
     return compose(parts)
@@ -593,6 +593,7 @@ def ask(
     key_id: str,
     runtime: AskRuntime,
     now: Clock = utc_now,
+    allow_live: bool = True,
 ) -> ToolAnswer:
     """Answer a question through the copilot and the claim gate, or from a recorded run.
 
@@ -602,12 +603,15 @@ def ask(
         key_id: Non-secret id of the calling API key (hash prefix), for its cost ledger.
         runtime: Live-model settings.
         now: Clock (tests).
+        allow_live: False for the public demo key: never start a live model call.
 
     Raises:
         InvalidInputError: The question is empty or too long.
         SourceUnavailableError: No live answer and nothing recorded exists at all.
     """
-    return ask_detailed(data, question, key_id=key_id, runtime=runtime, now=now).answer
+    return ask_detailed(
+        data, question, key_id=key_id, runtime=runtime, now=now, allow_live=allow_live
+    ).answer
 
 
 def ask_detailed(

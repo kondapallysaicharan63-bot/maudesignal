@@ -145,8 +145,8 @@ def _inside_repository(target_dir: Path) -> bool:
     return any((p / ".git").exists() for p in (target_dir, *target_dir.parents))
 
 
-def write_key_file(key: str, directory: Path, now: datetime) -> Path:
-    """Write the key to a new mode-600 file in ``directory`` (never inside the repository)."""
+def write_key_file(key: str, directory: Path, now: datetime, label: str | None = None) -> Path:
+    """Write the entry (``KEY`` or ``LABEL=KEY``) to a new mode-600 file outside the repository."""
     target_dir = directory.expanduser().resolve()
     if _inside_repository(target_dir):
         raise ValueError("refusing to write a key inside the repository")
@@ -154,7 +154,7 @@ def write_key_file(key: str, directory: Path, now: datetime) -> Path:
     path = target_dir / f"maudesignal-connector-key-{now:%Y%m%dT%H%M%SZ}.txt"
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     with os.fdopen(fd, "w", encoding="utf-8") as fh:
-        fh.write(key + "\n")
+        fh.write(entry_for(key, label) + "\n")
     path.chmod(0o600)
     return path
 
@@ -219,7 +219,7 @@ def main(
         )
         return 0
     try:
-        path = write_key_file(key, args.out_dir, now())
+        path = write_key_file(key, args.out_dir, now(), label)
     except (OSError, ValueError) as exc:
         print(f"Could not save the key: {type(exc).__name__}. Nothing was written.", file=err)
         return 1
@@ -229,13 +229,16 @@ def main(
         "(Production) and paste the file's single line as the value, then redeploy.",
         file=out,
     )
-    print(
-        f'To try it from this shell without showing it: MAUDESIGNAL_KEY="$(cat {path})"',
-        file=out,
-    )
     if label:
         print(
-            f"Line to paste into MAUDESIGNAL_API_KEYS (append it after a comma): {label}=<key>",
+            f"The file's line is {label}=<key>. To add it to a list that already exists, append "
+            "it after a comma. To try the key from this shell without showing it, use the part "
+            f'after the first "=": MAUDESIGNAL_KEY="$(cut -d= -f2- {path})"',
+            file=out,
+        )
+    else:
+        print(
+            f'To try it from this shell without showing it: MAUDESIGNAL_KEY="$(cat {path})"',
             file=out,
         )
     print("Delete the file once the key is stored in your password manager.", file=out)

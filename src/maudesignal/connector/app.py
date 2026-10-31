@@ -41,6 +41,7 @@ from maudesignal.connector.data import ConnectorData
 from maudesignal.connector.docs_page import render_docs_page
 from maudesignal.connector.errors import ConnectorError, InvalidInputError, NotFoundError
 from maudesignal.connector.feedback import mount_feedback
+from maudesignal.connector.globalcap import global_daily_usd
 from maudesignal.connector.legal_pages import render_privacy, render_terms
 from maudesignal.connector.live import LiveBackends, LiveConfig, mount_live
 from maudesignal.connector.manifest import build_manifest
@@ -121,6 +122,7 @@ CONNECT_PATH = "/v1/connect"
 PUBLIC_URL_ENV = "MAUDESIGNAL_PUBLIC_URL"
 READ_ONLY = {"x-maudesignal-read-only": True, "x-maudesignal-scope": "read"}
 MCP_PATH = "/mcp"
+DEMO_LABEL = "demo"
 MAX_MCP_BODY_BYTES = 64 * 1024
 
 DESCRIPTION = (
@@ -252,6 +254,8 @@ class ConnectInfo(BaseModel):
     mcp_url: str
     openapi_url: str
     docs_url: str
+    privacy_url: str
+    terms_url: str
     auth_header: str
     demo_key: str | None
     demo_limits: DemoLimits
@@ -328,11 +332,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     demo_daily = state.daily_counter("demo-key-day", DEMO_PER_DAY, today=lambda: cfg.now().date())
     web_origins = frozenset(cfg.web_origins)
+
     app = FastAPI(
         title="MaudeSignal connector API",
         version=API_VERSION,
         description=DESCRIPTION,
-        contact={"name": "MaudeSignal (open source)", "url": REPO_URL},
+        contact={"name": "MaudeSignal (open source)", "url": REPO_URL + "/issues"},
         terms_of_service=TERMS_URL,
         docs_url=None,
         redoc_url=None,
@@ -388,8 +393,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             day_ok, _left = demo_daily.hit(key_id)
             if not day_ok:
                 now = cfg.now()
-                reset = datetime.combine(now.date(), datetime.min.time(), tzinfo=UTC)
-                wait = max(1, 86_400 - int((now - reset).total_seconds()))
+                midnight = datetime.combine(now.date(), datetime.min.time(), tzinfo=UTC)
+                wait = max(1, 86_400 - int((now - midnight).total_seconds()))
                 raise ApiError(
                     429,
                     "rate_limited",
@@ -400,7 +405,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         response.headers["X-RateLimit-Limit"] = str(active.limit)
         response.headers["X-RateLimit-Remaining"] = str(remaining)
         request.state.audit_id = key_id  # peppered HMAC id (as the limiter and ledger); not the key
-        request.state.key_label = matched.label
+        request.state.key_label = DEMO_LABEL if matched.demo else matched.label
         request.state.key_demo = matched.demo
         return key_id
 
@@ -569,28 +574,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             )
         return response
 
-    @app.get("/", response_class=HTMLResponse, include_in_schema=False)
-    @app.get("/docs-page", response_class=HTMLResponse, include_in_schema=False)
-    def docs_page() -> HTMLResponse:
-        return HTMLResponse(
-            render_docs_page(
-                version=API_VERSION,
-                state_backend=state.backend,
-                rate_per_min=limiter.limit,
-                public_per_hour=public_limiter.limit,
-                daily_usd=ask_runtime.caps.daily_usd,
-                request_usd=ask_runtime.caps.session_usd,
-            )
-        )
-
-    @app.get("/privacy", response_class=HTMLResponse, include_in_schema=False)
-    def privacy_page() -> HTMLResponse:
-        return HTMLResponse(render_privacy())
-
-    @app.get("/terms", response_class=HTMLResponse, include_in_schema=False)
-    def terms_page() -> HTMLResponse:
-        return HTMLResponse(render_terms())
-
     @app.get(
         CONNECT_PATH,
         response_model=ConnectInfo,
@@ -607,14 +590,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def connect_info(request: Request) -> ConnectInfo:
         base = os.environ.get(PUBLIC_URL_ENV, "").strip().rstrip("/")
         if not base.startswith(("https://", "http://")):
-            base = str(request.base_url).rstrip("/")
-        demo = cfg.keys.demo_key_hint
+            base = API_BASE_URL
         return ConnectInfo(
             mcp_url=f"{base}{MCP_PATH}",
             openapi_url=f"{base}/openapi.json",
             docs_url=f"{base}/docs-page",
+            privacy_url=f"{base}/privacy",
+            terms_url=f"{base}/terms",
             auth_header="X-API-Key",
-            demo_key=demo,
+            demo_key=cfg.keys.demo_key_hint,
             demo_limits=DemoLimits(
                 per_minute=demo_limiter.limit,
                 per_day=DEMO_PER_DAY,
@@ -626,6 +610,45 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "Send the key in the X-API-Key header (the demo key above works for a first try).",
                 "Call a tool, for example what_changed_this_week with product_code LLZ.",
             ],
+        )
+
+    @app.get("/", response_class=HTMLResponse, include_in_schema=False)
+    @app.get("/docs-page", response_class=HTMLResponse, include_in_schema=False)
+    def docs_page() -> HTMLResponse:
+        return HTMLResponse(
+            render_docs_page(
+                version=API_VERSION,
+                state_backend=state.backend,
+                rate_per_min=limiter.limit,
+                public_per_hour=public_limiter.limit,
+                daily_usd=ask_runtime.caps.daily_usd,
+                request_usd=ask_runtime.caps.session_usd,
+            )
+        )
+
+    @app.get("/privacy", response_class=HTMLResponse, include_in_schema=False)
+    def privacy_page() -> HTMLResponse:
+        return HTMLResponse(
+            render_privacy(
+                rate_per_min=limiter.limit,
+                public_per_hour=public_limiter.limit,
+                shared_store=state.backend == "upstash_redis",
+            )
+        )
+
+    @app.get("/terms", response_class=HTMLResponse, include_in_schema=False)
+    def terms_page() -> HTMLResponse:
+        return HTMLResponse(
+            render_terms(
+                rate_per_min=limiter.limit,
+                public_per_hour=public_limiter.limit,
+                daily_usd=ask_runtime.caps.daily_usd,
+                total_daily_usd=global_daily_usd(),
+                request_usd=ask_runtime.caps.session_usd,
+                failed_auth_per_min=failed_auth.limit,
+                demo_per_min=demo_limiter.limit,
+                demo_per_day=DEMO_PER_DAY,
+            )
         )
 
     @app.get(
@@ -810,10 +833,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         description=(
             "Read-only. The last entries (default 20, at most 200) of the append-only, "
             "hash-chained log of tool calls: tool, inputs, answer SHA-256, gate counts, "
-            "provenance and the caller's key id (a keyed hash held by the server; never "
-            "the key). An `ask` question is stored as its SHA-256 and length, not its text. "
-            "`chain.verified` is recomputed on every call. Full keys only: the public demo key "
-            "gets 403."
+            "provenance and the caller's label (if any) and key id (a keyed hash held by the "
+            "server; never the key). An `ask` question is stored as its SHA-256 and length, not "
+            "its text. Full keys only: the public demo key gets 403. "
+            "`chain.verified` is recomputed on every call."
         ),
         tags=["service"],
         responses=_ERRORS | {503: {"model": ErrorResponse, "description": "Audit store down."}},

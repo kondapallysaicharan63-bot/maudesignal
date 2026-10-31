@@ -17,6 +17,16 @@ _RATIO = re.compile(r"(\d(?:\.\d+)?)\s*[x×](?![\w])")
 _PCT = re.compile(r"(\d(?:\.\d+)?)\s*%")
 
 
+def plural(n: int, noun: str, plural_form: str | None = None) -> str:
+    """'1 report' / '2 reports' / '0 reports' (``plural_form`` for irregular nouns)."""
+    return f"{n} {noun if n == 1 else (plural_form or noun + 's')}"
+
+
+def were(n: int) -> str:
+    """'was' for exactly 1, otherwise 'were' ('There was 1 report', 'There were 2 reports')."""
+    return "was" if n == 1 else "were"
+
+
 def speak_date(value: str | date | None) -> str:
     """'20260831', '2026-08-31' or a date -> 'August 31, 2026' ('' for None)."""
     if value is None:

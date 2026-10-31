@@ -36,6 +36,10 @@ class StoreError(Exception):
     """The record store failed; the message holds no token and no record text."""
 
 
+class ObjectGoneError(StoreError):
+    """The object was not found (it was deleted, or never existed)."""
+
+
 @dataclass(frozen=True)
 class BlobRef:
     """One stored object: its pathname and where to fetch it."""
@@ -55,6 +59,9 @@ class RecordStore(Protocol):
         ``overwrite=True`` replaces an existing object at the same pathname (the spend ledger
         and the name-redaction step use it; feedback and visits never do).
         """
+
+    def overwrite_json(self, pathname: str, record: dict[str, Any]) -> None:
+        """Replace the record stored at an existing ``pathname`` (same path, new content)."""
 
     def list_prefix(self, prefix: str, *, strict: bool = False) -> list[BlobRef]:
         """Every stored object whose pathname starts with ``prefix``."""
@@ -82,6 +89,10 @@ class MemoryStore:
         with self._lock:
             self._items[pathname] = data
 
+    def overwrite_json(self, pathname: str, record: dict[str, Any]) -> None:
+        """Replace a record at the same pathname."""
+        self.put_json(pathname, record)
+
     def list_prefix(self, prefix: str, *, strict: bool = False) -> list[BlobRef]:
         """Objects under ``prefix``."""
         with self._lock:
@@ -93,7 +104,7 @@ class MemoryStore:
             try:
                 return self._items[ref.pathname]
             except KeyError:
-                raise StoreError("object not found") from None
+                raise ObjectGoneError("object not found") from None
 
     def delete(self, ref: BlobRef) -> None:
         """Remove one object (absent is not an error)."""
@@ -129,6 +140,13 @@ class VercelBlobStore:
 
     def put_json(self, pathname: str, record: dict[str, Any], *, overwrite: bool = False) -> None:
         """PUT one private JSON object, no random suffix (the pathname already has a uuid)."""
+        self._put(pathname, record, overwrite=overwrite)
+
+    def overwrite_json(self, pathname: str, record: dict[str, Any]) -> None:
+        """PUT over an existing private object at the same pathname (``x-allow-overwrite``)."""
+        self._put(pathname, record, overwrite=True)
+
+    def _put(self, pathname: str, record: dict[str, Any], *, overwrite: bool) -> None:
         body = json.dumps(record, sort_keys=True).encode("utf-8")
         headers = self._auth() | {
             "x-vercel-blob-access": "private",
@@ -180,6 +198,8 @@ class VercelBlobStore:
         except httpx.HTTPError as exc:
             logger.error("blob_get_failed", error_type=type(exc).__name__)
             raise StoreError("blob store unreachable") from None
+        if r.status_code == 404:
+            raise ObjectGoneError("object not found")
         if r.status_code != 200:
             logger.error("blob_get_failed", status=r.status_code)
             raise StoreError(f"blob store answered {r.status_code}")

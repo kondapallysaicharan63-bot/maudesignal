@@ -166,8 +166,16 @@ def test_label_in_file_mode_prints_the_line_without_the_key(tmp_path: Path) -> N
     mod = load()
     code, out, err = run(mod, ["--label", "charan", "--out-dir", str(tmp_path / "k")], {})
     assert code == 0 and err == ""
-    key = next((tmp_path / "k").glob("*.txt")).read_text().strip()
-    assert "charan=<key>" in out and key not in out
+    line = next((tmp_path / "k").glob("*.txt")).read_text().strip()
+    assert line.startswith("charan=")
+    key = line.split("=", 1)[1]
+    assert len(key) >= 32 and "charan=<key>" in out
+    assert line not in out + err and key not in out + err
+    assert key[:6] not in out + err
+    from maudesignal.connector.security import KeyStore
+
+    store = KeyStore.from_env({"MAUDESIGNAL_API_KEYS": line})
+    assert store.match(key) is not None and store.match(line) is None
 
 
 def test_bad_label_is_refused() -> None:

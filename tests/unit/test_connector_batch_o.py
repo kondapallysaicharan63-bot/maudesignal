@@ -17,36 +17,35 @@ from typing import Any
 import pytest
 
 pytest.importorskip("fastapi")
-from fastapi.testclient import TestClient  # noqa: E402
 
 from maudesignal.connector import mentions as mn  # noqa: E402
-from maudesignal.connector.app import Settings, create_app  # noqa: E402
 from maudesignal.connector.ask import AskRuntime  # noqa: E402
-from maudesignal.connector.blob_store import BlobRef, MemoryStore, StoreError  # noqa: E402
+from maudesignal.connector.blob_store import (  # noqa: E402
+    BlobRef,
+    MemoryStore,
+    ObjectGoneError,
+    StoreError,
+)
 from maudesignal.connector.data import ConnectorData  # noqa: E402
 from maudesignal.connector.forbidden import forbidden_in  # noqa: E402
 from maudesignal.connector.globalcap import LEDGER_ID, blob_enforced_cap  # noqa: E402
-from maudesignal.connector.legal_pages import (  # noqa: E402
-    contact_line,
-    render_privacy,
-    render_terms,
-)
 from maudesignal.connector.live import LiveConfig  # noqa: E402
-from maudesignal.connector.security import KeyStore, RateLimiter, sha256_hex  # noqa: E402
-from maudesignal.connector.store import BlobLedger, BlobLedgerError, ConnectorState  # noqa: E402
-from maudesignal.copilot.spend import SpendCaps  # noqa: E402
+from maudesignal.connector.store import (  # noqa: E402
+    BlobLedger,
+    BlobLedgerError,
+    ConnectorState,
+    _Reservation,
+)
+from maudesignal.copilot.spend import DailyLedger, SpendCaps  # noqa: E402
 from tests.unit.test_connector import (
     KEY,
     SCRIPT,
     FakeClient,
-    fake_check,
     live_runtime,
 )  # noqa: E402
 from tests.unit.test_connector_live import (  # noqa: E402
     ORIGIN,
-    QUESTION,
     Env,
-    RecordingSpark,
 )
 
 DAY = date(2026, 10, 30)
@@ -78,16 +77,19 @@ def has_drop_word(text: str) -> list[str]:
 
 
 class FakeBlobStore:
-    """A private-Blob-like store: overwrite flag honoured, failures and races injectable."""
+    """A private-Blob-like store: overwrite honoured, failures and races injectable."""
 
     backend = "blob_private"
 
     def __init__(self) -> None:
         self.items: dict[str, bytes] = {}
         self.lock = threading.Lock()
-        self.fail_list = self.fail_put = self.fail_get = False
+        self.fail_list = self.fail_put = self.fail_get = self.fail_overwrite = False
+        self.fail_delete = False
         self.after_put: Any = None
+        self.after_list: Any = None
         self.puts = 0
+        self.overwrites = 0
 
     def put_json(self, pathname: str, record: dict[str, Any], *, overwrite: bool = False) -> None:
         if self.fail_put:
@@ -100,15 +102,25 @@ class FakeBlobStore:
         if self.after_put:
             self.after_put(pathname)
 
+    def overwrite_json(self, pathname: str, record: dict[str, Any]) -> None:
+        if self.fail_overwrite:
+            raise StoreError("blob store unreachable")
+        with self.lock:
+            self.items[pathname] = json.dumps(record, sort_keys=True).encode()
+            self.overwrites += 1
+
     def list_prefix(self, prefix: str, *, strict: bool = False) -> list[BlobRef]:
         if self.fail_list:
             raise StoreError("blob store unreachable")
         with self.lock:
-            return [
+            out = [
                 BlobRef(p, "https://blob.test/" + p)
                 for p in sorted(self.items)
                 if p.startswith(prefix)
             ]
+        if self.after_list:
+            self.after_list(prefix)
+        return out
 
     def get(self, ref: BlobRef) -> bytes:
         if self.fail_get:
@@ -117,35 +129,40 @@ class FakeBlobStore:
             try:
                 return self.items[ref.pathname]
             except KeyError:
-                raise StoreError("not found") from None
+                raise ObjectGoneError("not found") from None
 
     def delete(self, ref: BlobRef) -> None:
+        if self.fail_delete:
+            raise StoreError("blob store unreachable")
         with self.lock:
             self.items.pop(ref.pathname, None)
 
     def seed_ledger(self, usd: float, day: date = DAY, name: str = LEDGER_ID) -> None:
-        """Replace the day's ledger entries with one real-cost entry of ``usd``."""
-        prefix = f"ledger/{name}/{day.isoformat()}/"
+        """Replace the day's ledger entries with one settled request that cost ``usd``."""
+        prefix = f"ledger/{day.isoformat()}/"
         for p in [p for p in self.items if p.startswith(prefix)]:
             del self.items[p]
-        micros = int(round(usd * 1_000_000))
-        self.items[f"{prefix}a-{micros}-1-{'0' * 32}.json"] = b"{}"
+        self.items[f"{prefix}{'0' * 32}.json"] = json.dumps(
+            {"hold_usd": usd, "actual_usd": usd, "settled": True}
+        ).encode()
 
     def ledger_usd(self, day: date = DAY, name: str = LEDGER_ID) -> float:
-        prefix = f"ledger/{name}/{day.isoformat()}/"
-        total = 0
-        for p in self.items:
+        """What the ledger counts for the day: actual if settled, else at least the hold."""
+        prefix = f"ledger/{day.isoformat()}/"
+        total = 0.0
+        for p, raw in self.items.items():
             if p.startswith(prefix):
-                kind, micros = p[len(prefix) :].split("-")[:2]
-                total += -int(micros) if kind == "r" else int(micros)
-        return total / 1_000_000
+                rec = json.loads(raw)
+                hold, actual = rec.get("hold_usd", 0.0), rec.get("actual_usd", 0.0)
+                total += actual if rec.get("settled") else max(hold, actual)
+        return total
 
 
 def ledger(store: FakeBlobStore, **kw: Any) -> BlobLedger:
     return BlobLedger(store, LEDGER_ID, today=lambda: DAY, **kw)
 
 
-# --- 1. durable global ledger ----------------------------------------------------------------
+# --- 1. durable global ledger (append-only: one object per request) ---------------------------
 
 
 def test_blob_ledger_reserves_then_settles_with_the_real_cost() -> None:
@@ -153,22 +170,39 @@ def test_blob_ledger_reserves_then_settles_with_the_real_cost() -> None:
     led = ledger(store)
     assert led.spent_today() == 0.0  # no objects is a new day
     assert led.reserve(0.25, 2.7) is True
+    (path,) = store.items
+    assert path.startswith("ledger/2026-10-30/") and path.endswith(".json")
+    assert json.loads(store.items[path]) == {"hold_usd": 0.25}  # written before the call
     assert store.ledger_usd() == 0.25
     led.add(0.04, 1)  # the real cost
-    led.release(0.25)  # the hold goes back
-    assert store.ledger_usd() == pytest.approx(0.04)
+    assert json.loads(store.items[path]) == {"hold_usd": 0.25}  # nothing written per call
+    led.release(0.25)  # settle: only our own object is overwritten
+    assert list(store.items) == [path]
+    assert json.loads(store.items[path]) == {"hold_usd": 0.25, "actual_usd": 0.04, "settled": True}
+    assert store.overwrites == 1 and store.puts == 1
     assert led.spent_today() == pytest.approx(0.04)
-    # one object per event, none overwritten
-    assert len(store.items) == 3
-    assert all(p.startswith("ledger/live-global/2026-10-30/") for p in store.items)
 
 
-def test_blob_ledger_refuses_a_hold_over_the_cap_and_holds_nothing() -> None:
+def test_blob_ledger_refuses_a_hold_over_the_cap_and_removes_its_own_object() -> None:
     store = FakeBlobStore()
     store.seed_ledger(2.6)
     led = ledger(store)
     assert led.reserve(0.25, 2.7) is False
-    assert store.ledger_usd() == 2.6 and len(store.items) == 1  # not even written
+    assert store.ledger_usd() == 2.6 and len(store.items) == 1  # our object is gone again
+    assert led.release(0.25) is None  # nothing is held: a no-op
+
+
+def test_a_refused_hold_that_cannot_be_deleted_is_zeroed_or_kept() -> None:
+    store = FakeBlobStore()
+    store.seed_ledger(2.6)
+    store.fail_delete = True
+    assert ledger(store).reserve(0.25, 2.7) is False
+    assert store.ledger_usd() == 2.6  # zeroed in place: a refusal started no model call
+    store2 = FakeBlobStore()
+    store2.seed_ledger(2.6)
+    store2.fail_delete = store2.fail_overwrite = True
+    assert ledger(store2).reserve(0.25, 2.7) is False
+    assert store2.ledger_usd() == pytest.approx(2.85)  # kept: it can only over-count
 
 
 def test_a_hold_that_loses_the_race_is_taken_back() -> None:
@@ -177,9 +211,13 @@ def test_a_hold_that_loses_the_race_is_taken_back() -> None:
     fired: list[int] = []
 
     def other_writes(path: str) -> None:
-        if "/h-250000-" in path and not fired:  # another instance's hold lands after ours
-            fired.append(1)
-            store.items[f"ledger/{LEDGER_ID}/2026-10-30/h-250000-0-{'b' * 32}.json"] = b"{}"
+        if (
+            "ledger/2026-10-30/" in path
+            and not fired
+            and path != f"ledger/2026-10-30/{'0' * 32}.json"
+        ):
+            fired.append(1)  # another instance's hold lands right after ours
+            store.items[f"ledger/2026-10-30/{'b' * 32}.json"] = b'{"hold_usd": 0.25}'
 
     store.after_put = other_writes
     assert ledger(store).reserve(0.25, 2.8) is False  # 2.5 + 0.25 + 0.25 > 2.8
@@ -190,8 +228,78 @@ def test_cold_start_keeps_the_total() -> None:
     store = FakeBlobStore()
     assert ledger(store).reserve(1.0, 2.7)
     fresh = ledger(store)  # a new object, as after a cold start: only the store remembers
-    assert fresh.spent_today() == 1.0
+    assert fresh.spent_today() == 1.0  # an unsettled hold still counts
     assert fresh.reserve(1.0, 2.7) and not fresh.reserve(1.0, 2.7)
+
+
+def _interleaved(
+    store: FakeBlobStore, cap: float, hold: float
+) -> tuple[bool, bool, BlobLedger, BlobLedger]:
+    """The worst-case order: A puts, B puts, A lists, B lists, then each decides.
+
+    ``a.reserve`` runs for real; B's steps are driven from hooks on A's put and A's listing,
+    using the same helpers ``reserve`` uses, so both listings happen before either hold is
+    taken back.
+    """
+    a, b = ledger(store), ledger(store)
+    day = DAY.isoformat()
+    state: dict[str, Any] = {}
+
+    def after_a_put(_path: str) -> None:
+        if "b_path" not in state:
+            state["b_path"] = ""  # set first: B's own put fires this hook again
+            state["b_path"] = b._write_new(day, {"hold_usd": hold})  # B puts
+
+    def after_a_list(_prefix: str) -> None:
+        if "b_ok" not in state:  # B lists (A has already listed), before A decides
+            store.after_list = None
+            total, _refs = b._sum(day)
+            state["b_ok"] = total <= cap + 1e-9
+            if state["b_ok"]:
+                b._set_mine(_Reservation(day, state["b_path"], hold))
+            else:
+                b._drop(day, state["b_path"])
+
+    store.after_put, store.after_list = after_a_put, after_a_list
+    got_a = a.reserve(hold, cap)
+    store.after_put = store.after_list = None
+    return got_a, bool(state["b_ok"]), a, b
+
+
+def test_two_instances_interleaved_with_room_for_only_one_both_are_refused(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Deterministic two-instance interleave; the process lock is patched to a no-op.
+
+    Both write their hold before either lists, so each listing sees both holds. With room for
+    one only (cap 0.30, holds 0.25) they cannot both pass, and what stays is within the cap.
+    """
+    monkeypatch.setattr(DailyLedger, "_lock", _NoLock())  # the ledger must not rely on a lock
+    store = FakeBlobStore()
+    got_a, got_b, _, _ = _interleaved(store, cap=0.30, hold=0.25)
+    assert not (got_a and got_b)
+    assert store.ledger_usd() <= 0.30 + 1e-9
+    assert store.ledger_usd() == pytest.approx(0.25 * (got_a + got_b))
+
+
+def test_two_instances_interleaved_that_both_pass_end_under_the_daily_total(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(DailyLedger, "_lock", _NoLock())
+    store = FakeBlobStore()
+    store.seed_ledger(2.0)
+    cap = blob_enforced_cap({})  # 3.00 minus the largest single-request cap = 2.70
+    got_a, got_b, a, b = _interleaved(store, cap=cap, hold=0.30)
+    assert got_a is True and got_b is True  # 2.00 + 0.30 + 0.30 = 2.60 <= 2.70
+    a.add(0.30, 1)
+    b.add(0.30, 1)  # each pays its full hold
+    a.release(0.30)
+    b.release(0.30)
+    assert store.ledger_usd() == pytest.approx(2.60)
+    assert store.ledger_usd() <= 3.0
+    # one more small request fits under the enforced cap, the next large one does not
+    assert ledger(store).reserve(0.10, cap) is True
+    assert ledger(store).reserve(0.30, cap) is False
 
 
 def test_concurrent_reservations_never_pass_the_cap() -> None:
@@ -211,31 +319,33 @@ def test_concurrent_reservations_never_pass_the_cap() -> None:
         t.join()
     # no process lock exists: overlapping holds may refuse each other (fail closed), never pass
     assert sum(results) <= 10
-    assert store.ledger_usd() == pytest.approx(0.25 * sum(results))
     assert store.ledger_usd() <= 2.7
+    assert store.ledger_usd() == pytest.approx(0.25 * sum(results))
 
 
-def test_two_instances_interleaved_lose_nothing() -> None:
-    """Instance A and B reserve the same amount; nothing is read-modify-written."""
+def test_settle_failure_keeps_the_hold_and_can_only_over_count() -> None:
     store = FakeBlobStore()
-    a, b = ledger(store), ledger(store)
-    assert a.reserve(0.25, 2.7) and b.reserve(0.25, 2.7)
-    assert store.ledger_usd() == pytest.approx(0.50)
-    a.add(0.04, 1)
-    b.add(0.05, 1)
-    a.release(0.25)
-    b.release(0.25)
-    assert store.ledger_usd() == pytest.approx(0.09)  # equals the real spend
-    assert a.spent_today() == pytest.approx(0.09)
-    assert b.spent_today() == pytest.approx(0.09) and b.spent_today() <= 3.0
+    led = ledger(store)
+    assert led.reserve(0.25, 2.7)
+    led.add(0.04, 1)
+    store.fail_overwrite = True  # the write after the paid call fails
+    led.release(0.25)
+    (path,) = store.items
+    assert json.loads(store.items[path]) == {"hold_usd": 0.25}  # the hold is still in place
+    assert store.ledger_usd() == 0.25  # counted at the hold, never lower
+    assert ledger(store).spent_today() == 0.25
+    assert led.release(0.25) is None  # a second settle has nothing to do
 
 
-def test_same_total_writes_from_two_instances_both_count() -> None:
+def test_add_without_a_reservation_writes_its_own_object() -> None:
     store = FakeBlobStore()
-    a, b = ledger(store), ledger(store)
-    a.add(0.25, 1)
-    b.add(0.25, 1)  # same amount, same moment: two objects, total 0.50
-    assert a.spent_today() == pytest.approx(0.5)
+    led = ledger(store)
+    assert led.add(0.05, 1) == pytest.approx(0.05)
+    (rec,) = (json.loads(v) for v in store.items.values())
+    assert rec["hold_usd"] == 0.0 and rec["actual_usd"] == 0.05
+    store.fail_put = True
+    with pytest.raises(BlobLedgerError):
+        led.add(0.05, 1)
 
 
 def test_unreadable_unwritable_or_corrupt_ledger_fails_closed() -> None:
@@ -250,11 +360,26 @@ def test_unreadable_unwritable_or_corrupt_ledger_fails_closed() -> None:
     with pytest.raises(BlobLedgerError):
         ledger(store).reserve(0.25, 2.7)
     store.fail_put = False
-    store.items[f"ledger/{LEDGER_ID}/2026-10-30/garbage.json"] = b"not json"
+    store.items["ledger/2026-10-30/garbage.json"] = b"not json"
     with pytest.raises(BlobLedgerError):
         ledger(store).reserve(0.25, 2.7)  # an unparseable entry is an error, never zero
     with pytest.raises(BlobLedgerError):
         ledger(store).spent_today()
+    assert "ledger/2026-10-30/garbage.json" in store.items
+    # our own holds are not left counting after the failed sums: deleted, or zeroed in place
+    others = [json.loads(v) for k, v in store.items.items() if not k.endswith("garbage.json")]
+    assert all(o == {"hold_usd": 0.0, "actual_usd": 0.0} for o in others)
+
+
+def test_a_failed_read_after_our_write_takes_the_hold_back() -> None:
+    store = FakeBlobStore()
+    store.after_put = lambda _p: setattr(store, "fail_list", True)
+    with pytest.raises(BlobLedgerError):
+        ledger(store).reserve(0.25, 2.7)
+    store.fail_list = False
+    store.after_put = None
+    assert len(store.items) in (0, 1)  # deleted, or zeroed/kept if deleting failed
+    assert store.ledger_usd() <= 0.25
 
 
 def test_enforced_cap_is_the_daily_total_minus_the_largest_request() -> None:
@@ -272,6 +397,12 @@ def test_state_picks_blob_only_for_a_private_blob_store() -> None:
     assert state.global_mode == "none"
     state.attach_blob(FakeBlobStore())
     assert state.global_mode == "blob" and isinstance(state.global_ledger("x"), BlobLedger)
+
+
+def test_without_blob_or_upstash_live_calls_stay_off(tmp_path: Path) -> None:
+    env = Env(tmp_path, config=LiveConfig(daily_usd=3.0, burst_per_min=1000, ask_per_day=1000))
+    body = env.ask().json()
+    assert body["mode"] == "recorded" and not env.spark.requests
 
 
 def blob_env(tmp_path: Path, store: FakeBlobStore, **kw: Any) -> Env:
@@ -298,8 +429,9 @@ def test_live_ask_reserves_before_the_call_and_settles_on_the_shared_ledger(tmp_
     assert body["mode"] == "live"
     assert seen_during_call and seen_during_call[0] >= 0.25
     after = store.ledger_usd()
-    assert 0 < after < 0.25  # the hold was returned; the real (small) cost stays
+    assert 0 < after < 0.25  # settled: the real (small) cost, not the hold, now counts
     assert body["cost_usd"] == pytest.approx(after, abs=1e-5)
+    assert len(store.items) == 1  # one object for the one request
 
 
 def test_cold_start_keeps_the_cap_through_the_route(tmp_path: Path) -> None:
@@ -320,6 +452,16 @@ def test_unreadable_ledger_gives_a_recorded_answer_and_no_model_call(tmp_path: P
     store.fail_list = False
     store.fail_put = True
     assert env.ask().json()["mode"] == "recorded" and not env.spark.requests
+
+
+def test_settle_failure_through_the_route_leaves_the_hold(tmp_path: Path) -> None:
+    store = FakeBlobStore()
+    env = blob_env(tmp_path, store)
+    store.fail_overwrite = True
+    body = env.ask().json()
+    assert body["mode"] == "live"  # the answer was already paid for and is shown
+    assert store.ledger_usd() >= 0.25  # but the day's count kept the hold, never less
+    store.fail_overwrite = False
 
 
 def test_total_never_exceeds_the_daily_cap_over_many_asks(tmp_path: Path) -> None:
@@ -376,125 +518,14 @@ def test_keyed_ask_counts_against_the_same_global_ledger(tmp_path: Path) -> None
     assert reasons == ["cap"]  # not "model_error": the ledger, not the model, was unavailable
 
 
-# --- 2. redact old names -------------------------------------------------------------------
+class _NoLock:
+    """A process lock that does nothing (proves the ledger does not rely on one)."""
 
+    def __enter__(self) -> None:
+        return None
 
-def feedback_record(rid: str, **kw: Any) -> dict[str, Any]:
-    return {
-        "id": rid,
-        "rating": 4,
-        "comment": "ok",
-        "blocker": "none",
-        "one_thing": "x",
-        "consent": "no_quote",
-        "ref": "r1",
-        "page": "/",
-        **kw,
-    }
-
-
-def admin_app(store: Any, tmp_path: Path) -> TestClient:
-    import os
-
-    os.environ["MAUDESIGNAL_ADMIN_KEY"] = ADMIN
-    try:
-        app = create_app(
-            Settings(
-                keys=KeyStore([]),
-                limiter=RateLimiter(100),
-                data=ConnectorData(work_dir=tmp_path / "w"),
-                feedback_store=store,
-                web_origins=tuple(ORIGINS),
-            )
-        )
-    finally:
-        os.environ.pop("MAUDESIGNAL_ADMIN_KEY", None)
-    return TestClient(app, raise_server_exceptions=False)
-
-
-def seed_feedback(store: Any) -> None:
-    store.put_json("feedback/2026-10-30/a.json", feedback_record("a", name="Jane Doe", role="QA"))
-    store.put_json(
-        "feedback/2026-10-30/b.json",
-        feedback_record("b", name="Sam Roe", consent="quote_name_role", role="RA"),
-    )
-    store.put_json("feedback/2026-10-30/c.json", feedback_record("c", name="  "))
-    store.put_json("feedback/2026-10-30/d.json", feedback_record("d"))
-    store.put_json("visits/2026-10-30/v.json", {"id": "v", "ref": "r1", "page": "/", "name": "Vis"})
-
-
-def stored(store: Any, path: str) -> dict[str, Any]:
-    return json.loads(store.get(BlobRef(path, path)))  # type: ignore[no-any-return]
-
-
-@pytest.mark.parametrize("store_cls", [MemoryStore, FakeBlobStore])
-def test_redact_names_dry_run_then_real(tmp_path: Path, store_cls: Any) -> None:
-    store = store_cls()
-    seed_feedback(store)
-    c = admin_app(store, tmp_path)
-    h = {"X-Admin-Key": ADMIN}
-    dry = c.post("/v1/admin/redact-names", json={"dry_run": True}, headers=h)
-    assert dry.status_code == 200
-    assert dry.json() == {
-        "checked": 4,
-        "names_removed": 1,
-        "names_kept_for_quote_by_name": 1,
-        "dry_run": True,
-        "failed": 0,
-    }
-    assert stored(store, "feedback/2026-10-30/a.json")["name"] == "Jane Doe"  # untouched
-    real = c.post("/v1/admin/redact-names", json={"dry_run": False}, headers=h).json()
-    assert (real["names_removed"], real["names_kept_for_quote_by_name"]) == (1, 1)
-    a = stored(store, "feedback/2026-10-30/a.json")
-    assert "name" not in a and a["role"] == "QA" and a["comment"] == "ok"  # only the name went
-    assert stored(store, "feedback/2026-10-30/b.json")["name"] == "Sam Roe"  # quote by name: kept
-    assert stored(store, "feedback/2026-10-30/c.json")["name"] == "  "  # empty: not touched
-    assert stored(store, "visits/2026-10-30/v.json")["name"] == "Vis"  # visits: never touched
-    again = c.post("/v1/admin/redact-names", json={"dry_run": False}, headers=h).json()
-    assert again["names_removed"] == 0 and again["names_kept_for_quote_by_name"] == 1
-
-
-def test_redact_names_needs_the_admin_key_and_valid_body(tmp_path: Path) -> None:
-    store = MemoryStore()
-    seed_feedback(store)
-    c = admin_app(store, tmp_path)
-    assert c.post("/v1/admin/redact-names", json={"dry_run": False}).status_code == 401
-    bad = {"X-Admin-Key": "wrong-key"}
-    assert c.post("/v1/admin/redact-names", json={"dry_run": False}, headers=bad).status_code == 401
-    assert stored(store, "feedback/2026-10-30/a.json")["name"] == "Jane Doe"
-    h = {"X-Admin-Key": ADMIN}
-    for body in (
-        '{"dry_run": "yes"}',
-        '{"dry_run": 1}',
-        "[1]",
-        '{"dry_run": true, "x": 1}',
-        "nope",
-    ):
-        r = c.post(
-            "/v1/admin/redact-names", content=body, headers=h | {"content-type": "application/json"}
-        )
-        assert r.status_code == 422, body
-    assert stored(store, "feedback/2026-10-30/a.json")["name"] == "Jane Doe"
-
-
-def test_redact_names_store_down_and_write_failure(tmp_path: Path) -> None:
-    store = FakeBlobStore()
-    seed_feedback(store)
-    c = admin_app(store, tmp_path)
-    h = {"X-Admin-Key": ADMIN}
-    store.fail_put = True
-    r = c.post("/v1/admin/redact-names", json={"dry_run": False}, headers=h).json()
-    assert r["names_removed"] == 0 and r["failed"] == 1  # not counted as removed
-    store.fail_put = False
-    store.fail_list = True
-    assert c.post("/v1/admin/redact-names", json={"dry_run": True}, headers=h).status_code == 503
-
-
-def test_admin_page_has_the_remove_names_button_with_confirm(tmp_path: Path) -> None:
-    c = admin_app(MemoryStore(), tmp_path)
-    page = c.get("/admin").text
-    assert "Remove names (keep only 'quote me by name')" in page
-    assert "confirm(" in page and "dry_run:dry" in page
+    def __exit__(self, *exc: object) -> None:
+        return None
 
 
 # --- 3. outside mentions -------------------------------------------------------------------
@@ -909,311 +940,6 @@ def test_record_script_parses_requests_and_the_request_file_is_off() -> None:
     assert "secrets." not in wf and "META_MODEL_API_KEY" not in wf
 
 
-# --- 4/5. demo key, labels, two keys, /v1/connect ---------------------------------------------
-
-KEY_A = "key-a-NOT-A-REAL-SECRET-0123456789ab"
-KEY_B = "key-b-NOT-A-REAL-SECRET-0123456789cd"
-DEMO = "demo-key-PUBLIC-ON-PURPOSE-0123456789"
-
-
-def keyed_client(
-    tmp_path: Path, env: dict[str, str], **kw: Any
-) -> tuple[TestClient, RecordingSpark, Any]:
-    spark = RecordingSpark()
-
-    def factory(d: ConnectorData, guard: Any) -> Any:
-        from maudesignal.copilot.agent import CopilotAgent
-
-        return CopilotAgent(guard.wrap(spark), d.tool_context())
-
-    runtime = AskRuntime(
-        agent_factory=factory,
-        live_enabled=lambda: True,
-        caps=SpendCaps(session_usd=1.0, session_calls=20, daily_usd=5.0),
-        ledger_dir=tmp_path / "led",
-    )
-    settings = Settings(
-        keys=KeyStore.from_env(env),
-        data=ConnectorData(work_dir=tmp_path / "w"),
-        live_checker=fake_check,
-        ask_runtime=runtime,
-        web_origins=tuple(ORIGINS),
-        feedback_store=MemoryStore(),
-        **kw,
-    )
-    return TestClient(create_app(settings), raise_server_exceptions=False), spark, settings
-
-
-def test_several_keys_each_revocable_and_plain_and_hashed_entries_work(tmp_path: Path) -> None:
-    both = {"MAUDESIGNAL_API_KEYS": f"{KEY_A},sha256:{sha256_hex(KEY_B)}"}
-    c, _, _ = keyed_client(tmp_path, both)
-    assert (
-        c.get("/v1/tools/recalls?product_code=LLZ", headers={"X-API-Key": KEY_A}).status_code == 200
-    )
-    assert (
-        c.get("/v1/tools/recalls?product_code=LLZ", headers={"X-API-Key": KEY_B}).status_code == 200
-    )
-    only_b = {"MAUDESIGNAL_API_KEYS": f"sha256:{sha256_hex(KEY_B)}"}  # key A revoked by deleting it
-    c2, _, _ = keyed_client(tmp_path, only_b)
-    assert (
-        c2.get("/v1/tools/recalls?product_code=LLZ", headers={"X-API-Key": KEY_A}).status_code
-        == 401
-    )
-    assert (
-        c2.get("/v1/tools/recalls?product_code=LLZ", headers={"X-API-Key": KEY_B}).status_code
-        == 200
-    )
-
-
-def test_labels_are_parsed_and_shown_in_the_audit_actor(tmp_path: Path) -> None:
-    env = {"MAUDESIGNAL_API_KEYS": f"charan={KEY_A},meta-review=sha256:{sha256_hex(KEY_B)}"}
-    ks = KeyStore.from_env(env)
-    ma, mb = ks.match(KEY_A), ks.match(KEY_B)
-    assert ma and ma.label == "charan" and not ma.demo
-    assert mb and mb.label == "meta-review" and mb.key_id != ma.key_id
-    assert ks.verify(KEY_A) == ma.key_id and ks.match("nope") is None
-    c, _, settings = keyed_client(tmp_path, env)
-    assert (
-        c.get("/v1/tools/recalls?product_code=LLZ", headers={"X-API-Key": KEY_B}).status_code == 200
-    )
-    rows = settings.state.audit_recent(5)
-    assert (
-        rows
-        and rows[-1]["actor"] == f"connector:key:meta-review:{mb.key_id}"
-        or rows[0]["actor"] == f"connector:key:meta-review:{mb.key_id}"
-    )
-    assert KEY_B not in json.dumps(rows)
-    # a plain key without a label still audits as before
-    c3, _, s3 = keyed_client(tmp_path, {"MAUDESIGNAL_API_KEYS": KEY_A})
-    c3.get("/v1/tools/recalls?product_code=LLZ", headers={"X-API-Key": KEY_A})
-    assert all(":" not in r["actor"].split("connector:key:")[-1] for r in s3.state.audit_recent(5))
-
-
-def test_label_syntax_edge_cases() -> None:
-    ks = KeyStore.from_env({"MAUDESIGNAL_API_KEYS": f"bad label={KEY_A}, x={'y' * 10}, {KEY_B}"})
-    assert ks.match(KEY_B) is not None and ks.match(KEY_B).label is None  # type: ignore[union-attr]
-    assert ks.match("y" * 10) is None  # a short key behind a label is still refused
-    padded = "z" * 40 + "="
-    assert KeyStore.from_env({"MAUDESIGNAL_API_KEYS": padded}).match(padded) is not None
-
-
-def demo_env() -> dict[str, str]:
-    return {
-        "MAUDESIGNAL_API_KEYS": KEY_A,
-        "MAUDESIGNAL_DEMO_KEYS": f"{DEMO},demo-two-PUBLIC-0123456789abcdefgh",
-    }
-
-
-def test_demo_key_reads_but_never_starts_a_live_call(tmp_path: Path) -> None:
-    c, spark, _ = keyed_client(tmp_path, demo_env())
-    h = {"X-API-Key": DEMO}
-    assert c.get("/v1/tools/recalls?product_code=LLZ", headers=h).status_code == 200
-    assert c.get("/v1/tools/what_changed_this_week?product_code=LLZ", headers=h).status_code == 200
-    r = c.post("/v1/tools/ask", json={"question": QUESTION}, headers=h)
-    assert r.status_code == 200 and r.json()["provenance"]["kind"] == "recorded_answer"
-    assert "demo key" in r.json()["provenance"]["note"] and not spark.requests
-    # a full key on the same server does start a live call
-    full = c.post("/v1/tools/ask", json={"question": QUESTION}, headers={"X-API-Key": KEY_A})
-    assert full.json()["provenance"]["kind"] == "live_model" and spark.requests
-
-
-def test_demo_key_has_its_own_lower_per_minute_limit(tmp_path: Path) -> None:
-    c, _, _ = keyed_client(tmp_path, demo_env(), demo_limiter=RateLimiter(3))
-    h = {"X-API-Key": DEMO}
-    codes = [c.get("/v1/tools/recalls?product_code=LLZ", headers=h).status_code for _ in range(4)]
-    assert codes == [200, 200, 200, 429]
-    assert (
-        c.get("/v1/tools/recalls?product_code=LLZ", headers={"X-API-Key": KEY_A}).status_code == 200
-    )
-
-
-def test_demo_key_daily_limit_is_200(tmp_path: Path) -> None:
-    c, _, _ = keyed_client(tmp_path, demo_env(), demo_limiter=RateLimiter(10_000))
-    h = {"X-API-Key": DEMO}
-    codes = [c.get("/v1/tools/recalls?product_code=LLZ", headers=h).status_code for _ in range(201)]
-    assert codes.count(200) == 200 and codes[-1] == 429
-
-
-def test_demo_default_rate_is_ten_and_env_configurable() -> None:
-    assert RateLimiter.from_env({}, name="MAUDESIGNAL_DEMO_RATE_PER_MIN", default=10).limit == 10
-    env = {"MAUDESIGNAL_DEMO_RATE_PER_MIN": "4"}
-    assert RateLimiter.from_env(env, name="MAUDESIGNAL_DEMO_RATE_PER_MIN", default=10).limit == 4
-
-
-def test_connect_without_a_key_has_the_documented_shape(tmp_path: Path) -> None:
-    c, _, _ = keyed_client(tmp_path, demo_env())
-    r = c.get("/v1/connect", headers={"Origin": ORIGIN})
-    assert r.status_code == 200 and r.headers["access-control-allow-origin"] == ORIGIN
-    b = r.json()
-    assert b["auth_header"] == "X-API-Key" and b["demo_key"] == DEMO
-    assert b["mcp_url"].endswith("/mcp") and b["openapi_url"].endswith("/openapi.json")
-    assert b["docs_url"].endswith("/docs-page")
-    assert b["demo_limits"] == {
-        "per_minute": 10,
-        "per_day": 200,
-        "live_model": False,
-        "note": "Read tools only. ask returns a recorded answer, labelled recorded.",
-    }
-    assert len(b["steps"]) == 3
-    assert KEY_A not in r.text  # the demo key is public by design; a full key never is
-    other = c.get("/v1/connect", headers={"Origin": "https://evil.example"})
-    assert other.status_code == 200 and "access-control-allow-origin" not in other.headers
-
-
-def test_connect_demo_key_is_null_when_unset_or_only_a_digest(tmp_path: Path) -> None:
-    c, _, _ = keyed_client(tmp_path, {"MAUDESIGNAL_API_KEYS": KEY_A})
-    assert c.get("/v1/connect").json()["demo_key"] is None
-    c2, _, _ = keyed_client(
-        tmp_path,
-        {"MAUDESIGNAL_API_KEYS": KEY_A, "MAUDESIGNAL_DEMO_KEYS": f"sha256:{sha256_hex(DEMO)}"},
-    )
-    assert c2.get("/v1/connect").json()["demo_key"] is None
-    c3, _, _ = keyed_client(
-        tmp_path, {"MAUDESIGNAL_API_KEYS": KEY_A, "MAUDESIGNAL_DEMO_KEYS": f"public={DEMO}"}
-    )
-    assert c3.get("/v1/connect").json()["demo_key"] == DEMO
-
-
-def test_connect_uses_the_public_url_env_and_does_not_echo_headers(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setenv("MAUDESIGNAL_PUBLIC_URL", "https://api.example.org/")
-    c, _, _ = keyed_client(tmp_path, demo_env())
-    b = c.get(
-        "/v1/connect", headers={"X-API-Key": KEY_A, "Authorization": "Bearer secret-token-xyz"}
-    ).json()
-    assert b["mcp_url"] == "https://api.example.org/mcp"
-    assert KEY_A not in json.dumps(b) and "secret-token-xyz" not in json.dumps(b)
-
-
-def test_the_demo_key_is_not_committed() -> None:
-    root = Path(__file__).resolve().parents[2]
-    for f in ("vercel.json", "api/openapi.json", "docs/hackathon/MUSE_CONNECTOR.md"):
-        assert DEMO not in (root / f).read_text(encoding="utf-8")
-
-
-# --- 6. privacy and terms --------------------------------------------------------------------
-
-
-def test_pages_render_with_contact_from_env_and_fallback(tmp_path: Path) -> None:
-    c, _, _ = keyed_client(tmp_path, {"MAUDESIGNAL_API_KEYS": KEY_A})
-    for path in ("/privacy", "/terms"):
-        r = c.get(path)
-        assert r.status_code == 200 and r.headers["content-type"].startswith("text/html")
-        assert (
-            "<h1>" in r.text
-            and "https://github.com/kondapallysaicharan63-bot/maudesignal/issues" in r.text
-        )
-        assert "http://" not in r.text.replace("http://www.w3.org", "") and "<link" not in r.text
-        assert "src=" not in r.text  # no external assets
-    assert contact_line({"MAUDESIGNAL_CONTACT_EMAIL": "help@example.org"}) == (
-        "help@example.org",
-        "mailto:help@example.org",
-    )
-    assert "help@example.org" in render_privacy({"MAUDESIGNAL_CONTACT_EMAIL": "help@example.org"})
-    assert "help@example.org" in render_terms({"MAUDESIGNAL_CONTACT_EMAIL": "help@example.org"})
-    evil = '"><script>alert(1)</script>@x.org'
-    assert "<script" not in render_privacy(
-        {"MAUDESIGNAL_CONTACT_EMAIL": evil}
-    )  # not an address: fallback
-    assert contact_line({"MAUDESIGNAL_CONTACT_EMAIL": evil})[0].startswith("https://github.com/")
-
-
-def test_privacy_answers_the_data_questionnaire() -> None:
-    import html as _html
-
-    text = _html.unescape(render_privacy({}))
-    for needle in (
-        "iad1",
-        "Vercel",
-        "Blob",
-        "Meta Model API",
-        "openFDA",
-        "GOV.UK",
-        "GDELT",
-        "Vercel's runtime-log retention for this plan",
-        "30 November 2026",
-        "No sale of data",
-        "No tracking cookies",
-        "never stores an IP address",
-        "region of that store is chosen when the store is created",
-        "in their own locations",
-        "not medical advice",
-        "Saicharan Kondapally",
-        "How do I ask for deletion?",
-    ):
-        assert needle.lower() in text.lower(), needle
-    assert "@" not in text.replace("@media", "")  # no personal email in git or in the default page
-    assert "any other country" not in text  # a claim nothing in the code can support
-    from maudesignal.connector.legal_pages import STATIC_ANSWERS
-
-    doc = (
-        Path(__file__).resolve().parents[2] / "docs" / "hackathon" / "MUSE_CONNECTOR.md"
-    ).read_text(encoding="utf-8")
-    for question, answer in STATIC_ANSWERS:  # one text, two places
-        assert answer in doc, question
-
-
-def test_pages_contain_no_forbidden_words() -> None:
-    for text in (render_privacy({}), render_terms({})):
-        assert not forbidden_in(text) and not has_drop_word(text)
-    doc = (
-        Path(__file__).resolve().parents[2] / "docs" / "hackathon" / "MUSE_CONNECTOR.md"
-    ).read_text(encoding="utf-8")
-    top = doc.split("# Part 2.")[0] if "# Part 2." in doc else doc
-    assert top  # the form-answer section is checked in test_connector_doc_is_the_single_source
-
-
-def test_openapi_info_links_the_terms_and_docs_page_links_both() -> None:
-    root = Path(__file__).resolve().parents[2]
-    spec = json.loads((root / "api" / "openapi.json").read_text(encoding="utf-8"))
-    assert spec["info"]["termsOfService"].endswith("/terms")
-    assert (
-        '"/privacy"' in (root / "vercel.json").read_text()
-        or "/privacy" in (root / "vercel.json").read_text()
-    )
-    html = (root / "api" / "docs.html").read_text(encoding="utf-8")
-    assert 'href="/privacy"' in html and 'href="/terms"' in html
-
-
-# --- 7/8. the single source doc and the icon ---------------------------------------------------
-
-
-def test_connector_doc_is_the_single_source() -> None:
-    root = Path(__file__).resolve().parents[2]
-    doc = (root / "docs" / "hackathon" / "MUSE_CONNECTOR.md").read_text(encoding="utf-8")
-    assert "## Form answers" in doc and "## Data questionnaire" in doc
-    form = doc.split("## Form answers", 1)[1].split("\n## ", 2)
-    section = "## Form answers" + "".join(form[:1])
-    for needle in (
-        "Not submitted",
-        "X-API-Key",
-        "maudesignal-icon.svg",
-        "/privacy",
-        "/terms",
-        "MAUDESIGNAL_CONTACT_EMAIL",
-        "$3.00",
-        "demo key",
-        "meta-review",
-    ):
-        assert needle in doc, needle
-    quest = doc.split("## Data questionnaire", 1)[1].split("\n## ", 1)[0]
-    assert not forbidden_in(section + quest) and not has_drop_word(section + quest)
-    for q, a in __import__("maudesignal.connector.legal_pages", fromlist=["x"]).STATIC_ANSWERS:
-        assert a in quest, q  # the same answers as the page
-
-
-def test_icon_files_exist_and_are_512_square_without_logos() -> None:
-    root = Path(__file__).resolve().parents[2] / "docs" / "hackathon"
-    svg = (root / "maudesignal-icon.svg").read_text(encoding="utf-8")
-    assert 'width="512"' in svg and 'height="512"' in svg and 'viewBox="0 0 512 512"' in svg
-    assert "<image" not in svg and "http" not in svg.replace("http://www.w3.org/2000/svg", "")
-    from PIL import Image
-
-    with Image.open(root / "maudesignal-icon.png") as im:
-        assert im.size == (512, 512)
-
-
 # --- security: nothing personal or secret in logs, ledgers or records -------------------------
 
 
@@ -1241,7 +967,7 @@ def test_no_address_key_or_query_text_in_logs_or_the_ledger(
     for needle in ("testclient", KEY, "secret device phrase", "unique-question-marker"):
         assert needle not in stored_text
     ledger_docs = [json.loads(v) for k, v in store.items.items() if k.startswith("ledger/")]
-    assert ledger_docs and all(set(d) == {"day", "kind", "usd", "calls"} for d in ledger_docs)
+    assert ledger_docs and all(set(d) == {"hold_usd", "actual_usd", "settled"} for d in ledger_docs)
 
 
 def test_no_redis_key_or_limiter_key_contains_the_raw_address(tmp_path: Path) -> None:
@@ -1262,17 +988,6 @@ def test_no_redis_key_or_limiter_key_contains_the_raw_address(tmp_path: Path) ->
     assert any(":rl:public-check:" in k for k in keys)
     for k in keys:
         assert "testclient" not in k and "127.0.0.1" not in k, k
-
-
-def test_key_containing_equals_is_not_mistaken_for_a_label() -> None:
-    padded = "A" * 32 + "=="  # base64-style padding: a plain key, not label "AAAA..."
-    ks = KeyStore.from_env({"MAUDESIGNAL_API_KEYS": f"{padded},charan={KEY_A}"})
-    assert ks.match(padded) is not None and ks.match(padded).label is None  # type: ignore[union-attr]
-    m = ks.match(KEY_A)
-    assert m is not None and m.label == "charan"
-    # a short remainder is not a label either: the whole entry is judged as a plain key
-    short = KeyStore.from_env({"MAUDESIGNAL_API_KEYS": "name=tooshort"})
-    assert short.match("tooshort") is None and short.match("name=tooshort") is None
 
 
 def test_http_fetcher_connects_to_the_address_it_checked(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1335,14 +1050,6 @@ def test_http_fetcher_has_a_wall_clock_deadline_for_slow_pages(
 # --- fix round: demo key and the audit list, blob listing, running total, Upstash margin -------
 
 
-def test_demo_key_cannot_read_the_audit_list(tmp_path: Path) -> None:
-    env = {"MAUDESIGNAL_API_KEYS": f"charan={KEY_A}", "MAUDESIGNAL_DEMO_KEYS": DEMO}
-    c, _spark, _settings = keyed_client(tmp_path, env)
-    r = c.get("/v1/audit/recent", headers={"X-API-Key": DEMO})
-    assert r.status_code == 403 and "charan" not in r.text
-    assert c.get("/v1/audit/recent", headers={"X-API-Key": KEY_A}).status_code == 200
-
-
 def test_blob_listing_longer_than_the_page_limit_fails_closed() -> None:
     import httpx
 
@@ -1369,15 +1076,15 @@ def test_blob_ledger_add_writes_once_and_does_not_list_again() -> None:
         return orig(prefix, strict=strict)
 
     store.list_prefix = counting  # type: ignore[method-assign]
-    total = led.add(0.1, 1)
-    assert lists == 0 and total == pytest.approx(0.35)
-    assert store.ledger_usd() == pytest.approx(0.35)
+    total = led.add(0.1, 1)  # no I/O at all: the cost is kept for the settle
+    assert lists == 0 and store.puts == 1 and total == pytest.approx(0.1)
+    assert store.ledger_usd() == pytest.approx(0.25)  # in flight: still counted at the hold
+    led.release(0.25)
+    assert store.ledger_usd() == pytest.approx(0.1)
 
 
 def test_upstash_mode_also_keeps_the_margin_for_the_keyed_ask() -> None:
     from types import SimpleNamespace
-
-    from maudesignal.connector.ask import AskRuntime
 
     rt = AskRuntime(
         agent_factory=lambda d, g: None,  # type: ignore[arg-type, return-value]

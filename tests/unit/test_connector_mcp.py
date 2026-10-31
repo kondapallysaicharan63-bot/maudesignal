@@ -302,4 +302,8 @@ def test_part_two_of_the_doc_has_no_forbidden_words() -> None:
     doc = Path(__file__).resolve().parents[2] / "docs" / "hackathon" / "MUSE_CONNECTOR.md"
     text = doc.read_text(encoding="utf-8")
     part_two = text[text.index("# Part 2.") :]
-    assert forbidden_in(part_two) == []
+    # The owner-given status sentence names what is NOT true ("Not approved or listed"); it is
+    # the one place the word may appear, and only inside that exact sentence.
+    status = "Not approved or listed."
+    assert status in part_two
+    assert forbidden_in(part_two.replace(status, "")) == []

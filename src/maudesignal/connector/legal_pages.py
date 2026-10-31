@@ -2,202 +2,310 @@
 
 HACKATHON-BUILT — Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026).
 
-The privacy page answers a data questionnaire honestly: where data is processed and stored, who
-else handles it, what is logged and for how long, how to ask for deletion. The same answers sit
-in ``docs/hackathon/MUSE_CONNECTOR.md`` under "Data questionnaire"; change both together. The
-contact address is read at runtime from ``MAUDESIGNAL_CONTACT_EMAIL`` and is never written in the
-repository; without it the page names the GitHub issues URL.
+Every statement here describes what this code does. The contact address is never written in git:
+it is read from ``MAUDESIGNAL_CONTACT_EMAIL`` when the page is served and HTML-escaped; when the
+variable is unset the GitHub issues URL is shown. Whether live ``ask`` is on is computed from the
+running configuration, and nothing else about it is revealed.
 """
 
 from __future__ import annotations
 
 import html
 import os
-import re
 
-from maudesignal.connector.docs_page import SUPPORT_URL
+from maudesignal.connector.ask import (
+    MAX_QUESTION_CHARS,
+    MIN_QUESTION_CHARS,
+    live_mode_allowed,
+)
+from maudesignal.connector.globalcap import global_daily_usd, largest_request_usd
+from maudesignal.connector.models import ADVISORY
+from maudesignal.connector.security import DEFAULT_DEMO_RATE_PER_MIN, DEMO_PER_DAY
 
 CONTACT_ENV = "MAUDESIGNAL_CONTACT_EMAIL"
-_EMAIL = re.compile(r"^[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$")
+ISSUES_URL = "https://github.com/kondapallysaicharan63-bot/maudesignal/issues"
+LAST_UPDATED = "2026-10-31"
+RETENTION_DATE = "2026-12-31"
 
-STYLE = """
-:root{--paper:#f6f3ec;--ink:#16130f;--muted:#5e574c;--rule:#d9d2c2;--accent:#1d3fbf;
---card:#fffdf8}
-@media (prefers-color-scheme:dark){:root{--paper:#14120f;--ink:#f1ece2;--muted:#a39b8d;
---rule:#3a352d;--accent:#9db0ff;--card:#1b1915}}
+_CSS = """
+:root{--paper:#f6f3ec;--ink:#16130f;--ink-2:#4a443b;--rule:#d8d1c3;--card:#fffdf8}
+@media (prefers-color-scheme:dark){:root{--paper:#14120f;--ink:#f1ece2;--ink-2:#c4bcae;
+--rule:#3a352d;--card:#1c1a16}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);
-font:17px/1.6 Newsreader,Georgia,serif}
-main{max-width:46rem;margin:0 auto;padding:2rem 16px 4rem}
-h1{font-size:2rem;line-height:1.2;margin:0 0 .5rem}
-h2{font-size:1.25rem;margin:2rem 0 .5rem;border-top:1px solid var(--rule);padding-top:1rem}
-p,li{max-width:42rem}
-a{color:var(--accent)}
-.lede{color:var(--muted)}
-table{border-collapse:collapse;width:100%;background:var(--card)}
-th,td{border:1px solid var(--rule);padding:.5rem .7rem;text-align:left;vertical-align:top}
-.scroll{overflow-x:auto}
-nav{margin-bottom:1.5rem;font:15px/1.4 "Geist",system-ui,sans-serif}
+body{margin:0;background:var(--paper);color:var(--ink);line-height:1.6;
+font-family:Georgia,'Times New Roman',serif}
+main{max-width:46rem;margin:0 auto;padding:2rem 16px 3rem}
+h1{font-size:1.8rem;line-height:1.2;margin:0 0 .25rem}
+h2{font-size:1.15rem;margin:1.8rem 0 .4rem;padding-top:.8rem;border-top:1px solid var(--rule)}
+p,li{font-size:1rem}
+a{color:inherit}
+.meta{color:var(--ink-2);font-size:.9rem}
+.box{background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:.6rem 1rem}
 nav a{margin-right:1rem}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9em}
 """
 
-#: (question, answer) pairs, shown on the page and copied into MUSE_CONNECTOR.md.
-STATIC_ANSWERS: tuple[tuple[str, str], ...] = (
-    (
-        "What does this service do with data?",
-        "It gives read-only access to public FDA device data (openFDA: adverse-event reports, "
-        "recalls, 510(k) records) and, where a result says so, to device alerts from the UK "
-        "MHRA, always labelled as UK. It is an advisory triage aid for quality and regulatory "
-        "review.",
-    ),
-    (
-        "Is any personal or patient data collected?",
-        "No. The data served is public and already de-identified by FDA. There are no accounts "
-        "and no sign-up. Do not type patient or personal details into a question: the live "
-        "routes refuse text that looks like a name with a title, an age, an email address or a "
-        "phone number, and nothing is kept when they do.",
-    ),
-    (
-        "Where is data processed and stored?",
-        "The service's functions run on Vercel in region iad1 (Washington, D.C., United "
-        "States), as set in the project's vercel.json. Feedback entries, page-visit entries "
-        "and the daily spend records are stored in a private Vercel Blob store. The region of"
-        " that store is chosen when the store is created in the Vercel dashboard; the code "
-        "does not check it, so this page does not state it. The other services named below "
-        "(Meta Model API, Resend, GDELT, and Upstash if the operator sets it up) process what"
-        " they receive in their own locations, which this service does not control.",
-    ),
-    (
-        "Who else handles data (subprocessors)?",
-        "Vercel (hosting, runtime logs and Blob storage). Meta Model API: only when live "
-        "answers are switched on, for the live ask, voice and label routes and for the "
-        "connector's ask tool (REST and MCP) for full keys (the public demo key never calls "
-        "it); the question text, the audio clip or the image is sent once to produce the answer "
-        "and is not stored by "
-        "this service. Resend (email): only if the operator turns on email for new feedback; "
-        "the email carries the feedback fields, no name and no address. Public data sources "
-        "that this service reads: openFDA, GOV.UK (MHRA alerts), GDELT and FDA public feeds "
-        "(for the outside-mentions search). These send us public data; we send them a product "
-        "code or a search term, never a person's details.",
-    ),
-    (
-        "What is logged, and for how long?",
-        "Per tool call: a key id (a keyed hash of the key, never the key), the tool name, the"
-        " time, the status; live-call cost is kept only as a daily total in the spend ledger. "
-        "Never the text of a question: for ask, only a hash "
-        "and a length are recorded. New feedback is stored without names. Older entries keep "
-        "the name only where the person chose to be quoted by name and role; all other names "
-        "were removed. Feedback has a role and a quote consent. A page visit stores the "
-        "referral code, the page and the time. This service "
-        "never stores an IP address: before any rate limit or counter sees it, the address is"
-        " replaced by a keyed hash, which is held in the memory of the server instance only to "
-        "apply limits, until that instance stops (or, with the operator's Redis store, for "
-        "at most twice the limit window). Holders of a full key can read the recent audit "
-        "list (tool names, inputs, times and key labels); the public demo key cannot. Vercel's "
-        "own request logs may include the address; "
-        "they are kept by Vercel for Vercel's runtime-log retention for this plan. Feedback "
-        "and visits are kept until the hackathon review ends, then deleted on request or by "
-        "30 November 2026.",
-    ),
-    (
-        "Cookies, tracking, sale of data, advertising?",
-        "No tracking cookies. No sale of data. No advertising and no use of data for ads. The "
-        "separate web app may use Vercel Web Analytics for page-view counts, which sets no "
-        "cookies.",
-    ),
-    (
-        "Not medical advice, nothing filed",
-        "Nothing here is medical advice or clinical decision support. Nothing is filed with "
-        "FDA or any other regulator. This is not an FDA-cleared device. It is an open-source "
-        "project by Saicharan Kondapally.",
-    ),
-)
+
+def contact_html() -> str:
+    """The contact line: the address from the environment (escaped) or the issues URL."""
+    email = os.environ.get(CONTACT_ENV, "").strip()
+    issues = f'<a href="{ISSUES_URL}">{ISSUES_URL}</a>'
+    if email:
+        safe = html.escape(email, quote=True)
+        return f"Email {safe} or open an issue at {issues}."
+    return f"Open an issue at {issues}."
 
 
-def contact_line(env: dict[str, str] | None = None) -> tuple[str, str]:
-    """``(text, href)`` for the deletion and support contact.
+def _live_limits() -> tuple[int, int, int, int, int]:
+    """``(ask, voice, label, mentions, burst)`` per-address limits of the live website routes."""
+    from maudesignal.connector.live import LiveConfig  # lazy: live imports this package
 
-    The email comes from ``MAUDESIGNAL_CONTACT_EMAIL`` when it looks like an address;
-    otherwise the GitHub issues URL is used.
-    """
-    raw = (os.environ if env is None else env).get(CONTACT_ENV, "").strip()
-    if _EMAIL.match(raw):
-        return raw, f"mailto:{raw}"
-    return SUPPORT_URL, SUPPORT_URL
+    cfg = LiveConfig.from_env()
+    return (
+        cfg.ask_per_day,
+        cfg.voice_per_day,
+        cfg.label_per_day,
+        cfg.mentions_per_day,
+        cfg.burst_per_min,
+    )
 
 
-def _page(title: str, body: str) -> str:
+def live_routes_line() -> str:
+    """What the live website routes send to Meta, stated for the running configuration."""
+    if live_mode_allowed():
+        return (
+            "<strong>Live routes are ON in this deployment.</strong> The website's live ask, "
+            "voice and label routes send what you give them to Meta (Meta Model API: Muse "
+            "Spark for questions and label reading, Muse Voice for transcription, SAM 3.1 for "
+            "the label crop): the question text, the audio clip or the label image. It is sent "
+            "once to produce the answer; this service does not store the text, the audio or "
+            "the image."
+        )
+    return (
+        "<strong>Live routes are OFF in this deployment</strong> (no model key or no shared "
+        "spend ledger is configured). The website's ask, voice and label routes return "
+        "recorded answers and nothing is sent to Meta."
+    )
+
+
+def live_ask_line() -> str:
+    """One sentence saying whether this deployment sends ``ask`` questions to Meta."""
+    if live_mode_allowed():
+        return (
+            "<strong>Live ask is ON in this deployment.</strong> The text of an <code>ask</code> "
+            "question is sent to Meta (Meta Model API, Muse Spark) with the server-side model key."
+        )
+    return (
+        "<strong>Live ask is OFF in this deployment.</strong> <code>ask</code> returns recorded "
+        "answers and nothing is sent to Meta."
+    )
+
+
+def _shell(title: str, body: str) -> str:
     return (
         "<!doctype html><html lang='en'><head><meta charset='utf-8'>"
-        "<meta name='viewport' content='width=device-width, initial-scale=1'>"
-        f"<title>{html.escape(title)}</title><style>{STYLE}</style></head><body><main>"
-        "<nav><a href='/'>API docs</a><a href='/privacy'>Privacy</a>"
-        "<a href='/terms'>Terms</a></nav>"
-        f"{body}</main></body></html>"
+        "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+        f"<title>{html.escape(title)} | MaudeSignal API</title><style>{_CSS}</style></head><body>"
+        "<main><nav><a href='/'>API docs</a><a href='/privacy'>Privacy</a>"
+        f"<a href='/terms'>Terms</a></nav>{body}</main></body></html>"
     )
 
 
-def render_privacy(env: dict[str, str] | None = None) -> str:
-    """The privacy page as HTML."""
-    text, href = contact_line(env)
-    rows = "".join(
-        f"<tr><th scope='row'>{html.escape(q)}</th><td>{html.escape(a)}</td></tr>"
-        for q, a in STATIC_ANSWERS
+def render_privacy(
+    *,
+    rate_per_min: int,
+    public_per_hour: int,
+    shared_store: bool,
+) -> str:
+    """The privacy page (it answers a connector data questionnaire).
+
+    Args:
+        rate_per_min: Requests per key per minute in force.
+        public_per_hour: Keyless checks per address per hour in force.
+        shared_store: True when an Upstash Redis store is configured.
+    """
+    redis = (
+        "Upstash Redis is configured here: rate-limit counters, the daily cost ledger, a "
+        "six-hour cache of keyless check answers and the audit log are held there."
+        if shared_store
+        else "No Upstash Redis store is configured here: rate-limit counters and the audit log "
+        "live in the memory of one server instance and are lost on a cold start."
     )
-    deletion = (
-        "<tr><th scope='row'>How do I ask for deletion?</th><td>Write to "
-        f"<a href='{html.escape(href)}'>{html.escape(text)}</a> and give the referral code "
-        "you were sent (new feedback and visits carry no name, so the code is how an entry is "
-        "found; older entries keep a name only where the person chose to be quoted by name and "
-        "role). Entries are deleted on request.</td></tr>"
+    resend = (
+        "If the operator has set an email notifier (Resend), a new feedback entry is also "
+        "emailed to the operator; this is off unless that is configured."
     )
-    body = (
-        "<h1>Privacy</h1>"
-        "<p class='lede'>MaudeSignal is an open-source project. This page answers, in plain "
-        "words, what happens to data when you use the API, the connector or the website.</p>"
-        f"<div class='scroll'><table><tbody>{rows}{deletion}</tbody></table></div>"
-        "<h2>Contact</h2>"
-        f"<p>Questions, corrections or deletion: <a href='{html.escape(href)}'>"
-        f"{html.escape(text)}</a>.</p>"
-        "<p><a href='/terms'>Terms</a></p>"
-    )
-    return _page("MaudeSignal privacy", body)
+    body = f"""
+<h1>Privacy</h1>
+<p class="meta">MaudeSignal connector API. Last updated {LAST_UPDATED}.</p>
+<p class="box">{html.escape(ADVISORY)}</p>
+
+<h2>What this service is</h2>
+<p>A read-only connector to public adverse-event data from FDA (openFDA). Where an answer says so,
+it also shows UK MHRA device alerts, labelled "MHRA (UK)", as regulator context only. No tool
+writes anything. It is an open-source project by Saicharan Kondapally. It is not an FDA-cleared
+device, not medical advice, and nothing is filed with FDA.</p>
+
+<h2>Personal and patient data</h2>
+<p>None is collected or wanted. The service has no accounts and no sign-up, and asks for no name,
+email address or patient information. Do not put patient details in a question or in feedback;
+the feedback form refuses text that looks like an email address, phone number, ID number or date
+of birth, which is a guard and not a guarantee.</p>
+
+<h2>Where data is processed and stored</h2>
+<p>On Vercel in the United States (function region iad1, Washington DC). Vercel Blob (private)
+holds website feedback and visit records and the live-call spend ledger: one small object per paid
+live request with two dollar amounts (its hold and its real cost) and no text, no address and no
+key. {html.escape(redis)}</p>
+
+<h2>Subprocessors</h2>
+<ul>
+<li>Vercel Inc.: hosting, runtime logs and Blob storage.</li>
+<li>Meta Platforms: Meta Model API, only when a model key is set on the server: for the
+<code>ask</code> tool (full keys only) and for the website's live ask, voice and label routes.
+{live_ask_line()} {live_routes_line()}</li>
+<li>Upstash: only if a Redis store is configured (see above).</li>
+<li>Resend: only if an email notifier is configured. {html.escape(resend)}</li>
+</ul>
+
+<h2>Public data sources</h2>
+<p>openFDA (api.fda.gov) is queried live with a product code only (and, for a device label read
+live, with the text fields read from the label). MHRA (UK) alerts come from a stored copy
+previously fetched from the GOV.UK search API; this service does not call GOV.UK when you use it.
+The website's outside-mentions search sends a product code and device search terms (no personal
+details; the route refuses text that looks like patient data) to public sources: GDELT, FDA
+public safety-communication and warning feeds, and no model is called for it.</p>
+
+<h2>What is logged</h2>
+<ul>
+<li>For each tool call: a key id (a peppered one-way hash, never the key), the tool name, the time,
+and the status. Spend on <code>ask</code> is kept as a daily total per key id (not per call).
+If the key has a label (for example a reviewer's name) the label is logged next to the key id.
+Calls made with the public demo key are logged the same way, with the label <code>demo</code>.</li>
+<li>The text of a question is <strong>not</strong> logged: only its SHA-256 and its length.
+During a live <code>ask</code> the question is held briefly in the server instance's temporary
+working database and replaced by its SHA-256 when the answer is done.</li>
+<li>New feedback stores rating, comments, role, quote consent, referral code, page and time -
+no names and no email addresses. Feedback sent before 31 October 2026 could include a name the
+person typed; names are removed from those entries except where the person chose to be quoted by
+name and role.</li>
+<li>Visits store: referral code, page and time.</li>
+<li>IP addresses are never stored by this code. Before any rate limit sees an address it is turned
+into a salted one-way hash (HMAC-SHA256); only that hash is used as the limit key, in memory or, if
+a Redis store is configured, in that store, for at most twice the limit window. Vercel, as host,
+keeps its own request logs (method, path, status, time and address) under its own retention rules;
+this code does not copy them.</li>
+</ul>
+
+<h2>Retention</h2>
+<p>Request logs follow Vercel's runtime-log retention for this plan. Feedback and visit records are
+kept until {RETENTION_DATE} and then deleted, earlier on request.</p>
+
+<h2>Sale, advertising, cookies</h2>
+<p>No sale of data, no advertising and no tracking cookies. This site sets no cookies.</p>
+
+<h2>Limits that apply</h2>
+<p>{rate_per_min} requests per key per minute; {public_per_hour} keyless checks per address per
+hour; the live website routes are limited per address per day. Full numbers are on the
+<a href="/terms">terms</a> page.</p>
+
+<h2>Deletion and questions</h2>
+<p>{contact_html()}</p>
+"""
+    return _shell("Privacy", body)
 
 
-TERMS_ITEMS: tuple[str, ...] = (
-    "Research and demonstration use. The service is provided as is, without warranty of any "
-    "kind, including accuracy, completeness, availability or fitness for a purpose.",
-    "Not medical advice. Nothing returned is clinical guidance, and no clinical decision "
-    "should be made from it. A qualified person must review any signal before acting on it.",
-    "Nothing is filed with FDA or any other regulator. This is not an FDA-cleared device.",
-    "Sources and dates. Every answer says where it came from: a stored snapshot with its "
-    "dates, live openFDA with the query time, a recorded answer or a live model answer. "
-    "Stored data can be out of date. Sentences marked as left out could not be verified and "
-    "must not be stated as fact. Outside mentions from news and public web pages are "
-    "unverified and are never mixed with checked FDA facts.",
-    "Rate limits apply to every key and every address, and a global daily cost cap applies "
-    "to live model calls; when a limit is reached the service answers from recorded runs, "
-    "labelled as recorded. Do not try to get around a limit.",
-    "Keys are read-only and the operator can revoke any key at any time. Do not share a key "
-    "that was given to you. The public demo key is shared by design and has lower limits.",
-    "Do not send personal or patient information.",
-    "U.S. FDA (openFDA) data only, plus labelled MHRA (UK) context where a result says so. "
-    "No other regulator is covered.",
-    "To the extent the law allows, the operator is not liable for decisions made from the "
-    "output. The operator may change, limit or stop the service at any time.",
-)
+def render_terms(
+    *,
+    rate_per_min: int,
+    public_per_hour: int,
+    daily_usd: float,
+    request_usd: float,
+    failed_auth_per_min: int,
+    total_daily_usd: float | None = None,
+    demo_per_min: int = DEFAULT_DEMO_RATE_PER_MIN,
+    demo_per_day: int = DEMO_PER_DAY,
+) -> str:
+    """The terms page, with the limits in force.
 
+    Args:
+        rate_per_min: Requests per key per minute.
+        public_per_hour: Keyless checks per address per hour.
+        daily_usd: Daily cost cap of ``ask`` per key.
+        request_usd: Cost cap of one ``ask`` call.
+        failed_auth_per_min: Wrong keys per address per minute before a 429.
+        total_daily_usd: The one daily cost cap of the live website routes and ``ask`` together
+            (``MAUDESIGNAL_LIVE_DAILY_USD``).
+        demo_per_min: Requests per minute allowed to the public demo key.
+        demo_per_day: Requests per UTC day allowed to the public demo key.
+    """
+    if total_daily_usd is None:
+        total_daily_usd = global_daily_usd()
+    live_ask, live_voice, live_label, live_mentions, live_burst = _live_limits()
+    largest = largest_request_usd()
+    body = f"""
+<h1>Terms</h1>
+<p class="meta">MaudeSignal connector API. Last updated {LAST_UPDATED}.</p>
+<p class="box">{html.escape(ADVISORY)}</p>
 
-def render_terms(env: dict[str, str] | None = None) -> str:
-    """The terms page as HTML."""
-    text, href = contact_line(env)
-    items = "".join(f"<li>{html.escape(t)}</li>" for t in TERMS_ITEMS)
-    body = (
-        "<h1>Terms</h1>"
-        "<p class='lede'>Short terms for the MaudeSignal API, connector and website, an "
-        "open-source project by Saicharan Kondapally.</p>"
-        f"<ol>{items}</ol>"
-        f"<p>Contact: <a href='{html.escape(href)}'>{html.escape(text)}</a>. "
-        "<a href='/privacy'>Privacy</a></p>"
-    )
-    return _page("MaudeSignal terms", body)
+<h2>As is</h2>
+<p>The service is provided as is, without warranty of any kind, for research and demonstration.
+It can be changed, limited or stopped at any time. Stored data can be out of date; every answer
+says its source and date.</p>
+
+<h2>Not medical advice</h2>
+<p>It is not medical advice and must not be used for clinical decisions. Outputs are signals for a
+person to review. Nothing is filed with FDA, and the project is not an FDA-cleared device.</p>
+
+<h2>Read-only</h2>
+<p>Every tool is read-only. No endpoint writes data on your behalf.</p>
+
+<h2>Keys and limits</h2>
+<ul>
+<li>API keys are personal and can be revoked at any time. Do not share a key.</li>
+<li>{rate_per_min} requests per key per minute.</li>
+<li>The public demo key (shown by <code>GET /v1/connect</code> when the operator sets one) is
+shared by design: it works on every read tool except the audit list, is limited to
+{demo_per_min} requests per minute and {demo_per_day} per UTC day, and never starts a live model
+call (<code>ask</code> returns a recorded answer, labelled recorded). The per-minute and
+per-day limits are counted per server instance unless a shared Upstash store is configured, so
+without one the effective limit is the number shown times the instances.</li>
+<li>{failed_auth_per_min} wrong or missing keys per address per minute, then HTTP 429.</li>
+<li>{public_per_hour} keyless device-type checks per address per hour.</li>
+<li>For <code>ask</code>: a question of {MIN_QUESTION_CHARS} to {MAX_QUESTION_CHARS} characters,
+at most ${request_usd:.2f} per call and ${daily_usd:.2f} per key per UTC day. When a cap is
+reached, <code>ask</code> returns a recorded answer instead of a live one.</li>
+</ul>
+
+<h2>Live website routes and the daily cost cap</h2>
+<ul>
+<li>The website's live routes (<code>/v1/live/ask</code>, <code>/v1/live/voice</code>,
+<code>/v1/live/label</code>) and the keyed <code>ask</code> tool share ONE cost cap of
+${total_daily_usd:.2f} per UTC day, counted in a shared ledger (the private Blob store, or Redis
+if the operator set it up). With neither, live calls are off and recorded answers are shown.</li>
+<li>Before each paid call the request writes its own ledger entry with its hold (at most
+${largest:.2f} for one request), then adds up every entry of the day. If the total would pass
+${total_daily_usd:.2f} minus the largest single-request cap (${largest:.2f}), the entry is
+removed and a recorded answer is shown, so requests that start together still end at or under
+${total_daily_usd:.2f}. After the call the request overwrites only its own entry with the real
+cost. If that write fails the hold stays, so the count can only be too high, never too low.</li>
+<li>If the ledger cannot be read or written, no live call is made and a recorded answer is
+shown.</li>
+<li>Per address per UTC day: {live_ask} live questions, {live_voice} voice questions,
+{live_label} label reads and {live_mentions} outside-mentions searches; at most {live_burst}
+live requests per minute. Each is counted with the address stored only as a salted hash.</li>
+<li>Voice clips are limited to 60 seconds and 4 MB, label images to 4 MB. The label and voice
+routes refuse text that looks like patient data.</li>
+</ul>
+
+<h2>Acceptable use</h2>
+<ul>
+<li>Do not try to bypass rate limits, cost caps or authentication.</li>
+<li>Do not put patient or personal data in questions or feedback.</li>
+<li>Do not present an output as advice or as a finding by a regulator.</li>
+</ul>
+
+<h2>Privacy and contact</h2>
+<p>See the <a href="/privacy">privacy</a> page. {contact_html()}</p>
+"""
+    return _shell("Terms", body)

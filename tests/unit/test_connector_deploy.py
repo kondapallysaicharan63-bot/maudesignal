@@ -141,6 +141,7 @@ def test_openapi_route_serves_the_committed_spec(data: ConnectorData, tmp_path: 
     paths = set(committed["paths"])
     assert paths == {
         "/v1/health",
+        "/v1/connect",
         "/v1/tools/what_changed_this_week",
         "/v1/tools/check_device_type",
         "/v1/tools/ask",
@@ -148,13 +149,12 @@ def test_openapi_route_serves_the_committed_spec(data: ConnectorData, tmp_path: 
         "/v1/tools/recalls",
         "/v1/public/check_device_type",
         "/v1/audit/recent",
-        "/v1/connect",
     }
     assert "/" not in paths and "/docs-page" not in paths  # the page is not part of the API
     for path, item in committed["paths"].items():
         for method, op in item.items():
             assert method in {"get", "post"}
-            if path in {"/v1/health", "/v1/public/check_device_type", "/v1/connect"}:
+            if path in {"/v1/health", "/v1/connect", "/v1/public/check_device_type"}:
                 assert "security" not in op  # no key needed
             else:
                 assert op["security"] == [{"APIKeyHeader": []}]
