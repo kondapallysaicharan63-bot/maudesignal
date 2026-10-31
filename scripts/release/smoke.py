@@ -30,6 +30,7 @@ import os
 import re
 import subprocess
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -37,7 +38,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 
-from budget import SKIPPED_BUDGET, Budget  # noqa: E402
+from budget import HOLD_USD, SKIPPED_BUDGET, Budget  # noqa: E402
 from compare import llz_snapshot_diffs  # noqa: E402
 from leaks import contains_any, find_key_shapes  # noqa: E402
 from load_test import evaluate, run_load, summarize  # noqa: E402
@@ -49,6 +50,25 @@ VOICE_FILES = ("question-a.wav", "question.wav", "question-c.wav")
 LABEL_PHOTO = ROOT / "demo" / "vision" / "labels" / "label-caresens-n.jpg"
 QUESTION = "What changed this week for LLZ?"
 TEST_REF = "TEST-0"
+
+
+def no_answer_detail(status: int) -> str:
+    """The detail of a scan-type check that had no 200 answer to look at."""
+    return f"no answer to check (HTTP {status})"
+
+
+def spent_usd(body: dict[str, Any]) -> float | None:
+    """The ``cost_usd`` of a live answer, or None when it is not a non-negative number.
+
+    None means the full cap stays as spent (a bool, a string, NaN, infinity and a negative
+    number are all "not a cost"), never $0.
+    """
+    c = body.get("cost_usd")
+    if isinstance(c, bool) or not isinstance(c, (int, float)):
+        return None
+    if c != c or c < 0 or c == float("inf"):
+        return None
+    return float(c)
 
 
 class Smoke:
@@ -75,21 +95,31 @@ class Smoke:
         """GET an API path with an optional key header."""
         return request("GET", self.api + path, headers={"X-API-Key": key} if key else None)
 
+    def scan(self, name: str, r: Response, detect: Callable[[str], bool], fail_detail: str) -> bool:
+        """Run one scan-type check on a response; FAIL when there is no 200 answer to scan.
+
+        Every check that looks for something in a response body (a key, key-shaped text, skill or
+        system text, an auto-confirmed action) goes through here, so a response with status 0 or
+        any status other than 200 is never a pass: the line is FAIL "no answer to check (HTTP
+        <status>)". Returns True when the response was scanned.
+        """
+        if r.status != 200:
+            self.rep.add(name, FAIL, no_answer_detail(r.status), group="security")
+            return False
+        self.rep.ok(name, not detect(r.text), fail_detail, group="security")
+        return True
+
     def clean(self, name: str, *rs: Response) -> None:
         """No secret value and no key-shaped string in the responses (FAIL when none answered)."""
-        silent = [r for r in rs if r.status == 0]
+        silent = [r for r in rs if r.status != 200]
         if silent:
-            # no answer at all: nothing was checked, so this is never a pass
-            self.rep.add(
-                name,
-                FAIL,
-                f"no answer (HTTP 0), nothing to check: {silent[0].error[:120]}",
-                group="security",
-            )
+            self.rep.add(name, FAIL, no_answer_detail(silent[0].status), group="security")
             return
-        bad = any(contains_any(r.text, self.secrets) or find_key_shapes(r.text) for r in rs)
-        self.rep.ok(
-            name, not bad, "a key or key-shaped string appears in a response", group="security"
+        self.scan(
+            name,
+            Response(200, body=b"\n".join(r.body for r in rs)),
+            lambda text: contains_any(text, self.secrets) or bool(find_key_shapes(text)),
+            "a key or key-shaped string appears in a response",
         )
 
     def shape(self, name: str, r: Response) -> dict[str, Any]:
@@ -226,12 +256,12 @@ class Smoke:
     def note_live(self, name: str, r: Response, kind: str) -> None:
         """Log mode, cost and the remaining count of one live call; settle its budget hold."""
         b = r.json() if isinstance(r.json(), dict) else {}
-        cost = float(b.get("cost_usd") or 0.0)
+        # a cost_usd that is not a non-negative number (or no 200 answer at all) is the full cap:
+        # the server may still have spent up to it, so the hold stays as spent
+        got = spent_usd(b) if r.status == 200 else None
+        cost = got if got is not None else HOLD_USD[kind]
         self.live_cost += cost
-        # no answer, a non-200 answer or no cost_usd: the server may still have spent up to the
-        # cap, so the full hold stays as spent
-        got_cost = r.status == 200 and b.get("cost_usd") is not None
-        self.budget.settle(kind, cost if got_cost else None)
+        self.budget.settle(kind, got)
         left = (b.get("limits") or {}).get("remaining_today")
         if isinstance(left, int):
             self.remaining.append(left)
@@ -280,7 +310,7 @@ class Smoke:
                 KNOWN_GAP,
                 "not called in the smoke run: a photo is held at $0.30 and does not fit the "
                 "$0.60 run budget beside the chat and spoken questions; the browser pass uses "
-                "a recorded mock; the release live job checks /v1/live/label",
+                "a recorded mock; the real /v1/live/label route is not called by any automated check",
                 group="live",
                 required=False,
             )

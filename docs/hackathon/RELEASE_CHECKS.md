@@ -7,7 +7,7 @@ nothing in a report is typed in. Scripts: `scripts/release/`. Unit tests of the 
 
 | Pipeline | Workflow | Runs on | Spends |
 |---|---|---|---|
-| Release check | `.github/workflows/release-check.yml` | push to `release/**`, or by hand | nothing, except the optional live job (at most $0.60 per attempt, at most 3 attempts a day) |
+| Release check | `.github/workflows/release-check.yml` | push to `release/**`, or by hand | $0: no job calls a model and none needs a secret (no Meta key) |
 | Smoke test | `.github/workflows/smoke.yml` | push to `smoke/**`, or by hand | a few live model calls against the deployed API, inside its own daily cap |
 
 ## Status words
@@ -29,7 +29,7 @@ report with no checks is a FAIL. A job that produced no report is a FAIL in the 
 The jobs run in parallel; the last job (`report`) merges their reports into the artifact
 **`release-report`** (`release-report.json`, `release-report.md`) and fails the run unless every
 required job passed. Each job also uploads its own artifact (`python-report`, `web-report`,
-`api-contract-report`, `e2e-report`, `live-report`).
+`api-contract-report`, `e2e-report`).
 
 ### `python` (`scripts/release/python_job.py`)
 
@@ -126,38 +126,13 @@ the only accepted lenient outcome is an explicit `no-match` or `search-failed` e
 page (an error or silence is a FAIL).
 Screenshots are in the `e2e-report` artifact (`screenshots/`, failures prefixed `FAILED-`).
 
-### `live` (`scripts/release/live_check.py`)
+### Real-model checks: none here
 
-Runs only when the pushed branch name contains `live` and the repository secret
-`META_MODEL_API_KEY` exists (the first step of the `live` job checks both; the key is never echoed; a branch with `live` in its name and no key fails that step, it is never a pass). The
-API runs locally with `MAUDESIGNAL_LIVE_DAILY_USD=0.60` (the app's own cap), per-request caps of
-$0.12 / $0.12 / $0.15 and a fresh ledger directory (an in-memory ledger capped at the $0.60 above). Calls: a chat question and a second one with history, one voice clip
-(`demo/voice/question-a.wav`, resampled to 16 kHz), one label photo
-(`demo/vision/labels/label-caresens-n.jpg`), and one injection question when budget remains. The
-report lists each call's real `cost_usd`, mode and time, and the total. A call that answers as
-`recorded` fails the job (the key was set). The injection answer is checked for key-shaped
-strings, copied skill text (same 60-character windows as the API check) and gate output. The job
-is skipped otherwise; the merged report then holds one line "live job" as NOT_PRESENT (not
-required, with the reason), so it is visibly not run and never a pass. A question the $0.60
-budget no longer allows (including the injection question) is a FAIL line `skipped: budget`.
-
-**Ledger and daily guard.** The live job's $0.60 is its own per-run ledger: a fresh ledger
-directory of the local API started inside the job. It is separate from the global ledger of the
-deployed API (which the job never calls), so neither counts against the other. The total per day
-is therefore limited by the number of live **attempts** (every "Re-run" gets a fresh runner and
-so a fresh ledger), and the **first step of the `live` job itself** (not a separate gate job)
-exits non-zero before any paid step when this attempt would be the fourth live attempt today
-(UTC); a re-run of the job or of failed jobs runs the step again. A re-run keeps the created date
-of its run, so the step does not filter runs by that date. With `GITHUB_TOKEN` (`actions: read`) it
-lists every run of `release-check.yml` from the last 31 days (every page), keeps branches whose
-name contains `live`, reads each attempt's jobs, and counts every attempt whose `Live` job started
-today (UTC) and was not skipped, whenever its run was created. The current run's own earlier
-attempts are counted; the attempt being checked is not. An attempt stopped by this guard also
-counts, so once the limit is reached it stays reached for the day. If a list cannot be read in full
-(HTTP error, bad JSON, more than 2,000 runs, an incomplete job list) the step fails with an error
-line and makes no guess. The job has a
-concurrency group (`release-live`) shared by all branches with `cancel-in-progress: false`, so two
-live runs cannot overlap.
+The release check has no `live` job, no Meta key and no secret, and spends $0. Real-model checks
+happen only in `smoke.yml`, after a deploy: one live ask and one spoken question ($0.55 at the
+holds, see the budget below), inside the deployed app's own daily cap. The merged report holds
+one informational line, `live model: checked after deploy by smoke.yml` (KNOWN_GAP, not required),
+so the report says plainly that no model was called. It is never a pass and never a failure.
 
 ## Smoke test (`smoke/**`)
 
@@ -181,7 +156,10 @@ admin key separately (GitHub masks the secret only as the whole comma-joined str
 secret present the API URL must be https on `maudesignal-api*.vercel.app`; otherwise the run
 exits with code 2 before sending anything (a `workflow_dispatch` input cannot redirect the keys).
 Responses and the web bundle are scanned for the secrets given to the run and for key-shaped
-strings.
+strings. Every scan-type check goes through one helper (`Smoke.scan`): when the response status
+is 0 or anything other than 200 there is nothing to scan, so the line is FAIL `no answer to check
+(HTTP <status>)`, never a pass. A live answer whose `cost_usd` is not a non-negative number (missing,
+a string, a boolean, negative, NaN or infinite) is counted at the full cap of its kind.
 
 **Spend budget per smoke run** (`scripts/release/budget.py`): one `Budget` object is shared by the
 live checks and the load test, and the web quick pass is kept out of live spending. In total at
@@ -189,7 +167,7 @@ most **$0.60**, **10** live asks, **2** photos and **1** spoken question. Before
 the budget checks the cost already spent, plus the holds of calls in flight, plus this call's
 maximum hold: **$0.25 ask, $0.30 voice, $0.30 photo**. These are the *deployed* API's default
 per-request caps (`globalcap.py` on `track-c-live`), the most one call can cost there; they are
-not the lower caps ($0.12 / $0.12 / $0.15) that the release `live` job sets on its own local API.
+the caps of a local API (the release check has no live job).
 `/v1/health` does not report the deployed caps, so the numbers are copied into `budget.py` (a
 unit test pins them); raise them if the deployment's caps are raised. A call that gets no usable
 answer (timeout, non-200, no `cost_usd`) may still have run the model, so its full hold is
@@ -205,8 +183,8 @@ is listed in the pass's report with `mocked: true`. The load test makes **no liv
 (`--max-live-asks 0`); all of its slots are public `check_device_type` and health calls. Run on
 its own, `load_test.py` builds the same $0.60 budget and defaults to 0 live asks. The real
 `/v1/live/label` route is not called by the smoke run (a photo does not fit beside the other two
-calls); the report carries a KNOWN_GAP line "live photo" saying so, and the release `live` job
-checks it on its own local API. The 390 px pass runs only the alert-bell scenario.
+calls); the report carries a KNOWN_GAP line "live photo" saying so, and no automated check calls
+it. The 390 px pass runs only the alert-bell scenario.
 
 The cost line "cap ledger: cost reported by the responses" is informational (KNOWN_GAP, not
 required): it sums `cost_usd` from the live checks and the load test (the browser pass is mocked, $0), and
@@ -230,19 +208,17 @@ quotes the last `remaining_today`. It confirms nothing by itself.
 
 | Name | Where | Used by | If missing |
 |---|---|---|---|
-| `META_MODEL_API_KEY` | repository secret | `live` (presence only, in its first step; then the calls) | the live job does not run |
-| `GITHUB_TOKEN` | provided by Actions | `live` first step (counts today's live attempts, `actions: read`) | the live job does not run |
 | `MAUDESIGNAL_SMOKE_KEYS` | repository secret (optional) | smoke | keyed checks BLOCKED |
 | `MAUDESIGNAL_ADMIN_KEY_SMOKE` | repository secret (optional) | smoke | TEST entries remain; reported |
 
 Release-check test keys are random per run (`serve_api.py prepare`), masked in the log, and
-exist only in that job. The release check calls no model except in the `live` job, whose total is
-limited by the app's own cap.
+exist only in that job. The release check calls no model and uses no secret. The smoke test calls the deployed model
+only within the app's own daily cap.
 
 ## Limits of these checks
 
 * The API contract job has no fake model, so prompt injection against a real model is checked
-  only in the release `live` job (one question), not in the smoke run; the other injection checks prove
+  only by the smoke test's one live ask after a deploy; the other injection checks prove
   that the server never returns keys, prompt text or ungated sentences, not how a model
   behaves.
 * `smoke.yml` and the `e2e` job of `release-check.yml` install the same pinned `playwright==1.63.0`

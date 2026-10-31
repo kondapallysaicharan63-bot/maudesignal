@@ -12,9 +12,9 @@ real ``cost_usd``. A refused call is never silent: the caller records a FAIL lin
 
 The holds are the DEPLOYED API's default per-request caps (``connector/globalcap.py`` on
 track-c-live: ask 0.25, voice 0.30, label 0.30), the most one call can cost there. They are NOT
-the lower caps the release live job sets on its own local API. Nothing in the deployed API
-reports its caps (``/v1/health`` does not), so they are copied here; if an operator raises the
-caps on the deployment, raise these too.
+caps of a local API (the release check has no live job and calls no model). Nothing in the
+deployed API reports its caps (``/v1/health`` does not), so they are copied here; if an
+operator raises the caps on the deployment, raise these too.
 
 A call that gets no usable answer (timeout, non-200, no ``cost_usd``) may still have run the
 model, so it is settled at its full hold (``settle(kind, None)``), never at $0.

@@ -4,6 +4,7 @@ name: Smoke test (live URLs)
 # commit), or run it by hand. It makes a few real model calls through the live API, so it
 # spends from the app's own daily cap; one shared budget limits a run to $0.60 (every call held at the
 # deployed API's per-request cap): one chat question ($0.25) and one spoken question ($0.30).
+# This is the only place the real model is checked (release-check.yml calls no model and spends $0).
 # The browser pass answers /v1/live/* from route mocks (recorded mode, $0) and the load test makes
 # no live asks, only public check_device_type calls. The run writes TEST entries that it deletes only when
 # the secret MAUDESIGNAL_ADMIN_KEY_SMOKE exists. Keys never appear in the log or the report.

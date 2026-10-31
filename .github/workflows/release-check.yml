@@ -5,16 +5,10 @@ name: Release check
 # that did not run counts as a failure. The merged report is uploaded as "release-report"
 # (JSON + Markdown, real numbers from the run). How to read it: docs/hackathon/RELEASE_CHECKS.md.
 #
-# Costs: the python, web, api-contract and e2e jobs call no model and need no secret. The live job
-# runs only when the branch name contains "live" and the repository secret META_MODEL_API_KEY
-# exists; the app's own cap (MAUDESIGNAL_LIVE_DAILY_USD) is set to $0.60 there. That cap is a
-# per-run ledger on a fresh directory of the local API in the job: it is separate from the
-# deployed API's global ledger, which this job never touches. So the day's total is limited by the
-# number of live attempts: the first step of the live job itself reads every run of this workflow
-# from the last 31 days on branches containing "live" (a re-run keeps its run's created date) and
-# counts every attempt whose Live job started today (UTC), whenever its run was created. It fails
-# before any paid step when this attempt would be the fourth, and when a list cannot be read in
-# full. A re-run of the job or of failed jobs checks again.
+# Costs: no job calls a model and none needs a secret, in particular no Meta key: the release
+# check spends $0. Real-model checks happen only in smoke.yml, after a deploy (one live ask and
+# one spoken question, $0.55 at the holds, inside the deployed app's own daily cap). The merged
+# report carries one informational line, "live model: checked after deploy by smoke.yml".
 
 on:
   push:
@@ -174,157 +168,9 @@ jobs:
           path: release-out/
           retention-days: 14
 
-  live:
-    name: Live (real Muse calls, total cost at most $0.60)
-    # runs only on a branch whose name contains "live"; the secret cannot be read in an `if`, so
-    # the first step checks it. One live job at a time across all branches (no overlap).
-    if: contains(github.ref_name, 'live')
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    concurrency:
-      group: release-live
-      cancel-in-progress: false
-    permissions:
-      contents: read
-      actions: read
-    steps:
-      - name: Daily guard (first step, before any paid step)
-        env:
-          HAS_KEY: ${{ secrets.META_MODEL_API_KEY != '' }}
-          BRANCH: ${{ github.ref_name }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-          RUN_ID: ${{ github.run_id }}
-          RUN_ATTEMPT: ${{ github.run_attempt }}
-          MAX_LIVE_RUNS_PER_DAY: "3"
-        run: |
-          if [ "$HAS_KEY" != "true" ]; then
-            echo "::error::live job: the Meta key secret is not set, so nothing is run (never a pass)"
-            exit 1
-          fi
-          # Every attempt (including "Re-run all jobs" and "Re-run failed jobs") gets a fresh
-          # runner and a fresh $0.60 ledger, so the number of live attempts per day limits the
-          # total. A re-run keeps the created date of its run, so runs are NOT filtered by that
-          # date: every run of this workflow from the last 31 days on a branch containing 'live'
-          # is read (all pages), and every attempt whose Live job started today (UTC) is counted,
-          # whenever its run was created. This run's own earlier attempts count; this attempt is
-          # the one being checked. Any list that cannot be read in full fails the step.
-          python3 - <<'PY'
-          import json, os, subprocess, sys
-          from datetime import datetime, timedelta, timezone
-
-          API = "https://api.github.com/repos/" + os.environ["REPO"]
-          ME = int(os.environ["RUN_ID"])
-          MY_ATTEMPT = int(os.environ["RUN_ATTEMPT"])
-          LIMIT = int(os.environ["MAX_LIVE_RUNS_PER_DAY"])
-          now = datetime.now(timezone.utc)
-          today = now.strftime("%Y-%m-%d")
-          since = (now - timedelta(days=31)).strftime("%Y-%m-%d")
-
-
-          def fail(msg):
-              print("::error::live job: " + msg)
-              sys.exit(1)
-
-
-          def get(path):
-              out = subprocess.run(
-                  ["curl", "-sS", "--fail-with-body", "-H", "Authorization: Bearer " + os.environ["GH_TOKEN"],
-                   "-H", "Accept: application/vnd.github+json", API + path],
-                  capture_output=True, text=True,
-              )
-              if out.returncode != 0:
-                  fail("stopped, " + path + " could not be read (no guess is made)")
-              try:
-                  data = json.loads(out.stdout)
-              except ValueError:
-                  fail("stopped, " + path + " did not return JSON (no guess is made)")
-              if not isinstance(data, dict):
-                  fail("stopped, " + path + " returned an unexpected shape (no guess is made)")
-              return data
-
-
-          # 1. every run of this workflow from the last 31 days (a re-run keeps its created_at, and a run
-          #    can be re-run for 30 days), on branches whose name contains 'live', over every page
-          runs = []
-          page = 1
-          while True:
-              rows = get("/actions/workflows/release-check.yml/runs?created=%3E%3D" + since
-                         + "&per_page=100&page=" + str(page)).get("workflow_runs")
-              if not isinstance(rows, list):
-                  fail("stopped, the run list could not be read (no guess is made)")
-              runs += [r for r in rows if "live" in (r.get("head_branch") or "").lower()]
-              if len(rows) < 100:
-                  break
-              page += 1
-              if page > 20:
-                  fail("stopped, more than 2000 runs in 31 days, the list is incomplete (no guess is made)")
-
-          # 2. count the attempts whose live job started today (UTC), whenever their run was created
-          used = 0
-          for r in runs:
-              rid = int(r["id"])
-              last = int(r.get("run_attempt") or 1)
-              if rid == ME:
-                  last = max(last, MY_ATTEMPT)
-              for n in range(1, last + 1):
-                  if rid == ME and n >= MY_ATTEMPT:
-                      continue  # the attempt being checked is not counted against itself
-                  data = get("/actions/runs/" + str(rid) + "/attempts/" + str(n) + "/jobs?per_page=100")
-                  jobs = data.get("jobs")
-                  if not isinstance(jobs, list) or int(data.get("total_count", len(jobs))) > len(jobs):
-                      fail("stopped, the job list of run " + str(rid) + " attempt " + str(n) + " is incomplete (no guess is made)")
-                  for j in jobs:
-                      started = (j.get("started_at") or "")[:10]
-                      if (j.get("name") or "").startswith("Live") and started == today and j.get("conclusion") != "skipped":
-                          used += 1
-
-          this_attempt = used + 1
-          if this_attempt > LIMIT:
-              fail("stopped before any paid step, this would be live attempt %d today (limit %d)" % (this_attempt, LIMIT))
-          print("live job: will run (attempt %d of at most %d today, UTC)" % (this_attempt, LIMIT))
-          PY
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: "pip"
-      - name: Install package and the API's own requirements
-        run: |
-          pip install -e ".[dev]"
-          pip install -r api/requirements.txt "uvicorn==0.54.0"
-      - name: Start the API with the real Meta key and the app's own $0.60 cap, on a fresh ledger
-        env:
-          META_MODEL_API_KEY: ${{ secrets.META_MODEL_API_KEY }}
-          MAUDESIGNAL_LIVE_DAILY_USD: "0.60"
-          MAUDESIGNAL_LIVE_ASK_USD: "0.12"
-          MAUDESIGNAL_LIVE_VOICE_USD: "0.12"
-          MAUDESIGNAL_LIVE_LABEL_USD: "0.15"
-        run: |
-          python scripts/release/serve_api.py prepare --profile e2e \
-            --keys-file "$RUNNER_TEMP/keys.json" --env-file "$RUNNER_TEMP/api.env" \
-            --ledger-dir "$RUNNER_TEMP/live-ledger-$GITHUB_RUN_ID"
-          set -a; . "$RUNNER_TEMP/api.env"; set +a
-          nohup python -m uvicorn api.index:app --host 127.0.0.1 --port 8002 \
-            > "$RUNNER_TEMP/api.log" 2>&1 &
-          for i in $(seq 1 60); do
-            curl -sf http://127.0.0.1:8002/v1/health > /dev/null && break
-            sleep 1
-          done
-      - name: One chat question with history, one voice clip, one label photo, one injection question
-        env:
-          META_MODEL_API_KEY: ${{ secrets.META_MODEL_API_KEY }}
-        run: python scripts/release/live_check.py --base http://127.0.0.1:8002 --out-dir release-out
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: live-report
-          path: release-out/
-          retention-days: 14
-
   report:
     name: Release report
-    needs: [python, web, api-contract, e2e, live]
+    needs: [python, web, api-contract, e2e]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -340,38 +186,28 @@ jobs:
       - name: Merge the job reports
         env:
           NEEDS: ${{ toJSON(needs) }}
-          LIVE_RESULT: ${{ needs.live.result }}
         run: |
           mkdir -p release-out
           cp -r parts/screenshots release-out/ 2>/dev/null || true
-          inputs="parts/python-job.json parts/web-job.json parts/api-contract.json parts/e2e.json"
-          if [ ! -f parts/live-check.json ] && [ "$LIVE_RESULT" = "skipped" ]; then
-            # a skipped live job gets its own line in the report: not run, never a pass
-            python - <<'PYEOF'
+          # one informational line: the real model is not called here (never a pass, never a failure)
+          python - <<'PYEOF'
           import sys
           sys.path.insert(0, "scripts/release")
           from pathlib import Path
-          from report import NOT_PRESENT, Report
-          rep = Report("live job")
-          rep.add("live job", NOT_PRESENT,
-                  "not run: it needs a branch name containing 'live' (and, inside the job, the Meta key secret and at most 3 live attempts today)",
-                  group="live", required=False)
-          rep.write(Path("parts"), "live-check")
+          from report import KNOWN_GAP, Report
+          rep = Report("live model")
+          rep.add("live model", KNOWN_GAP, "checked after deploy by smoke.yml", group="live", required=False)
+          rep.write(Path("parts"), "live-model-note")
           PYEOF
-          fi
-          if [ -f parts/live-check.json ]; then inputs="$inputs parts/live-check.json"; fi
-          python scripts/release/report.py merge $inputs \
+          python scripts/release/report.py merge parts/python-job.json parts/web-job.json \
+            parts/api-contract.json parts/e2e.json parts/live-model-note.json \
             --json release-out/release-report.json --md release-out/release-report.md \
             --title "release-report ${GITHUB_REF_NAME}@${GITHUB_SHA::7}" || echo "MERGED_FAIL=1" >> "$GITHUB_ENV"
           cat release-out/release-report.md >> "$GITHUB_STEP_SUMMARY"
           python - <<'EOF'
-          import json, os, sys
+          import json, os
           needs = json.loads(os.environ["NEEDS"])
-          bad = {k: v["result"] for k, v in needs.items()
-                 if k != "live" and v["result"] != "success"}
-          live = needs["live"]["result"]
-          if live not in ("success", "skipped"):
-              bad["live"] = live
+          bad = {k: v["result"] for k, v in needs.items() if v["result"] != "success"}
           if bad:
               print("jobs that did not succeed:", bad)
               open(os.environ["GITHUB_ENV"], "a").write("JOB_FAIL=1\n")

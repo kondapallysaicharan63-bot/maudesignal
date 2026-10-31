@@ -635,34 +635,26 @@ def test_workflow_triggers_and_secret_rules() -> None:
     st = sm.get("on") or sm.get(True)
     assert st["push"]["branches"] == ["smoke/**"] and "workflow_dispatch" in st
     jobs = rc["jobs"]
-    # the live job runs on a branch with "live" in its name; its first step checks the secret
-    assert "live" in jobs["live"]["if"] and "needs" not in jobs["live"]
-    guard = json.dumps(jobs["live"]["steps"][0])
-    assert "META_MODEL_API_KEY" in guard
-    live = json.dumps(jobs["live"])
-    assert '"MAUDESIGNAL_LIVE_DAILY_USD": "0.60"' in live  # the app's own cap
-    assert "INSTANCE_DIVISOR" not in live  # no code reads it; the doc does not claim it
-    # the Meta key is read from a secret only by the live job, and never in an echo
-    for job_name, job in jobs.items():
-        if job_name != "live":
-            assert "META_MODEL_API_KEY" not in json.dumps(job), job_name
-    assert not re.search(
-        r"echo[^\n]*META_MODEL_API_KEY", (WORKFLOWS / "release-check.yml").read_text()
-    )
-    # every job feeds the report job
-    assert set(jobs["report"]["needs"]) >= {"python", "web", "api-contract", "e2e", "live"}
+    # the release check has no live job and no secret at all: it spends $0
+    assert "live" not in jobs and "gate-live" not in jobs
+    text = (WORKFLOWS / "release-check.yml").read_text()
+    assert "META_MODEL_API_KEY" not in text and "secrets." not in text
+    assert "live_check" not in text and "release-live" not in text
+    assert set(jobs["report"]["needs"]) == {"python", "web", "api-contract", "e2e"}
 
 
-def test_report_job_stubs_a_skipped_live_job() -> None:
+def test_report_job_adds_the_informational_live_model_line() -> None:
     import yaml
 
     rc = yaml.safe_load((WORKFLOWS / "release-check.yml").read_text())
     merge = json.dumps(rc["jobs"]["report"])
-    assert "needs.live.result" in merge and "NOT_PRESENT" in merge and "live job" in merge
+    assert "checked after deploy by smoke.yml" in merge and "KNOWN_GAP" in merge
+    assert "required=False" in merge and "live-model-note.json" in merge
+    assert "needs.live" not in merge
 
 
 # --------------------------------------------------------------------------------------------
-# TEST refs, the shared spend budget, delete-test effect, live_check budget, pinned installs
+# TEST refs, the shared spend budget, delete-test effect, pinned installs
 # --------------------------------------------------------------------------------------------
 
 # A copy of the server's rule (src/maudesignal/connector/feedback.py on track-c-live).
@@ -712,8 +704,8 @@ def test_budget_holds_counts_and_dollars() -> None:
 
 
 def test_budget_holds_are_the_deployed_caps() -> None:
-    # copied from connector/globalcap.py on track-c-live (DEFAULT_ASK/VOICE/LABEL_USD); the local
-    # release live job uses lower caps (0.12/0.12/0.15) but the smoke run talks to the deployment
+    # copied from connector/globalcap.py on track-c-live (DEFAULT_ASK/VOICE/LABEL_USD); the smoke
+    # run talks to the deployment
     import budget
 
     assert budget.HOLD_USD == {"ask": 0.25, "voice": 0.30, "photo": 0.30}
@@ -950,24 +942,6 @@ def test_smoke_live_records_a_fail_line_when_the_budget_is_short(
     assert calls == []  # not even one call fits
     lines = [c for c in rep.checks if c.detail == "skipped: budget"]
     assert len(lines) == 3 and all(c.status == rpt.FAIL for c in lines)
-
-
-def test_live_check_records_skipped_budget_for_the_injection_question(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    import live_check
-
-    def fake(method: str, url: str, **kw: Any) -> netutil.Response:
-        body = {"mode": "live", "cost_usd": 0.30, "answer": {"spoken_text": "x"}, "heard": "q"}
-        return netutil.Response(200, {}, json.dumps(body).encode(), 1)
-
-    monkeypatch.setattr(live_check, "request", fake)
-    monkeypatch.setenv("META_MODEL_API_KEY", "set-for-test")
-    live_check.main(["--base", "http://x", "--out-dir", str(tmp_path)])
-    doc = json.loads((tmp_path / "live-check.json").read_text())
-    names = {c["name"]: c for c in doc["checks"]}
-    assert names["prompt-injection question"]["detail"] == "skipped: budget"
-    assert names["prompt-injection question"]["status"] == rpt.FAIL
 
 
 def test_smoke_and_release_install_the_same_pinned_playwright_and_pillow() -> None:

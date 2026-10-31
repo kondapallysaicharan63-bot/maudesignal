@@ -254,7 +254,7 @@ class Env:
         """Smoke: answer every /v1/live/* call from the browser with a recorded body, no spend.
 
         The browser pass runs in recorded mode through route mocking, so it makes no model call
-        and costs $0; the real live routes are checked once by ``live_check.py`` through the
+        and costs $0; the real live routes are checked only by smoke.yml after a deploy, through the
         shared budget. Each call is logged with ``mocked: true`` so a report shows it.
         """
 
