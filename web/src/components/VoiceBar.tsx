@@ -88,14 +88,21 @@ export function VoiceBar({ rec, transcribing, title }: { rec: Recorder; transcri
             <i style={{ width: `${live ? Math.max(2, Math.round(rec.level * 100)) : 2}%` }} />
           </div>
         ) : (
-          <div className="flex h-8 min-w-6 flex-1 items-center justify-center gap-[3px] overflow-hidden" aria-hidden="true" data-testid="voice-wave">
-            {waveHeights(rec.levels, live).map((v, i) => (
-              <i
-                key={i}
-                className={['block w-[2px] shrink-0 rounded-full transition-[height] duration-100 ease-out', live ? 'bg-accent' : 'bg-ink-3'].join(' ')}
-                style={{ height: `${Math.max(2, Math.round(v * 32))}px` }}
-              />
-            ))}
+          <div className="flex h-8 min-w-6 flex-1 items-center justify-center overflow-hidden" aria-hidden="true" data-testid="voice-wave">
+            {/* A 2px grey floor across the whole wave; each bar rises from it, centred on it. */}
+            <span className="relative flex h-8 max-w-full items-center justify-center gap-[3px]">
+              <span className="absolute inset-x-0 top-1/2 h-[2px] -translate-y-1/2 rounded-full bg-ink-3 opacity-60" />
+              {waveHeights(rec.levels, live).map((v, i) => {
+                const h = Math.round(v * 32)
+                return (
+                  <i
+                    key={i}
+                    className={['relative block w-[2px] shrink-0 rounded-full transition-[height] duration-100 ease-out', live && h > 2 ? 'bg-accent' : 'bg-ink-3'].join(' ')}
+                    style={{ height: `${Math.max(2, h)}px` }}
+                  />
+                )
+              })}
+            </span>
           </div>
         )}
         {rec.canPause && (

@@ -71,10 +71,12 @@ export function BuddyFace({ alert, size = 30 }: { alert: boolean; size?: number 
  * with some it is a button: click or Enter opens the first alert's panel.
  */
 export function AlertBuddy({ items, count, onOpen }: { items: AlertItem[]; count: number; onOpen: (a: AlertItem) => void }) {
-  const [bubble, setBubble] = useState(false)
+  // 'auto': shown once on the first visit; 'user': shown on hover or focus. The page hides the 'auto' one where the
+  // message box is shown (it can cover the claims strip), never the one the person asked for.
+  const [bubble, setBubble] = useState<false | 'auto' | 'user'>(false)
   useEffect(() => {
     if (count <= 0) return
-    if (firstBubble()) setBubble(true)
+    if (firstBubble()) setBubble('auto')
   }, [count > 0]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!bubble) return
@@ -88,7 +90,7 @@ export function AlertBuddy({ items, count, onOpen }: { items: AlertItem[]; count
       </span>
     )
   return (
-    <span className="relative inline-flex" onMouseEnter={() => setBubble(true)} onMouseLeave={() => setBubble(false)} onFocus={() => setBubble(true)} onBlur={() => setBubble(false)}>
+    <span className="relative inline-flex" onMouseEnter={() => setBubble('user')} onMouseLeave={() => setBubble(false)} onFocus={() => setBubble('user')} onBlur={() => setBubble(false)}>
       <button
         type="button"
         className="ms-buddy ws-icon-btn"
@@ -103,7 +105,7 @@ export function AlertBuddy({ items, count, onOpen }: { items: AlertItem[]; count
         <BuddyFace alert />
       </button>
       {bubble && (
-        <span className="ms-buddy-bubble" aria-hidden="true" data-testid="buddy-bubble">
+        <span className="ms-buddy-bubble" aria-hidden="true" data-testid="buddy-bubble" data-auto={bubble === 'auto' ? 'true' : undefined}>
           {buddyText(count)}
         </span>
       )}

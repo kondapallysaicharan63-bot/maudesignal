@@ -136,6 +136,13 @@ export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera
     onError: (message) => setVoiceNote(message),
   })
   const recording = rec.state !== 'idle' || transcribing
+  // On a page with the message box the alert buddy's first-visit bubble is not shown (it can cover the claims strip).
+  useEffect(() => {
+    document.body.dataset.composerMenu = 'true'
+    return () => {
+      delete document.body.dataset.composerMenu
+    }
+  }, [])
   useEffect(() => {
     const on = inUse || recording || camera
     if (on) document.body.dataset.composerActive = 'true'
@@ -484,7 +491,7 @@ export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera
             )}
             {didYouMean.length > 0 && (
               <div className="flex flex-wrap items-center gap-2 px-2 pb-1 pt-0.5 text-[16px] text-ink" data-testid="did-you-mean">
-                <span className="ws-pill ws-pill--ring flex-wrap bg-accent-soft py-1 text-ink">
+                <span className="inline-flex flex-wrap items-center gap-1 rounded-full border-0 bg-accent-soft px-3 py-1 text-[16px] font-semibold text-ink">
                   <span>
                     Did you mean <span className="ms-code !text-ink">{didYouMean.join(' or ')}</span>?
                   </span>

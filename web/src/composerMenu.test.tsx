@@ -641,3 +641,25 @@ describe('the camera dialog on its own', () => {
     expect(onClose).toHaveBeenCalled()
   })
 })
+
+describe('polish: alert bubble and menu rows', () => {
+  it('the first-visit bubble is marked auto (hidden on pages with the message box); hover shows a user one', async () => {
+    const { AlertBuddy } = await import('./components/AlertBuddy')
+    sessionStorage.clear()
+    await act(async () => root.render(<AlertBuddy items={[]} count={3} onOpen={() => undefined} />))
+    expect(q('buddy-bubble')?.dataset.auto).toBe('true')
+    const wrap = q('alert-buddy')?.parentElement as HTMLElement
+    await act(async () => { wrap.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, relatedTarget: document.body })) })
+    await act(async () => { wrap.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, relatedTarget: document.body })) })
+    expect(q('buddy-bubble')?.dataset.auto).toBeUndefined()
+  })
+
+  it('the message box marks the page; the highlighted menu row has a soft fill, no left bar', async () => {
+    expect(document.body.dataset.composerMenu).toBe('true')
+    await click(q('composer-plus'))
+    const row = q('menu-take-photo') as HTMLElement
+    expect(row.className).toContain('rounded-row')
+    expect(row.className).toContain('bg-sunk')
+    expect(row.className).not.toContain('inset_4px')
+  })
+})

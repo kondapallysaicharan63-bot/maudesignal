@@ -33,6 +33,7 @@ export default {
         xs: 'var(--radius-xs)',
         sm: 'var(--radius-sm)',
         md: 'var(--radius-md)',
+        row: 'var(--radius-row)',
         lg: 'var(--radius-lg)',
         full: 'var(--radius-full)',
       },
