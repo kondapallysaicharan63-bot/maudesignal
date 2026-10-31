@@ -1,6 +1,8 @@
 // "Take photo" on a computer: the live camera opens at once (back camera preferred), with Shutter, then Retake or Use
 // photo. If the camera cannot be used (permission refused, no camera, a page that is not secure) the dialog closes and the
-// caller falls back to the file picker with a short reason. The picture is a fresh JPEG drawn from the video (no EXIF).
+// caller falls back to the file picker with a short reason. The dialog never closes on time alone: the browser's "Allow
+// camera?" prompt may be open, so after a few seconds without a picture it offers "Use a photo instead" and keeps waiting.
+// The picture is a fresh JPEG drawn from the video (no EXIF).
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Icon } from '../icons'
@@ -10,7 +12,6 @@ import { frameToJpeg, PHOTO_ENCODE_FAILED_TEXT, PHOTO_TOO_BIG_TEXT, PhotoError }
 export function cameraFallbackText(e: unknown): string {
   const name = (e as { name?: string } | null)?.name ?? ''
   if (name === 'insecure') return 'Camera needs a secure (https) page — choose a photo instead'
-  if (name === 'timeout') return 'Camera did not start — choose a photo instead'
   if (name === 'unsupported') return 'This browser has no camera access — choose a photo instead'
   if (name === 'NotFoundError' || name === 'DevicesNotFoundError' || name === 'OverconstrainedError') return 'No camera found — choose a photo instead'
   if (name === 'NotReadableError') return 'Camera in use by another program — choose a photo instead'
@@ -19,40 +20,24 @@ export function cameraFallbackText(e: unknown): string {
 
 const named = (name: string): Error => Object.assign(new Error(name), { name })
 
-/** Asks for the camera: back camera preferred, any camera if that is refused as impossible. */
-/** How long the camera may take to start before the page falls back to the file picker. */
-export const CAMERA_START_TIMEOUT_MS = 4000
+/** After this long without a picture the dialog offers "Use a photo instead" (it stays open and keeps waiting). */
+export const CAMERA_SLOW_MS = 4000
 
 /**
- * `start()` raced against a timeout: some browsers never settle getUserMedia (a prompt left open, a refusal that is
- * never reported). On timeout this rejects with name "timeout", and a stream that arrives later is stopped at once.
+ * True when the browser already says the camera is refused (Permissions API). "prompt", "granted", an error or no
+ * Permissions API all mean: ask for the camera as usual.
  */
-export function startWithin(start: () => Promise<MediaStream>, ms: number = CAMERA_START_TIMEOUT_MS): Promise<MediaStream> {
-  return new Promise<MediaStream>((resolve, reject) => {
-    let done = false
-    const timer = setTimeout(() => {
-      done = true
-      reject(named('timeout'))
-    }, ms)
-    start().then(
-      (s) => {
-        if (done) s.getTracks().forEach((t) => t.stop()) // too late: switch the camera off again
-        else {
-          done = true
-          clearTimeout(timer)
-          resolve(s)
-        }
-      },
-      (e: unknown) => {
-        if (done) return
-        done = true
-        clearTimeout(timer)
-        reject(e)
-      },
-    )
-  })
+export async function cameraDenied(perms: Permissions | undefined = typeof navigator === 'undefined' ? undefined : navigator.permissions): Promise<boolean> {
+  try {
+    if (!perms?.query) return false
+    const st = await perms.query({ name: 'camera' as PermissionName })
+    return st.state === 'denied'
+  } catch {
+    return false
+  }
 }
 
+/** Asks for the camera: back camera preferred, any camera if that is refused as impossible. */
 export async function openCamera(md: MediaDevices | undefined = typeof navigator === 'undefined' ? undefined : navigator.mediaDevices, secure: boolean = typeof window === 'undefined' || window.isSecureContext !== false): Promise<MediaStream> {
   if (!secure) throw named('insecure')
   if (!md?.getUserMedia) throw named('unsupported')
@@ -65,12 +50,15 @@ export async function openCamera(md: MediaDevices | undefined = typeof navigator
   }
 }
 
-export function CameraSheet({ onUse, onClose, onFail }: {
+export function CameraSheet({ onUse, onClose, onFail, onPickFile, slowAfterMs = CAMERA_SLOW_MS }: {
   /** The picture the person chose to attach. */
   onUse: (jpeg: Blob) => void
   onClose: () => void
-  /** The camera could not be used: a short reason for the file-picker fallback. */
+  /** The camera could not be used (a real refusal or no camera): a short reason for the file-picker fallback. */
   onFail: (reason: string) => void
+  /** "Use a photo instead": close the camera and open the file picker. */
+  onPickFile: () => void
+  slowAfterMs?: number
 }) {
   const video = useRef<HTMLVideoElement>(null)
   const stream = useRef<MediaStream | null>(null)
@@ -79,6 +67,7 @@ export function CameraSheet({ onUse, onClose, onFail }: {
   const [ready, setReady] = useState(false)
   const [shot, setShot] = useState<{ blob: Blob; url: string } | null>(null)
   const [problem, setProblem] = useState<string | null>(null)
+  const [slow, setSlow] = useState(false)
 
   const stopCamera = useCallback(() => {
     stream.current?.getTracks().forEach((t) => t.stop())
@@ -86,9 +75,17 @@ export function CameraSheet({ onUse, onClose, onFail }: {
   }, [])
 
   useEffect(() => {
+    // `alive` turns false when the dialog closes (✕, Escape, "Use a photo instead"): a stream that arrives after that
+    // is switched off at once.
     let alive = true
-    startWithin(() => openCamera())
-      .then((s) => {
+    const slowTimer = window.setTimeout(() => alive && setSlow(true), slowAfterMs)
+    void (async () => {
+      if (await cameraDenied()) {
+        if (alive) onFail(cameraFallbackText({ name: 'NotAllowedError' }))
+        return
+      }
+      try {
+        const s = await openCamera()
         if (!alive) {
           s.getTracks().forEach((t) => t.stop())
           return
@@ -98,13 +95,15 @@ export function CameraSheet({ onUse, onClose, onFail }: {
           video.current.srcObject = s
           void video.current.play().catch(() => undefined)
         }
+        setSlow(false)
         setReady(true)
-      })
-      .catch((e: unknown) => {
+      } catch (e) {
         if (alive) onFail(cameraFallbackText(e))
-      })
+      }
+    })()
     return () => {
       alive = false
+      window.clearTimeout(slowTimer)
       stopCamera()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -184,9 +183,21 @@ export function CameraSheet({ onUse, onClose, onFail }: {
           />
           {shot && <img src={shot.url} alt="The photo you took" className="block max-h-[55dvh] w-full object-contain" data-testid="camera-shot" />}
           {!ready && !shot && (
-            <p role="status" className="absolute inset-0 m-0 flex items-center justify-center text-[16px] text-ink-2">
-              Starting the camera…
-            </p>
+            <div role="status" className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4 text-center" data-testid="camera-waiting">
+              {slow ? (
+                <>
+                  <p className="m-0 text-[17px] font-semibold text-ink" data-testid="camera-slow">
+                    Camera not started yet
+                  </p>
+                  <p className="m-0 text-[15px] text-ink-2">If the browser is asking, allow the camera. Or:</p>
+                  <button type="button" className="ms-btn ws-btn-primary !min-h-11" onClick={onPickFile} data-testid="camera-use-file">
+                    <Icon name="upload" size={18} /> Use a photo instead
+                  </button>
+                </>
+              ) : (
+                <p className="m-0 text-[16px] text-ink-2">Starting the camera…</p>
+              )}
+            </div>
           )}
         </div>
         <p className="m-0 mt-2 text-[15px] text-ink-2">Photo is read once and not stored. Do not photograph patient details.</p>

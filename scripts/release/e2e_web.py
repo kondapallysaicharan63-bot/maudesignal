@@ -1012,8 +1012,6 @@ def s_camera_take_photo(env: Env) -> str:
 
 
 REFUSED_REASON = "Camera blocked — choose a photo instead"
-#: WebKit may leave getUserMedia pending instead of refusing; the page then gives up after 4 s with this reason.
-STALLED_REASON = "Camera did not start — choose a photo instead"
 #: Refuses the camera in every engine: replaces getUserMedia on the prototype and on the instance (WebKit keeps it
 #: on the prototype and ignores a plain assignment on some versions), and adds mediaDevices if it is missing.
 REFUSE_CAMERA_JS = """
@@ -1050,11 +1048,20 @@ def s_camera_refused(env: Env) -> str:
     except Exception:
         opened = False
     note = page.get_by_test_id("photo-note")
-    # the page gives the camera 4 s to start before it falls back, so allow a little more than that
-    note.wait_for(timeout=10_000)
+    try:
+        note.wait_for(timeout=8_000)
+    except Exception as exc:
+        # The refusal stub did not reach this engine's getUserMedia: the dialog keeps waiting (the page never closes
+        # it on time alone). That is the right page behaviour, but the refusal path was not exercised here.
+        if env.engine == "webkit" and page.get_by_test_id("camera-waiting").count():
+            raise SkipError(
+                KNOWN_GAP,
+                "WebKit: the getUserMedia refusal stub does not take effect in Playwright, so the camera"
+                " request stays pending; the refusal path is checked in chromium and firefox",
+            ) from exc
+        raise
     said = note.inner_text()
-    reasons = [REFUSED_REASON] + ([STALLED_REASON] if env.engine == "webkit" else [])
-    if not any(r in said for r in reasons):
+    if REFUSED_REASON not in said:
         raise AssertionError(f"reason not shown: {said[:120]!r}")
     if page.get_by_test_id("camera-sheet").count():
         raise AssertionError("the camera dialog stayed open after the camera was refused")
@@ -1070,7 +1077,7 @@ def s_camera_refused(env: Env) -> str:
 
 
 def s_camera_stalls(env: Env) -> str:
-    """The camera never starts (getUserMedia never settles): after 4 s the file picker path with a reason."""
+    """The camera does not start (an open permission prompt): the dialog stays open and offers a photo after ~4 s."""
     page = env.page
     page.add_init_script(
         REFUSE_CAMERA_JS.replace(
@@ -1087,15 +1094,25 @@ def s_camera_stalls(env: Env) -> str:
         )
     menu_item(env, "take-photo")
     page.wait_for_selector("[data-testid=camera-sheet]", timeout=5_000)
-    note = page.get_by_test_id("photo-note")
-    note.wait_for(timeout=10_000)
-    if STALLED_REASON not in note.inner_text():
-        raise AssertionError(f"reason not shown: {note.inner_text()[:120]!r}")
-    if page.get_by_test_id("camera-sheet").count():
-        raise AssertionError("the camera dialog stayed open after the camera did not start")
+    started = time.monotonic()
+    page.wait_for_selector("[data-testid=camera-use-file]", timeout=10_000)
+    waited = time.monotonic() - started
+    if waited < 2.5:
+        raise AssertionError(
+            f"'Use a photo instead' came after {waited:.1f} s, before the camera had time"
+        )
+    if "Camera not started yet" not in page.get_by_test_id("camera-slow").inner_text():
+        raise AssertionError("the waiting dialog does not say the camera has not started")
+    page.wait_for_timeout(2_000)
+    if not page.get_by_test_id("camera-sheet").count():
+        raise AssertionError("the camera dialog closed on time alone")
+    if page.get_by_test_id("photo-note").count():
+        raise AssertionError("a refusal reason was shown although nothing was refused")
+    env.shot("camera-slow")
     with page.expect_file_chooser(timeout=6_000):
-        page.get_by_test_id("photo-note-pick").click()
-    return "camera did not start in 4 s -> dialog closed, reason shown, file picker opens"
+        page.get_by_test_id("camera-use-file").click()
+    page.wait_for_selector("[data-testid=camera-sheet]", state="detached", timeout=5_000)
+    return f"dialog stays open; 'Use a photo instead' after {waited:.1f} s opens the file picker"
 
 
 def s_thumbnail_remove(env: Env) -> str:
@@ -1218,7 +1235,7 @@ COMPOSER_SCENARIOS: tuple[tuple[str, Callable[[Env], str]], ...] = (
     ("voice: stop, transcript in box, edit, send", s_voice_transcript_send),
     ("photo: take photo (live camera / phone camera)", s_camera_take_photo),
     ("photo: camera refused, file picker with reason", s_camera_refused),
-    ("photo: camera never starts, falls back after 4 s", s_camera_stalls),
+    ("photo: camera slow to start, dialog stays open, photo offered", s_camera_stalls),
     ("photo: thumbnail remove", s_thumbnail_remove),
     ("research toggle hidden without the feature", s_research_hidden),
     ("voice: 1:00 limit pauses, no request until Stop", s_voice_limit),

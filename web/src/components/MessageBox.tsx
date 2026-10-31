@@ -362,6 +362,11 @@ export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera
             setCamera(false)
             focusBox()
           }}
+          onPickFile={() => {
+            setCamera(false)
+            setPhotoNote(null)
+            uploadRef.current?.click()
+          }}
           onFail={(reason) => {
             setCamera(false)
             setPhotoNote({ text: reason, pick: true })
