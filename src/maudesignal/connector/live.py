@@ -76,14 +76,34 @@ from maudesignal.connector.data import PROJECT_ROOT, ConnectorData
 from maudesignal.connector.errors import InvalidInputError, SourceUnavailableError
 from maudesignal.connector.feedback import clean_ref, looks_like_phi
 from maudesignal.connector.forbidden import is_clean
+from maudesignal.connector.globalcap import (
+    ASK_USD_ENV,
+    DAILY_USD_ENV,
+    DEFAULT_ASK_USD,
+    DEFAULT_DAILY_USD,
+    DEFAULT_LABEL_USD,
+    DEFAULT_VOICE_USD,
+    LABEL_USD_ENV,
+    LEDGER_ID,
+    VOICE_USD_ENV,
+    largest_request_usd,
+)
+from maudesignal.connector.mentions import (
+    LABEL,
+    Fetcher,
+    HttpFetcher,
+    empty_recorded,
+    load_recorded,
+    search_mentions,
+)
 from maudesignal.connector.models import ToolAnswer
 from maudesignal.connector.readonly import make_read_only
 from maudesignal.connector.security import RateLimiter
 from maudesignal.connector.store import (
+    RESERVING_LEDGERS,
     ConnectorState,
     MemoryLedger,
     UpstashError,
-    UpstashLedger,
 )
 from maudesignal.copilot.agent import CopilotAgent
 from maudesignal.copilot.spend import DailyLedger, SpendCaps, SpendGuard, SpendLimitError
@@ -111,30 +131,26 @@ logger = get_logger(__name__)
 ASK_PATH = "/v1/live/ask"
 VOICE_PATH = "/v1/live/voice"
 LABEL_PATH = "/v1/live/label"
-LIVE_PATHS = (ASK_PATH, VOICE_PATH, LABEL_PATH)
+MENTIONS_PATH = "/v1/live/mentions"
+LIVE_PATHS = (ASK_PATH, VOICE_PATH, LABEL_PATH, MENTIONS_PATH)
 
 # Environment names (all optional).
 ASK_PER_DAY_ENV = "MAUDESIGNAL_LIVE_ASK_PER_DAY"
 VOICE_PER_DAY_ENV = "MAUDESIGNAL_LIVE_VOICE_PER_DAY"
 LABEL_PER_DAY_ENV = "MAUDESIGNAL_LIVE_LABEL_PER_DAY"
+MENTIONS_PER_DAY_ENV = "MAUDESIGNAL_LIVE_MENTIONS_PER_DAY"
+MENTIONS_USD_ENV = "MAUDESIGNAL_LIVE_MENTIONS_USD"
 BURST_PER_MIN_ENV = "MAUDESIGNAL_LIVE_PER_MIN"
-DAILY_USD_ENV = "MAUDESIGNAL_LIVE_DAILY_USD"
 DIVISOR_ENV = "MAUDESIGNAL_LIVE_INSTANCE_DIVISOR"
-ASK_USD_ENV = "MAUDESIGNAL_LIVE_ASK_USD"
-VOICE_USD_ENV = "MAUDESIGNAL_LIVE_VOICE_USD"
-LABEL_USD_ENV = "MAUDESIGNAL_LIVE_LABEL_USD"
 PEPPER_ENV = "MAUDESIGNAL_KEY_PEPPER"
 
 DEFAULT_ASK_PER_DAY = 30
 DEFAULT_VOICE_PER_DAY = 10
 DEFAULT_LABEL_PER_DAY = 5
+DEFAULT_MENTIONS_PER_DAY = 10
+DEFAULT_MENTIONS_USD = 0.01
 DEFAULT_BURST_PER_MIN = 10
-DEFAULT_DAILY_USD = 3.00
 DEFAULT_DIVISOR = 2
-DEFAULT_ASK_USD = 0.25
-DEFAULT_VOICE_USD = 0.30
-DEFAULT_LABEL_USD = 0.30
-LEDGER_ID = "live-global"
 
 # Upload and body limits.
 MAX_JSON_BYTES = 64 * 1024
@@ -216,6 +232,8 @@ class LiveConfig:
     ask_usd: float = DEFAULT_ASK_USD
     voice_usd: float = DEFAULT_VOICE_USD
     label_usd: float = DEFAULT_LABEL_USD
+    mentions_per_day: int = DEFAULT_MENTIONS_PER_DAY
+    mentions_usd: float = DEFAULT_MENTIONS_USD
 
     @classmethod
     def from_env(cls, env: dict[str, str] | None = None) -> LiveConfig:
@@ -231,11 +249,24 @@ class LiveConfig:
             ask_usd=_float_env(e, ASK_USD_ENV, DEFAULT_ASK_USD),
             voice_usd=_float_env(e, VOICE_USD_ENV, DEFAULT_VOICE_USD),
             label_usd=_float_env(e, LABEL_USD_ENV, DEFAULT_LABEL_USD),
+            mentions_per_day=_int_env(e, MENTIONS_PER_DAY_ENV, DEFAULT_MENTIONS_PER_DAY),
+            mentions_usd=_float_env(e, MENTIONS_USD_ENV, DEFAULT_MENTIONS_USD),
         )
 
-    def effective_daily_usd(self, *, shared: bool) -> float:
-        """The cap this instance enforces: the whole value when shared, a share otherwise."""
-        return self.daily_usd if shared else round(self.daily_usd / self.instance_divisor, 6)
+    def effective_daily_usd(self, *, shared: bool, race_margin: float = 0.0) -> float:
+        """The cap this instance enforces.
+
+        The whole value when the ledger is shared and atomic (Redis), a share of it when it is
+        per instance, and the value minus ``race_margin`` (the largest per-request cap) when
+        the shared ledger is the Blob object, whose read-modify-write is not atomic.
+        """
+        if not shared:
+            return round(self.daily_usd / self.instance_divisor, 6)
+        return max(0.0, round(self.daily_usd - race_margin, 6))
+
+    def largest_request_usd(self, env: dict[str, str] | None = None) -> float:
+        """The biggest per-request cap of the live routes and the keyed ask tool."""
+        return max(self.ask_usd, self.voice_usd, self.label_usd, largest_request_usd(env))
 
 
 class Transcriber:
@@ -321,6 +352,8 @@ class LiveBackends:
     searcher: Callable[[float], Searcher] = default_searcher
     clock: Callable[[], float] = time.monotonic
     vision_dir: Path = field(default_factory=lambda: PROJECT_ROOT / "demo" / "vision")
+    mentions_fetcher: Callable[[], Fetcher] = HttpFetcher
+    mentions_dir: Path = field(default_factory=lambda: PROJECT_ROOT / "demo" / "mentions")
 
 
 class DeadlineClient:
@@ -398,8 +431,12 @@ class LiveAskRuntime(AskRuntime):
 
     live_ledger: DailyLedger = field(default_factory=MemoryLedger)
 
+    def global_ledger(self) -> DailyLedger | None:
+        """None: the live routes already use the global ledger as their only ledger."""
+        return None
+
     def ledger_for(self, key_id: str) -> DailyLedger:
-        """The shared live ledger (Redis when configured), never a file."""
+        """The shared live ledger (Redis or Blob when configured), never a file."""
         shared = self.state.ledger(key_id) if self.state else None
         return shared or self.live_ledger
 
@@ -444,6 +481,33 @@ class AskIn(_CommonIn):
 
 class MetaIn(_CommonIn):
     """The optional ``meta`` part of ``POST /v1/live/voice``."""
+
+
+class MentionsIn(BaseModel):
+    """Body of ``POST /v1/live/mentions``."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    product_code: str = Field(pattern=_PRODUCT_CODE)
+    device_terms: list[str] = Field(default_factory=list, max_length=5)
+
+    @field_validator("product_code", mode="after")
+    @classmethod
+    def _upper_code(cls, value: str) -> str:
+        return value.upper()
+
+    @field_validator("device_terms", mode="after")
+    @classmethod
+    def _terms(cls, value: list[str]) -> list[str]:
+        if any(not 2 <= len(t.strip()) <= 60 for t in value):
+            raise ValueError("each term must have 2 to 60 characters")
+        return [t.strip() for t in value]
+
+
+_MENTIONS_NOTES = {
+    "cap": "Today's shared live budget is used up, so no live search was made.",
+    "unreachable": "None of the public sources could be reached just now.",
+}
 
 
 def with_code(question: str, code: str | None) -> str:
@@ -880,13 +944,18 @@ def mount_live(
     cfg = config or LiveConfig.from_env(env)
     clock_now = now or (lambda: datetime.now(UTC))
     today: Callable[[], date] = lambda: clock_now().date()  # noqa: E731
-    daily_cap = cfg.effective_daily_usd(shared=state.shared)
-    ledger: DailyLedger = state.ledger(LEDGER_ID) or MemoryLedger(today=today)
+    mode = state.global_mode
+    daily_cap = cfg.effective_daily_usd(
+        shared=mode != "none",
+        race_margin=cfg.largest_request_usd(env) if mode == "blob" else 0.0,
+    )
+    ledger: DailyLedger = state.global_ledger(LEDGER_ID, today=today) or MemoryLedger(today=today)
     burst = make_limiter("live-burst", cfg.burst_per_min, 60.0)
     counters = {
         "ask": state.daily_counter("live-ask", cfg.ask_per_day, today=today),
         "voice": state.daily_counter("live-voice", cfg.voice_per_day, today=today),
         "label": state.daily_counter("live-label", cfg.label_per_day, today=today),
+        "mentions": state.daily_counter("live-mentions", cfg.mentions_per_day, today=today),
     }
     pepper_src = (env if env is not None else os.environ).get(PEPPER_ENV)
     if not pepper_src and state.shared:
@@ -1008,7 +1077,7 @@ def mount_live(
         hold = 0.0
         ok = True
         try:
-            if isinstance(ledger, UpstashLedger):
+            if isinstance(ledger, RESERVING_LEDGERS):
                 try:
                     ok = ledger.reserve(request_usd, daily_cap)
                 except UpstashError:
@@ -1017,7 +1086,7 @@ def mount_live(
                     hold = request_usd
             yield ok
         finally:
-            if hold and isinstance(ledger, UpstashLedger):
+            if hold and isinstance(ledger, RESERVING_LEDGERS):
                 ledger.release(hold)
 
     def log(endpoint: str, mode: str, started: float, status: int = 200) -> None:
@@ -1070,6 +1139,65 @@ def mount_live(
         response = _ask_response(outcome, limits(remaining))
         log("ask", response["mode"], started)
         return JSONResponse(response, headers={"Cache-Control": "no-store"})
+
+    # --- outside mentions (no model; free public sources; inside the global cost cap) -------
+
+    def do_mentions(body: MentionsIn) -> tuple[dict[str, Any], str | None]:
+        """``(body_without_limits, recorded_reason)``; the reason is None for a live result."""
+        reason: str | None = None
+        try:
+            if ledger.spent_today() >= daily_cap - 1e-9:
+                reason = "cap"
+        except UpstashError:
+            reason = "cap"  # fails closed: an unreadable ledger is a stored result
+        if reason is None:
+            with held(cfg.mentions_usd) as ok:
+                if not ok:
+                    reason = "cap"
+                else:
+                    found = search_mentions(
+                        body.product_code,
+                        body.device_terms,
+                        be.mentions_fetcher(),
+                        clock=be.clock,
+                        now=clock_now,
+                    )
+                    if found.network_ok:
+                        return found.as_dict() | {"label": LABEL, "mode": "live"}, None
+                    reason = "unreachable"
+        stored = load_recorded(be.mentions_dir, body.product_code) or empty_recorded(
+            body.product_code, clock_now()
+        )
+        note = _MENTIONS_NOTES[reason]
+        if not stored.get("searched_utc"):
+            note += " No stored mentions exist for this product code."
+        else:
+            note += f" Shown instead: the stored search of {str(stored['searched_utc'])[:10]}."
+        return stored | {"label": LABEL, "mode": "recorded", "recorded_note": note}, reason
+
+    @app.post(MENTIONS_PATH, include_in_schema=False)
+    async def live_mentions(request: Request) -> Response:
+        started = be.clock()
+        if (blocked := burst_refusal(request)) is not None:
+            return blocked
+        raw = await read_capped(request, MAX_JSON_BYTES)
+        if isinstance(raw, Response):
+            return raw
+        try:
+            body = MentionsIn.model_validate(json.loads(raw))
+        except ValueError as exc:
+            if isinstance(exc, ValidationError):
+                return invalid(exc)
+            return _err(422, "invalid_input", "Body must be a JSON object.")
+        if phi_in(body.device_terms):
+            return _err(422, "patient_data", PHI_MESSAGE)
+        refused, remaining = daily_refusal(request, "mentions")
+        if refused is not None:
+            return refused
+        out, reason = await run_in_threadpool(do_mentions, body)
+        out["limits"] = limits(remaining)
+        log("mentions", "recorded" if reason else "live", started)
+        return JSONResponse(out, headers={"Cache-Control": "no-store"})
 
     def _ask_response(outcome: AskOutcome, lim: dict[str, Any]) -> dict[str, Any]:
         out: dict[str, Any] = {

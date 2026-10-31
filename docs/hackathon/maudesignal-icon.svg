@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="t">
+  <title id="t">MaudeSignal icon: a pulse line across a report page</title>
+  <!-- Original artwork. Colours are the design-system tokens: paper #f6f3ec, surface #fffdf8,
+       ink #16130f, ink-2 #4a443b, accent #1d3fbf, accent-soft #e6eafb. -->
+  <rect width="512" height="512" rx="104" fill="#f6f3ec"/>
+  <!-- report page with a folded corner -->
+  <path d="M136 72h170l78 78v268a22 22 0 0 1-22 22H136a22 22 0 0 1-22-22V94a22 22 0 0 1 22-22z"
+        fill="#fffdf8" stroke="#16130f" stroke-width="14" stroke-linejoin="round"/>
+  <path d="M306 72v56a22 22 0 0 0 22 22h56" fill="#e6eafb" stroke="#16130f" stroke-width="14"
+        stroke-linejoin="round"/>
+  <!-- text lines on the page -->
+  <path d="M158 190h108M158 222h156M158 380h172M158 412h104" fill="none" stroke="#4a443b"
+        stroke-width="14" stroke-linecap="round"/>
+  <!-- the signal: a pulse line that spikes across the page -->
+  <path d="M82 300h94l32-76 44 150 36-102 22 28h86" fill="none" stroke="#1d3fbf" stroke-width="22"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="430" cy="300" r="20" fill="#1d3fbf"/>
+</svg>

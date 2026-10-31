@@ -139,6 +139,9 @@ class Env:
         searcher: FakeSearcher | None = None,
         state: ConnectorState | None = None,
         origins: tuple[str, ...] = (ORIGIN,),
+        store: Any = None,
+        fetcher: Any = None,
+        mentions_dir: Path | None = None,
     ) -> None:
         self.clock = Clock()
         self.spark = spark or RecordingSpark()
@@ -146,7 +149,7 @@ class Env:
         self.transcriber = transcriber or FakeTranscriber()
         self.searcher = searcher or FakeSearcher(openfda_rows)
         self.sam_seen: list[dict[str, Any]] = []
-        self.store = MemoryStore()
+        self.store = store if store is not None else MemoryStore()
         self.live_on = live
         self.state = state or ConnectorState()
 
@@ -167,6 +170,9 @@ class Env:
             searcher=lambda _t: self.searcher,
             clock=lambda: self.clock.mono,
         )
+        if fetcher is not None:
+            self.backends.mentions_fetcher = lambda: fetcher
+        self.backends.mentions_dir = mentions_dir or (tmp_path / "no-mentions")
         settings = Settings(
             keys=KeyStore.from_env({"MAUDESIGNAL_API_KEYS": KEY}),
             limiter=RateLimiter(100),

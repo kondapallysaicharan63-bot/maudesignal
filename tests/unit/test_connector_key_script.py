@@ -32,6 +32,7 @@ class FakeVercel:
     def __init__(self, envs: list[dict[str, Any]] | None = None, status: int = 200) -> None:
         self.envs = envs or []
         self.status = status
+        self.old_value = "existing-key-NOT-REAL-0123456789abcdef"
         self.requests: list[tuple[str, str, dict[str, Any] | None]] = []
 
     def __call__(
@@ -39,6 +40,8 @@ class FakeVercel:
     ) -> tuple[int, Any]:
         assert token == "vercel-token-NOT-REAL"
         self.requests.append((method, url, body))
+        if method == "GET" and "/v1/projects/" in url:  # one variable, decrypted
+            return self.status, {"value": self.old_value}
         if method == "GET":
             return self.status, {"envs": self.envs}
         return (201 if method == "POST" else 200) if self.status == 200 else self.status, {
@@ -120,13 +123,44 @@ def test_vercel_mode_updates_an_existing_variable_and_passes_the_team() -> None:
     }
     code, out, err = run(mod, [], env, http)
     assert code == 0
-    assert [m for m, _, _ in http.requests] == ["GET", "PATCH"]
+    assert [m for m, _, _ in http.requests] == ["GET", "GET", "PATCH"]
+    assert http.requests[1][1].startswith("https://api.vercel.com/v1/projects/prj_123/env/env_9")
     assert (
-        http.requests[1][1] == "https://api.vercel.com/v9/projects/prj_123/env/env_9?teamId=team_7"
+        http.requests[2][1] == "https://api.vercel.com/v9/projects/prj_123/env/env_9?teamId=team_7"
     )
-    body = http.requests[1][2]
+    body = http.requests[2][2]
     assert body is not None and body["type"] == "encrypted" and "key" not in body
     assert body["value"] not in out + err
+    # appended, not replaced: the earlier key is still first in the list
+    assert body["value"].startswith(http.old_value + ",")
+    assert http.old_value not in out + err
+
+
+def test_label_is_written_as_label_equals_key_and_the_key_is_appended() -> None:
+    mod = load()
+    http = FakeVercel([{"id": "env_9", "key": "MAUDESIGNAL_API_KEYS", "target": ["production"]}])
+    env = {"VERCEL_TOKEN": "vercel-token-NOT-REAL", "VERCEL_PROJECT_ID": "prj_123"}
+    code, out, err = run(mod, ["--label", "meta-review"], env, http)
+    assert code == 0 and err == ""
+    body = http.requests[-1][2]
+    assert body is not None
+    assert body["value"].startswith(http.old_value + ",meta-review=")
+    new_key = body["value"].split("meta-review=", 1)[1]
+    assert len(new_key) >= 32 and new_key not in out + err
+
+
+def test_label_in_file_mode_prints_the_line_without_the_key(tmp_path: Path) -> None:
+    mod = load()
+    code, out, err = run(mod, ["--label", "charan", "--out-dir", str(tmp_path / "k")], {})
+    assert code == 0 and err == ""
+    key = next((tmp_path / "k").glob("*.txt")).read_text().strip()
+    assert "charan=<key>" in out and key not in out
+
+
+def test_bad_label_is_refused() -> None:
+    mod = load()
+    code, out, err = run(mod, ["--label", "no spaces=allowed"], {})
+    assert code == 2 and out == "" and "label" in err
 
 
 def test_vercel_failure_prints_status_only_and_no_key() -> None:

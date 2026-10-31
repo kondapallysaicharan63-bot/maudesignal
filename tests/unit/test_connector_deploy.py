@@ -148,12 +148,13 @@ def test_openapi_route_serves_the_committed_spec(data: ConnectorData, tmp_path: 
         "/v1/tools/recalls",
         "/v1/public/check_device_type",
         "/v1/audit/recent",
+        "/v1/connect",
     }
     assert "/" not in paths and "/docs-page" not in paths  # the page is not part of the API
     for path, item in committed["paths"].items():
         for method, op in item.items():
             assert method in {"get", "post"}
-            if path in {"/v1/health", "/v1/public/check_device_type"}:
+            if path in {"/v1/health", "/v1/public/check_device_type", "/v1/connect"}:
                 assert "security" not in op  # no key needed
             else:
                 assert op["security"] == [{"APIKeyHeader": []}]

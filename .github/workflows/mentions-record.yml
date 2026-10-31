@@ -1,0 +1,55 @@
+# HACKATHON-BUILT — record outside mentions (news and public web) of a device type into
+# demo/mentions/<CODE>.json for the stored-first public demo. Free: public feeds and the GDELT
+# news index only, no secrets, no model call, no Meta credit. Runs only when
+# demo/mentions/REQUEST changes on track-c-live (or by manual dispatch). The gate step skips the
+# run when the file is empty or holds 0. Content: 0 (off), or 1 / a list of extra three-letter
+# product codes, e.g. "1 QIH JAK"; LLZ is always recorded.
+name: Record outside mentions
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [track-c-live]
+    paths: ["demo/mentions/REQUEST"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mentions-record
+  cancel-in-progress: false
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Gate (skip when the request file is empty or 0)
+        id: gate
+        run: |
+          body="$(grep -v '^[[:space:]]*#' demo/mentions/REQUEST | tr -d '[:space:]')"
+          if [ "${{ github.event_name }}" = "push" ] && { [ -z "$body" ] || [ "$body" = "0" ]; }; then
+            echo "run=no" >> "$GITHUB_OUTPUT"
+            echo "demo/mentions/REQUEST is empty or 0: skipped"
+          else
+            echo "run=yes" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-python@v5
+        if: steps.gate.outputs.run == 'yes'
+        with:
+          python-version: "3.12"
+      - if: steps.gate.outputs.run == 'yes'
+        run: pip install -e .
+      - name: Search the free sources and check every quote against its page
+        if: steps.gate.outputs.run == 'yes'
+        run: python scripts/record_mentions.py --request demo/mentions/REQUEST --out demo/mentions
+      - name: Commit the recorded files
+        if: steps.gate.outputs.run == 'yes'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add demo/mentions/*.json
+          git diff --cached --quiet || git commit -m "chore(demo): record outside mentions"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

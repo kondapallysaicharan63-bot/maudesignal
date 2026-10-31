@@ -6,8 +6,9 @@ Routes (all hidden from the public OpenAPI document):
   ``MAUDESIGNAL_WEB_ORIGINS``, rate limited per address. No IP address and no user agent is ever
   stored; the limiter sees only a salted hash of the address for the length of its window.
 * ``GET /v1/admin/export``, ``GET /v1/admin/summary``, ``POST /v1/admin/delete-test`` and
-  ``GET /admin``: need the ``X-Admin-Key`` header (constant-time check against
-  ``MAUDESIGNAL_ADMIN_KEY``). If that variable is unset the admin routes answer 503, never open.
+  ``POST /v1/admin/redact-names`` and ``GET /admin``: need the ``X-Admin-Key`` header
+  (constant-time check against ``MAUDESIGNAL_ADMIN_KEY``). If that variable is unset the
+  admin routes answer 503, never open.
 
 No names or email addresses are stored: an optional ``name`` sent by an old client is dropped
 before storage. Referral codes are the only link to a person, and the owner keeps that list
@@ -36,7 +37,7 @@ from typing import Annotated, Any, Literal
 
 from fastapi import FastAPI, Query, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, ValidationError, field_validator
 from starlette.concurrency import run_in_threadpool
 from starlette.requests import ClientDisconnect
 
@@ -63,6 +64,8 @@ TEST_CODE = re.compile(r"^test[0-9._~-]*$", re.IGNORECASE)  # TEST, TEST1, test-
 DEFAULT_REF_ENV = "MAUDESIGNAL_DEFAULT_REF"
 DEFAULT_REF = "email-batch-1"
 DELETE_TEST_PATH = "/v1/admin/delete-test"
+REDACT_NAMES_PATH = "/v1/admin/redact-names"
+KEEP_NAME_CONSENT = "quote_name_role"
 FETCH_WORKERS = 8
 KINDS = ("feedback", "visits")
 
@@ -137,6 +140,14 @@ class FeedbackIn(BaseModel):
     @classmethod
     def _ref(cls, value: Any) -> Any:
         return clean_ref(value)
+
+
+class RedactIn(BaseModel):
+    """Body of ``POST /v1/admin/redact-names``."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    dry_run: StrictBool = True
 
 
 class VisitIn(BaseModel):
@@ -303,6 +314,7 @@ No data is in this page until you unlock it; the key stays in this tab (session 
 <button type="button" data-kind="visits">Download visits CSV</button></p>
 <p><label><input type="checkbox" id="hide"> Hide TEST codes</label>
 <button type="button" id="deltest">Delete TEST entries</button></p>
+<p><button type="button" id="redact">Remove names (keep only 'quote me by name')</button></p>
 <h2>Totals</h2><p id="tot"></p>
 <h2>By code</h2><div id="codes"></div>
 <h2>By referral code</h2><div class="scroll"><table id="refs"></table></div>
@@ -371,6 +383,23 @@ $("deltest").addEventListener("click",async()=>{
   await load();
   $("msg").textContent="Deleted "+d.deleted.visits+" visits and "+d.deleted.feedback+
     " feedback entries.";
+});
+$("redact").addEventListener("click",async()=>{
+  const post=dry=>fetch("/v1/admin/redact-names",{method:"POST",
+    headers:{...hdr(),"Content-Type":"application/json"},cache:"no-store",
+    body:JSON.stringify({dry_run:dry})});
+  const p=await post(true);
+  if(!p.ok){$("msg").textContent="Preview failed: "+p.status;return;}
+  const c=await p.json();
+  if(!confirm("Preview: "+c.checked+" feedback entries checked. "+c.names_removed+
+    " names would be removed; "+c.names_kept_for_quote_by_name+
+    " kept (they chose 'quote me by name and role'). Remove them now? "+
+    "This cannot be undone."))return;
+  const r=await post(false);
+  if(!r.ok){$("msg").textContent="Remove failed: "+r.status;return;}
+  const d=await r.json();
+  $("msg").textContent="Removed "+d.names_removed+" names, kept "+
+    d.names_kept_for_quote_by_name+", "+d.failed+" failed.";
 });
 $("f").addEventListener("submit",e=>{e.preventDefault();
   sessionStorage.setItem(K,$("k").value);$("k").value="";load();});
@@ -650,6 +679,62 @@ def mount_feedback(
         except StoreError:
             return _err(503, "store_unavailable", "The record store is not reachable.", no_store)
         return JSONResponse(result, headers=no_store)
+
+    @app.post(REDACT_NAMES_PATH, include_in_schema=False)
+    async def admin_redact_names(request: Request) -> Response:
+        """Remove stored names from feedback unless the person chose "quote me by name".
+
+        Body ``{"dry_run": bool}`` (default true). Only the ``name`` field of a feedback
+        record is ever changed; every other field and every visit record is left as is.
+        """
+        if (refusal := admin_gate(request)) is not None:
+            return refusal
+        payload, failure = await read_json(request)
+        if failure is not None:
+            return failure
+        try:
+            body = RedactIn.model_validate(payload)
+        except ValidationError as exc:
+            return bad_fields(exc)
+        result = await run_in_threadpool(redact_names, body.dry_run)
+        if result is None:
+            return _err(503, "store_unavailable", "Record store not reachable.", no_store)
+        return JSONResponse(result, headers=no_store)
+
+    def redact_names(dry_run: bool) -> dict[str, Any] | None:
+        counts = {"checked": 0, "names_removed": 0, "names_kept_for_quote_by_name": 0}
+        failed = 0
+        try:
+            blobs = store.list_prefix("feedback/")
+        except StoreError:
+            return None
+        for blob in blobs:
+            try:
+                data = json.loads(store.get(blob))
+            except (ValueError, StoreError):
+                failed += 1
+                continue
+            if not isinstance(data, dict):
+                continue
+            counts["checked"] += 1
+            name = data.get("name")
+            if not name or (isinstance(name, str) and not name.strip()):
+                continue
+            if data.get("consent") == KEEP_NAME_CONSENT:
+                counts["names_kept_for_quote_by_name"] += 1
+                continue
+            if dry_run:
+                counts["names_removed"] += 1
+                continue
+            data.pop("name", None)
+            try:
+                store.put_json(blob.pathname, data, overwrite=True)
+            except StoreError:
+                failed += 1
+                continue
+            counts["names_removed"] += 1
+        logger.info("admin_redact_names", dry_run=dry_run, failed=failed, **counts)
+        return counts | {"dry_run": dry_run, "failed": failed}
 
     @app.post(DELETE_TEST_PATH, include_in_schema=False)
     def admin_delete_test(request: Request) -> Response:

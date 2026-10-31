@@ -32,13 +32,14 @@ from maudesignal.connector.ask import (
     MAX_QUESTION_CHARS,
     MIN_QUESTION_CHARS,
     AskRuntime,
-    ask,
+    ask_detailed,
 )
 from maudesignal.connector.blob_store import RecordStore, store_from_env
 from maudesignal.connector.data import ConnectorData
 from maudesignal.connector.docs_page import render_docs_page
 from maudesignal.connector.errors import ConnectorError, InvalidInputError, NotFoundError
 from maudesignal.connector.feedback import mount_feedback
+from maudesignal.connector.legal_pages import render_privacy, render_terms
 from maudesignal.connector.live import LiveBackends, LiveConfig, mount_live
 from maudesignal.connector.manifest import build_manifest
 from maudesignal.connector.mcp_server import (
@@ -67,7 +68,13 @@ from maudesignal.connector.registry import (
     REPORT_ID_PATTERN,
     WHAT_CHANGED_DESCRIPTION,
 )
-from maudesignal.connector.security import KeyStore, RateLimiter
+from maudesignal.connector.security import (
+    DEFAULT_DEMO_RATE_PER_MIN,
+    DEMO_PER_DAY,
+    DEMO_RATE_ENV,
+    KeyStore,
+    RateLimiter,
+)
 from maudesignal.connector.store import (
     ConnectorState,
     UpstashError,
@@ -105,6 +112,10 @@ def _question_audit_inputs(question: str) -> dict[str, str]:
 
 
 REPO_URL = "https://github.com/kondapallysaicharan63-bot/maudesignal"
+API_BASE_URL = "https://maudesignal-api.vercel.app"
+TERMS_URL = f"{API_BASE_URL}/terms"
+CONNECT_PATH = "/v1/connect"
+PUBLIC_URL_ENV = "MAUDESIGNAL_PUBLIC_URL"
 READ_ONLY = {"x-maudesignal-read-only": True, "x-maudesignal-scope": "read"}
 MCP_PATH = "/mcp"
 MAX_MCP_BODY_BYTES = 64 * 1024
@@ -184,6 +195,7 @@ class Settings:
     limiter: RateLimiter | None = None
     failed_auth: RateLimiter | None = None
     public_limiter: RateLimiter | None = None
+    demo_limiter: RateLimiter | None = None
     data: ConnectorData = field(default_factory=ConnectorData)
     ask_runtime: AskRuntime | None = None
     live_checker: LiveChecker = _default_live_checker
@@ -220,6 +232,27 @@ class Health(BaseModel):
     limits_scope: str
     state_store: str
     feedback_store: str
+
+
+class DemoLimits(BaseModel):
+    """Limits of the public demo key."""
+
+    per_minute: int
+    per_day: int
+    live_model: bool
+    note: str
+
+
+class ConnectInfo(BaseModel):
+    """``GET /v1/connect`` body."""
+
+    mcp_url: str
+    openapi_url: str
+    docs_url: str
+    auth_header: str
+    demo_key: str | None
+    demo_limits: DemoLimits
+    steps: list[str]
 
 
 class ApiError(Exception):
@@ -277,13 +310,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         ).limit,
         PUBLIC_WINDOW_SECONDS,
     )
+    state.attach_blob(cfg.feedback_store)  # the private Blob store also holds the spend ledger
     ask_runtime = cfg.ask_runtime or AskRuntime(state=state)
+    demo_limiter = cfg.demo_limiter or state.rate_limiter(
+        "demo-key",
+        RateLimiter.from_env(name=DEMO_RATE_ENV, default=DEFAULT_DEMO_RATE_PER_MIN).limit,
+    )
+    demo_daily = state.daily_counter("demo-key-day", DEMO_PER_DAY, today=lambda: cfg.now().date())
     web_origins = frozenset(cfg.web_origins)
     app = FastAPI(
         title="MaudeSignal connector API",
         version=API_VERSION,
         description=DESCRIPTION,
         contact={"name": "MaudeSignal (open source)", "url": REPO_URL},
+        terms_of_service=TERMS_URL,
         docs_url=None,
         redoc_url=None,
     )
@@ -314,8 +354,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             scheme, _, token = request.headers.get("authorization", "").partition(" ")
             if scheme.lower() == "bearer" and token.strip():
                 presented = token.strip()
-        key_id = cfg.keys.verify(presented)
-        if key_id is None or presented is None:
+        matched = cfg.keys.match(presented)
+        if matched is None or presented is None:
             failed_auth.record(client)
             raise ApiError(
                 401,
@@ -323,18 +363,35 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "A valid X-API-Key header is required.",
                 {"WWW-Authenticate": "ApiKey"},
             )
-        allowed, remaining, retry = limiter.check(key_id)
+        key_id = matched.key_id
+        active = demo_limiter if matched.demo else limiter
+        allowed, remaining, retry = active.check(key_id)
         if not allowed:
             raise ApiError(
                 429,
                 "rate_limited",
-                f"Rate limit of {limiter.limit} requests per minute reached. "
+                f"Rate limit of {active.limit} requests per minute reached. "
                 f"Retry in {retry} seconds.",
                 {"Retry-After": str(retry)},
             )
-        response.headers["X-RateLimit-Limit"] = str(limiter.limit)
+        if matched.demo:
+            day_ok, _left = demo_daily.hit(key_id)
+            if not day_ok:
+                now = cfg.now()
+                reset = datetime.combine(now.date(), datetime.min.time(), tzinfo=UTC)
+                wait = max(1, 86_400 - int((now - reset).total_seconds()))
+                raise ApiError(
+                    429,
+                    "rate_limited",
+                    f"The demo key's daily limit of {DEMO_PER_DAY} requests is reached. "
+                    f"Retry in {wait} seconds.",
+                    {"Retry-After": str(wait)},
+                )
+        response.headers["X-RateLimit-Limit"] = str(active.limit)
         response.headers["X-RateLimit-Remaining"] = str(remaining)
         request.state.audit_id = key_id  # peppered HMAC id (as the limiter and ledger); not the key
+        request.state.key_label = matched.label
+        request.state.key_demo = matched.demo
         return key_id
 
     key_dep = Annotated[str, Depends(authenticate)]
@@ -349,6 +406,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         inputs: dict[str, str],
         answer: ToolAnswer | None,
         error: str | None = None,
+        label: str | None = None,
     ) -> None:
         """Append one chained audit entry; a failing store never fails the request."""
         payload: dict[str, Any] = {"tool": tool, "inputs": inputs, "error": error}
@@ -364,6 +422,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 },
             }
         actor = PUBLIC_ACTOR if audit_id == PUBLIC_ACTOR else f"connector:key:{audit_id}"
+        if label and audit_id != PUBLIC_ACTOR:
+            actor = f"connector:key:{label}:{audit_id}"  # the label next to the key id
         try:
             state.audit_append(actor=actor, action=f"tool:{tool}", entity_id=tool, payload=payload)
         except UpstashError as exc:
@@ -374,12 +434,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     ) -> ToolAnswer:
         """Run a tool and append its audit entry (also when it fails with a tool error)."""
         audit_id = str(request.state.audit_id)
+        label = getattr(request.state, "key_label", None)
         try:
             answer = run()
         except ConnectorError as exc:
-            record_audit(audit_id, tool, inputs, None, exc.code)
+            record_audit(audit_id, tool, inputs, None, exc.code, label)
             raise
-        record_audit(audit_id, tool, inputs, answer)
+        record_audit(audit_id, tool, inputs, answer, None, label)
         return answer
 
     def dispatch(request: Request, name: str, args: dict[str, str]) -> ToolAnswer:
@@ -410,7 +471,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 request,
                 name,
                 _question_audit_inputs(question),
-                lambda: ask(cfg.data, question, key_id=key_id, runtime=ask_runtime, now=cfg.now),
+                lambda: ask_detailed(
+                    cfg.data,
+                    question,
+                    key_id=key_id,
+                    runtime=ask_runtime,
+                    now=cfg.now,
+                    allow_live=not getattr(request.state, "key_demo", False),
+                ).answer,
             )
         if name == "get_report":
             return audited(
@@ -462,6 +530,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             method=request.method,
             path=request.url.path,
             status=response.status_code,
+            key_label=getattr(request.state, "key_label", None),
         )
         return response
 
@@ -470,7 +539,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
         """CORS for the keyless route only, and only for origins listed in the environment."""
-        if not request.url.path.startswith(PUBLIC_PREFIX):
+        if not (request.url.path.startswith(PUBLIC_PREFIX) or request.url.path == CONNECT_PATH):
             return await call_next(request)
         origin = request.headers.get("origin", "").rstrip("/")
         allowed = bool(origin) and origin in web_origins
@@ -502,6 +571,51 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 daily_usd=ask_runtime.caps.daily_usd,
                 request_usd=ask_runtime.caps.session_usd,
             )
+        )
+
+    @app.get("/privacy", response_class=HTMLResponse, include_in_schema=False)
+    def privacy_page() -> HTMLResponse:
+        return HTMLResponse(render_privacy())
+
+    @app.get("/terms", response_class=HTMLResponse, include_in_schema=False)
+    def terms_page() -> HTMLResponse:
+        return HTMLResponse(render_terms())
+
+    @app.get(
+        CONNECT_PATH,
+        response_model=ConnectInfo,
+        operation_id="connect_info",
+        summary="How to connect (no key needed)",
+        description=(
+            "Where the MCP and REST endpoints are, which header carries the key, the public "
+            "demo key (when the operator has set one) with its lower limits, and three steps. "
+            "The demo key is public by design, works on every read tool and never starts a "
+            "live model call."
+        ),
+        tags=["service"],
+    )
+    def connect_info(request: Request) -> ConnectInfo:
+        base = os.environ.get(PUBLIC_URL_ENV, "").strip().rstrip("/")
+        if not base.startswith(("https://", "http://")):
+            base = str(request.base_url).rstrip("/")
+        demo = cfg.keys.demo_key_hint
+        return ConnectInfo(
+            mcp_url=f"{base}{MCP_PATH}",
+            openapi_url=f"{base}/openapi.json",
+            docs_url=f"{base}/docs-page",
+            auth_header="X-API-Key",
+            demo_key=demo,
+            demo_limits=DemoLimits(
+                per_minute=demo_limiter.limit,
+                per_day=DEMO_PER_DAY,
+                live_model=False,
+                note="Read tools only. ask returns a recorded answer, labelled recorded.",
+            ),
+            steps=[
+                f"Add {base}{MCP_PATH} as a custom MCP connector.",
+                "Send the key in the X-API-Key header (the demo key above works for a first try).",
+                "Call a tool, for example what_changed_this_week with product_code LLZ.",
+            ],
         )
 
     @app.get(

@@ -35,6 +35,7 @@ from typing import Any, Literal
 import httpx
 
 from maudesignal.common.logging import get_logger
+from maudesignal.connector.blob_store import BlobRef, RecordStore, StoreError
 from maudesignal.connector.security import RateLimiter
 from maudesignal.copilot.spend import DailyLedger
 from maudesignal.storage.database import Database
@@ -344,6 +345,135 @@ class UpstashLedger(DailyLedger):
         return round(total, 6)
 
 
+#: Serialises read-modify-write of the Blob ledger inside one process (all instances of the
+#: class share it, so two ``BlobLedger`` objects on the same store cannot interleave).
+_BLOB_LEDGER_LOCK = threading.Lock()
+BLOB_LEDGER_ATTEMPTS = 3
+LEDGER_PREFIX = "ledger"
+
+
+class BlobLedgerError(UpstashError):
+    """The Blob ledger could not be read or written.
+
+    Callers treat it like a Redis failure (a recorded answer, never a spend without a cap).
+    The message holds no token.
+    """
+
+
+def _bust(url: str) -> str:
+    """Add a changing query value so a CDN cannot serve an older copy of the ledger."""
+    return f"{url}{'&' if '?' in url else '?'}t={secrets.token_hex(4)}"
+
+
+class BlobLedger(DailyLedger):
+    """Global daily spend kept as one small JSON object per UTC day in the private Blob store.
+
+    Object ``ledger/<name>/<YYYY-MM-DD>.json`` holds ``{"day", "usd", "calls"}``. A reservation
+    reads it, adds the hold, writes it back and reads it again to confirm that nobody else
+    overwrote it in between (up to three tries). If the object cannot be read, written or
+    confirmed, :class:`BlobLedgerError` is raised and the caller answers from a recording: the
+    ledger FAILS CLOSED. A missing object is a new day (zero); an object that cannot be parsed
+    is an error, never zero.
+
+    Race: Blob has no atomic increment. Two server instances that read at the same moment may
+    both reserve; the confirm step catches most of these and retries, and the enforced cap is
+    the daily total minus the largest per-request cap (``globalcap``), so a rare undetected
+    overlap of two requests still ends at or under the daily total.
+    """
+
+    def __init__(
+        self,
+        store: RecordStore,
+        name: str,
+        *,
+        today: Callable[[], date] | None = None,
+        attempts: int = BLOB_LEDGER_ATTEMPTS,
+    ) -> None:
+        """Create the ledger ``name`` on ``store``."""
+        super().__init__(Path(os.devnull), today=today)
+        self._store, self._name, self._attempts = store, name, max(1, attempts)
+
+    def _object(self, day: str) -> str:
+        return f"{LEDGER_PREFIX}/{self._name}/{day}.json"
+
+    def _load(self, day: str) -> tuple[float, int]:
+        path = self._object(day)
+        try:
+            refs = [r for r in self._store.list_prefix(path) if r.pathname == path]
+            if not refs:
+                return 0.0, 0
+            raw = self._store.get(BlobRef(refs[0].pathname, _bust(refs[0].url)))
+        except StoreError:
+            raise BlobLedgerError("ledger store unreachable") from None
+        try:
+            doc = json.loads(raw)
+            usd, calls = float(doc["usd"]), int(doc.get("calls", 0))
+            if doc.get("day") != day or not math.isfinite(usd) or usd < 0 or calls < 0:
+                raise ValueError("bad ledger")
+        except (ValueError, KeyError, TypeError, AttributeError):
+            raise BlobLedgerError("ledger object unreadable") from None
+        return usd, calls
+
+    def _change(
+        self, usd: float, calls: int = 0, *, cap: float | None = None
+    ) -> tuple[bool, float]:
+        """Add ``usd`` (may be negative) and confirm it. Returns ``(applied, total)``."""
+        day = self._today().isoformat()
+        with _BLOB_LEDGER_LOCK:
+            for _ in range(self._attempts):
+                have, n = self._load(day)
+                total = max(0.0, round(have + usd, 6))
+                if cap is not None and total > cap + 1e-9:
+                    return False, have
+                doc = {"day": day, "usd": total, "calls": n + calls}
+                try:
+                    self._store.put_json(self._object(day), doc, overwrite=True)
+                except StoreError:
+                    raise BlobLedgerError("ledger store unreachable") from None
+                confirmed, _ = self._load(day)
+                if abs(confirmed - total) < 1e-9:
+                    return True, total
+        raise BlobLedgerError("ledger write could not be confirmed")
+
+    def spent_today(self) -> float:
+        """USD recorded today (UTC). Raises ``BlobLedgerError`` when it cannot be read."""
+        return self._load(self._today().isoformat())[0]
+
+    def reserve(self, usd: float, daily_cap: float) -> bool:
+        """Hold ``usd`` before a model call. False (nothing held) if it would pass the cap."""
+        return self._change(float(usd), cap=float(daily_cap))[0]
+
+    def release(self, usd: float) -> None:
+        """Give back a hold from :meth:`reserve` (the real cost is added by ``add``)."""
+        try:
+            self._change(-float(usd))
+        except BlobLedgerError as exc:
+            logger.critical(
+                "connector_spend_hold_not_released",
+                usd=round(float(usd), 6),
+                day=self._today().isoformat(),
+                error=str(exc),
+            )
+
+    def add(self, usd: float, calls: int) -> float:
+        """Add real spend for today and return today's new total."""
+        try:
+            return self._change(float(usd), int(calls))[1]
+        except BlobLedgerError as exc:
+            logger.critical(
+                "connector_spend_not_recorded",
+                usd=round(float(usd), 6),
+                calls=int(calls),
+                day=self._today().isoformat(),
+                error=str(exc),
+            )
+            raise
+
+
+#: Ledgers on which a hold can be placed before a model call (atomic or confirmed).
+RESERVING_LEDGERS = (UpstashLedger, BlobLedger)
+
+
 def build_entry(
     *,
     seq: int,
@@ -415,6 +545,7 @@ class ConnectorState:
             now: UTC clock for audit timestamps (tests).
         """
         self._client, self._wall, self._now = client, wall, now
+        self._blob: RecordStore | None = None
         self._lock = threading.Lock()
         self._cache: dict[str, tuple[float, str]] = {}
         self._audit: list[dict[str, Any]] = []
@@ -455,6 +586,27 @@ class ConnectorState:
     def ledger(self, key_id: str) -> DailyLedger | None:
         """Shared daily ledger for ``key_id``; ``None`` when not shared (a file ledger is used)."""
         return UpstashLedger(self._client, key_id) if self._client else None
+
+    def attach_blob(self, store: RecordStore) -> None:
+        """Offer the private Blob store as the durable global ledger (ignored for memory)."""
+        self._blob = store if store.backend == "blob_private" else None
+
+    @property
+    def global_mode(self) -> Literal["upstash", "blob", "none"]:
+        """Where the global live ledger is kept: Redis, the private Blob store, or nowhere."""
+        if self._client:
+            return "upstash"
+        return "blob" if self._blob is not None else "none"
+
+    def global_ledger(
+        self, name: str, *, today: Callable[[], date] | None = None
+    ) -> DailyLedger | None:
+        """The durable shared ledger ``name`` (Redis, else Blob), or ``None`` when neither."""
+        if self._client:
+            return UpstashLedger(self._client, name, today=today)
+        if self._blob is not None:
+            return BlobLedger(self._blob, name, today=today)
+        return None
 
     # -- cache ----------------------------------------------------------------------------
 

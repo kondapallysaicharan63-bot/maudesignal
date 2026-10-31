@@ -36,10 +36,18 @@ from maudesignal.connector import links
 from maudesignal.connector.data import ConnectorData
 from maudesignal.connector.errors import InvalidInputError, SourceUnavailableError
 from maudesignal.connector.forbidden import is_clean
+from maudesignal.connector.globalcap import (
+    LEDGER_ID as GLOBAL_LEDGER_ID,
+)
+from maudesignal.connector.globalcap import blob_enforced_cap, global_daily_usd
 from maudesignal.connector.models import Fact, Provenance, ToolAnswer, WithheldSentence
 from maudesignal.connector.readonly import make_read_only
 from maudesignal.connector.speech import compose, speak_date
-from maudesignal.connector.store import ConnectorState, UpstashLedger, shared_store_configured
+from maudesignal.connector.store import (
+    RESERVING_LEDGERS,
+    ConnectorState,
+    shared_store_configured,
+)
 from maudesignal.connector.tools import Clock, _stamp, utc_now
 from maudesignal.copilot.agent import CopilotAgent, CopilotResult
 from maudesignal.copilot.spend import (
@@ -77,6 +85,7 @@ _LEADS = {
     "live_off": f"Live answers are switched off on this server, so {_RECORDED}",
     "model_error": f"The live model is not available just now, so {_RECORDED}",
     "timeout": f"This request ran out of time, so {_RECORDED}",
+    "demo_key": f"The demo key never starts a live model call, so {_RECORDED}",
     "no_transcript": (
         "Your recording could not be turned into text, so this is a recorded answer to a "
         "different spoken question"
@@ -92,6 +101,7 @@ _REASON_NOTES = {
     "model_error": "The live model call failed, so no live answer is shown.",
     "no_transcript": "The recording could not be transcribed, so no live model call was made.",
     "timeout": "The time limit for this request was used up, so no live model call was made.",
+    "demo_key": "The public demo key never starts a live model call, so this is a recorded answer.",
 }
 _UNLINKED_REASON = "passed the claim gate but has no openFDA or record link, so it is not spoken"
 _FORBIDDEN_REASON = "contains a term this service does not use, so it is not spoken"
@@ -168,7 +178,9 @@ def live_mode_allowed() -> bool:
     and the override is not needed. A model key alone, with neither, returns recorded answers.
     """
     return bool(os.environ.get("META_MODEL_API_KEY")) and (
-        shared_store_configured() or os.environ.get(ALLOW_PER_INSTANCE_ENV, "").strip() == "1"
+        shared_store_configured()
+        or bool(os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip())
+        or os.environ.get(ALLOW_PER_INSTANCE_ENV, "").strip() == "1"
     )
 
 
@@ -178,6 +190,22 @@ def _env_float(name: str, default: float) -> float:
     except ValueError:
         return default
     return value if value >= 0 else default
+
+
+class _TeeLedger(DailyLedger):
+    """A key's ledger whose spend is also added to the global live ledger."""
+
+    def __init__(self, primary: DailyLedger, shared: DailyLedger) -> None:
+        super().__init__(Path(os.devnull))
+        self._primary, self._shared = primary, shared
+
+    def spent_today(self) -> float:
+        return self._primary.spent_today()
+
+    def add(self, usd: float, calls: int) -> float:
+        total = self._primary.add(usd, calls)
+        self._shared.add(usd, calls)
+        return total
 
 
 @dataclass
@@ -200,6 +228,16 @@ class AskRuntime:
         )
     )
     state: ConnectorState | None = None
+
+    def global_ledger(self) -> DailyLedger | None:
+        """The global live ledger (Redis or Blob) every live call is also counted against."""
+        return self.state.global_ledger(GLOBAL_LEDGER_ID) if self.state else None
+
+    def global_cap(self) -> float:
+        """The cap enforced on the global ledger (minus the largest request on Blob)."""
+        if self.state is not None and self.state.global_mode == "blob":
+            return blob_enforced_cap()
+        return global_daily_usd()
 
     def ledger_for(self, key_id: str) -> DailyLedger:
         """The UTC-day spend ledger of one API key (kept apart per key).
@@ -578,6 +616,7 @@ def ask_detailed(
     now: Clock = utc_now,
     history: list[tuple[str, str]] | None = None,
     spoken: bool = False,
+    allow_live: bool = True,
 ) -> AskOutcome:
     """:func:`ask`, plus cost, timings and whether the answer was live or recorded.
 
@@ -589,6 +628,7 @@ def ask_detailed(
         now: Clock (tests).
         history: Earlier ``(question, answer)`` pairs from the same visitor (context only).
         spoken: The question is a voice transcript; spoken-question recordings may answer it.
+        allow_live: False for the public demo key: a recorded answer only, never a model call.
 
     Raises:
         InvalidInputError: The question is empty or too long.
@@ -602,23 +642,34 @@ def ask_detailed(
         )
     reason = "live_off" if os.environ.get("META_MODEL_API_KEY") else "no_model"
     attempt_ms = 0.0
-    if runtime.live_enabled():
+    if not allow_live:
+        reason = "demo_key"
+    elif runtime.live_enabled():
+        key_ledger = runtime.ledger_for(key_id)
+        glob = runtime.global_ledger()
         guard = SpendGuard(
             session_id=f"api-{key_id}",
             caps=runtime.caps,
-            ledger=runtime.ledger_for(key_id),
+            ledger=_TeeLedger(key_ledger, glob) if glob is not None else key_ledger,
             db=data.db,
         )
         hold = 0.0
-        ledger = guard.ledger
+        ghold = 0.0
+        ledger = key_ledger
         try:
             guard.check("connector.ask")
-            if isinstance(ledger, UpstashLedger):
+            if isinstance(ledger, RESERVING_LEDGERS):
                 # Shared ledger: reserve the per-call cap first so instances running at the
                 # same moment cannot all pass a read-only check; released in `finally`.
                 if not ledger.reserve(runtime.caps.session_usd, runtime.caps.daily_usd):
                     raise SpendLimitError("daily_usd", "Today's live-call budget is used up.")
                 hold = runtime.caps.session_usd
+            if glob is not None and isinstance(glob, RESERVING_LEDGERS):
+                # The global daily cap ($3 by default) covers the live website routes and this
+                # keyed tool together. Fails closed: an unreadable ledger is a recorded answer.
+                if not glob.reserve(runtime.caps.session_usd, runtime.global_cap()):
+                    raise SpendLimitError("global_usd", "The global live-call budget is used up.")
+                ghold = runtime.caps.session_usd
             # One live ask at a time per instance: the copilot appends to the audit chain on
             # its own connection, and the redaction below recomputes that chain.
             with data.live_ask_lock:
@@ -653,8 +704,10 @@ def ask_detailed(
             reason = "model_error"
             attempt_ms = round((time.perf_counter() - started) * 1000.0, 1)
         finally:
-            if hold and isinstance(ledger, UpstashLedger):
+            if hold and isinstance(ledger, RESERVING_LEDGERS):
                 ledger.release(hold)
+            if ghold and glob is not None and isinstance(glob, RESERVING_LEDGERS):
+                glob.release(ghold)
     if not data.transcripts():
         raise SourceUnavailableError(
             "No live answer is available and no recorded answers are stored."
