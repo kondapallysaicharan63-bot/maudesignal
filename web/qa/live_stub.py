@@ -367,19 +367,25 @@ class Stub:
         return out
 
     def connect(self) -> dict[str, Any]:
-        """GET /v1/connect as the page expects it. The key is a fake string for the stub only."""
+        """GET /v1/connect with the real API body (ConnectInfo). The key is a fake string for the stub only."""
+        base = "https://maudesignal-api.vercel.app"
         return {
-            "mcp_url": "https://maudesignal-api.vercel.app/mcp",
-            "openapi_url": "https://maudesignal-api.vercel.app/openapi.json",
-            "privacy_url": "https://maudesignal-api.vercel.app/privacy",
-            "terms_url": "https://maudesignal-api.vercel.app/terms",
-            "key_header": "X-API-Key",
+            "mcp_url": f"{base}/mcp",
+            "openapi_url": f"{base}/openapi.json",
+            "docs_url": f"{base}/docs-page",
+            "auth_header": "X-API-Key",
             "demo_key": None if self.connect_mode == "no_key" else "stub-demo-key-not-a-real-key",
-            "limits": {
-                "read_only": True,
-                "live_spark": False,
-                "note": "Stub demo key: read-only, no live Spark, rate-limited.",
+            "demo_limits": {
+                "per_minute": 10,
+                "per_day": 200,
+                "live_model": False,
+                "note": "Read tools only. ask returns a recorded answer, labelled recorded.",
             },
+            "steps": [
+                f"Add {base}/mcp as a custom MCP connector.",
+                "Send the key in the X-API-Key header.",
+                "Call a tool, for example what_changed_this_week with product_code LLZ.",
+            ],
         }
 
     def mentions_route(self, h: Any, raw: bytes, entry: dict[str, Any]) -> None:

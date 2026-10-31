@@ -112,6 +112,7 @@ def panel_checks(page: Page, label: str, *, company: bool, phone: bool) -> None:
 def main() -> int:
     """Run everything and print the report."""
     e.OUT.mkdir(parents=True, exist_ok=True)
+    e.require_free_ports()
     print("building...", flush=True)
     e.build()
     stub = Stub(port=e.STUB_PORT, origins={f"http://127.0.0.1:{e.LIVE_PORT}"})
@@ -276,7 +277,8 @@ def main() -> int:
                 page.wait_for_selector("[data-testid=connect-view] [data-testid=demo-key-block]")
                 page.wait_for_selector("[data-testid=value-demo-key]")
                 check(f"connect {w} {scheme}: MCP address, OpenAPI address and demo key are shown", page.get_by_test_id("value-mcp-address").inner_text() == "https://maudesignal-api.vercel.app/mcp" and page.get_by_test_id("value-openapi-address").inner_text().endswith("/openapi.json") and page.get_by_test_id("value-demo-key").inner_text().startswith("stub-demo-key"))
-                check(f"connect {w} {scheme}: limits are stated (read-only, no live Spark, rate-limited)", "read-only" in page.get_by_test_id("demo-key-limits").inner_text() and "no live Spark" in page.get_by_test_id("demo-key-limits").inner_text())
+                lim_txt = page.get_by_test_id("demo-key-limits").inner_text()
+                check(f"connect {w} {scheme}: limits from demo_limits are stated (read tools, no live Spark, per minute, per day)", all(x in lim_txt for x in ("Read tools only", "No live Spark", "10 calls a minute", "200 a day")), lim_txt)
                 steps = page.locator("[data-testid=connect-steps] li").all_inner_texts()
                 check(f"connect {w} {scheme}: three numbered steps", len(steps) == 3 and "connectors" in steps[0] and "https://maudesignal-api.vercel.app/mcp" in steps[1] and "X-API-Key" in steps[2], steps)
                 check(f"connect {w} {scheme}: privacy and terms link to the API", page.get_by_test_id("link-privacy").get_attribute("href") == "https://maudesignal-api.vercel.app/privacy" and page.get_by_test_id("link-terms").get_attribute("href") == "https://maudesignal-api.vercel.app/terms")
@@ -315,7 +317,8 @@ def main() -> int:
                 page = page_for(browser, w, h, scheme)
                 page.goto(e.LIVE_URL + "privacy/", wait_until="load")
                 txt = page.locator("main").inner_text()
-                need = ["iad1", "Vercel", "Meta Model API", "openFDA", "kondapallysaicharan63@gmail.com", "No automatic deletion period", "not sold", "no name, no e-mail, no IP address", "is not kept"]
+                need = ["iad1", "Vercel", "Meta Model API", "openFDA", "Upstash", "never stores an IP address", "No sale of data", "How do I ask for deletion?", "read from MAUDESIGNAL_CONTACT_EMAIL at runtime", "issues"]
+                check(f"privacy {w} {scheme}: no personal e-mail address on the page", re.search(r"[\w.+-]+@[\w-]+\.[a-z]{2,}", txt) is None)
                 missing = [n for n in need if n.lower() not in txt.lower()]
                 check(f"privacy {w} {scheme}: answers the data questions (region, subprocessors, logs, retention, deletion contact, no sale)", not missing, missing)
                 check(f"privacy {w} {scheme}: no forbidden words", FORBIDDEN.search(txt) is None, FORBIDDEN.search(txt))
@@ -333,6 +336,9 @@ def main() -> int:
                     check(f"header {w} {scheme}: every control fits inside the viewport", max(kids) <= w + 0.5 and e.overflow(page) == 0, [max(kids), w])
                     tall = page.evaluate("[...document.querySelectorAll('header > div:first-child button')].filter(b => b.offsetParent !== null).every(b => b.getBoundingClientRect().height >= 40 && b.getBoundingClientRect().width >= 40)")
                     check(f"header {w} {scheme}: every header button is at least 40 px", tall)
+                    if w == 390:
+                        more = ratio(page, "[data-testid=more-menu-button]")
+                        check(f"header {w} {scheme}: the ... menu button is at least 3:1 against the bar", more >= 3.0, more)
                     if scheme == "dark" or w == 1440:
                         snap(page, "header", w, scheme, report)
                     page.close()

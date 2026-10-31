@@ -259,7 +259,10 @@ personal details". Stored search first; on 429, an error or no API address the s
 
 ### Connect: `GET /v1/connect`
 
-`{mcp_url, openapi_url, privacy_url, terms_url, key_header: "X-API-Key", demo_key: str|null, limits: {read_only, live_spark, note}}`. The
+The real API body: `{mcp_url, openapi_url, docs_url, auth_header: "X-API-Key", demo_key: str|null, demo_limits: {per_minute, per_day, live_model, note}, steps}`.
+The page reads `demo_limits` (and says "No live Spark answers" unless `live_model` is true, with the per-minute and per-day numbers as sent). The
+older names (`key_header`, `privacy_url`, `terms_url`, `limits: {read_only, live_spark, note}`) are still accepted as a fallback; without
+`privacy_url` and `terms_url` the page uses `/privacy` and `/terms` on the MCP address's origin. The
 "Connect to Muse" page shows these with a one-click Copy for the key. Any failure, or no API address, shows the fixed text: MCP URL
 `https://maudesignal-api.vercel.app/mcp`, OpenAPI URL `https://maudesignal-api.vercel.app/openapi.json`, "Ask Charan for a key", and links
 to `/privacy` and `/terms` on the API. Three steps: open Muse connectors, add the MCP URL, paste the key in the `X-API-Key` header. No OAuth.

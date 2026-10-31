@@ -179,11 +179,27 @@ describe('connect', () => {
   it('uses the API values and falls back per field', () => {
     const i = parseConnect({ mcp_url: 'https://x.test/mcp', openapi_url: 'http://insecure', demo_key: ' k ', limits: { read_only: true, live_spark: false } })!
     expect(i.mcp_url).toBe('https://x.test/mcp')
-    expect(i.openapi_url).toBe('https://maudesignal-api.vercel.app/openapi.json')
+    expect(i.openapi_url).toBe('https://x.test/openapi.json')
     expect(i.demo_key).toBe('k')
     expect(i.limits.note).toContain('read-only')
     expect(i.limits.note).toContain('no live Spark')
     expect(i.fromApi).toBe(true)
+  })
+  it('reads the real API body: auth_header and demo_limits', () => {
+    const i = parseConnect({
+      mcp_url: 'https://maudesignal-api.vercel.app/mcp',
+      openapi_url: 'https://maudesignal-api.vercel.app/openapi.json',
+      docs_url: 'https://maudesignal-api.vercel.app/docs-page',
+      auth_header: 'X-Demo-Key',
+      demo_key: 'k1',
+      demo_limits: { per_minute: 10, per_day: 200, live_model: false, note: 'Read tools only.' },
+      steps: ['a'],
+    })!
+    expect(i.key_header).toBe('X-Demo-Key')
+    expect(i.limits.live_spark).toBe(false)
+    expect(i.limits.note).toBe('Read tools only. No live Spark answers. Rate limit: 10 calls a minute, 200 a day.')
+    expect(i.privacy_url).toBe('https://maudesignal-api.vercel.app/privacy')
+    expect(parseConnect({ demo_limits: { live_model: true, per_minute: 'x', per_day: -1 } })!.limits.note).toBe('Live Spark answers are on for this key.')
   })
   it('no key means null; a non-object means null', () => {
     expect(parseConnect({})!.demo_key).toBeNull()

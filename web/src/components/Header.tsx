@@ -67,7 +67,7 @@ function MoreMenu(p: Props) {
     <div className="relative sm:hidden" ref={wrap}>
       <button
         type="button"
-        className="ws-icon-btn"
+        className="ws-icon-btn !text-ink"
         onClick={() => setOpen((o) => !o)}
         aria-label="More actions"
         aria-expanded={open}

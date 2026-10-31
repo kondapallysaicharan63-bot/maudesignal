@@ -37,22 +37,51 @@ export const FALLBACK_INFO: ConnectInfo = {
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 const https = (v: unknown, fallback: string): string => (typeof v === 'string' && /^https:\/\//.test(v) ? v : fallback)
 
-/** The connect answer; each address falls back to the fixed one when missing or not https. Null when the body is not an object. */
+const posInt = (v: unknown): number | null => (typeof v === 'number' && Number.isInteger(v) && v >= 0 && v < 1_000_000 ? v : null)
+const originOf = (u: string): string | null => {
+  try {
+    return new URL(u).origin
+  } catch {
+    return null
+  }
+}
+
+/**
+ * The connect answer. The real API body is {mcp_url, openapi_url, docs_url, auth_header, demo_key, demo_limits:{per_minute, per_day,
+ * live_model, note}, steps}; the older names (key_header, privacy_url, terms_url, limits:{read_only, live_spark, note}) still work as a
+ * fallback. Each address falls back to the fixed one when missing or not https. Null when the body is not an object.
+ */
 export function parseConnect(body: unknown): ConnectInfo | null {
   if (!isObj(body)) return null
+  const dl = isObj(body.demo_limits) ? body.demo_limits : null
   const lim = isObj(body.limits) ? body.limits : {}
   const readOnly = lim.read_only !== false
-  const spark = lim.live_spark === true
-  const note =
-    typeof lim.note === 'string' && lim.note.trim()
-      ? lim.note.trim().slice(0, 300)
-      : `The demo key is ${readOnly ? 'read-only' : 'not read-only'}, ${spark ? 'can ask live Spark' : 'has no live Spark answers'} and is rate-limited.`
+  const spark = dl ? dl.live_model === true : lim.live_spark === true
+  const perMin = dl ? posInt(dl.per_minute) : null
+  const perDay = dl ? posInt(dl.per_day) : null
+  const rawNote = dl ? dl.note : lim.note
+  let note: string
+  if (dl) {
+    const parts = [typeof rawNote === 'string' ? rawNote.trim().slice(0, 300) : '', spark ? 'Live Spark answers are on for this key.' : 'No live Spark answers.']
+    if (perMin !== null || perDay !== null) {
+      const lims = [perMin !== null ? `${perMin} calls a minute` : '', perDay !== null ? `${perDay} a day` : ''].filter(Boolean).join(', ')
+      parts.push(`Rate limit: ${lims}.`)
+    }
+    note = parts.filter(Boolean).join(' ')
+  } else if (typeof rawNote === 'string' && rawNote.trim()) {
+    note = rawNote.trim().slice(0, 300)
+  } else {
+    note = `The demo key is ${readOnly ? 'read-only' : 'not read-only'}, ${spark ? 'can ask live Spark' : 'has no live Spark answers'} and is rate-limited.`
+  }
+  const mcp = https(body.mcp_url, FALLBACK.mcp_url)
+  const root = originOf(mcp) ?? API_ROOT
+  const header = [body.auth_header, body.key_header].find((h) => typeof h === 'string' && /^[A-Za-z0-9-]{1,40}$/.test(h)) as string | undefined
   return {
-    mcp_url: https(body.mcp_url, FALLBACK.mcp_url),
-    openapi_url: https(body.openapi_url, FALLBACK.openapi_url),
-    privacy_url: https(body.privacy_url, FALLBACK.privacy_url),
-    terms_url: https(body.terms_url, FALLBACK.terms_url),
-    key_header: typeof body.key_header === 'string' && /^[A-Za-z0-9-]{1,40}$/.test(body.key_header) ? body.key_header : FALLBACK.key_header,
+    mcp_url: mcp,
+    openapi_url: https(body.openapi_url, `${root}/openapi.json`),
+    privacy_url: https(body.privacy_url, `${root}/privacy`),
+    terms_url: https(body.terms_url, `${root}/terms`),
+    key_header: header ?? FALLBACK.key_header,
     demo_key: typeof body.demo_key === 'string' && body.demo_key.trim() ? body.demo_key.trim() : null,
     limits: { read_only: readOnly, live_spark: spark, note },
     fromApi: true,

@@ -25,12 +25,26 @@ from playwright.sync_api import Browser, Page, sync_playwright
 WEB = Path(__file__).resolve().parents[1]
 OUT = WEB / "qa" / "screenshots"
 # Ports can be moved with LIVE_E2E_PORT_BASE (stub, live page, stored page = base, base+1, base+2) when another run holds them.
-_BASE = int(os.environ.get("LIVE_E2E_PORT_BASE", "0"))
+_BASE = int(os.environ.get("MAUDESIGNAL_QA_PORT_BASE") or os.environ.get("LIVE_E2E_PORT_BASE") or "0")
 STUB_PORT, LIVE_PORT, STORED_PORT = (_BASE, _BASE + 1, _BASE + 2) if _BASE else (8765, 4173, 4174)
 LIVE_URL = f"http://127.0.0.1:{LIVE_PORT}/"
 STORED_URL = f"http://127.0.0.1:{STORED_PORT}/"
 
 results: list[dict[str, object]] = []
+
+
+def require_free_ports() -> None:
+    """Exit with an error if a QA port is already served, so a run never tests another build."""
+    import socket
+
+    busy = []
+    for port in (STUB_PORT, LIVE_PORT, STORED_PORT):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(0.3)
+            if s.connect_ex(("127.0.0.1", port)) == 0:
+                busy.append(port)
+    if busy:
+        sys.exit(f"QA ports already in use: {busy}. Set MAUDESIGNAL_QA_PORT_BASE to three free ports in a row.")
 
 
 def check(name: str, ok: bool, detail: object = "") -> None:
@@ -165,6 +179,7 @@ def stub_log(page: Page) -> list[dict[str, object]]:
 def main() -> int:
     """Run everything and print the report."""
     OUT.mkdir(parents=True, exist_ok=True)
+    require_free_ports()
     print("building...", flush=True)
     build()
     stub = Stub(port=STUB_PORT, origins={f"http://127.0.0.1:{LIVE_PORT}"})

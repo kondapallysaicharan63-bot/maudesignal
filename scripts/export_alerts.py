@@ -721,13 +721,46 @@ def build_alerts(
     }
 
 
+MENTION_BADGE = "Unverified — not checked against FDA records"
+
+
+def _clean_mentions(doc: dict[str, Any]) -> dict[str, Any] | None:
+    """A stored search, hardened for the web copy; None when it is not a recorded search.
+
+    Kept: only a ``recorded`` file, and only mentions with an ``https`` url, a non-empty quote and no
+    personal details in the quote or the reason. The badge text is forced. A mention dropped for personal
+    details is counted in ``dropped.personal_details`` so the line on the page stays true.
+    """
+    if doc.get("mode") != "recorded" or not isinstance(doc.get("mentions"), list):
+        return None
+    kept: list[dict[str, Any]] = []
+    personal = 0
+    for m in doc["mentions"]:
+        if not isinstance(m, dict) or m.get("mode", "recorded") != "recorded":
+            continue
+        url, quote = m.get("url"), m.get("quote")
+        if not (isinstance(url, str) and url.startswith("https://")):
+            continue
+        if not (isinstance(quote, str) and quote.strip()):
+            continue
+        if any(has_personal_details(str(m.get(k) or "")) for k in ("quote", "why_matched", "source_name")):
+            personal += 1
+            continue
+        kept.append({**m, "badge": MENTION_BADGE})
+    dropped = dict(doc["dropped"]) if isinstance(doc.get("dropped"), dict) else {}
+    dropped["personal_details"] = int(dropped.get("personal_details") or 0) + personal
+    return {**doc, "mentions": kept, "dropped": dropped}
+
+
 def build_mentions(root: Path) -> dict[str, Any]:
-    """``mentions.json``: the stored outside-source searches (``demo/mentions/<CODE>.json``), copied as they are."""
+    """``mentions.json``: the stored outside-source searches (``demo/mentions/<CODE>.json``), checked before they are copied."""
     folder = root / "demo" / "mentions"
     codes: dict[str, Any] = {}
     for p in sorted(folder.glob("*.json")) if folder.is_dir() else []:
         doc = ewd.read_json(p)
-        codes[str(doc.get("product_code") or p.stem).upper()] = doc
+        clean = _clean_mentions(doc) if isinstance(doc, dict) else None
+        if clean is not None:
+            codes[str(clean.get("product_code") or p.stem).upper()] = clean
     return {
         "schema_version": SCHEMA_VERSION,
         "codes": codes,
