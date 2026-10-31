@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -21,7 +22,7 @@ _spec.loader.exec_module(probe)
 
 KEY = "sk-test-not-a-real-key-123"
 
-#: Shape of an OpenAI-style Responses reply with a web search call and url citations.
+#: Shape of an OpenAI-style Responses reply with web search calls and url citations.
 FAKE_OK: dict[str, Any] = {
     "id": "resp_1",
     "status": "completed",
@@ -40,6 +41,12 @@ FAKE_OK: dict[str, Any] = {
                     {"type": "url", "url": "https://www.fda.gov/b", "published_date": "2026-05-01"},
                 ],
             },
+        },
+        {
+            "type": "web_search_call",
+            "id": "ws_2",
+            "status": "completed",
+            "action": {"type": "search", "queries": ["CT recall 2026"], "sources": []},
         },
         {
             "type": "message",
@@ -71,68 +78,85 @@ FAKE_OK: dict[str, Any] = {
     },
 }
 
-FAKE_UNSUPPORTED = {
-    "error": {
-        "type": "invalid_request_error",
-        "param": "tools[0].type",
-        "message": "Tool type 'web_search' is not supported for this model.",
-    }
+#: Probe 1's real outcome shape: searches made, output cap hit, no message.
+FAKE_INCOMPLETE: dict[str, Any] = {
+    "status": "incomplete",
+    "incomplete_details": {"reason": "max_output_tokens"},
+    "output": [
+        {"type": "web_search_call", "status": "completed", "action": {"query": "q"}},
+        {"type": "reasoning"},
+    ],
+    "usage": {"input_tokens": 24256, "output_tokens": 800},
 }
 
 
-def test_build_request_limits() -> None:
+def _err(param: str, message: str) -> dict[str, Any]:
+    return {"error": {"type": "invalid_request_error", "param": param, "message": message}}
+
+
+def test_build_request_shape() -> None:
     body = probe.build_request("muse-spark-1.3")
     assert body["tools"] == [{"type": "web_search"}]
-    assert body["max_output_tokens"] == 800
+    assert body["max_output_tokens"] == 3000
     assert body["reasoning"] == {"effort": "low"}
-    assert body["model"] == "muse-spark-1.3"
+    assert body["max_tool_calls"] == 2
+    assert body["include"] == ["web_search_call.action.sources"]
+    dropped = probe.build_request("muse-spark-1.3", frozenset({"include"}))
+    assert "include" not in dropped and dropped["max_tool_calls"] == 2
 
 
 def test_parse_ok_payload() -> None:
     res = probe.parse_response(FAKE_OK)
     assert res.status == "completed"
-    assert res.web_search_calls == 1
-    assert res.search_queries == ["FDA safety communication CT scanner"]
+    assert res.web_search_calls == 2
+    assert res.search_queries == ["FDA safety communication CT scanner", "CT recall 2026"]
+    assert [s.sources for s in res.searches] == [2, 0]
     assert [c.url for c in res.citations] == ["https://www.fda.gov/b"]
-    assert res.citations[0].kind == "url_citation"
+    cite = res.citations[0]
+    assert cite.kind == "url_citation" and (cite.start, cite.end) == (0, 10)
     assert [s.url for s in res.sources] == ["https://www.fda.gov/a", "https://www.fda.gov/b"]
     assert res.sources[1].date == "2026-05-01"
     assert res.input_tokens == 12000 and res.output_tokens == 600
     assert res.reasoning_tokens == 150
     assert "2026-05-01" in res.text
-    assert res.output_types == ["reasoning", "web_search_call", "message"]
 
 
-def test_parse_empty_and_odd_payloads() -> None:
+def test_parse_incomplete_payload() -> None:
+    res = probe.parse_response(FAKE_INCOMPLETE)
+    assert res.incomplete_reason == "max_output_tokens"
+    assert res.web_search_calls == 1 and res.citations == [] and res.text == ""
+    lines = "\n".join(probe.report("muse-spark-1.3", 200, res, probe.build_request("m")))
+    assert "incomplete: max_output_tokens" in lines and "search 1:" in lines
+
+
+def test_parse_odd_payloads() -> None:
     res = probe.parse_response({"output": [None, "x", {"type": "message", "content": [1]}]})
     assert res.web_search_calls == 0 and res.citations == [] and res.text == ""
-    res = probe.parse_response(
-        {"output_text": "hi", "citations": [{"url": "https://u", "title": "t", "date": "d"}]}
-    )
-    assert res.text == "hi" and res.sources[0].date == "d"
+    assert probe.parse_response({"output_text": "hi"}).text == "hi"
 
 
-def test_cost_known_and_unknown_model() -> None:
+def test_cost_line() -> None:
     res = probe.parse_response(FAKE_OK)
     line = probe.cost_line("muse-spark-1.3", res)
     # 12000 * 1.25/M + 600 * 4.25/M = 0.015 + 0.00255
     assert "$0.017550" in line and "web_search tool fee: price unknown" in line
-    assert "price unknown for muse-spark-1.1" in probe.cost_line("muse-spark-1.1", res)
+    assert "price unknown for other-model" in probe.cost_line("other-model", res)
 
 
-def test_worst_case_cost_under_ten_cents() -> None:
-    rin, rout = probe.PRICES["muse-spark-1.3"]
-    # Two calls, each at the output cap with a generous 30k-token input (search results).
-    worst = 2 * (30000 * rin / 1e6 + probe.MAX_OUTPUT_TOKENS * rout / 1e6)
-    assert worst <= 0.10
+def test_expected_max_cost_at_most_ten_cents() -> None:
+    # 1 billed call x (40,000 x $1.25/M + 3,000 x $4.25/M) = $0.05 + $0.01275
+    assert probe.expected_max_cost_usd() == pytest.approx(0.06275)
+    assert probe.expected_max_cost_usd() <= 0.10
 
 
-def test_tool_unsupported_detection() -> None:
-    msg = probe.error_message(FAKE_UNSUPPORTED)
-    assert probe.tool_unsupported(400, msg)
-    assert not probe.tool_unsupported(401, msg)
-    assert not probe.tool_unsupported(400, "max_output_tokens must be <= 512")
-    assert not probe.tool_unsupported(429, "rate limited")
+def test_rejected_params() -> None:
+    msg = probe.error_message(_err("max_tool_calls", "Unknown parameter: max_tool_calls"))
+    assert probe.rejected_params(400, msg) == {"max_tool_calls"}
+    msg = probe.error_message(_err("include", "include value not supported"))
+    assert probe.rejected_params(400, msg) == {"include"}
+    assert probe.rejected_params(400, "bad request") == {"max_tool_calls", "include"}
+    assert probe.rejected_params(401, "max_tool_calls") == frozenset()
+    assert probe.rejected_params(429, "rate limited") == frozenset()
     assert probe.error_message("plain text") == "plain text"
 
 
@@ -141,12 +165,15 @@ def test_redact() -> None:
     assert probe.redact("x", "") == "x"
 
 
-def _run(monkeypatch: pytest.MonkeyPatch, handler: Any, capsys: Any) -> tuple[int, str, int]:
-    seen: list[httpx.Request] = []
+def _run(
+    monkeypatch: pytest.MonkeyPatch, handler: Any, capsys: Any
+) -> tuple[int, str, list[dict[str, Any]]]:
+    sent: list[dict[str, Any]] = []
 
     def wrapped(request: httpx.Request) -> httpx.Response:
-        seen.append(request)
-        return handler(request)  # type: ignore[no-any-return]
+        assert str(request.url) == "https://api.meta.ai/v1/responses"
+        sent.append(json.loads(request.read()))
+        return handler(sent[-1])  # type: ignore[no-any-return]
 
     transport = httpx.MockTransport(wrapped)
     real = httpx.Client
@@ -156,37 +183,42 @@ def _run(monkeypatch: pytest.MonkeyPatch, handler: Any, capsys: Any) -> tuple[in
     code = probe.main()
     out = capsys.readouterr().out
     assert KEY not in out and "Bearer" not in out and "Authorization" not in out
-    for req in seen:
-        assert str(req.url) == "https://api.meta.ai/v1/responses"
-    return code, out, len(seen)
+    return code, out, sent
 
 
 def test_main_success_one_call(monkeypatch: pytest.MonkeyPatch, capsys: Any) -> None:
-    code, out, n = _run(monkeypatch, lambda r: httpx.Response(200, json=FAKE_OK), capsys)
-    assert code == 0 and n == 1
+    code, out, sent = _run(monkeypatch, lambda b: httpx.Response(200, json=FAKE_OK), capsys)
+    assert code == 0 and len(sent) == 1
     assert "web_search accepted: yes" in out and "https://www.fda.gov/b" in out
+    assert "web_search_call items: 2" in out and "span 0-10" in out
+    assert "expected max token cost: $0.0628" in out
 
 
-def test_main_fallback_succeeds(monkeypatch: pytest.MonkeyPatch, capsys: Any) -> None:
-    def handler(request: httpx.Request) -> httpx.Response:
-        if '"muse-spark-1.3"' in request.read().decode():
-            return httpx.Response(400, json=FAKE_UNSUPPORTED)
+def test_main_retries_once_without_rejected_param(
+    monkeypatch: pytest.MonkeyPatch, capsys: Any
+) -> None:
+    def handler(body: dict[str, Any]) -> httpx.Response:
+        if "max_tool_calls" in body:
+            return httpx.Response(400, json=_err("max_tool_calls", "unknown parameter"))
         return httpx.Response(200, json=FAKE_OK)
 
-    code, out, n = _run(monkeypatch, handler, capsys)
-    assert n == 2 and code == 0
-    assert "model: muse-spark-1.1" in out and "price unknown for muse-spark-1.1" in out
+    code, out, sent = _run(monkeypatch, handler, capsys)
+    assert code == 0 and len(sent) == 2
+    assert "include" in sent[1] and "max_tool_calls" not in sent[1]
+    assert "retrying once without: max_tool_calls" in out
 
 
 def test_main_never_more_than_two_calls(monkeypatch: pytest.MonkeyPatch, capsys: Any) -> None:
-    code, out, n = _run(monkeypatch, lambda r: httpx.Response(400, json=FAKE_UNSUPPORTED), capsys)
-    assert n == 2 and code == 1 and "requests made: 2" in out
+    code, out, sent = _run(
+        monkeypatch, lambda b: httpx.Response(400, json=_err("include", "bad include")), capsys
+    )
+    assert code == 1 and len(sent) == 2 and "requests made: 2" in out
 
 
-def test_main_no_fallback_on_other_error(monkeypatch: pytest.MonkeyPatch, capsys: Any) -> None:
+def test_main_no_retry_on_other_error(monkeypatch: pytest.MonkeyPatch, capsys: Any) -> None:
     body = {"error": {"message": f"invalid api key {KEY}"}}
-    code, out, n = _run(monkeypatch, lambda r: httpx.Response(401, json=body), capsys)
-    assert n == 1 and code == 1 and "[REDACTED]" in out
+    code, out, sent = _run(monkeypatch, lambda b: httpx.Response(401, json=body), capsys)
+    assert len(sent) == 1 and code == 1 and "[REDACTED]" in out
 
 
 def test_main_without_key(monkeypatch: pytest.MonkeyPatch, capsys: Any) -> None:
