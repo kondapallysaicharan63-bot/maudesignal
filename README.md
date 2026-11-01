@@ -6,7 +6,7 @@
 
 ## In 30 seconds
 
-**MaudeSignal cuts the time to investigate a complaint against FDA data and to prepare PMS evidence, and keeps every fact traceable for audit.** It only shows facts it can match to the FDA record. People make every decision.
+**When a complaint arrives, MaudeSignal finds the matching FDA evidence in one question, prepares PMS evidence, and keeps every fact traceable for audit.** It only shows facts it can match to the FDA record. People make every decision.
 
 - **Who it is for:** postmarket-surveillance (PMS) and regulatory-affairs teams at
   medical-device makers, working on public openFDA data (MAUDE adverse-event reports,

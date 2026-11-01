@@ -39,8 +39,8 @@ from maudesignal.storage.database import Database
 app = typer.Typer(
     name="maudesignal",
     help=(
-        "MaudeSignal cuts the time to investigate a complaint against FDA data and to prepare "
-        "PMS evidence, and keeps every fact traceable for audit."
+        "When a complaint arrives, MaudeSignal finds the matching FDA evidence in one question, "
+        "prepares PMS evidence, and keeps every fact traceable for audit."
     ),
     add_completion=False,
     no_args_is_help=True,

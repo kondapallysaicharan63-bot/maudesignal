@@ -13,7 +13,7 @@ fast way to ramp.
 
 ## 1. What MaudeSignal Is
 
-MaudeSignal cuts the time to investigate a complaint against FDA data and to prepare PMS evidence, and keeps every fact traceable for audit.
+When a complaint arrives, MaudeSignal finds the matching FDA evidence in one question, prepares PMS evidence, and keeps every fact traceable for audit.
 
 It is an open-source AI postmarket surveillance toolkit for FDA-cleared AI/ML
 medical devices. Pipeline: ingest MAUDE adverse event reports from

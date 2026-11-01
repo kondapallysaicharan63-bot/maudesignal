@@ -22,8 +22,8 @@ REPORT_ID_PATTERN = r"^[A-Za-z0-9-]{1,24}$"
 
 #: The product headline (PRD v2.3 section 11b); it also leads the README and website.
 HEADLINE = (
-    "MaudeSignal cuts the time to investigate a complaint against FDA data and to prepare "
-    "PMS evidence, and keeps every fact traceable for audit."
+    "When a complaint arrives, MaudeSignal finds the matching FDA evidence in one question, "
+    "prepares PMS evidence, and keeps every fact traceable for audit."
 )
 
 GUIDANCE = (
