@@ -1,0 +1,254 @@
+{
+  "schema_version": "1.2",
+  "as_of": "2026-09-05",
+  "headline": "New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1",
+  "counts": {
+    "new": 0,
+    "more_serious_than_usual": 0,
+    "reports_suddenly_increased": 1,
+    "stable": 3
+  },
+  "window": {
+    "current_start": "2026-08-30",
+    "current_end": "2026-09-05",
+    "baseline_start": "2026-08-02",
+    "baseline_end": "2026-08-29",
+    "date_field": "date_received"
+  },
+  "rules": {
+    "current_window_days": 7,
+    "baseline_weeks": 4,
+    "spike_multiplier": 2,
+    "spike_min_reports": 3,
+    "severity_escalation_pp": 15,
+    "severity_min_reports": 3,
+    "severe_event_types": [
+      "death",
+      "injury"
+    ],
+    "ranking_order": [
+      "rule precedence: new kind of problem, then more serious than usual, then reports suddenly increased",
+      "more Injury/Death reports this window",
+      "higher ratio of this window's count to the baseline weekly mean",
+      "more reports this window",
+      "product code, alphabetically"
+    ]
+  },
+  "source": "openFDA device adverse-event reports stored in the local MaudeSignal database",
+  "events_considered": 154,
+  "events_after_as_of": 0,
+  "events_skipped_missing_date": 0,
+  "fetch_summary": {
+    "LLZ": 17
+  },
+  "notes": [],
+  "signals": [
+    {
+      "product_code": "LLZ",
+      "classification": "spike",
+      "label": "reports suddenly increased",
+      "triggers": [
+        "spike"
+      ],
+      "current_count": 32,
+      "current_report_ids": [
+        "50513025",
+        "50513122",
+        "50515017",
+        "50515470",
+        "50516576",
+        "50516578",
+        "50516613",
+        "50517192",
+        "50517935",
+        "50519907",
+        "50519908",
+        "50519912",
+        "50519913",
+        "50531298",
+        "50531301",
+        "50538587",
+        "50538910",
+        "50538912",
+        "50539411",
+        "50590063",
+        "50602494",
+        "50603242",
+        "50604196",
+        "50612448",
+        "50620785",
+        "50626922",
+        "50626972",
+        "50627606",
+        "50633651",
+        "50634985",
+        "50635536",
+        "50635914"
+      ],
+      "current_severe_count": 1,
+      "current_severe_report_ids": [
+        "50590063"
+      ],
+      "current_severe_share": 0.0312,
+      "baseline_count": 34,
+      "baseline_report_ids": [
+        "50112689",
+        "50112690",
+        "50112691",
+        "50126279",
+        "50137132",
+        "50137135",
+        "50137273",
+        "50170848",
+        "50171166",
+        "50251919",
+        "50340316",
+        "50340565",
+        "50340568",
+        "50340569",
+        "50341198",
+        "50346085",
+        "50426770",
+        "50426773",
+        "50448213",
+        "50448215",
+        "50448216",
+        "50448217",
+        "50451032",
+        "50453041",
+        "50502511",
+        "50502514",
+        "50502888",
+        "50503657",
+        "50503658",
+        "50503662",
+        "50504539",
+        "50504540",
+        "50504541",
+        "50504545"
+      ],
+      "baseline_weekly_mean": 8.5,
+      "baseline_severe_count": 0,
+      "baseline_severe_report_ids": [],
+      "baseline_severe_share": 0.0,
+      "severe_share_delta_pp": 3.12,
+      "spike_ratio": 3.76,
+      "prior_report_count": 106,
+      "new_event_types": [],
+      "new_event_type_report_ids": [],
+      "current_event_type_counts": {
+        "injury": 1,
+        "malfunction": 31
+      },
+      "example_report_ids": [
+        "50513025",
+        "50513122",
+        "50515017"
+      ]
+    },
+    {
+      "product_code": "MYN",
+      "classification": "stable",
+      "label": "no change",
+      "triggers": [],
+      "current_count": 0,
+      "current_report_ids": [],
+      "current_severe_count": 0,
+      "current_severe_report_ids": [],
+      "current_severe_share": null,
+      "baseline_count": 0,
+      "baseline_report_ids": [],
+      "baseline_weekly_mean": 0.0,
+      "baseline_severe_count": 0,
+      "baseline_severe_report_ids": [],
+      "baseline_severe_share": null,
+      "severe_share_delta_pp": null,
+      "spike_ratio": null,
+      "prior_report_count": 5,
+      "new_event_types": [],
+      "new_event_type_report_ids": [],
+      "current_event_type_counts": {},
+      "example_report_ids": []
+    },
+    {
+      "product_code": "POK",
+      "classification": "stable",
+      "label": "no change",
+      "triggers": [],
+      "current_count": 0,
+      "current_report_ids": [],
+      "current_severe_count": 0,
+      "current_severe_report_ids": [],
+      "current_severe_share": null,
+      "baseline_count": 0,
+      "baseline_report_ids": [],
+      "baseline_weekly_mean": 0.0,
+      "baseline_severe_count": 0,
+      "baseline_severe_report_ids": [],
+      "baseline_severe_share": null,
+      "severe_share_delta_pp": null,
+      "spike_ratio": null,
+      "prior_report_count": 1,
+      "new_event_types": [],
+      "new_event_type_report_ids": [],
+      "current_event_type_counts": {},
+      "example_report_ids": []
+    },
+    {
+      "product_code": "QIH",
+      "classification": "stable",
+      "label": "no change",
+      "triggers": [],
+      "current_count": 0,
+      "current_report_ids": [],
+      "current_severe_count": 0,
+      "current_severe_report_ids": [],
+      "current_severe_share": null,
+      "baseline_count": 0,
+      "baseline_report_ids": [],
+      "baseline_weekly_mean": 0.0,
+      "baseline_severe_count": 0,
+      "baseline_severe_report_ids": [],
+      "baseline_severe_share": null,
+      "severe_share_delta_pp": null,
+      "spike_ratio": null,
+      "prior_report_count": 10,
+      "new_event_types": [],
+      "new_event_type_report_ids": [],
+      "current_event_type_counts": {},
+      "example_report_ids": []
+    }
+  ],
+  "device_types": {
+    "LLZ": "System, Image Processing, Radiological",
+    "MYN": "Analyzer, Medical Image",
+    "POK": "Computer-Assisted Diagnostic Software For Lesions Suspicious For Cancer"
+  },
+  "window_brands": {
+    "LLZ": [
+      {
+        "brand": "IntelliSpace Cardiovascular",
+        "reports": 31
+      },
+      {
+        "brand": "UroNav 4",
+        "reports": 1
+      }
+    ]
+  },
+  "window_sources": {
+    "LLZ": {
+      "manufacturer": 32
+    }
+  },
+  "ranking": [
+    {
+      "rank": 1,
+      "product_code": "LLZ",
+      "classification": "spike",
+      "label": "reports suddenly increased",
+      "reason": "Ranked 1 of 1 flagged: reports suddenly increased: 32 reports this window vs a baseline weekly mean of 8.50 (3.76x; the rule needs >= 2x and >= 3 reports). It is the only product code that crossed a rule threshold; 3 other code(s) stayed below every threshold."
+    }
+  ],
+  "footer": "Advisory only — B2B regulatory triage aid, not medical advice. Every item requires human review; nothing is reported to FDA automatically."
+}
