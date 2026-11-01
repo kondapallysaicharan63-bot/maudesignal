@@ -25,7 +25,7 @@ arrows, Escape returns focus); voice Cancel sends no ``/v1/live/voice`` request;
 Resume hold and restart the timer; Stop puts the transcript in the box, it is edited, and one
 ask request carries the edited text; Take photo opens the live camera on a computer and the
 phone camera input at 390; a refused camera falls back to the file picker with a reason; the
-thumbnail's remove button drops the photo; "Research the web" is hidden when ``/v1/health``
+thumbnail's remove button drops the photo; "Web research" is hidden when ``/v1/health``
 does not offer it. On a build with the earlier composer they are NOT_PRESENT, not required.
 
 Error states use route mocking: openFDA down, Meta down, daily cap reached (429), slow network,
@@ -1146,7 +1146,7 @@ def s_thumbnail_remove(env: Env) -> str:
 
 
 def s_research_hidden(env: Env) -> str:
-    """The Research the web item appears only when GET /v1/health offers it."""
+    """The Web research item appears only when GET /v1/health offers it."""
     page = env.page
     mock_health(env, research=False)
     env.open()

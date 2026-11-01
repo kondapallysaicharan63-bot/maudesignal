@@ -6,7 +6,7 @@ export const HEALTH_PATH = '/v1/health'
 const HEALTH_TIMEOUT_MS = 8000
 
 export interface ApiFeatures {
-  /** "Research the web" in the + menu: the ask request may carry research: true. */
+  /** "Web research" in the + menu: the ask request may carry research: true. */
   research: boolean
   /** Voice can return only the transcript (meta transcribe_only), so the words go into the box for editing. */
   transcribeOnly: boolean

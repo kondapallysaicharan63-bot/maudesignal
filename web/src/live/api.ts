@@ -185,7 +185,7 @@ export interface AskOptions {
   history?: Turn[]
   productCode?: string | null
   ref?: string | null
-  /** "Research the web" is on: the request carries research: true (only sent when the API offers it). */
+  /** "Web research" is on: the request carries research: true (only sent when the API offers it). */
   research?: boolean
 }
 

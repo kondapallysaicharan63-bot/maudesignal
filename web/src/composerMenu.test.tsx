@@ -354,12 +354,12 @@ describe('the + menu', () => {
     expect(host.querySelector('[role="menu"]')).toBeNull()
   })
 
-  it('"Research the web" is hidden when the API does not offer it', async () => {
+  it('"Web research" is hidden when the API does not offer it', async () => {
     await click(q('composer-plus'))
     expect(q('menu-research')).toBeNull()
   })
 
-  it('"Research the web" is an on/off item when offered; on, the ask carries research: true', async () => {
+  it('"Web research" is an on/off item when offered; on, the ask carries research: true', async () => {
     await act(async () => root.unmount())
     host.remove()
     features = { research: true, transcribeOnly: true }

@@ -1,5 +1,5 @@
 // The message box with one "+" menu (behind VITE_FEATURE_COMPOSER_MENU; ?composer=classic shows the earlier composer).
-// The menu holds: Take photo · Upload photo · Try a sample label · Research the web (only when the API offers it) · Ask by
+// The menu holds: Take photo · Upload photo · Try a sample label · Web research (only when the API offers it) · Ask by
 // voice. A photo shows as a thumbnail above the box until it is sent or removed. Voice swaps the box for a recording bar;
 // Stop turns the recording into words in the box, and nothing is sent until the person presses Send.
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
@@ -228,7 +228,7 @@ export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera
     { id: 'upload-photo', label: 'Upload photo', icon: 'upload', hint: 'Choose a label photo', onSelect: () => (live ? uploadRef.current?.click() : onCamera()) },
     { id: 'sample-label', label: 'Try a sample label', icon: 'image', hint: 'Recorded example photos', onSelect: onSample },
     ...(live?.features.research
-      ? [{ id: 'research', label: 'Research the web', icon: 'globe' as const, hint: 'Outside pages, not FDA records', checked: research, onSelect: () => setResearch((r) => !r) }]
+      ? [{ id: 'research', label: 'Web research', icon: 'globe' as const, hint: 'Not FDA records', checked: research, onSelect: () => setResearch((r) => !r) }]
       : []),
     {
       id: 'voice',
