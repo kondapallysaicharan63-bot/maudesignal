@@ -2733,9 +2733,15 @@ def profile_check(env: Env, did: str, tab: str) -> None:
         raise AssertionError(f"{did}/{tab} is not selected")
     if env.page.locator("[role=tab][aria-selected=true]").count() != 1:
         raise AssertionError(f"{did}: more than one tab open")
-    label = env.page.locator("#profile-panel [data-testid=sim-tab-label]")
-    if label.count() != 1 or not label.is_visible() or SIM_LABEL not in label.inner_text():
-        raise AssertionError(f"{did}/{tab}: no visible SIMULATED label in the panel")
+    banner = env.page.get_by_test_id("profile-banner")
+    if banner.count() != 1 or not banner.is_visible() or SIM_LABEL not in banner.inner_text():
+        raise AssertionError(f"{did}/{tab}: no single visible SIMULATED banner")
+    small = env.page.evaluate(
+        "[...document.querySelectorAll('#main-v2 *')].filter(e => [...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim())"
+        " && getComputedStyle(e).fontSize && parseFloat(getComputedStyle(e).fontSize) < 14 && e.getClientRects().length).map(e => e.tagName + ':' + e.textContent.trim().slice(0, 30))"
+    )
+    if small:
+        raise AssertionError(f"{did}/{tab}: text under 14 px: {small[:4]}")
     title = env.page.title()
     if SIM_LABEL not in title:
         raise AssertionError(f"{did}/{tab}: the document title has no SIMULATED label ({title!r})")
@@ -2748,7 +2754,11 @@ def profile_check(env: Env, did: str, tab: str) -> None:
         raise AssertionError(f"{did}/{tab}: {env.overflow()} px sideways scroll")
     text = env.page.locator("#main-v2").inner_text()
     sim = text.split("Real FDA data · MAUDE")[0]
-    if re.search(r"fda[- ]approved|\bvalidated\b|\bsafe\b|\bunsafe\b|draft capa", sim, re.I):
+    if re.search(
+        r"fda[- ]approved|\bvalidated\b|\bsafe\b|\bunsafe\b|draft capa|\btool (determined|decided)\b",
+        sim,
+        re.I,
+    ):
         raise AssertionError(f"{did}/{tab}: banned wording on a simulated page")
     if re.search(r"\bK\d{6}\b", sim):
         raise AssertionError(f"{did}/{tab}: a real-looking K-number is shown")
@@ -2776,10 +2786,24 @@ def v2_s_profiles_nav(env: Env) -> str:
     v2_open(env, "devices/apply", "r=TEST1")
     env.page.wait_for_selector("[data-testid=device-tiles]", timeout=15_000)
     tiles = env.page.get_by_test_id("device-tiles").inner_text()
-    if SIM_LABEL not in tiles or "Under FDA review" not in tiles or "Open CAPAs" not in tiles:
+    if "(simulated)" not in tiles or "Under FDA review" not in tiles or "Open CAPAs" not in tiles:
         raise AssertionError(f"the device tiles are missing or unlabelled: {tiles[:160]!r}")
     env.shot("v2-devices-dashboard")
-    env.page.locator("#main-v2 button[aria-label$='Open.']").first.click()
+    rows = env.page.locator("#main-v2 button[aria-label$='Open.']")
+    if rows.count() != 12:
+        raise AssertionError(f"{rows.count()} device rows, not 12")
+    if "(simulated)" in " ".join(rows.all_inner_texts()):
+        raise AssertionError("a device row repeats '(simulated)'")
+    if env.page.locator("#main-v2 :text-is('Make it yours'):visible").count() > 1:
+        raise AssertionError("'Make it yours' is shown twice on Our devices")
+    if env.page.get_by_test_id("device-alert-details").count():
+        raise AssertionError("a device row still has a second 'Alert details' button")
+    if env.width >= 480:  # a click on the row away from the name opens the profile, too
+        env.page.locator("#main-v2 tbody tr").first.locator("td").nth(1).click()
+        env.page.wait_for_selector("[data-testid=device-profile]", timeout=15_000)
+        env.page.go_back(wait_until="load")
+        env.page.wait_for_selector("[data-testid=device-tiles]", timeout=15_000)
+    rows.first.click()
     env.page.wait_for_selector("[data-testid=device-profile]", timeout=15_000)
     did = str(env.page.get_by_test_id("device-profile").get_attribute("data-id"))
     if not v2_path(env).endswith(f"/devices/{did}"):
@@ -2833,7 +2857,7 @@ def v2_s_profiles_themes(env: Env) -> str:
             profile_tab(env, tab)
             profile_check(env, did, tab)
         same = env.page.evaluate(
-            "(() => { const e = document.querySelector('[data-testid=sim-tab-label]');"
+            "(() => { const e = document.querySelector('[data-testid=profile-banner]');"
             " const s = getComputedStyle(e); return s.color === s.backgroundColor })()"
         )
         if same:
@@ -2857,6 +2881,11 @@ def open_all_paths(env: Env) -> None:
         card = env.page.get_by_test_id("decision-path").nth(i)
         if card.get_attribute("open") is None:
             card.locator(":scope > summary").click()
+    details = env.page.locator(".ms2-more > summary")
+    for i in range(details.count()):
+        item = details.nth(i)
+        if item.locator("xpath=..").get_attribute("open") is None:
+            item.click()
     env.page.wait_for_timeout(100)
 
 
@@ -2889,8 +2918,8 @@ def check_path_steps(env: Env, did: str, path: dict[str, Any], card: Any) -> Non
     sim = board.get_by_test_id("dp-company").inner_text()
     if "Real FDA data" not in real or "SIMULATED" in real:
         raise AssertionError(f"{did}/{path['id']}: the real evidence panel is not labelled real")
-    if SIM_LABEL not in sim:
-        raise AssertionError(f"{did}/{path['id']}: the company side is not labelled SIMULATED")
+    if "Simulated — sample data" not in sim:
+        raise AssertionError(f"{did}/{path['id']}: the company side is not labelled simulated")
     if path["state"] == "decided":
         out = steps.nth(2).inner_text()
         kind = path["outcome"]["kind"]
@@ -2908,7 +2937,7 @@ def check_path_steps(env: Env, did: str, path: dict[str, Any], card: Any) -> Non
             raise AssertionError(f"{did}/{path['id']}: the 30-day clock is not explained")
     elif "No outcome yet" not in steps.nth(2).inner_text():
         raise AssertionError(f"{did}/{path['id']}: an open path shows an outcome")
-    banned = r"maudesignal (determined|decided)|fda[- ]approved|\bvalidated\b|\bsafe\b|\bunsafe\b|draft capa"
+    banned = r"maudesignal (determined|decided)|\btool (determined|decided)\b|fda[- ]approved|\bvalidated\b|\bsafe\b|\bunsafe\b|draft capa"
     if re.search(banned, card.inner_text(), re.I):
         raise AssertionError(f"{did}/{path['id']}: banned wording in a decision path")
 
@@ -2937,6 +2966,10 @@ def v2_s_profiles_paths(env: Env) -> str:
         cards = env.page.get_by_test_id("decision-path")
         if cards.count() != len(paths):
             raise AssertionError(f"{did}: {cards.count()} paths shown, {len(paths)} stored")
+        expanded = env.page.locator("[data-testid=decision-path][open]").count()
+        want_open = sum(1 for x in paths if x["state"] == "open")
+        if expanded != want_open:
+            raise AssertionError(f"{did}: {expanded} paths expanded by default, not {want_open}")
         open_all_paths(env)
         for i, path in enumerate(
             sorted(paths, key=lambda x: (x["state"] != "open", x["triage"]["date"]))
@@ -2964,6 +2997,28 @@ def v2_s_profiles_paths(env: Env) -> str:
     return f"{total} decision paths on {len(by_dev)} devices stepped through (4 steps, chips, real vs simulated); investigate href kept ?r= and layout; tile {open_paths} on {open_devs} devices"
 
 
+CONTRAST_JS = """(() => {
+  const rgb = (c) => (c.match(/[\\d.]+/g) || []).slice(0, 4).map(Number);
+  const lum = ([r, g, b]) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4 }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b) };
+  const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05) };
+  const bad = [];
+  document.querySelectorAll('.ms2-rg-num, .ms2-rg-axis').forEach((t) => {
+    const cell = t.previousElementSibling && t.previousElementSibling.classList.contains('ms2-rg-cell') ? t.previousElementSibling : null;
+    const bg = cell ? rgb(getComputedStyle(cell).fill) : rgb(getComputedStyle(document.body).backgroundColor);
+    const r = ratio(rgb(getComputedStyle(t).fill), bg);
+    if (r < 4.5) bad.push('grid ' + t.textContent + ' ' + r.toFixed(2));
+  });
+  document.querySelectorAll('.ms2-pill, .ms2-tile--attn[data-attn=on] .ms2-tile-n, .ms2-step-n').forEach((e) => {
+    const s = getComputedStyle(e);
+    const bgc = rgb(s.backgroundColor);
+    if (!bgc.length || (bgc.length === 4 && bgc[3] === 0)) return;
+    const r = ratio(rgb(s.color), bgc);
+    if (r < 4.5) bad.push(e.className + ' ' + e.textContent.trim().slice(0, 20) + ' ' + r.toFixed(2));
+  });
+  return bad;
+})()"""
+
+
 def v2_s_profiles_path_themes(env: Env) -> str:
     """The decision path in every theme: step numbers, chips and the real box stay readable; no sideways scroll."""
     by_dev = profile_paths()
@@ -2983,6 +3038,9 @@ def v2_s_profiles_path_themes(env: Env) -> str:
             raise AssertionError(
                 f"theme {t}: {bad} decision-path elements have text the colour of their background"
             )
+        low = env.page.evaluate(CONTRAST_JS)
+        if low:
+            raise AssertionError(f"theme {t}: contrast under 4.5:1 for {low[:4]}")
         env.shot(f"v2-decision-path-{t}")
     return (
         f"{did} paths ({len(by_dev[did])}) in {', '.join(PROFILE_THEMES)}: readable, 0 px sideways"

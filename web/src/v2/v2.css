@@ -932,12 +932,13 @@
 }
 
 /* --- Device lifecycle profiles (simulated) -------------------------------------------------- */
+/* Rules of this block: simulated data uses neutral tokens; the accent colour is for real FDA evidence only; small
+   text is 14px or more; badges are tinted pills without a border (borders are for buttons and filters). */
 .ms2-simtag {
   display: inline-block;
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   padding: 2px 8px;
-  font: 600 13px/1.4 var(--font-sans);
-  letter-spacing: 0.02em;
+  font: 600 14px/1.4 var(--font-sans);
   color: var(--ink);
   background: var(--surface-sunk);
   border: 1px dashed var(--rule-strong);
@@ -948,8 +949,44 @@
 }
 .ms2-realtag {
   margin: 0;
-  font: 600 13px/1.4 var(--font-sans);
+  font: 600 14px/1.4 var(--font-sans);
   color: var(--accent);
+}
+.ms2-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  font: 600 14px/1.4 var(--font-sans);
+  color: var(--ink);
+  background: var(--surface-sunk);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+.ms2-pill--ok {
+  color: var(--success);
+  background: var(--success-soft);
+}
+.ms2-pill--bad {
+  color: var(--critical);
+  background: var(--critical-soft);
+}
+.ms2-pill--due {
+  color: var(--critical);
+  background: var(--critical-soft);
+}
+.ms2-trow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 2px;
+}
+.ms2-story {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--surface-sunk);
+  border-left: 3px solid var(--ink-3);
+  border-radius: var(--radius-xs);
 }
 .ms2-facts {
   display: grid;
@@ -991,18 +1028,10 @@
   border-top: 0;
   padding-top: 0;
 }
-.ms2-timeline,
-.ms2-chart {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-.ms2-chart {
-  max-width: 40rem;
-}
+/* Key dates: a dated list on a drawn line, neutral. */
 .ms2-tl {
-  margin: 12px 0 0 6px;
-  padding: 0 0 0 16px;
+  margin: 4px 0 0 6px;
+  padding: 0 0 0 18px;
   list-style: none;
   border-left: 2px solid var(--rule-strong);
 }
@@ -1010,19 +1039,19 @@
   position: relative;
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 12px;
+  gap: 2px 12px;
   padding: 4px 0;
 }
 .ms2-tl > li::before {
   content: '';
   position: absolute;
-  left: -23px;
+  left: -25px;
   top: 11px;
   width: 12px;
   height: 12px;
   box-sizing: border-box;
   border-radius: var(--radius-full);
-  background: var(--accent);
+  background: var(--ink-2);
 }
 .ms2-tl > li[data-planned]::before {
   background: var(--surface);
@@ -1032,10 +1061,50 @@
   min-width: 7.5rem;
   color: var(--ink-2);
 }
+@media (max-width: 479px) {
+  .ms2-tl > li {
+    flex-direction: column;
+  }
+}
+/* Complaints as horizontal bars: neutral fill, 14px+ text, every month labelled. */
+.ms2-hbars {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+.ms2-hbars > li {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr) 2rem;
+  align-items: center;
+  gap: 10px;
+  min-height: 28px;
+  font-size: 15px;
+}
+.ms2-hbar-m {
+  color: var(--ink-2);
+}
+.ms2-hbar-track {
+  display: block;
+  height: 12px;
+  background: var(--surface-sunk);
+  border-radius: var(--radius-xs);
+}
+.ms2-hbar-fill {
+  display: block;
+  height: 100%;
+  background: var(--ink-3);
+  border-radius: var(--radius-xs);
+}
+.ms2-hbar-n {
+  text-align: right;
+  color: var(--ink);
+  font-weight: 600;
+}
+/* Tiles above Our devices: lifecycle first, then the two that need attention. */
 .ms2-tiles {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
   margin: 0 0 20px;
   padding: 0;
   list-style: none;
@@ -1043,57 +1112,118 @@
 .ms2-tile {
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
   gap: 2px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   background: var(--surface);
   border: 1px solid var(--rule);
   border-radius: var(--radius-md);
 }
+.ms2-tile--attn[data-attn='on'] {
+  background: var(--critical-soft);
+  border-color: transparent;
+}
+.ms2-tile--attn[data-attn='on'] .ms2-tile-n {
+  color: var(--critical);
+}
+.ms2-tile:nth-child(5) {
+  margin-left: 6px;
+}
 .ms2-tile-n {
-  font: 500 32px/1.1 var(--font-serif);
+  font: 500 30px/1.1 var(--font-serif);
   color: var(--ink);
 }
 .ms2-tile-l {
-  font-size: 15px;
+  font-size: 14px;
+  line-height: 1.3;
+  color: var(--ink);
+}
+.ms2-tile-s {
+  min-height: 1.3em;
+  font-size: 14px;
+  line-height: 1.3;
   color: var(--ink-2);
 }
-@media (max-width: 479px) {
+@media (max-width: 767px) {
   .ms2-tiles {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .ms2-tile:nth-child(5) {
+    margin-left: 0;
+  }
+  .ms2-tile {
+    padding: 8px 10px;
+  }
+  .ms2-tile-s:empty {
+    display: none;
   }
 }
-
-/* --- Decision paths (simulated) ----------------------------------------------------------------- */
+/* Our devices list (v2): the whole row is the link. */
+.ms2-rowlink {
+  cursor: pointer;
+}
+.ms2-rowlink:hover,
+.ms2-rowlink:focus-within {
+  background: var(--surface-sunk);
+}
+.ms2-chev {
+  float: right;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--ink-2);
+}
+.ms2-devices .bg-critical[data-testid='status-chip'] {
+  background: var(--critical-soft);
+  color: var(--critical);
+}
+.ms2-viewpick select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* Decision paths. */
 .ms2-dp {
   border: 1px solid var(--rule);
   border-radius: var(--radius-md);
   background: var(--paper);
   padding: 0 16px 16px;
 }
+.ms2-dp:not([open]) {
+  padding-bottom: 0;
+}
 .ms2-dp > summary {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px 12px;
-  min-height: 48px;
+  gap: 6px 12px;
+  min-height: 52px;
   padding: 10px 0;
   cursor: pointer;
   font-weight: 600;
   color: var(--ink);
 }
 .ms2-dp > summary:focus-visible,
-.ms2-why > summary:focus-visible {
+.ms2-why > summary:focus-visible,
+.ms2-more > summary:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 .ms2-dp-title {
   min-width: 0;
+  flex: 1 1 14rem;
   overflow-wrap: anywhere;
+}
+.ms2-dp-meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  font-weight: 400;
 }
 .ms2-stepper {
   position: relative;
-  margin: 12px 0 0;
+  margin: 8px 0 0;
   padding: 0;
   list-style: none;
 }
@@ -1101,7 +1231,7 @@
   position: relative;
   display: flex;
   gap: 14px;
-  padding-bottom: 18px;
+  padding-bottom: 20px;
 }
 .ms2-step::before {
   content: '';
@@ -1142,11 +1272,38 @@
   flex: 1 1 auto;
   overflow-wrap: anywhere;
 }
+.ms2-step-h {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin: 0;
+  font: 600 18px/1.3 var(--font-sans);
+  color: var(--ink);
+}
+.ms2-more {
+  margin-top: 6px;
+  font-size: 15px;
+}
+.ms2-more > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  cursor: pointer;
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .ms2-clauses {
-  margin-top: 10px;
+  margin-top: 8px;
+}
+.ms2-clause {
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: help;
 }
 .ms2-why {
-  margin-top: 4px;
+  margin-top: 2px;
   font-size: 14px;
   color: var(--ink-2);
 }
@@ -1162,9 +1319,68 @@
   border-left: 3px solid var(--ink-3);
   border-radius: var(--radius-xs);
 }
+/* Risk matrix: numbers 14px+ in the strong ink; the band key beside it on wide screens. */
+.ms2-rg {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px 24px;
+  margin: 0;
+}
 .ms2-riskgrid {
   display: block;
-  width: 100%;
-  max-width: 17rem;
+  flex: none;
+  max-width: 100%;
   height: auto;
+}
+.ms2-rg-key {
+  flex: 1 1 14rem;
+  min-width: 0;
+  font-size: 15px;
+}
+.ms2-rg-cell {
+  stroke: var(--rule);
+  stroke-width: 1;
+}
+.ms2-rg-lo {
+  fill: var(--success-soft);
+  background: var(--success-soft);
+}
+.ms2-rg-mid {
+  fill: var(--warning-soft);
+  background: var(--warning-soft);
+}
+.ms2-rg-hi {
+  fill: var(--critical-soft);
+  background: var(--critical-soft);
+}
+.ms2-rg-num {
+  font: 600 14px/1 var(--font-sans);
+  fill: var(--ink);
+}
+.ms2-rg-axis {
+  font: 500 14px/1 var(--font-sans);
+  fill: var(--ink);
+}
+.ms2-rg-ring {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+.ms2-rg-dot {
+  fill: var(--ink);
+  stroke: var(--paper);
+  stroke-width: 2;
+}
+.ms2-rg-sw {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  vertical-align: -2px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 3px;
+}
+#profile-panel .ms-code {
+  font-size: 14px;
 }

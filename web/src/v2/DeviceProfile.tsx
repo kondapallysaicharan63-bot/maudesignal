@@ -1,7 +1,8 @@
 // A simulated device's full lifecycle profile (/devices/<id>): seven tabs, one open at a time. Everything is
 // SIMULATED sample data from company_profiles.json, except the boxes marked "Real FDA data": the product code, its FDA
 // name, class and regulation number (stored openFDA data), and on Post-market the real MAUDE problem patterns already
-// stored in company.json for that product code. The two are kept visually apart.
+// stored in company.json for that product code. The two are kept visually apart. One banner per page says so (and the
+// document title); cards that mix real and simulated data carry the small "Simulated — sample data" tag.
 import { useEffect, type ReactNode } from 'react'
 import type { Company, CompanyDevice } from '../types'
 import {
@@ -41,14 +42,6 @@ const ymd = (s: string): string => (/^\d{8}$/.test(s) ? `${s.slice(0, 4)}-${s.sl
 
 const when = (x: Dated | null | undefined): string => (x ? `${niceDate(x.date)}${x.planned ? ' (planned)' : ''}` : 'not yet')
 
-function SimTag() {
-  return (
-    <p className="ms2-simtag" data-testid="sim-tab-label">
-      {SIM_LABEL}
-    </p>
-  )
-}
-
 function Card({ title, children, testid, real = false }: { title: string; children: ReactNode; testid?: string; real?: boolean }) {
   return (
     <section className={['ms2-card', real ? 'ms2-realbox' : ''].join(' ')} aria-label={title} data-testid={testid}>
@@ -72,7 +65,7 @@ function Facts({ rows }: { rows: [string, ReactNode][] }) {
 }
 
 function ResultChip({ r }: { r: 'pass' | 'fail' | 'planned' }) {
-  const cls = r === 'pass' ? 'ms-chip ms-chip--ok' : r === 'fail' ? 'ms-chip ms-chip--high' : 'ms-chip'
+  const cls = r === 'pass' ? 'ms2-pill ms2-pill--ok' : r === 'fail' ? 'ms2-pill ms2-pill--bad' : 'ms2-pill'
   return (
     <span className={cls} data-testid="result-chip" data-result={r}>
       {r === 'pass' ? 'Pass' : r === 'fail' ? 'Fail' : 'Planned'}
@@ -80,39 +73,19 @@ function ResultChip({ r }: { r: 'pass' | 'fail' | 'planned' }) {
   )
 }
 
-/** The milestones on one line, placed by date (inline SVG, design tokens only), with the dated list below it. */
+/** The key dates as a dated list on a drawn line (CSS only, neutral tokens): date first, then the title. */
 export function Timeline({ p }: { p: Profile }) {
   const ms = p.milestones
   if (ms.length === 0) return null
-  const t0 = Date.parse(ms[0].date)
-  const t1 = Date.parse(ms[ms.length - 1].date)
-  const span = Math.max(1, t1 - t0)
-  const W = 1000
-  const x = (d: string) => 20 + ((Date.parse(d) - t0) / span) * (W - 40)
   return (
     <div data-testid="timeline">
-      <svg viewBox={`0 0 ${W} 40`} className="ms2-timeline" role="img" aria-label={`Timeline from ${niceDate(ms[0].date)} to ${niceDate(ms[ms.length - 1].date)}`}>
-        <line x1={20} y1={20} x2={W - 20} y2={20} stroke="var(--rule-strong)" strokeWidth={2} />
-        {ms.map((m) => (
-          <circle
-            key={m.key}
-            cx={x(m.date)}
-            cy={20}
-            r={7}
-            fill={m.planned ? 'var(--surface)' : 'var(--accent)'}
-            stroke={m.planned ? 'var(--ink-3)' : 'var(--accent)'}
-            strokeWidth={2}
-            strokeDasharray={m.planned ? '3 2' : undefined}
-          />
-        ))}
-      </svg>
       <ol className="ms2-tl" aria-label="Key dates">
         {ms.map((m) => (
           <li key={m.key} data-planned={m.planned || undefined} data-testid="milestone" data-key={m.key} data-date={m.date}>
             <span className="ms-num ms2-tl-date">{niceDate(m.date)}</span>
             <span>
               {m.label}
-              {m.planned && <span className="ms2-tag ml-2">planned</span>}
+              {m.planned && <span className="ms2-pill ml-2">planned</span>}
             </span>
           </li>
         ))}
@@ -136,7 +109,7 @@ function Overview({ p }: { p: Profile }) {
         />
         <p className="ms2-muted m-0 mt-2 text-[14px]" data-testid="real-source">
           Source: {o.classification_source}
-          {o.classification_fetched ? `, fetched ${niceDate(o.classification_fetched)}` : ''}. Name: {o.fda_name_source}.
+          {o.classification_fetched ? `, fetched ${niceDate(o.classification_fetched)}` : ''}.
         </p>
       </Card>
       <Card title="This device (simulated)" testid="sim-overview">
@@ -224,47 +197,50 @@ function Design({ p }: { p: Profile }) {
   )
 }
 
+/** "DC-21" from "... (design change DC-21)". */
+const changeId = (s: string): string => /design change (DC-\d+)/.exec(s)?.[1] ?? 'the change'
+
 function VV({ p }: { p: Profile }) {
   const v = p.vv
+  const retests = new Set(v.problems.map((x) => x.retest_id))
   return (
     <div className="space-y-4">
       <Card title="Test protocols" testid="protocols">
         <ul className="ms2-list">
-          {v.protocols.map((t) => (
-            <li key={t.id} data-testid="protocol" data-result={t.result}>
-              <p className="m-0 flex flex-wrap items-center gap-2">
-                <span className="ms-code">{t.id}</span>
-                <span className="font-semibold">{t.title}</span>
-                <ResultChip r={t.result} />
-              </p>
-              <p className="ms2-muted m-0 text-[15px]">
-                {t.standard ? `${t.standard} · ` : ''}
-                {when(t)} · report {t.report}
-              </p>
-            </li>
-          ))}
+          {v.protocols
+            .filter((t) => !retests.has(t.id))
+            .map((t) => {
+              const prob = v.problems.find((x) => x.found_in === t.id)
+              return (
+                <li key={t.id} data-testid="protocol" data-result={t.result}>
+                  <p className="ms2-trow">
+                    <span className="ms-code">{t.id}</span>
+                    <ResultChip r={t.result} />
+                  </p>
+                  <p className="m-0 font-semibold">{t.title}</p>
+                  <p className="ms2-muted m-0 text-[15px]">
+                    {t.standard ? `${t.standard} · ` : ''}
+                    {when(t)} · report {t.report}
+                  </p>
+                  {prob && (
+                    <div className="ms2-story" data-testid="problem-story">
+                      <p className="m-0">
+                        <span className="font-semibold">Problem found</span> ({prob.id}): {prob.description}
+                      </p>
+                      <p className="m-0">
+                        <span className="font-semibold">What changed:</span> {prob.change}
+                      </p>
+                      <p className="m-0">
+                        <span className="font-semibold">Retest after change {changeId(prob.change)}:</span> {prob.retest_id} · {niceDate(prob.retest_date)} · <ResultChip r={prob.retest_result} />
+                      </p>
+                    </div>
+                  )}
+                </li>
+              )
+            })}
         </ul>
       </Card>
-      {v.problems.length > 0 ? (
-        <Card title="Problems found and what changed" testid="problems">
-          <ul className="ms2-list">
-            {v.problems.map((x) => (
-              <li key={x.id}>
-                <p className="m-0 font-semibold">
-                  <span className="ms-code">{x.id}</span> Found in {x.found_in} on {niceDate(x.date)}
-                </p>
-                <p className="m-0">{x.description}</p>
-                <p className="m-0">What changed: {x.change}</p>
-                <p className="m-0">
-                  Retest {x.retest_id} on {niceDate(x.retest_date)}: <ResultChip r={x.retest_result} />
-                </p>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      ) : (
-        <p className="ms2-muted m-0">No test failed for this device.</p>
-      )}
+      {v.problems.length === 0 && <p className="ms2-muted m-0">No test failed for this device.</p>}
       {v.study && (
         <Card title="Standalone performance study (simulated)" testid="study">
           <Facts
@@ -286,6 +262,7 @@ function VV({ p }: { p: Profile }) {
 function Regulatory({ p }: { p: Profile }) {
   const r = p.regulatory
   const verb = DECISION_VERB[r.pathway]
+  const pma = r.pathway === 'PMA'
   return (
     <div className="space-y-4">
       <Card title="Pre-Submission (Q-Sub)">
@@ -302,12 +279,13 @@ function Regulatory({ p }: { p: Profile }) {
         )}
       </Card>
       <Card title={`${r.pathway} submission`} testid="submission">
+        <p className="ms2-muted m-0 mb-3 text-[14px]">Numbers in this format (K-SIM-, DEN-SIM-, P-SIM-, Q-SIM-) are fictional and are not FDA numbers.</p>
         <Facts
           rows={[
             ['Submission number', <span className="ms-code !text-[15px] !text-ink" data-testid="submission-number">{r.submission.number}</span>],
             ['Submitted', when(r.submission)],
-            ['FDA Additional Information request', r.ai_request ? `${when(r.ai_request)}. ${r.ai_request.summary}` : 'none'],
-            ['Response to the request', r.ai_response ? `${when(r.ai_response)}. ${r.ai_response.summary}` : 'none'],
+            [pma ? 'FDA major deficiency letter' : 'FDA Additional Information request', r.ai_request ? `${when(r.ai_request)}. ${r.ai_request.summary}` : 'none'],
+            [pma ? 'Response to the letter' : 'Response to the request', r.ai_response ? `${when(r.ai_response)}. ${r.ai_response.summary}` : 'none'],
             ['FDA decision', <span data-testid="decision">{r.decision ? `${verb} on ${when(r.decision)}` : 'pending'}</span>],
             ...(r.fda_days !== null && r.hold_days !== null
               ? ([['Review time', `${r.fda_days} FDA days + ${r.hold_days} days on hold (waiting on the response)`]] as [string, ReactNode][])
@@ -315,7 +293,6 @@ function Regulatory({ p }: { p: Profile }) {
             ...(r.predicate ? ([['Predicate', r.predicate]] as [string, ReactNode][]) : []),
           ]}
         />
-        <p className="ms2-muted m-0 mt-2 text-[14px]">Numbers in this format (K-SIM-, DEN-SIM-, P-SIM-, Q-SIM-) are fictional and are not FDA numbers.</p>
       </Card>
     </div>
   )
@@ -341,34 +318,27 @@ function Market({ p }: { p: Profile }) {
   )
 }
 
-/** Monthly complaints as small bars (inline SVG, tokens only). */
+/**
+ * Monthly complaints as a list of horizontal bars (neutral tokens): every month has its own labelled row, the text is
+ * 14 px or more at every width, and the figure reads as a list for a screen reader.
+ */
 export function ComplaintsChart({ rows }: { rows: { month: string; count: number }[] }) {
   const max = Math.max(1, ...rows.map((r) => r.count))
-  const W = 600
-  const H = 120
-  const bw = W / rows.length
   const total = rows.reduce((s, r) => s + r.count, 0)
+  const summary = `Complaints per month, ${niceMonth(rows[0].month)} to ${niceMonth(rows[rows.length - 1].month)}: ${rows.map((r) => `${niceMonth(r.month)} ${r.count}`).join(', ')}. ${total} in all.`
   return (
-    <figure className="m-0" data-testid="complaints-chart">
-      <svg viewBox={`0 0 ${W} ${H + 20}`} className="ms2-chart" role="img" aria-label={`Complaints per month, ${niceMonth(rows[0].month)} to ${niceMonth(rows[rows.length - 1].month)}: ${total} in all`}>
-        <line x1={0} y1={H} x2={W} y2={H} stroke="var(--rule-strong)" strokeWidth={1} />
-        {rows.map((r, i) => {
-          const h = (r.count / max) * (H - 16)
-          return (
-            <g key={r.month}>
-              <rect x={i * bw + bw * 0.2} y={H - h} width={bw * 0.6} height={h} fill="var(--accent)" rx={2} />
-              <text x={i * bw + bw / 2} y={H - h - 4} textAnchor="middle" fontSize={13} fill="var(--ink-2)">
-                {r.count}
-              </text>
-              {(i === 0 || i === rows.length - 1 || i % 3 === 0) && (
-                <text x={i * bw + bw / 2} y={H + 16} textAnchor="middle" fontSize={12} fill="var(--ink-3)">
-                  {niceMonth(r.month).slice(0, 3)}
-                </text>
-              )}
-            </g>
-          )
-        })}
-      </svg>
+    <figure className="m-0" data-testid="complaints-chart" aria-label={summary}>
+      <ul className="ms2-hbars">
+        {rows.map((r) => (
+          <li key={r.month} data-testid="complaints-row">
+            <span className="ms2-hbar-m">{niceMonth(r.month)}</span>
+            <span className="ms2-hbar-track" aria-hidden="true">
+              <span className="ms2-hbar-fill" style={{ width: `${(r.count / max) * 100}%` }} />
+            </span>
+            <span className="ms-num ms2-hbar-n">{r.count}</span>
+          </li>
+        ))}
+      </ul>
       <figcaption className="ms2-muted text-[14px]">
         {total} complaints, {niceMonth(rows[0].month)} to {niceMonth(rows[rows.length - 1].month)} (simulated).
       </figcaption>
@@ -396,18 +366,25 @@ function RealPatterns({ d, company }: { d: CompanyDevice | undefined; company: C
       ) : (
         <ul className="ms2-list mt-2">
           {d.patterns.map((pt) => (
-            <li key={pt.id} data-testid="real-pattern">
-              <span className="font-semibold">{pt.display_label.replace(/^Keyword match \(unreviewed\):\s*/i, '')}</span>{' '}
-              <span className="ms-num">· {pt.count} reports</span>
-              {pt.kind === 'keyword' && <span className="ms2-tag ml-2">keyword match, unreviewed</span>}
+            <li key={pt.id} data-testid="real-pattern" className="space-y-1">
+              <p className="m-0 font-semibold">
+                {pt.display_label.replace(/^Keyword match \(unreviewed\):\s*/i, '')}
+                {pt.kind === 'keyword' ? ' (keyword match)' : ''}
+              </p>
+              <p className="m-0">
+                <span className="ms-num">{pt.count}</span> reports
+              </p>
+              {pt.kind === 'keyword' && (
+                <p className="m-0">
+                  <span className="ms2-pill">unreviewed</span>
+                </p>
+              )}
               {pt.links[0] && (
-                <>
-                  {' '}
-                  ·{' '}
+                <p className="m-0 text-[15px]">
                   <a className="ms2-a" href={pt.links[0].url} target="_blank" rel="noreferrer">
                     {pt.links[0].label}
                   </a>
-                </>
+                </p>
               )}
             </li>
           ))}
@@ -459,10 +436,11 @@ function PostMarket({ p, d, company, onEvidence }: { p: Profile; d: CompanyDevic
             <ul className="ms2-list">
               {pm.capas.map((c) => (
                 <li key={c.id} data-testid="capa" data-state={c.state}>
-                  <p className="m-0 flex flex-wrap items-center gap-2">
-                    <span className="ms-code">{c.id}</span> <span className="font-semibold">{c.title}</span>
-                    <span className={c.state === 'open' ? 'ms-chip' : 'ms-chip ms-chip--ok'}>{c.state === 'open' ? 'Open' : 'Closed'}</span>
+                  <p className="ms2-trow">
+                    <span className="ms-code">{c.id}</span>
+                    <span className={c.state === 'open' ? 'ms2-pill' : 'ms2-pill ms2-pill--ok'}>{c.state === 'open' ? 'Open' : 'Closed'}</span>
                   </p>
+                  <p className="m-0 font-semibold">{c.title}</p>
                   <p className="ms2-muted m-0 text-[15px]">
                     Owner {c.owner} · opened {niceDate(c.opened)}
                     {c.closed ? ` · closed ${niceDate(c.closed)} (${daysBetween(c.opened, c.closed)} days)` : ''}
@@ -518,27 +496,25 @@ function People({ p }: { p: Profile }) {
 /** The summary tiles above the Our devices list, computed from the profiles and company.json. */
 export function DeviceTiles({ file, company }: { file: ProfilesFile; company: Company }) {
   const s = summarize(file, company)
-  const tiles: [string, number, string][] = [
-    ['In development', s.development, 'development'],
-    ['Under FDA review', s.review, 'review'],
-    ['FDA decision, launch planned', s.decided, 'decided'],
-    ['On market', s.market, 'market'],
-    ['Open CAPAs', s.openCapas, 'capas'],
-    ['Decisions due (open decision paths)', s.needDecision, 'decision'],
+  const tiles: [string, number, string, boolean][] = [
+    ['In development', s.development, 'development', false],
+    ['Under FDA review', s.review, 'review', false],
+    ['Decided, not launched', s.decided, 'decided', false],
+    ['On market', s.market, 'market', false],
+    ['Open CAPAs', s.openCapas, 'capas', true],
+    ['Decisions due', s.needDecision, 'decision', true],
   ]
   return (
     <section aria-label="Our devices at a glance (simulated)" data-testid="device-tiles">
-      <p className="ms2-simtag">{SIM_LABEL}</p>
+      <h2 className="ms2-h2 mb-2">At a glance (simulated)</h2>
       <ul className="ms2-tiles">
-        {tiles.map(([label, n, id]) => (
-          <li key={id} className="ms2-tile" data-testid={`tile-${id}`}>
+        {tiles.map(([label, n, id, attn]) => (
+          <li key={id} className={['ms2-tile', attn ? 'ms2-tile--attn' : ''].join(' ')} data-testid={`tile-${id}`} data-attn={attn && n > 0 ? 'on' : undefined}>
             <span className="ms-num ms2-tile-n">{n}</span>
             <span className="ms2-tile-l">{label}</span>
-            {id === 'decision' && (
-              <span className="ms2-tile-l" data-testid="tile-decision-sub">
-                on {s.needDecisionDevices} {s.needDecisionDevices === 1 ? 'device' : 'devices'}
-              </span>
-            )}
+            <span className="ms2-tile-s" data-testid={id === 'decision' ? 'tile-decision-sub' : undefined}>
+              {id === 'decision' ? `on ${s.needDecisionDevices} ${s.needDecisionDevices === 1 ? 'device' : 'devices'}` : ''}
+            </span>
           </li>
         ))}
       </ul>
@@ -583,7 +559,9 @@ export function DeviceProfilePage({
       <div className="space-y-3" data-testid="profile-missing">
         {back}
         <h1 className="ms2-h1">Device profile</h1>
-        <p className="ms2-simtag">{SIM_LABEL}</p>
+        <p className="ms-banner ms-banner--warn m-0" data-testid="profile-banner">
+          <span className="ws-wrap font-semibold">{SIM_LABEL}</span>
+        </p>
         <p>There is no stored profile for “{id}”.</p>
       </div>
     )
@@ -607,7 +585,6 @@ export function DeviceProfilePage({
         </p>
       </header>
       <SubTabs id="profile" label={`${p.name} profile`} tabs={PROFILE_TAB_LABELS} value={tab} onChange={onTab}>
-        <SimTag />
         {tab === 'overview' && <Overview p={p} />}
         {tab === 'design' && <Design p={p} />}
         {tab === 'vv' && <VV p={p} />}

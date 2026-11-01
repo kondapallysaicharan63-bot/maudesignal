@@ -96,6 +96,7 @@ export type DecisionOutcome =
   | (Dated & {
       kind: 'escalation'
       assessed_by: string
+      follow_up_capa: { capa_id: string; owner: string; due: string; due_planned: boolean; status: string } | null
       mdr: MdrAssessment
       correction_removal: Assessment
       recall: Assessment
@@ -205,6 +206,8 @@ export interface ProfilesFile {
 }
 
 export const SIM_LABEL = 'SIMULATED — sample data'
+/** The repeated tag inside a card that mixes real and simulated data (sentence case; the banner uses SIM_LABEL). */
+export const SIM_TAG = 'Simulated — sample data'
 
 /** The word FDA uses for a decision on each pathway. "approved" is for PMA only. */
 export const DECISION_VERB: Record<Pathway, 'cleared' | 'granted' | 'approved'> = {

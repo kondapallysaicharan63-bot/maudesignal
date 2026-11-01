@@ -41,7 +41,7 @@ OUT = ROOT / "web" / "public" / "data" / "company_profiles.json"
 
 SEED = 20261101
 AS_OF = date(2026, 11, 1)
-BANNER = "SIMULATED — sample data. A fictional company and fictional devices; only the product code, its FDA name, class and regulation number are real stored FDA data."
+BANNER = "SIMULATED — sample data. Simulated company and devices. Only the product code, FDA name, class and regulation number are real FDA data."
 
 # Decision wording by pathway: "cleared" for 510(k), "granted" for De Novo, "approved" only for PMA.
 VERB = {"510(k)": "cleared", "De Novo": "granted", "PMA": "approved"}
@@ -102,7 +102,6 @@ PLAN: dict[str, dict[str, Any]] = {
         "submitted": "2023-09-11",
         "family": "imaging_software",
         "ai": True,
-        "pathway": "De Novo",
     },
     "DMC-06": {
         "stage": "post_market",
@@ -110,11 +109,13 @@ PLAN: dict[str, dict[str, Any]] = {
         "family": "imaging_hardware",
         "ai": False,
         "fail": "emc",
+        "sw_class": "C",  # the software can contribute to serious injury (freeze in a time-critical procedure)
     },
     "DMC-07": {
         "stage": "on_market",
         "submitted": "2022-06-27",
         "family": "imaging_hardware",
+        "hazard_set": "imaging_xray",
         "ai": False,
     },
     "DMC-08": {
@@ -146,6 +147,8 @@ PLAN: dict[str, dict[str, Any]] = {
         "stage": "under_review",
         "submitted": "2026-08-10",
         "family": "physio_monitor",
+        "variant": "noalarm",
+        "sw_class": "B",
         "ai": False,
         "ai_response": False,
     },
@@ -162,6 +165,7 @@ INTENDED_USE = {
     "imaging_software": "Software that displays, processes and helps trained clinicians report on medical images. It does not replace the clinician's reading.",
     "imaging_hardware": "An imaging system used by trained operators to acquire images that clinicians then read.",
     "physio_monitor": "A monitoring device used by trained staff to observe patient measurements and be alerted to changes.",
+    "physio_noalarm": "A monitoring device used by trained staff to observe patient measurements on its display. It has no alarms; staff watch the display.",
 }
 AI_USE = " A machine-learning function marks areas for the clinician to look at; the clinician makes every finding."
 
@@ -184,6 +188,12 @@ DESIGN_INPUTS = {
         "Run 4 h on battery with alarms active",
         "Meet electrical safety, EMC and skin-contact requirements",
     ],
+    "physio_noalarm": [
+        "Measure within the stated accuracy across the stated range",
+        "Show every reading with its time, and a sensor-fault message when a reading is not valid",
+        "Run 4 h on battery",
+        "Meet electrical safety, EMC and skin-contact requirements",
+    ],
 }
 DESIGN_OUTPUTS = {
     "imaging_software": [
@@ -204,6 +214,12 @@ DESIGN_OUTPUTS = {
         "Firmware design",
         "Labeling and instructions for use",
     ],
+    "physio_noalarm": [
+        "Sensor and electronics design",
+        "Display and user interface specification",
+        "Firmware design",
+        "Labeling and instructions for use (states that the device has no alarms)",
+    ],
 }
 HAZARDS = {
     "imaging_software": [
@@ -217,7 +233,7 @@ HAZARDS = {
         (
             "Measurement shown with wrong scale",
             "Wrong size recorded",
-            "Moderate",
+            "Serious",
             "Calibration shown on screen; unit test of every scale path",
             "Acceptable",
         ),
@@ -247,7 +263,7 @@ HAZARDS = {
         (
             "Electromagnetic interference with nearby equipment",
             "Other equipment malfunctions",
-            "Moderate",
+            "Minor",
             "Shielding and filtering; tested to IEC 60601-1-2",
             "Acceptable",
         ),
@@ -263,7 +279,7 @@ HAZARDS = {
         (
             "Reading drifts out of accuracy",
             "Wrong clinical picture",
-            "Moderate",
+            "Serious",
             "Accuracy checked in V&V; sensor-fault message",
             "Acceptable",
         ),
@@ -272,6 +288,52 @@ HAZARDS = {
             "Skin reaction",
             "Minor",
             "Biocompatible materials; wear-time limit in labeling",
+            "Acceptable",
+        ),
+    ],
+    "physio_noalarm": [
+        (
+            "Reading drifts out of accuracy",
+            "Wrong clinical picture",
+            "Serious",
+            "Accuracy checked in V&V; sensor-fault message",
+            "Acceptable",
+        ),
+        (
+            "Sensor fault not noticed by staff",
+            "Delayed recognition of a change",
+            "Serious",
+            "Sensor-fault message and blank reading; labeling states the device has no alarms; staff training",
+            "Acceptable",
+        ),
+        (
+            "Skin irritation from the sensor",
+            "Skin reaction",
+            "Minor",
+            "Biocompatible materials; wear-time limit in labeling",
+            "Acceptable",
+        ),
+    ],
+    "imaging_xray": [
+        (
+            "Excess radiation dose to the patient",
+            "Higher dose than intended",
+            "Critical",
+            "Exposure limit enforced by hardware independent of software; dose shown after each exposure; tested limits",
+            "Acceptable",
+        ),
+        (
+            "Image artefact hides a finding",
+            "Missed or delayed diagnosis",
+            "Serious",
+            "Daily quality-control phantom check; artefact warning on screen",
+            "Acceptable",
+        ),
+        (
+            "Electromagnetic interference with nearby equipment",
+            "Other equipment malfunctions",
+            "Minor",
+            "Shielding and filtering; tested to IEC 60601-1-2",
             "Acceptable",
         ),
     ],
@@ -294,6 +356,13 @@ COMPLAINT_CATEGORIES = {
     "physio_monitor": [
         "Alarm behaviour",
         "Reading accuracy",
+        "Sensor or cable",
+        "Battery",
+        "Other",
+    ],
+    "physio_noalarm": [
+        "Reading accuracy",
+        "Display or sensor-fault message",
         "Sensor or cable",
         "Battery",
         "Other",
@@ -331,7 +400,7 @@ def classification(code: str, db: sqlite3.Connection | None) -> dict[str, Any]:
         return {
             "device_class": cl.get("device_class") or None,
             "regulation_number": cl.get("regulation_number") or None,
-            "source": f"openFDA device classification, stored in demo/company/evidence/{code}.json",
+            "source": "openFDA device classification",
             "fetched": c.get("fetched_utc"),
         }
     if db is not None:
@@ -351,7 +420,7 @@ def classification(code: str, db: sqlite3.Connection | None) -> dict[str, Any]:
             return {
                 "device_class": klass,
                 "regulation_number": reg,
-                "source": f"openFDA fields of {n} MAUDE reports stored in data/demo/maudesignal_demo.db",
+                "source": f"openFDA fields of {n} stored MAUDE reports",
                 "fetched": fetched[:19].replace(" ", "T") + "Z" if fetched else None,
             }
     return {
@@ -430,7 +499,7 @@ def protocols(
     rng: random.Random, plan: dict[str, Any], dates: dict[str, date | None], n0: int
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Test protocols with results, and the problems found and retested."""
-    fam = plan["family"]
+    fam = "physio_noalarm" if plan.get("variant") == "noalarm" else plan["family"]
     vs, ve = dates["vv_start"], dates["vv_end"]
     assert vs and ve
     span = (ve - vs).days
@@ -445,6 +514,7 @@ def protocols(
         ] + rows
     if fam == "physio_monitor":
         rows.append(("Alarm system verification", "IEC 60601-1-8"))
+    if fam.startswith("physio"):
         rows.append(("Biocompatibility (skin contact)", "ISO 10993-1"))
     rows.append(("Design validation — simulated use", None))
     out: list[dict[str, Any]] = []
@@ -615,9 +685,9 @@ PATH_PLAN: dict[str, list[dict[str, Any]]] = {
         {
             "signal": "LLZ-inv-2",
             "kind": "ntf",
-            "triage": "2026-10-12",
-            "board": "2026-10-19",
-            "outcome": "2026-10-19",
+            "triage": "2026-10-30",
+            "board": "2026-10-30",
+            "outcome": "2026-10-30",
             "risk": (2, 2, 2, 2),
             "summary": "No complaint on our device matches this pattern; the report-finalising path in our software differs from the one described.",
             "rationale": "No matching complaint on our device in the last 12 months (simulated search). The failure described depends on a third-party server setup we do not ship.",
@@ -625,9 +695,9 @@ PATH_PLAN: dict[str, list[dict[str, Any]]] = {
         {
             "signal": "LLZ-inv-3",
             "kind": "recall",
-            "triage": "2026-10-12",
-            "board": "2026-10-26",
-            "outcome": "2026-10-26",
+            "triage": "2026-10-30",
+            "board": "2026-10-31",
+            "outcome": "2026-10-31",
             "risk": (2, 3, 2, 3),
             "summary": "Sign-in errors are described. Our complaint file has two server-error complaints (simulated) with a documented workaround and no effect on the images shown.",
             "assess": {
@@ -637,15 +707,15 @@ PATH_PLAN: dict[str, list[dict[str, Any]]] = {
             },
             "mdr_why": "No death or serious injury, and the malfunction would not be likely to cause or contribute to one if it recurred: the user can sign in again and the images are unchanged.",
             "corr_why": "No correction or removal is being made to reduce a risk to health; the workaround is a user instruction already in the manual.",
-            "recall_why": "The board found no reasonable probability of serious adverse health consequences; the issue is an availability inconvenience with a workaround. Considered and ruled out; revisit if complaints rise.",
+            "recall_why": "The board identified no risk to health: a sign-in error delays access but changes no image or result, and the workaround is already in the labeling (simulated). Recall considered and ruled out; revisit if complaints rise.",
         },
         {
             "signal": "LLZ-inv-1",
             "kind": "capa",
-            "triage": "2026-10-12",
-            "board": "2026-10-23",
+            "triage": "2026-10-30",
+            "board": "2026-10-30",
             "outcome": "2026-10-30",
-            "risk": (3, 4, 3, 2),
+            "risk": (3, 3, 3, 2),
             "summary": "Two complaints on our device (simulated) match this pattern and both involve a study shown without its prior images.",
             "capa_title": "Prior images missing after a server error",
             "capa_due": "2026-12-18",
@@ -657,9 +727,9 @@ PATH_PLAN: dict[str, list[dict[str, Any]]] = {
         {
             "signal": "LLZ-inv-2",
             "kind": "ntf",
-            "triage": "2026-10-12",
-            "board": "2026-10-21",
-            "outcome": "2026-10-21",
+            "triage": "2026-10-30",
+            "board": "2026-10-30",
+            "outcome": "2026-10-30",
             "risk": (2, 2, 2, 2),
             "summary": "ReportDesk shares no code with the finalise step described.",
             "rationale": "Already covered: our report workflow saves a local draft, so a failed finalise does not lose work (software verification, simulated).",
@@ -667,9 +737,9 @@ PATH_PLAN: dict[str, list[dict[str, Any]]] = {
         {
             "signal": "LLZ-inv-3",
             "kind": "ntf",
-            "triage": "2026-10-12",
-            "board": "2026-10-21",
-            "outcome": "2026-10-21",
+            "triage": "2026-10-30",
+            "board": "2026-10-30",
+            "outcome": "2026-10-30",
             "risk": (2, 2, 2, 2),
             "summary": "Connection errors are handled by the same retry path reviewed for the sister product.",
             "rationale": "Already covered by the retry and error-message design and by the CAPA opened for the sister product.",
@@ -677,8 +747,8 @@ PATH_PLAN: dict[str, list[dict[str, Any]]] = {
         {
             "signal": "LLZ-inv-1",
             "kind": "ntf",
-            "triage": "2026-10-12",
-            "board": "2026-10-28",
+            "triage": "2026-10-30",
+            "board": "2026-10-30",
             "outcome": "2026-10-30",
             "risk": (3, 2, 3, 2),
             "summary": "Same pattern as the sister product's corrective action; the shared component is fixed there.",
@@ -691,60 +761,61 @@ PATH_PLAN: dict[str, list[dict[str, Any]]] = {
             "kind": "open",
             "triage": "2026-10-20",
             "board": "2026-11-06",
-            "summary": "Agenda: does a pattern about patient data attached to the wrong study apply to the design under review?",
+            "summary": "Agenda: does a pattern about patient data attached to the wrong study (keyword match, unreviewed) apply to the design under review?",
         }
     ],
     "DMC-04": [
         {
             "signal": "MYN-wrong-result",
-            "kind": "capa",
-            "triage": "2026-09-16",
-            "board": "2026-09-23",
-            "outcome": "2026-09-25",
-            "risk": (4, 3, 4, 2),
-            "summary": "One complaint on our device (simulated) reported a result that disagreed with the reader's own finding. The board asked for a corrective action.",
-            "capa_title": "Corrective action: result disagreement on low-contrast slides",
-            "capa_due": "2026-10-30",
-            "capa_state": "closed",
-            "capa_status": "Closed 2026-10-27 after the effectiveness check",
+            "kind": "ntf",
+            "triage": "2026-10-16",
+            "board": "2026-10-21",
+            "outcome": "2026-10-21",
+            "risk": (4, 2, 4, 2),
+            "summary": "The stored keyword-matched reports (unreviewed) are old, and no complaint on our device matches. Our device shows a result the reader must confirm before sign-off.",
+            "rationale": "No complaint on our device matches this pattern in the last 12 months (simulated search). A result is shown only for the reader to confirm, so a disagreement is caught before sign-off; the existing control is judged adequate.",
         }
     ],
     "DMC-06": [
         {
             "signal": "IYN-freeze-crash",
             "kind": "mdr",
-            "triage": "2026-09-03",
-            "board": "2026-09-10",
-            "outcome": "2026-09-10",
+            "triage": "2026-10-30",
+            "board": "2026-10-30",
+            "outcome": "2026-10-30",
             "risk": (4, 3, 4, 2),
-            "summary": "Complaint COMP-SIM-0309 (simulated): the system froze during a time-critical guided procedure; the procedure was finished on another system after a delay. No injury was reported.",
-            "receipt": "2026-09-02",
-            "submitted": "2026-09-24",
+            "summary": "The stored FDA pattern (keyword match, unreviewed) matched our own complaint COMP-SIM-0309 (simulated): the system froze during a time-critical guided procedure; the procedure was finished on another system after a delay. No injury was reported. An ad hoc board was called the day the signal was triaged.",
+            "receipt": "2026-10-27",
+            "submitted": "2026-10-31",
             "assess": {
                 "mdr": "reportable",
-                "corr": "not reportable",
-                "recall": "recall not warranted",
+                "corr": "reportable",
+                "recall": "correction handled as a recall action; classification left to FDA",
             },
             "mdr_why": "No injury occurred, but the board assessed that a freeze in a time-critical procedure would be likely to cause or contribute to serious injury if it recurred, so it assessed the event as reportable.",
-            "corr_why": "A software update is planned in the normal release cycle; it is not a removal or correction made to reduce a risk to health.",
-            "recall_why": "One event, the system recovers on restart, and the update is already scheduled. Considered and ruled out as not warranted.",
+            "corr_why": "The software update is made to reduce a risk to health from freezes in time-critical procedures, so the board assessed it as a correction and as reportable: the report is due within 10 working days of initiating the correction (simulated).",
+            "recall_why": "The board handled the correction as a recall action and left the classification to FDA (simulated). The board did not rule a recall out, and no recall classification is claimed here.",
+            "capa_title": "Corrective action for system freeze during guided procedures",
+            "capa_due": "2026-12-18",
+            "capa_state": "open",
+            "capa_status": "Root cause analysis in progress; software update planned",
         },
         {
             "signal": "IYN-display-quality",
             "kind": "ntf",
-            "triage": "2026-09-03",
-            "board": "2026-09-10",
-            "outcome": "2026-09-10",
+            "triage": "2026-10-30",
+            "board": "2026-10-30",
+            "outcome": "2026-10-30",
             "risk": (2, 2, 2, 2),
-            "summary": "Display artefact reports concern a transducer type we do not ship with this system.",
-            "rationale": "Not our configuration: the artefact described occurs with a transducer outside our labeled configuration. Daily phantom check remains the control.",
+            "summary": "Display artefact reports (keyword match, unreviewed) concern a transducer type we do not ship with this system.",
+            "rationale": "Not our configuration: the artefact described occurs with a transducer outside our labeled configuration. The daily phantom check remains the control.",
         },
         {
             "signal": "IYN-load-transfer",
             "kind": "open",
             "triage": "2026-10-30",
             "board": "2026-11-10",
-            "summary": "Agenda: images or data failing to load or transfer; two complaints on our device since the MDR assessment (simulated).",
+            "summary": "Agenda: images or data failing to load or transfer (keyword match, unreviewed); two complaints on our device since the MDR assessment (simulated).",
         },
     ],
     "DMC-07": [
@@ -771,7 +842,7 @@ PATH_PLAN: dict[str, list[dict[str, Any]]] = {
             "kind": "open",
             "triage": "2026-10-30",
             "board": "2026-11-12",
-            "summary": "Agenda: wrong-reading reports for this product code; pre-market, so the question is whether the design inputs and risk file already cover them.",
+            "summary": "Agenda: wrong-reading reports for this product code (keyword match, unreviewed); pre-market, so the question is whether the design inputs and risk file already cover them.",
         }
     ],
     "DMC-12": [
@@ -780,8 +851,7 @@ PATH_PLAN: dict[str, list[dict[str, Any]]] = {
             "kind": "open",
             "triage": "2026-10-30",
             "board": "2026-10-31",
-            "held": True,
-            "summary": "Fifteen reports of wrong readings were reviewed against the accuracy verification. The board asked Clinical for a sensor-site comparison before deciding.",
+            "summary": "15 keyword-matched reports (unreviewed) were read against the accuracy verification. The board asked Clinical for a sensor-site comparison before deciding.",
             "decision": "Hold: reconvene on 2026-11-14 with the Clinical comparison.",
         }
     ],
@@ -789,6 +859,12 @@ PATH_PLAN: dict[str, list[dict[str, Any]]] = {
 
 NO_PATH_REASON = {
     "Not applicable to our device": "No decision path: the owner recorded this product code as not applicable to our device.",
+}
+NO_PATH_BY_DEVICE = {
+    "DMC-10": (
+        'No decision path. The owner\'s "not applicable" covers only the display pattern. The wrong-result '
+        "pattern (29 stored reports) has no decision path yet and stays visible in the real FDA data below."
+    ),
 }
 
 
@@ -822,7 +898,7 @@ def build_decision(
     label = (dev.get("status") or {}).get("label") or ""
     plan = PATH_PLAN.get(dev["id"], [])
     if not plan:
-        reason = NO_PATH_REASON.get(label)
+        reason = NO_PATH_BY_DEVICE.get(dev["id"]) or NO_PATH_REASON.get(label)
         if reason is None:
             reason = "No decision path: no problem pattern or sweep signal is stored for this product code."
         return {"none_reason": reason, "paths": []}
@@ -876,7 +952,9 @@ def build_decision(
             paths.append(path)
             continue
         out_day = d(e["outcome"])
-        signer = person(rng, "Quality Engineering")
+        signer = person(
+            rng, "Regulatory Affairs" if kind in ("mdr", "recall") else "Quality Engineering"
+        )
         if kind == "ntf":
             path["outcome"] = {
                 "kind": "ntf",
@@ -927,8 +1005,32 @@ def build_decision(
                         "submission as made on a simulated date inside the 30 days; MaudeSignal files nothing."
                     ),
                 )
+            follow_up: dict[str, Any] | None = None
+            if e.get(
+                "capa_title"
+            ):  # the CAPA linked to the escalation replaces the generic open one
+                post["capas"] = [c for c in post["capas"] if c["state"] != "open"]
+                fid = f"CAPA-SIM-{n:02d}{len(post['capas']) + 1:02d}"
+                fdue = d(e["capa_due"])
+                fcapa = {
+                    "id": fid,
+                    "title": e["capa_title"],
+                    "owner": person(rng, "Quality Engineering"),
+                    "opened": iso(out_day),
+                    "closed": None,
+                    "state": "open",
+                }
+                post["capas"].append(fcapa)
+                follow_up = {
+                    "capa_id": fid,
+                    "owner": fcapa["owner"],
+                    "due": iso(fdue),
+                    "due_planned": fdue > AS_OF,
+                    "status": e["capa_status"],
+                }
             path["outcome"] = {
                 "kind": "escalation",
+                "follow_up_capa": follow_up,
                 **when(out_day),
                 "assessed_by": "the board",
                 "mdr": mdr,
@@ -943,7 +1045,7 @@ def build_decision(
             "ntf": "Health hazard evaluation not needed: no new hazard or harm was identified; the risk file was reviewed and left unchanged.",
             "capa": "Health hazard evaluation (simulated): the worst credible harm is a delayed or repeated study; the corrective action is expected to lower the probability.",
             "recall": "Health hazard evaluation (simulated): an unavailable sign-in is a delay, not a harm to the patient; no change to the risk estimate.",
-            "mdr": "Health hazard evaluation (simulated): a freeze during a time-critical procedure can delay care; the planned update lowers the probability of recurrence.",
+            "mdr": "Health hazard evaluation (simulated): a freeze during a time-critical procedure can delay care; the corrective action and software update are expected to lower the probability of recurrence.",
         }[kind]
         changed = (sb, pb) != (sa, pa)
         path["risk"] = {
@@ -977,7 +1079,7 @@ def build_profile(
 ) -> dict[str, Any]:
     """One device's simulated lifecycle profile."""
     plan = PLAN[dev["id"]]
-    fam = plan["family"]
+    fam = "physio_noalarm" if plan.get("variant") == "noalarm" else plan["family"]
     cl = classification(dev["product_code"], db)
     pathway = pathway_for(plan, cl["device_class"])
     verb = VERB[pathway]
@@ -987,6 +1089,11 @@ def build_profile(
     software = True
     st_label = STAGE_LABEL.get(stage) or f"{verb.capitalize()} — launch planned"
 
+    req_label, resp_label = (
+        ("FDA major deficiency letter", "Response to the deficiency letter")
+        if pathway == "PMA"
+        else ("FDA Additional Information request", "Response to AI request")
+    )
     milestones: list[dict[str, Any]] = []
     for key, label in (
         ("design_start", "Design started"),
@@ -995,8 +1102,8 @@ def build_profile(
         ("vv_end", "V&V complete"),
         ("presub", "Pre-Sub meeting"),
         ("submission", f"{pathway} submitted"),
-        ("ai_request", "FDA Additional Information request"),
-        ("ai_response", "Response to AI request"),
+        ("ai_request", req_label),
+        ("ai_response", resp_label),
         ("decision", f"{verb.capitalize()} by FDA"),
         ("launch", "Launch"),
     ):
@@ -1129,13 +1236,19 @@ def build_profile(
                     "imaging_software": rng.choice([40, 80, 120]),
                     "imaging_hardware": rng.choice([20, 40, 60]),
                     "physio_monitor": rng.choice([300, 600, 1200]),
+                    "physio_noalarm": rng.choice([300, 600, 1200]),
                 }[fam]
                 * years
                 // 10
                 * 10
             )
             # Sites never exceed units: one installation per software site, several units per hardware site.
-            per_site = {"imaging_software": 1, "imaging_hardware": 2, "physio_monitor": 20}[fam]
+            per_site = {
+                "imaging_software": 1,
+                "imaging_hardware": 2,
+                "physio_monitor": 20,
+                "physio_noalarm": 20,
+            }[fam]
             market["sites"] = max(5, market["units_shipped"] // per_site // 5 * 5)
 
     post: dict[str, Any] = {"complaints_by_month": [], "categories": [], "capas": []}
@@ -1190,7 +1303,7 @@ def build_profile(
                     "title": f"Labeling clarification for '{cats[3].lower()}'",
                     "owner": person(rng, "Quality Engineering"),
                     "opened": iso(o1),
-                    "closed": iso(o1 + timedelta(days=rng.randint(45, 80))),
+                    "closed": iso(o1 + timedelta(days=rng.randint(95, 130))),
                     "state": "closed",
                 }
             )
@@ -1265,9 +1378,9 @@ def build_profile(
         add(
             dates["ai_request"],
             "Regulatory Affairs",
-            "logged the FDA Additional Information request",
+            f"logged the {req_label}",
         )
-        add(dates["ai_response"], "Regulatory Affairs", "submitted the response to the AI request")
+        add(dates["ai_response"], "Regulatory Affairs", f"submitted the {resp_label.lower()}")
         add(dates["decision"], "Regulatory Affairs", f"recorded the FDA decision: {verb}")
         add(launch, "Management review", "approved the launch")
     for c in post["capas"]:
@@ -1351,9 +1464,14 @@ def build_profile(
         "ai": plan["ai"],
     }
     sw = {
-        "iec62304_class": "C" if fam == "physio_monitor" else "B",
+        "iec62304_class": plan.get("sw_class") or ("C" if fam == "physio_monitor" else "B"),
         "documentation_level": (
-            "Enhanced" if fam == "physio_monitor" or plan["ai"] or pathway == "PMA" else "Basic"
+            "Enhanced"
+            if fam.startswith("physio")
+            or plan["ai"]
+            or pathway == "PMA"
+            or plan.get("sw_class") == "C"
+            else "Basic"
         ),
     }
     return {
@@ -1381,7 +1499,7 @@ def build_profile(
                     "control": c,
                     "residual": r,
                 }
-                for i, (h, hm, sv, c, r) in enumerate(HAZARDS[fam])
+                for i, (h, hm, sv, c, r) in enumerate(HAZARDS[plan.get("hazard_set", fam)])
             ],
             "software": sw,
             "reviews": reviews,

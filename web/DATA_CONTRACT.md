@@ -190,14 +190,14 @@ not from this file. The rules are tested in `web/src/v2/profiles.test.tsx` and `
 `company.json`, or the weekly sweep signal when none is stored). A path is `{id, signal: {kind, pattern_id}, state: open|decided, triage,
 board, outcome, risk}`; every step has `tags` (compliance chips, each `{tag, why}`). `outcome` is `ntf` (rationale, signed_by),
 `capa` (capa_id, owner, due, status) or `escalation` (the board's `mdr`, `correction_removal` and `recall` assessments, each
-`{result, rationale}`; the MDR one carries the 30-day clock note, which runs from the company's receipt of the complaint). An `open`
+`{result, rationale}`, plus `follow_up_capa` when the board opened a CAPA; the MDR one carries the 30-day clock note, which runs from the company's receipt of the complaint). An `open`
 path has no outcome and no risk review; the Our devices tile "Decisions due" counts these. The real FDA pattern shown beside a path is
 read from `company.json`, never from this file.
 
 **Investigate link.** Each profile has a quiet link "Investigate a complaint on this device" to
 `/investigate?code=<PRODUCT_CODE>&device=<device id>`, built by `investigateHref()` in `web/src/v2/profiles.ts`. The app folder and the
-other query parameters (`?r=`, `?layout=v2`) are kept; `layout=v2` is added when the address has none. The `/investigate` page itself is
-built on branch `fw-investigate`; until it is merged the link leads to the app's fallback page.
+other query parameters (`?r=`, `?layout=v2`) are kept; `layout=v2` is added when the address has none. `web/vercel.json` rewrites `/investigate` and `/investigate/:path*` to the app. The page itself is built on branch
+`fw-investigate`; until it is merged the app has no such page and shows Home.
 
 ## Feedback and visit pings
 
