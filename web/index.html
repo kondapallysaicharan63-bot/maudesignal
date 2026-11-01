@@ -2,6 +2,18 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // v2 layout pages have their own addresses (/chat/<id>, /signals/trend, ...). The built files are linked
+      // relatively ("./assets/..."), so on such an address the base is set to the app's folder before anything loads.
+      ;(function () {
+        var m = /^(.*?\/)(chat|signals|devices|evidence|connect|workflow|thread|run|capture)(\/|$)/.exec(location.pathname)
+        if (m) {
+          var b = document.createElement('base')
+          b.href = m[1]
+          document.head.appendChild(b)
+        }
+      })()
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>MaudeSignal workspace</title>
     <meta
@@ -13,7 +25,8 @@
       // design-system tokens follow prefers-color-scheme.
       try {
         var t = localStorage.getItem('ms-theme')
-        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t)
+        if (t === 'light' || t === 'dark' || t === 'contrast' || t === 'black' || t === 'pink')
+          document.documentElement.setAttribute('data-theme', t)
       } catch (e) {}
     </script>
   </head>

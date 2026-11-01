@@ -4,7 +4,7 @@ import { Icon } from '../icons'
 
 type Fetcher = (url: string, init?: RequestInit) => Promise<Response>
 
-function CopyButton({ text, label }: { text: string; label: string }) {
+export function CopyButton({ text, label }: { text: string; label: string }) {
   const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle')
   const copy = async () => {
     try {

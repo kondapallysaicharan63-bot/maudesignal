@@ -71,6 +71,11 @@ export interface LiveChat {
   /** Saves one web-research item to the audit trail ('unsupported' when the server has no such route). */
   saveResearch: (item: ResearchItem) => Promise<SaveOutcome>
   clear: () => void
+  /**
+   * Shows a saved conversation (v2 layout: a chat reopened from Recents, or [] for a new chat). Nothing is sent; the
+   * daily-limit state is kept. Answers still on their way for the turns that were on screen go to `onBackground`.
+   */
+  restore: (turns: LiveTurn[], reserveUpTo?: number) => void
 }
 
 interface Options {
@@ -79,6 +84,8 @@ interface Options {
   threads: Thread[]
   evidence: Evidence
   fetcher?: Fetcher
+  /** A turn that is no longer on screen (another chat was opened) changed: its answer arrived. v2 saves it to its chat. */
+  onBackground?: (id: number, p: Partial<LiveTurn>) => void
 }
 
 let nextId = 1
@@ -107,7 +114,13 @@ export function useLiveChat(o: Options): LiveChat {
     setTurns(next)
   }, [])
   const patch = useCallback(
-    (id: number, p: Partial<LiveTurn>) => put(turnsRef.current.map((t) => (t.id === id ? { ...t, ...p } : t))),
+    (id: number, p: Partial<LiveTurn>) => {
+      if (!turnsRef.current.some((t) => t.id === id)) {
+        opts.current.onBackground?.(id, p)
+        return
+      }
+      put(turnsRef.current.map((t) => (t.id === id ? { ...t, ...p } : t)))
+    },
     [put],
   )
 
@@ -237,6 +250,17 @@ export function useLiveChat(o: Options): LiveChat {
     turnsRef.current.forEach((t) => t.image && typeof URL.revokeObjectURL === 'function' && URL.revokeObjectURL(t.image))
     put([])
   }, [put])
+  const restore = useCallback(
+    (next: LiveTurn[], reserveUpTo = 0) => {
+      stopSpeaking()
+      setSpeakingId(null)
+      // Turn ids stay unique in this page: new turns are numbered after every restored one (and after reserveUpTo).
+      if (reserveUpTo >= nextId) nextId = reserveUpTo + 1
+      for (const t of next) if (t.id >= nextId) nextId = t.id + 1
+      put(next)
+    },
+    [put],
+  )
 
   return {
     enabled: !!o.apiBase,
@@ -262,6 +286,7 @@ export function useLiveChat(o: Options): LiveChat {
     transcribe,
     saveResearch,
     clear,
+    restore,
   }
 }
 
@@ -284,4 +309,5 @@ export const NO_LIVE: LiveChat = {
   transcribe: () => Promise.reject(new LiveError('not_configured', 'The live service is not connected in this build.')),
   saveResearch: async () => 'unsupported',
   clear: () => undefined,
+  restore: () => undefined,
 }

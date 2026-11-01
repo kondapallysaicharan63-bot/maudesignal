@@ -31,6 +31,12 @@ does not offer it. On a build with the earlier composer they are NOT_PRESENT, no
 Error states use route mocking: openFDA down, Meta down, daily cap reached (429), slow network,
 offline. Each must show an honest message, no crash and no invented data.
 
+``--layout v2`` runs the v2 layout scenarios instead (the chat-app shell at ``?layout=v2``): Home's
+top 3 real alerts and "View all", New chat saving the chat before it, Recents (reopen, rename, delete),
+Ctrl K search, refresh and Back on ``/chat/<id>``, every section and subtab, the bell (real alerts only),
+``?r=TEST1``, the chat chrome, keyboard and labels with axe, no sideways scroll and the phone drawer,
+the other themes (smoke) and the interface font. Live calls are route-mocked ($0).
+
 ``--suite smoke`` runs the short pass the post-deploy smoke test uses (chromium, 1440 and 390,
 light): chat, camera upload, alert panel.
 """
@@ -1431,6 +1437,615 @@ SMOKE = (
 SMOKE_LIVE = ("chat (recorded mode, two turns)", "camera upload, matches, confirm")
 
 
+# --- v2 layout (``--layout v2``: the chat-app shell at ?layout=v2) ------------------------------
+#
+# Every v2 scenario answers /v1/live/* from the browser with a recorded body (route mocking, $0, no
+# model call) and blocks /v1/visit pings (their bodies are kept to check the ref). Chats are saved in
+# the browser's localStorage only; each scenario starts in a fresh context, so with no saved chats.
+
+V2_MUSE_STATUS = "Submitted to Meta's Muse Connector Program — pending review"
+V2_PAGES = (
+    ("signals", ("ranked", "trend", "unfiled", "alerts")),
+    ("devices", ("apply", "yours")),
+    ("evidence", ("capa", "review", "approve", "audit")),
+    ("connect", ("muse", "claude", "api")),
+)
+V2_THEMES = ("contrast", "black", "pink")
+
+
+def v2_url(env: Env, path: str = "", extra: str = "") -> str:
+    """The app address of a v2 page, with ?layout=v2 (and ``extra`` query parameters)."""
+    base = env.args.url.rstrip("/")
+    query = "layout=v2" + (f"&{extra}" if extra else "")
+    return f"{base}/{path}?{query}"
+
+
+def v2_answer(question: str, remaining: int | None) -> dict[str, Any]:
+    """A recorded-mode answer that repeats the question (so chat search can find it), no figures."""
+    text = f"Recorded sample answer for: {question[:80]}"
+    return {
+        "mode": "recorded",
+        "not_medical_advice": True,
+        "recorded_note": RECORDED_NOTE,
+        "trace": _MOCK_TRACE,
+        "cost_usd": None,
+        "limits": {"remaining_today": remaining},
+        "answer": {
+            "speakable": [{"text": text, "links": [_MOCK_LINK]}],
+            "withheld": [],
+            "spoken_text": text,
+        },
+        "suggestions": ["A follow-up question?"],
+    }
+
+
+def v2_prepare(env: Env, remaining: int | None = 29) -> None:
+    """Mock the live routes and /v1/health; keep the visit pings (blocked)."""
+
+    def ask(route: Any) -> None:
+        try:
+            q = str(json.loads(route.request.post_data or "{}").get("question", ""))
+        except ValueError:
+            q = ""
+        env.live_calls.append(
+            {"path": "ask", "status": 200, "mode": "recorded", "cost_usd": 0.0, "mocked": True}
+        )
+        route.fulfill(
+            status=200,
+            headers=CORS_ANY,
+            content_type="application/json",
+            body=json.dumps(v2_answer(q, remaining)),
+        )
+
+    env.page.context.route(ASK_PATH, ask)
+    env.page.context.route(
+        HEALTH_ROUTE,
+        lambda r: r.fulfill(
+            status=200,
+            headers=CORS_ANY,
+            content_type="application/json",
+            body=json.dumps({"status": "ok", "features": {}}),
+        ),
+    )
+    env.block_visits()
+
+
+def v2_open(env: Env, path: str = "", extra: str = "", remaining: int | None = 29) -> None:
+    """Load a v2 page (live routes mocked) and wait for the shell."""
+    if not getattr(env, "v2_ready", False):
+        v2_prepare(env, remaining)
+        env.v2_ready = True  # type: ignore[attr-defined]
+    env.page.goto(v2_url(env, path, extra), wait_until="load")
+    env.page.wait_for_selector("[data-testid=topbar-v2]", timeout=30_000)
+    env.page.wait_for_selector("#main-v2 h1, [data-testid=chat-screen]", timeout=30_000)
+
+
+def v2_sidebar(env: Env) -> Any:
+    """The sidebar, opening the phone drawer first when it is closed."""
+    side = env.page.locator("#sidebar")
+    if not env.page.get_by_test_id("new-chat").is_visible():
+        env.page.get_by_test_id("sidebar-toggle").click()
+        env.page.wait_for_timeout(300)
+    return side
+
+
+def v2_side_click(env: Env, testid: str) -> None:
+    """Click a sidebar entry by its test id (drawer opened first on a phone)."""
+    v2_sidebar(env)
+    env.page.get_by_test_id(testid).first.click()
+    env.page.wait_for_timeout(300)
+
+
+def v2_ask(env: Env, text: str) -> None:
+    """Ask in the message box and wait for the answer to be written."""
+    env.ask(text)
+    env.page.wait_for_selector("[data-testid=answer-sentences] li", timeout=30_000)
+    env.page.wait_for_timeout(300)
+
+
+def v2_recents(env: Env) -> list[str]:
+    """Titles in Recents, newest first."""
+    v2_sidebar(env)
+    return [t.strip() for t in env.page.get_by_test_id("recent-chat").all_inner_texts()]
+
+
+def v2_close_drawer(env: Env) -> None:
+    """Close the phone drawer if it is open."""
+    if env.width < 768 and env.page.get_by_test_id("new-chat").is_visible():
+        env.page.keyboard.press("Escape")
+        env.page.wait_for_timeout(300)
+
+
+def v2_path(env: Env) -> str:
+    """The page's path (no origin, no query)."""
+    return str(env.page.evaluate("location.pathname"))
+
+
+def v2_s_home(env: Env) -> str:
+    """Home: top 3 real FDA alerts, "View all N" opens Signals · All alerts with N, a separate simulated card."""
+    v2_open(env)
+    home = env.page.get_by_test_id("home-alerts")
+    rows = home.locator("li").count()
+    if rows != 3:
+        raise AssertionError(f"Home shows {rows} alerts, not the top 3")
+    if re.search(r"simulated|needs review", home.inner_text(), re.I):
+        raise AssertionError("a simulated device is in the real-alert list on Home")
+    m = re.search(r"View all\s+(\d+)", env.page.get_by_test_id("home-view-all").inner_text())
+    if not m:
+        raise AssertionError("no 'View all N' link")
+    n = int(m.group(1))
+    sim = env.page.get_by_test_id("home-devices").inner_text()
+    if "simulated" not in sim.lower() or "to review" not in sim:
+        raise AssertionError(f"the simulated devices card is not labelled: {sim[:80]!r}")
+    for tid, words in (
+        ("home-sweep", r"\d+ flagged of \d+"),
+        ("home-sweep-label", r"Stored"),
+        ("home-trust", r"Claims verified"),
+    ):
+        if not re.search(words, env.page.get_by_test_id(tid).inner_text()):
+            raise AssertionError(f"{tid} does not show {words!r}")
+    env.shot("v2-home")
+    env.page.get_by_test_id("home-view-all").click()
+    env.page.wait_for_selector("[data-testid=all-alerts]", timeout=10_000)
+    if not v2_path(env).endswith("/signals/alerts"):
+        raise AssertionError(f"View all opened {v2_path(env)}")
+    listed = env.page.get_by_test_id("all-alerts").locator("li").count()
+    if listed != n:
+        raise AssertionError(f"View all {n} but the list has {listed}")
+    if re.search(r"simulated", env.page.get_by_test_id("all-alerts").inner_text(), re.I):
+        raise AssertionError("a simulated device is in All alerts")
+    return f"top 3 of {n} real alerts; View all -> {listed}; simulated card separate"
+
+
+def v2_s_new_chat(env: Env) -> str:
+    """New chat saves the chat before it and starts an empty one (greeting and chips, no extra chrome)."""
+    v2_open(env, "chat")
+    v2_ask(env, "Which recalls are on file for LLZ devices?")
+    first = v2_path(env)
+    if not re.search(r"/chat/[a-z0-9]+$", first):
+        raise AssertionError(f"the chat has no address of its own: {first}")
+    v2_side_click(env, "new-chat")
+    env.page.wait_for_selector("[data-testid=chat-empty]", timeout=10_000)
+    if not v2_path(env).endswith("/chat"):
+        raise AssertionError(f"New chat opened {v2_path(env)}")
+    chips = env.page.get_by_test_id("empty-chip").count()
+    if not 3 <= chips <= 4:
+        raise AssertionError(f"{chips} suggestion chips (3 or 4 expected)")
+    main = env.page.locator("#main-v2").inner_text()
+    for gone in ("Speaker on", "Speaker off", "Clear conversation", "Audio is sent once"):
+        if gone in main:
+            raise AssertionError(f"{gone!r} is still on the chat screen")
+    env.shot("v2-empty-chat")
+    titles = v2_recents(env)
+    if not titles or not titles[0].startswith("Which recalls are on file"):
+        raise AssertionError(f"the first chat was not saved: {titles}")
+    v2_close_drawer(env)
+    env.page.get_by_test_id("empty-chip").first.click()
+    env.page.wait_for_selector("[data-testid=answer-sentences] li", timeout=30_000)
+    env.page.wait_for_timeout(300)
+    second = v2_path(env)
+    titles = v2_recents(env)
+    if second == first or len(titles) != 2:
+        raise AssertionError(f"second chat: {second} (first {first}); recents {titles}")
+    env.shot("v2-chat-with-recents")
+    v2_close_drawer(env)
+    return f"2 chats saved, newest first: {[t[:24] for t in titles]}"
+
+
+def v2_s_recents(env: Env) -> str:
+    """Recents: reopen exactly, rename inline (kept after reload), delete with confirm."""
+    v2_open(env, "chat")
+    v2_ask(env, "First saved question about MHRA alerts")
+    first = v2_path(env)
+    v2_ask(env, "And a second turn in the same chat")
+    v2_side_click(env, "new-chat")
+    v2_ask(env, "Another chat about QIH reports")
+    v2_sidebar(env)
+    env.page.get_by_test_id("recent-chat").nth(1).click()
+    env.page.wait_for_function(f"location.pathname === {json.dumps(first)}", timeout=10_000)
+    env.page.wait_for_function(
+        "[...document.querySelectorAll('[data-testid=user-bubble]')].some(b => b.innerText.includes('MHRA'))",
+        timeout=10_000,
+    )
+    bubbles = env.page.get_by_test_id("user-bubble").all_inner_texts()
+    if [b.strip() for b in bubbles] != [
+        "First saved question about MHRA alerts",
+        "And a second turn in the same chat",
+    ]:
+        raise AssertionError(f"reopened chat shows {bubbles}")
+    env.page.wait_for_selector("[data-testid=suggestion-chip]", timeout=15_000)
+    if (
+        env.page.get_by_test_id("mode-badge").count() != 2
+        or env.page.get_by_test_id("recorded-note").count() != 2
+    ):
+        raise AssertionError("the reopened answers lost their Recorded label")
+    v2_sidebar(env)
+    env.page.get_by_test_id("recent-more").nth(1).click()
+    env.page.get_by_test_id("recent-rename").click()
+    box = env.page.get_by_test_id("rename-input")
+    box.fill("Renamed MHRA chat")
+    box.press("Enter")
+    env.page.wait_for_timeout(200)
+    env.page.reload(wait_until="load")
+    env.page.wait_for_selector("[data-testid=answer-sentences] li", timeout=30_000)
+    titles = v2_recents(env)
+    if "Renamed MHRA chat" not in titles:
+        raise AssertionError(f"rename was not kept after reload: {titles}")
+    env.page.get_by_test_id("recent-more").nth(0).click()
+    env.page.get_by_test_id("recent-delete").click()
+    env.page.get_by_test_id("delete-no").click()
+    if len(v2_recents(env)) != 2:
+        raise AssertionError("Cancel deleted the chat")
+    v2_sidebar(env)
+    env.page.get_by_test_id("recent-more").nth(1).click()
+    env.page.get_by_test_id("recent-delete").click()
+    env.page.get_by_test_id("delete-yes").click()
+    env.page.wait_for_timeout(300)
+    left = v2_recents(env)
+    if len(left) != 1 or "Renamed MHRA chat" in left:
+        raise AssertionError(f"delete did not remove the chat: {left}")
+    if env.page.get_by_test_id("chat-empty").count() == 0:
+        raise AssertionError("deleting the open chat did not leave an empty chat")
+    stored = env.page.evaluate("localStorage.getItem('ms-chats-v1') || ''")
+    if "MHRA" in stored:
+        raise AssertionError("the deleted chat is still in localStorage")
+    v2_close_drawer(env)
+    return "reopened 2 turns with badges and chips; rename kept after reload; Cancel kept, Delete removed"
+
+
+def v2_s_search(env: Env) -> str:
+    """Ctrl K searches chat titles and text, and the pages."""
+    v2_open(env, "chat")
+    v2_ask(env, "Tell me about zebrafish imaging software")
+    target = v2_path(env)
+    v2_side_click(env, "new-chat")
+    v2_ask(env, "Something else entirely")
+    v2_close_drawer(env)
+    env.page.locator("body").press("Control+k")
+    env.page.wait_for_selector("[data-testid=search-input]", timeout=5_000)
+    env.page.get_by_test_id("search-input").fill("zebrafish")
+    hits = env.page.get_by_test_id("search-chat").count()
+    if hits != 1:
+        raise AssertionError(f"{hits} chat results for a word in one chat")
+    env.page.get_by_test_id("search-input").press("Enter")
+    env.page.wait_for_function(f"location.pathname === {json.dumps(target)}", timeout=10_000)
+    env.page.locator("body").press("Control+k")
+    env.page.get_by_test_id("search-input").fill("Sample answer for: something else")
+    if env.page.get_by_test_id("search-chat").count() != 1:
+        raise AssertionError("answer text is not searched")
+    env.page.get_by_test_id("search-input").fill("trend")
+    env.page.get_by_test_id("search-input").press("Enter")
+    env.page.wait_for_selector("[data-testid=trend-list]", timeout=10_000)
+    if not v2_path(env).endswith("/signals/trend"):
+        raise AssertionError(f"page search opened {v2_path(env)}")
+    env.page.locator("body").press("Control+k")
+    env.page.wait_for_selector("[data-testid=search-input]")
+    env.page.keyboard.press("Escape")
+    env.page.wait_for_function(
+        "!document.querySelector('[data-testid=search-input]')", timeout=5_000
+    )
+    return "title/text hit opened the chat; 'trend' opened Signals · Trend; Escape closes"
+
+
+def v2_s_refresh_back(env: Env) -> str:
+    """Refresh on /chat/<id> reopens the chat; Back and Forward move between chats and pages."""
+    v2_open(env, "chat")
+    v2_ask(env, "Refresh test question one")
+    one = v2_path(env)
+    v2_side_click(env, "new-chat")
+    v2_ask(env, "Refresh test question two")
+    two = v2_path(env)
+    env.page.reload(wait_until="load")
+    env.page.wait_for_selector("[data-testid=answer-sentences] li", timeout=30_000)
+    if (
+        v2_path(env) != two
+        or env.page.get_by_test_id("user-bubble").first.inner_text().strip()
+        != "Refresh test question two"
+    ):
+        raise AssertionError("refresh did not reopen the chat")
+    if "layout=v2" not in env.page.url:
+        raise AssertionError("the query string was dropped")
+    v2_side_click(env, "nav-signals")
+    env.page.wait_for_selector("[data-testid=signals-tabs]")
+    env.page.go_back()
+    env.page.wait_for_function(f"location.pathname === {json.dumps(two)}", timeout=10_000)
+    env.page.wait_for_selector("[data-testid=user-bubble]", timeout=10_000)
+    if (
+        env.page.get_by_test_id("user-bubble").first.inner_text().strip()
+        != "Refresh test question two"
+    ):
+        raise AssertionError("Back did not show chat two")
+    env.page.go_back()
+    env.page.wait_for_function(f"location.pathname === {json.dumps(one)}", timeout=10_000)
+    env.page.wait_for_function(
+        "[...document.querySelectorAll('[data-testid=user-bubble]')].some(b => b.innerText.includes('question one'))",
+        timeout=10_000,
+    )
+    env.page.go_forward()
+    env.page.wait_for_function(f"location.pathname === {json.dumps(two)}", timeout=10_000)
+    # A direct load of a saved chat's address in a new tab of the same browser.
+    p2 = env.page.context.new_page()
+    p2.goto(env.args.url.rstrip("/") + one + "?layout=v2", wait_until="load")
+    p2.wait_for_selector("[data-testid=user-bubble]", timeout=30_000)
+    ok = "question one" in p2.get_by_test_id("user-bubble").first.inner_text()
+    p2.close()
+    if not ok:
+        raise AssertionError("a direct load of /chat/<id> did not open the chat")
+    # Without ?layout the address still opens v2 (a /chat/ path is v2 only).
+    p3 = env.page.context.new_page()
+    p3.goto(env.args.url.rstrip("/") + one, wait_until="load")
+    p3.wait_for_selector("[data-testid=topbar-v2]", timeout=30_000)
+    p3.close()
+    return "refresh, Back, Back, Forward and a direct load all show the right chat"
+
+
+def v2_s_sections(env: Env) -> str:
+    """Every section and subtab opens (ARIA tabs, one panel, own address); key facts are from the data."""
+    v2_open(env)
+    seen: list[str] = []
+    for section, tabs in V2_PAGES:
+        v2_side_click(env, f"nav-{section}")
+        env.page.wait_for_selector(f"[data-testid={section}-tabs]", timeout=10_000)
+        if env.page.locator("#main-v2 h1").count() < 1:
+            raise AssertionError(f"{section} has no page heading")
+        env.shot(f"v2-{section}")
+        for t in tabs:
+            tab = env.page.get_by_test_id(f"tab-{t}")
+            tab.click()
+            env.page.wait_for_timeout(250)
+            if tab.get_attribute("aria-selected") != "true":
+                raise AssertionError(f"{section}/{t} is not selected after a click")
+            if env.page.locator("[role=tab][aria-selected=true]").count() != 1:
+                raise AssertionError(f"{section}: more than one tab open")
+            if not v2_path(env).endswith(f"/{section}/{t}"):
+                raise AssertionError(f"{section}/{t} address is {v2_path(env)}")
+            panel = env.page.locator(f"#{section}-panel")
+            if (
+                panel.get_attribute("aria-labelledby") != f"{section}-tab-{t}"
+                or len(panel.inner_text().strip()) < 20
+            ):
+                raise AssertionError(
+                    f"{section}/{t}: the panel is empty or not labelled by its tab"
+                )
+            seen.append(f"{section}/{t}")
+        first = env.page.get_by_test_id(f"tab-{tabs[0]}")
+        first.click()
+        first.focus()
+        env.page.keyboard.press("ArrowRight")
+        env.page.wait_for_timeout(200)
+        if env.page.get_by_test_id(f"tab-{tabs[1]}").get_attribute("aria-selected") != "true":
+            raise AssertionError(f"{section}: ArrowRight did not move to the next tab")
+    env.page.goto(v2_url(env, "signals/trend"), wait_until="load")
+    env.page.wait_for_selector("[data-testid=trend-row][data-code=LLZ]", timeout=10_000)
+    llz = env.page.locator("[data-testid=trend-row][data-code=LLZ]").inner_text()
+    if "33" not in llz or "8.75" not in llz or "Stored" not in llz:
+        raise AssertionError(f"Trend LLZ row is not 33 vs 8.75 labelled stored: {llz[:120]!r}")
+    env.page.goto(v2_url(env, "connect/muse"), wait_until="load")
+    env.page.wait_for_selector("[data-testid=connect-view]", timeout=10_000)
+    if V2_MUSE_STATUS not in env.page.locator("#main-v2").inner_text():
+        raise AssertionError("the Muse connector status is not the exact text")
+    env.page.goto(v2_url(env, "devices/apply"), wait_until="load")
+    env.page.wait_for_selector("[data-testid=company-banner]", timeout=10_000)
+    return f"{len(seen)} subtabs: {', '.join(seen)}; LLZ 33 vs 8.75 (stored); Muse status exact"
+
+
+def v2_s_bell(env: Env) -> str:
+    """The bell lists real alerts only; the simulated devices are a separate, labelled link."""
+    v2_open(env)
+    env.page.get_by_test_id("alert-bell").click()
+    env.page.wait_for_selector("#alert-list", timeout=5_000)
+    groups = env.page.get_by_test_id("alert-group")
+    if groups.count() != 1:
+        raise AssertionError(f"{groups.count()} groups in the bell (only the real alerts expected)")
+    real = groups.first.inner_text()
+    n_real = groups.first.locator("li").count()
+    if re.search(r"simulated|needs review", real, re.I):
+        raise AssertionError("a simulated device is in the bell's real-alert list")
+    sim = env.page.get_by_test_id("bell-simulated").inner_text()
+    if "simulated" not in sim.lower():
+        raise AssertionError("the simulated link is not labelled")
+    env.shot("v2-bell")
+    groups.first.locator("li button").first.click()
+    env.page.wait_for_selector("[data-testid=open-in-chat]", timeout=10_000)
+    env.page.keyboard.press("Escape")
+    env.page.wait_for_function(
+        "!document.querySelector('[data-testid=open-in-chat]')", timeout=5_000
+    )
+    return f"{n_real} real alerts; simulated link separate; alert panel opens and closes"
+
+
+def v2_s_ref(env: Env) -> str:
+    """?r=TEST1 is kept on every move and sent with every visit ping."""
+    v2_open(env, extra="r=TEST1")
+    v2_side_click(env, "nav-signals")
+    env.page.wait_for_selector("[data-testid=signals-tabs]")
+    v2_side_click(env, "new-chat")
+    env.page.wait_for_selector("[data-testid=chat-empty]")
+    env.page.wait_for_timeout(500)
+    if "r=TEST1" not in env.page.url:
+        raise AssertionError(f"the ref code was dropped from the address: {env.page.url}")
+    ok, why = visits_all_test(env.visit_bodies, "TEST1")
+    if not env.visit_bodies:
+        raise AssertionError("no visit ping was sent")
+    if not ok:
+        raise AssertionError(why)
+    pages = sorted({json.loads(b or "{}").get("page", "") for b in env.visit_bodies})
+    if any(re.search(r"chat:.+|/chat/", p) for p in pages):
+        raise AssertionError(f"a chat id is in a visit ping: {pages}")
+    return f"{why}; pages {pages}"
+
+
+def v2_s_chat_chrome(env: Env) -> str:
+    """Questions left shows only from 5 down; Live/Recorded badge and the + menu are kept."""
+    v2_open(env, "chat", remaining=29)
+    v2_ask(env, "Many questions left?")
+    if env.page.get_by_test_id("questions-left").count():
+        raise AssertionError("'questions left' is shown with 29 left")
+    if not env.page.get_by_test_id("mode-badge").first.inner_text().strip():
+        raise AssertionError("no Live / Recorded badge")
+    if env.page.locator(PLUS).count() == 0:
+        raise AssertionError("the + menu is missing")
+    if env.page.get_by_test_id("voice-note").count():
+        raise AssertionError("the audio note is shown while not recording")
+    env.page.context.unroute(ASK_PATH)
+    env.page.context.route(
+        ASK_PATH,
+        lambda r: r.fulfill(
+            status=200,
+            headers=CORS_ANY,
+            content_type="application/json",
+            body=json.dumps(v2_answer("few", 3)),
+        ),
+    )
+    v2_ask(env, "Few questions left?")
+    env.page.wait_for_selector("[data-testid=questions-left]", timeout=5_000)
+    left = env.page.get_by_test_id("questions-left").inner_text()
+    if "3" not in left:
+        raise AssertionError(f"questions left reads {left!r}")
+    return f"hidden at 29, shown at 3 ({left!r}); badge and + menu kept; no audio note"
+
+
+def v2_s_keyboard_a11y(env: Env) -> str:
+    """Keyboard and screen-reader labels: skip link first, every control named, axe on the v2 pages."""
+    v2_open(env)
+    env.page.keyboard.press("Tab")
+    first = env.page.evaluate("document.activeElement && document.activeElement.textContent.trim()")
+    if first != "Skip to content":
+        raise AssertionError(f"first Tab stop is {first!r}, not the skip link")
+    unnamed = env.page.evaluate(
+        """[...document.querySelectorAll('button, a[href], select, input, textarea, [role=tab]')]
+        .filter(e => e.offsetParent !== null && !e.closest('[aria-hidden=true]'))
+        .filter(e => !(e.getAttribute('aria-label') || e.textContent.trim() || e.getAttribute('title')
+          || (e.id && document.querySelector('label[for=\"' + e.id + '\"]')) || e.closest('label')))
+        .map(e => e.outerHTML.slice(0, 80))"""
+    )
+    if unnamed:
+        raise AssertionError(f"controls without a name: {unnamed[:3]}")
+    axe = Path(env.args.axe)
+    if not axe.is_file():
+        raise SkipError(NOT_PRESENT, f"axe-core not found at {axe}", required=False)
+    totals = {"minor": 0, "moderate": 0, "serious": 0, "critical": 0, "unknown": 0}
+    worst: list[str] = []
+    for path in (
+        "",
+        "chat",
+        "signals/ranked",
+        "signals/trend",
+        "signals/unfiled",
+        "devices/apply",
+        "evidence/approve",
+        "connect/claude",
+    ):
+        env.page.goto(v2_url(env, path), wait_until="load")
+        env.page.wait_for_selector("#main-v2 h1", timeout=15_000)
+        env.page.wait_for_timeout(300)
+        env.page.add_script_tag(path=str(axe))
+        results = env.page.evaluate("axe.run(document, {resultTypes: ['violations']})")
+        for k, v in count_axe(results).items():
+            totals[k] += v
+        for v in results.get("violations", []):
+            if v.get("impact") in ("serious", "critical"):
+                worst.append(
+                    f"{path or 'home'}: {v.get('id')} ({v.get('impact')}, {len(v.get('nodes', []))} nodes)"
+                )
+    env.axe_totals = totals  # type: ignore[attr-defined]
+    if axe_blocks(totals):
+        raise AssertionError("; ".join(worst[:6]) + f" | totals {totals}")
+    return f"skip link first; all controls named; axe totals {totals}"
+
+
+def v2_s_layout_and_drawer(env: Env) -> str:
+    """No sideways scroll on any v2 page; the phone drawer opens and closes; the desktop sidebar collapses."""
+    bad: list[str] = []
+    for path in ("", "chat", *(f"{s}/{t}" for s, tabs in V2_PAGES for t in tabs)):
+        v2_open(env, path)
+        if env.overflow() > 0:
+            bad.append(f"{path or 'home'} +{env.overflow()}px")
+    if bad:
+        raise AssertionError("sideways scroll: " + ", ".join(bad))
+    v2_open(env)
+    toggle = env.page.get_by_test_id("sidebar-toggle")
+    if env.width < 768:
+        if env.page.get_by_test_id("new-chat").is_visible():
+            raise AssertionError("the drawer is open on load")
+        toggle.click()
+        env.page.wait_for_timeout(350)
+        if (
+            toggle.get_attribute("aria-expanded") != "true"
+            or not env.page.get_by_test_id("recents").count()
+            and not env.page.get_by_test_id("saved-note").is_visible()
+        ):
+            raise AssertionError("the drawer did not open")
+        env.shot("v2-phone-drawer")
+        env.page.keyboard.press("Escape")
+        env.page.wait_for_timeout(350)
+        if env.page.get_by_test_id("new-chat").is_visible():
+            raise AssertionError("Escape did not close the drawer")
+    else:
+        toggle.click()
+        env.page.wait_for_timeout(200)
+        if env.page.get_by_test_id("new-chat").is_visible():
+            raise AssertionError("the sidebar did not collapse")
+        toggle.click()
+    return "0 px sideways on every page; drawer / collapse work"
+
+
+def v2_s_themes(env: Env) -> str:
+    """Every theme applies (smoke) and nothing breaks; the top-bar switch cycles."""
+    v2_open(env)
+    v2_sidebar(env)
+    for t in V2_THEMES:
+        v2_sidebar(env)
+        env.page.get_by_test_id("theme-select").select_option(t)
+        env.page.wait_for_timeout(150)
+        got = env.page.evaluate("document.documentElement.getAttribute('data-theme')")
+        if got != t:
+            raise AssertionError(f"theme {t} gave data-theme={got}")
+        v2_close_drawer(env)
+        env.shot(f"v2-theme-{t}")
+    v2_sidebar(env)
+    env.page.get_by_test_id("theme-select").select_option("system")
+    v2_close_drawer(env)
+    env.page.get_by_test_id("top-theme").click()
+    if env.page.evaluate("document.documentElement.getAttribute('data-theme')") != "light":
+        raise AssertionError("the top-bar switch did not move System -> Paper")
+    env.page.reload(wait_until="load")
+    env.page.wait_for_selector("[data-testid=topbar-v2]")
+    if env.page.evaluate("document.documentElement.getAttribute('data-theme')") != "light":
+        raise AssertionError("the theme was not kept after reload")
+    return f"themes {', '.join(V2_THEMES)} applied; top switch cycles and is kept"
+
+
+def v2_s_fonts(env: Env) -> str:
+    """The interface font (Geist) is really loaded and used by the shell."""
+    v2_open(env)
+    env.page.evaluate("document.fonts.ready")
+    loaded = env.page.evaluate("document.fonts.check('16px Geist')")
+    family = env.page.evaluate(
+        "getComputedStyle(document.querySelector('.ms2-navitem, .ms2-h1')).fontFamily"
+    )
+    if not loaded or not str(family).startswith("Geist"):
+        raise AssertionError(f"Geist loaded={loaded}, family={family}")
+    return f"Geist loaded; shell font {family}"
+
+
+V2_SCENARIOS: tuple[tuple[str, Callable[[Env], str]], ...] = (
+    ("v2 Home: top 3 real alerts, view all, simulated apart", v2_s_home),
+    ("v2 new chat saves the old one", v2_s_new_chat),
+    ("v2 Recents: reopen, rename, delete", v2_s_recents),
+    ("v2 Ctrl K search", v2_s_search),
+    ("v2 refresh and Back on /chat/<id>", v2_s_refresh_back),
+    ("v2 every section and subtab", v2_s_sections),
+    ("v2 bell: real alerts only", v2_s_bell),
+    ("v2 ?r=TEST1 kept and sent", v2_s_ref),
+    ("v2 chat chrome: questions left, badge, + menu", v2_s_chat_chrome),
+    ("v2 keyboard, labels, axe", v2_s_keyboard_a11y),
+    ("v2 no sideways scroll, drawer", v2_s_layout_and_drawer),
+    ("v2 themes smoke", v2_s_themes),
+    ("v2 interface font", v2_s_fonts),
+)
+
+
 # --- error states (route mocking) --------------------------------------------------------------
 
 
@@ -1647,6 +2262,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--schemes", default="light,dark")
     ap.add_argument("--stem", default="e2e")
     ap.add_argument(
+        "--layout",
+        choices=("classic", "v2"),
+        default="classic",
+        help="classic: the existing scenarios at the plain address; v2: the v2 layout scenarios at ?layout=v2",
+    )
+    ap.add_argument(
         "--test-ref",
         default="",
         help="smoke suite: the TEST ref the visit pings must carry (default TEST-0)",
@@ -1673,7 +2294,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.suite == "smoke":
         args.engines, args.schemes = "chromium", "light"
     rep = Report("e2e" if args.suite == "full" else "smoke web quick pass")
-    rep.metrics.update(url=args.url, api=args.api, suite=args.suite)
+    rep.metrics.update(url=args.url, api=args.api, suite=args.suite, layout=args.layout)
     from playwright.sync_api import sync_playwright
 
     axe_totals: dict[str, int] = {}
@@ -1699,6 +2320,10 @@ def main(argv: list[str] | None = None) -> int:
                     todo = [("scenario", n, f) for n, f in scenarios]
                     if args.suite == "full":
                         todo += [("error state", n, f) for n, f in ERROR_SCENARIOS]
+                    if (
+                        args.layout == "v2"
+                    ):  # the v2 shell: its own scenarios, each opens its own page
+                        todo = [("v2 layout", n, f) for n, f in V2_SCENARIOS]
                     for group, name, fn in todo:
                         ctx = new_context(pw, browser, engine, width, scheme)
                         page = ctx.new_page()

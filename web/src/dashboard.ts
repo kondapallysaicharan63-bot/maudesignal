@@ -46,7 +46,7 @@ export function sweepStatsText(s: SweepStats, minReports: number = SWEEP_RULES.s
 // ── Alerts ──────────────────────────────────────────────────────────────
 
 export type AlertKind = 'new_signal' | 'severity_escalation'
-export type AlertItemKind = AlertKind | 'needs_review'
+export type AlertItemKind = AlertKind | 'needs_review' | 'spike'
 
 export interface AlertItem {
   id: string

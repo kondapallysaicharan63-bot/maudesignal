@@ -236,7 +236,7 @@ function PhotoTurn({ turn, onRecordedLabel }: { turn: LiveTurn; onRecordedLabel?
   )
 }
 
-function TurnView({ turn, chat, onRecordedVoice, onRecordedLabel, onAsk, onOpen }: {
+export function TurnView({ turn, chat, onRecordedVoice, onRecordedLabel, onAsk, onOpen }: {
   turn: LiveTurn
   chat: Chat
   onRecordedVoice: () => void

@@ -162,6 +162,12 @@ jobs:
           python scripts/release/e2e_web.py --url http://127.0.0.1:4173 \
             --api http://127.0.0.1:8001 --axe web/node_modules/axe-core/axe.min.js \
             --out-dir release-out
+      - name: Browser checks, v2 layout (?layout=v2; live calls route-mocked, $0)
+        if: always()
+        run: |
+          python scripts/release/e2e_web.py --url http://127.0.0.1:4173 \
+            --api http://127.0.0.1:8001 --axe web/node_modules/axe-core/axe.min.js \
+            --out-dir release-out --layout v2 --engines chromium --stem e2e-v2
       - uses: actions/upload-artifact@v4
         if: always()
         with:

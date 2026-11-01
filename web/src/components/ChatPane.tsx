@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import type { CaptureMode } from '../capture'
 import { composerMenuOn } from '../composerFlag'
 import { useApiFeatures } from '../live/features'
@@ -72,9 +72,17 @@ interface Props {
   apiBase?: string | null
   /** Test hook: forces the message box with the + menu on or off (default: VITE_FEATURE_COMPOSER_MENU and ?composer=classic). */
   composerMenu?: boolean
+  /** v2 layout: no title row above the page (the top bar and the sidebar already name it). */
+  bare?: boolean
+  /** v2 layout: what the page shows instead of the body picked from `view` (Home, the chat screen). */
+  body?: ReactNode
+  /** v2 layout: a line just above the message box (questions left, the audio note while recording). */
+  aboveComposer?: ReactNode
+  /** v2 layout: told when the message box starts or stops recording. */
+  onRecording?: (on: boolean) => void
 }
 
-function StoredList({ def, data, onThread }: { def: WorkflowDef; data: WorkspaceData; onThread: (id: string) => void }) {
+export function StoredList({ def, data, onThread }: { def: WorkflowDef; data: WorkspaceData; onThread: (id: string) => void }) {
   const group = data.threads.workflows.find((w) => w.id === def.id)
   const items = group ? data.threads.threads.filter((t) => group.thread_ids.includes(t.id)) : []
   const demo = DEMO_WORKFLOWS.includes(def.id)
@@ -130,8 +138,10 @@ export function ChatPane(p: Props) {
       p.onCapture('voice')
     },
   })
-  let body: JSX.Element
-  if (p.view.kind === 'live') {
+  let body: ReactNode
+  if (p.body !== undefined) {
+    body = p.body
+  } else if (p.view.kind === 'live') {
     body = (
       <LiveChatView
         chat={live}
@@ -215,9 +225,11 @@ export function ChatPane(p: Props) {
       data-expanded={p.expanded}
     >
       {/* Below lg the title row and its expand button are dropped (the page is one column already), so the top of the screen is not spent on a second title bar. */}
+      {!p.bare && (
       <div className={p.expanded ? '' : 'max-lg:hidden'}>
         <PanelBar title={p.view.kind === 'new' ? 'Home' : 'Chat'} panel="main" expanded={p.expanded} onToggle={p.onToggleExpand} />
       </div>
+      )}
       <div
         className="ws-fade-bottom min-h-0 flex-1 scroll-pb-40 overflow-y-auto px-4 py-4 md:px-8 md:py-6"
         onScroll={(e) => {
@@ -225,10 +237,12 @@ export function ChatPane(p: Props) {
           setScrolled((cur) => (down ? key : cur === key ? null : cur))
         }}
       >
-        <div className={['mx-auto pb-40 lg:pb-28', p.view.kind === 'new' ? 'max-w-6xl' : 'max-w-3xl'].join(' ')}>{body}</div>
+        <div className={['mx-auto pb-40 lg:pb-28', p.view.kind === 'new' ? 'max-w-6xl' : 'max-w-3xl', ...(p.bare ? ['ms2-page'] : [])].join(' ')}>{body}</div>
       </div>
+      {p.aboveComposer}
       {menuOn ? (
         <MessageBox
+          onRecording={p.onRecording}
           threads={data.threads.threads}
           onThread={p.onThread}
           viewKey={viewKey(p.view)}

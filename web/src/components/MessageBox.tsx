@@ -47,6 +47,8 @@ interface Props {
   live?: MessageBoxLive | null
   /** Test hook: true makes "Take photo" use the phone camera input instead of the live preview. */
   phone?: boolean
+  /** Told when a recording starts and ends (v2 shows the audio note only while recording). */
+  onRecording?: (on: boolean) => void
 }
 
 /** A phone or tablet: a touch screen as the main pointer, or a mobile browser. Its own camera app takes the photo. */
@@ -63,7 +65,7 @@ interface Photo {
   url: string
 }
 
-export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera, onMic, onSample, live = null, phone }: Props) {
+export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera, onMic, onSample, live = null, phone, onRecording }: Props) {
   const [text, setText] = useState('')
   const [askError, setAskError] = useState<string | null>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -136,6 +138,11 @@ export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera
     onError: (message) => setVoiceNote(message),
   })
   const recording = rec.state !== 'idle' || transcribing
+  const onRecordingRef = useRef(onRecording)
+  onRecordingRef.current = onRecording
+  useEffect(() => {
+    onRecordingRef.current?.(recording)
+  }, [recording])
   // On a page with the message box the alert buddy's first-visit bubble is not shown (it can cover the claims strip).
   useEffect(() => {
     document.body.dataset.composerMenu = 'true'

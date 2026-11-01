@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { groupAlerts, type AlertItem } from '../dashboard'
 import { Icon } from '../icons'
 import { readStore, writeStore } from '../storage'
@@ -125,7 +125,13 @@ export function AlertBell({
   onViewAll = () => undefined,
   companyBanner = FALLBACK_BANNER,
   seenState,
+  extra,
+  note,
 }: {
+  /** v2: shown under the list, e.g. a separate, labelled link to the simulated devices. */
+  extra?: (close: () => void) => ReactNode
+  /** v2: replaces the explanation under the list. */
+  note?: string
   /** Shared with the alert buddy so both agree on what is unseen; the bell keeps its own when absent. */
   seenState?: { seen: string[]; markAll: (ids: string[]) => void }
   items: AlertItem[]
@@ -221,9 +227,10 @@ export function AlertBell({
                 seen={seen}
                 banner={companyBanner}
               />
+              {extra?.(() => setOpen(false))}
               <p className="m-0 mt-2 text-[16px] leading-snug text-ink-2">
-                Signals: a new kind of problem, or more serious than usual, in the AI device sweep and the newest demo-snapshot brief.
-                Our devices: devices that need review (simulated, or yours in Make it yours). Signals for a person to review.
+                {note ?? <>Signals: a new kind of problem, or more serious than usual, in the AI device sweep and the newest demo-snapshot brief.
+                Our devices: devices that need review (simulated, or yours in Make it yours). Signals for a person to review.</>}
               </p>
             </div>
             <div className="flex shrink-0 items-center justify-between gap-2 border-t border-rule p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
