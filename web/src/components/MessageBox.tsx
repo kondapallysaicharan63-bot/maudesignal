@@ -15,6 +15,7 @@ import { exactKnownCode, moveActive, suggest, type CodeInfo, type Suggestion } f
 import type { Thread } from '../types'
 import { CameraSheet } from './CameraSheet'
 import { DISCLAIMER, Marked, SUGGESTED } from './Composer'
+import { useInvestigateEntry } from '../investigate/entry'
 import { PlusMenu, type MenuItem } from './PlusMenu'
 import { VoiceBar } from './VoiceBar'
 
@@ -223,10 +224,14 @@ export function MessageBox({ threads, onThread, viewKey, codes, onCode, onCamera
     void rec.start()
   }
 
+  const investigateEntry = useInvestigateEntry()
   const items: MenuItem[] = [
     { id: 'take-photo', label: 'Take photo', icon: 'camera', hint: 'Photograph a device label', onSelect: takePhoto },
     { id: 'upload-photo', label: 'Upload photo', icon: 'upload', hint: 'Choose a label photo', onSelect: () => (live ? uploadRef.current?.click() : onCamera()) },
     { id: 'sample-label', label: 'Try a sample label', icon: 'image', hint: 'Recorded example photos', onSelect: onSample },
+    ...(investigateEntry
+      ? [{ id: 'investigate', label: 'Investigate a complaint', icon: 'search' as const, hint: 'Check a complaint against FDA data', onSelect: () => investigateEntry.open() }]
+      : []),
     ...(live?.features.research
       ? [{ id: 'research', label: 'Web research', icon: 'globe' as const, hint: 'Not FDA records', checked: research, onSelect: () => setResearch((r) => !r) }]
       : []),

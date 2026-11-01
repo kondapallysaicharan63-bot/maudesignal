@@ -61,6 +61,8 @@ from maudesignal.connector.errors import (
 from maudesignal.connector.feedback import looks_like_phi, mount_feedback
 from maudesignal.connector.globalcap import global_daily_usd
 from maudesignal.connector.guidance import unknown_code_error
+from maudesignal.connector.investigate import Source as InvestigateSource
+from maudesignal.connector.investigate_route import mount_investigate
 from maudesignal.connector.legal_pages import render_privacy, render_terms
 from maudesignal.connector.live import (
     LiveBackends,
@@ -281,6 +283,8 @@ class Settings:
     research_transport: Callable[[], research.ResearchTransport | None] | None = None
     #: GDELT backup fetcher factory for ``outside_mentions``.
     research_fetcher: Callable[[], Fetcher] | None = HttpFetcher
+    #: openFDA source for ``POST /v1/investigate`` (``None``: the real one; tests pass a fake).
+    investigate_source: Callable[[], InvestigateSource] | None = None
 
 
 class AskRequest(BaseModel):
@@ -1369,6 +1373,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         make_limiter=state.rate_limiter,
         backends=cfg.live,
         config=cfg.live_config,
+        now=cfg.now,
+    )
+    mount_investigate(
+        app,
+        state=state,
+        web_origins=web_origins,
+        caller_id=limiter_id,
+        source_factory=cfg.investigate_source,
         now=cfg.now,
     )
     return app

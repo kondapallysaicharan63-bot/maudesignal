@@ -35,6 +35,8 @@ export type Route =
   | { page: 'pms' }
   /** F27: time and cost, measured not claimed. */
   | { page: 'roi' }
+  /** Investigate a complaint. ?code=XXX&device=<simulated device id> prefill the form (see src/investigate/api.ts). */
+  | { page: 'investigate'; code?: string; device?: string }
 
 export type Section = 'signals' | 'devices' | 'evidence' | 'connect'
 
@@ -73,7 +75,7 @@ const dec = (s: string | undefined): string => {
 }
 
 /** The page an address shows. Anything unknown is Home. */
-export function parseRoute(pathname: string): Route {
+export function parseRoute(pathname: string, search = ''): Route {
   const rest = pathname.slice(appRoot(pathname).length)
   const [seg, a, b] = rest.split('/').filter((x) => x !== '')
   switch (seg) {
@@ -104,8 +106,26 @@ export function parseRoute(pathname: string): Route {
       return { page: 'pms' }
     case 'roi':
       return { page: 'roi' }
+    case 'investigate':
+      return investigateRoute(search)
     default:
       return { page: 'home' }
+  }
+}
+
+/** /investigate?code=XXX&device=<id>: a three-letter code and a plain device id; anything else is ignored. */
+function investigateRoute(search: string): Route {
+  try {
+    const q = new URLSearchParams(search)
+    const code = (q.get('code') ?? '').trim().toUpperCase()
+    const device = (q.get('device') ?? '').trim()
+    return {
+      page: 'investigate',
+      ...(/^[A-Z]{3}$/.test(code) ? { code } : {}),
+      ...(/^[A-Za-z0-9._-]{1,40}$/.test(device) ? { device } : {}),
+    }
+  } catch {
+    return { page: 'investigate' }
   }
 }
 
@@ -140,6 +160,8 @@ export function formatRoute(r: Route): string {
       return 'pms-workflow'
     case 'roi':
       return 'roi'
+    case 'investigate':
+      return 'investigate'
   }
 }
 
@@ -149,7 +171,25 @@ export function hrefFor(
   loc: { pathname: string; search: string } = window.location,
   flag: string | undefined = import.meta.env.VITE_LAYOUT_DEFAULT as string | undefined,
 ): string {
-  return `${appRoot(loc.pathname)}${formatRoute(r)}${withLayout(loc.search, flag)}`
+  return `${appRoot(loc.pathname)}${formatRoute(r)}${withRouteQuery(withLayout(loc.search, flag), r)}`
+}
+
+/** The query string with the route's own parameters (investigate: code, device) set, and stale ones removed. */
+export function withRouteQuery(search: string, r: Route): string {
+  try {
+    const q = new URLSearchParams(search)
+    if (r.page !== 'investigate' && !q.has('code') && !q.has('device')) return search
+    q.delete('code')
+    q.delete('device')
+    if (r.page === 'investigate') {
+      if (r.code) q.set('code', r.code)
+      if (r.device) q.set('device', r.device)
+    }
+    const out = q.toString()
+    return out ? `?${out}` : ''
+  } catch {
+    return search
+  }
 }
 
 /**
@@ -194,6 +234,8 @@ export function routeName(r: Route): string {
       return 'pms-workflow'
     case 'roi':
       return 'roi'
+    case 'investigate':
+      return 'investigate'
   }
 }
 
@@ -201,9 +243,9 @@ export const sameRoute = (a: Route, b: Route): boolean => formatRoute(a) === for
 
 /** The current page and a way to move: push (a new history entry) or replace. */
 export function useRoute(): { route: Route; navigate: (r: Route, o?: { replace?: boolean }) => void } {
-  const [route, setRoute] = useState<Route>(() => parseRoute(window.location.pathname))
+  const [route, setRoute] = useState<Route>(() => parseRoute(window.location.pathname, window.location.search))
   useEffect(() => {
-    const onPop = () => setRoute(parseRoute(window.location.pathname))
+    const onPop = () => setRoute(parseRoute(window.location.pathname, window.location.search))
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
   }, [])

@@ -1,0 +1,165 @@
+/* Investigate a complaint (v2). Design-system tokens only (var(--token)); every rule is scoped to .ms2-inv or a .ms2-inv-* class. */
+
+.ms2-inv {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 56rem;
+}
+.ms2-inv .ms2-pagehead {
+  margin-bottom: 0;
+}
+.ms2-inv-banner {
+  margin: 0;
+}
+.ms2-inv-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 18px 20px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
+}
+.ms2-inv-label {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.ms2-inv-label > span {
+  font-weight: 400;
+}
+.ms2-inv-grow {
+  flex: 1 1 22rem;
+  min-width: 0;
+}
+.ms2-inv-input {
+  display: block;
+  margin-top: 4px;
+  width: 100%;
+  padding: 10px 12px;
+  font: 400 17px/1.4 var(--font-sans);
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-xs);
+}
+.ms2-inv-input[readonly] {
+  background: var(--surface-sunk);
+}
+.ms2-inv-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.ms2-inv-code {
+  width: 8.5rem;
+  min-height: 44px;
+  text-transform: uppercase;
+}
+.ms2-inv-text {
+  resize: vertical;
+  min-height: 6.5rem;
+}
+.ms2-inv-submit {
+  flex: 1 1 100%;
+}
+.ms2-inv-results {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.ms2-inv-prov {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 15px;
+}
+.ms2-inv-stats {
+  margin-top: 12px;
+}
+.ms2-inv-scroll {
+  overflow-x: auto;
+}
+.ms2-inv-scroll .ms2-table th[scope='row'] {
+  font-weight: 400;
+  white-space: nowrap;
+}
+.ms2-inv-barcol {
+  width: 40%;
+}
+@media (max-width: 560px) {
+  .ms2-inv-barcol {
+    display: none;
+  }
+  .ms2-inv-form {
+    padding: 14px;
+  }
+}
+.ms2-inv-quotes {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.ms2-inv-quotes blockquote {
+  padding-left: 12px;
+  border-left: 3px solid var(--rule-strong);
+  overflow-wrap: anywhere;
+}
+.ms2-inv-plain {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ms2-inv-two {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  margin-top: 10px;
+}
+@media (min-width: 900px) {
+  .ms2-inv-two {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.ms2-inv-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+.ms2-inv-evidence {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  max-height: 24rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 400 13.5px/1.5 var(--font-mono, ui-monospace, monospace);
+  color: var(--ink);
+  background: var(--surface-sunk);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-xs);
+}
+.ms2-inv-evidence:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.ms2-inv-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.ms2-inv-card > div {
+  flex: 1 1 18rem;
+  min-width: 0;
+}

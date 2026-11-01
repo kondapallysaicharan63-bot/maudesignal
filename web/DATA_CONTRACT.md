@@ -331,6 +331,71 @@ source" only for an `https` fda.gov address (whatever `source_kind` says), drops
 (unverified)", dashed border). Line under the title: "N found, N dropped because the quote was not on the page, N dropped for
 personal details". Stored search first; on 429, an error or no API address the stored search is shown, or "No stored search yet".
 
+### Investigate a complaint: `POST /v1/investigate` (F25)
+
+The page `/investigate` (v2 layout only) and its API. No model, no key, nothing stored. Entry points: the Home card
+"Investigate a complaint" (its one button) and the "+" menu item of the same name (between "Try a sample label" and "Ask by
+voice"; present only in the v2 layout).
+
+**URL contract for other pages** (for example a simulated device profile that wants an "Investigate a complaint on this
+device" link): `/investigate?code=XXX&device=<simulated device id>`. `code` is three letters and fills the product code box;
+`device` is `[A-Za-z0-9._-]{1,40}`, is shown as "From the simulated device <id>" and is never sent anywhere. Both are
+optional; anything else is ignored. The app folder, `?layout=v2` and `?r=` are kept. In code: `hrefFor({ page: 'investigate',
+code, device })` (`src/v2/router.ts`, `src/investigate/api.ts`).
+
+Request (JSON, no cookies, `credentials: "omit"`): `{product_code: 3 letters, description: 5..500 characters}`. The description
+is the device problem in a few words; the page shows the banner "Do not enter patient data. Describe the device problem only."
+above the form. The server runs the `/v1/live/ask` patient-data guard first and refuses with `422 {code: "patient_data",
+message}` (nothing is searched). The description is used once to pick keywords and is never stored or logged: the audit entry
+holds only its SHA-256 and length, the response is `Cache-Control: no-store` and does not repeat it. Keywords are the
+lowercased content words of the description (at least 3 letters or digits, not a number, not in a fixed stop-word list, not the
+generic words device, problem, issue, report, event), the first 6 in order; no model, no synonyms, no stemming.
+
+Answer (`InvestigateAnswer`, see `api/openapi.json`):
+```json
+{"mode": "live", "product_code": "LLZ", "device_type_name": "string|null",
+ "retrieved_utc": "2026-11-01T14:05:00Z", "retrieved_date": "2026-11-01", "window_start": "20251101", "window_end": "20261101",
+ "keywords": ["viewer", "froze"], "keyword_rule": "...",
+ "months": [{"month": "2026-07", "code_wide": 72, "code_wide_url": "https://api.fda.gov/...", "keyword_matched": 17, "keyword_url": "https://api.fda.gov/...", "partial": false}],
+ "total_code_wide": {"value": 121, "url": "..."}, "total_keyword_matched": {"value": 24, "url": "..."},
+ "quotes": [{"report_number": "...", "mdr_report_key": "...", "date_received": "20260701", "source": "manufacturer", "maker": "as written", "quote": "verbatim sentence", "truncated": false, "keywords_in_quote": [], "url": "...", "gate": "verbatim match"}],
+ "sources": {"buckets": [{"source": "Manufacturer report", "normalized": "manufacturer", "count": 121}], "buckets_url": "...", "manufacturer_count": 121,
+             "non_manufacturer": {"value": 0, "url": "..."}, "no_source_count": 0, "reports": [{"report_number", "mdr_report_key", "date_received", "source", "maker", "url"}], "note": null},
+ "recalls": {"total": {"value": 561, "url": "..."}, "items": [{"recall_number", "firm", "status", "date_initiated", "reason", "url"}], "note": null},
+ "clearances": {"total": {"value": 209, "url": "..."}, "items": [{"k_number", "device_name", "applicant", "decision_date", "url"}], "note": null},
+ "dropped": {"quote_not_verbatim": 0, "quote_personal_details": 0, "quote_wording": 0, "record_not_confirmed": 0},
+ "own_maker_note": "...cannot be separated...", "lag_note": "...", "notice": "fixed text", "not_medical_advice": true,
+ "source_note": null, "notes": []}
+```
+- The two counts are different questions and are never added: `code_wide` is every report for the product code in the month;
+  `keyword_matched` is the part of it whose narrative mentions at least one keyword (null when the description had no content
+  words). The window is the 12 calendar months ending on the retrieval date (the first and last month can be partial; openFDA
+  runs weeks behind). Every figure has the openFDA query that shows it; the page links only addresses that start with
+  `https://api.fda.gov/` and drops any other.
+- Quotes: at most 5, one per report, each a sentence of the report narrative (cut at a word at 300 characters, `truncated`),
+  checked by the claim gate's verbatim-quote rule against the very record it came from before it is returned. A sentence with
+  personal details or a word from `connector/forbidden.py` is left out and counted in `dropped`.
+- `sources` is the F12 filter live: counts by `report_source_code` over the window (normalised with
+  `gate/evidence.normalize_source`), the number not filed by a manufacturer, and the newest five of those reports.
+- Reports filed by the user's own company **cannot be separated** (the form does not ask which company; maker names on MAUDE
+  reports are free text). The answer says so (`own_maker_note`) and each quote shows the maker name as written.
+- Recalls and 510(k)s: total (all dates) and the newest five, from `device/recall.json` and `device/510k.json`; each item is
+  confirmed by the gate (recall / device claim against the fetched row) before it is returned.
+- A section that openFDA could not give is `null` / empty with a `note`; if the main monthly counts cannot be read the answer is
+  `502 {code: "unavailable"}`. Other errors: `422 invalid_input`, `429 rate_limited` (per address, default 6 an hour and 20 a
+  day; `Retry-After`).
+- CORS: only the origins in `MAUDESIGNAL_WEB_ORIGINS`, POST and OPTIONS, no credentials.
+
+Without `VITE_MAUDESIGNAL_API_BASE` the page makes no request and shows the **Recorded example**: code LLZ and a sample
+description, run by `scripts/record_investigate_example.py` over the stored copy of openFDA records in the demo database
+(fetched 2026-10-27) into `src/fixtures/investigateExample.json`. Its counts are those of the stored copy (the label says so);
+each link still opens the live query. The form is read-only there.
+
+"Evidence for the complaint file" is built in the browser from the answer (`evidenceText` in `src/investigate/api.ts`): the
+search date and time (UTC), product code and FDA name, the description as entered (marked "as entered by the user; not stored"),
+every count with its openFDA query URL, the quotes, the not-by-manufacturer counts, the recalls and 510(k)s and the fixed
+notice. Copy puts it on the clipboard; Download .txt saves `complaint-evidence-<CODE>-<date>.txt` (no description in the name).
+
 ### Connect: `GET /v1/connect`
 
 The real API body: `{mcp_url, openapi_url, docs_url, auth_header: "X-API-Key", demo_key: str|null, demo_limits: {per_minute, per_day, live_model, note}, steps}`.

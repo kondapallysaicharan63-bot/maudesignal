@@ -116,6 +116,7 @@ tables in `app.py` show the brand written on each report.
 |---|---|
 | `monitor/sources.py`, `gate` `source_count` claim, `copilot/tools.py` `report_sources` | F12 report-source filter: openFDA `report_source_code` stored on every event (backfilled from stored raw records), counts per device type, the reports not filed by a manufacturer, a gated claim kind and 10 adversarial cases |
 | `scripts/check_source_counts.py`, `docs/hackathon/SOURCE_COUNTS.md` | Stored source counts compared with openFDA's own counts each recording run |
+| `connector/investigate.py`, `investigate_route.py`, `investigate_stored.py`, `web/src/investigate/`, `scripts/record_investigate_example.py` | F25 Investigate a complaint (reactive PMS): `POST /v1/investigate` (no key, no model, description never stored) returns similar MAUDE events by month (whole code and keyword-matched, never mixed), gate-checked verbatim quotes, reports not filed by a manufacturer, recalls and 510(k)s, every number with its openFDA query; the page `/investigate` builds the "Evidence for the complaint file" text. Recorded example (LLZ) when the build has no API address |
 | `docs/VALIDATION_EVIDENCE.md` | Intended use, deterministic vs model-generated, test evidence, known limits, what a manufacturer would still do |
 | `skills/safety-copilot` 1.2.2, `dossier-narrative` 1.1.1, `dossier-reviewer` 1.1.1 | "CAPA-need evidence pack" wording; the copilot never decides CAPA need, reportability or device similarity |
 

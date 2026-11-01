@@ -1,0 +1,326 @@
+{
+  "input": {
+    "product_code": "LLZ",
+    "description": "The report manager would not let users save a study, and images came up unreadable."
+  },
+  "answer": {
+    "mode": "recorded",
+    "product_code": "LLZ",
+    "device_type_name": null,
+    "retrieved_utc": "2026-10-27T18:00:00Z",
+    "retrieved_date": "2026-10-27",
+    "window_start": "20251101",
+    "window_end": "20261027",
+    "keywords": [
+      "manager",
+      "save",
+      "study",
+      "images",
+      "unreadable"
+    ],
+    "keyword_rule": "Lowercased words of the description with at least 3 letters or digits, after dropping common English words and the generic words device, problem, issue, report and event; the first 6, in the order written. A report counts as matched when its narrative mentions at least one of them. No model, no synonyms, no stemming.",
+    "months": [
+      {
+        "month": "2025-11",
+        "code_wide": 0,
+        "code_wide_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20251101+TO+20251130%5D&limit=1",
+        "keyword_matched": 0,
+        "keyword_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20251101+TO+20251130%5D+AND+mdr_text.text%3A%28manager+OR+save+OR+study+OR+images+OR+unreadable%29&limit=1",
+        "partial": false
+      },
+      {
+        "month": "2025-12",
+        "code_wide": 0,
+        "code_wide_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20251201+TO+20251231%5D&limit=1",
+        "keyword_matched": 0,
+        "keyword_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20251201+TO+20251231%5D+AND+mdr_text.text%3A%28manager+OR+save+OR+study+OR+images+OR+unreadable%29&limit=1",
+        "partial": false
+      },
+      {
+        "month": "2026-01",
+        "code_wide": 0,
+        "code_wide_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260101+TO+20260131%5D&limit=1",
+        "keyword_matched": 0,
+        "keyword_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260101+TO+20260131%5D+AND+mdr_text.text%3A%28manager+OR+save+OR+study+OR+images+OR+unreadable%29&limit=1",
+        "partial": false
+      },
+      {
+        "month": "2026-02",
+        "code_wide": 0,
+        "code_wide_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260201+TO+20260228%5D&limit=1",
+        "keyword_matched": 0,
+        "keyword_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260201+TO+20260228%5D+AND+mdr_text.text%3A%28manager+OR+save+OR+study+OR+images+OR+unreadable%29&limit=1",
+        "partial": false
+      },
+      {
+        "month": "2026-03",
+        "code_wide": 0,
+        "code_wide_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260301+TO+20260331%5D&limit=1",
+        "keyword_matched": 0,
+        "keyword_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260301+TO+20260331%5D+AND+mdr_text.text%3A%28manager+OR+save+OR+study+OR+images+OR+unreadable%29&limit=1",
+        "partial": false
+      },
+      {
+        "month": "2026-04",
+        "code_wide": 0,
+        "code_wide_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260401+TO+20260430%5D&limit=1",
+        "keyword_matched": 0,
+        "keyword_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260401+TO+20260430%5D+AND+mdr_text.text%3A%28manager+OR+save+OR+study+OR+images+OR+unreadable%29&limit=1",
+        "partial": false
+      },
+      {
+        "month": "2026-05",
+        "code_wide": 0,
+        "code_wide_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260501+TO+20260531%5D&limit=1",
+        "keyword_matched": 0,
+        "keyword_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260501+TO+20260531%5D+AND+mdr_text.text%3A%28manager+OR+save+OR+study+OR+images+OR+unreadable%29&limit=1",
+        "partial": false
+      },
+      {
+        "month": "2026-06",
+        "code_wide": 0,
+        "code_wide_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260601+TO+20260630%5D&limit=1",
+        "keyword_matched": 0,
+        "keyword_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260601+TO+20260630%5D+AND+mdr_text.text%3A%28manager+OR+save+OR+study+OR+images+OR+unreadable%29&limit=1",
+        "partial": false
+      },
+      {
+        "month": "2026-07",
+        "code_wide": 72,
+        "code_wide_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260701+TO+20260731%5D&limit=1",
+        "keyword_matched": 17,
+        "keyword_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260701+TO+20260731%5D+AND+mdr_text.text%3A%28manager+OR+save+OR+study+OR+images+OR+unreadable%29&limit=1",
+        "partial": false
+      },
+      {
+        "month": "2026-08",
+        "code_wide": 49,
+        "code_wide_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260801+TO+20260831%5D&limit=1",
+        "keyword_matched": 6,
+        "keyword_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260801+TO+20260831%5D+AND+mdr_text.text%3A%28manager+OR+save+OR+study+OR+images+OR+unreadable%29&limit=1",
+        "partial": false
+      },
+      {
+        "month": "2026-09",
+        "code_wide": 0,
+        "code_wide_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260901+TO+20260930%5D&limit=1",
+        "keyword_matched": 0,
+        "keyword_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260901+TO+20260930%5D+AND+mdr_text.text%3A%28manager+OR+save+OR+study+OR+images+OR+unreadable%29&limit=1",
+        "partial": false
+      },
+      {
+        "month": "2026-10",
+        "code_wide": 0,
+        "code_wide_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20261001+TO+20261027%5D&limit=1",
+        "keyword_matched": 0,
+        "keyword_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20261001+TO+20261027%5D+AND+mdr_text.text%3A%28manager+OR+save+OR+study+OR+images+OR+unreadable%29&limit=1",
+        "partial": true
+      }
+    ],
+    "total_code_wide": {
+      "value": 121,
+      "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20251101+TO+20261027%5D&limit=1"
+    },
+    "total_keyword_matched": {
+      "value": 23,
+      "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20251101+TO+20261027%5D+AND+mdr_text.text%3A%28manager+OR+save+OR+study+OR+images+OR+unreadable%29&limit=1"
+    },
+    "quotes": [
+      {
+        "report_number": "3003768277-2026-101206",
+        "mdr_report_key": "25675105",
+        "date_received": "20260701",
+        "source": "manufacturer",
+        "maker": "PHILIPS MEDICAL SYSTEMS NEDERLAND B.V.",
+        "quote": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLISPACE CARDIOVASCULAR) SYSTEM WHEREIN ISCV REPORT MANAGER NOT ALLOWING SAVE.",
+        "truncated": false,
+        "keywords_in_quote": [
+          "manager",
+          "save"
+        ],
+        "url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A25675105&limit=1",
+        "gate": "verbatim match"
+      },
+      {
+        "report_number": "3003768277-2026-101214",
+        "mdr_report_key": "25675205",
+        "date_received": "20260701",
+        "source": "manufacturer",
+        "maker": "PHILIPS MEDICAL SYSTEMS NEDERLAND B.V.",
+        "quote": "PHILIPS IDENTIFIED A SOFTWARE DEFECT IN ISCV (INTELLI SPACE CARDIOVASCULAR) SYSTEM WHEREIN THE QIDO WADO IS MODIFYING TRANSFER SYNTAX WHEN IMAGES ARE PULLED BY THIRD PARTY CAUSING UNREADABLE IMAGES.",
+        "truncated": false,
+        "keywords_in_quote": [
+          "images",
+          "unreadable"
+        ],
+        "url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A25675205&limit=1",
+        "gate": "verbatim match"
+      },
+      {
+        "report_number": "3003768277-2026-101349",
+        "mdr_report_key": "50515470",
+        "date_received": "20260831",
+        "source": "manufacturer",
+        "maker": "Philips Medical Systems Nederland B.V.",
+        "quote": "Philips identified a software defect in ISCV (IntelliSpace Cardiovascular) system wherein unable to fetch images for some records.",
+        "truncated": false,
+        "keywords_in_quote": [
+          "images"
+        ],
+        "url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50515470&limit=1",
+        "gate": "verbatim match"
+      },
+      {
+        "report_number": "3003768277-2026-101350",
+        "mdr_report_key": "50516613",
+        "date_received": "20260831",
+        "source": "manufacturer",
+        "maker": "Philips Medical Systems Nederland B.V.",
+        "quote": "Philips identified a software defect in ISCV (IntelliSpace Cardiovascular) system wherein the user was unable to retrieve images from Vue Picture Archiving and Communication System (PACS).",
+        "truncated": false,
+        "keywords_in_quote": [
+          "images"
+        ],
+        "url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50516613&limit=1",
+        "gate": "verbatim match"
+      },
+      {
+        "report_number": "3003768277-2026-101328",
+        "mdr_report_key": "50448213",
+        "date_received": "20260826",
+        "source": "manufacturer",
+        "maker": "Philips Medical Systems Nederland B.V.",
+        "quote": "Philips received a complaint regarding IntelliSpace Cardiovascular (ISCV), indicating that an error 500 occurs for one study, preventing the doctor from processing the report.",
+        "truncated": false,
+        "keywords_in_quote": [
+          "study"
+        ],
+        "url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A50448213&limit=1",
+        "gate": "verbatim match"
+      }
+    ],
+    "sources": {
+      "buckets": [
+        {
+          "source": "Manufacturer report",
+          "normalized": "manufacturer",
+          "count": 121
+        }
+      ],
+      "buckets_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20251101+TO+20261027%5D&count=report_source_code.exact&limit=1000",
+      "manufacturer_count": 121,
+      "non_manufacturer": {
+        "value": 0,
+        "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20251101+TO+20261027%5D&limit=1"
+      },
+      "no_source_count": 0,
+      "reports": [],
+      "note": null
+    },
+    "recalls": {
+      "total": {
+        "value": 561,
+        "url": "https://api.fda.gov/device/recall.json?search=product_code%3ALLZ&limit=1&sort=event_date_initiated%3Adesc"
+      },
+      "items": [
+        {
+          "recall_number": "Z-0186-2027",
+          "firm": "INTELERAD MEDICAL SYSTEMS INCORPORATED",
+          "status": "Open, Classified",
+          "date_initiated": "2026-09-05",
+          "reason": "Following a Chromium-based web-browser, report and displayed images may not match.",
+          "url": "https://api.fda.gov/device/recall.json?search=product_res_number%3A%22Z-0186-2027%22&limit=1"
+        },
+        {
+          "recall_number": "Z-3166-2026",
+          "firm": "GE Healthcare",
+          "status": "Open, Classified",
+          "date_initiated": "2026-07-31",
+          "reason": "Under certain conditions historical imaging data migrated from a legacy system may become incorrectly associated with a different patient. If this occurs, studies or images may be displayed under the wrong patient record, which could lead t",
+          "url": "https://api.fda.gov/device/recall.json?search=product_res_number%3A%22Z-3166-2026%22&limit=1"
+        },
+        {
+          "recall_number": "Z-3167-2026",
+          "firm": "GE Healthcare",
+          "status": "Open, Classified",
+          "date_initiated": "2026-07-31",
+          "reason": "Under certain conditions historical imaging data migrated from a legacy system may become incorrectly associated with a different patient. If this occurs, studies or images may be displayed under the wrong patient record, which could lead t",
+          "url": "https://api.fda.gov/device/recall.json?search=product_res_number%3A%22Z-3167-2026%22&limit=1"
+        },
+        {
+          "recall_number": "Z-3168-2026",
+          "firm": "GE Healthcare",
+          "status": "Open, Classified",
+          "date_initiated": "2026-07-31",
+          "reason": "Under certain conditions historical imaging data migrated from a legacy system may become incorrectly associated with a different patient. If this occurs, studies or images may be displayed under the wrong patient record, which could lead t",
+          "url": "https://api.fda.gov/device/recall.json?search=product_res_number%3A%22Z-3168-2026%22&limit=1"
+        },
+        {
+          "recall_number": "Z-3169-2026",
+          "firm": "GE Healthcare",
+          "status": "Open, Classified",
+          "date_initiated": "2026-07-31",
+          "reason": "Under certain conditions historical imaging data migrated from a legacy system may become incorrectly associated with a different patient. If this occurs, studies or images may be displayed under the wrong patient record, which could lead t",
+          "url": "https://api.fda.gov/device/recall.json?search=product_res_number%3A%22Z-3169-2026%22&limit=1"
+        }
+      ],
+      "note": null
+    },
+    "clearances": {
+      "total": {
+        "value": 209,
+        "url": "https://api.fda.gov/device/510k.json?search=product_code%3ALLZ&limit=1&sort=decision_date%3Adesc"
+      },
+      "items": [
+        {
+          "k_number": "K263048",
+          "device_name": "Syngo Carbon Space (VA4)",
+          "applicant": "Siemens Healthineers AG",
+          "decision_date": "2026-09-29",
+          "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK263048&limit=1"
+        },
+        {
+          "k_number": "K261874",
+          "device_name": "Syneris PACS v.1.0.1.0",
+          "applicant": "Syneris",
+          "decision_date": "2026-09-23",
+          "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK261874&limit=1"
+        },
+        {
+          "k_number": "K262442",
+          "device_name": "HipStudio Analysis",
+          "applicant": "Replasia BV",
+          "decision_date": "2026-09-22",
+          "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK262442&limit=1"
+        },
+        {
+          "k_number": "K261855",
+          "device_name": "Elucid PlaqueIQ",
+          "applicant": "Elucid Bioimaging, Inc.",
+          "decision_date": "2026-09-18",
+          "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK261855&limit=1"
+        },
+        {
+          "k_number": "K254214",
+          "device_name": "OOOPDS",
+          "applicant": "Taiwan Main Orthopaedic Biotechnology Co., Ltd.",
+          "decision_date": "2026-09-15",
+          "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK254214&limit=1"
+        }
+      ],
+      "note": null
+    },
+    "dropped": {
+      "quote_not_verbatim": 0,
+      "quote_personal_details": 0,
+      "quote_wording": 0,
+      "record_not_confirmed": 0
+    },
+    "own_maker_note": "Reports filed by your own company cannot be separated here: the form does not ask which company you are, and the maker name on a MAUDE report is free text that is spelled differently from report to report. Each quote shows the maker name as filed, so your team can set its own reports aside.",
+    "lag_note": "openFDA runs weeks behind real time, so the newest months are incomplete.",
+    "notice": "This is evidence assembled from public FDA data to attach to your complaint record, your MDR-reportability assessment (21 CFR 803) and your PMS board. MaudeSignal does not decide reportability, similarity, or whether a CAPA is needed; your team does.",
+    "not_medical_advice": true,
+    "source_note": "Recorded example. The counts are for the stored copy of 121 LLZ reports fetched from openFDA on 2026-10-27, not for all of openFDA. Each link opens the live openFDA query, which may show a larger number.",
+    "notes": []
+  }
+}

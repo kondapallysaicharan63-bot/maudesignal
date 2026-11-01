@@ -30,6 +30,8 @@ import { HomeV2 } from './HomeV2'
 import { PmsWorkflow } from './PmsWorkflow'
 import { RoiPage } from './RoiPage'
 import { devicesToReview, realAlertItems } from './realAlerts'
+import { InvestigateEntry } from '../investigate/entry'
+import { InvestigatePage } from '../investigate/InvestigatePage'
 import { hrefFor, routeName, useRoute, type Route, type Section } from './router'
 import { pageItems, SearchPalette, type SearchItem } from './SearchPalette'
 import { ConnectPage, DevicesPage, EvidencePage, SignalsPage } from './Sections'
@@ -321,6 +323,7 @@ export default function AppV2() {
     const m = data ? closestThread(q, data.threads.threads) : null
     if (m) go({ page: 'thread', id: m.thread.id })
   }
+  const investigateApi = useMemo(() => ({ open: (code?: string) => go(code ? { page: 'investigate', code } : { page: 'investigate' }) }), [go])
   const openWorkflow = (id: WorkflowId) => go(routeForWorkflow(id))
   const openDevice = (id: string | null) => go(id ? { page: 'devices', tab: 'apply', device: id } : { page: 'devices', tab: 'apply' })
   const filterDevices = (label: string | null) => {
@@ -445,6 +448,7 @@ export default function AppV2() {
           onAudit={() => go({ page: 'evidence', tab: 'audit' })}
           onPms={() => go({ page: 'pms' })}
           onRoi={() => go({ page: 'roi' })}
+          onInvestigate={() => go({ page: 'investigate' })}
         />
       ) : route.page === 'chat' ? (
         <ChatBoundary resetKey={chatId ?? 'new'} onDelete={chatId ? () => deleteChat(chatId) : null} onNewChat={newChat}>
@@ -548,6 +552,8 @@ export default function AppV2() {
           onWorkflow={openWorkflow}
         />
       )
+    else if (route.page === 'investigate')
+      sectionBody = <InvestigatePage key={`${route.code ?? ''}|${route.device ?? ''}`} apiBase={API_BASE} code={route.code} device={route.device} />
     else if (route.page === 'connect') sectionBody = <ConnectPage tab={route.tab} onTab={(t, how) => tabGo({ page: 'connect', tab: t }, how)} apiBase={API_BASE} />
     else if (route.page === 'pms') sectionBody = <PmsWorkflow onRoi={() => go({ page: 'roi' })} />
     else if (route.page === 'roi') sectionBody = <RoiPage />
@@ -562,6 +568,7 @@ export default function AppV2() {
   const navActive = navOf(route)
   return (
     <MineContext.Provider value={mineApi}>
+      <InvestigateEntry.Provider value={investigateApi}>
       <AlertPanelContext.Provider value={panelApi}>
         <PanelNav.Provider value={{ onHome: () => go({ page: 'home' }), workflow: null }}>
           <div className="ms2-shell" data-layout="v2">
@@ -666,6 +673,7 @@ export default function AppV2() {
           )}
         </PanelNav.Provider>
       </AlertPanelContext.Provider>
+      </InvestigateEntry.Provider>
     </MineContext.Provider>
   )
 }
