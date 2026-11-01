@@ -314,3 +314,21 @@ reasoning never reaches it.
   building classic as its default so both layouts stay tested); `?layout=classic` keeps the old layout.
 - Pre-approved: one production deploy via a single push to main, only if every gate passes (release check green in
   3 browsers, advisor + ui-critic pass, live smoke passes, spend < $3/day, rollback targets recorded).
+
+### 2026-11-01 → 11-02 — final candidate, owner's yes, freeze
+- Release check on release/m7 failed in the Web job only: all 706 tests passed but `npm test` exited 1 because an unguarded
+  `scrollIntoView` raised 6 unhandled errors under jsdom (a real browser is unaffected). Fixed with a guarded call.
+- Nothing deployed from m7. A scheduled check for m7 also tried to "deploy if green"; it was ignored because the owner's
+  later message requires a "yes" before any deploy.
+- Third practitioner review (PRD §11c) folded in: wording "problems reported on other makers' devices of the same type",
+  Investigate described as for the complaints team (its evidence feeds the known-effects record), the validation sentence
+  on the Trust card and in the README, reviewer credits as individuals (personal capacity, no employer names, no links,
+  no quotes).
+- Headline changed by the owner to: "When a complaint arrives, MaudeSignal finds the matching FDA evidence in one
+  question, prepares PMS evidence, and keeps every fact traceable for audit." No time-saved or ROI claim until the owner
+  sends measured numbers (the ROI page shows "measurement pending").
+- Owner's "yes" received for the deploy of the checked candidate. Freeze from that point: bug fixes only, each with the
+  full release check and smoke test; research stays OFF.
+- Reviewer subagents were unavailable from the evening of Nov 1 (weekly usage limit, resets Nov 4 05:00 UTC); changes after
+  the last independent review (7110d41, a785d15, 58f8529, f358ba8, the wording/credit/headline commits) were self-checked
+  against the rules (banned wording, SIMULATED labels, cleared/granted/approved, keys, unmeasured claims, credits).

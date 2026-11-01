@@ -123,6 +123,17 @@ tables in `app.py` show the brand written on each report.
 Small pre-existing changes: `NormalizedEventRecord.report_source` column (with a
 one-time `ALTER TABLE` + backfill in `Database`), `ingestion/pipeline.py` stores it.
 
+### Added Nov 1–2 (the final stretch)
+
+| Path | What it is |
+|---|---|
+| `web/src/roadmap.ts` | The one validation sentence on the Home Trust card (kept identical in the README): validation path to FDA AI/ML guidance is on the roadmap; this build is not validated |
+| `web/src/layoutFlag.ts`, `web/src/v2/*` | The v2 layout (sidebar, saved chats in this browser only, Home cards, sections); `?layout=classic` keeps the old layout; `VITE_LAYOUT_DEFAULT=v2` on the web project makes v2 the default |
+| `web/src/sweepLabel.ts` | "Latest sweep · <run day> (openFDA week <start>–<end>)" built from the stored sweep file, never typed in |
+| `src/maudesignal/copilot/dates.py` + `gate` `DateShift` / `NoData` | The copilot is told today's date and the stored data window; a range whose year is not in the data is moved one year only if the moved range lies inside the window, and the claim gate withholds a sentence that names the wrong year or states "0 reports" for a range with no data |
+| `tests/unit/test_integration_fixes.py`, `web/src/v2/integrationFixes.test.tsx` | Tests for the review fixes (unknown profile ids, route lists in `index.html`, research time bound, answer-cache day) |
+| `docs/hackathon/SUBMISSION_DRAFT.md` | Reviewer credits (individuals, personal capacity) and the one-line video caption |
+
 Plus this manifest, the demo video, and the submission write-up.
 
 ### Added Oct 28, later (design system, themes, memory, compare, MHRA)
