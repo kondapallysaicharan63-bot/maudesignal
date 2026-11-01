@@ -930,3 +930,135 @@
   color: var(--ink);
   border: 1px solid var(--rule-strong);
 }
+
+/* --- Device lifecycle profiles (simulated) -------------------------------------------------- */
+.ms2-simtag {
+  display: inline-block;
+  margin: 0 0 12px;
+  padding: 2px 8px;
+  font: 600 13px/1.4 var(--font-sans);
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  background: var(--surface-sunk);
+  border: 1px dashed var(--rule-strong);
+  border-radius: var(--radius-xs);
+}
+.ms2-realbox {
+  border-left: 4px solid var(--accent);
+}
+.ms2-realtag {
+  margin: 0;
+  font: 600 13px/1.4 var(--font-sans);
+  color: var(--accent);
+}
+.ms2-facts {
+  display: grid;
+  grid-template-columns: minmax(0, 14rem) minmax(0, 1fr);
+  gap: 6px 16px;
+  margin: 0;
+}
+.ms2-facts > div {
+  display: contents;
+}
+.ms2-facts dt {
+  color: var(--ink-2);
+}
+.ms2-facts dd {
+  margin: 0;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+@media (max-width: 479px) {
+  .ms2-facts {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .ms2-facts dd {
+    margin-bottom: 8px;
+  }
+}
+.ms2-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ms2-list > li {
+  padding: 8px 0;
+  border-top: 1px solid var(--rule);
+  overflow-wrap: anywhere;
+}
+.ms2-list > li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.ms2-timeline,
+.ms2-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.ms2-chart {
+  max-width: 40rem;
+}
+.ms2-tl {
+  margin: 12px 0 0 6px;
+  padding: 0 0 0 16px;
+  list-style: none;
+  border-left: 2px solid var(--rule-strong);
+}
+.ms2-tl > li {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding: 4px 0;
+}
+.ms2-tl > li::before {
+  content: '';
+  position: absolute;
+  left: -23px;
+  top: 11px;
+  width: 12px;
+  height: 12px;
+  box-sizing: border-box;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+}
+.ms2-tl > li[data-planned]::before {
+  background: var(--surface);
+  border: 2px dashed var(--ink-3);
+}
+.ms2-tl-date {
+  min-width: 7.5rem;
+  color: var(--ink-2);
+}
+.ms2-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: 12px;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+}
+.ms2-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
+}
+.ms2-tile-n {
+  font: 500 32px/1.1 var(--font-serif);
+  color: var(--ink);
+}
+.ms2-tile-l {
+  font-size: 15px;
+  color: var(--ink-2);
+}
+@media (max-width: 479px) {
+  .ms2-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

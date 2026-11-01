@@ -9,10 +9,13 @@ export const SIGNALS_TABS = ['ranked', 'trend', 'unfiled', 'alerts'] as const
 export const DEVICES_TABS = ['apply', 'yours'] as const
 export const EVIDENCE_TABS = ['capa', 'review', 'approve', 'audit'] as const
 export const CONNECT_TABS = ['muse', 'claude', 'api'] as const
+/** The tabs of a simulated device's lifecycle profile (/devices/<id>, /devices/<id>/<tab>). */
+export const PROFILE_TABS = ['overview', 'design', 'vv', 'regulatory', 'market', 'postmarket', 'people'] as const
 export type SignalsTab = (typeof SIGNALS_TABS)[number]
 export type DevicesTab = (typeof DEVICES_TABS)[number]
 export type EvidenceTab = (typeof EVIDENCE_TABS)[number]
 export type ConnectTab = (typeof CONNECT_TABS)[number]
+export type ProfileTab = (typeof PROFILE_TABS)[number]
 
 export type Route =
   | { page: 'home' }
@@ -20,6 +23,8 @@ export type Route =
   | { page: 'chat'; id: string | null }
   | { page: 'signals'; tab: SignalsTab }
   | { page: 'devices'; tab: DevicesTab; device?: string }
+  /** A simulated device's lifecycle profile. */
+  | { page: 'profile'; id: string; tab: ProfileTab }
   | { page: 'evidence'; tab: EvidenceTab }
   | { page: 'connect'; tab: ConnectTab }
   | { page: 'workflow'; id: WorkflowId; code?: string }
@@ -73,6 +78,7 @@ export function parseRoute(pathname: string): Route {
     case 'signals':
       return { page: 'signals', tab: pick(SIGNALS_TABS, a, 'ranked') }
     case 'devices': {
+      if (a && !DEVICES_TABS.includes(a as DevicesTab)) return { page: 'profile', id: dec(a), tab: pick(PROFILE_TABS, b, 'overview') }
       const tab = pick(DEVICES_TABS, a, 'apply')
       return tab === 'apply' && b ? { page: 'devices', tab, device: dec(b) } : { page: 'devices', tab }
     }
@@ -108,6 +114,8 @@ export function formatRoute(r: Route): string {
       return `signals/${r.tab}`
     case 'devices':
       return r.device ? `devices/${r.tab}/${enc(r.device)}` : `devices/${r.tab}`
+    case 'profile':
+      return r.tab === 'overview' ? `devices/${enc(r.id)}` : `devices/${enc(r.id)}/${r.tab}`
     case 'evidence':
       return `evidence/${r.tab}`
     case 'connect':
@@ -161,6 +169,8 @@ export function routeName(r: Route): string {
       return `${r.page}:${r.tab}`
     case 'devices':
       return r.device ? `devices:${r.tab}:${r.device}` : `devices:${r.tab}`
+    case 'profile':
+      return `devices:profile:${r.tab}`
     case 'workflow':
       return `workflow:${r.id}`
     case 'thread':

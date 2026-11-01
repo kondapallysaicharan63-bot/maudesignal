@@ -35,7 +35,9 @@ offline. Each must show an honest message, no crash and no invented data.
 top 3 real alerts and "View all", New chat saving the chat before it, Recents (reopen, rename, delete),
 Ctrl K search, refresh and Back on ``/chat/<id>``, every section and subtab, the bell (real alerts only),
 ``?r=TEST1``, the chat chrome, keyboard and labels with axe, no sideways scroll and the phone drawer,
-the other themes (smoke) and the interface font. Live calls are route-mocked ($0).
+the other themes (smoke), the interface font, and the simulated device profiles (all 12 at
+``/devices/<id>``, every tab labelled SIMULATED on screen and in the title, the Our devices tiles,
+Back and refresh, every theme). Live calls are route-mocked ($0).
 
 ``--suite smoke`` runs the short pass the post-deploy smoke test uses (chromium, 1440 and 390,
 light): chat, camera upload, alert panel.
@@ -2566,6 +2568,148 @@ def v2_s_saved_edge_cases(env: Env) -> str:
     return "old-shape chat opens; refused storage says 'Not saved'; Home and refresh stay in v2"
 
 
+# --- v2 simulated device lifecycle profiles (/devices/<id>) ------------------------------------
+
+PROFILE_TABS = ("overview", "design", "vv", "regulatory", "market", "postmarket", "people")
+SIM_LABEL = "SIMULATED — sample data"
+PROFILE_THEMES = ("light", "dark", "contrast", "black", "pink")
+
+
+def profile_ids() -> list[str]:
+    """The simulated device ids, read from the stored company.json the build serves."""
+    data = json.loads((HERE.parent.parent / "web" / "public" / "data" / "company.json").read_text())
+    return [str(d["id"]) for d in data["devices"]]
+
+
+def profile_tab(env: Env, tab: str) -> None:
+    """Open a profile tab: a click on a computer, the View menu below 480 px."""
+    if env.width < 480:
+        menu = env.page.get_by_test_id("profile-viewpick")
+        if not menu.is_visible():
+            raise AssertionError("no View menu on the profile below 480 px")
+        menu.select_option(tab)
+    else:
+        env.page.get_by_test_id(f"tab-{tab}").click()
+    env.page.wait_for_timeout(120)
+
+
+def profile_check(env: Env, did: str, tab: str) -> None:
+    """The open tab is the one asked for, labelled SIMULATED on screen and in the title, no sideways scroll."""
+    sel = env.page.get_by_test_id(f"tab-{tab}")
+    if sel.get_attribute("aria-selected") != "true":
+        raise AssertionError(f"{did}/{tab} is not selected")
+    if env.page.locator("[role=tab][aria-selected=true]").count() != 1:
+        raise AssertionError(f"{did}: more than one tab open")
+    label = env.page.locator("#profile-panel [data-testid=sim-tab-label]")
+    if label.count() != 1 or not label.is_visible() or SIM_LABEL not in label.inner_text():
+        raise AssertionError(f"{did}/{tab}: no visible SIMULATED label in the panel")
+    title = env.page.title()
+    if SIM_LABEL not in title:
+        raise AssertionError(f"{did}/{tab}: the document title has no SIMULATED label ({title!r})")
+    want = f"/devices/{did}" if tab == "overview" else f"/devices/{did}/{tab}"
+    if not v2_path(env).endswith(want):
+        raise AssertionError(f"{did}/{tab} address is {v2_path(env)}")
+    if len(env.page.locator("#profile-panel").inner_text().strip()) < 60:
+        raise AssertionError(f"{did}/{tab}: the panel is empty")
+    if env.overflow() > 0:
+        raise AssertionError(f"{did}/{tab}: {env.overflow()} px sideways scroll")
+    text = env.page.locator("#main-v2").inner_text()
+    sim = text.split("Real FDA data · MAUDE")[0]
+    if re.search(r"fda[- ]approved|\bvalidated\b|\bsafe\b|\bunsafe\b|draft capa", sim, re.I):
+        raise AssertionError(f"{did}/{tab}: banned wording on a simulated page")
+    if re.search(r"\bK\d{6}\b", sim):
+        raise AssertionError(f"{did}/{tab}: a real-looking K-number is shown")
+
+
+def v2_s_profiles_all(env: Env) -> str:
+    """Every simulated device's profile opens at /devices/<id>, and every tab carries the SIMULATED label."""
+    ids = profile_ids()
+    for did in ids:
+        v2_open(env, f"devices/{did}")
+        env.page.wait_for_selector(f"[data-testid=device-profile][data-id='{did}']", timeout=15_000)
+        if not env.page.get_by_test_id("profile-banner").is_visible():
+            raise AssertionError(f"{did}: no SIMULATED banner")
+        for tab in PROFILE_TABS:
+            if tab != "overview":
+                profile_tab(env, tab)
+            profile_check(env, did, tab)
+        if did == ids[0]:
+            env.shot("v2-profile-people")
+    return f"{len(ids)} profiles x {len(PROFILE_TABS)} tabs open, labelled SIMULATED in the panel and title, 0 px sideways"
+
+
+def v2_s_profiles_nav(env: Env) -> str:
+    """Our devices tiles; a row opens /devices/<id> keeping ?r= and the layout; Back and refresh work."""
+    v2_open(env, "devices/apply", "r=TEST1")
+    env.page.wait_for_selector("[data-testid=device-tiles]", timeout=15_000)
+    tiles = env.page.get_by_test_id("device-tiles").inner_text()
+    if SIM_LABEL not in tiles or "Under FDA review" not in tiles or "Open CAPAs" not in tiles:
+        raise AssertionError(f"the device tiles are missing or unlabelled: {tiles[:160]!r}")
+    env.shot("v2-devices-dashboard")
+    env.page.locator("#main-v2 button[aria-label$='Open.']").first.click()
+    env.page.wait_for_selector("[data-testid=device-profile]", timeout=15_000)
+    did = str(env.page.get_by_test_id("device-profile").get_attribute("data-id"))
+    if not v2_path(env).endswith(f"/devices/{did}"):
+        raise AssertionError(f"a device row opened {v2_path(env)}, not /devices/{did}")
+    q = str(env.page.evaluate("location.search"))
+    if "r=TEST1" not in q or "layout=v2" not in q:
+        raise AssertionError(f"the query string was not kept: {q}")
+    profile_check(env, did, "overview")
+    profile_tab(env, "regulatory")
+    profile_tab(env, "postmarket")
+    profile_check(env, did, "postmarket")
+    real = env.page.get_by_test_id("real-patterns")
+    if real.count() != 1 or "Real FDA data" not in real.inner_text():
+        raise AssertionError("Post-market has no separate real FDA data box")
+    env.page.reload(wait_until="load")
+    env.page.wait_for_selector("[data-testid=device-profile]", timeout=15_000)
+    profile_check(env, did, "postmarket")
+    env.page.go_back(wait_until="load")
+    env.page.wait_for_timeout(300)
+    profile_check(env, did, "regulatory")
+    env.page.go_back(wait_until="load")
+    env.page.go_back(wait_until="load")
+    env.page.wait_for_timeout(300)
+    if not v2_path(env).endswith("/devices/apply"):
+        raise AssertionError(f"Back did not return to Our devices: {v2_path(env)}")
+    env.page.wait_for_selector("[data-testid=device-tiles]", timeout=10_000)
+    # A fresh tab on the bare address opens the profile in v2 (the Vercel rewrite covers /devices/:path*).
+    p2 = env.page.context.new_page()
+    p2.goto(env.args.url.rstrip("/") + f"/devices/{did}/vv", wait_until="load")
+    p2.wait_for_selector("[data-testid=device-profile]", timeout=30_000)
+    ok = p2.get_by_test_id("tab-vv").get_attribute("aria-selected") == "true"
+    p2.close()
+    if not ok:
+        raise AssertionError("a fresh tab on /devices/<id>/vv did not open that tab")
+    return f"tiles labelled; row -> /devices/{did} with ?r= kept; refresh and Back keep the tab; bare address opens v2"
+
+
+def v2_s_profiles_themes(env: Env) -> str:
+    """A profile in every theme (light, dark, contrast, black, pink): labelled, readable, no sideways scroll."""
+    ids = profile_ids()
+    did = next((i for i in ids if i == "DMC-06"), ids[0])
+    v2_open(env, f"devices/{did}")
+    env.page.wait_for_selector("[data-testid=device-profile]", timeout=15_000)
+    for t in PROFILE_THEMES:
+        v2_pick_theme(env, "side-theme", t)
+        v2_close_drawer(env)
+        got = env.page.evaluate("document.documentElement.getAttribute('data-theme')")
+        if got != t:
+            raise AssertionError(f"theme {t} gave data-theme={got}")
+        for tab in ("overview", "vv", "postmarket"):
+            profile_tab(env, tab)
+            profile_check(env, did, tab)
+        same = env.page.evaluate(
+            "(() => { const e = document.querySelector('[data-testid=sim-tab-label]');"
+            " const s = getComputedStyle(e); return s.color === s.backgroundColor })()"
+        )
+        if same:
+            raise AssertionError(f"theme {t}: the SIMULATED label is unreadable")
+        env.shot(f"v2-profile-theme-{t}")
+        profile_tab(env, "overview")
+    return f"{did} in {', '.join(PROFILE_THEMES)}: labelled, 0 px sideways"
+
+
 V2_SCENARIOS: tuple[tuple[str, Callable[[Env], str]], ...] = (
     ("v2 Home: top 3 real alerts, view all, simulated apart", v2_s_home),
     ("v2 new chat saves the old one", v2_s_new_chat),
@@ -2581,6 +2725,9 @@ V2_SCENARIOS: tuple[tuple[str, Callable[[Env], str]], ...] = (
     ("v2 themes smoke", v2_s_themes),
     ("v2 interface font", v2_s_fonts),
     ("v2 saved-chat edge cases, staying in v2", v2_s_saved_edge_cases),
+    ("v2 device profiles: all 12, every tab, SIMULATED", v2_s_profiles_all),
+    ("v2 device profiles: tiles, row, Back and refresh", v2_s_profiles_nav),
+    ("v2 device profiles: every theme", v2_s_profiles_themes),
 )
 
 
@@ -2871,6 +3018,9 @@ def main(argv: list[str] | None = None) -> int:
                         args.layout == "v2"
                     ):  # the v2 shell: its own scenarios, each opens its own page
                         todo = [("v2 layout", n, f) for n, f in V2_SCENARIOS]
+                        if args.only:  # --only narrows the v2 scenarios too
+                            parts = [x.strip() for x in args.only.split(",") if x.strip()]
+                            todo = [t for t in todo if any(x in t[1] for x in parts)]
                     for group, name, fn in todo:
                         ctx = new_context(pw, browser, engine, width, scheme)
                         page = ctx.new_page()

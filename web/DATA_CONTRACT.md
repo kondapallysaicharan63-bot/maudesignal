@@ -174,6 +174,18 @@ per simulated device marked Needs review (`company:<DEVICE-ID>`); these ids are 
 (same shape as the live answer below, `mode: "recorded"`). When that folder is absent (it is not on this branch) `codes` is `{}` and the
 page says "No stored search yet"; nothing is invented.
 
+### `company_profiles.json` (v2 layout only)
+
+SIMULATED lifecycle profiles of the simulated company's devices, built by `scripts/build_company_profiles.py` (fixed seed and as-of
+date, so a re-run gives the same file; `--check` exits 1 when it is out of date). `{schema_version, simulated: true, banner, company,
+as_of, seed, generated_by, real_fields, profiles: {<device id>: {id, name, model, product_code, owner, overview, milestones, design, vv,
+regulatory, market, postmarket, activity}}}`. Name, model, owner and product code are copied from `company.json`. Only `real_fields` are
+real: the FDA device name (from `company.json`), device class and regulation number (from `demo/company/evidence/<CODE>.json`, else
+the openFDA block of the MAUDE reports in `data/demo/maudesignal_demo.db`; `null` when not stored). Everything else is fictional:
+numbers use `K-SIM-`, `DEN-SIM-`, `P-SIM-`, `Q-SIM-` and `SIM-UDI-`; every person is "(simulated)"; a date after `as_of` is
+`planned: true`. The page `/devices/<id>` reads the real MAUDE patterns and the "Does this apply to us?" history from `company.json`,
+not from this file. The rules are tested in `web/src/v2/profiles.test.tsx` and `tests/unit/test_company_profiles.py`.
+
 ## Feedback and visit pings
 
 `/v1/visit` fires once per view per session whenever an API base is configured. The body is
