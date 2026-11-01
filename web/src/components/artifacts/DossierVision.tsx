@@ -67,7 +67,7 @@ export function DossierTab({ dossier, v2 = false }: { dossier: Dossier; v2?: boo
       </div>
       {v2 ? (
         <details className="ms2-made mt-4" data-testid="how-made">
-          <summary>How this was made</summary>
+          <summary>Who wrote this</summary>
           <ul>
             {dossier.narrative && (
               <li>
