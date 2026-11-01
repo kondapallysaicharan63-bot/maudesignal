@@ -317,6 +317,8 @@ export async function investigate(
       : { ok: false, kind: 'bad-response', message: 'The answer could not be read, so nothing is shown.' }
   }
   const e = errorOf(body)
+  if (res.status === 504 || e.code === 'investigate_timeout')
+    return { ok: false, kind: 'timeout', message: 'The search took too long and was stopped. Nothing is shown. Try again, or try a narrower description.' }
   if (res.status === 422 && e.code === 'patient_data') return { ok: false, kind: 'patient_data', message: e.message || 'Please remove patient details and send again.' }
   if (res.status === 422) return { ok: false, kind: 'invalid', message: e.message || 'The product code or the description could not be used.' }
   if (res.status === 429) return { ok: false, kind: 'rate', message: e.message || 'Limit reached. Try again later.' }

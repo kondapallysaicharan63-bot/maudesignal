@@ -31,6 +31,7 @@ import time
 from collections import defaultdict
 from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FutureTimeout
 from dataclasses import dataclass, replace
 from datetime import date, datetime, timedelta
 from typing import Any, Literal, Protocol
@@ -491,16 +492,18 @@ class DeadlineExceededError(MaudeSignalError):
     """The overall time limit of one investigation ran out before this call could start."""
 
 
-DEFAULT_DEADLINE_S = 40.0
-MAX_DEADLINE_S = 45.0
+DEFAULT_DEADLINE_S = 30.0
+MAX_DEADLINE_S = 40.0
 CALL_TIMEOUT_S = 10.0
+#: Hard wall-clock cap per openFDA call (an httpx timeout applies per phase, not per call).
+CALL_WALL_S = 8.0
 
 
 class Budget:
     """The overall time limit: every openFDA call asks it for its own timeout."""
 
     def __init__(self, deadline_s: float, clock: Callable[[], float] = time.monotonic) -> None:
-        """Start the clock now; ``deadline_s`` is clamped to 45 seconds."""
+        """Start the clock now; ``deadline_s`` is clamped to 40 seconds."""
         self._clock = clock
         self._end = clock() + min(max(deadline_s, 1.0), MAX_DEADLINE_S)
         self.expired = False
@@ -515,7 +518,14 @@ class Budget:
         if left <= 0.05:
             self.expired = True
             raise DeadlineExceededError("time limit")
-        return source.run(query, timeout_s=min(CALL_TIMEOUT_S, left))
+        pool = ThreadPoolExecutor(max_workers=1)
+        future = pool.submit(source.run, query, timeout_s=min(CALL_TIMEOUT_S, left))
+        try:
+            return future.result(timeout=min(CALL_WALL_S, left))
+        except FutureTimeout as exc:
+            raise OpenFDAUnavailableError("openFDA call took longer than its time limit") from exc
+        finally:
+            pool.shutdown(wait=False)
 
 
 # ---------------------------------------------------------------------------
@@ -684,7 +694,7 @@ def run_investigation(
         product_code: Three-letter FDA product code, upper case.
         description: The device problem as typed. Used for keywords only; not kept.
         now: The retrieval time (UTC).
-        deadline_s: Overall time limit in seconds (at most 45). After it, the calls not yet
+        deadline_s: Overall time limit in seconds (at most 40). After it, the calls not yet
             started are skipped and the page says so.
         clock: Monotonic clock (tests).
 

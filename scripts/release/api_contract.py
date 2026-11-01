@@ -907,8 +907,8 @@ class Contract:
                 and r.headers.get("cache-control", "").lower() == "no-store"
             )
         self.rep.ok(
-            "investigate: keyless; 200 with the full shape, no description; 502 if openFDA is down",
-            shape_ok or r.status == 502,
+            "investigate: keyless; 200 with the full shape; 502/503/504 if openFDA is down or slow",
+            shape_ok or r.status in (502, 503, 504),
             f"HTTP {r.status}",
             group="public",
         )

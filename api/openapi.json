@@ -2235,6 +2235,12 @@
           },
           "502": {
             "description": "openFDA unreachable."
+          },
+          "503": {
+            "description": "openFDA is limiting requests (code openfda_limited); try later."
+          },
+          "504": {
+            "description": "The search ran out of time (code investigate_timeout)."
           }
         },
         "summary": "Investigate a complaint against public FDA data (no key, no model)",
