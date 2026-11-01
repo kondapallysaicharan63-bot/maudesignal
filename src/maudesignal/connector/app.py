@@ -55,6 +55,7 @@ from maudesignal.connector.errors import (
     InvalidInputError,
     NotFoundError,
     body_shape_message,
+    exc_where,
     field_name,
 )
 from maudesignal.connector.feedback import looks_like_phi, mount_feedback
@@ -850,7 +851,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.exception_handler(Exception)
     async def _unexpected(_: Request, exc: Exception) -> Response:
-        logger.error("connector_unexpected_error", error_type=type(exc).__name__)
+        logger.error("connector_unexpected_error", **exc_where(exc))
         return _error(500, "internal_error", "Something went wrong on the server.")
 
     @app.middleware("http")
@@ -892,11 +893,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             try:
                 response = await call_next(request)
             except Exception as exc:  # noqa: BLE001 - keep the CORS headers on a failure too
-                logger.error(
-                    "connector_unexpected_error",
-                    error_type=type(exc).__name__,
-                    path=request.url.path,
-                )
+                logger.error("connector_unexpected_error", path=request.url.path, **exc_where(exc))
                 response = _error(500, "internal_error", "Something went wrong on the server.")
         response.headers["Vary"] = "Origin"
         if allowed:

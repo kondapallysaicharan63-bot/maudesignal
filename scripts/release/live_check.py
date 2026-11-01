@@ -31,6 +31,7 @@ import re
 import sys
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -59,6 +60,25 @@ def cost_of(body: dict[str, Any]) -> float | None:
     if isinstance(c, bool) or not isinstance(c, (int, float)) or c != c or c < 0:
         return None
     return float(c)
+
+
+KEY_WITHHELD = "[withheld: key-shaped text]"
+
+
+def safe(value: Any) -> Any:
+    """``value`` with every string that holds a key-shaped substring replaced (recursive)."""
+    if isinstance(value, str):
+        return KEY_WITHHELD if find_key_shapes(value) else value
+    if isinstance(value, list):
+        return [safe(v) for v in value]
+    if isinstance(value, dict):
+        return {k: safe(v) for k, v in value.items()}
+    return value
+
+
+def say(message: str) -> None:
+    """Print one line to the log, after the key-shape filter (remote text never goes raw)."""
+    print(safe(message), flush=True)
 
 
 def describe(i: int, question: str, budget: Budget) -> dict[str, Any]:
@@ -105,21 +125,16 @@ def describe(i: int, question: str, budget: Budget) -> dict[str, Any]:
         "cors_header_present": bool(acao),
         "cost_usd": got,
         "answer_text": text,
-        "transport_error": r.error if hasattr(r, "error") else "",
+        "transport_error": r.error,
     }
+    row = safe(row)  # filter BEFORE anything is printed or written
     for k, v in row.items():
-        if k == "answer_text":
-            print(f"  answer_text: {v}", flush=True)
-        elif k == "trace_steps":
+        if k == "trace_steps":
             for step in v:
-                print(f"  trace: {step}", flush=True)
+                say(f"  trace: {step}")
         else:
-            print(f"  {k}: {v}", flush=True)
-    note = "  (tool rounds are not reported by the API: tool_calls is the count in the trace note)"
-    print(note, flush=True)
-    if find_key_shapes(json.dumps(row)):
-        row["answer_text"] = "[withheld: key-shaped text in the response]"
-        print("  WARNING: a key-shaped string appeared in the response; text withheld", flush=True)
+            say(f"  {k}: {v}")
+    say("  (tool rounds are not reported by the API: tool_calls is the count in the trace note)")
     return row
 
 
@@ -163,7 +178,9 @@ def browser_pass(web: str, out_dir: Path, budget: Budget) -> dict[str, Any]:
             result["error_text"] = err.inner_text() if err.count() else None
             result["chip_ok"] = result["chip_text"] == CHIP_TEXT
             result["page_has_unreachable"] = "could not be reached" in page.inner_text("body")
-            print(f"  chip: {result['chip_text']!r}  error: {result['error_text']!r}", flush=True)
+            result["chip_text"] = safe(result["chip_text"])
+            result["error_text"] = safe(result["error_text"])
+            say(f"  chip: {result['chip_text']!r}  error: {result['error_text']!r}")
             page.screenshot(path=str(out_dir / "live-1440.png"), full_page=True)
             page.set_viewport_size({"width": 390, "height": 844})  # same answer, phone width
             page.wait_for_timeout(500)
@@ -188,7 +205,7 @@ def delete_test_entries(api: str, admin: str) -> dict[str, Any]:
         print("\nMAUDESIGNAL_ADMIN_KEY_SMOKE not set: TEST entries were not deleted.", flush=True)
         return {"deleted": None}
     r = request("POST", api + "/v1/admin/delete-test", headers={"X-Admin-Key": admin})
-    print(f"\n/v1/admin/delete-test: HTTP {r.status} {r.text[:120]}", flush=True)
+    say(f"\n/v1/admin/delete-test: HTTP {r.status} {r.text[:120]}")
     s = request("GET", api + "/v1/admin/summary", headers={"X-Admin-Key": admin})
     codes = (s.json() or {}).get("codes") if isinstance(s.json(), dict) else None
     left = [c for c in (codes or []) if isinstance(c, dict) and c.get("code") == TEST_REF]
@@ -217,7 +234,8 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     _API, _WEB = args.api.rstrip("/"), args.web.rstrip("/")
     admin = os.environ.get("MAUDESIGNAL_ADMIN_KEY_SMOKE", "").strip()
-    if admin and not _API.startswith("https://maudesignal-api"):
+    parts = urlparse(_API)
+    if admin and not (parts.scheme == "https" and parts.hostname == "maudesignal-api.vercel.app"):
         print("refusing to send the admin key to an unexpected API host", file=sys.stderr)
         return 2
     args.out_dir.mkdir(parents=True, exist_ok=True)

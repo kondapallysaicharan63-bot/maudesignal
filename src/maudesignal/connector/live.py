@@ -57,6 +57,7 @@ Rules enforced here:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import hashlib
 import hmac
 import io
@@ -98,6 +99,7 @@ from maudesignal.connector.errors import (
     InvalidInputError,
     LiveTimeoutError,
     SourceUnavailableError,
+    exc_where,
 )
 from maudesignal.connector.feedback import clean_ref, looks_like_phi
 from maudesignal.connector.forbidden import is_clean
@@ -204,17 +206,17 @@ OPENFDA_CALL_WALL_S = 8.0
 #: Whole-request time for a typed live question. Vercel kills the function at ``maxDuration``
 #: (60 s) with a reply that has no CORS headers (the browser then reports a network failure),
 #: so the model work must stop well before that, leaving room for a cold start, the claim gate
-#: and the response. Override with ``MAUDESIGNAL_LIVE_ASK_BUDGET_S`` (clamped to 10..55).
+#: and the response. Override with ``MAUDESIGNAL_LIVE_ASK_BUDGET_S`` (clamped to 10..45).
 DEFAULT_ASK_BUDGET_S = 40.0
 ASK_BUDGET_ENV = "MAUDESIGNAL_LIVE_ASK_BUDGET_S"
 ASK_BUDGET_MIN_S = 10.0
-ASK_BUDGET_MAX_S = 55.0
+ASK_BUDGET_MAX_S = 45.0
 #: Extra seconds the request may run past the budget before it is answered 504 regardless.
-ASK_HARD_GRACE_S = 5.0
+ASK_HARD_GRACE_S = 4.0
 LIVE_TIMEOUT_MESSAGE = "That question took too long. Try a shorter or narrower question."
 VOICE_TRANSCRIBE_TIMEOUT_S = 15.0
 #: One deadline for the whole voice request (transcription plus answer), under Vercel's 60 s.
-VOICE_REQUEST_BUDGET_S = 52.0
+VOICE_REQUEST_BUDGET_S = 44.0
 MIN_CALL_BUDGET_S = 3.0
 CALL_TIMEOUT_S = 25.0
 
@@ -424,7 +426,7 @@ class DeadlineClient:
     def create(self, **kwargs: Any) -> Any:
         """One chat call with a timeout of at most the time left."""
         left = self.left()
-        if left < MIN_CALL_BUDGET_S:
+        if left < MIN_CALL_BUDGET_S - 1.0:  # lower than _DeadlineFirst's: it cannot trip after it
             raise LiveTimeoutError(LIVE_TIMEOUT_MESSAGE)
         client = self._inner
         if hasattr(client, "with_options"):
@@ -1123,10 +1125,18 @@ def mount_live(
         mac = hmac.new(pepper, client_address(request).encode("utf-8"), hashlib.sha256)
         return "live:" + mac.hexdigest()[:24]
 
-    def runtime(request_usd: float, budget_s: float) -> LiveAskRuntime:
-        """Ask settings for one request: its cost cap and the time its model calls may take."""
+    def runtime(
+        request_usd: float, budget_s: float, *, deadline: float | None = None
+    ) -> LiveAskRuntime:
+        """Ask settings for one request: its cost cap and when its model calls must stop.
+
+        ``deadline`` (a reading of the backend clock) is measured from the start of the
+        request; without it the budget starts now.
+        """
         return LiveAskRuntime(
-            agent_factory=be.agent_factory(be.clock() + budget_s, be.clock),
+            agent_factory=be.agent_factory(
+                deadline if deadline is not None else be.clock() + budget_s, be.clock
+            ),
             live_enabled=lambda: be.live_enabled() and not no_shared_ledger,
             caps=SpendCaps(
                 session_usd=request_usd,
@@ -1170,9 +1180,7 @@ def mount_live(
                 # An exception left to Starlette's outermost handler is answered outside this
                 # middleware, so the browser would get no CORS headers and report a network
                 # error. Answer here instead.
-                logger.error(
-                    "live_unexpected_error", error_type=type(exc).__name__, path=request.url.path
-                )
+                logger.error("live_unexpected_error", path=request.url.path, **exc_where(exc))
                 response = _err(500, "internal_error", "Something went wrong on the server.")
         response.headers["Vary"] = "Origin"
         if allowed:
@@ -1268,12 +1276,14 @@ def mount_live(
 
     # --- ask ---------------------------------------------------------------------------
 
-    def do_ask(body: AskIn) -> AskOutcome:
+    def do_ask(body: AskIn, deadline: float) -> AskOutcome:
+        if deadline - be.clock() < MIN_CALL_BUDGET_S:  # the budget went while this waited
+            raise LiveTimeoutError(LIVE_TIMEOUT_MESSAGE)
         return ask_detailed(
             data,
             with_code(body.question, body.product_code),
             key_id=LEDGER_ID,
-            runtime=runtime(cfg.ask_usd, cfg.ask_budget_s),
+            runtime=runtime(cfg.ask_usd, cfg.ask_budget_s, deadline=deadline),
             history=history_pairs(body.history),
             raise_on_timeout=True,
         )
@@ -1344,10 +1354,13 @@ def mount_live(
         refused, remaining = daily_refusal(request, "ask")
         if refused is not None:
             return refused
+        deadline = started + cfg.ask_budget_s  # from the request start, not from the thread
         try:
             outcome, found = await asyncio.wait_for(
-                asyncio.gather(run_in_threadpool(do_ask, body), research_for(request, body)),
-                timeout=cfg.ask_budget_s + ASK_HARD_GRACE_S,
+                asyncio.gather(
+                    run_in_threadpool(do_ask, body, deadline), research_for(request, body)
+                ),
+                timeout=max(0.0, deadline + ASK_HARD_GRACE_S - be.clock()),
             )
         except (LiveTimeoutError, TimeoutError):
             # The model stopped at its budget, or something hung past it: a clean error, no
@@ -1366,7 +1379,12 @@ def mount_live(
             if cacheable(body.question, r, has_history=bool(body.history)) and chat.has_fact(
                 response
             ):
-                live_cache.put(body.question, body.product_code, chat.cache_entry(response))
+                entry = chat.cache_entry(response)
+                with contextlib.suppress(Exception):  # a slow or failing cache never fails an ask
+                    await asyncio.wait_for(
+                        run_in_threadpool(live_cache.put, body.question, body.product_code, entry),
+                        timeout=2.0,
+                    )
         if found is not None:
             response["research"] = found  # added after caching: never stored with the answer
         log("ask", response["mode"], started, tier="live")

@@ -24,6 +24,27 @@ class ConnectorError(MaudeSignalError):
         self.suggestions: list[str] = list(suggestions or [])
 
 
+def exc_where(exc: BaseException, limit: int = 6) -> dict[str, object]:
+    """Where an exception came from, safe to log: type, innermost our-code frame, our frames.
+
+    Only frames inside the ``maudesignal`` package are listed (``path:line function``); no
+    message text, no local values and no request content is included, so a question never
+    reaches the log through here.
+    """
+    import traceback
+
+    frames = [
+        f"{f.filename.split('maudesignal/')[-1]}:{f.lineno} {f.name}"
+        for f in traceback.extract_tb(exc.__traceback__)
+        if "maudesignal" in f.filename.replace("\\", "/")
+    ]
+    return {
+        "error_type": type(exc).__name__,
+        "where": frames[-1] if frames else "",
+        "frames": frames[-limit:],
+    }
+
+
 class InvalidInputError(ConnectorError):
     """The caller's input is not usable (maps to 422)."""
 

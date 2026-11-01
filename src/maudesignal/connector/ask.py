@@ -828,6 +828,7 @@ def ask_detailed(
         except LiveTimeoutError:
             if raise_on_timeout:
                 raise  # the typed live route answers 504 live_timeout
+            logger.warning("connector_ask_live_failed", error_type="LiveTimeoutError")
             reason = "model_error"
             attempt_ms = round((time.perf_counter() - started) * 1000.0, 1)
         except (

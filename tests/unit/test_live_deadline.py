@@ -8,6 +8,8 @@ request that runs into the hosting platform's function limit instead of stopping
 
 from __future__ import annotations
 
+import json
+import time
 from pathlib import Path
 from typing import Any
 
@@ -141,3 +143,102 @@ def test_deadline_client_raises_live_timeout_before_calling() -> None:
     with pytest.raises(LiveTimeoutError):
         client.create(model="m")
     assert called == []
+
+
+# --- review follow-ups ------------------------------------------------------------------
+
+
+def test_budget_clamp_leaves_room_below_the_function_limit() -> None:
+    vercel = json.loads((Path(__file__).resolve().parents[2] / "vercel.json").read_text("utf-8"))
+    max_duration = vercel["functions"]["api/index.py"]["maxDuration"]
+    assert live_module.ASK_BUDGET_MAX_S + live_module.ASK_HARD_GRACE_S + 10 < max_duration
+    assert live_module.VOICE_REQUEST_BUDGET_S + 10 < max_duration
+    assert (
+        LiveConfig.from_env({ASK_BUDGET_ENV: "9999"}).ask_budget_s == live_module.ASK_BUDGET_MAX_S
+    )
+
+
+def test_a_call_that_never_starts_leaves_no_hold() -> None:
+    holds: list[int] = []
+
+    class Guarded:  # stands in for guard.wrap(...): one hold per call that reaches it
+        def __init__(self) -> None:
+            self.chat = type("C", (), {"completions": self})()
+
+        def create(self, **_k: Any) -> Any:
+            holds.append(1)
+            return "ok"
+
+    t = [0.0]
+    client = live_module._DeadlineFirst(Guarded(), 10.0, lambda: t[0])
+    assert client.chat.completions.create(model="m") == "ok" and holds == [1]
+    t[0] = 8.5  # under MIN_CALL_BUDGET_S left
+    with pytest.raises(LiveTimeoutError):
+        client.chat.completions.create(model="m")
+    assert holds == [1], "the refused call reserved nothing"
+
+
+def test_inner_check_is_looser_than_the_outer_one() -> None:
+    called: list[int] = []
+
+    class Completions:
+        def create(self, **_k: Any) -> Any:
+            called.append(1)
+            return "ok"
+
+    class Inner:
+        chat = type("C", (), {"completions": Completions()})()
+
+    t = [0.0]
+    inner = DeadlineClient(Inner(), 10.0, lambda: t[0])
+    t[0] = 7.5  # left 2.5: the outer layer would refuse, the inner one must not
+    assert inner.create(model="m") == "ok"
+
+
+def test_a_blocked_ask_thread_still_gets_a_504_with_cors(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(live_module, "ASK_HARD_GRACE_S", 0.1)
+    env = Env(tmp_path, config=LiveConfig(daily_usd=3.0, burst_per_min=1000, ask_budget_s=0.2))
+
+    # the fake clock never moves, so the deadline check passes and the thread blocks
+    env.backends.agent_factory = lambda _d, _c: (lambda _data, _guard: _Blocking())  # type: ignore[assignment,return-value]
+    r = post(env)
+    assert r.status_code == 504 and r.json()["code"] == "live_timeout"
+    assert r.headers["access-control-allow-origin"] == ORIGIN
+
+
+class _Blocking:
+    """An agent whose ask() blocks the worker thread."""
+
+    def __init__(self) -> None:
+        self._client = object()
+        self.context = type("X", (), {"created_capas": []})()
+
+    def ask(self, _q: str) -> Any:
+        time.sleep(1.0)
+
+
+def test_public_route_500_carries_cors(tmp_path: Path) -> None:
+    from maudesignal.connector.store import ConnectorState
+
+    class BrokenState(ConnectorState):
+        def cache_get(self, key: str) -> Any:
+            raise RuntimeError("the cache exploded")
+
+    env = Env(tmp_path, state=BrokenState())
+    r = env.client.get("/v1/public/check_device_type?product_code=LLZ", headers={"Origin": ORIGIN})
+    assert r.status_code == 500 and r.json()["error"]["code"] == "internal_error"
+    assert r.headers["access-control-allow-origin"] == ORIGIN
+
+
+def test_exc_where_names_our_frame_and_never_the_message() -> None:
+    from maudesignal.connector.errors import exc_where
+
+    try:
+        DeadlineClient(object(), 0.0, lambda: 5.0).create(model="m")
+    except LiveTimeoutError as exc:
+        got = exc_where(exc)
+    assert got["error_type"] == "LiveTimeoutError"
+    assert str(got["where"]).startswith("connector/live.py:")
+    assert "took too long" not in str(got)
