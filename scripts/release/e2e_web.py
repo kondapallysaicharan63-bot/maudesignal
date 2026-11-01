@@ -1618,7 +1618,7 @@ def s_v2_rating_old_api(env: Env) -> str:
     return "older API: quiet 'Rating not saved.', no validation text shown"
 
 
-V2_SCENARIOS: tuple[tuple[str, Callable[[Env], str]], ...] = (
+V2_ANSWER_SCENARIOS: tuple[tuple[str, Callable[[Env], str]], ...] = (
     ("v2: live answer chip, no cost line (mocked)", s_v2_live_chip),
     ("v2: greeting is an Instant answer, no cost line", s_v2_greeting),
     ("v2: recorded answer chip with date (mocked)", s_v2_recorded),
@@ -1807,7 +1807,7 @@ SCENARIOS: tuple[tuple[str, Callable[[Env], str]], ...] = (
     ("no sideways scroll", s_no_sideways_scroll),
     ("axe-core accessibility", s_axe),
     *COMPOSER_SCENARIOS,
-    *V2_SCENARIOS,
+    *V2_ANSWER_SCENARIOS,
 )
 SMOKE = (
     "chat (recorded mode, two turns)",
@@ -1842,7 +1842,7 @@ def v2_url(env: Env, path: str = "", extra: str = "") -> str:
     return f"{base}/{path}?{query}"
 
 
-def v2_answer(question: str, remaining: int | None) -> dict[str, Any]:
+def v2_mock_answer_body(question: str, remaining: int | None) -> dict[str, Any]:
     """A recorded-mode answer that repeats the question (so chat search can find it), no figures."""
     text = f"Recorded sample answer for: {question[:80]}"
     return {
@@ -1876,7 +1876,7 @@ def v2_prepare(env: Env, remaining: int | None = 29) -> None:
             status=200,
             headers=CORS_ANY,
             content_type="application/json",
-            body=json.dumps(v2_answer(q, remaining)),
+            body=json.dumps(v2_mock_answer_body(q, remaining)),
         )
 
     env.page.context.route(ASK_PATH, ask)
@@ -1921,7 +1921,7 @@ def v2_side_click(env: Env, testid: str) -> None:
 def v2_ask(env: Env, text: str) -> None:
     """Ask in the message box and wait for the answer to be written."""
     env.ask(text)
-    env.page.wait_for_selector("[data-testid=answer-sentences] li", timeout=30_000)
+    env.page.wait_for_selector("[data-testid=answer-sentence]", timeout=30_000)
     env.page.wait_for_timeout(300)
 
 
@@ -2003,7 +2003,7 @@ def v2_s_new_chat(env: Env) -> str:
         raise AssertionError(f"the first chat was not saved: {titles}")
     v2_close_drawer(env)
     env.page.get_by_test_id("empty-chip").first.click()
-    env.page.wait_for_selector("[data-testid=answer-sentences] li", timeout=30_000)
+    env.page.wait_for_selector("[data-testid=answer-sentence]", timeout=30_000)
     env.page.wait_for_timeout(300)
     second = v2_path(env)
     titles = v2_recents(env)
@@ -2037,7 +2037,7 @@ def v2_s_recents(env: Env) -> str:
         raise AssertionError(f"reopened chat shows {bubbles}")
     env.page.wait_for_selector("[data-testid=suggestion-chip]", timeout=15_000)
     if (
-        env.page.get_by_test_id("mode-badge").count() != 2
+        env.page.get_by_test_id("model-chip").count() != 2
         or env.page.get_by_test_id("recorded-note").count() != 2
     ):
         raise AssertionError("the reopened answers lost their Recorded label")
@@ -2049,7 +2049,7 @@ def v2_s_recents(env: Env) -> str:
     box.press("Enter")
     env.page.wait_for_timeout(200)
     env.page.reload(wait_until="load")
-    env.page.wait_for_selector("[data-testid=answer-sentences] li", timeout=30_000)
+    env.page.wait_for_selector("[data-testid=answer-sentence]", timeout=30_000)
     titles = v2_recents(env)
     if "Renamed MHRA chat" not in titles:
         raise AssertionError(f"rename was not kept after reload: {titles}")
@@ -2118,7 +2118,7 @@ def v2_s_refresh_back(env: Env) -> str:
     v2_ask(env, "Refresh test question two")
     two = v2_path(env)
     env.page.reload(wait_until="load")
-    env.page.wait_for_selector("[data-testid=answer-sentences] li", timeout=30_000)
+    env.page.wait_for_selector("[data-testid=answer-sentence]", timeout=30_000)
     if (
         v2_path(env) != two
         or env.page.get_by_test_id("user-bubble").first.inner_text().strip()
@@ -2282,8 +2282,8 @@ def v2_s_chat_chrome(env: Env) -> str:
     v2_ask(env, "Many questions left?")
     if env.page.get_by_test_id("questions-left").count():
         raise AssertionError("'questions left' is shown with 29 left")
-    if not env.page.get_by_test_id("mode-badge").first.inner_text().strip():
-        raise AssertionError("no Live / Recorded badge")
+    if not env.page.get_by_test_id("model-chip").first.inner_text().strip():
+        raise AssertionError("no model chip (Live / Recorded)")
     if env.page.locator(PLUS).count() == 0:
         raise AssertionError("the + menu is missing")
     if env.page.get_by_test_id("voice-note").count():
@@ -2295,7 +2295,7 @@ def v2_s_chat_chrome(env: Env) -> str:
             status=200,
             headers=CORS_ANY,
             content_type="application/json",
-            body=json.dumps(v2_answer("few", 3)),
+            body=json.dumps(v2_mock_answer_body("few", 3)),
         ),
     )
     v2_ask(env, "Few questions left?")
