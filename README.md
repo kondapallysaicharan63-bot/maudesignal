@@ -158,18 +158,30 @@ Today: U.S. FDA data (MAUDE, recalls, 510(k)). UK MHRA alerts appear as labelled
 Ideas from testers that are bigger than a half-day change are listed here instead of being built before the
 deadline. (Empty so far.)
 
-### Tomorrow — what testers asked for next, by role
+### Tomorrow — what testers asked for next
 
-Listed by role, without names. Names only after written permission is confirmed.
+By reviewer. Reviewers are credited as individuals, in a personal capacity (see Acknowledgements below).
 
-- **A medical-device quality leader:** a PMS board and note-to-file record you can sign, escalation assessments,
-  measured ROI, and the workflow map (the map and a first decision path on simulated devices are built; saving your own
-  decisions is not).
-- **A pharmacovigilance practitioner:** a known-effects record that Investigate a complaint can feed, and a validation
-  path. Validation path to FDA AI/ML guidance (GMLP principles, lifecycle guidance) is on the roadmap; this build is not
-  validated.
-- **An earlier PMS practitioner (Oct 27):** a user-entered list of device types to watch, taken from your own
-  clinical evaluation report.
+- **Srinivas Sreepada (medical device quality leader):** a PMS board and note-to-file record you can sign, FDA
+  escalation and recall assessments, risk, measured ROI, and the workflow map. The map and a first decision path on
+  simulated devices are built; saving your own decisions is not.
+- **Hemadri Doma (computer system validation / CSA quality manager):** a complaints-team record that Investigate a
+  complaint can feed (the known-effects record), and validation to FDA AI standards before an auditor would accept
+  the tool. Validation path to FDA AI/ML guidance (GMLP principles, lifecycle guidance) is on the roadmap; this build is
+  not validated.
+- **A PMS practitioner (Oct 27):** a user-entered list of device types to watch, taken from your own clinical
+  evaluation report.
+
+### Acknowledgements
+
+Feedback from these reviewers shaped the decision workflow, the complaint-investigation page, the workflow map and the
+ROI page. They are credited as individuals, in a personal capacity.
+
+- **Srinivas Sreepada**, Medical Device Quality Leader (ASQ CQA, CMQ-OE; ISO 13485 lead auditor): PMS board, note to
+  file, FDA escalation and recall assessment, risk; reactive PMS, measured ROI, workflow map.
+- **Hemadri Doma**, Computer System Validation / CSA quality manager, author on FDA's CSA guidance: complaints-team /
+  known-effects record; validation to FDA AI standards before auditor acceptance.
+- **A PMS practitioner (Oct 27)** (earlier feedback): who files the reports, and what a company's own CAPA form decides.
 
 ### Tomorrow — what a quality leader asked for next
 

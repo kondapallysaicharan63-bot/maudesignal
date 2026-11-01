@@ -154,3 +154,16 @@ firsthand (the problem statement is "Build for Your World").
   monitor cron can run.
 - FDA Elsa 4.0 and MAUDE: any sentence about it needs a check against an FDA source by Charan first (fda.gov was not reachable from the build environment); it is not used anywhere in the project until then.
 - The final submit click.
+
+## Reviewer credits (final wording for the submission form)
+
+Credited as individuals, in a personal capacity. No employer names, no endorsement wording, no quotes.
+
+- Srinivas Sreepada, Medical Device Quality Leader (ASQ CQA, CMQ-OE; ISO 13485 lead auditor): PMS board, note to file,
+  FDA escalation and recall assessment, risk; reactive PMS, measured ROI, workflow map.
+- Hemadri Doma, Computer System Validation / CSA quality manager, author on FDA's CSA guidance: complaints-team /
+  known-effects record; validation to FDA AI standards before auditor acceptance.
+- A PMS practitioner (Oct 27).
+
+Video caption (one line): "Reviewed by a medical-device quality leader and a validation specialist; their feedback
+shaped the decision workflow."
