@@ -2710,6 +2710,152 @@ def v2_s_profiles_themes(env: Env) -> str:
     return f"{did} in {', '.join(PROFILE_THEMES)}: labelled, 0 px sideways"
 
 
+def profile_paths() -> dict[str, list[dict[str, Any]]]:
+    """Device id -> its simulated decision paths, read from the stored company_profiles.json."""
+    data = json.loads(
+        (HERE.parent.parent / "web" / "public" / "data" / "company_profiles.json").read_text()
+    )
+    return {k: list(v["decision"]["paths"]) for k, v in data["profiles"].items()}
+
+
+def open_all_paths(env: Env) -> None:
+    """Open every decision-path card (they are <details>) with a click on its summary."""
+    for i in range(env.page.get_by_test_id("decision-path").count()):
+        card = env.page.get_by_test_id("decision-path").nth(i)
+        if card.get_attribute("open") is None:
+            card.locator(":scope > summary").click()
+    env.page.wait_for_timeout(100)
+
+
+def check_path_steps(env: Env, did: str, path: dict[str, Any], card: Any) -> None:
+    """Step through one path: four steps, clause chips with reasons, real evidence apart, outcome and risk."""
+    steps = card.get_by_test_id("dp-step")
+    if steps.count() != 4:
+        raise AssertionError(f"{did}/{path['id']}: {steps.count()} steps, not 4")
+    for i, name in enumerate(("triage", "board", "outcome", "risk")):
+        step = steps.nth(i)
+        step.scroll_into_view_if_needed()
+        if step.get_attribute("data-step") != name or not step.is_visible():
+            raise AssertionError(f"{did}/{path['id']}: step {i + 1} is not {name} or is hidden")
+        chips = step.get_by_test_id("clause-chip")
+        if chips.count() < 1:
+            if name in ("outcome", "risk") and path["state"] == "open":
+                continue  # not reached yet: no outcome, so no clauses
+            raise AssertionError(f"{did}/{path['id']}/{name}: no compliance chip")
+        for j in range(chips.count()):
+            if len(str(chips.nth(j).get_attribute("title"))) < 20:
+                raise AssertionError(f"{did}/{path['id']}/{name}: a chip has no reason on hover")
+        why = step.locator(".ms2-why > summary")
+        why.click()
+        if len(step.locator(".ms2-why li").all_inner_texts()) != chips.count():
+            raise AssertionError(
+                f"{did}/{path['id']}/{name}: 'Why these clauses' lists another count"
+            )
+    board = steps.nth(1)
+    real = board.get_by_test_id("dp-real").inner_text()
+    sim = board.get_by_test_id("dp-company").inner_text()
+    if "Real FDA data" not in real or "SIMULATED" in real:
+        raise AssertionError(f"{did}/{path['id']}: the real evidence panel is not labelled real")
+    if SIM_LABEL not in sim:
+        raise AssertionError(f"{did}/{path['id']}: the company side is not labelled SIMULATED")
+    if path["state"] == "decided":
+        out = steps.nth(2).inner_text()
+        kind = path["outcome"]["kind"]
+        want = {
+            "ntf": "Note to file",
+            "capa": "CAPA opened",
+            "escalation": "Assessed by the board",
+        }[kind]
+        if want not in out:
+            raise AssertionError(f"{did}/{path['id']}: outcome step lacks {want!r}")
+        if steps.nth(3).get_by_test_id("risk-grid").count() != 1:
+            raise AssertionError(f"{did}/{path['id']}: no risk grid")
+        reportable = kind == "escalation" and path["outcome"]["mdr"]["result"] == "reportable"
+        if reportable and ("30-day clock" not in out or "became aware" not in out):
+            raise AssertionError(f"{did}/{path['id']}: the 30-day clock is not explained")
+    elif "No outcome yet" not in steps.nth(2).inner_text():
+        raise AssertionError(f"{did}/{path['id']}: an open path shows an outcome")
+    banned = r"maudesignal (determined|decided)|fda[- ]approved|\bvalidated\b|\bsafe\b|\bunsafe\b|draft capa"
+    if re.search(banned, card.inner_text(), re.I):
+        raise AssertionError(f"{did}/{path['id']}: banned wording in a decision path")
+
+
+def v2_s_profiles_paths(env: Env) -> str:
+    """Every device with decision paths: open Post-market, step through each path; the investigate link; the tile."""
+    by_dev = profile_paths()
+    total = 0
+    for did, paths in by_dev.items():
+        v2_open(env, f"devices/{did}/postmarket", "r=TEST1")
+        env.page.wait_for_selector("[data-testid=device-profile]", timeout=15_000)
+        profile_check(env, did, "postmarket")
+        link = env.page.get_by_test_id("investigate-link")
+        href = str(link.get_attribute("href"))
+        code = str(
+            env.page.evaluate("document.querySelector('.ms2-lead .ms-code').textContent")
+        ).strip()
+        if not href.startswith(f"/investigate?code={code}&device={did}"):
+            raise AssertionError(f"{did}: investigate href is {href}")
+        if "r=TEST1" not in href or "layout=v2" not in href:
+            raise AssertionError(f"{did}: investigate href lost ?r= or ?layout: {href}")
+        if not paths:
+            if env.page.get_by_test_id("no-decision-path").count() != 1:
+                raise AssertionError(f"{did}: no reason given for a missing decision path")
+            continue
+        cards = env.page.get_by_test_id("decision-path")
+        if cards.count() != len(paths):
+            raise AssertionError(f"{did}: {cards.count()} paths shown, {len(paths)} stored")
+        open_all_paths(env)
+        for i, path in enumerate(
+            sorted(paths, key=lambda x: (x["state"] != "open", x["triage"]["date"]))
+        ):
+            check_path_steps(env, did, path, cards.nth(i))
+            total += 1
+        if env.overflow() > 0:
+            raise AssertionError(f"{did}: {env.overflow()} px sideways scroll with the paths open")
+        # The link from the history opens the first path.
+        env.page.get_by_test_id("open-decision-path").click()
+        if cards.first.get_attribute("open") is None:
+            raise AssertionError(f"{did}: the history link did not open the decision path")
+    env.shot("v2-decision-path")
+    v2_open(env, "devices/apply")
+    env.page.wait_for_selector("[data-testid=device-tiles]", timeout=15_000)
+    tile = env.page.get_by_test_id("tile-decision").inner_text()
+    open_paths = sum(1 for ps in by_dev.values() for x in ps if x["state"] == "open")
+    open_devs = sum(1 for ps in by_dev.values() if any(x["state"] == "open" for x in ps))
+    if (
+        f"{open_paths}" not in tile
+        or "Decisions due" not in tile
+        or f"on {open_devs} devices" not in tile
+    ):
+        raise AssertionError(f"the Decisions due tile is {tile!r}, not {open_paths} on {open_devs}")
+    return f"{total} decision paths on {len(by_dev)} devices stepped through (4 steps, chips, real vs simulated); investigate href kept ?r= and layout; tile {open_paths} on {open_devs} devices"
+
+
+def v2_s_profiles_path_themes(env: Env) -> str:
+    """The decision path in every theme: step numbers, chips and the real box stay readable; no sideways scroll."""
+    by_dev = profile_paths()
+    did = "DMC-06"
+    v2_open(env, f"devices/{did}/postmarket")
+    env.page.wait_for_selector("[data-testid=decision-path]", timeout=15_000)
+    for t in PROFILE_THEMES:
+        v2_pick_theme(env, "side-theme", t)
+        v2_close_drawer(env)
+        open_all_paths(env)
+        profile_check(env, did, "postmarket")
+        bad = env.page.evaluate(
+            "[...document.querySelectorAll('.ms2-step-n, [data-testid=clause-chip], .ms2-simtag')]"
+            ".filter(e => { const s = getComputedStyle(e); return s.color === s.backgroundColor }).length"
+        )
+        if bad:
+            raise AssertionError(
+                f"theme {t}: {bad} decision-path elements have text the colour of their background"
+            )
+        env.shot(f"v2-decision-path-{t}")
+    return (
+        f"{did} paths ({len(by_dev[did])}) in {', '.join(PROFILE_THEMES)}: readable, 0 px sideways"
+    )
+
+
 V2_SCENARIOS: tuple[tuple[str, Callable[[Env], str]], ...] = (
     ("v2 Home: top 3 real alerts, view all, simulated apart", v2_s_home),
     ("v2 new chat saves the old one", v2_s_new_chat),
@@ -2728,6 +2874,8 @@ V2_SCENARIOS: tuple[tuple[str, Callable[[Env], str]], ...] = (
     ("v2 device profiles: all 12, every tab, SIMULATED", v2_s_profiles_all),
     ("v2 device profiles: tiles, row, Back and refresh", v2_s_profiles_nav),
     ("v2 device profiles: every theme", v2_s_profiles_themes),
+    ("v2 device profiles: decision paths, step through", v2_s_profiles_paths),
+    ("v2 device profiles: decision paths in every theme", v2_s_profiles_path_themes),
 )
 
 

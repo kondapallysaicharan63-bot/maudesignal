@@ -7,6 +7,7 @@ import type { Company, CompanyDevice } from '../types'
 import {
   DECISION_VERB,
   daysBetween,
+  investigateHref,
   niceDate,
   niceMonth,
   SIM_LABEL,
@@ -17,6 +18,7 @@ import {
 } from './profiles'
 import type { ProfileTab } from './router'
 import { SubTabs, type TabDef, type TabHow } from './SubTabs'
+import { DecisionPaths, showPath } from './DecisionPath'
 
 export const PROFILE_TAB_LABELS: TabDef<ProfileTab>[] = [
   { id: 'overview', label: 'Overview' },
@@ -483,11 +485,17 @@ function PostMarket({ p, d, company, onEvidence }: { p: Profile; d: CompanyDevic
               ))}
             </ol>
           )}
+          {p.decision.paths.length > 0 && (
+            <button type="button" className="ms2-link mt-2 mr-4" onClick={() => showPath(p.decision.paths[0].id)} data-testid="open-decision-path">
+              See the decision path for these signals
+            </button>
+          )}
           <button type="button" className="ms2-link mt-2" onClick={onEvidence} data-testid="open-evidence">
             Open the evidence check for this device
           </button>
         </Card>
       </div>
+      <DecisionPaths decision={p.decision} d={d} />
       <RealPatterns d={d} company={company} />
     </div>
   )
@@ -516,7 +524,7 @@ export function DeviceTiles({ file, company }: { file: ProfilesFile; company: Co
     ['FDA decision, launch planned', s.decided, 'decided'],
     ['On market', s.market, 'market'],
     ['Open CAPAs', s.openCapas, 'capas'],
-    ['Need a decision', s.needDecision, 'decision'],
+    ['Decisions due (open decision paths)', s.needDecision, 'decision'],
   ]
   return (
     <section aria-label="Our devices at a glance (simulated)" data-testid="device-tiles">
@@ -526,6 +534,11 @@ export function DeviceTiles({ file, company }: { file: ProfilesFile; company: Co
           <li key={id} className="ms2-tile" data-testid={`tile-${id}`}>
             <span className="ms-num ms2-tile-n">{n}</span>
             <span className="ms2-tile-l">{label}</span>
+            {id === 'decision' && (
+              <span className="ms2-tile-l" data-testid="tile-decision-sub">
+                on {s.needDecisionDevices} {s.needDecisionDevices === 1 ? 'device' : 'devices'}
+              </span>
+            )}
           </li>
         ))}
       </ul>
@@ -586,6 +599,11 @@ export function DeviceProfilePage({
         </h1>
         <p className="ms2-lead">
           <span className="ms-code !text-[15px] !text-ink">{p.product_code}</span> · {p.overview.pathway} · {p.overview.status_label} · owner {p.owner}
+        </p>
+        <p className="m-0 mt-1">
+          <a className="ms2-smalllink" href={investigateHref(p.product_code, p.id)} data-testid="investigate-link">
+            Investigate a complaint on this device
+          </a>
         </p>
       </header>
       <SubTabs id="profile" label={`${p.name} profile`} tabs={PROFILE_TAB_LABELS} value={tab} onChange={onTab}>

@@ -3,6 +3,7 @@
 // device name, class and regulation number, which the script reads from stored FDA data in the repo.
 import { useEffect, useState } from 'react'
 import type { Company } from '../types'
+import { appRoot, withLayout } from './router'
 
 export interface Dated {
   date: string
@@ -60,6 +61,70 @@ export interface Capa {
   opened: string
   closed: string | null
   state: 'open' | 'closed'
+}
+
+export interface ClauseTag {
+  tag: string
+  why: string
+}
+
+export interface RiskCell {
+  severity: number
+  severity_label: string
+  probability: number
+  probability_label: string
+  score: number
+  zone: 'acceptable' | 'reduce as far as possible' | 'not acceptable'
+}
+
+export interface Assessment {
+  result: string
+  rationale: string
+}
+
+export interface MdrAssessment extends Assessment {
+  receipt_date?: string
+  due_date?: string
+  submitted_date?: string
+  day_of_30?: number
+  clock_note?: string
+}
+
+export type DecisionOutcome =
+  | (Dated & { kind: 'ntf'; rationale: string; signed_by: string; signed_role: string; tags: ClauseTag[] })
+  | (Dated & { kind: 'capa'; capa_id: string; owner: string; due: string; due_planned: boolean; status: string; tags: ClauseTag[] })
+  | (Dated & {
+      kind: 'escalation'
+      assessed_by: string
+      mdr: MdrAssessment
+      correction_removal: Assessment
+      recall: Assessment
+      signed_by: string
+      signed_role: string
+      tags: ClauseTag[]
+    })
+
+export interface DecisionPath {
+  id: string
+  signal: { kind: 'pattern' | 'sweep'; pattern_id: string | null }
+  state: 'open' | 'decided'
+  pre_market: boolean
+  triage: Dated & { owner: string; role: string; note: string; tags: ClauseTag[] }
+  board: Dated & { held: boolean; attendees: Attendee[]; summary: string; decision: string | null; tags: ClauseTag[] }
+  outcome: DecisionOutcome | null
+  risk: {
+    hhe_summary: string
+    before: RiskCell
+    after: RiskCell
+    after_is_expected: boolean
+    risk_file: Dated & { ref: string; change: string }
+    tags: ClauseTag[]
+  } | null
+}
+
+export interface DeviceDecision {
+  none_reason: string | null
+  paths: DecisionPath[]
 }
 
 export interface ActivityEntry {
@@ -123,6 +188,7 @@ export interface DeviceProfile {
     categories: { name: string; count: number }[]
     capas: Capa[]
   }
+  decision: DeviceDecision
   activity: ActivityEntry[]
 }
 
@@ -194,16 +260,21 @@ export interface DeviceSummary {
   decided: number
   market: number
   openCapas: number
+  /** Decision paths still open (no outcome yet). */
   needDecision: number
+  /** Devices with at least one open decision path. */
+  needDecisionDevices: number
 }
 
-/** The tiles above Our devices, counted from the data (needs-decision from company.json statuses). */
+/** The tiles above Our devices, counted from the data (decisions due = decision paths with no outcome yet). */
 export function summarize(file: ProfilesFile, company: Company): DeviceSummary {
-  const out: DeviceSummary = { development: 0, review: 0, decided: 0, market: 0, openCapas: 0, needDecision: 0 }
+  const out: DeviceSummary = { development: 0, review: 0, decided: 0, market: 0, openCapas: 0, needDecision: 0, needDecisionDevices: 0 }
   for (const d of company.devices) {
     const p = file.profiles[d.id]
-    if (d.status?.label === 'Needs review') out.needDecision += 1
     if (!p) continue
+    const open = p.decision.paths.filter((x) => x.state === 'open').length
+    out.needDecision += open
+    if (open > 0) out.needDecisionDevices += 1
     out[STAGE_GROUP[p.overview.stage]] += 1
     out.openCapas += p.postmarket.capas.filter((c) => c.state === 'open').length
   }
@@ -225,3 +296,22 @@ export function niceMonth(ym: string): string {
 
 /** Days from a to b (ISO dates). */
 export const daysBetween = (a: string, b: string): number => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86_400_000)
+
+/**
+ * The address of the investigation page (built on another branch) for a complaint on this device:
+ * /investigate?code=<PRODUCT_CODE>&device=<device id>. Other query parameters (?r=, ?layout) are kept.
+ */
+export function investigateHref(
+  code: string,
+  device: string,
+  loc: { pathname: string; search: string } = window.location,
+  flag: string | undefined = import.meta.env.VITE_LAYOUT_DEFAULT as string | undefined,
+): string {
+  const q = new URLSearchParams()
+  q.set('code', code)
+  q.set('device', device)
+  new URLSearchParams(withLayout(loc.search, flag)).forEach((v, k) => {
+    if (k !== 'code' && k !== 'device') q.append(k, v)
+  })
+  return `${appRoot(loc.pathname)}investigate?${q.toString()}`
+}

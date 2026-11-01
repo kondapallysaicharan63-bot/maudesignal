@@ -545,6 +545,433 @@ def months_between(a: date, b: date) -> list[str]:
     return out
 
 
+# --- PMS decision paths (F22/F23, simulated) ---------------------------------------------------
+# People decide, the tool supplies evidence. Each path is: triage -> PMS review board -> outcome -> risk.
+# The plan below is hand-written (dates, outcomes, rationale) so a reviewer can read it; only the names of
+# simulated people are drawn from the seeded generator.
+
+CLAUSES: dict[str, dict[str, str]] = {
+    "qmsr": {
+        "tag": "21 CFR 820 (QMSR)",
+        "why": "The quality system rule requires documented complaint handling and corrective action; it incorporates ISO 13485.",
+    },
+    "i821": {
+        "tag": "ISO 13485 §8.2.1",
+        "why": "Feedback: post-market information, here the FDA problem pattern, is collected as an input to the quality system.",
+    },
+    "i822": {
+        "tag": "ISO 13485 §8.2.2",
+        "why": "Complaint handling: each complaint is assessed, and a decision not to investigate is recorded with its reason.",
+    },
+    "i823": {
+        "tag": "ISO 13485 §8.2.3",
+        "why": "Reporting to regulatory authorities: the company sets and applies criteria for what must be reported.",
+    },
+    "i852": {
+        "tag": "ISO 13485 §8.5.2",
+        "why": "Corrective action: the cause is addressed, the action has an owner and a due date, and its effect is checked.",
+    },
+    "r803": {
+        "tag": "21 CFR 803",
+        "why": "Medical device reporting: the manufacturer assesses reportability and reports within 30 calendar days of becoming aware.",
+    },
+    "r806": {
+        "tag": "21 CFR 806",
+        "why": "Corrections and removals: a correction or removal made to reduce a health risk is assessed for a report.",
+    },
+    "r7": {
+        "tag": "21 CFR 7",
+        "why": "Recall policy: the firm considers whether the situation calls for a recall and documents why or why not.",
+    },
+    "i14971": {
+        "tag": "ISO 14971",
+        "why": "Risk management: production and post-production information is fed back and the risk file is reviewed and updated.",
+    },
+}
+
+STEP_CLAUSES: dict[str, list[str]] = {
+    "triage": ["i821", "i822", "qmsr"],
+    "board": ["i822", "i823"],
+    "ntf": ["i822", "qmsr"],
+    "capa": ["i852", "qmsr"],
+    "escalation": ["r803", "r806", "r7", "i823"],
+    "risk": ["i14971"],
+}
+
+SEVERITY = ["Negligible", "Minor", "Serious", "Critical", "Catastrophic"]
+PROBABILITY = ["Improbable", "Remote", "Occasional", "Probable", "Frequent"]
+ATTENDEE_ROLES = [
+    "Quality Engineering",
+    "Regulatory Affairs",
+    "Clinical",
+    "Design Engineering",
+    "Post-Market Surveillance",
+]
+
+# kind: ntf (note to file), capa, recall (escalation assessment, recall not warranted),
+# mdr (escalation assessment, reportable), open (no outcome yet). risk: (S, P) before and after.
+PATH_PLAN: dict[str, list[dict[str, Any]]] = {
+    "DMC-01": [
+        {
+            "signal": "LLZ-inv-2",
+            "kind": "ntf",
+            "triage": "2026-10-12",
+            "board": "2026-10-19",
+            "outcome": "2026-10-19",
+            "risk": (2, 2, 2, 2),
+            "summary": "No complaint on our device matches this pattern; the report-finalising path in our software differs from the one described.",
+            "rationale": "No matching complaint on our device in the last 12 months (simulated search). The failure described depends on a third-party server setup we do not ship.",
+        },
+        {
+            "signal": "LLZ-inv-3",
+            "kind": "recall",
+            "triage": "2026-10-12",
+            "board": "2026-10-26",
+            "outcome": "2026-10-26",
+            "risk": (2, 3, 2, 3),
+            "summary": "Sign-in errors are described. Our complaint file has two server-error complaints (simulated) with a documented workaround and no effect on the images shown.",
+            "assess": {
+                "mdr": "not reportable",
+                "corr": "not reportable",
+                "recall": "recall not warranted",
+            },
+            "mdr_why": "No death or serious injury, and the malfunction would not be likely to cause or contribute to one if it recurred: the user can sign in again and the images are unchanged.",
+            "corr_why": "No correction or removal is being made to reduce a risk to health; the workaround is a user instruction already in the manual.",
+            "recall_why": "The board found no reasonable probability of serious adverse health consequences; the issue is an availability inconvenience with a workaround. Considered and ruled out; revisit if complaints rise.",
+        },
+        {
+            "signal": "LLZ-inv-1",
+            "kind": "capa",
+            "triage": "2026-10-12",
+            "board": "2026-10-23",
+            "outcome": "2026-10-30",
+            "risk": (3, 4, 3, 2),
+            "summary": "Two complaints on our device (simulated) match this pattern and both involve a study shown without its prior images.",
+            "capa_title": "Prior images missing after a server error",
+            "capa_due": "2026-12-18",
+            "capa_state": "open",
+            "capa_status": "Testing in progress: fix built, regression test running",
+        },
+    ],
+    "DMC-02": [
+        {
+            "signal": "LLZ-inv-2",
+            "kind": "ntf",
+            "triage": "2026-10-12",
+            "board": "2026-10-21",
+            "outcome": "2026-10-21",
+            "risk": (2, 2, 2, 2),
+            "summary": "ReportDesk shares no code with the finalise step described.",
+            "rationale": "Already covered: our report workflow saves a local draft, so a failed finalise does not lose work (software verification, simulated).",
+        },
+        {
+            "signal": "LLZ-inv-3",
+            "kind": "ntf",
+            "triage": "2026-10-12",
+            "board": "2026-10-21",
+            "outcome": "2026-10-21",
+            "risk": (2, 2, 2, 2),
+            "summary": "Connection errors are handled by the same retry path reviewed for the sister product.",
+            "rationale": "Already covered by the retry and error-message design and by the CAPA opened for the sister product.",
+        },
+        {
+            "signal": "LLZ-inv-1",
+            "kind": "ntf",
+            "triage": "2026-10-12",
+            "board": "2026-10-28",
+            "outcome": "2026-10-30",
+            "risk": (3, 2, 3, 2),
+            "summary": "Same pattern as the sister product's corrective action; the shared component is fixed there.",
+            "rationale": "Already covered: the shared component is corrected under the sister product's open CAPA, and this device takes the same release.",
+        },
+    ],
+    "DMC-03": [
+        {
+            "signal": "QIH-patient-data",
+            "kind": "open",
+            "triage": "2026-10-20",
+            "board": "2026-11-06",
+            "summary": "Agenda: does a pattern about patient data attached to the wrong study apply to the design under review?",
+        }
+    ],
+    "DMC-04": [
+        {
+            "signal": "MYN-wrong-result",
+            "kind": "capa",
+            "triage": "2026-09-16",
+            "board": "2026-09-23",
+            "outcome": "2026-09-25",
+            "risk": (4, 3, 4, 2),
+            "summary": "One complaint on our device (simulated) reported a result that disagreed with the reader's own finding. The board asked for a corrective action.",
+            "capa_title": "Corrective action: result disagreement on low-contrast slides",
+            "capa_due": "2026-10-30",
+            "capa_state": "closed",
+            "capa_status": "Closed 2026-10-27 after the effectiveness check",
+        }
+    ],
+    "DMC-06": [
+        {
+            "signal": "IYN-freeze-crash",
+            "kind": "mdr",
+            "triage": "2026-09-03",
+            "board": "2026-09-10",
+            "outcome": "2026-09-10",
+            "risk": (4, 3, 4, 2),
+            "summary": "Complaint COMP-SIM-0309 (simulated): the system froze during a time-critical guided procedure; the procedure was finished on another system after a delay. No injury was reported.",
+            "receipt": "2026-09-02",
+            "submitted": "2026-09-24",
+            "assess": {
+                "mdr": "reportable",
+                "corr": "not reportable",
+                "recall": "recall not warranted",
+            },
+            "mdr_why": "No injury occurred, but the board assessed that a freeze in a time-critical procedure would be likely to cause or contribute to serious injury if it recurred, so it assessed the event as reportable.",
+            "corr_why": "A software update is planned in the normal release cycle; it is not a removal or correction made to reduce a risk to health.",
+            "recall_why": "One event, the system recovers on restart, and the update is already scheduled. Considered and ruled out as not warranted.",
+        },
+        {
+            "signal": "IYN-display-quality",
+            "kind": "ntf",
+            "triage": "2026-09-03",
+            "board": "2026-09-10",
+            "outcome": "2026-09-10",
+            "risk": (2, 2, 2, 2),
+            "summary": "Display artefact reports concern a transducer type we do not ship with this system.",
+            "rationale": "Not our configuration: the artefact described occurs with a transducer outside our labeled configuration. Daily phantom check remains the control.",
+        },
+        {
+            "signal": "IYN-load-transfer",
+            "kind": "open",
+            "triage": "2026-10-30",
+            "board": "2026-11-10",
+            "summary": "Agenda: images or data failing to load or transfer; two complaints on our device since the MDR assessment (simulated).",
+        },
+    ],
+    "DMC-07": [
+        {
+            "signal": None,
+            "kind": "open",
+            "triage": "2026-10-30",
+            "board": "2026-11-05",
+            "summary": "Agenda: the weekly count for this product code is above its recent baseline; are any reports about a function our device has?",
+        }
+    ],
+    "DMC-08": [
+        {
+            "signal": None,
+            "kind": "open",
+            "triage": "2026-10-30",
+            "board": "2026-11-04",
+            "summary": "Agenda: the share of serious reports for this product code rose; is the failure described one our alarm design can show?",
+        }
+    ],
+    "DMC-09": [
+        {
+            "signal": "MUD-wrong-result",
+            "kind": "open",
+            "triage": "2026-10-30",
+            "board": "2026-11-12",
+            "summary": "Agenda: wrong-reading reports for this product code; pre-market, so the question is whether the design inputs and risk file already cover them.",
+        }
+    ],
+    "DMC-12": [
+        {
+            "signal": "MWI-wrong-result",
+            "kind": "open",
+            "triage": "2026-10-30",
+            "board": "2026-10-31",
+            "held": True,
+            "summary": "Fifteen reports of wrong readings were reviewed against the accuracy verification. The board asked Clinical for a sensor-site comparison before deciding.",
+            "decision": "Hold: reconvene on 2026-11-14 with the Clinical comparison.",
+        }
+    ],
+}
+
+NO_PATH_REASON = {
+    "Not applicable to our device": "No decision path: the owner recorded this product code as not applicable to our device.",
+}
+
+
+def clause_tags(*keys: str) -> list[dict[str, str]]:
+    """The compliance chips of a step, each with its one-line reason."""
+    return [dict(CLAUSES[k]) for k in keys]
+
+
+def risk_cell(s: int, p: int) -> dict[str, Any]:
+    """A cell of the 5x5 risk matrix (severity x probability) with its zone."""
+    score = s * p
+    zone = (
+        "acceptable"
+        if score <= 4
+        else "reduce as far as possible" if score <= 9 else "not acceptable"
+    )
+    return {
+        "severity": s,
+        "severity_label": SEVERITY[s - 1],
+        "probability": p,
+        "probability_label": PROBABILITY[p - 1],
+        "score": score,
+        "zone": zone,
+    }
+
+
+def build_decision(
+    rng: random.Random, dev: dict[str, Any], n: int, profile_stage: str, post: dict[str, Any]
+) -> dict[str, Any]:
+    """The decision paths of one device; adds the CAPA of a CAPA outcome to ``post['capas']``."""
+    label = (dev.get("status") or {}).get("label") or ""
+    plan = PATH_PLAN.get(dev["id"], [])
+    if not plan:
+        reason = NO_PATH_REASON.get(label)
+        if reason is None:
+            reason = "No decision path: no problem pattern or sweep signal is stored for this product code."
+        return {"none_reason": reason, "paths": []}
+    owner = dev["owner"]
+    pre_market = profile_stage in ("development", "under_review", "decided")
+    paths: list[dict[str, Any]] = []
+    for k, e in enumerate(plan, start=1):
+        kind = e["kind"]
+        board_day = d(e["board"])
+        held = board_day <= AS_OF
+        attendees = [{"name": person(rng, r), "role": r} for r in ATTENDEE_ROLES]
+        decision_text: str | None
+        if kind == "open":
+            decision_text = e.get("decision")
+        elif kind == "ntf":
+            decision_text = "Note to file: no further action, rationale documented."
+        elif kind == "capa":
+            decision_text = "Open a CAPA."
+        else:
+            decision_text = (
+                "Escalation assessment recorded (reportability, correction or removal, recall)."
+            )
+        triage_day = d(e["triage"])
+        path: dict[str, Any] = {
+            "id": f"DP-{dev['id']}-{k}",
+            "signal": {
+                "kind": "sweep" if e["signal"] is None else "pattern",
+                "pattern_id": e["signal"],
+            },
+            "state": "open" if kind == "open" else "decided",
+            "pre_market": pre_market,
+            "triage": {
+                **when(triage_day),
+                "owner": owner,
+                "role": "Post-Market Surveillance",
+                "note": "Owner assigned; the signal was logged for the board agenda.",
+                "tags": clause_tags(*STEP_CLAUSES["triage"]),
+            },
+            "board": {
+                **when(board_day),
+                "held": held,
+                "attendees": attendees,
+                "summary": e["summary"],
+                "decision": decision_text if held else None,
+                "tags": clause_tags(*STEP_CLAUSES["board"]),
+            },
+            "outcome": None,
+            "risk": None,
+        }
+        if kind == "open":
+            paths.append(path)
+            continue
+        out_day = d(e["outcome"])
+        signer = person(rng, "Quality Engineering")
+        if kind == "ntf":
+            path["outcome"] = {
+                "kind": "ntf",
+                **when(out_day),
+                "rationale": e["rationale"],
+                "signed_by": signer,
+                "signed_role": "Quality Engineering",
+                "tags": clause_tags(*STEP_CLAUSES["ntf"]),
+            }
+        elif kind == "capa":
+            if e["capa_state"] == "open":  # replaces the generic trend-review CAPA of the device
+                post["capas"] = [c for c in post["capas"] if c["state"] != "open"]
+            capa_id = f"CAPA-SIM-{n:02d}{len(post['capas']) + 1:02d}"
+            due = d(e["capa_due"])
+            capa = {
+                "id": capa_id,
+                "title": e["capa_title"],
+                "owner": person(rng, "Quality Engineering"),
+                "opened": iso(out_day),
+                "closed": None if e["capa_state"] == "open" else iso(due - timedelta(days=3)),
+                "state": e["capa_state"],
+            }
+            post["capas"].append(capa)
+            path["outcome"] = {
+                "kind": "capa",
+                **when(out_day),
+                "capa_id": capa_id,
+                "owner": capa["owner"],
+                "due": iso(due),
+                "due_planned": due > AS_OF,
+                "status": e["capa_status"],
+                "tags": clause_tags(*STEP_CLAUSES["capa"]),
+            }
+        else:
+            a = e["assess"]
+            mdr: dict[str, Any] = {"result": a["mdr"], "rationale": e["mdr_why"]}
+            if a["mdr"] == "reportable":
+                receipt, sub = d(e["receipt"]), d(e["submitted"])
+                mdr.update(
+                    receipt_date=iso(receipt),
+                    due_date=iso(receipt + timedelta(days=30)),
+                    submitted_date=iso(sub),
+                    day_of_30=(sub - receipt).days,
+                    clock_note=(
+                        "The 30 calendar days of 21 CFR 803 run from the day the company became aware of the event, "
+                        f"here its receipt of complaint COMP-SIM-0309 (simulated) on {niceish(receipt)}. They do not "
+                        "run from the date any report appears in FDA's database. Regulatory Affairs recorded the "
+                        "submission as made on a simulated date inside the 30 days; MaudeSignal files nothing."
+                    ),
+                )
+            path["outcome"] = {
+                "kind": "escalation",
+                **when(out_day),
+                "assessed_by": "the board",
+                "mdr": mdr,
+                "correction_removal": {"result": a["corr"], "rationale": e["corr_why"]},
+                "recall": {"result": a["recall"], "rationale": e["recall_why"]},
+                "signed_by": signer,
+                "signed_role": "Regulatory Affairs",
+                "tags": clause_tags(*STEP_CLAUSES["escalation"]),
+            }
+        sb, pb, sa, pa = e["risk"]
+        hhe = {
+            "ntf": "Health hazard evaluation not needed: no new hazard or harm was identified; the risk file was reviewed and left unchanged.",
+            "capa": "Health hazard evaluation (simulated): the worst credible harm is a delayed or repeated study; the corrective action is expected to lower the probability.",
+            "recall": "Health hazard evaluation (simulated): an unavailable sign-in is a delay, not a harm to the patient; no change to the risk estimate.",
+            "mdr": "Health hazard evaluation (simulated): a freeze during a time-critical procedure can delay care; the planned update lowers the probability of recurrence.",
+        }[kind]
+        changed = (sb, pb) != (sa, pa)
+        path["risk"] = {
+            "hhe_summary": hhe,
+            "before": risk_cell(sb, pb),
+            "after": risk_cell(sa, pa),
+            "after_is_expected": changed
+            and ((kind == "capa" and e["capa_state"] == "open") or kind == "mdr"),
+            "risk_file": {
+                "ref": f"RMF-{dev['model']}-rev{2 + (k % 3)}",
+                **when(
+                    out_day + timedelta(days=2) if out_day + timedelta(days=2) <= AS_OF else out_day
+                ),
+                "change": "Risk estimate updated" if changed else "Reviewed, no change",
+            },
+            "tags": clause_tags(*STEP_CLAUSES["risk"]),
+        }
+        paths.append(path)
+    order = {"open": 0, "decided": 1}
+    paths.sort(key=lambda x: (order[x["state"]], x["triage"]["date"]))
+    return {"none_reason": None, "paths": paths}
+
+
+def niceish(x: date) -> str:
+    """A date as '2 Sep 2026' for sentences in the data."""
+    return f"{x.day} {x.strftime('%b %Y')}"
+
+
 def build_profile(
     rng: random.Random, dev: dict[str, Any], n: int, db: sqlite3.Connection | None
 ) -> dict[str, Any]:
@@ -736,7 +1163,7 @@ def build_profile(
             o1 = AS_OF - timedelta(days=rng.randint(300, 420))
             post["capas"].append(
                 {
-                    "id": f"CAPA-SIM-{n:02d}1",
+                    "id": f"CAPA-SIM-{n:02d}01",
                     "title": f"Recurring '{cats[0].lower()}' complaints",
                     "owner": person(rng, "Quality Engineering"),
                     "opened": iso(o1),
@@ -747,7 +1174,7 @@ def build_profile(
             o2 = AS_OF - timedelta(days=rng.randint(25, 70))
             post["capas"].append(
                 {
-                    "id": f"CAPA-SIM-{n:02d}2",
+                    "id": f"CAPA-SIM-{n:02d}02",
                     "title": f"Trend review: '{cats[1].lower()}' above monthly limit",
                     "owner": person(rng, "Quality Engineering"),
                     "opened": iso(o2),
@@ -759,7 +1186,7 @@ def build_profile(
             o1 = AS_OF - timedelta(days=rng.randint(150, 250))
             post["capas"].append(
                 {
-                    "id": f"CAPA-SIM-{n:02d}1",
+                    "id": f"CAPA-SIM-{n:02d}01",
                     "title": f"Labeling clarification for '{cats[3].lower()}'",
                     "owner": person(rng, "Quality Engineering"),
                     "opened": iso(o1),
@@ -767,6 +1194,8 @@ def build_profile(
                     "state": "closed",
                 }
             )
+
+    decision = build_decision(rng, dev, n, stage, post)
 
     # Activity log (past entries only, newest first).
     log: list[dict[str, Any]] = []
@@ -869,6 +1298,40 @@ def build_profile(
             f"set 'Does this apply to us?' to {h['to_status']}",
             h["actor"],
         )
+    for dp in decision["paths"]:
+        add(
+            d(dp["triage"]["date"]),
+            "Post-Market Surveillance",
+            f"triaged the signal for {dp['id']}",
+            dp["triage"]["owner"],
+        )
+        if dp["board"]["held"]:
+            add(
+                d(dp["board"]["date"]),
+                "Quality Engineering",
+                f"took part in the PMS review board for {dp['id']}",
+            )
+        oc = dp["outcome"]
+        if oc and oc["kind"] == "ntf":
+            add(
+                d(oc["date"]),
+                "Quality Engineering",
+                f"signed the note to file for {dp['id']}",
+                oc["signed_by"],
+            )
+        elif oc and oc["kind"] == "escalation":
+            add(
+                d(oc["date"]),
+                "Regulatory Affairs",
+                f"recorded the board's assessments (reportability, correction or removal, recall) for {dp['id']}",
+                oc["signed_by"],
+            )
+        if dp["risk"]:
+            add(
+                d(dp["risk"]["risk_file"]["date"]),
+                "Design Engineering",
+                f"updated the risk file {dp['risk']['risk_file']['ref']} after {dp['id']}",
+            )
     log.sort(key=lambda e: (e["date"], e["role"], e["action"]), reverse=True)
 
     overview = {
@@ -927,6 +1390,7 @@ def build_profile(
         "regulatory": regulatory,
         "market": market,
         "postmarket": post,
+        "decision": decision,
         "activity": log,
     }
 

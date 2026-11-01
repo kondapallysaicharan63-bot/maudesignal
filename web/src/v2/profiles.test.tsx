@@ -12,11 +12,12 @@ import company from '../../public/data/company.json'
 import raw from '../../public/data/company_profiles.json'
 import type { Company } from '../types'
 import { DeviceProfilePage, DeviceTiles, PROFILE_TAB_LABELS, profileTitle } from './DeviceProfile'
-import { DECISION_VERB, SIM_LABEL, summarize, type DeviceProfile, type ProfilesFile } from './profiles'
+import { DECISION_VERB, investigateHref, SIM_LABEL, summarize, type DecisionOutcome, type DeviceProfile, type ProfilesFile } from './profiles'
 import { formatRoute, parseRoute, PROFILE_TABS, type ProfileTab } from './router'
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
+type Escalation = Extract<DecisionOutcome, { kind: 'escalation' }>
 const C = company as unknown as Company
 const F = raw as unknown as ProfilesFile
 const P = Object.values(F.profiles)
@@ -34,7 +35,7 @@ function datesIn(o: unknown, path = ''): { path: string; date: string; planned: 
   else if (o && typeof o === 'object') {
     const r = o as Record<string, unknown>
     for (const [k, v] of Object.entries(r)) {
-      if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) out.push({ path: `${path}.${k}`, date: v, planned: k === 'date' && typeof r.planned === 'boolean' ? (r.planned as boolean) : null })
+      if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) out.push({ path: `${path}.${k}`, date: v, planned: k === 'date' && typeof r.planned === 'boolean' ? (r.planned as boolean) : k === 'due' && typeof r.due_planned === 'boolean' ? (r.due_planned as boolean) : null })
       else if (typeof v === 'string' && k === 'month' && /^\d{4}-\d{2}$/.test(v)) out.push({ path: `${path}.${k}`, date: `${v}-01`, planned: null })
       else out.push(...datesIn(v, `${path}.${k}`))
     }
@@ -312,5 +313,232 @@ describe('profile addresses', () => {
   it('is covered by the Vercel rewrites', () => {
     const v = JSON.parse(readFileSync(resolve(__dirname, '../../vercel.json'), 'utf8')) as { rewrites: { source: string }[] }
     expect(v.rewrites.map((r) => r.source)).toContain('/devices/:path*')
+  })
+})
+
+// --- PMS decision paths (simulated) ---------------------------------------------------------------
+
+const PATHS = P.flatMap((p) => p.decision.paths.map((x) => ({ p, x })))
+const DEVICE = Object.fromEntries(C.devices.map((d) => [d.id, d]))
+const outcomeOf = (x: (typeof PATHS)[number]['x']) => x.outcome?.kind ?? null
+
+describe('decision paths: data rules', () => {
+  it('has paths for devices with a signal and none for "Not applicable" or devices with nothing stored', () => {
+    for (const p of P) {
+      const d = DEVICE[p.id]
+      if (d.status?.label === 'Not applicable to our device') {
+        expect(p.decision.paths).toHaveLength(0)
+        expect(p.decision.none_reason).toMatch(/not applicable/i)
+      } else if (d.patterns.length === 0 && d.status?.label !== 'Needs review') {
+        expect(p.decision.paths).toHaveLength(0)
+        expect(p.decision.none_reason).toBeTruthy()
+      } else {
+        expect(p.decision.paths.length, p.id).toBeGreaterThanOrEqual(1)
+        expect(p.decision.none_reason).toBeNull()
+        // every stored pattern of a device that is not "Not applicable" has a path
+        for (const pt of d.patterns) expect(p.decision.paths.map((x) => x.signal.pattern_id), `${p.id} ${pt.id}`).toContain(pt.id)
+      }
+      for (const x of p.decision.paths) if (x.signal.kind === 'pattern') expect(d.patterns.map((q) => q.id)).toContain(x.signal.pattern_id)
+    }
+  })
+
+  it('opens exactly one path per "Needs review" device, and none anywhere else', () => {
+    const open = PATHS.filter(({ x }) => x.state === 'open')
+    const need = C.devices.filter((d) => d.status?.label === 'Needs review').map((d) => d.id)
+    expect(open.map(({ p }) => p.id).sort()).toEqual([...need].sort())
+    for (const { x } of open) {
+      expect(x.outcome).toBeNull()
+      expect(x.risk).toBeNull()
+    }
+    for (const { x } of PATHS.filter(({ x }) => x.state === 'decided')) {
+      expect(x.outcome).not.toBeNull()
+      expect(x.risk).not.toBeNull()
+    }
+  })
+
+  it('keeps the dates of a path in order and never past the as-of date unless planned', () => {
+    for (const { p, x } of PATHS) {
+      expect(x.triage.date <= x.board.date, `${x.id} triage<=board`).toBe(true)
+      expect(x.board.held, x.id).toBe(x.board.date <= F.as_of)
+      expect(x.board.planned).toBe(x.board.date > F.as_of)
+      if (x.outcome) {
+        expect(x.board.held).toBe(true)
+        expect(x.outcome.date >= x.board.date, `${x.id} board<=outcome`).toBe(true)
+        expect(x.outcome.date <= F.as_of).toBe(true)
+      }
+      if (x.risk) expect(x.risk.risk_file.date >= x.outcome!.date, `${x.id} outcome<=risk file`).toBe(true)
+      if (!x.board.held) expect(x.board.decision).toBeNull()
+      expect(x.id.startsWith(`DP-${p.id}-`)).toBe(true)
+    }
+  })
+
+  it('tags every step with the clauses it serves, each with a reason', () => {
+    for (const { x } of PATHS) {
+      const sets = [x.triage.tags, x.board.tags, ...(x.outcome ? [x.outcome.tags] : []), ...(x.risk ? [x.risk.tags] : [])]
+      for (const tags of sets) {
+        expect(tags.length).toBeGreaterThanOrEqual(1)
+        for (const t of tags) {
+          expect(t.tag).toMatch(/^(21 CFR (820 \(QMSR\)|803|806|7)|ISO 13485 §8\.(2\.[123]|5\.2)|ISO 14971)$/)
+          expect(t.why.length).toBeGreaterThan(30)
+        }
+      }
+      const tag = (t: { tag: string }[]) => t.map((z) => z.tag)
+      expect(tag(x.triage.tags)).toContain('ISO 13485 §8.2.2')
+      if (x.outcome?.kind === 'capa') expect(tag(x.outcome.tags)).toContain('ISO 13485 §8.5.2')
+      if (x.outcome?.kind === 'ntf') expect(tag(x.outcome.tags)).toContain('ISO 13485 §8.2.2')
+      if (x.outcome?.kind === 'escalation') for (const c of ['21 CFR 803', '21 CFR 806', '21 CFR 7']) expect(tag(x.outcome.tags)).toContain(c)
+      if (x.risk) expect(tag(x.risk.tags)).toEqual(['ISO 14971'])
+    }
+  })
+
+  it('has the realistic mix: mostly notes to file, 2-3 CAPAs, one MDR-reportable, one recall ruled out', () => {
+    const decided = PATHS.filter(({ x }) => x.state === 'decided')
+    const kinds = decided.map(({ x }) => outcomeOf(x))
+    const ntf = kinds.filter((k) => k === 'ntf').length
+    const capa = kinds.filter((k) => k === 'capa').length
+    expect(ntf).toBeGreaterThan(decided.length / 2)
+    expect(capa).toBeGreaterThanOrEqual(2)
+    expect(capa).toBeLessThanOrEqual(3)
+    const esc: Escalation[] = []
+    for (const { x } of decided) if (x.outcome?.kind === 'escalation') esc.push(x.outcome)
+    expect(esc.filter((o) => o.mdr.result === 'reportable')).toHaveLength(1)
+    expect(esc.filter((o) => o.mdr.result === 'not reportable' && o.recall.result === 'recall not warranted')).toHaveLength(1)
+    for (const o of esc) {
+      for (const a of [o.mdr, o.correction_removal, o.recall]) {
+        expect(['reportable', 'not reportable', 'recall not warranted']).toContain(a.result)
+        expect(a.rationale.length).toBeGreaterThan(40)
+      }
+      expect(o.assessed_by).toBe('the board')
+    }
+  })
+
+  it('explains the 30-day clock as running from the company receipt, inside the as-of date', () => {
+    let mdr: Escalation | null = null
+    for (const { x } of PATHS) if (x.outcome?.kind === 'escalation' && x.outcome.mdr.result === 'reportable') mdr = x.outcome
+    expect(mdr).not.toBeNull()
+    const m = mdr!.mdr
+    expect(m.clock_note).toMatch(/became aware/)
+    expect(m.clock_note).toMatch(/receipt/)
+    expect(m.clock_note).toMatch(/not\s+run from the date any report appears in FDA's database/)
+    expect(days(m.receipt_date!, m.due_date!)).toBe(30)
+    expect(m.submitted_date! <= m.due_date!).toBe(true)
+    expect(m.submitted_date! >= m.receipt_date!).toBe(true)
+    expect(m.day_of_30).toBe(days(m.receipt_date!, m.submitted_date!))
+    expect(m.submitted_date! <= F.as_of).toBe(true)
+    expect(m.receipt_date! <= mdr!.date).toBe(true)
+  })
+
+  it('ties a CAPA outcome to a CAPA of the device, and keeps the open-CAPA count', () => {
+    for (const { p, x } of PATHS) {
+      if (x.outcome?.kind !== 'capa') continue
+      const id = x.outcome.capa_id
+      expect(id).toMatch(/^CAPA-SIM-\d{4}$/)
+      const c = p.postmarket.capas.find((q) => q.id === id)
+      expect(c, `${p.id} ${id}`).toBeDefined()
+      expect(c!.owner).toBe(x.outcome.owner)
+      expect(c!.opened).toBe(x.outcome.date)
+    }
+    for (const p of P) for (const c of p.postmarket.capas) expect(c.id).toMatch(/^CAPA-SIM-\d{4}$/)
+  })
+
+  it('uses "board decided / assessed / documented / signed" wording and never has the tool decide', () => {
+    const all = strings(P.map((p) => p.decision)).join('\n')
+    expect(all).not.toMatch(/maudesignal (determined|decided)/i)
+    expect(all).not.toMatch(/\b(fda[- ]approved|validated|unsafe|draft capa)\b/i)
+    expect(all).not.toMatch(/\bsafe\b/i)
+    for (const { x } of PATHS) {
+      if (x.outcome?.kind === 'ntf') expect(x.outcome.signed_by).toMatch(/\(simulated\)$/)
+      for (const a of x.board.attendees) {
+        expect(a.name).toMatch(/\(simulated\)$/)
+        expect(a.role.length).toBeGreaterThan(3)
+      }
+      expect(x.triage.owner).toMatch(/\(simulated\)$/)
+    }
+  })
+
+  it('draws the risk cell before and after on the 5x5 scale', () => {
+    for (const { x } of PATHS) {
+      if (!x.risk) continue
+      for (const c of [x.risk.before, x.risk.after]) {
+        expect(c.severity).toBeGreaterThanOrEqual(1)
+        expect(c.severity).toBeLessThanOrEqual(5)
+        expect(c.probability).toBeGreaterThanOrEqual(1)
+        expect(c.probability).toBeLessThanOrEqual(5)
+        expect(c.score).toBe(c.severity * c.probability)
+      }
+    }
+  })
+})
+
+describe('decision paths: rendering', () => {
+  it('shows every path of every device with four steps, the SIMULATED label, and real FDA evidence apart', () => {
+    for (const p of P) {
+      const html = page(p.id, 'postmarket')
+      if (p.decision.paths.length === 0) {
+        expect(html).toContain('data-testid="no-decision-path"')
+        continue
+      }
+      expect(html).toContain('data-testid="decision-paths"')
+      expect(html.match(/data-testid="decision-path"/g)).toHaveLength(p.decision.paths.length)
+      expect(html.match(/data-testid="dp-step"/g)).toHaveLength(p.decision.paths.length * 4)
+      expect(html.match(/data-testid="dp-real"/g)).toHaveLength(p.decision.paths.length)
+      expect(text(html)).toContain('Real FDA data · openFDA · product code ' + p.product_code)
+      expect(text(html)).toContain('Company side')
+      expect(html.indexOf('data-testid="sim-postmarket"')).toBeLessThan(html.indexOf('data-testid="decision-paths"'))
+      expect(html.indexOf('data-testid="decision-paths"')).toBeLessThan(html.indexOf('data-testid="real-patterns"'))
+      expect(html).toContain('data-testid="clause-chip"')
+      expect(html).toContain('data-testid="open-decision-path"')
+    }
+  })
+
+  it('shows the stored openFDA link of the pattern on the board step', () => {
+    const html = page('DMC-01', 'postmarket')
+    expect(html).toContain('https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=')
+    expect(text(html)).toMatch(/MAUDE reports, received/)
+  })
+
+  it('shows a sweep signal for a device with no stored pattern', () => {
+    const tx = text(page('DMC-08', 'postmarket'))
+    expect(tx).toMatch(/Weekly AI-device sweep/)
+    expect(tx).toMatch(/Decision due/)
+  })
+
+  it('writes the board assessments in words for the MDR path', () => {
+    const mdr = P.find((p) => p.decision.paths.some((x) => x.outcome?.kind === 'escalation' && x.outcome.mdr.result === 'reportable'))!
+    const html = page(mdr.id, 'postmarket')
+    const tx = text(html)
+    expect(tx).toMatch(/MDR reportability 21 CFR 803 Assessed by the board: reportable/)
+    expect(tx).toMatch(/Correction or removal 21 CFR 806 Assessed by the board: not reportable/)
+    expect(tx).toMatch(/Recall consideration 21 CFR 7 Assessed by the board: recall not warranted/)
+    expect(tx).toMatch(/The 30-day clock\./)
+    expect(html).toContain('data-testid="risk-grid"')
+  })
+
+  it('has the quiet investigate link with the code and the device, keeping ?r= and the layout', () => {
+    const html = page('DMC-06', 'overview')
+    expect(html).toContain('data-testid="investigate-link"')
+    expect(text(html)).toContain('Investigate a complaint on this device')
+    const loc = { pathname: '/devices/DMC-06', search: '?layout=v2&r=TEST1' }
+    const href = investigateHref('IYN', 'DMC-06', loc, undefined)
+    const u = new URL(href, 'https://x.test')
+    expect(u.pathname).toBe('/investigate')
+    expect(u.searchParams.get('code')).toBe('IYN')
+    expect(u.searchParams.get('device')).toBe('DMC-06')
+    expect(u.searchParams.get('r')).toBe('TEST1')
+    expect(u.searchParams.get('layout')).toBe('v2')
+    expect(href.startsWith('/investigate?code=IYN&device=DMC-06')).toBe(true)
+    // no ?layout on the address: v2 is added so the page opens in v2
+    expect(new URL(investigateHref('IYN', 'DMC-06', { pathname: '/devices/DMC-06', search: '' }, undefined), 'https://x.test').searchParams.get('layout')).toBe('v2')
+    // a sub-folder deployment keeps its folder
+    expect(investigateHref('IYN', 'DMC-06', { pathname: '/app/devices/DMC-06/vv', search: '' }, 'v2').startsWith('/app/investigate?')).toBe(true)
+  })
+
+  it('counts "Decisions due" from the open decision paths and explains it', () => {
+    const s = summarize(F, C)
+    expect(s.needDecision).toBe(PATHS.filter(({ x }) => x.state === 'open').length)
+    expect(s.needDecision).toBe(C.devices.filter((d) => d.status?.label === 'Needs review').length)
+    const tx = text(renderToStaticMarkup(<DeviceTiles file={F} company={C} />))
+    expect(tx).toContain('Decisions due (open decision paths)')
+    expect(tx).toContain(`on ${s.needDecisionDevices} devices`)
   })
 })

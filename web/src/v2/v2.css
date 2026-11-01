@@ -1062,3 +1062,109 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* --- Decision paths (simulated) ----------------------------------------------------------------- */
+.ms2-dp {
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
+  background: var(--paper);
+  padding: 0 16px 16px;
+}
+.ms2-dp > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  min-height: 48px;
+  padding: 10px 0;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--ink);
+}
+.ms2-dp > summary:focus-visible,
+.ms2-why > summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.ms2-dp-title {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ms2-stepper {
+  position: relative;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.ms2-step {
+  position: relative;
+  display: flex;
+  gap: 14px;
+  padding-bottom: 18px;
+}
+.ms2-step::before {
+  content: '';
+  position: absolute;
+  left: 13px;
+  top: 30px;
+  bottom: 0;
+  width: 2px;
+  background: var(--rule-strong);
+}
+.ms2-step:last-child {
+  padding-bottom: 0;
+}
+.ms2-step:last-child::before {
+  display: none;
+}
+.ms2-step-n {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  font: 600 14px/1 var(--font-sans);
+}
+.ms2-step[data-state='planned'] .ms2-step-n,
+.ms2-step[data-state='pending'] .ms2-step-n {
+  background: var(--surface);
+  color: var(--ink);
+  border-style: dashed;
+  border-color: var(--ink-3);
+}
+.ms2-step-body {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow-wrap: anywhere;
+}
+.ms2-clauses {
+  margin-top: 10px;
+}
+.ms2-why {
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.ms2-why > summary {
+  cursor: pointer;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+}
+.ms2-note {
+  padding: 8px 12px;
+  background: var(--surface-sunk);
+  border-left: 3px solid var(--ink-3);
+  border-radius: var(--radius-xs);
+}
+.ms2-riskgrid {
+  display: block;
+  width: 100%;
+  max-width: 17rem;
+  height: auto;
+}

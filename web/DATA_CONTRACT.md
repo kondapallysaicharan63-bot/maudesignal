@@ -186,6 +186,19 @@ numbers use `K-SIM-`, `DEN-SIM-`, `P-SIM-`, `Q-SIM-` and `SIM-UDI-`; every perso
 `planned: true`. The page `/devices/<id>` reads the real MAUDE patterns and the "Does this apply to us?" history from `company.json`,
 not from this file. The rules are tested in `web/src/v2/profiles.test.tsx` and `tests/unit/test_company_profiles.py`.
 
+`profiles.<id>.decision` is `{none_reason, paths: [...]}`: the SIMULATED PMS decision path of each signal (a stored problem pattern of
+`company.json`, or the weekly sweep signal when none is stored). A path is `{id, signal: {kind, pattern_id}, state: open|decided, triage,
+board, outcome, risk}`; every step has `tags` (compliance chips, each `{tag, why}`). `outcome` is `ntf` (rationale, signed_by),
+`capa` (capa_id, owner, due, status) or `escalation` (the board's `mdr`, `correction_removal` and `recall` assessments, each
+`{result, rationale}`; the MDR one carries the 30-day clock note, which runs from the company's receipt of the complaint). An `open`
+path has no outcome and no risk review; the Our devices tile "Decisions due" counts these. The real FDA pattern shown beside a path is
+read from `company.json`, never from this file.
+
+**Investigate link.** Each profile has a quiet link "Investigate a complaint on this device" to
+`/investigate?code=<PRODUCT_CODE>&device=<device id>`, built by `investigateHref()` in `web/src/v2/profiles.ts`. The app folder and the
+other query parameters (`?r=`, `?layout=v2`) are kept; `layout=v2` is added when the address has none. The `/investigate` page itself is
+built on branch `fw-investigate`; until it is merged the link leads to the app's fallback page.
+
 ## Feedback and visit pings
 
 `/v1/visit` fires once per view per session whenever an API base is configured. The body is

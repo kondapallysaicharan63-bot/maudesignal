@@ -49,3 +49,27 @@ def test_real_fields_come_from_stored_data() -> None:
             cl = json.loads(f.read_text())["classification"]
             assert ov["device_class"] == (cl["device_class"] or None)
             assert ov["regulation_number"] == (cl["regulation_number"] or None)
+
+
+def test_decision_paths_have_the_realistic_mix() -> None:
+    """Mostly notes to file, 2-3 CAPAs, exactly one MDR-reportable, one recall ruled out."""
+    data = json.loads(STORED.read_text())
+    paths = [x for p in data["profiles"].values() for x in p["decision"]["paths"]]
+    decided = [x["outcome"] for x in paths if x["outcome"]]
+    kinds = [o["kind"] for o in decided]
+    assert kinds.count("ntf") > len(decided) / 2
+    assert 2 <= kinds.count("capa") <= 3
+    esc = [o for o in decided if o["kind"] == "escalation"]
+    assert sum(o["mdr"]["result"] == "reportable" for o in esc) == 1
+    assert (
+        sum(
+            o["recall"]["result"] == "recall not warranted"
+            and o["mdr"]["result"] == "not reportable"
+            for o in esc
+        )
+        == 1
+    )
+    for x in paths:
+        for step in (x["triage"], x["board"], *([x["outcome"]] if x["outcome"] else [])):
+            assert step["tags"], x["id"]
+        assert x["triage"]["date"] <= x["board"]["date"]
