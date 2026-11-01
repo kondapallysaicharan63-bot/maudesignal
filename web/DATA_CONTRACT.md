@@ -390,10 +390,10 @@ Answer (`InvestigateAnswer`, see `api/openapi.json`):
   this product code" (the tool counts every maker and decides nothing about similarity). `sources.non_manufacturer.url` is `""`
   when no filer type other than a manufacturer exists (no query returns "0 reports"); the page then writes "None of the 121
   reports ..." and links `sources.buckets_url`, the by-filer-type query. A zero is never linked.
-- Time limit: the whole search has a deadline (`MAUDESIGNAL_INVESTIGATE_DEADLINE_S`, default 40, at most 45); each openFDA call
+- Time limit: the whole search has a deadline (`MAUDESIGNAL_INVESTIGATE_DEADLINE_S`, default 30, at most 40); each openFDA call
   gets min(10 s, time left); keyword counts, filer types, recalls, 510(k)s and the type name run side by side. After the deadline
   the calls not started are skipped and `notes` says so. `502` only when the first monthly count fails; `503
-  {code: "openfda_limited"}` when openFDA answers 429. The page gives up after 48 s with its own "took too long" message.
+  {code: "openfda_limited"}` when openFDA answers 429, and `504 {code: "investigate_timeout"}` when the whole request outruns its limit (deadline + 5 s; each openFDA call is also cut at 8 s of wall-clock time). An unexpected server error is a JSON 500 that still carries the CORS headers. The page gives up after 48 s with its own "took too long" message.
 - The patient-data guard also refuses `name:` / `patient name` labels, and keywords never come from words after `name:` or from runs
   of two Capitalised words.
 - The audit entry holds `description_hmac` (HMAC-SHA256 with the server pepper), not a plain hash.

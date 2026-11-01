@@ -60,6 +60,8 @@ function Badge({ a }: { a: Investigation }) {
 }
 
 function Months({ a }: { a: Investigation }) {
+  const [allMonths, setAllMonths] = useState(false)
+  const zeros = a.months.filter((m) => m.code_wide === 0).length
   const max = Math.max(1, ...a.months.map((m) => m.code_wide))
   const kw = a.total_keyword_matched
   return (
@@ -104,10 +106,20 @@ function Months({ a }: { a: Investigation }) {
           <span className="ms2-bar ms2-bar--now ms2-inv-swatch" aria-hidden="true" /> Narrative mentions a keyword
         </li>
       </ul>
+      {a.total_code_wide.value === 0 && (
+        <p className="ms2-inv-meta m-0 mt-2" data-testid="inv-zero-hint">
+          No reports for this product code in these 12 months. Check the product code or widen the wording.
+        </p>
+      )}
+      {a.total_code_wide.value > 0 && a.total_keyword_matched && a.total_keyword_matched.value === 0 && (
+        <p className="ms2-inv-meta m-0 mt-2" data-testid="inv-zero-hint">
+          No narrative mentions these keywords. Widen the wording.
+        </p>
+      )}
       <div className="ms2-inv-scroll">
-        <table className="ms2-table" data-testid="inv-months">
+        <table className={`ms2-table${allMonths ? ' is-all' : ''}`} data-testid="inv-months">
           <caption className="ms2-inv-caption">
-            Reports received per month, last 12 months. The table is the text version of the bars.
+            Reports received per month, last 12 months.<span className="ms2-inv-barsonly"> The table is the text version of the bars.</span>
           </caption>
           <thead>
             <tr>
@@ -142,14 +154,16 @@ function Months({ a }: { a: Investigation }) {
                 </td>
                 <td className="ms2-inv-barcol" aria-hidden="true" data-bars={`${m.month}: ${m.code_wide} all reports${m.keyword_matched === null ? '' : `, ${m.keyword_matched} keyword`}`}>
                   <span className="ms2-bars">
-                    <span className="ms2-inv-barrow">
-                      <span className="ms2-bar ms2-bar--base" style={{ width: `${(m.code_wide / max) * 100}%` }} />
-                      {m.code_wide > 0 && <span className="ms2-inv-barval">{fmt(m.code_wide)}</span>}
-                    </span>
-                    {m.keyword_matched !== null && (
+                    {m.code_wide > 0 && (
                       <span className="ms2-inv-barrow">
-                        <span className="ms2-bar ms2-bar--now" style={{ width: `${(m.keyword_matched / max) * 100}%` }} />
-                        {m.keyword_matched > 0 && <span className="ms2-inv-barval">{fmt(m.keyword_matched)}</span>}
+                        <span className="ms2-bar ms2-bar--base" style={{ width: `${(m.code_wide / max) * 80}%` }} />
+                        <span className="ms2-inv-barval">{fmt(m.code_wide)}</span>
+                      </span>
+                    )}
+                    {m.keyword_matched !== null && m.keyword_matched > 0 && (
+                      <span className="ms2-inv-barrow">
+                        <span className="ms2-bar ms2-bar--now" style={{ width: `${(m.keyword_matched / max) * 80}%` }} />
+                        <span className="ms2-inv-barval">{fmt(m.keyword_matched)}</span>
                       </span>
                     )}
                   </span>
@@ -159,6 +173,11 @@ function Months({ a }: { a: Investigation }) {
           </tbody>
         </table>
       </div>
+      {zeros > 0 && zeros < a.months.length && (
+        <button type="button" className="ms2-link ms2-inv-allmonths" onClick={() => setAllMonths((v) => !v)} aria-expanded={allMonths} data-testid="inv-allmonths">
+          {allMonths ? 'Show only months with reports' : `Show all ${a.months.length} months`}
+        </button>
+      )}
       <p className="ms2-inv-meta m-0 mt-2">
         The two counts answer different questions and are never added. Months with no reports are dimmed and not linked. {a.lag_note}
       </p>
@@ -197,9 +216,11 @@ function Quotes({ a }: { a: Investigation }) {
           ))}
         </ul>
       )}
-      <p className="ms2-inv-meta m-0 mt-2" data-testid="inv-own-maker">
-        {a.own_maker_note}
-      </p>
+      {a.quotes.length > 0 && (
+        <p className="ms2-inv-meta m-0 mt-2" data-testid="inv-own-maker">
+          {a.own_maker_note}
+        </p>
+      )}
     </div>
   )
 }
@@ -273,6 +294,17 @@ function Sources({ a }: { a: Investigation }) {
   )
 }
 
+/** Recalls with the same reason text are shown under that text once. */
+function groupByReason<T extends { reason: string }>(items: T[]): { reason: string; items: T[] }[] {
+  const out: { reason: string; items: T[] }[] = []
+  for (const it of items) {
+    const g = out.find((x) => x.reason === it.reason)
+    if (g) g.items.push(it)
+    else out.push({ reason: it.reason, items: [it] })
+  }
+  return out
+}
+
 function Related({ a }: { a: Investigation }) {
   const { recalls, clearances } = a
   return (
@@ -285,20 +317,29 @@ function Related({ a }: { a: Investigation }) {
               <Figure value={recalls.total.value} url={recalls.total.url} label="recall records" /> recall records for this product code, all dates.
               Newest:
             </p>
-            <ul className="ms2-inv-plain mt-1">
-              {recalls.items.map((r) => (
-                <li key={r.recall_number}>
-                  <span className="ms-num">{r.recall_number}</span> · {r.firm ?? 'firm not stated'} · {r.status ?? 'status not stated'} · started{' '}
-                  {r.date_initiated ?? 'date not stated'}
-                  {r.reason && <span className="ms2-inv-meta block">{r.reason}</span>}
-                  {r.url && (
-                    <a className="ms2-a text-[15px]" href={r.url} target="_blank" rel="noreferrer" aria-label={`Full record of recall ${r.recall_number} on openFDA`}>
-                      Full record
-                    </a>
-                  )}
-                </li>
-              ))}
-            </ul>
+            {groupByReason(recalls.items).map((g) => (
+              <div key={g.reason + g.items[0].recall_number} className="mt-2" data-testid="inv-recall-group">
+                {g.reason && (
+                  <p className="ms2-inv-meta m-0">
+                    {g.reason}
+                    {g.items.length > 1 && <strong> (×{g.items.length}, same reason)</strong>}
+                  </p>
+                )}
+                <ul className="ms2-inv-plain mt-1">
+                  {g.items.map((r) => (
+                    <li key={r.recall_number}>
+                      <span className="ms-num">{r.recall_number}</span> · {r.firm ?? 'firm not stated'} · {r.status ?? 'status not stated'} · started{' '}
+                      {r.date_initiated ?? 'date not stated'}{' '}
+                      {r.url && (
+                        <a className="ms2-a" href={r.url} target="_blank" rel="noreferrer" aria-label={`Full record of recall ${r.recall_number} on openFDA`}>
+                          Full record
+                        </a>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
             <p className="ms2-inv-meta m-0 mt-1">Numbers and dates are as filed with FDA.</p>
           </>
         ) : (
@@ -490,6 +531,7 @@ export function InvestigatePage({
   const [out, setOut] = useState<Outcome | null>(null)
   const [asked, setAsked] = useState('')
   const [editing, setEditing] = useState(false)
+  const errRef = useRef<HTMLParagraphElement>(null)
   const ready = code.length === 3 && description.trim().length >= MIN_DESCRIPTION
   const why = code.length !== 3 ? 'Enter the three-letter product code.' : `Describe the problem in at least ${MIN_DESCRIPTION} characters.`
   const ran = out?.ok === true || !live
@@ -504,6 +546,7 @@ export function InvestigatePage({
     setOut(o)
     setEditing(!o.ok)
     setBusy(false)
+    if (!o.ok) window.setTimeout(() => errRef.current?.scrollIntoView({ block: 'center', behavior: 'auto' }), 0)
   }
   const shown = !live ? RECORDED_INPUT.description : asked
   const summary = shown.length > 90 ? `${shown.slice(0, 90).trimEnd()}…` : shown
@@ -516,7 +559,7 @@ export function InvestigatePage({
           openFDA query, and no AI model is used.
         </p>
       </header>
-      <p className="ms-banner ms-banner--warn ms2-inv-banner" role="note" data-testid="inv-banner">
+      <p className={`ms-banner ms-banner--warn ms2-inv-banner${collapsed ? ' ms2-inv-banner--after' : ''}`} role="note" data-testid="inv-banner">
         <Icon name="warn" size={20} />
         <span>{BANNER}</span>
       </p>
@@ -602,7 +645,8 @@ export function InvestigatePage({
               maxLength={MAX_DESCRIPTION}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="A few words about the problem with the device. No patient details."
-              aria-describedby="inv-desc-hint"
+              aria-describedby={out && !out.ok ? 'inv-desc-hint inv-error' : 'inv-desc-hint'}
+              aria-invalid={out && !out.ok && out.kind === 'patient_data' ? true : undefined}
             />
             <span id="inv-desc-hint" className="ms2-inv-hint">
               <span className="ms-num" data-testid="inv-count">
@@ -610,6 +654,17 @@ export function InvestigatePage({
               </span>{' '}
               of {MAX_DESCRIPTION} characters. Used once to pick keywords for the search; not stored.
             </span>
+            {out && !out.ok && (
+              <p
+                ref={errRef}
+                id="inv-error"
+                role="alert"
+                className={`ms-banner ${out.kind === 'patient_data' ? 'ms-banner--warn' : 'ms-banner--err'} ms2-inv-error`}
+                data-testid={`inv-error-${out.kind}`}
+              >
+                {out.message}
+              </p>
+            )}
           </div>
           {live && (
             <div className="ms2-inv-submit">
@@ -643,12 +698,7 @@ export function InvestigatePage({
       <div>
         {busy && (
           <p className="ms2-muted" role="status" data-testid="inv-busy">
-            Asking openFDA. This can take up to 40 seconds.
-          </p>
-        )}
-        {out && !out.ok && (
-          <p role="alert" className={`ms-banner ${out.kind === 'patient_data' ? 'ms-banner--warn' : 'ms-banner--err'}`} data-testid={`inv-error-${out.kind}`}>
-            {out.message}
+            Asking openFDA. This can take up to 30 seconds.
           </p>
         )}
       </div>

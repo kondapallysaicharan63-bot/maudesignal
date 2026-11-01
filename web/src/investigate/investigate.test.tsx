@@ -396,3 +396,62 @@ describe('review fixes', () => {
     for (const l of document.querySelectorAll('label')) expect(l.querySelector('span')).toBeNull()
   })
 })
+
+describe('design re-check', () => {
+  it('a month with no reports draws no bar, and the widest bar leaves room for its value', async () => {
+    await act(async () => root.render(<InvestigatePage apiBase={null} />))
+    expect(q('inv-month-2025-11')!.querySelector('.ms2-bar')).toBeNull()
+    const widths = [...q('inv-month-2026-07')!.querySelectorAll<HTMLElement>('.ms2-bar')].map((b) => parseFloat(b.style.width))
+    expect(Math.max(...widths)).toBeLessThanOrEqual(80)
+  })
+  it('the months with no reports can be collapsed and re-opened', async () => {
+    await act(async () => root.render(<InvestigatePage apiBase={null} />))
+    expect(q('inv-months')!.className).not.toContain('is-all')
+    await click(q('inv-allmonths'))
+    expect(q('inv-months')!.className).toContain('is-all')
+  })
+  it('recalls with the same reason show the sentence once with a count', async () => {
+    const b = JSON.parse(JSON.stringify(FIX))
+    b.recalls.items = ['Z-1-2026', 'Z-2-2026', 'Z-3-2026'].map((n) => ({ ...b.recalls.items[0], recall_number: n, reason: 'Same sentence.' }))
+    await act(async () => root.render(<InvestigatePage apiBase="https://api.example" fetcher={async () => json(200, b)} code="LLZ" />))
+    await typeInto(q('inv-desc') as HTMLTextAreaElement, 'the viewer froze')
+    await click(q('inv-run'))
+    await flush()
+    const groups = document.querySelectorAll('[data-testid=inv-recall-group]')
+    expect(groups.length).toBe(1)
+    expect(groups[0].textContent).toContain('×3')
+    expect((groups[0].textContent ?? '').split('Same sentence.').length).toBe(2)
+  })
+  it('no own-company note without quotes; a zero state tells what to do', async () => {
+    const b = JSON.parse(JSON.stringify(FIX))
+    b.quotes = []
+    b.total_code_wide.value = 0
+    b.months = b.months.map((m: Record<string, unknown>) => ({ ...m, code_wide: 0, keyword_matched: 0 }))
+    await act(async () => root.render(<InvestigatePage apiBase="https://api.example" fetcher={async () => json(200, b)} code="LLZ" />))
+    await typeInto(q('inv-desc') as HTMLTextAreaElement, 'the viewer froze')
+    await click(q('inv-run'))
+    await flush()
+    expect(q('inv-own-maker')).toBeNull()
+    expect(q('inv-zero-hint')?.textContent).toContain('Check the product code or widen the wording.')
+  })
+  it('an error is under the description field, described by it, and announced once', async () => {
+    const f = vi.fn().mockResolvedValue(json(422, { code: 'patient_data', message: 'Please remove patient details.' }))
+    await act(async () => root.render(<InvestigatePage apiBase="https://api.example" fetcher={f} code="LLZ" />))
+    await typeInto(q('inv-desc') as HTMLTextAreaElement, 'something here')
+    await click(q('inv-run'))
+    await flush()
+    const err = q('inv-error-patient_data')!
+    expect(err.id).toBe('inv-error')
+    expect(q('inv-desc')!.getAttribute('aria-describedby')).toContain('inv-error')
+    expect(q('inv-desc')!.parentElement!.contains(err)).toBe(true)
+    expect(document.querySelectorAll('[role=alert]').length).toBe(1)
+  })
+})
+
+describe('504 from the server', () => {
+  it('maps investigate_timeout to the took-too-long message', async () => {
+    const f = async () => json(504, { code: 'investigate_timeout', message: 'x' })
+    const o = await investigate('LLZ', 'abcde', { apiBase: 'https://api.example', fetcher: f })
+    expect(o).toMatchObject({ ok: false, kind: 'timeout' })
+  })
+})

@@ -159,7 +159,7 @@ Plus this manifest, the demo video, and the submission write-up.
 - `OPENFDA_API_KEY` must be set on the API project. A run makes up to 8 openFDA requests; without a key the shared keyless
   limit (240 a minute, 1,000 a day per IP) is used up fast and the page then says "openFDA is limiting requests just now".
 - `MAUDESIGNAL_WEB_ORIGINS` must list the website origin (CORS for `POST /v1/investigate`). Optional:
-  `MAUDESIGNAL_INVESTIGATE_PER_HOUR` (6), `MAUDESIGNAL_INVESTIGATE_PER_DAY` (20), `MAUDESIGNAL_INVESTIGATE_DEADLINE_S` (40, at most 45;
+  `MAUDESIGNAL_INVESTIGATE_PER_HOUR` (6), `MAUDESIGNAL_INVESTIGATE_PER_DAY` (20), `MAUDESIGNAL_INVESTIGATE_DEADLINE_S` (30, at most 40;
   the function's `maxDuration` is 60).
 
 ## What is PRE-EXISTING (the base — NOT presented as hackathon work)

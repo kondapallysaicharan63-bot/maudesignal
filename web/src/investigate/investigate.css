@@ -323,3 +323,52 @@
 .ms2-inv-hint a {
   overflow-wrap: anywhere;
 }
+
+/* --- design re-check ------------------------------------------------------------------------------------------ */
+.ms2-inv-hint,
+.ms2-inv-meta,
+.ms2-inv-badge,
+.ms2-inv-figlabel,
+.ms2-inv-legend,
+.ms2-inv-caption {
+  font-size: 15px;
+}
+.ms2-inv-allmonths {
+  display: none;
+}
+.ms2-inv-submit .ms-btn[disabled] {
+  opacity: 1;
+  color: var(--ink);
+  background: var(--surface-sunk);
+  border-color: var(--rule-strong);
+}
+.ms2-inv-error {
+  margin: 8px 0 0;
+}
+.ms2-inv-jumps .ms2-smalllink {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+}
+@media (max-width: 560px) {
+  .ms2-inv-legend,
+  .ms2-inv-barsonly,
+  .ms2-inv-barcol {
+    display: none;
+  }
+  .ms2-inv-banner--after {
+    display: none;
+  }
+  .ms2-inv-jumps {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 4px 20px;
+    white-space: nowrap;
+  }
+  .ms2-inv-allmonths {
+    display: inline-flex;
+  }
+  .ms2-table:not(.is-all) tr.ms2-inv-zero {
+    display: none;
+  }
+}

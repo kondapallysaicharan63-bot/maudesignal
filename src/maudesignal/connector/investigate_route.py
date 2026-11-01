@@ -8,13 +8,15 @@ per hour and per day (the address is only ever seen as a peppered hash), CORS fo
 per-call cost ledger is never touched). What differs, by design:
 
 * the problem description is **never stored or logged**. The audit entry and the log line carry
-  a keyed hash (HMAC) of it and its length only; the response is ``Cache-Control: no-store`` and is not cached;
+  a keyed hash (HMAC) of it and its length only; the response is ``Cache-Control: no-store``
+  and is not cached;
 * the patient-data guard of ``/v1/live/ask`` runs first (``422 patient_data``) and nothing is
   searched.
 """
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import hmac
 import json
@@ -24,6 +26,7 @@ import time
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
 from datetime import time as dtime
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, Request, Response
@@ -50,6 +53,7 @@ logger = get_logger(__name__)
 
 INVESTIGATE_PATH = "/v1/investigate"
 PER_HOUR_ENV = "MAUDESIGNAL_INVESTIGATE_PER_HOUR"
+GRACE_S = 5.0
 DEADLINE_ENV = "MAUDESIGNAL_INVESTIGATE_DEADLINE_S"
 PER_DAY_ENV = "MAUDESIGNAL_INVESTIGATE_PER_DAY"
 DEFAULT_PER_HOUR = 6
@@ -86,6 +90,26 @@ def _err(
     return JSONResponse(
         status_code=status, content=body, headers={"Cache-Control": "no-store", **(headers or {})}
     )
+
+
+def _where(exc: BaseException) -> str:
+    """``file:line`` of the innermost frame of an exception (never its message)."""
+    tb = exc.__traceback__
+    last = None
+    while tb is not None:
+        last = tb
+        tb = tb.tb_next
+    if last is None:
+        return "unknown"
+    return f"{Path(last.tb_frame.f_code.co_filename).name}:{last.tb_lineno}"
+
+
+def _wait_text(seconds: int) -> str:
+    """Write a wait as minutes (600 seconds is "10 minutes"); seconds only under 90."""
+    if seconds < 90:
+        return f"{seconds} seconds"
+    minutes = -(-seconds // 60)
+    return f"{minutes} minutes" if minutes < 120 else f"{-(-minutes // 60)} hours"
 
 
 def audit_inputs(code: str, description: str, pepper: bytes) -> dict[str, str]:
@@ -160,7 +184,15 @@ def mount_investigate(
         elif origin and not allowed:
             response = _err(403, "origin_not_allowed", "Origin not allowed.")
         else:
-            response = await call_next(request)
+            try:
+                response = await call_next(request)
+            except Exception as exc:
+                # Without this the 500 comes from the outermost handler, which sends no CORS
+                # headers, and the browser reports a network error. Type and place only, never text.
+                logger.error(
+                    "investigate_unexpected_error", error_type=type(exc).__name__, where=_where(exc)
+                )
+                response = _err(500, "internal_error", "Something went wrong on the server.")
         response.headers["Vary"] = "Origin"
         if allowed:
             response.headers["Access-Control-Allow-Origin"] = origin
@@ -231,6 +263,8 @@ def mount_investigate(
             422: {"description": "Input not usable, or it looks like patient details."},
             429: {"description": "Per-address limit reached; see Retry-After."},
             502: {"description": "openFDA unreachable."},
+            503: {"description": "openFDA is limiting requests (code openfda_limited); try later."},
+            504: {"description": "The search ran out of time (code investigate_timeout)."},
         },
         openapi_extra={"x-maudesignal-read-only": True, "x-maudesignal-scope": "read"},
     )
@@ -243,7 +277,7 @@ def mount_investigate(
                 429,
                 "rate_limited",
                 f"Limit of {hourly.limit} investigations per hour reached. "
-                f"Retry in {retry} seconds.",
+                f"Retry in {_wait_text(retry)}.",
                 {"Retry-After": str(retry)},
                 retry_after_s=retry,
             )
@@ -258,13 +292,24 @@ def mount_investigate(
             return _err(
                 429,
                 "rate_limited",
-                f"Daily limit of {daily.limit} investigations reached. Retry in {wait} seconds.",
+                f"Daily limit of {daily.limit} investigations reached. "
+                f"Retry in {_wait_text(wait)}.",
                 {"Retry-After": str(wait)},
                 retry_after_s=wait,
             )
         inputs = audit_inputs(body.product_code.upper(), body.description, pepper)
         try:
-            answer = await run_in_threadpool(run, body)
+            answer = await asyncio.wait_for(
+                run_in_threadpool(run, body), timeout=deadline_s + GRACE_S
+            )
+        except TimeoutError:
+            append_audit(inputs, None, "investigate_timeout")
+            logger.info("investigate_request", status=504, outcome="timeout")
+            return _err(
+                504,
+                "investigate_timeout",
+                "The search took too long and was stopped. Nothing is shown. Try again.",
+            )
         except InvestigateError as exc:
             if exc.limited:
                 append_audit(inputs, None, "openfda_limited")

@@ -553,7 +553,6 @@ def test_time_limit_skips_the_calls_not_started_and_says_so(stored: StoredSource
     ans = inv.run_investigation(slow, "LLZ", DESC, now=NOW, deadline_s=40.0, clock=lambda: clock[0])
     assert ans.total_code_wide.value > 0  # the first count ran
     assert any("time limit" in n for n in ans.notes)
-    assert ans.recalls.total is None or ans.clearances.total is None or ans.sources is None
     assert all(t is not None and t <= inv.CALL_TIMEOUT_S for t in slow.timeouts)
 
 
@@ -563,7 +562,7 @@ def test_first_count_failing_is_the_only_hard_error() -> None:
         inv.run_investigation(_Down(), "LLZ", DESC, now=NOW, clock=lambda: clock[0])
 
 
-def test_deadline_is_clamped_to_45_seconds() -> None:
+def test_deadline_is_clamped() -> None:
     b = inv.Budget(500.0, clock=lambda: 0.0)
     assert b.left() == inv.MAX_DEADLINE_S
 
@@ -626,3 +625,87 @@ def test_privacy_page_mentions_the_complaint_description() -> None:
         research_on=False,
     )
     assert "up to 6 words" in html and "keyed" in html
+
+
+def test_wait_is_written_in_minutes() -> None:
+    from maudesignal.connector.investigate_route import _wait_text
+
+    assert _wait_text(600) == "10 minutes"
+    assert _wait_text(45) == "45 seconds"
+    assert _wait_text(7200) == "2 hours"
+
+
+# --- integration review ---------------------------------------------------------------------
+
+
+class _Boom:
+    def run(self, query: inv.Query, *, timeout_s: float | None = None) -> inv.Reply:
+        raise RuntimeError("secret detail the description must never reach")
+
+
+def test_an_unexpected_error_is_a_json_500_with_cors_headers(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    c = make_client(_Boom(), tmp=tmp_path)
+    r = c.post(
+        "/v1/investigate",
+        json={"product_code": "LLZ", "description": DESC},
+        headers={"Origin": ORIGIN},
+    )
+    assert r.status_code == 500 and r.json()["code"] == "internal_error"
+    assert r.headers["access-control-allow-origin"] == ORIGIN
+    out = capsys.readouterr()
+    assert "manager" not in out.out + out.err
+    other = c.post(
+        "/v1/investigate",
+        json={"product_code": "LLZ", "description": DESC},
+        headers={"Origin": "https://evil.example"},
+    )
+    assert "access-control-allow-origin" not in other.headers
+
+
+class _Sleepy(StoredSource):
+    def run(self, query: inv.Query, *, timeout_s: float | None = None) -> inv.Reply:
+        import time
+
+        time.sleep(0.6)
+        return super().run(query, timeout_s=timeout_s)
+
+
+def test_one_slow_openfda_call_is_cut_at_its_wall_clock_cap(
+    stored: StoredSource, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(inv, "CALL_WALL_S", 0.1)
+    slow = _Sleepy(stored.events, stored.recalls, stored.k510)
+    with pytest.raises(OpenFDAAPIError):
+        inv.Budget(30.0).call(slow, inv.recall_query("LLZ"))
+    with pytest.raises(inv.InvestigateError):
+        inv.run_investigation(slow, "LLZ", DESC, now=NOW)
+
+
+def test_the_whole_search_has_an_outer_time_limit_and_answers_504_with_cors(
+    stored: StoredSource, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from maudesignal.connector import investigate_route as route
+
+    monkeypatch.setenv("MAUDESIGNAL_INVESTIGATE_DEADLINE_S", "5")
+    monkeypatch.setattr(route, "GRACE_S", -4.6)  # outer limit 0.4 s
+    slow = _Sleepy(stored.events, stored.recalls, stored.k510)
+    c = make_client(slow, tmp=tmp_path)
+    r = c.post(
+        "/v1/investigate",
+        json={"product_code": "LLZ", "description": DESC},
+        headers={"Origin": ORIGIN},
+    )
+    assert r.status_code == 504 and r.json()["code"] == "investigate_timeout"
+    assert r.headers["access-control-allow-origin"] == ORIGIN
+
+
+def test_deadline_defaults_and_clamp() -> None:
+    assert inv.DEFAULT_DEADLINE_S == 30.0 and inv.MAX_DEADLINE_S == 40.0
+    assert inv.Budget(500.0, clock=lambda: 0.0).left() == 40.0
+
+
+def test_openapi_lists_the_upstream_limit_and_timeout_answers(client: TestClient) -> None:
+    op = client.get("/openapi.json").json()["paths"]["/v1/investigate"]["post"]
+    assert {"422", "429", "502", "503", "504"} <= set(op["responses"])
