@@ -56,7 +56,14 @@ function AlertRow({ a, onOpen, dim }: { a: AlertItem; onOpen: (a: AlertItem) => 
             <Pill tone={a.kind === 'severity_escalation' ? 'bad' : 'warn'}>{a.label}</Pill>
           </span>
           <span className="ws-wrap block text-[17px] text-ink-2">
-            {a.detail} · {sourceLabel(a)} · <span className="ms-num whitespace-nowrap">{a.date}</span>
+            {a.source === 'sweep' && a.detail.includes('Latest sweep') ? (
+              // The detail already names the sweep, its run day and its openFDA week.
+              a.detail
+            ) : (
+              <>
+                {a.detail} · {sourceLabel(a)} · <span className="ms-num whitespace-nowrap">{a.date}</span>
+              </>
+            )}
           </span>
         </span>
         <span className="shrink-0 text-accent" aria-hidden="true">

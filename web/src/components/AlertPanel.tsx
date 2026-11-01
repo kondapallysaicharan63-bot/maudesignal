@@ -131,7 +131,7 @@ export function AlertPanel({
                 <>
                   <dl className="m-0 mt-3 grid grid-cols-2 gap-2" data-testid="alert-window">
                     <div className="rounded-md border border-rule bg-paper p-2">
-                      <dt className="text-[15px] leading-snug text-ink-2">This week · {rangeLine(d.window.this_week)}</dt>
+                      <dt className="text-[15px] leading-snug text-ink-2">{d.source.kind === 'sweep' ? 'Latest sweep week' : 'This week'} · {rangeLine(d.window.this_week)}</dt>
                       <dd className="t-index ms-num m-0 mt-1">{d.window.this_week.count ?? 'not stored'}</dd>
                     </div>
                     <div className="rounded-md border border-rule bg-paper p-2">
@@ -160,7 +160,7 @@ export function AlertPanel({
               <H id="ap-reports">Reports behind it</H>
               {d.reports.length === 0 ? (
                 <p className="m-0 mt-2 text-ink-2" data-testid="alert-no-reports">
-                  No reports are stored in this workspace for this week. Open the openFDA query above to read them.
+                  No reports are stored in this workspace for that week. Open the openFDA query above to read them.
                 </p>
               ) : (
                 <>
@@ -234,7 +234,7 @@ export function AlertPanel({
               <H id="ap-who">Who filed</H>
               {d.who_filed ? (
                 <p className="m-0 mt-2 text-[17px]" data-testid="alert-who">
-                  Of the {d.reports_stored ?? 0} stored reports this week: <strong className="ms-num">{d.who_filed.manufacturer}</strong> by the manufacturer,{' '}
+                  Of the {d.reports_stored ?? 0} stored reports that week: <strong className="ms-num">{d.who_filed.manufacturer}</strong> by the manufacturer,{' '}
                   <strong className="ms-num">{d.who_filed.user_facility}</strong> by a user facility, <strong className="ms-num">{d.who_filed.other}</strong> by others.
                 </p>
               ) : (

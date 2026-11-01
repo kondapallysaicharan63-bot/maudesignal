@@ -3,6 +3,7 @@
 // except ordering. Without alerts.json the risky sweep and brief items from the stored exports are used.
 import type { AlertDetail } from '../alerts'
 import { alertItems, groupAlerts, NEEDS_REVIEW, type AlertItem, type AlertItemKind } from '../dashboard'
+import { sweepDetail, sweepLabel } from '../sweepLabel'
 import type { WorkspaceData } from '../types'
 
 const KIND_OF_RULE: Record<string, AlertItemKind> = {
@@ -27,11 +28,15 @@ export function realDetails(data: Pick<WorkspaceData, 'alerts'>): AlertDetail[] 
 
 const plural = (n: number, w: string): string => `${n} ${w}${n === 1 ? '' : 's'}`
 
-/** One stored alert as a list item (same shape the bell and the alert lists use). */
-export function itemOf(d: AlertDetail): AlertItem {
+/**
+ * One stored alert as a list item (same shape the bell and the alert lists use). `label` is the stored sweep's
+ * "Latest sweep · <run day> (openFDA week ...)" (see sweepLabel); the sweep is never called "this week".
+ */
+export function itemOf(d: AlertDetail, label: string | null = null): AlertItem {
   const kind = KIND_OF_RULE[d.rule ?? ''] ?? 'new_signal'
   const n = d.window?.this_week.count
-  const where = d.source.kind === 'brief' ? 'in the demo-snapshot week' : 'this week'
+  const detail =
+    n == null ? d.source.label : d.source.kind === 'brief' ? `${plural(n, 'report')} in the demo-snapshot week` : sweepDetail(n, label)
   return {
     id: d.id,
     kind,
@@ -40,7 +45,7 @@ export function itemOf(d: AlertDetail): AlertItem {
     source: d.source.kind === 'brief' ? 'brief' : 'sweep',
     ...(d.device_type ? { deviceName: d.device_type } : {}),
     date: d.source.as_of ?? '',
-    detail: n != null ? `${plural(n, 'report')} ${where}` : d.source.label,
+    detail,
   }
 }
 
@@ -58,20 +63,21 @@ export function rankReal(details: AlertDetail[]): AlertDetail[] {
   })
 }
 
-/** This week's real alerts: the AI device sweep only (the stored brief is a demo snapshot, listed apart). */
+/** The latest sweep's real alerts: the AI device sweep only (the stored brief is a demo snapshot, listed apart). */
 export function sweepDetails(data: Pick<WorkspaceData, 'alerts'>): AlertDetail[] {
   return realDetails(data).filter((d) => d.source.kind === 'sweep')
 }
 
-/** The demo-snapshot brief's alerts: real FDA reports, but from the demo database, not this week. */
+/** The demo-snapshot brief's alerts: real FDA reports, but from the demo database, not the latest sweep. */
 export function demoDetails(data: Pick<WorkspaceData, 'alerts'>): AlertDetail[] {
   return realDetails(data).filter((d) => d.source.kind === 'brief')
 }
 
-/** This week's real alerts as list items, ranked (the bell, Home, Signals). Without alerts.json: the risky sweep items. */
+/** The latest sweep's real alerts as list items, ranked (the bell, Home, Signals). Without alerts.json: the risky sweep items. */
 export function realAlertItems(data: Pick<WorkspaceData, 'alerts' | 'sweep' | 'briefs'>): AlertItem[] {
   const details = sweepDetails(data)
-  if (details.length > 0) return rankReal(details).map(itemOf)
+  const label = sweepLabel(data.sweep)
+  if (details.length > 0) return rankReal(details).map((d) => itemOf(d, label))
   return groupAlerts(alertItems(data.sweep, data.briefs, null)).signals.filter((a) => a.source === 'sweep')
 }
 

@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { CLASS_LABEL, flaggedRows } from '../artifacts'
 import { isoDay } from '../data'
 import { sweepRowId, sweepRuleText, sweepStats, sweepStatsText } from '../dashboard'
+import { sweepWeek } from '../sweepLabel'
 import type { Sweep } from '../types'
 import { Pill } from './artifacts/common'
 
@@ -117,6 +118,7 @@ export function SweepHead({ sweep, compact = false }: { sweep: Sweep; compact?: 
 /** The flagged product codes with their openFDA query links. */
 export function SweepFlagged({ sweep, focusCode = null }: { sweep: Sweep; focusCode?: string | null }) {
   const m = sweep.meta
+  const week = sweepWeek(sweep) ?? 'the latest openFDA week'
   const flagged = flaggedRows(sweep)
   const { openAlert } = useAlertPanel()
   return (
@@ -145,7 +147,7 @@ export function SweepFlagged({ sweep, focusCode = null }: { sweep: Sweep; focusC
                   </Pill>
                 </span>
                 <span className="ms-num text-ink-2">
-                  {r.current_count} this week · {r.baseline_weekly_mean} a week on average in the 4 weeks before
+                  {r.current_count} in {week} · {r.baseline_weekly_mean} a week on average in the 4 weeks before
                 </span>
               </div>
               <button

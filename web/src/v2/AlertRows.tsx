@@ -1,11 +1,13 @@
 // One row pattern for alerts in the v2 layout (Home, Signals · Ranked, Signals · All alerts), two lines per row:
-// line 1 the code, the device name and the rule as a badge; line 2 the stored counts, "4 this week (0.25 before)".
-// The source ("Stored · AI device sweep · 2026-09-30") is said once, in the list's caption. The whole row opens the
+// line 1 the code, the device name and the rule as a badge; line 2 the stored counts, "4 in the latest sweep (0.25
+// before)". The source ("Latest sweep · Oct 30 (openFDA week Sep 24–30)", from the stored sweep) is said once, in
+// the list's caption. The whole row opens the
 // alert panel. Numbers and names come from the stored exports; a missing name is said, never made up.
 import type { AlertDetail } from '../alerts'
 import type { AlertItem } from '../dashboard'
 import { Icon } from '../icons'
 import { Pill } from '../components/artifacts/common'
+import { sweepLabel } from '../sweepLabel'
 import type { WorkspaceData } from '../types'
 import { demoDetails, itemOf, rankReal, realAlertItems, sweepDetails } from './realAlerts'
 
@@ -18,13 +20,13 @@ export interface AlertRowModel {
   name: string | null
   tone: 'bad' | 'warn'
   label: string
-  /** "4 this week (0.25 before)"; null when no count is stored. */
+  /** "4 in the latest sweep (0.25 before)"; null when no count is stored. */
   counts: string | null
 }
 
 export interface AlertRowList {
   rows: AlertRowModel[]
-  /** Said once above the list, e.g. "Stored · AI device sweep · 2026-09-30". */
+  /** Said once above the list, e.g. "Latest sweep · Oct 30 (openFDA week Sep 24–30)". */
   source: string | null
 }
 
@@ -40,7 +42,7 @@ function fromDetail(d: AlertDetail, names: Map<string, string>): AlertRowModel {
   const w = d.window
   let counts: string | null = null
   if (w && w.this_week.count != null) {
-    const where = d.source.kind === 'brief' ? 'that week' : 'this week'
+    const where = d.source.kind === 'brief' ? 'that week' : 'in the latest sweep'
     counts = w.baseline_4wk.weekly_mean != null ? `${w.this_week.count} ${where} (${w.baseline_4wk.weekly_mean} before)` : `${w.this_week.count} ${where}`
   }
   return {
@@ -71,15 +73,16 @@ function sourceOf(details: AlertDetail[]): string | null {
   return `Stored · ${d.source.label}${dates.length === 1 ? ` · ${dates[0]}` : ''}`
 }
 
-/** This week's real alerts (the AI device sweep), ranked. Never a simulated device, never the demo brief. */
+/** The latest sweep's real alerts (the AI device sweep), ranked. Never a simulated device, never the demo brief. */
 export function realRows(data: Pick<WorkspaceData, 'alerts' | 'sweep' | 'briefs'>): AlertRowList {
   const names = briefNames(data)
   const details = sweepDetails(data)
-  if (details.length > 0) return { rows: rankReal(details).map((d) => fromDetail(d, names)), source: sourceOf(details) }
-  return { rows: realAlertItems(data).map((a) => fromItem(a, names)), source: 'Stored · AI device sweep' }
+  const label = sweepLabel(data.sweep)
+  if (details.length > 0) return { rows: rankReal(details).map((d) => fromDetail(d, names)), source: label ?? sourceOf(details) }
+  return { rows: realAlertItems(data).map((a) => fromItem(a, names)), source: label ?? 'Stored · AI device sweep' }
 }
 
-/** The demo-snapshot brief's alerts (real reports from the demo database, not this week), listed apart. */
+/** The demo-snapshot brief's alerts (real reports from the demo database, not the latest sweep), listed apart. */
 export function demoRows(data: Pick<WorkspaceData, 'alerts' | 'briefs'>): AlertRowList {
   const names = briefNames(data)
   const details = demoDetails(data)
