@@ -149,7 +149,7 @@ firsthand (the problem statement is "Build for Your World").
 
 ## Not done / still needed from Charan
 
-- External beta and expert sign-off (Harish / PSM QA).
+- External beta and expert sign-off (a PMS practitioner, Oct 27).
 - Making `hackathon-day2` the default branch (or an OK to merge) so the daily
   monitor cron can run.
 - FDA Elsa 4.0 and MAUDE: any sentence about it needs a check against an FDA source by Charan first (fda.gov was not reachable from the build environment); it is not used anywhere in the project until then.
