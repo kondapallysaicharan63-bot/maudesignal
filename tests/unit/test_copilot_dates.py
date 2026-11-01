@@ -537,3 +537,101 @@ def test_a_date_block_is_not_counted_as_a_claim(tmp_path: Path) -> None:
     assert report.blocked == 1
     assert report.claim_counts == {"pass": 1, "block": 0}  # one claim, counted once
     assert report.sentences[0].date_issues and "[Withheld" in report.render()
+
+
+# --- round 3: zero claims on a range a tool found empty, compact dates, report numbers -------
+
+
+@pytest.mark.parametrize(
+    ("code", "frm", "to", "claim_from", "claim_to"),
+    [
+        ("MYN", "20250825", "20250831", "20250825", "20250831"),
+        ("MYN", "20260101", "20260107", "20260101", "20260107"),
+        ("QIH", "20260825", "20260831", "20260825", "20260831"),
+        ("MYN", "20250801", "20250831", "20250825", "20250831"),  # a narrower claimed range
+    ],
+)
+def test_zero_on_a_range_a_tool_called_empty_is_blocked(
+    tmp_path: Path, code: str, frm: str, to: str, claim_from: str, claim_to: str
+) -> None:
+    ctx = _demo_ctx(tmp_path)
+    out = product_summary(ctx, code, frm, to)
+    assert out["no_data_for_range"] is True and len(ctx.no_data) == 1
+    zero = _count(code, 0, claim_from, claim_to)
+    text = f"{code} had 0 reports in that range."
+    assert verify_sentence(text, [zero], ctx.store).status in ("pass", "block")  # blind: no check
+    v = verify_sentence(text, [zero], ctx.store, (), tuple(ctx.no_data))
+    assert v.status == "block" and "no stored data for that range" in " ".join(v.reasons)
+    # source-count and share zeros on the same range are blocked too
+    src = SourceCountClaim(code, "non-manufacturer", 0, claim_from, claim_to)
+    assert verify_sentence("0 reports.", [src], ctx.store, (), tuple(ctx.no_data)).status == "block"
+    share = ShareClaim(code, "Injury", 0.0, claim_from, claim_to)
+    assert (
+        verify_sentence("0% injury.", [share], ctx.store, (), tuple(ctx.no_data)).status == "block"
+    )
+    # another code, or a non-zero claim, is not affected by the pair
+    other = verify_sentence(
+        "LLZ had 0 reports.",
+        [_count("LLZ", 0, claim_from, claim_to)],
+        ctx.store,
+        (),
+        tuple(ctx.no_data),
+    )
+    assert "tool call said so" not in " ".join(other.reasons)
+
+
+def test_direct_tier_zero_without_a_tool_call_still_passes(tmp_path: Path) -> None:
+    ctx = _demo_ctx(tmp_path)
+    zero = _count("QIH", 0, "20260825", "20260831")
+    assert verify_sentence("QIH had 0 reports this week.", [zero], ctx.store).status == "pass"
+
+
+def test_agent_withholds_a_zero_after_a_no_data_tool_call(tmp_path: Path) -> None:
+    ctx = _demo_ctx(tmp_path)
+    claim = {
+        "kind": "count",
+        "product_code": "MYN",
+        "value": 0,
+        "event_type": None,
+        "date_from": "20250825",
+        "date_to": "20250831",
+    }
+    answer = json.dumps(
+        {"sentences": [{"text": "MYN had 0 reports that week.", "claims": [claim]}]}
+    )
+    args = {"product_code": "MYN", "date_from": "20250825", "date_to": "20250831"}
+    script = [
+        _msg(tool_calls=[_call("product_summary", args)]),
+        *[_msg(answer) for _ in range(6)],
+    ]
+    agent = CopilotAgent(FakeClient(script), ctx)
+    res = agent.ask("MYN reports in the last week of August?")
+    assert res.report.blocked == 1 and "no stored data for that range" in res.answer
+    # cleared for the next question
+    CopilotAgent(FakeClient([_msg(answer), _msg(answer), _msg(answer)]), ctx).ask("again")
+    assert ctx.no_data == []
+
+
+@pytest.mark.parametrize(
+    "form", ["between 20250825 and 20250831", "on 20250825", "report 3012345-2025-00012 in 2025"]
+)
+def test_compact_dates_name_the_year(tmp_path: Path, form: str) -> None:
+    ctx = _ctx(tmp_path)
+    product_summary(ctx, "LLZ", "20250825", "20250831")
+    claim = _count("LLZ", 3, "20260825", "20260831")
+    v = verify_sentence(f"LLZ had 3 reports {form}.", [claim], ctx.store, tuple(ctx.date_shifts))
+    assert v.status == "block", form
+    assert "Dates used" not in v.text  # never a contradictory note on a withheld sentence
+
+
+def test_a_report_number_does_not_name_the_year(tmp_path: Path) -> None:
+    ctx = _ctx(tmp_path)
+    product_summary(ctx, "LLZ", "20250825", "20250831")
+    claim = _count("LLZ", 3, "20260825", "20260831")
+    text = "LLZ had 3 reports; see report 3012345-2025-00012."
+    v = verify_sentence(
+        text, [claim, RecordClaim("3012345-2025-00012")], ctx.store, tuple(ctx.date_shifts)
+    )
+    # blocked only because that report id is unknown, not because of the year in its number
+    assert not v.date_issues
+    assert v.text.endswith("(Dates used: 2026-08-25 to 2026-08-31.)")

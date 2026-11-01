@@ -1,0 +1,46 @@
+{
+  "checks": [
+    {
+      "detail": "130 cases (need 50)",
+      "group": "",
+      "metrics": {},
+      "name": "enough adversarial cases",
+      "required": true,
+      "status": "PASS"
+    },
+    {
+      "detail": "0 of 84 must-block cases passed",
+      "group": "",
+      "metrics": {},
+      "name": "false passes are 0",
+      "required": true,
+      "status": "PASS"
+    },
+    {
+      "detail": "0 of 46 must-pass cases were blocked",
+      "group": "",
+      "metrics": {},
+      "name": "false blocks are 0",
+      "required": true,
+      "status": "PASS"
+    }
+  ],
+  "counts": {
+    "BLOCKED": 0,
+    "FAIL": 0,
+    "KNOWN_GAP": 0,
+    "NOT_PRESENT": 0,
+    "PASS": 3,
+    "SKIPPED": 0
+  },
+  "metrics": {
+    "cases": 130,
+    "false_block": 0,
+    "false_pass": 0,
+    "must_block": 84,
+    "must_pass": 46
+  },
+  "started_utc": "2026-11-01T07:44:06Z",
+  "title": "gate adversarial set",
+  "verdict": "PASS"
+}
