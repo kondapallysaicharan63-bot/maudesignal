@@ -1,5 +1,6 @@
 // Home (v2): the three most important real FDA alerts, a separate card for the simulated devices, the AI sweep and
 // the trust numbers. Every number is read from the stored exports.
+import { VALIDATION_NOTE } from '../roadmap'
 import { flaggedRows } from '../artifacts'
 import { isoDay } from '../data'
 import { Icon } from '../icons'
@@ -165,6 +166,7 @@ export function HomeV2({
               </dd>
             </div>
           </dl>
+          <p className="ms2-muted m-0 mt-2 text-[15px]" data-testid="trust-validation">{VALIDATION_NOTE}</p>
           <p className="ms2-muted m-0 mt-2 text-[15px]">Every sentence is checked against stored source records before it is shown.</p>
           <button type="button" className="ms2-quietlink mt-1" onClick={onAudit}>
             Audit trail →

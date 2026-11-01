@@ -4,7 +4,7 @@
 import { readStore, writeStore } from '../storage'
 
 export const TASKS = [
-  { id: 'similar-events', label: 'Complaint: find similar events at other makers in the last 12 months' },
+  { id: 'similar-events', label: "Complaint: find problems reported on other makers' devices of the same type in the last 12 months" },
   { id: 'weekly-trend', label: 'Weekly trend for code X vs prior 4 weeks' },
   { id: 'evidence-section', label: 'Assemble the evidence section for a PMS board / CAPA-need form' },
 ] as const

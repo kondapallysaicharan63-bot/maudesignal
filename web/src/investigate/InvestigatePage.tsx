@@ -495,6 +495,9 @@ function Results({ a, description }: { a: Investigation; description: string }) 
         <Related a={a} />
       </Section>
       <Evidence a={a} description={description} />
+      <p className="ms2-muted m-0 text-[15px]" data-testid="inv-attach">
+        Attach to the complaint file / known-effects record. MaudeSignal never decides reportability.
+      </p>
     </div>
   )
 }
@@ -548,7 +551,7 @@ export function InvestigatePage({
     setOut(o)
     setEditing(!o.ok)
     setBusy(false)
-    if (!o.ok) window.setTimeout(() => errRef.current?.scrollIntoView({ block: 'center', behavior: 'auto' }), 0)
+    if (!o.ok) window.setTimeout(() => errRef.current?.scrollIntoView?.({ block: 'center', behavior: 'auto' }), 0)
   }
   const shown = !live ? RECORDED_INPUT.description : asked
   const summary = shown.length > 90 ? `${shown.slice(0, 90).trimEnd()}…` : shown
@@ -558,7 +561,8 @@ export function InvestigatePage({
         <h1 className="ms2-h1">Investigate a complaint</h1>
         <p className="ms2-lead">
           Check a complaint against what FDA already holds for the device type. Everything below comes from public FDA data, each number has its
-          openFDA query, and no AI model is used.
+          openFDA query, and no AI model is used. It is made for the complaints team: the evidence it produces feeds the
+          company's known-effects record.
         </p>
       </header>
       <p className={`ms-banner ms-banner--warn ms2-inv-banner${collapsed ? ' ms2-inv-banner--after' : ''}`} role="note" data-testid="inv-banner">

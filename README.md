@@ -65,7 +65,7 @@ investigates) and periodic (trend review, PMS board, PSUR or PMSR, management re
 The website page `/pms-workflow` (v2 layout) maps that order step by step and, for each
 step, shows: what is done by hand today, what MaudeSignal does, what stays human, and related
 clauses (ISO 13485 section 8.2.1 to 8.2.3 and 8.5.2; 21 CFR 820, 803, 806 and 7; ISO 14971).
-The map lists what MaudeSignal does at each step: similar-event search over FDA data,
+The map lists what MaudeSignal does at each step: a search of problems reported on other makers' devices of the same type (FDA data),
 Investigate a complaint (new), the weekly change check and AI-device sweep (the proactive
 extra), the claim gate, the CAPA-need evidence PDF with an independent Muse Wonder review,
 human approval and a hash-chained audit trail, and a decision path on simulated devices
@@ -158,6 +158,19 @@ Today: U.S. FDA data (MAUDE, recalls, 510(k)). UK MHRA alerts appear as labelled
 Ideas from testers that are bigger than a half-day change are listed here instead of being built before the
 deadline. (Empty so far.)
 
+### Tomorrow — what testers asked for next, by role
+
+Listed by role, without names. Names only after written permission is confirmed.
+
+- **A medical-device quality leader:** a PMS board and note-to-file record you can sign, escalation assessments,
+  measured ROI, and the workflow map (the map and a first decision path on simulated devices are built; saving your own
+  decisions is not).
+- **A pharmacovigilance practitioner:** a known-effects record that Investigate a complaint can feed, and a validation
+  path. Validation path to FDA AI/ML guidance (GMLP principles, lifecycle guidance) is on the roadmap; this build is not
+  validated.
+- **An earlier PMS practitioner (Oct 27):** a user-entered list of device types to watch, taken from your own
+  clinical evaluation report.
+
 ### Tomorrow — what a quality leader asked for next
 
 A medical-device quality leader's feedback (Oct 31 and Nov 1) shaped the complaint-investigation, workflow-map,
@@ -175,13 +188,14 @@ ROI and device-profile pages. What is NOT built yet:
 - **Photos in saved chats**, Firefox/Safari checks of the v2 live-check, and a sticky-composer option on the
   Investigate page for phones.
 - **EU / UK / Canada sources** (see Today / Tomorrow above).
+- **Validation.** Validation path to FDA AI/ML guidance (GMLP principles, lifecycle guidance) is on the roadmap; this build is not validated.
 
 ---
 
 ## The problem
 
 - Device makers already know their own complaints: they file them. What is
-  hard to see is what happens to **other companies' devices of the same type**
+  hard to see is **problems reported on other makers' devices of the same type**
   and the reports about **their own device filed by someone else** — a user
   facility such as a hospital, a voluntary reporter, a distributor. Those sit
   among tens of thousands of public MAUDE reports. openFDA's counts by report

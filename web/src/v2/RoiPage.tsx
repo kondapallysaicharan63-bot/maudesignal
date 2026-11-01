@@ -83,7 +83,7 @@ interface Field {
 }
 const GROUPS: { title: string; fields: Field[] }[] = [
   {
-    title: 'Complaints: find similar events',
+    title: "Complaints: problems reported on other makers' devices of the same type",
     fields: [
       { key: 'complaints', label: 'Complaints', unit: 'per month' },
       { key: 'complaintManual', label: 'Manual, per complaint', unit: 'min' },
