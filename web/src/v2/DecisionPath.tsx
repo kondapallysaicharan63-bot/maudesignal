@@ -138,6 +138,7 @@ function Step({
   state,
   summary,
   tags,
+  shown,
   children,
 }: {
   n: number
@@ -146,15 +147,18 @@ function Step({
   state: 'done' | 'planned' | 'pending'
   summary: string
   tags?: ClauseTag[]
+  /** Always visible under the summary line (the risk grid). */
+  shown?: ReactNode
+  /** Behind "Show details". */
   children?: ReactNode
 }) {
   return (
     <li className="ms2-step" data-testid="dp-step" data-step={id} data-state={state}>
-      <span className="ms2-step-n" aria-hidden="true">
-        {n}
-      </span>
       <div className="ms2-step-body">
         <h3 className="ms2-step-h">
+          <span className="ms2-step-n" aria-hidden="true">
+            {n}
+          </span>
           <span>
             Step {n}: {title}
           </span>
@@ -163,6 +167,7 @@ function Step({
         <p className="m-0 mt-1" data-testid="step-summary">
           {summary}
         </p>
+        {shown && <div className="mt-2">{shown}</div>}
         {children && (
           <details className="ms2-more">
             <summary>Show details</summary>
@@ -227,7 +232,7 @@ export function RealEvidence({ d, path }: { d: CompanyDevice | undefined; path: 
     <section className="ms2-card ms2-realbox" aria-label="Real FDA data" data-testid="dp-real">
       <p className="ms2-realtag">{head}</p>
       <div className="mt-1 space-y-1">{body}</div>
-      <p className="ms2-muted m-0 mt-1 text-[14px]">These are reports on all devices with this product code, not on our simulated device.</p>
+      <p className="ms2-muted m-0 mt-1 text-[15px]">These are reports on all devices with this product code, not on our simulated device.</p>
     </section>
   )
 }
@@ -379,11 +384,11 @@ export function PathCard({ path, d, open }: { path: DecisionPath; d: CompanyDevi
           state={path.risk ? 'done' : 'pending'}
           summary={path.risk ? `Risk ${path.risk.before.score} before, ${path.risk.after.score} after${path.risk.after_is_expected ? ' (expected)' : ''}.` : 'Not reached yet: the risk file is reviewed once the board has an outcome.'}
           tags={path.risk?.tags}
+          shown={path.risk && <RiskGrid before={path.risk.before} after={path.risk.after} expected={path.risk.after_is_expected} />}
         >
           {path.risk && (
             <>
               <p className="m-0">Health hazard evaluation (HHE) and ISO 14971 risk file. {path.risk.hhe_summary}</p>
-              <RiskGrid before={path.risk.before} after={path.risk.after} expected={path.risk.after_is_expected} />
               <p className="m-0 ms2-muted">
                 Risk file {path.risk.risk_file.ref}: {path.risk.risk_file.change.toLowerCase()} · {dateOf(path.risk.risk_file)}.
               </p>

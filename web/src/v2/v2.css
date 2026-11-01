@@ -1229,9 +1229,7 @@
 }
 .ms2-step {
   position: relative;
-  display: flex;
-  gap: 14px;
-  padding-bottom: 20px;
+  padding: 0 0 20px 42px;
 }
 .ms2-step::before {
   content: '';
@@ -1249,7 +1247,9 @@
   display: none;
 }
 .ms2-step-n {
-  flex: none;
+  position: absolute;
+  left: 0;
+  top: 0;
   display: grid;
   place-items: center;
   width: 28px;
@@ -1304,7 +1304,7 @@
 }
 .ms2-why {
   margin-top: 2px;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--ink-2);
 }
 .ms2-why > summary {
@@ -1383,4 +1383,49 @@
 }
 #profile-panel .ms-code {
   font-size: 14px;
+}
+
+/* A sticky label for the long phone pages (the banner scrolls away); small, and only below 480px. */
+.ms2-simchip {
+  display: none;
+}
+@media (max-width: 479px) {
+  .ms2-simchip {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 6;
+    margin: 0 0 8px;
+    padding: 4px 0;
+    font: 600 14px/1.4 var(--font-sans);
+    color: var(--ink);
+    background: var(--paper);
+    border-bottom: 1px dashed var(--rule-strong);
+  }
+  /* The step rail goes: the number sits in the heading and the text uses the full width. */
+  .ms2-step {
+    padding-left: 0;
+  }
+  .ms2-step::before {
+    display: none;
+  }
+  .ms2-step-n {
+    position: static;
+    flex: none;
+    width: 26px;
+    height: 26px;
+  }
+  .ms2-dp {
+    padding: 0 10px 12px;
+  }
+  #profile-panel .ms2-card {
+    padding: 14px 12px;
+  }
+  .ms2-tl {
+    padding-left: 14px;
+    margin-left: 4px;
+  }
+  .ms2-tl > li::before {
+    left: -21px;
+  }
 }

@@ -191,7 +191,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      },
      {
       "id": "DR-2",
@@ -220,7 +220,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      },
      {
       "id": "DR-3",
@@ -249,7 +249,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      }
     ]
    },
@@ -924,7 +924,7 @@
      "date": "2022-09-27",
      "person": "Matteo Ferrante (simulated)",
      "role": "Management review",
-     "action": "approved the launch"
+     "action": "signed off the launch"
     },
     {
      "date": "2022-08-06",
@@ -966,31 +966,31 @@
      "date": "2021-07-31",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-222 (TP-122)"
+     "action": "signed off test report TR-222 (TP-122)"
     },
     {
      "date": "2021-06-27",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-221 (TP-121)"
+     "action": "signed off test report TR-221 (TP-121)"
     },
     {
      "date": "2021-05-24",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-220 (TP-120)"
+     "action": "signed off test report TR-220 (TP-120)"
     },
     {
      "date": "2021-02-22",
      "person": "Aoife Brennan (simulated)",
      "role": "Quality Engineering",
-     "action": "approved the risk management plan (ISO 14971)"
+     "action": "signed off the risk management plan (ISO 14971)"
     },
     {
      "date": "2021-02-22",
      "person": "Ruth Calloway (simulated)",
      "role": "Management review",
-     "action": "approved design freeze at DR-2"
+     "action": "signed off the design freeze at DR-2"
     },
     {
      "date": "2021-02-22",
@@ -1190,7 +1190,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      },
      {
       "id": "DR-2",
@@ -1219,7 +1219,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      },
      {
       "id": "DR-3",
@@ -1248,7 +1248,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      }
     ]
    },
@@ -1892,7 +1892,7 @@
      "date": "2024-11-20",
      "person": "Ruth Calloway (simulated)",
      "role": "Management review",
-     "action": "approved the launch"
+     "action": "signed off the launch"
     },
     {
      "date": "2024-09-22",
@@ -1934,31 +1934,31 @@
      "date": "2023-09-21",
      "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-242 (TP-142)"
+     "action": "signed off test report TR-242 (TP-142)"
     },
     {
      "date": "2023-08-16",
      "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-241 (TP-141)"
+     "action": "signed off test report TR-241 (TP-141)"
     },
     {
      "date": "2023-07-11",
      "person": "Aoife Brennan (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-240 (TP-140)"
+     "action": "signed off test report TR-240 (TP-140)"
     },
     {
      "date": "2023-04-03",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
-     "action": "approved the risk management plan (ISO 14971)"
+     "action": "signed off the risk management plan (ISO 14971)"
     },
     {
      "date": "2023-04-03",
      "person": "Matteo Ferrante (simulated)",
      "role": "Management review",
-     "action": "approved design freeze at DR-2"
+     "action": "signed off the design freeze at DR-2"
     },
     {
      "date": "2023-04-03",
@@ -2146,7 +2146,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      },
      {
       "id": "DR-2",
@@ -2175,7 +2175,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      },
      {
       "id": "DR-3",
@@ -2204,7 +2204,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      }
     ]
    },
@@ -2426,31 +2426,31 @@
      "date": "2025-12-07",
      "person": "Aoife Brennan (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-262 (TP-162)"
+     "action": "signed off test report TR-262 (TP-162)"
     },
     {
      "date": "2025-10-31",
      "person": "Aoife Brennan (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-261 (TP-161)"
+     "action": "signed off test report TR-261 (TP-161)"
     },
     {
      "date": "2025-09-24",
      "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-260 (TP-160)"
+     "action": "signed off test report TR-260 (TP-160)"
     },
     {
      "date": "2025-06-11",
      "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
-     "action": "approved the risk management plan (ISO 14971)"
+     "action": "signed off the risk management plan (ISO 14971)"
     },
     {
      "date": "2025-06-11",
      "person": "Matteo Ferrante (simulated)",
      "role": "Management review",
-     "action": "approved design freeze at DR-2"
+     "action": "signed off the design freeze at DR-2"
     },
     {
      "date": "2025-06-11",
@@ -2650,7 +2650,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      },
      {
       "id": "DR-2",
@@ -2679,7 +2679,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      },
      {
       "id": "DR-3",
@@ -2708,7 +2708,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      }
     ]
    },
@@ -3093,7 +3093,7 @@
      "date": "2025-06-06",
      "person": "Matteo Ferrante (simulated)",
      "role": "Management review",
-     "action": "approved the launch"
+     "action": "signed off the launch"
     },
     {
      "date": "2025-04-06",
@@ -3141,13 +3141,13 @@
      "date": "2024-03-08",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-282 (TP-182)"
+     "action": "signed off test report TR-282 (TP-182)"
     },
     {
      "date": "2024-02-28",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-331 (TP-181R)"
+     "action": "signed off test report TR-331 (TP-181R)"
     },
     {
      "date": "2024-01-29",
@@ -3165,19 +3165,19 @@
      "date": "2023-12-17",
      "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-280 (TP-180)"
+     "action": "signed off test report TR-280 (TP-180)"
     },
     {
      "date": "2023-09-29",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
-     "action": "approved the risk management plan (ISO 14971)"
+     "action": "signed off the risk management plan (ISO 14971)"
     },
     {
      "date": "2023-09-29",
      "person": "Ruth Calloway (simulated)",
      "role": "Management review",
-     "action": "approved design freeze at DR-2"
+     "action": "signed off the design freeze at DR-2"
     },
     {
      "date": "2023-09-29",
@@ -3377,7 +3377,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      },
      {
       "id": "DR-2",
@@ -3406,7 +3406,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      },
      {
       "id": "DR-3",
@@ -3435,7 +3435,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      }
     ]
    },
@@ -3634,7 +3634,7 @@
      "date": "2024-04-14",
      "person": "Matteo Ferrante (simulated)",
      "role": "Management review",
-     "action": "approved the launch"
+     "action": "signed off the launch"
     },
     {
      "date": "2024-03-02",
@@ -3682,31 +3682,31 @@
      "date": "2023-01-14",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-302 (TP-202)"
+     "action": "signed off test report TR-302 (TP-202)"
     },
     {
      "date": "2022-12-07",
      "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-301 (TP-201)"
+     "action": "signed off test report TR-301 (TP-201)"
     },
     {
      "date": "2022-10-29",
      "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-300 (TP-200)"
+     "action": "signed off test report TR-300 (TP-200)"
     },
     {
      "date": "2022-08-20",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
-     "action": "approved the risk management plan (ISO 14971)"
+     "action": "signed off the risk management plan (ISO 14971)"
     },
     {
      "date": "2022-08-20",
      "person": "Matteo Ferrante (simulated)",
      "role": "Management review",
-     "action": "approved design freeze at DR-2"
+     "action": "signed off the design freeze at DR-2"
     },
     {
      "date": "2022-08-20",
@@ -3906,7 +3906,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      },
      {
       "id": "DR-2",
@@ -3935,7 +3935,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      },
      {
       "id": "DR-3",
@@ -3964,7 +3964,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      }
     ]
    },
@@ -4621,7 +4621,7 @@
      "date": "2022-05-18",
      "person": "Ruth Calloway (simulated)",
      "role": "Management review",
-     "action": "approved the launch"
+     "action": "signed off the launch"
     },
     {
      "date": "2022-04-07",
@@ -4663,25 +4663,25 @@
      "date": "2021-04-10",
      "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-324 (TP-224)"
+     "action": "signed off test report TR-324 (TP-224)"
     },
     {
      "date": "2021-03-17",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-323 (TP-223)"
+     "action": "signed off test report TR-323 (TP-223)"
     },
     {
      "date": "2021-02-27",
      "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-371 (TP-221R)"
+     "action": "signed off test report TR-371 (TP-221R)"
     },
     {
      "date": "2021-02-21",
      "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-322 (TP-222)"
+     "action": "signed off test report TR-322 (TP-222)"
     },
     {
      "date": "2021-01-30",
@@ -4699,19 +4699,19 @@
      "date": "2021-01-04",
      "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-320 (TP-220)"
+     "action": "signed off test report TR-320 (TP-220)"
     },
     {
      "date": "2020-09-16",
      "person": "Aoife Brennan (simulated)",
      "role": "Quality Engineering",
-     "action": "approved the risk management plan (ISO 14971)"
+     "action": "signed off the risk management plan (ISO 14971)"
     },
     {
      "date": "2020-09-16",
      "person": "Matteo Ferrante (simulated)",
      "role": "Management review",
-     "action": "approved design freeze at DR-2"
+     "action": "signed off the design freeze at DR-2"
     },
     {
      "date": "2020-09-16",
@@ -4911,7 +4911,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      },
      {
       "id": "DR-2",
@@ -4940,7 +4940,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      },
      {
       "id": "DR-3",
@@ -4969,7 +4969,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      }
     ]
    },
@@ -5252,7 +5252,7 @@
      "date": "2023-04-15",
      "person": "Ruth Calloway (simulated)",
      "role": "Management review",
-     "action": "approved the launch"
+     "action": "signed off the launch"
     },
     {
      "date": "2023-03-03",
@@ -5294,43 +5294,43 @@
      "date": "2021-12-01",
      "person": "Aoife Brennan (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-344 (TP-244)"
+     "action": "signed off test report TR-344 (TP-244)"
     },
     {
      "date": "2021-11-05",
      "person": "Aoife Brennan (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-343 (TP-243)"
+     "action": "signed off test report TR-343 (TP-243)"
     },
     {
      "date": "2021-10-09",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-342 (TP-242)"
+     "action": "signed off test report TR-342 (TP-242)"
     },
     {
      "date": "2021-09-13",
      "person": "Aoife Brennan (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-341 (TP-241)"
+     "action": "signed off test report TR-341 (TP-241)"
     },
     {
      "date": "2021-08-18",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-340 (TP-240)"
+     "action": "signed off test report TR-340 (TP-240)"
     },
     {
      "date": "2021-05-31",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
-     "action": "approved the risk management plan (ISO 14971)"
+     "action": "signed off the risk management plan (ISO 14971)"
     },
     {
      "date": "2021-05-31",
      "person": "Matteo Ferrante (simulated)",
      "role": "Management review",
-     "action": "approved design freeze at DR-2"
+     "action": "signed off the design freeze at DR-2"
     },
     {
      "date": "2021-05-31",
@@ -5530,7 +5530,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      },
      {
       "id": "DR-2",
@@ -5559,7 +5559,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      },
      {
       "id": "DR-3",
@@ -5588,7 +5588,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      }
     ]
    },
@@ -5945,7 +5945,7 @@
      "date": "2023-04-27",
      "person": "Ruth Calloway (simulated)",
      "role": "Management review",
-     "action": "approved the launch"
+     "action": "signed off the launch"
     },
     {
      "date": "2023-03-02",
@@ -5987,31 +5987,31 @@
      "date": "2022-03-03",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-366 (TP-266)"
+     "action": "signed off test report TR-366 (TP-266)"
     },
     {
      "date": "2022-02-12",
      "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-365 (TP-265)"
+     "action": "signed off test report TR-365 (TP-265)"
     },
     {
      "date": "2022-01-27",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-412 (TP-262R)"
+     "action": "signed off test report TR-412 (TP-262R)"
     },
     {
      "date": "2022-01-24",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-364 (TP-264)"
+     "action": "signed off test report TR-364 (TP-264)"
     },
     {
      "date": "2022-01-05",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-363 (TP-263)"
+     "action": "signed off test report TR-363 (TP-263)"
     },
     {
      "date": "2021-12-19",
@@ -6029,25 +6029,25 @@
      "date": "2021-11-28",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-361 (TP-261)"
+     "action": "signed off test report TR-361 (TP-261)"
     },
     {
      "date": "2021-11-09",
      "person": "Aoife Brennan (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-360 (TP-260)"
+     "action": "signed off test report TR-360 (TP-260)"
     },
     {
      "date": "2021-08-24",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
-     "action": "approved the risk management plan (ISO 14971)"
+     "action": "signed off the risk management plan (ISO 14971)"
     },
     {
      "date": "2021-08-24",
      "person": "Matteo Ferrante (simulated)",
      "role": "Management review",
-     "action": "approved design freeze at DR-2"
+     "action": "signed off the design freeze at DR-2"
     },
     {
      "date": "2021-08-24",
@@ -6247,7 +6247,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      },
      {
       "id": "DR-2",
@@ -6276,7 +6276,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      },
      {
       "id": "DR-3",
@@ -6305,7 +6305,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      }
     ]
    },
@@ -6558,55 +6558,55 @@
      "date": "2025-07-24",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-386 (TP-286)"
+     "action": "signed off test report TR-386 (TP-286)"
     },
     {
      "date": "2025-07-04",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-385 (TP-285)"
+     "action": "signed off test report TR-385 (TP-285)"
     },
     {
      "date": "2025-06-14",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-384 (TP-284)"
+     "action": "signed off test report TR-384 (TP-284)"
     },
     {
      "date": "2025-05-25",
      "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-383 (TP-283)"
+     "action": "signed off test report TR-383 (TP-283)"
     },
     {
      "date": "2025-05-05",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-382 (TP-282)"
+     "action": "signed off test report TR-382 (TP-282)"
     },
     {
      "date": "2025-04-15",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-381 (TP-281)"
+     "action": "signed off test report TR-381 (TP-281)"
     },
     {
      "date": "2025-03-26",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-380 (TP-280)"
+     "action": "signed off test report TR-380 (TP-280)"
     },
     {
      "date": "2024-12-28",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
-     "action": "approved the risk management plan (ISO 14971)"
+     "action": "signed off the risk management plan (ISO 14971)"
     },
     {
      "date": "2024-12-28",
      "person": "Ruth Calloway (simulated)",
      "role": "Management review",
-     "action": "approved design freeze at DR-2"
+     "action": "signed off the design freeze at DR-2"
     },
     {
      "date": "2024-12-28",
@@ -6782,7 +6782,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      },
      {
       "id": "DR-2",
@@ -6811,7 +6811,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      },
      {
       "id": "DR-3",
@@ -6967,55 +6967,55 @@
      "date": "2026-09-25",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-406 (TP-306)"
+     "action": "signed off test report TR-406 (TP-306)"
     },
     {
      "date": "2026-09-03",
      "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-405 (TP-305)"
+     "action": "signed off test report TR-405 (TP-305)"
     },
     {
      "date": "2026-08-12",
      "person": "Aoife Brennan (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-404 (TP-304)"
+     "action": "signed off test report TR-404 (TP-304)"
     },
     {
      "date": "2026-07-21",
      "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-403 (TP-303)"
+     "action": "signed off test report TR-403 (TP-303)"
     },
     {
      "date": "2026-06-29",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-402 (TP-302)"
+     "action": "signed off test report TR-402 (TP-302)"
     },
     {
      "date": "2026-06-07",
      "person": "Aoife Brennan (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-401 (TP-301)"
+     "action": "signed off test report TR-401 (TP-301)"
     },
     {
      "date": "2026-05-16",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-400 (TP-300)"
+     "action": "signed off test report TR-400 (TP-300)"
     },
     {
      "date": "2026-03-12",
      "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
-     "action": "approved the risk management plan (ISO 14971)"
+     "action": "signed off the risk management plan (ISO 14971)"
     },
     {
      "date": "2026-03-12",
      "person": "Ruth Calloway (simulated)",
      "role": "Management review",
-     "action": "approved design freeze at DR-2"
+     "action": "signed off the design freeze at DR-2"
     },
     {
      "date": "2026-03-12",
@@ -7215,7 +7215,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      },
      {
       "id": "DR-2",
@@ -7244,7 +7244,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      },
      {
       "id": "DR-3",
@@ -7273,7 +7273,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      }
     ]
    },
@@ -7478,7 +7478,7 @@
      "date": "2023-09-22",
      "person": "Ruth Calloway (simulated)",
      "role": "Management review",
-     "action": "approved the launch"
+     "action": "signed off the launch"
     },
     {
      "date": "2023-07-22",
@@ -7520,43 +7520,43 @@
      "date": "2022-07-20",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-424 (TP-324)"
+     "action": "signed off test report TR-424 (TP-324)"
     },
     {
      "date": "2022-06-23",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-423 (TP-323)"
+     "action": "signed off test report TR-423 (TP-323)"
     },
     {
      "date": "2022-05-27",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-422 (TP-322)"
+     "action": "signed off test report TR-422 (TP-322)"
     },
     {
      "date": "2022-04-30",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-421 (TP-321)"
+     "action": "signed off test report TR-421 (TP-321)"
     },
     {
      "date": "2022-04-03",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-420 (TP-320)"
+     "action": "signed off test report TR-420 (TP-320)"
     },
     {
      "date": "2022-01-09",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
-     "action": "approved the risk management plan (ISO 14971)"
+     "action": "signed off the risk management plan (ISO 14971)"
     },
     {
      "date": "2022-01-09",
      "person": "Ruth Calloway (simulated)",
      "role": "Management review",
-     "action": "approved design freeze at DR-2"
+     "action": "signed off the design freeze at DR-2"
     },
     {
      "date": "2022-01-09",
@@ -7744,7 +7744,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      },
      {
       "id": "DR-2",
@@ -7773,7 +7773,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      },
      {
       "id": "DR-3",
@@ -7802,7 +7802,7 @@
         "role": "Independent reviewer"
        }
       ],
-      "outcome": "Approved with actions closed"
+      "outcome": "Accepted, actions closed"
      }
     ]
    },
@@ -8033,49 +8033,49 @@
      "date": "2026-01-26",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-445 (TP-345)"
+     "action": "signed off test report TR-445 (TP-345)"
     },
     {
      "date": "2026-01-02",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-444 (TP-344)"
+     "action": "signed off test report TR-444 (TP-344)"
     },
     {
      "date": "2025-12-08",
      "person": "Aoife Brennan (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-443 (TP-343)"
+     "action": "signed off test report TR-443 (TP-343)"
     },
     {
      "date": "2025-11-13",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-442 (TP-342)"
+     "action": "signed off test report TR-442 (TP-342)"
     },
     {
      "date": "2025-10-20",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-441 (TP-341)"
+     "action": "signed off test report TR-441 (TP-341)"
     },
     {
      "date": "2025-09-25",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
-     "action": "approved test report TR-440 (TP-340)"
+     "action": "signed off test report TR-440 (TP-340)"
     },
     {
      "date": "2025-07-17",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
-     "action": "approved the risk management plan (ISO 14971)"
+     "action": "signed off the risk management plan (ISO 14971)"
     },
     {
      "date": "2025-07-17",
      "person": "Matteo Ferrante (simulated)",
      "role": "Management review",
-     "action": "approved design freeze at DR-2"
+     "action": "signed off the design freeze at DR-2"
     },
     {
      "date": "2025-07-17",

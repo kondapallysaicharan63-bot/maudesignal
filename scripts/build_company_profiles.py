@@ -1141,7 +1141,7 @@ def build_profile(
                 "name": name,
                 **when(x),
                 "attendees": attendees,
-                "outcome": "Planned" if x > AS_OF else "Approved with actions closed",
+                "outcome": "Planned" if x > AS_OF else "Accepted, actions closed",
             }
         )
 
@@ -1335,11 +1335,11 @@ def build_profile(
         "Design Engineering",
         "held design review DR-1 (design inputs)",
     )
-    add(dates["design_freeze"], "Management review", "approved design freeze at DR-2")
+    add(dates["design_freeze"], "Management review", "signed off the design freeze at DR-2")
     add(
         dates["design_freeze"],
         "Quality Engineering",
-        "approved the risk management plan (ISO 14971)",
+        "signed off the risk management plan (ISO 14971)",
     )
     add(dates["design_freeze"], "Clinical", "reviewed the clinical hazards in the risk analysis")
     for p in prots:
@@ -1353,7 +1353,7 @@ def build_profile(
             add(
                 d(p["date"]) + timedelta(days=5),
                 "Quality Engineering",
-                f"approved test report {p['report']} ({p['id']})",
+                f"signed off test report {p['report']} ({p['id']})",
             )
     for pr in problems:
         add(
@@ -1382,7 +1382,7 @@ def build_profile(
         )
         add(dates["ai_response"], "Regulatory Affairs", f"submitted the {resp_label.lower()}")
         add(dates["decision"], "Regulatory Affairs", f"recorded the FDA decision: {verb}")
-        add(launch, "Management review", "approved the launch")
+        add(launch, "Management review", "signed off the launch")
     for c in post["capas"]:
         add(d(c["opened"]), "Quality Engineering", f"opened {c['id']}", c["owner"])
         if c["closed"]:

@@ -12,6 +12,7 @@ import {
   niceDate,
   niceMonth,
   SIM_LABEL,
+  SIM_TAG,
   summarize,
   type Dated,
   type DeviceProfile as Profile,
@@ -107,7 +108,7 @@ function Overview({ p }: { p: Profile }) {
             ['Regulation number', o.regulation_number ? `21 CFR ${o.regulation_number}` : 'Not in stored data'],
           ]}
         />
-        <p className="ms2-muted m-0 mt-2 text-[14px]" data-testid="real-source">
+        <p className="ms2-muted m-0 mt-2 text-[15px]" data-testid="real-source">
           Source: {o.classification_source}
           {o.classification_fetched ? `, fetched ${niceDate(o.classification_fetched)}` : ''}.
         </p>
@@ -136,7 +137,7 @@ function Design({ p }: { p: Profile }) {
   return (
     <div className="space-y-4">
       <div className="ms2-grid">
-        <Card title="Design inputs">
+        <Card title="Design inputs (simulated)">
           <ul className="ms2-list">
             {g.inputs.map((x) => (
               <li key={x.id}>
@@ -145,7 +146,7 @@ function Design({ p }: { p: Profile }) {
             ))}
           </ul>
         </Card>
-        <Card title="Design outputs">
+        <Card title="Design outputs (simulated)">
           <ul className="ms2-list">
             {g.outputs.map((x) => (
               <li key={x.id}>
@@ -155,7 +156,7 @@ function Design({ p }: { p: Profile }) {
           </ul>
         </Card>
       </div>
-      <Card title="Risk management (ISO 14971): top hazards" testid="hazards">
+      <Card title="Risk management (ISO 14971): top hazards (simulated)" testid="hazards">
         <ul className="ms2-list">
           {g.hazards.map((h) => (
             <li key={h.id}>
@@ -171,7 +172,7 @@ function Design({ p }: { p: Profile }) {
         </ul>
       </Card>
       {g.software && (
-        <Card title="Software" testid="software-class">
+        <Card title="Software (simulated)" testid="software-class">
           <Facts
             rows={[
               ['IEC 62304 software safety class', `Class ${g.software.iec62304_class}`],
@@ -180,7 +181,7 @@ function Design({ p }: { p: Profile }) {
           />
         </Card>
       )}
-      <Card title="Design reviews">
+      <Card title="Design reviews (simulated)">
         <ul className="ms2-list">
           {g.reviews.map((r) => (
             <li key={r.id}>
@@ -205,7 +206,7 @@ function VV({ p }: { p: Profile }) {
   const retests = new Set(v.problems.map((x) => x.retest_id))
   return (
     <div className="space-y-4">
-      <Card title="Test protocols" testid="protocols">
+      <Card title="Test protocols (simulated)" testid="protocols">
         <ul className="ms2-list">
           {v.protocols
             .filter((t) => !retests.has(t.id))
@@ -252,7 +253,7 @@ function VV({ p }: { p: Profile }) {
               ['Report signed', when(v.study)],
             ]}
           />
-          <p className="ms2-muted m-0 mt-2 text-[14px]">{v.study.label}. These are not results of any real device.</p>
+          <p className="ms2-muted m-0 mt-2 text-[15px]">{v.study.label}. These are not results of any real device.</p>
         </Card>
       )}
     </div>
@@ -265,7 +266,7 @@ function Regulatory({ p }: { p: Profile }) {
   const pma = r.pathway === 'PMA'
   return (
     <div className="space-y-4">
-      <Card title="Pre-Submission (Q-Sub)">
+      <Card title="Pre-Submission (Q-Sub) (simulated)">
         <Facts rows={[['Number', r.presub.number], ['Meeting', when(r.presub)]]} />
         {r.presub.feedback.length > 0 && (
           <>
@@ -278,8 +279,8 @@ function Regulatory({ p }: { p: Profile }) {
           </>
         )}
       </Card>
-      <Card title={`${r.pathway} submission`} testid="submission">
-        <p className="ms2-muted m-0 mb-3 text-[14px]">Numbers in this format (K-SIM-, DEN-SIM-, P-SIM-, Q-SIM-) are fictional and are not FDA numbers.</p>
+      <Card title={`${r.pathway} submission (simulated)`} testid="submission">
+        <p className="ms2-muted m-0 mb-3 text-[15px]">Numbers in this format (K-SIM-, DEN-SIM-, P-SIM-, Q-SIM-) are fictional and are not FDA numbers.</p>
         <Facts
           rows={[
             ['Submission number', <span className="ms-code !text-[15px] !text-ink" data-testid="submission-number">{r.submission.number}</span>],
@@ -302,7 +303,7 @@ function Market({ p }: { p: Profile }) {
   const m = p.market
   return (
     <div className="space-y-4">
-      <Card title="Launch and market" testid="market">
+      <Card title="Launch and market (simulated)" testid="market">
         <Facts
           rows={[
             ['Launch', m.launch ? when(m.launch) : 'not launched'],
@@ -312,7 +313,7 @@ function Market({ p }: { p: Profile }) {
             ['UDI-DI', <span className="ms-code !text-[15px] !text-ink" data-testid="udi">{m.udi_di}</span>],
           ]}
         />
-        <p className="ms2-muted m-0 mt-2 text-[14px]">The UDI-DI is a fictional placeholder, not a GS1 number.</p>
+        <p className="ms2-muted m-0 mt-2 text-[15px]">The UDI-DI is a fictional placeholder, not a GS1 number.</p>
       </Card>
     </div>
   )
@@ -339,7 +340,7 @@ export function ComplaintsChart({ rows }: { rows: { month: string; count: number
           </li>
         ))}
       </ul>
-      <figcaption className="ms2-muted text-[14px]">
+      <figcaption className="ms2-muted text-[15px]">
         {total} complaints, {niceMonth(rows[0].month)} to {niceMonth(rows[rows.length - 1].month)} (simulated).
       </figcaption>
     </figure>
@@ -391,7 +392,7 @@ function RealPatterns({ d, company }: { d: CompanyDevice | undefined; company: C
         </ul>
       )}
       {ev.queries.length > 0 && (
-        <p className="ms2-muted m-0 mt-2 text-[14px]">
+        <p className="ms2-muted m-0 mt-2 text-[15px]">
           Source:{' '}
           {ev.queries.map((q, i) => (
             <span key={q.url}>
@@ -567,6 +568,9 @@ export function DeviceProfilePage({
     )
   return (
     <div data-testid="device-profile" data-id={p.id}>
+      <p className="ms2-simchip" data-testid="sim-chip">
+        {SIM_TAG}
+      </p>
       {back}
       <p className="ms-banner ms-banner--warn m-0 mt-2" data-testid="profile-banner">
         <span className="ws-wrap font-semibold">{file?.banner}</span>
