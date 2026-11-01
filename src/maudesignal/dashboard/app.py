@@ -1835,6 +1835,7 @@ def _on_theme() -> None:
 
 def _top_bar(db: Database) -> None:
     """Design-system Bar: wordmark, the product pages, theme picker; then the dateline."""
+    from maudesignal.connector.registry import HEADLINE
     from maudesignal.dashboard.copilot_pages import FRAMING_LINE
     from maudesignal.dashboard.theme import THEME_NAMES
 
@@ -1865,6 +1866,7 @@ def _top_bar(db: Database) -> None:
         f"<span>{datetime.now().strftime('%A, %B %d, %Y')}</span>"
         f"<span>openFDA data as of {as_of}</span>"
         f"<span>{db.count_raw_reports():,} MAUDE records on file</span></div>"
+        f'<p class="ms-frame-line"><strong>{html.escape(HEADLINE)}</strong></p>'
         f'<p class="ms-frame-line">{html.escape(FRAMING_LINE)}</p>'
     )
 

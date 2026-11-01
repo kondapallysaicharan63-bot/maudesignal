@@ -420,3 +420,30 @@ The browser never calls openFDA (openFDA answered the preview's browser calls wi
   check. Client limit: 10 checks per browser session, 6-hour local cache per code.
 - Withheld sentences: the API never returns a withheld sentence's text; the web app must
   not display one either (tested in `web/src/liveCheck.test.tsx`).
+
+### `measurements.json` (hand-maintained, not written by the exporter)
+
+Recorded timing tests behind the `/roi` page (F27). The page shows no time-saved or cost
+figure unless an entry here carries who, when and how. It starts empty and must stay empty
+until a person has actually timed a task.
+
+```json
+{"schema": 1,
+ "measurements": [
+   {"id": "string, unique",
+    "task": "similar-events | weekly-trend | evidence-section (or the task's full label)",
+    "who": "the person who timed it (required)",
+    "when": "date of the test, YYYY-MM-DD (required)",
+    "how": "how it was timed: stopwatch, screen recording, sample used (required)",
+    "manual_minutes": 0,
+    "maudesignal_minutes": 0,
+    "notes": "optional"}
+ ]}
+```
+
+Rules: `schema` is the integer `1`. `manual_minutes` and `maudesignal_minutes` are measured
+minutes, never estimates. The web app drops an entry that lacks `id`, `task`, `who`, `when`
+or `how`, or whose minutes are not non-negative numbers. Tasks: `similar-events` (complaint:
+find similar events at other makers in the last 12 months), `weekly-trend` (weekly trend for
+code X vs prior 4 weeks), `evidence-section` (assemble the evidence section for a PMS board
+or CAPA-need form).

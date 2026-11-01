@@ -26,6 +26,10 @@ export type Route =
   | { page: 'thread'; id: string }
   | { page: 'run'; id: string }
   | { page: 'capture'; mode: CaptureMode }
+  /** F26: current PMS workflow vs MaudeSignal. */
+  | { page: 'pms' }
+  /** F27: time and cost, measured not claimed. */
+  | { page: 'roi' }
 
 export type Section = 'signals' | 'devices' | 'evidence' | 'connect'
 
@@ -90,6 +94,10 @@ export function parseRoute(pathname: string): Route {
       return a ? { page: 'run', id: dec(a) } : { page: 'home' }
     case 'capture':
       return { page: 'capture', mode: pick(CAPTURE_MODES, a, 'label') }
+    case 'pms-workflow':
+      return { page: 'pms' }
+    case 'roi':
+      return { page: 'roi' }
     default:
       return { page: 'home' }
   }
@@ -120,6 +128,10 @@ export function formatRoute(r: Route): string {
       return `run/${enc(r.id)}`
     case 'capture':
       return `capture/${r.mode}`
+    case 'pms':
+      return 'pms-workflow'
+    case 'roi':
+      return 'roi'
   }
 }
 
@@ -168,6 +180,10 @@ export function routeName(r: Route): string {
       return `${r.page}:${r.id}`
     case 'capture':
       return `capture:${r.mode}`
+    case 'pms':
+      return 'pms-workflow'
+    case 'roi':
+      return 'roi'
   }
 }
 

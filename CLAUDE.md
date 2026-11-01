@@ -13,12 +13,15 @@ fast way to ramp.
 
 ## 1. What MaudeSignal Is
 
-Open-source AI postmarket surveillance toolkit for FDA-cleared AI/ML
+MaudeSignal cuts the time to investigate a complaint against FDA data and to prepare PMS evidence, and keeps every fact traceable for audit.
+
+It is an open-source AI postmarket surveillance toolkit for FDA-cleared AI/ML
 medical devices. Pipeline: ingest MAUDE adverse event reports from
 openFDA → extract structured fields via an LLM Skill → classify into an
 AI-failure taxonomy MAUDE does not natively capture → verify every
 regulatory citation → render a Streamlit dashboard and a PSUR-style
-report.
+report. The weekly change check and the AI-device sweep are the proactive
+extra, not the headline.
 
 Built as an open-source portfolio project under an 8-week build window
 (see [docs/07_roadmap.md](docs/07_roadmap.md)). Already through Day 1 +

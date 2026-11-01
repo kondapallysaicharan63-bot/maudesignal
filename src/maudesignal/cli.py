@@ -38,7 +38,10 @@ from maudesignal.storage.database import Database
 
 app = typer.Typer(
     name="maudesignal",
-    help="Open-source AI postmarket surveillance toolkit for FDA-cleared " "AI/ML medical devices.",
+    help=(
+        "MaudeSignal cuts the time to investigate a complaint against FDA data and to prepare "
+        "PMS evidence, and keeps every fact traceable for audit."
+    ),
     add_completion=False,
     no_args_is_help=True,
 )

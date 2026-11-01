@@ -7,6 +7,7 @@ import { configSnippets, EXAMPLE_QUESTIONS, fetchConnect, FALLBACK_INFO, type Co
 import { AlertRows, demoRows, realRows, SourceCaption } from './AlertRows'
 import { demoSnapshotLabel, WORKFLOWS } from '../data'
 import { Icon } from '../icons'
+import { HEADLINE } from '../positioning'
 import { useMine } from '../useMyCompany'
 import type { WorkflowId, WorkspaceData } from '../types'
 import { StoredList } from '../components/ChatPane'
@@ -469,7 +470,7 @@ function ApiDocs({ apiBase }: { apiBase: string | null }) {
 export function ConnectPage({ tab, onTab, apiBase }: { tab: ConnectTab; onTab: (t: ConnectTab, how?: TabHow) => void; apiBase: string | null }) {
   return (
     <div>
-      <PageHead title="Connect" lead="Use MaudeSignal from Muse, Claude or your own code." />
+      <PageHead title="Connect" lead={HEADLINE} />
       <SubTabs id="connect" label="Connect" tabs={CONNECT_TAB_LABELS} value={tab} onChange={onTab}>
         {tab === 'muse' && (
           <ConnectView apiBase={apiBase} v2 />

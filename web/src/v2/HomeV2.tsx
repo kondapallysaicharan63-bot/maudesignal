@@ -3,10 +3,12 @@
 import { flaggedRows } from '../artifacts'
 import { isoDay } from '../data'
 import { Icon } from '../icons'
+import { HEADLINE } from '../positioning'
 import type { WorkspaceData } from '../types'
 import { sweepDate } from '../components/SweepCard'
 import { AlertRows, demoRows, realRows, SourceCaption } from './AlertRows'
 import { devicesToReview } from './realAlerts'
+import './positioning.css'
 
 export const HOME_TOP = 3
 
@@ -16,6 +18,8 @@ export function HomeV2({
   onViewAll,
   onDevices,
   onAudit,
+  onPms,
+  onRoi,
 }: {
   data: WorkspaceData
   onAlert: (id: string, code: string) => void
@@ -25,6 +29,10 @@ export function HomeV2({
   onDevices: () => void
   /** Evidence · Audit verified. */
   onAudit: () => void
+  /** How MaudeSignal fits your PMS workflow (F26). */
+  onPms?: () => void
+  /** Time and cost: measured, not claimed (F27). */
+  onRoi?: () => void
 }) {
   const real = realRows(data)
   const demo = demoRows(data)
@@ -36,6 +44,9 @@ export function HomeV2({
   return (
     <div className="ms2-home">
       <h1 className="sr-only">Home</h1>
+      <p className="ms2-home-intro" data-testid="home-headline">
+        {HEADLINE}
+      </p>
       <div className="ms2-grid">
         <section className="ms2-card ms2-span2" aria-labelledby="home-alerts-h" data-testid="home-alerts">
           <h2 id="home-alerts-h" className="ms2-h2">
@@ -74,6 +85,23 @@ export function HomeV2({
             <Icon name="chevron" size={18} />
           </button>
         </section>
+
+        {(onPms || onRoi) && (
+          <section className="ms2-card ms2-span2" aria-label="Where MaudeSignal fits" data-testid="home-fit">
+            {onPms && (
+              <button type="button" className="ms2-row" onClick={onPms} data-testid="home-pms-link">
+                <span className="font-medium">How MaudeSignal fits your PMS workflow</span>
+                <Icon name="chevron" size={18} />
+              </button>
+            )}
+            {onRoi && (
+              <button type="button" className="ms2-row" onClick={onRoi} data-testid="home-roi-link">
+                <span className="font-medium">Time and cost: measured, not claimed</span>
+                <Icon name="chevron" size={18} />
+              </button>
+            )}
+          </section>
+        )}
 
         <section className="ms2-card" aria-labelledby="home-sweep-h" data-testid="home-sweep">
           <h2 id="home-sweep-h" className="ms2-h2">

@@ -17,6 +17,7 @@ from typing import Any
 
 from maudesignal.connector.data import PROJECT_ROOT
 from maudesignal.connector.models import ADVISORY
+from maudesignal.connector.registry import HEADLINE
 
 TEMPLATE = PROJECT_ROOT / "api" / "docs.html"
 EXAMPLES = PROJECT_ROOT / "api" / "examples.json"
@@ -28,7 +29,7 @@ SUPPORT_URL = "https://github.com/kondapallysaicharan63-bot/maudesignal/issues"
 
 _FALLBACK = (
     "<!doctype html><html lang='en'><head><meta charset='utf-8'><title>MaudeSignal API</title>"
-    "</head><body><h1>MaudeSignal connector API</h1><p>Read-only tools. "
+    "</head><body><h1>MaudeSignal connector API</h1><p>{headline}</p><p>Read-only tools. "
     "The OpenAPI spec is at <a href='/openapi.json'>/openapi.json</a>.</p><p>{advisory}</p>"
     "<p><a href='{support}'>Support</a> | <a href='/privacy'>Privacy</a> | "
     "<a href='/terms'>Terms</a></p></body></html>"
@@ -81,7 +82,9 @@ def render_docs_page(
     """
     template = _read(TEMPLATE)
     if not template:
-        return _FALLBACK.format(advisory=html.escape(ADVISORY), support=SUPPORT_URL)
+        return _FALLBACK.format(
+            headline=html.escape(HEADLINE), advisory=html.escape(ADVISORY), support=SUPPORT_URL
+        )
     shared = state_backend == "upstash_redis"
     scope = (
         "shared by every server instance (Upstash Redis)"
