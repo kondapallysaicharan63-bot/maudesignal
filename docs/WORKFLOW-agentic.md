@@ -286,3 +286,15 @@ reasoning never reaches it.
   so Vercel builds production from git. 7e82feb = 0d7fe88 + main's two merge commits (no file
   difference). Smoke tests run after the production builds; rollback targets: API
   dpl_2TWpkZKwNEnPyBAdUkoakvcoKMvf, web dpl_qEG9iLDgWRLRyND91skxNViMjSRs (both d4bea03).
+
+### 2026-11-01 05:30 UTC — deploy #2 scope and the feedback window
+- Deploy #2 = layout v2 behind `?layout=v2` (shell 9f53cb3→77899a9→11679ff, answers 8796c94→0af73a6, merged on
+  integrate/v2), each reviewed by the advisor (BLOCK → fixed) and ui-critic (two rounds). Read-aloud uses browser
+  speechSynthesis: the Meta Model API lists no text-to-speech model (models.list, meta-smoke run 41232476267).
+- Research probe 2 (run 41265412828): 2 searches (max_tool_calls respected), 21 fda.gov sources, 0 url
+  citations, $0.0135 tokens + an unknown per-search fee. Per the owner's rule, `MAUDESIGNAL_RESEARCH` goes on in
+  deploy #2 as "Web research — not FDA records".
+- Owner's change of plan: after deploy #2 a feedback window runs until Nov 2, 9 PM PT (Nov 3 05:00 UTC). Only
+  changes under half a day that make the demo clearer or more trustworthy, each reviewed, tested and deployed via
+  `main` with the owner's yes. Bigger ideas go to README "Tomorrow — what testers asked for". Final freeze Nov 2,
+  9 PM PT. Video shot list after deploy #2, updated after the freeze if a screen changed.

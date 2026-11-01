@@ -126,6 +126,11 @@ see [Deploy your own copy](#deploy-your-own-copy).
 
 Today: U.S. FDA data (MAUDE, recalls, 510(k)). UK MHRA alerts appear as labelled regulator context only, not counted. EU data is not included yet. Tomorrow: EU national safety notices (BfArM, ANSM), EUDAMED vigilance once the EU makes it public, Health Canada and Australia TGA recalls.
 
+### Tomorrow — what testers asked for
+
+Ideas from testers that are bigger than a half-day change are listed here instead of being built before the
+deadline. (Empty so far.)
+
 ---
 
 ## The problem
