@@ -6,11 +6,15 @@
 
 ## In 30 seconds
 
-**Every morning, MaudeSignal shows where reports suddenly increased, where they are more serious than usual and where there is a new kind of problem, for the device types you choose — your competitors' devices and reports about your device you didn't file. It only shows facts it can match to the FDA record. People make every decision.**
+**MaudeSignal cuts the time to investigate a complaint against FDA data and to prepare PMS evidence, and keeps every fact traceable for audit.** It only shows facts it can match to the FDA record. People make every decision.
 
 - **Who it is for:** postmarket-surveillance (PMS) and regulatory-affairs teams at
   medical-device makers, working on public openFDA data (MAUDE adverse-event reports,
   recalls, 510(k) records).
+- **The proactive extra:** a weekly change check for the device types you choose, and a sweep of
+  FDA's AI-enabled device list, show where reports suddenly increased, where they are more
+  serious than usual and where there is a new kind of problem. They look ahead of any
+  complaint; they do not replace your trend review.
 - **How it works:** a deterministic monitor (no model) flags changes week over week;
   **Muse Spark** (Meta Model API) answers questions through 13 deterministic tools over
   stored records; a deterministic claim gate recomputes every number and matches every
@@ -53,6 +57,29 @@ All calls go through the **Meta Model API** (OpenAI-compatible, default base URL
 The keyless public demo replays real runs recorded in GitHub Actions
 ([`copilot-record.yml`](.github/workflows/copilot-record.yml), key from repository
 secrets). **Standard tier only**, never the Contributor tier, which trains on your data.
+
+## How MaudeSignal fits your PMS workflow (F26)
+
+Post-market surveillance in most companies is reactive (a complaint arrives, someone
+investigates) and periodic (trend review, PMS board, PSUR or PMSR, management review, audit).
+The website page `/pms-workflow` (v2 layout) maps that order step by step and, for each
+step, shows: what is done by hand today, what MaudeSignal does, what stays human, and which
+clauses it serves (ISO 13485 section 8.2.1 to 8.2.3 and 8.5.2; 21 CFR 820, 803, 806 and 7;
+ISO 14971). It claims only what exists: similar-event search over FDA data, "Investigate a
+complaint" (F25, new), the weekly change check and AI-device sweep (the proactive extra), the
+claim gate, the CAPA-need evidence PDF with an independent Muse Wonder review, human
+approval and a hash-chained audit trail, and simulated device profiles with a decision path
+(F22, new, simulated). The decision, the signature and any filing stay human: MaudeSignal does
+not decide, and nothing is filed with FDA.
+
+## Time and cost: measured, not claimed (F27)
+
+The page `/roi` shows no time-saved or cost figure of its own. Timing tests are recorded in
+[`web/public/data/measurements.json`](web/public/data/measurements.json) with who ran them,
+when and how (schema in [`web/DATA_CONTRACT.md`](web/DATA_CONTRACT.md)); the file is empty
+today, so every row reads "Measurement pending". A calculator takes your own assumptions
+(volume, hourly cost, minutes) and labels its results "from your assumptions". Nothing is
+sent to a server; values stay in your browser.
 
 ## Numbers (each from a file in this repo)
 

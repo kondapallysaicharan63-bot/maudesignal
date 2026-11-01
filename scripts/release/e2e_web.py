@@ -2566,6 +2566,85 @@ def v2_s_saved_edge_cases(env: Env) -> str:
     return "old-shape chat opens; refused storage says 'Not saved'; Home and refresh stay in v2"
 
 
+HEADLINE = (
+    "MaudeSignal cuts the time to investigate a complaint against FDA data and to prepare "
+    "PMS evidence, and keeps every fact traceable for audit."
+)
+
+
+def v2_axe_page(env: Env, label: str) -> str:
+    """axe-core on the open page; serious or critical violations fail. Empty when axe is absent."""
+    axe = Path(env.args.axe)
+    if not axe.is_file():
+        return ""
+    env.page.add_script_tag(path=str(axe))
+    results = env.page.evaluate("axe.run(document, {resultTypes: ['violations']})")
+    counts = count_axe(results)
+    if axe_blocks(counts):
+        ids = [v.get("id") for v in results.get("violations", [])]
+        raise AssertionError(f"axe on {label}: {ids} {counts}")
+    return f"; axe {label} {counts}"
+
+
+def v2_s_positioning(env: Env) -> str:
+    """Headline on Home; /pms-workflow map (8 steps, four fields, stacked on a phone); /roi shows no figure."""
+    v2_open(env)
+    head = env.page.get_by_test_id("home-headline").inner_text().strip()
+    if head != HEADLINE:
+        raise AssertionError(f"Home headline is {head!r}")
+    env.shot("v2-home-headline")
+    env.page.get_by_test_id("home-pms-link").click()
+    env.page.wait_for_selector("[data-testid=pms-page]", timeout=10_000)
+    if not v2_path(env).endswith("/pms-workflow"):
+        raise AssertionError(f"the workflow link opened {v2_path(env)}")
+    steps = env.page.get_by_test_id("pms-steps").locator("> li")
+    if steps.count() != 8:
+        raise AssertionError(f"{steps.count()} steps, not 8")
+    fields = [t.strip() for t in steps.nth(1).locator("h3").all_text_contents()]
+    if fields != ["Manual today", "What MaudeSignal does", "What stays human", "Clauses it serves"]:
+        raise AssertionError(f"step fields: {fields}")
+    if (
+        "Stays human — MaudeSignal does not decide."
+        not in env.page.get_by_test_id("pms-step-decision").inner_text()
+    ):
+        raise AssertionError("the decision step does not say it stays human")
+    boxes = [steps.nth(1).locator("h3").nth(i).bounding_box() for i in (0, 1)]
+    if None in boxes:
+        raise AssertionError("step fields have no box")
+    same_col = abs(boxes[0]["x"] - boxes[1]["x"]) < 2  # type: ignore[index]
+    if (env.width < 768) != same_col:
+        raise AssertionError(f"fields {'stacked' if same_col else 'side by side'} at {env.width}px")
+    if env.overflow() > 0:
+        raise AssertionError(f"workflow page scrolls sideways by {env.overflow()}px")
+    env.shot("v2-pms-workflow")
+    axe_note = v2_axe_page(env, "workflow")
+    env.page.reload(wait_until="load")
+    env.page.wait_for_selector("[data-testid=pms-page]", timeout=30_000)
+    v2_open(env, "roi")
+    env.page.wait_for_selector("[data-testid=roi-page]", timeout=10_000)
+    pending = env.page.locator("[data-testid^=roi-pending-]").all_inner_texts()
+    if pending != ["Measurement pending"] * 3:
+        raise AssertionError(f"pending rows: {pending}")
+    body = env.page.get_by_test_id("roi-page").inner_text()
+    if re.search(r"\d[\d.,]*\s*(%|x\b|hours?\b|minutes?\b)|[$]\s*\d", body, re.I):
+        raise AssertionError("a time or cost figure is on the empty ROI page")
+    if not env.page.get_by_test_id("roi-use-recorded").is_disabled():
+        raise AssertionError("'Use recorded measurements' is enabled with no measurements")
+    if env.overflow() > 0:
+        raise AssertionError(f"ROI page scrolls sideways by {env.overflow()}px")
+    env.shot("v2-roi-pending")
+    for field, value in (("complaints", "10"), ("manual", "60"), ("tool", "30")):
+        env.page.get_by_test_id(f"roi-in-{field}").fill(value)
+    label = env.page.get_by_test_id("roi-result-label").inner_text().strip()
+    if label != "from your assumptions":
+        raise AssertionError(f"result label is {label!r}")
+    env.page.get_by_test_id("roi-in-complaints").fill("")
+    env.page.get_by_test_id("roi-in-manual").fill("")
+    env.page.get_by_test_id("roi-in-tool").fill("")
+    axe_note += v2_axe_page(env, "roi")
+    return f"headline on Home; 8 steps, fields {'stacked' if env.width < 768 else 'in 4 columns'}; ROI pending x3{axe_note}"
+
+
 V2_SCENARIOS: tuple[tuple[str, Callable[[Env], str]], ...] = (
     ("v2 Home: top 3 real alerts, view all, simulated apart", v2_s_home),
     ("v2 new chat saves the old one", v2_s_new_chat),
@@ -2581,6 +2660,7 @@ V2_SCENARIOS: tuple[tuple[str, Callable[[Env], str]], ...] = (
     ("v2 themes smoke", v2_s_themes),
     ("v2 interface font", v2_s_fonts),
     ("v2 saved-chat edge cases, staying in v2", v2_s_saved_edge_cases),
+    ("v2 headline, PMS workflow map, time and cost", v2_s_positioning),
 )
 
 

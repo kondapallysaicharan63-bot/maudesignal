@@ -3,6 +3,7 @@
 **Event:** Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026)
 **Track:** Indie Developer, solo
 **Problem statement:** Build for Your World
+**One line:** MaudeSignal cuts the time to investigate a complaint against FDA data and to prepare PMS evidence, and keeps every fact traceable for audit.
 **Muse connector:** Submitted to Meta's Muse Connector Program — pending review. Read-only MCP + REST at `https://maudesignal-api.vercel.app/mcp`; form answers in `docs/hackathon/MUSE_CONNECTOR.md`.
 
 ## What was built DURING the hackathon (new work — this is the submission)

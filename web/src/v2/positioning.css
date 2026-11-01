@@ -1,0 +1,211 @@
+/* F26 PMS workflow map and F27 time-and-cost page. Design-system tokens only; no other colours, fonts or gradients. */
+.ms2-pos {
+  max-width: 72rem;
+}
+
+/* Overview strip: desktop only (on a phone the numbered list below is the map). */
+.ms2-map-wrap {
+  display: none;
+  margin: 0 0 20px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
+}
+@media (min-width: 768px) {
+  .ms2-map-wrap {
+    display: block;
+  }
+}
+.ms2-map-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.ms2-map-line {
+  stroke: var(--rule-strong);
+  stroke-width: 2;
+}
+.ms2-map-node {
+  fill: var(--paper);
+  stroke: var(--ink-2);
+  stroke-width: 2;
+}
+.ms2-map-node--assist {
+  fill: var(--accent);
+  stroke: var(--accent);
+}
+.ms2-map-n {
+  font: 600 15px var(--font-sans);
+  fill: var(--ink);
+}
+.ms2-map-n--on {
+  fill: var(--paper);
+}
+.ms2-map-t {
+  font: 500 13px var(--font-sans);
+  fill: var(--ink);
+}
+.ms2-map-k {
+  font: 500 12px var(--font-sans);
+  fill: var(--ink-2);
+}
+
+/* The steps: a vertical flow with a connector line; each step is a card with four labelled fields. */
+.ms2-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+}
+.ms2-step {
+  position: relative;
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius-md);
+}
+.ms2-step--human {
+  border-left-color: var(--ink-3);
+  background: var(--paper);
+}
+.ms2-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 30px;
+  bottom: -16px;
+  height: 16px;
+  border-left: 2px solid var(--rule-strong);
+}
+.ms2-step-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+.ms2-step-n {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--surface-sunk);
+  color: var(--ink);
+  font: 600 14px var(--font-sans);
+}
+.ms2-step-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+@media (min-width: 900px) {
+  .ms2-step-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+.ms2-step-f p,
+.ms2-step-f ul {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.ms2-step-f ul {
+  padding-left: 18px;
+}
+.ms2-step-fh {
+  margin: 0 0 4px;
+  font: 600 13px var(--font-sans);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+/* Time and cost */
+.ms2-pos .ms2-tag {
+  white-space: normal;
+}
+.ms2-roi-tasks {
+  display: grid;
+  gap: 16px;
+}
+.ms2-tablewrap {
+  overflow-x: auto;
+  margin-top: 8px;
+}
+.ms2-roi-table {
+  min-width: 36rem;
+}
+.ms2-roi-fields {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+@media (min-width: 768px) {
+  .ms2-roi-fields {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.ms2-roi-field {
+  display: grid;
+  gap: 4px;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.ms2-roi-field input {
+  min-height: 44px;
+  padding: 8px 10px;
+  font: 400 16px var(--font-sans);
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-sm);
+}
+.ms2-roi-field input::placeholder {
+  color: var(--ink-3);
+}
+.ms2-roi-field input:focus-visible,
+.ms2-posbtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.ms2-posbtn {
+  min-height: 44px;
+  padding: 8px 16px;
+  font: 600 15px var(--font-sans);
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-sm);
+}
+.ms2-posbtn:disabled {
+  color: var(--ink-3);
+  cursor: not-allowed;
+}
+.ms2-posbtn:not(:disabled):hover {
+  background: var(--surface-sunk);
+}
+.ms2-pos .ms2-stats {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (min-width: 768px) {
+  .ms2-pos .ms2-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Home: the quiet intro and the two links */
+.ms2-home-intro {
+  margin: 0 0 16px;
+  max-width: 48rem;
+  color: var(--ink-2);
+  font-size: 17px;
+  line-height: 1.5;
+}

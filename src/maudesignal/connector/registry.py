@@ -20,8 +20,16 @@ from maudesignal.connector.guidance import CODE_HINT, K_HINT, REPORT_ID_HINT
 PRODUCT_CODE_PATTERN = r"^[A-Za-z]{3}$"
 REPORT_ID_PATTERN = r"^[A-Za-z0-9-]{1,24}$"
 
+#: The product headline (PRD v2.3 section 11b); it also leads the README and website.
+HEADLINE = (
+    "MaudeSignal cuts the time to investigate a complaint against FDA data and to prepare "
+    "PMS evidence, and keeps every fact traceable for audit."
+)
+
 GUIDANCE = (
-    "Read-only MaudeSignal tools over openFDA device data, for quality and regulatory review. "
+    HEADLINE
+    + " "
+    + "Read-only MaudeSignal tools over openFDA device data, for quality and regulatory review. "
     "Speak the text content; every fact in structuredContent has an openFDA or record link. "
     "Always cite the FDA links given in each answer. This is not medical advice, and nothing "
     "is filed with FDA. Confirm the product code with the person before guessing one: use "

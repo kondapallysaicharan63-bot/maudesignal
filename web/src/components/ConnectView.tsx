@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ASK_FOR_KEY, configSnippets, connectSteps, KEY_PLACEHOLDER, EXAMPLE_QUESTIONS, fetchConnect, FALLBACK_INFO, type ConnectInfo } from '../connect'
 import { Icon } from '../icons'
+import { HEADLINE } from '../positioning'
 
 type Fetcher = (url: string, init?: RequestInit) => Promise<Response>
 
@@ -61,6 +62,7 @@ export function ConnectView({ apiBase, fetcher, v2 = false }: { apiBase: string 
         </h1>
         )}
         <p className={v2 ? 'm-0 max-w-2xl text-ink-2' : 'mt-2 max-w-2xl text-ink-2'}>
+          {!v2 && <>{HEADLINE} </>}
           Add MaudeSignal to Muse as a custom connector. It answers from stored public FDA records, read-only. Signals for a person to review; nothing is filed with FDA.
         </p>
         <p className="mt-2 max-w-2xl font-semibold text-ink" data-testid="connect-status">

@@ -27,6 +27,8 @@ import { newChatId, useChatStore } from './chatStore'
 import { ChatBoundary, ChatScreen, ComposerNote, questionsLeft } from './ChatScreen'
 import type { TabHow } from './SubTabs'
 import { HomeV2 } from './HomeV2'
+import { PmsWorkflow } from './PmsWorkflow'
+import { RoiPage } from './RoiPage'
 import { devicesToReview, realAlertItems } from './realAlerts'
 import { hrefFor, routeName, useRoute, type Route, type Section } from './router'
 import { pageItems, SearchPalette, type SearchItem } from './SearchPalette'
@@ -435,6 +437,8 @@ export default function AppV2() {
             go({ page: 'devices', tab: 'apply' })
           }}
           onAudit={() => go({ page: 'evidence', tab: 'audit' })}
+          onPms={() => go({ page: 'pms' })}
+          onRoi={() => go({ page: 'roi' })}
         />
       ) : route.page === 'chat' ? (
         <ChatBoundary resetKey={chatId ?? 'new'} onDelete={chatId ? () => deleteChat(chatId) : null} onNewChat={newChat}>
@@ -526,8 +530,11 @@ export default function AppV2() {
         />
       )
     else if (route.page === 'connect') sectionBody = <ConnectPage tab={route.tab} onTab={(t, how) => tabGo({ page: 'connect', tab: t }, how)} apiBase={API_BASE} />
+    else if (route.page === 'pms') sectionBody = <PmsWorkflow onRoi={() => go({ page: 'roi' })} />
+    else if (route.page === 'roi') sectionBody = <RoiPage />
+    const sectionLabel = route.page === 'pms' ? 'PMS workflow' : route.page === 'roi' ? 'Time and cost' : route.page[0].toUpperCase() + route.page.slice(1)
     content = (
-      <main className="ms2-section" aria-label={route.page[0].toUpperCase() + route.page.slice(1)}>
+      <main className="ms2-section" aria-label={sectionLabel}>
         <div className="ms2-section-inner">{sectionBody}</div>
       </main>
     )

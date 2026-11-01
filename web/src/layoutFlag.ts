@@ -6,7 +6,7 @@
 export type LayoutMode = 'classic' | 'v2'
 
 /** First path segments only the v2 layout serves (kept in step with router.ts and web/vercel.json). */
-export const V2_SEGMENTS = ['chat', 'signals', 'devices', 'evidence', 'connect', 'workflow', 'thread', 'run', 'capture'] as const
+export const V2_SEGMENTS = ['chat', 'signals', 'devices', 'evidence', 'connect', 'workflow', 'thread', 'run', 'capture', 'pms-workflow', 'roi'] as const
 
 const norm = (v: string | null | undefined): LayoutMode | null => {
   const s = (v ?? '').trim().toLowerCase()
