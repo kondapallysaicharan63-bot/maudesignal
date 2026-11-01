@@ -1,0 +1,47 @@
+name: Smoke v2 (live site, ?layout=v2)
+# Browser pass of the v2 layout against the live website. Every /v1/live/* call is route-mocked,
+# so it spends $0. Runs only on pushes to smoke-v2/**.
+on:
+  push:
+    branches: ["smoke-v2/**"]
+jobs:
+  v2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      WEB_URL: https://maudesignal-app.vercel.app
+      API_URL: https://maudesignal-api.vercel.app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install
+        run: |
+          pip install "playwright==1.63.0" "pillow==12.3.0"
+          python -m playwright install --with-deps chromium
+          cd web && npm ci
+      - name: v2 shell scenarios on the live site
+        run: |
+          python scripts/release/e2e_web.py --url "$WEB_URL" --api "$API_URL" \
+            --axe web/node_modules/axe-core/axe.min.js --out-dir release-out \
+            --layout v2 --engines chromium --widths 1440,390 --schemes light,dark --stem e2e-v2
+      - name: v2 answer-turn scenarios on the live site
+        if: always()
+        run: |
+          python scripts/release/e2e_web.py --url "$WEB_URL" --api "$API_URL" \
+            --axe web/node_modules/axe-core/axe.min.js --out-dir release-out \
+            --only "v2:" --engines chromium --widths 1440,390 --schemes light,dark --stem e2e-v2-answers
+      - name: Report
+        if: always()
+        run: |
+          for f in release-out/e2e-v2.md release-out/e2e-v2-answers.md; do [ -f "$f" ] && cat "$f" >> "$GITHUB_STEP_SUMMARY"; done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-v2-report
+          path: release-out/
+          retention-days: 30
