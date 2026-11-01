@@ -63,14 +63,14 @@ secrets). **Standard tier only**, never the Contributor tier, which trains on yo
 Post-market surveillance in most companies is reactive (a complaint arrives, someone
 investigates) and periodic (trend review, PMS board, PSUR or PMSR, management review, audit).
 The website page `/pms-workflow` (v2 layout) maps that order step by step and, for each
-step, shows: what is done by hand today, what MaudeSignal does, what stays human, and which
-clauses it serves (ISO 13485 section 8.2.1 to 8.2.3 and 8.5.2; 21 CFR 820, 803, 806 and 7;
-ISO 14971). It claims only what exists: similar-event search over FDA data, "Investigate a
-complaint" (F25, new), the weekly change check and AI-device sweep (the proactive extra), the
-claim gate, the CAPA-need evidence PDF with an independent Muse Wonder review, human
-approval and a hash-chained audit trail, and simulated device profiles with a decision path
-(F22, new, simulated). The decision, the signature and any filing stay human: MaudeSignal does
-not decide, and nothing is filed with FDA.
+step, shows: what is done by hand today, what MaudeSignal does, what stays human, and related
+clauses (ISO 13485 section 8.2.1 to 8.2.3 and 8.5.2; 21 CFR 820, 803, 806 and 7; ISO 14971).
+The map lists what MaudeSignal does at each step: similar-event search over FDA data,
+Investigate a complaint (new), the weekly change check and AI-device sweep (the proactive
+extra), the claim gate, the CAPA-need evidence PDF with an independent Muse Wonder review,
+human approval and a hash-chained audit trail, and a decision path on simulated devices
+(new, simulated). The decision, the signature and any filing stay human: MaudeSignal does not
+decide, and nothing is filed with FDA. The page does not say that any step satisfies a clause.
 
 ## Time and cost: measured, not claimed (F27)
 

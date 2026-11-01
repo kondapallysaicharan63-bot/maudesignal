@@ -12,7 +12,9 @@
     { "source": "/run/:path*", "destination": "/index.html" },
     { "source": "/capture/:path*", "destination": "/index.html" },
     { "source": "/pms-workflow", "destination": "/index.html" },
+    { "source": "/pms-workflow/:path*", "destination": "/index.html" },
     { "source": "/roi", "destination": "/index.html" },
+    { "source": "/roi/:path*", "destination": "/index.html" },
     { "source": "/investigate", "destination": "/index.html" },
     { "source": "/investigate/:path*", "destination": "/index.html" }
   ]

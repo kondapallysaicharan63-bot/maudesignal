@@ -35,6 +35,28 @@ def test_headline_in_docs_and_generated_files() -> None:
     assert HEADLINE in json.loads(_read("api/openapi.json"))["info"]["description"]
 
 
+def _flat(rel: str) -> str:
+    """The file text with string-literal glue and whitespace removed, so wrapped copies compare."""
+    text = _read(rel)
+    for junk in ('"\n', "\n", '"', "'", "(", ")", "  "):
+        text = text.replace(junk, " ")
+    return " ".join(text.split())
+
+
+def test_headline_copies_in_code_are_the_same_sentence() -> None:
+    flat = " ".join(HEADLINE.split())
+    for rel in (
+        "src/maudesignal/cli.py",
+        "src/maudesignal/__init__.py",
+        "scripts/release/e2e_web.py",
+    ):
+        assert flat in _flat(rel), rel
+
+
+def test_legal_page_uses_the_constant() -> None:
+    assert "HEADLINE" in _read("src/maudesignal/connector/legal_pages.py")
+
+
 def test_old_headline_is_gone() -> None:
     for rel in ("README.md", "CLAUDE.md", "HACKATHON.md"):
         assert OLD not in _read(rel), rel

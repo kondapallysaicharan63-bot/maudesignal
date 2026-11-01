@@ -2603,7 +2603,7 @@ def v2_s_positioning(env: Env) -> str:
     if steps.count() != 8:
         raise AssertionError(f"{steps.count()} steps, not 8")
     fields = [t.strip() for t in steps.nth(1).locator("h3").all_text_contents()]
-    if fields != ["Manual today", "What MaudeSignal does", "What stays human", "Clauses it serves"]:
+    if fields != ["Manual today", "What MaudeSignal does", "What stays human", "Related clauses"]:
         raise AssertionError(f"step fields: {fields}")
     if (
         "Stays human — MaudeSignal does not decide."
@@ -2624,7 +2624,9 @@ def v2_s_positioning(env: Env) -> str:
     env.page.wait_for_selector("[data-testid=pms-page]", timeout=30_000)
     v2_open(env, "roi")
     env.page.wait_for_selector("[data-testid=roi-page]", timeout=10_000)
-    pending = env.page.locator("[data-testid^=roi-pending-]").all_inner_texts()
+    pending = env.page.locator(
+        "[data-testid^=roi-pending-]:not([data-testid=roi-pending-chip])"
+    ).all_inner_texts()
     if pending != ["Measurement pending"] * 3:
         raise AssertionError(f"pending rows: {pending}")
     body = env.page.get_by_test_id("roi-page").inner_text()
@@ -2635,15 +2637,67 @@ def v2_s_positioning(env: Env) -> str:
     if env.overflow() > 0:
         raise AssertionError(f"ROI page scrolls sideways by {env.overflow()}px")
     env.shot("v2-roi-pending")
-    for field, value in (("complaints", "10"), ("manual", "60"), ("tool", "30")):
+    if env.page.get_by_test_id("roi-pending-chip").count() != 1:
+        raise AssertionError("the empty ROI page has no single Pending chip")
+    for field, value in (("complaints", "10"), ("complaintManual", "60"), ("complaintTool", "30")):
         env.page.get_by_test_id(f"roi-in-{field}").fill(value)
     label = env.page.get_by_test_id("roi-result-label").inner_text().strip()
     if label != "from your assumptions":
         raise AssertionError(f"result label is {label!r}")
-    env.page.get_by_test_id("roi-in-complaints").fill("")
-    env.page.get_by_test_id("roi-in-manual").fill("")
-    env.page.get_by_test_id("roi-in-tool").fill("")
+    for field in ("complaints", "complaintManual", "complaintTool"):
+        env.page.get_by_test_id(f"roi-in-{field}").fill("")
     axe_note += v2_axe_page(env, "roi")
+    # With two recorded entries (measurements.json route-mocked) the page must still fit the viewport: every card's
+    # right edge is inside it and nothing scrolls sideways (a clipped column would fail here).
+    seeded = {
+        "schema": 1,
+        "measurements": [
+            {
+                "id": "t1",
+                "task": "similar-events",
+                "who": "Test person with a rather long name to check wrapping",
+                "when": "2026-01-02",
+                "how": "Stopwatch on a sample complaint, written out in full so the line has to wrap",
+                "manual_minutes": 40,
+                "maudesignal_minutes": 10,
+                "notes": "",
+            },
+            {
+                "id": "t2",
+                "task": "weekly-trend",
+                "who": "Second person",
+                "when": "2026-01-03",
+                "how": "Screen recording",
+                "manual_minutes": 20,
+                "maudesignal_minutes": 30,
+                "notes": "",
+            },
+        ],
+    }
+    env.page.route(
+        "**/data/measurements.json",
+        lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps(seeded)),
+    )
+    v2_open(env, "roi")
+    env.page.wait_for_selector("[data-testid=roi-record]", timeout=10_000)
+    if env.page.get_by_test_id("roi-record").count() != 2:
+        raise AssertionError("the seeded measurements are not shown")
+    if env.page.get_by_test_id("roi-use-recorded").is_disabled():
+        raise AssertionError("'Use recorded measurements' is disabled with recorded entries")
+    if env.page.get_by_test_id("roi-slower").count() != 1:
+        raise AssertionError("the slower recording is not flagged")
+    vw = int(env.page.evaluate("document.documentElement.clientWidth"))
+    rights = env.page.evaluate(
+        "[...document.querySelectorAll("
+        "'[data-testid=roi-page] .ms2-card, [data-testid=roi-page] .ms2-roi-rec')]"
+        ".map(e => Math.round(e.getBoundingClientRect().right))"
+    )
+    if any(r > vw for r in rights) or env.overflow() > 0:
+        raise AssertionError(
+            f"ROI page with measurements overflows: rights {rights}, viewport {vw}"
+        )
+    env.shot("v2-roi-recorded")
+    env.page.unroute("**/data/measurements.json")
     return f"headline on Home; 8 steps, fields {'stacked' if env.width < 768 else 'in 4 columns'}; ROI pending x3{axe_note}"
 
 

@@ -1,66 +1,114 @@
 /* F26 PMS workflow map and F27 time-and-cost page. Design-system tokens only; no other colours, fonts or gradients. */
 .ms2-pos {
   max-width: 72rem;
+  min-width: 0;
+}
+.ms2-crumb {
+  margin: 0 0 8px;
 }
 
-/* Overview strip: desktop only (on a phone the numbered list below is the map). */
-.ms2-map-wrap {
+/* Overview strip: wide screens only (below that the numbered list is the map). */
+.ms2-strip {
   display: none;
-  margin: 0 0 20px;
-  padding: 12px 16px;
+  margin: 0 0 12px;
+  padding: 12px 8px 10px;
   background: var(--surface);
   border: 1px solid var(--rule);
   border-radius: var(--radius-md);
 }
-@media (min-width: 768px) {
-  .ms2-map-wrap {
+@media (min-width: 1100px) {
+  .ms2-strip {
     display: block;
   }
 }
-.ms2-map-svg {
-  display: block;
-  width: 100%;
-  height: auto;
+.ms2-strip ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
 }
-.ms2-map-line {
-  stroke: var(--rule-strong);
-  stroke-width: 2;
+.ms2-strip-li {
+  position: relative;
+  text-align: center;
 }
-.ms2-map-node {
-  fill: var(--paper);
-  stroke: var(--ink-2);
-  stroke-width: 2;
+/* The line and arrowhead from this node to the next. */
+.ms2-strip-li:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  top: 17px;
+  left: calc(50% + 22px);
+  right: calc(-50% + 26px);
+  border-top: 2px solid var(--rule-strong);
 }
-.ms2-map-node--assist {
-  fill: var(--accent);
-  stroke: var(--accent);
+.ms2-strip-li:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 13px;
+  right: calc(-50% + 22px);
+  width: 8px;
+  height: 8px;
+  border-top: 2px solid var(--rule-strong);
+  border-right: 2px solid var(--rule-strong);
+  transform: rotate(45deg);
 }
-.ms2-map-n {
+.ms2-strip-a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0 4px;
+  color: var(--ink);
+  text-decoration: none;
+}
+.ms2-strip-a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+.ms2-strip-n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--ink-2);
+  background: var(--paper);
   font: 600 15px var(--font-sans);
-  fill: var(--ink);
 }
-.ms2-map-n--on {
-  fill: var(--paper);
+.ms2-strip-li--assist .ms2-strip-n {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--paper);
 }
-.ms2-map-t {
-  font: 500 13px var(--font-sans);
-  fill: var(--ink);
+.ms2-strip-a:hover .ms2-strip-t {
+  text-decoration: underline;
 }
-.ms2-map-k {
-  font: 500 12px var(--font-sans);
-  fill: var(--ink-2);
+.ms2-strip-t {
+  font: 500 15px/1.25 var(--font-sans);
+}
+.ms2-strip-k {
+  font: 400 14px/1.25 var(--font-sans);
+  color: var(--ink-2);
 }
 
-/* The steps: a vertical flow with a connector line; each step is a card with four labelled fields. */
+.ms2-step-sum {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+
+/* The steps: a vertical flow with a 24px connector and chevron between cards. */
 .ms2-steps {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 16px;
+  gap: 24px;
 }
 .ms2-step {
   position: relative;
+  scroll-margin-top: 16px;
   padding: 16px 18px;
   background: var(--surface);
   border: 1px solid var(--rule);
@@ -69,21 +117,34 @@
 }
 .ms2-step--human {
   border-left-color: var(--ink-3);
-  background: var(--paper);
 }
 .ms2-step:not(:last-child)::after {
   content: '';
   position: absolute;
-  left: 30px;
-  bottom: -16px;
-  height: 16px;
+  left: 29px;
+  bottom: -24px;
+  height: 24px;
   border-left: 2px solid var(--rule-strong);
+}
+.ms2-step:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 25px;
+  bottom: -22px;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--rule-strong);
+  border-bottom: 2px solid var(--rule-strong);
+  transform: rotate(45deg);
 }
 .ms2-step-head {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 10px;
+  gap: 6px 8px;
+}
+.ms2-step-head .ms2-h2 {
+  margin-right: 2px;
 }
 .ms2-step-n {
   flex: none;
@@ -95,7 +156,16 @@
   border-radius: var(--radius-full);
   background: var(--surface-sunk);
   color: var(--ink);
-  font: 600 14px var(--font-sans);
+  font: 600 15px var(--font-sans);
+}
+.ms2-tag--kind {
+  background: transparent;
+  border: 1px solid var(--rule-strong);
+}
+.ms2-step-detail {
+  margin: 4px 0 0 36px;
+  font-size: 15px;
+  color: var(--ink-2);
 }
 .ms2-step-grid {
   display: grid;
@@ -109,9 +179,12 @@
     gap: 16px;
   }
 }
+.ms2-step-f {
+  min-width: 0;
+}
 .ms2-step-f p,
 .ms2-step-f ul {
-  margin: 0;
+  margin: 0 0 6px;
   font-size: 15px;
   line-height: 1.5;
   color: var(--ink);
@@ -119,33 +192,102 @@
 }
 .ms2-step-f ul {
   padding-left: 18px;
+  font-size: 14px;
+  color: var(--ink-2);
 }
 .ms2-step-fh {
   margin: 0 0 4px;
-  font: 600 13px var(--font-sans);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font: 600 15px/1.3 var(--font-sans);
   color: var(--ink-2);
+}
+.ms2-step-f--manual p {
+  color: var(--ink-2);
+}
+.ms2-step-f--human {
+  padding: 8px 10px;
+  background: var(--surface-sunk);
+  border-radius: var(--radius-sm);
 }
 
 /* Time and cost */
 .ms2-pos .ms2-tag {
   white-space: normal;
 }
+.ms2-roi-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
 .ms2-roi-tasks {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
   display: grid;
-  gap: 16px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
 }
-.ms2-tablewrap {
-  overflow-x: auto;
-  margin-top: 8px;
+.ms2-roi-tasks > li {
+  min-width: 0;
+  padding: 10px 0;
+  border-top: 1px solid var(--rule);
+  overflow-wrap: anywhere;
 }
-.ms2-roi-table {
-  min-width: 36rem;
+.ms2-roi-task {
+  margin: 0 0 4px;
+  font: 600 15px/1.35 var(--font-sans);
+  color: var(--ink);
+}
+.ms2-roi-rec {
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-sm);
+}
+.ms2-roi-dl {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px 16px;
+  margin: 0;
+}
+@media (min-width: 600px) {
+  .ms2-roi-dl {
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  }
+}
+.ms2-roi-dl > div {
+  min-width: 0;
+}
+.ms2-roi-dl dt {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.ms2-roi-dl dd {
+  margin: 0;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+.ms2-roi-slow {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.ms2-roi-group {
+  margin: 14px 0 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.ms2-roi-group legend {
+  padding: 0;
+  margin-bottom: 6px;
+  font: 600 15px var(--font-sans);
+  color: var(--ink-2);
 }
 .ms2-roi-fields {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
 }
 @media (min-width: 768px) {
@@ -156,10 +298,18 @@
 .ms2-roi-field {
   display: grid;
   gap: 4px;
+  min-width: 0;
   font-size: 15px;
   color: var(--ink-2);
 }
-.ms2-roi-field input {
+.ms2-roi-inwrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ms2-roi-inwrap input {
+  flex: 1 1 auto;
+  min-width: 0;
   min-height: 44px;
   padding: 8px 10px;
   font: 400 16px var(--font-sans);
@@ -168,11 +318,18 @@
   border: 1px solid var(--rule-strong);
   border-radius: var(--radius-sm);
 }
-.ms2-roi-field input::placeholder {
-  color: var(--ink-3);
+.ms2-roi-inwrap input::placeholder {
+  color: var(--ink-2);
+  opacity: 1;
 }
-.ms2-roi-field input:focus-visible,
-.ms2-posbtn:focus-visible {
+.ms2-roi-unit {
+  flex: none;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.ms2-roi-inwrap input:focus-visible,
+.ms2-posbtn:focus-visible,
+.ms2-roi-clear:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -185,12 +342,23 @@
   border: 1px solid var(--rule-strong);
   border-radius: var(--radius-sm);
 }
-.ms2-posbtn:disabled {
-  color: var(--ink-3);
+.ms2-posbtn:disabled,
+.ms2-posbtn[aria-disabled='true'] {
+  color: var(--ink-2);
+  background: var(--surface-sunk);
+  border-style: dashed;
   cursor: not-allowed;
 }
 .ms2-posbtn:not(:disabled):hover {
   background: var(--surface-sunk);
+}
+.ms2-roi-clear {
+  min-height: 44px;
+  padding: 0 4px;
+  font: 400 15px var(--font-sans);
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .ms2-pos .ms2-stats {
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -201,11 +369,11 @@
   }
 }
 
-/* Home: the quiet intro and the two links */
+/* Home: the headline paragraph (quiet, readable) */
 .ms2-home-intro {
-  margin: 0 0 16px;
+  margin: 0 0 24px;
   max-width: 48rem;
-  color: var(--ink-2);
-  font-size: 17px;
+  color: var(--ink);
+  font-size: 18px;
   line-height: 1.5;
 }

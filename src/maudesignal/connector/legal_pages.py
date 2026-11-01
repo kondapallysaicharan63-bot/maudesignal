@@ -21,6 +21,7 @@ from maudesignal.connector.ask import (
 from maudesignal.connector.callcap import MAX_CALL_HOLD_USD, enforced_cap
 from maudesignal.connector.globalcap import global_daily_usd
 from maudesignal.connector.models import ADVISORY
+from maudesignal.connector.registry import HEADLINE
 from maudesignal.connector.security import DEFAULT_DEMO_RATE_PER_MIN, DEMO_PER_DAY
 
 CONTACT_ENV = "MAUDESIGNAL_CONTACT_EMAIL"
@@ -210,8 +211,7 @@ def render_privacy(
 <p class="box">{html.escape(ADVISORY)}</p>
 
 <h2>What this service is</h2>
-<p>MaudeSignal cuts the time to investigate a complaint against FDA data and to prepare PMS
-evidence, and keeps every fact traceable for audit. It is a read-only connector to public
+<p>{html.escape(HEADLINE)} It is a read-only connector to public
 adverse-event data from FDA (openFDA). Where an answer says so,
 it also shows UK MHRA device alerts, labelled "MHRA (UK)", as regulator context only. No tool
 writes anything. It is an open-source project by Saicharan Kondapally. It is not an FDA-cleared
