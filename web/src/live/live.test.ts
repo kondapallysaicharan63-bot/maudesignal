@@ -345,6 +345,12 @@ describe('network layer with a fake fetch', () => {
     expect(await run(async () => json(429, { code: 'rate_limited', message: 'm', retry_after_s: 5 }))).toMatchObject({ kind: 'rate_limited', retryAfterS: 5 })
     expect(await run(async () => json(422, { code: 'patient_data', message: 'no names' }))).toMatchObject({ kind: 'patient_data', message: 'no names' })
     expect(await run(async () => json(500, {}))).toMatchObject({ kind: 'server' })
+    expect(await run(async () => json(504, { code: 'live_timeout', message: 'server text' }))).toMatchObject({
+      kind: 'live_timeout',
+      message: 'That question took too long. Try a shorter or narrower question.',
+    })
+    expect(await run(async () => json(504, { error: { code: 'live_timeout' } }))).toMatchObject({ kind: 'live_timeout' })
+    expect(await run(async () => json(504, {}))).toMatchObject({ kind: 'server' }) // a bare gateway error stays a server error
     expect(
       await run(async () => {
         throw new TypeError('down')

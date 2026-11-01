@@ -35,7 +35,11 @@ from maudesignal.common.logging import get_logger
 from maudesignal.connector import links
 from maudesignal.connector.callcap import CallMeter
 from maudesignal.connector.data import ConnectorData
-from maudesignal.connector.errors import InvalidInputError, SourceUnavailableError
+from maudesignal.connector.errors import (
+    InvalidInputError,
+    LiveTimeoutError,
+    SourceUnavailableError,
+)
 from maudesignal.connector.forbidden import is_clean
 from maudesignal.connector.models import Fact, Provenance, ToolAnswer, WithheldSentence
 from maudesignal.connector.readonly import make_read_only
@@ -747,6 +751,7 @@ def ask_detailed(
     history: list[tuple[str, str]] | None = None,
     spoken: bool = False,
     allow_live: bool = True,
+    raise_on_timeout: bool = False,
 ) -> AskOutcome:
     """:func:`ask`, plus cost, timings and whether the answer was live or recorded.
 
@@ -759,10 +764,13 @@ def ask_detailed(
         history: Earlier ``(question, answer)`` pairs from the same visitor (context only).
         spoken: The question is a voice transcript; spoken-question recordings may answer it.
         allow_live: False for the public demo key: a recorded answer only, never a model call.
+        raise_on_timeout: Raise :class:`LiveTimeoutError` when the live time budget ends,
+            instead of answering from a recording (the typed live route reports it as 504).
 
     Raises:
         InvalidInputError: The question is empty or too long.
         SourceUnavailableError: No live answer and nothing recorded exists at all.
+        LiveTimeoutError: The time budget ended and ``raise_on_timeout`` is set.
     """
     started = time.perf_counter()
     q = " ".join(question.split())
@@ -816,6 +824,11 @@ def ask_detailed(
             )
         except SpendLimitError:
             reason = "cap"
+            attempt_ms = round((time.perf_counter() - started) * 1000.0, 1)
+        except LiveTimeoutError:
+            if raise_on_timeout:
+                raise  # the typed live route answers 504 live_timeout
+            reason = "model_error"
             attempt_ms = round((time.perf_counter() - started) * 1000.0, 1)
         except (
             Exception

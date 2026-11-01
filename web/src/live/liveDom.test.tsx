@@ -214,6 +214,16 @@ describe('recorded, limit and refusal', () => {
     expect(q('recorded-note')?.textContent).toContain('could not be reached')
   })
 
+  it('a 504 live_timeout shows the calm message, not "could not be reached"', async () => {
+    fetcher.mockResolvedValueOnce(res(504, { code: 'live_timeout', message: 'x', error: { code: 'live_timeout', message: 'x' } }))
+    await type('What problems were reported for LLZ devices in August 2026?')
+    await key('Enter')
+    await flush()
+    expect(q('turn-error')?.textContent).toContain('That question took too long. Try a shorter or narrower question.')
+    expect(text()).not.toContain('could not be reached')
+    expect(q('live-answer')).toBeNull()
+  })
+
   it('422 patient_data shows the server message and no answer', async () => {
     fetcher.mockResolvedValueOnce(res(422, { code: 'patient_data', message: 'That looks like a patient name. Remove it and ask again.' }))
     await type('What happened to the patient John?')

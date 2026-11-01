@@ -889,7 +889,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 response.headers["Access-Control-Allow-Headers"] = "Content-Type"
                 response.headers["Access-Control-Max-Age"] = "600"
         else:
-            response = await call_next(request)
+            try:
+                response = await call_next(request)
+            except Exception as exc:  # noqa: BLE001 - keep the CORS headers on a failure too
+                logger.error(
+                    "connector_unexpected_error",
+                    error_type=type(exc).__name__,
+                    path=request.url.path,
+                )
+                response = _error(500, "internal_error", "Something went wrong on the server.")
         response.headers["Vary"] = "Origin"
         if allowed:
             response.headers["Access-Control-Allow-Origin"] = origin

@@ -31,6 +31,8 @@ export const LABEL_TIMEOUT_MS = 60_000
 export const NOT_MEDICAL_ADVICE = 'Not medical advice. Signals for a person to review; nothing is filed with FDA.'
 export const VOICE_NOTE = 'Audio is sent once for transcription and not stored. Do not say patient details.'
 export const PHOTO_NOTE = 'Photo is read once and not stored. Do not photograph patient details.'
+/** The server stopped a live question at its own time budget (HTTP 504, code live_timeout). Calm, and says what to do. */
+export const LIVE_TIMEOUT_TEXT = 'That question took too long. Try a shorter or narrower question.'
 export const LIMIT_TEXT = 'Daily live limit reached - showing recorded runs'
 
 export type TraceStatus = 'ok' | 'skipped' | 'failed' | 'not_searched' | 'unknown'
@@ -156,7 +158,7 @@ export function trimHistory(turns: Turn[]): Turn[] {
 /** The plain text of an answer (the sentences that passed), used as the "answer" of a history turn. */
 export const answerText = (a: LiveAnswer): string => a.speakable.map((s) => s.text).join(' ')
 
-export type FailKind = 'invalid_input' | 'patient_data' | 'rate_limited' | 'too_large' | 'server' | 'network' | 'timeout' | 'bad_response' | 'not_configured'
+export type FailKind = 'invalid_input' | 'patient_data' | 'rate_limited' | 'too_large' | 'server' | 'network' | 'timeout' | 'live_timeout' | 'bad_response' | 'not_configured'
 
 export class LiveError extends Error {
   constructor(
@@ -237,6 +239,7 @@ export function mapError(status: number, body: unknown): LiveError {
     const r = typeof b.retry_after_s === 'number' && Number.isFinite(b.retry_after_s) ? b.retry_after_s : undefined
     return new LiveError('rate_limited', message || LIMIT_TEXT, r)
   }
+  if (b.code === 'live_timeout' || (isObj(b.error) && b.error.code === 'live_timeout')) return new LiveError('live_timeout', LIVE_TIMEOUT_TEXT)
   if (status === 413) return new LiveError('too_large', message || 'That is too large to send.')
   if (status === 422) {
     if (b.code === 'patient_data') return new LiveError('patient_data', message || 'This looks like it contains patient details, so it was not sent on. Remove them and try again.')

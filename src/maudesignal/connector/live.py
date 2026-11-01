@@ -94,7 +94,11 @@ from maudesignal.connector.ask import (
 from maudesignal.connector.callcap import CallMeter, CallRefusedError, enforced_cap
 from maudesignal.connector.data import PROJECT_ROOT, ConnectorData
 from maudesignal.connector.direct import answer as direct_answer
-from maudesignal.connector.errors import InvalidInputError, SourceUnavailableError
+from maudesignal.connector.errors import (
+    InvalidInputError,
+    LiveTimeoutError,
+    SourceUnavailableError,
+)
 from maudesignal.connector.feedback import clean_ref, looks_like_phi
 from maudesignal.connector.forbidden import is_clean
 from maudesignal.connector.globalcap import (
@@ -197,7 +201,17 @@ OPENFDA_DEADLINE_S = 45.0
 OPENFDA_CALL_TIMEOUT_S = 6.0
 #: Hard wall-clock cap per openFDA call (an httpx timeout applies per phase, not per call).
 OPENFDA_CALL_WALL_S = 8.0
-ASK_BUDGET_S = 50.0
+#: Whole-request time for a typed live question. Vercel kills the function at ``maxDuration``
+#: (60 s) with a reply that has no CORS headers (the browser then reports a network failure),
+#: so the model work must stop well before that, leaving room for a cold start, the claim gate
+#: and the response. Override with ``MAUDESIGNAL_LIVE_ASK_BUDGET_S`` (clamped to 10..55).
+DEFAULT_ASK_BUDGET_S = 40.0
+ASK_BUDGET_ENV = "MAUDESIGNAL_LIVE_ASK_BUDGET_S"
+ASK_BUDGET_MIN_S = 10.0
+ASK_BUDGET_MAX_S = 55.0
+#: Extra seconds the request may run past the budget before it is answered 504 regardless.
+ASK_HARD_GRACE_S = 5.0
+LIVE_TIMEOUT_MESSAGE = "That question took too long. Try a shorter or narrower question."
 VOICE_TRANSCRIBE_TIMEOUT_S = 15.0
 #: One deadline for the whole voice request (transcription plus answer), under Vercel's 60 s.
 VOICE_REQUEST_BUDGET_S = 52.0
@@ -263,6 +277,7 @@ class LiveConfig:
     label_usd: float = DEFAULT_LABEL_USD
     mentions_per_day: int = DEFAULT_MENTIONS_PER_DAY
     voice_transcribe_only: bool = True
+    ask_budget_s: float = DEFAULT_ASK_BUDGET_S
 
     @classmethod
     def from_env(cls, env: dict[str, str] | None = None) -> LiveConfig:
@@ -279,6 +294,10 @@ class LiveConfig:
             label_usd=_float_env(e, LABEL_USD_ENV, DEFAULT_LABEL_USD),
             mentions_per_day=_int_env(e, MENTIONS_PER_DAY_ENV, DEFAULT_MENTIONS_PER_DAY),
             voice_transcribe_only=_bool_env(e, VOICE_TRANSCRIBE_ONLY_ENV, True),
+            ask_budget_s=min(
+                ASK_BUDGET_MAX_S,
+                max(ASK_BUDGET_MIN_S, _float_env(e, ASK_BUDGET_ENV, DEFAULT_ASK_BUDGET_S)),
+            ),
         )
 
 
@@ -307,7 +326,9 @@ def default_agent_factory(deadline: float, clock: Callable[[], float]) -> AgentF
         )
         model = os.environ.get("META_MODEL_API_MODEL", SPARK_MODEL)
         client = DeadlineClient(provider.client, deadline, clock)
-        agent = CopilotAgent(guard.wrap(client), data.tool_context(), model=model)
+        agent = CopilotAgent(
+            _DeadlineFirst(guard.wrap(client), deadline, clock), data.tool_context(), model=model
+        )
         make_read_only(agent)
         return agent
 
@@ -404,11 +425,31 @@ class DeadlineClient:
         """One chat call with a timeout of at most the time left."""
         left = self.left()
         if left < MIN_CALL_BUDGET_S:
-            raise TimeoutError("the live time budget for this request is used up")
+            raise LiveTimeoutError(LIVE_TIMEOUT_MESSAGE)
         client = self._inner
         if hasattr(client, "with_options"):
             client = client.with_options(timeout=min(left, CALL_TIMEOUT_S), max_retries=0)
-        return client.chat.completions.create(**kwargs)
+        try:
+            return client.chat.completions.create(**kwargs)
+        except LiveTimeoutError:
+            raise
+        except Exception as exc:
+            if self.left() <= 0.5:  # the call failed because the budget ended under it
+                raise LiveTimeoutError(LIVE_TIMEOUT_MESSAGE) from exc
+            raise
+
+
+class _DeadlineFirst:
+    """Outermost client layer: no call starts (so no spend is reserved) after ``deadline``."""
+
+    def __init__(self, inner: Any, deadline: float, clock: Callable[[], float]) -> None:
+        self._inner, self._deadline, self._clock = inner, deadline, clock
+        self.chat = type("Chat", (), {"completions": self})()
+
+    def create(self, **kwargs: Any) -> Any:
+        if self._deadline - self._clock() < MIN_CALL_BUDGET_S:
+            raise LiveTimeoutError(LIVE_TIMEOUT_MESSAGE)
+        return self._inner.chat.completions.create(**kwargs)
 
 
 class _DeadlineCompletions:
@@ -1123,7 +1164,16 @@ def mount_live(
         elif origin and not allowed:
             response = _err(403, "origin_not_allowed", "Origin not allowed.")
         else:
-            response = await call_next(request)
+            try:
+                response = await call_next(request)
+            except Exception as exc:  # noqa: BLE001 - every failure keeps the CORS headers
+                # An exception left to Starlette's outermost handler is answered outside this
+                # middleware, so the browser would get no CORS headers and report a network
+                # error. Answer here instead.
+                logger.error(
+                    "live_unexpected_error", error_type=type(exc).__name__, path=request.url.path
+                )
+                response = _err(500, "internal_error", "Something went wrong on the server.")
         response.headers["Vary"] = "Origin"
         if allowed:
             response.headers["Access-Control-Allow-Origin"] = origin
@@ -1223,8 +1273,9 @@ def mount_live(
             data,
             with_code(body.question, body.product_code),
             key_id=LEDGER_ID,
-            runtime=runtime(cfg.ask_usd, ASK_BUDGET_S),
+            runtime=runtime(cfg.ask_usd, cfg.ask_budget_s),
             history=history_pairs(body.history),
+            raise_on_timeout=True,
         )
 
     # --- research mode (web links next to the answer; never inside it) --------------------
@@ -1294,9 +1345,15 @@ def mount_live(
         if refused is not None:
             return refused
         try:
-            outcome, found = await asyncio.gather(
-                run_in_threadpool(do_ask, body), research_for(request, body)
+            outcome, found = await asyncio.wait_for(
+                asyncio.gather(run_in_threadpool(do_ask, body), research_for(request, body)),
+                timeout=cfg.ask_budget_s + ASK_HARD_GRACE_S,
             )
+        except (LiveTimeoutError, TimeoutError):
+            # The model stopped at its budget, or something hung past it: a clean error, no
+            # model text. Each model call settled or kept its own hold already.
+            log("ask", "timeout", started, status=504, tier="live")
+            return _err(504, "live_timeout", LIVE_TIMEOUT_MESSAGE)
         except InvalidInputError as exc:
             return _err(422, "invalid_input", str(exc))
         except SourceUnavailableError:

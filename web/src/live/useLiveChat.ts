@@ -170,7 +170,7 @@ export function useLiveChat(o: Options): LiveChat {
             limitRef.current = true
             setLimit(true)
             recorded(LIMIT_TEXT + '.')
-          } else if (err.kind === 'patient_data' || err.kind === 'invalid_input') patch(id, { status: 'error', error: err.message })
+          } else if (err.kind === 'patient_data' || err.kind === 'invalid_input' || err.kind === 'live_timeout') patch(id, { status: 'error', error: err.message })
           else recorded(`${err.message}`)
         })
       return null

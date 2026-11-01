@@ -64,6 +64,17 @@ class DailyLimitError(ConnectorError):
         self.structured = structured
 
 
+class LiveTimeoutError(ConnectorError, TimeoutError):
+    """The live time budget of one request ran out (maps to 504 ``live_timeout``).
+
+    Raised before a model call that could not finish inside the budget, so nothing is sent to
+    the model, no spend is reserved for it, and the server answers with a clean JSON error
+    (with CORS headers) well before the hosting platform would kill the function.
+    """
+
+    code = "live_timeout"
+
+
 class DemoKeyRefusedError(ConnectorError):
     """The public demo key may not use this tool (maps to 403)."""
 
