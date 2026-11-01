@@ -240,7 +240,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     if not cleaned:
         print("FAIL: TEST entries were not fully deleted", flush=True)
-    return 0 if cleaned and ok_asks and ok_browser and snap["spent_usd"] <= args.max_usd + 1e-9 else 1  # type: ignore[operator]
+    within_budget = float(str(snap["spent_usd"])) <= args.max_usd + 1e-9
+    return 0 if cleaned and ok_asks and ok_browser and within_budget else 1
 
 
 if __name__ == "__main__":
