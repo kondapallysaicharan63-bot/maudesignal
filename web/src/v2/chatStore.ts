@@ -2,9 +2,16 @@
 // Every read and write is wrapped: a private window or blocked site data leaves an empty list and the app works.
 // Format: {"v": 1, "chats": [SavedChat]} under a versioned key; the list is capped by count and by size, oldest dropped.
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { parseAsk, parseLabelResponse } from '../live/api'
 import type { LiveTurn } from '../live/useLiveChat'
 
 export const CHATS_KEY = 'ms-chats-v1'
+/**
+ * The answer format the saved turns were written in. A saved answer is read back through the same parser as a fresh
+ * one (parseAsk / parseLabelResponse); bump this when the answer view needs a field older saves do not have, so they
+ * are dropped instead of shown broken.
+ */
+export const ANSWER_FORMAT = 1
 export const MAX_CHATS = 50
 /** About 2 MB of JSON (one UTF-16 char counted as one byte; close enough for a cap). */
 export const MAX_BYTES = 2_000_000
@@ -23,7 +30,8 @@ export interface SavedChat {
 
 interface Store {
   read: (key: string) => string | null
-  write: (key: string, value: string) => void
+  /** False when the browser refused the write (storage full or blocked). */
+  write: (key: string, value: string) => boolean | void
 }
 
 const browserStore: Store = {
@@ -37,8 +45,9 @@ const browserStore: Store = {
   write: (k, v) => {
     try {
       window.localStorage.setItem(k, v)
+      return true
     } catch {
-      /* full or blocked: the chats stay in this page's memory */
+      return false // full or blocked: the chats stay in this page's memory only
     }
   },
 }
@@ -75,24 +84,43 @@ function restoredTurn(t: LiveTurn): LiveTurn {
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 
-function validTurn(v: unknown): v is LiveTurn {
-  return (
-    isObj(v) &&
-    typeof v.id === 'number' &&
-    (v.via === 'text' || v.via === 'voice' || v.via === 'photo') &&
-    (v.status === 'pending' || v.status === 'done' || v.status === 'error') &&
-    (v.question === null || v.question === undefined || typeof v.question === 'string') &&
-    // a done text or voice turn must carry its answer in the shape the answer view reads
-    (v.status !== 'done' || v.via === 'photo' || (isObj(v.resp) && isObj(v.resp.answer) && Array.isArray(v.resp.answer.speakable))) &&
-    (v.via !== 'photo' || v.status !== 'done' || isObj(v.label))
-  )
+const optStr = (v: unknown): v is string | undefined => v === undefined || typeof v === 'string'
+
+/**
+ * A saved turn rebuilt in exactly the shape the answer view reads, or null when it cannot be. Answers and label
+ * readings go through the same parsers as a fresh API answer; the daily-limit count is never restored.
+ */
+export function restoreTurn(v: unknown): LiveTurn | null {
+  if (!isObj(v) || typeof v.id !== 'number' || !Number.isFinite(v.id)) return null
+  if (v.via !== 'text' && v.via !== 'voice' && v.via !== 'photo') return null
+  if (v.status !== 'pending' && v.status !== 'done' && v.status !== 'error') return null
+  if (!(v.question === null || v.question === undefined || typeof v.question === 'string')) return null
+  if (!optStr(v.error) || !optStr(v.followUp)) return null
+  const t: LiveTurn = { id: v.id, via: v.via, question: typeof v.question === 'string' ? v.question : null, status: v.status }
+  if (typeof v.error === 'string') t.error = v.error
+  if (typeof v.followUp === 'string') t.followUp = v.followUp
+  if (v.offerRecordedVoice === true) t.offerRecordedVoice = true
+  if (v.offerRecordedLabel === true) t.offerRecordedLabel = true
+  if (v.resp !== undefined) {
+    const resp = parseAsk(v.resp)
+    if (!resp) return null
+    t.resp = { ...resp, limits: null }
+  }
+  if (v.label !== undefined) {
+    const label = parseLabelResponse(v.label)
+    if (!label) return null
+    t.label = { ...label, limits: null }
+  }
+  if (t.status === 'done' && (t.via === 'photo' ? !t.label : !t.resp)) return null
+  if (t.status === 'error' && !t.error) t.error = PENDING_NOTE
+  return t
 }
 
 function validChat(v: unknown): SavedChat | null {
   if (!isObj(v) || typeof v.id !== 'string' || !v.id || typeof v.title !== 'string' || !Array.isArray(v.turns)) return null
   const createdAt = typeof v.createdAt === 'number' ? v.createdAt : 0
   const updatedAt = typeof v.updatedAt === 'number' ? v.updatedAt : createdAt
-  const turns = v.turns.filter(validTurn).map(restoredTurn)
+  const turns = v.turns.map(restoreTurn).filter((t): t is LiveTurn => t !== null).map(restoredTurn)
   if (turns.length === 0) return null
   return { id: v.id, title: v.title, ...(v.titleEdited === true ? { titleEdited: true } : {}), createdAt, updatedAt, turns }
 }
@@ -102,7 +130,7 @@ export function parseChats(raw: string | null): SavedChat[] {
   if (!raw) return []
   try {
     const doc = JSON.parse(raw) as unknown
-    if (!isObj(doc) || doc.v !== 1 || !Array.isArray(doc.chats)) return []
+    if (!isObj(doc) || doc.v !== 1 || doc.fmt !== ANSWER_FORMAT || !Array.isArray(doc.chats)) return []
     const seen = new Set<string>()
     const out: SavedChat[] = []
     for (const c of doc.chats) {
@@ -120,7 +148,7 @@ export function parseChats(raw: string | null): SavedChat[] {
 
 export const sortChats = (chats: SavedChat[]): SavedChat[] => [...chats].sort((a, b) => b.updatedAt - a.updatedAt)
 
-const serialize = (chats: SavedChat[]): string => JSON.stringify({ v: 1, chats: chats.map((c) => ({ ...c, turns: c.turns.map(storableTurn) })) })
+const serialize = (chats: SavedChat[]): string => JSON.stringify({ v: 1, fmt: ANSWER_FORMAT, chats: chats.map((c) => ({ ...c, turns: c.turns.map(storableTurn) })) })
 
 /** The list cut to MAX_CHATS and MAX_BYTES, oldest chats dropped first; the newest is kept even when alone too big (its oldest turns go). */
 export function capChats(chats: SavedChat[], maxChats: number = MAX_CHATS, maxBytes: number = MAX_BYTES): SavedChat[] {
@@ -138,10 +166,11 @@ export function loadChats(store: Store = browserStore): SavedChat[] {
   return parseChats(store.read(CHATS_KEY))
 }
 
-export function saveChats(chats: SavedChat[], store: Store = browserStore): SavedChat[] {
+/** Writes the capped list; `ok` is false when the browser refused it (the chats then live in this page only). */
+export function saveChats(chats: SavedChat[], store: Store = browserStore): { kept: SavedChat[]; ok: boolean } {
   const kept = capChats(chats)
-  store.write(CHATS_KEY, serialize(kept))
-  return kept
+  const ok = store.write(CHATS_KEY, serialize(kept)) !== false
+  return { kept, ok }
 }
 
 const sameTurns = (a: LiveTurn[], b: LiveTurn[]): boolean =>
@@ -222,6 +251,8 @@ export function newChatId(): string {
 
 export interface ChatStore {
   chats: SavedChat[]
+  /** False after the browser refused a write (storage full or blocked). */
+  saved: boolean
   get: (id: string) => SavedChat | undefined
   upsert: (id: string, turns: LiveTurn[]) => void
   rename: (id: string, title: string) => void
@@ -232,14 +263,16 @@ export interface ChatStore {
 /** The saved chats as React state; every change is written through (and capped) at once. */
 export function useChatStore(store: Store = browserStore): ChatStore {
   const [chats, setChats] = useState<SavedChat[]>(() => loadChats(store))
+  const [saved, setSaved] = useState(true)
   const ref = useRef(chats)
   const apply = useCallback(
     (f: (cur: SavedChat[]) => SavedChat[]) => {
       const next = f(ref.current)
       if (next === ref.current) return
-      const kept = saveChats(next, store)
+      const { kept, ok } = saveChats(next, store)
       ref.current = kept
       setChats(kept)
+      setSaved(ok)
     },
     [store],
   )
@@ -256,6 +289,7 @@ export function useChatStore(store: Store = browserStore): ChatStore {
   }, [])
   return {
     chats,
+    saved,
     get: useCallback((id: string) => ref.current.find((c) => c.id === id), []),
     upsert: useCallback((id, turns) => apply((cur) => upsertChat(cur, id, turns)), [apply]),
     rename: useCallback((id, title) => apply((cur) => renameChat(cur, id, title)), [apply]),

@@ -15,7 +15,9 @@ import type { WorkspaceData } from '../types'
 import type { SavedChat } from './chatStore'
 import { HomeV2 } from './HomeV2'
 import { devicesToReview, realAlertItems, realDetails } from './realAlerts'
-import { SidebarV2 } from './SidebarV2'
+import { NOT_SAVED_NOTE, SidebarV2 } from './SidebarV2'
+import { ChatBoundary, questionsLeft } from './ChatScreen'
+import { SubTabs } from './SubTabs'
 import { tabMove } from './SubTabs'
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
@@ -72,6 +74,8 @@ function renderSidebar(over: Partial<Parameters<typeof SidebarV2>[0]> = {}) {
         chats={[chat('b', 'A very long chat title that goes on and on beyond the sidebar'), chat('a', 'Older chat')]}
         devicesLabel="Our devices (simulated)"
         devicesToReview={6}
+        saved
+        chatHref={(id) => `/chat/${id}`}
         theme="system"
         {...fns}
         {...over}
@@ -172,7 +176,7 @@ describe('real alerts are never mixed with simulated devices', () => {
     const onViewAll = vi.fn()
     act(() =>
       root.render(
-        <HomeV2 data={DATA} onAlert={() => undefined} onViewAll={onViewAll} onDevices={() => undefined} onSweep={() => undefined} onAudit={() => undefined} />,
+        <HomeV2 data={DATA} onAlert={() => undefined} onViewAll={onViewAll} onDevices={() => undefined} onAudit={() => undefined} />,
       ),
     )
     const list = q('[data-testid=home-alerts]')!
@@ -197,4 +201,78 @@ it('tab keys move round the row', () => {
   expect(tabMove('Home', 2, 4)).toBe(0)
   expect(tabMove('End', 0, 4)).toBe(3)
   expect(tabMove('a', 0, 4)).toBeNull()
+})
+
+describe('review fixes', () => {
+  it('Recents rows are real links; a plain click opens here, a Ctrl click is left to the browser', () => {
+    const f = renderSidebar()
+    const a = qa('[data-testid=recent-chat]')[1] as HTMLAnchorElement
+    expect(a.tagName).toBe('A')
+    expect(a.getAttribute('href')).toBe('/chat/a')
+    const ctrl = new MouseEvent('click', { bubbles: true, cancelable: true, ctrlKey: true })
+    act(() => {
+      a.dispatchEvent(ctrl)
+    })
+    expect(f.onChat).not.toHaveBeenCalled()
+    click(a)
+    expect(f.onChat).toHaveBeenCalledWith('a')
+  })
+  it('says so when the browser refused to save', () => {
+    renderSidebar({ saved: false })
+    expect(q('[data-testid=saved-note]')?.textContent).toBe(NOT_SAVED_NOTE)
+  })
+  it('questions left comes from the live count only, and only from 5 down', () => {
+    expect(questionsLeft({ remaining: null })).toBeNull()
+    expect(questionsLeft({ remaining: 29 })).toBeNull()
+    expect(questionsLeft({ remaining: 5 })).toBe(5)
+    expect(questionsLeft({ remaining: 0 })).toBe(0)
+  })
+  it('a chat that cannot be drawn shows Delete this chat and New chat instead of a blank page', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const onDelete = vi.fn()
+    const onNewChat = vi.fn()
+    function Boom(): JSX.Element {
+      throw new Error('bad saved answer')
+    }
+    act(() =>
+      root.render(
+        <ChatBoundary resetKey="c1" onDelete={onDelete} onNewChat={onNewChat}>
+          <Boom />
+        </ChatBoundary>,
+      ),
+    )
+    expect(q('[data-testid=chat-broken]')).not.toBeNull()
+    click(q('[data-testid=broken-delete]'))
+    click(q('[data-testid=broken-new]'))
+    expect(onDelete).toHaveBeenCalled()
+    expect(onNewChat).toHaveBeenCalled()
+    act(() =>
+      root.render(
+        <ChatBoundary resetKey="c2" onDelete={null} onNewChat={onNewChat}>
+          <p data-testid="fine">ok</p>
+        </ChatBoundary>,
+      ),
+    )
+    expect(q('[data-testid=fine]')).not.toBeNull()
+  })
+  it('subtabs: arrow keys report "key" (history replaced), the View menu reports "click"', () => {
+    const onChange = vi.fn()
+    act(() =>
+      root.render(
+        <SubTabs id="t" label="T" tabs={[{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }]} value="a" onChange={onChange}>
+          <p>panel</p>
+        </SubTabs>,
+      ),
+    )
+    act(() => {
+      q('[data-testid=tab-a]')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))
+    })
+    expect(onChange).toHaveBeenLastCalledWith('b', 'key')
+    const sel = q<HTMLSelectElement>('[data-testid=t-viewpick]') as HTMLSelectElement
+    act(() => {
+      sel.value = 'b'
+      sel.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+    expect(onChange).toHaveBeenLastCalledWith('b', 'click')
+  })
 })

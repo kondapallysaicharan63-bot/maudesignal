@@ -124,8 +124,28 @@ export function formatRoute(r: Route): string {
 }
 
 /** The full address of a page, keeping the folder and the query string. */
-export function hrefFor(r: Route, loc: { pathname: string; search: string } = window.location): string {
-  return `${appRoot(loc.pathname)}${formatRoute(r)}${loc.search}`
+export function hrefFor(
+  r: Route,
+  loc: { pathname: string; search: string } = window.location,
+  flag: string | undefined = import.meta.env.VITE_LAYOUT_DEFAULT as string | undefined,
+): string {
+  return `${appRoot(loc.pathname)}${formatRoute(r)}${withLayout(loc.search, flag)}`
+}
+
+/**
+ * The query string with layout=v2 added when the build default is not v2 and the address does not say, so Home, a
+ * refresh or a new tab stays in v2 after it was opened from a v2-only path. Other parameters are kept as they are.
+ */
+export function withLayout(search: string, flag: string | undefined): string {
+  if ((flag ?? '').trim().toLowerCase() === 'v2') return search
+  try {
+    const q = new URLSearchParams(search)
+    if (q.has('layout')) return search
+    q.append('layout', 'v2')
+    return `?${q.toString()}`
+  } catch {
+    return search
+  }
 }
 
 /** A short name for the page (feedback and visit pings), e.g. "signals:trend" or "chat". Never carries a chat id. */

@@ -24,10 +24,11 @@ import { PanelNav } from '../components/PanelBar'
 import type { VisionSel } from '../components/VisionWorkflow'
 import type { TabId } from '../artifacts'
 import { newChatId, useChatStore } from './chatStore'
-import { ChatScreen, ComposerNote, questionsLeft } from './ChatScreen'
+import { ChatBoundary, ChatScreen, ComposerNote, questionsLeft } from './ChatScreen'
+import type { TabHow } from './SubTabs'
 import { HomeV2 } from './HomeV2'
 import { devicesToReview, realAlertItems } from './realAlerts'
-import { routeName, useRoute, type Route, type Section } from './router'
+import { hrefFor, routeName, useRoute, type Route, type Section } from './router'
 import { pageItems, SearchPalette, type SearchItem } from './SearchPalette'
 import { ConnectPage, DevicesPage, EvidencePage, SignalsPage } from './Sections'
 import { SchedulesDialog } from './SchedulesDialog'
@@ -209,13 +210,15 @@ export default function AppV2() {
   }, [live.turns]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const go = useCallback(
-    (r: Route) => {
+    (r: Route, o?: { replace?: boolean }) => {
       setDrawer(false)
       setWIdx(null)
-      navigate(r)
+      navigate(r, o)
     },
     [navigate],
   )
+  /** A subtab change: arrow keys replace the history entry, a click or the View menu adds one. */
+  const tabGo = (r: Route, how?: TabHow) => go(r, { replace: how === 'key' })
   const newChat = useCallback(() => {
     // The chat on screen is already saved; a new one starts empty.
     liveRef.current.restore([])
@@ -344,6 +347,16 @@ export default function AppV2() {
     }
   }
 
+  // While the phone drawer is open, the page behind it (top bar and main) is inert: focus and clicks stay in the drawer.
+  const drawerOpen = drawer && !desktop
+  useEffect(() => {
+    const els = [document.querySelector('.ms2-topbar'), document.getElementById('main-v2')]
+    for (const el of els) {
+      if (!el) continue
+      if (drawerOpen) el.setAttribute('inert', '')
+      else el.removeAttribute('inert')
+    }
+  }, [drawerOpen])
   // The artifacts pane (vision readings) belongs to the workflow pages only.
   useEffect(() => {
     if (route.page !== 'workflow' && route.page !== 'thread' && route.page !== 'capture') setArtifacts(false)
@@ -415,17 +428,16 @@ export default function AppV2() {
       route.page === 'home' ? (
         <HomeV2
           data={data}
-          onAlert={(a) => openAlertPanel(a.id, a.productCode)}
+          onAlert={openAlertPanel}
           onViewAll={() => go({ page: 'signals', tab: 'alerts' })}
           onDevices={() => {
             setDeviceFilter(null)
             go({ page: 'devices', tab: 'apply' })
           }}
-          onSweep={() => go({ page: 'signals', tab: 'ranked' })}
-          onWithheld={withheldRefs.length > 0 ? () => openWithheld(0) : undefined}
           onAudit={() => go({ page: 'evidence', tab: 'audit' })}
         />
       ) : route.page === 'chat' ? (
+        <ChatBoundary resetKey={chatId ?? 'new'} onDelete={chatId ? () => deleteChat(chatId) : null} onNewChat={newChat}>
         <ChatScreen
           chat={chatLive}
           threads={data.threads.threads}
@@ -442,6 +454,7 @@ export default function AppV2() {
           onRecordedLabel={() => openCapture('label')}
           onOpen={onOpenView}
         />
+        </ChatBoundary>
       ) : undefined
     content = (
       <ChatPane
@@ -483,7 +496,7 @@ export default function AppV2() {
         <SignalsPage
           data={data}
           tab={route.tab}
-          onTab={(t) => go({ page: 'signals', tab: t })}
+          onTab={(t, how) => tabGo({ page: 'signals', tab: t }, how)}
           onWorkflow={openWorkflow}
           onThread={(id) => go({ page: 'thread', id })}
           briefDate={briefDate}
@@ -495,7 +508,7 @@ export default function AppV2() {
         <DevicesPage
           data={data}
           tab={route.tab}
-          onTab={(t) => go({ page: 'devices', tab: t })}
+          onTab={(t, how) => tabGo({ page: 'devices', tab: t }, how)}
           device={route.device ?? null}
           onDevice={openDevice}
           filter={deviceFilter}
@@ -507,12 +520,12 @@ export default function AppV2() {
         <EvidencePage
           data={data}
           tab={route.tab}
-          onTab={(t) => go({ page: 'evidence', tab: t })}
+          onTab={(t, how) => tabGo({ page: 'evidence', tab: t }, how)}
           onThread={(id) => go({ page: 'thread', id })}
           onWorkflow={openWorkflow}
         />
       )
-    else if (route.page === 'connect') sectionBody = <ConnectPage tab={route.tab} onTab={(t) => go({ page: 'connect', tab: t })} apiBase={API_BASE} />
+    else if (route.page === 'connect') sectionBody = <ConnectPage tab={route.tab} onTab={(t, how) => tabGo({ page: 'connect', tab: t }, how)} apiBase={API_BASE} />
     content = (
       <main className="ms2-section" aria-label={route.page[0].toUpperCase() + route.page.slice(1)}>
         <div className="ms2-section-inner">{sectionBody}</div>
@@ -526,10 +539,17 @@ export default function AppV2() {
       <AlertPanelContext.Provider value={panelApi}>
         <PanelNav.Provider value={{ onHome: () => go({ page: 'home' }), workflow: null }}>
           <div className="ms2-shell" data-layout="v2">
-            <a href="#main-v2" className="ms2-skip">
+            <button
+              type="button"
+              className="ms2-skip"
+              onClick={() => document.getElementById('main-v2')?.focus()}
+              data-testid="skip-link"
+            >
               Skip to content
-            </a>
+            </button>
             <TopBarV2
+              desktop={desktop}
+              homeHref={hrefFor({ page: 'home' })}
               sidebarOpen={desktop ? !collapsed : drawer}
               onToggleSidebar={() => (desktop ? setCollapsed((c) => !c) : setDrawer((o) => !o))}
               onHome={() => go({ page: 'home' })}
@@ -554,6 +574,8 @@ export default function AppV2() {
                 active={navActive}
                 activeChat={route.page === 'chat' ? chatId : null}
                 chats={store.chats}
+                saved={store.saved}
+                chatHref={(id) => hrefFor({ page: 'chat', id })}
                 devicesLabel={devicesLabel}
                 devicesToReview={toReview}
                 theme={theme}
@@ -576,7 +598,7 @@ export default function AppV2() {
                 }}
                 onClose={() => setDrawer(false)}
               />
-              <div id="main-v2" ref={mainRef} className="ms2-main">
+              <div id="main-v2" ref={mainRef} className="ms2-main" tabIndex={-1}>
                 {data ? content : <p className="ms2-muted p-6" role="status">Loading stored data…</p>}
               </div>
               {data && (route.page === 'workflow' || route.page === 'thread' || route.page === 'capture') && (

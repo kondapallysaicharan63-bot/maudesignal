@@ -141,6 +141,8 @@
 .ms2-navitem[aria-current='page'] {
   background: var(--accent-soft);
   font-weight: 600;
+  /* A bar as well as the tint, so the current page is clear in every theme (the Pink tint alone is too faint). */
+  box-shadow: inset 3px 0 0 var(--ink);
 }
 .ms2-navitem > svg {
   flex: none;
@@ -160,8 +162,9 @@
   font-weight: 600;
   padding: 1px 8px;
   border-radius: var(--radius-full);
-  background: var(--warning-soft);
-  color: var(--warning);
+  background: var(--surface-sunk);
+  color: var(--ink);
+  border: 1px solid var(--rule-strong);
 }
 .ms2-kbd {
   flex: none;
@@ -179,8 +182,12 @@
 }
 .ms2-side-note {
   margin: 2px 10px 6px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--ink-2);
+}
+.ms2-side-note.is-bad {
+  color: var(--critical);
+  font-weight: 600;
 }
 .ms2-recent {
   position: relative;
@@ -304,13 +311,14 @@
   background: var(--paper);
 }
 .ms2-section-inner {
-  max-width: 64rem;
+  /* Same column as Home (ChatPane: max-w-6xl, 32px sides, 24px top), so the left edge does not jump between pages. */
+  max-width: 72rem;
   margin: 0 auto;
-  padding: 28px 32px 64px;
+  padding: 24px 32px 120px;
 }
 @media (max-width: 767px) {
   .ms2-section-inner {
-    padding: 20px 16px 48px;
+    padding: 16px 16px 120px;
   }
 }
 .ms2-pagehead {
@@ -628,3 +636,216 @@
   overflow: hidden;
   clip: rect(0 0 0 0);
 }
+
+/* --- review round 1 ------------------------------------------------------------------------- */
+
+.ms2-nowrap {
+  white-space: nowrap;
+}
+.ms2-url {
+  overflow-wrap: anywhere;
+  font-size: 14px;
+}
+.ms2-shell [data-testid='connect-view'] .ms-code {
+  overflow-wrap: anywhere;
+  word-break: normal;
+  font-size: 14px !important;
+}
+
+/* Subtabs: a row of tabs; below 480 px one "View" menu so no tab is clipped. */
+.ms2-viewpick {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.ms2-viewpick label {
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.ms2-viewpick select {
+  flex: 1 1 auto;
+  min-height: 44px;
+  padding: 4px 10px;
+  font: 600 16px/1.3 var(--font-sans);
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-sm);
+}
+@media (max-width: 479px) {
+  .ms2-viewpick {
+    display: flex;
+  }
+  .ms2-tabs {
+    display: none;
+  }
+}
+
+/* Alert rows: line 1 code + device type, line 2 badge, line 3 stored numbers; the whole row is the link. */
+.ms2-alerts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ms2-alerts > li + li {
+  border-top: 1px solid var(--rule);
+}
+.ms2-alertrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 12px 4px;
+  text-align: left;
+  color: var(--ink);
+  border-radius: var(--radius-sm);
+}
+.ms2-alertrow:hover {
+  background: var(--surface-sunk);
+}
+.ms2-alertrow > svg {
+  flex: none;
+  color: var(--ink-2);
+}
+.ms2-alertrow-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.ms2-alertrow-l1 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+}
+.ms2-alertrow-title {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.ms2-alertrow-l3 {
+  font-size: 15px;
+  color: var(--ink-2);
+}
+
+/* Simulated devices: neutral, never styled like a real alert. */
+.ms2-sim {
+  padding: 8px 14px;
+  border: 1px dashed var(--rule-strong);
+  border-radius: var(--radius-md);
+  background: transparent;
+}
+.ms2-devices [data-needs-review] {
+  background: transparent !important;
+}
+.ms2-devices [data-needs-review] td:first-child,
+.ms2-devices li[data-needs-review] {
+  box-shadow: inset 3px 0 0 var(--rule-strong) !important;
+}
+.ms2-devices [data-testid='filter-chips'] {
+  flex-wrap: wrap;
+  overflow: visible;
+}
+.ms2-shell .ms2-devices [data-testid='status-chip'] {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--rule-strong);
+}
+
+/* Banners: normal weight, the lead words bold. */
+.ms2-shell .ms-banner {
+  font-weight: 400;
+}
+.ms2-shell .ms-banner strong {
+  font-weight: 600;
+}
+
+/* Bell: section titles in the interface face; the count badge clear of the icon. */
+.ms2-shell #alert-list h3 {
+  font-family: var(--font-sans);
+  font-size: 17px;
+}
+.ms2-topbar [data-testid='alert-badge'] {
+  top: -6px;
+  right: -9px;
+}
+
+/* Quiet rows in the sidebar footer and the theme menu. */
+.ms2-siderow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  padding: 4px 6px;
+  font-size: 15px;
+  color: var(--ink);
+  text-align: left;
+  border-radius: var(--radius-sm);
+}
+.ms2-siderow:hover {
+  background: var(--surface-sunk);
+}
+.ms2-thememenu {
+  position: relative;
+}
+.ms2-menu--theme {
+  min-width: 12rem;
+}
+.ms2-menu--theme.is-down {
+  top: 44px;
+  right: 0;
+  left: auto;
+}
+.ms2-menu--theme.is-up {
+  top: auto;
+  bottom: 40px;
+  left: 0;
+  right: auto;
+}
+.ms2-menu--theme button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ms2-check {
+  display: inline-block;
+  width: 1em;
+}
+.ms2-quietlink {
+  min-height: 36px;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.ms2-quietlink:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* High contrast: every badge and tag has an edge in its text colour; the send button is solid with a border. */
+[data-theme='contrast'] .ms2-shell .ws-pill,
+[data-theme='contrast'] .ms2-shell .ms2-tag,
+[data-theme='contrast'] .ms2-shell .ms2-badge {
+  border: 1.5px solid currentColor;
+}
+[data-theme='contrast'] .ms2-shell [data-testid='composer-send'] {
+  background: var(--ink);
+  color: var(--paper);
+  border: 2px solid var(--ink);
+}
+/* Black: card edges and the send button stay visible on true black. */
+[data-theme='black'] .ms2-shell .ms2-card,
+[data-theme='black'] .ms2-shell .ms2-sim {
+  border-color: var(--rule-strong);
+}
+[data-theme='black'] .ms2-shell [data-testid='composer-send'] {
+  border: 1px solid var(--rule-strong);
+}
+[data-theme='black'] .ms2-shell [data-testid='composer-send']:disabled {
+  background: var(--surface-sunk);
+}
+.ms2-main:focus { outline: none; }

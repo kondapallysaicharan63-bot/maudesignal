@@ -37,7 +37,7 @@ function Row({ label, value, copyLabel }: { label: string; value: string; copyLa
 }
 
 /** The "Connect to Muse" page: addresses, the demo key when the API gives one, three steps, privacy and terms. */
-export function ConnectView({ apiBase, fetcher }: { apiBase: string | null; fetcher?: Fetcher }) {
+export function ConnectView({ apiBase, fetcher, v2 = false }: { apiBase: string | null; fetcher?: Fetcher; v2?: boolean }) {
   const [info, setInfo] = useState<ConnectInfo | null>(apiBase ? null : FALLBACK_INFO)
   useEffect(() => {
     let live = true
@@ -54,7 +54,7 @@ export function ConnectView({ apiBase, fetcher }: { apiBase: string | null; fetc
   return (
     <div className="space-y-4" data-testid="connect-view">
       <div>
-        <p className="ms-kicker m-0">For reviewers</p>
+        {!v2 && <p className="ms-kicker m-0">For reviewers</p>}
         <h1 className="t-headline m-0 mt-1" style={{ fontSize: 'clamp(24px, 4vw, 32px)' }}>
           Connect to Muse
         </h1>
@@ -78,7 +78,7 @@ export function ConnectView({ apiBase, fetcher }: { apiBase: string | null; fetc
         <Row label="MCP address" value={i.mcp_url} copyLabel="MCP address" />
         <Row label="OpenAPI file" value={i.openapi_url} copyLabel="OpenAPI address" />
         <div className="border-t border-rule pt-3" data-testid="demo-key-block">
-          <h2 className="t-title m-0">Demo key</h2>
+          <h2 className="t-title m-0">{v2 ? 'Public demo key · read-only, rate-limited' : 'Demo key'}</h2>
           {i.demo_key ? (
             <>
               <Row label={`Paste it into the ${i.key_header} header`} value={i.demo_key} copyLabel="demo key" />
@@ -114,7 +114,7 @@ export function ConnectView({ apiBase, fetcher }: { apiBase: string | null; fetc
       <article className="rounded-md border border-rule bg-surface p-4" aria-label="Config snippets" data-testid="config-snippets">
         <h2 className="t-title m-0">Copy-paste setup</h2>
         {!i.demo_key && <p className="m-0 mt-1 text-[16px] text-ink-2">Replace {KEY_PLACEHOLDER} with your key.</p>}
-        {configSnippets(i).map((sn) => (
+        {configSnippets(i).filter((sn) => !v2 || sn.id === 'muse').map((sn) => (
           <section key={sn.id} className="mt-3 border-t border-rule pt-3" aria-label={sn.title} data-testid={`snippet-${sn.id}`}>
             <div className="flex items-center justify-between gap-3">
               <h3 className="m-0 text-[17px] font-semibold">{sn.title}</h3>
@@ -130,6 +130,7 @@ export function ConnectView({ apiBase, fetcher }: { apiBase: string | null; fetc
         ))}
       </article>
 
+      {!v2 && (
       <article className="rounded-md border border-rule bg-surface p-4" aria-label="Ready-made prompts" data-testid="example-questions">
         <h2 className="t-title m-0">Ready-made prompts</h2>
         <ul className="m-0 mt-2 list-none space-y-2 p-0">
@@ -140,6 +141,7 @@ export function ConnectView({ apiBase, fetcher }: { apiBase: string | null; fetc
           ))}
         </ul>
       </article>
+      )}
 
       <p className="m-0 flex flex-wrap items-center gap-x-5 text-[17px]">
         <a className="inline-flex min-h-11 items-center gap-1 text-accent underline" href={i.privacy_url} target="_blank" rel="noreferrer noopener" data-testid="link-privacy">
@@ -148,9 +150,11 @@ export function ConnectView({ apiBase, fetcher }: { apiBase: string | null; fetc
         <a className="inline-flex min-h-11 items-center gap-1 text-accent underline" href={i.terms_url} target="_blank" rel="noreferrer noopener" data-testid="link-terms">
           Terms <Icon name="chevron" size={16} />
         </a>
+        {!v2 && (
         <a className="inline-flex min-h-11 items-center gap-1 text-accent underline" href={i.openapi_url} target="_blank" rel="noreferrer noopener">
           OpenAPI file <Icon name="chevron" size={16} />
         </a>
+        )}
       </p>
     </div>
   )

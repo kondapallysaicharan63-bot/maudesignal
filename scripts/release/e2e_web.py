@@ -1746,7 +1746,7 @@ def v2_s_refresh_back(env: Env) -> str:
     if "layout=v2" not in env.page.url:
         raise AssertionError("the query string was dropped")
     v2_side_click(env, "nav-signals")
-    env.page.wait_for_selector("[data-testid=signals-tabs]")
+    env.page.wait_for_selector("[data-testid=signals-tabs]", state="attached")
     env.page.go_back()
     env.page.wait_for_function(f"location.pathname === {json.dumps(two)}", timeout=10_000)
     env.page.wait_for_selector("[data-testid=user-bubble]", timeout=10_000)
@@ -1785,13 +1785,21 @@ def v2_s_sections(env: Env) -> str:
     seen: list[str] = []
     for section, tabs in V2_PAGES:
         v2_side_click(env, f"nav-{section}")
-        env.page.wait_for_selector(f"[data-testid={section}-tabs]", timeout=10_000)
+        env.page.wait_for_selector(
+            f"[data-testid={section}-tabs]", state="attached", timeout=10_000
+        )
+        phone_menu = env.page.get_by_test_id(f"{section}-viewpick")
+        if env.width < 480 and not phone_menu.is_visible():
+            raise AssertionError(f"{section}: no View menu below 480 px")
         if env.page.locator("#main-v2 h1").count() < 1:
             raise AssertionError(f"{section} has no page heading")
         env.shot(f"v2-{section}")
         for t in tabs:
             tab = env.page.get_by_test_id(f"tab-{t}")
-            tab.click()
+            if env.width < 480:  # the View menu: every subtab reachable on a phone
+                phone_menu.select_option(t)
+            else:
+                tab.click()
             env.page.wait_for_timeout(250)
             if tab.get_attribute("aria-selected") != "true":
                 raise AssertionError(f"{section}/{t} is not selected after a click")
@@ -1808,13 +1816,24 @@ def v2_s_sections(env: Env) -> str:
                     f"{section}/{t}: the panel is empty or not labelled by its tab"
                 )
             seen.append(f"{section}/{t}")
-        first = env.page.get_by_test_id(f"tab-{tabs[0]}")
-        first.click()
-        first.focus()
-        env.page.keyboard.press("ArrowRight")
-        env.page.wait_for_timeout(200)
-        if env.page.get_by_test_id(f"tab-{tabs[1]}").get_attribute("aria-selected") != "true":
-            raise AssertionError(f"{section}: ArrowRight did not move to the next tab")
+        if env.width >= 480:
+            first = env.page.get_by_test_id(f"tab-{tabs[0]}")
+            first.click()
+            first.focus()
+            before = env.page.evaluate("history.length")
+            env.page.keyboard.press("ArrowRight")
+            env.page.wait_for_timeout(200)
+            if env.page.get_by_test_id(f"tab-{tabs[1]}").get_attribute("aria-selected") != "true":
+                raise AssertionError(f"{section}: ArrowRight did not move to the next tab")
+            if env.page.evaluate("history.length") != before:
+                raise AssertionError(f"{section}: an arrow-key move added a history entry")
+            focused = env.page.evaluate(
+                "document.activeElement && document.activeElement.dataset.testid"
+            )
+            if focused != f"tab-{tabs[1]}":
+                raise AssertionError(
+                    f"{section}: focus left the tab row after ArrowRight ({focused})"
+                )
     env.page.goto(v2_url(env, "signals/trend"), wait_until="load")
     env.page.wait_for_selector("[data-testid=trend-row][data-code=LLZ]", timeout=10_000)
     llz = env.page.locator("[data-testid=trend-row][data-code=LLZ]").inner_text()
@@ -1858,7 +1877,7 @@ def v2_s_ref(env: Env) -> str:
     """?r=TEST1 is kept on every move and sent with every visit ping."""
     v2_open(env, extra="r=TEST1")
     v2_side_click(env, "nav-signals")
-    env.page.wait_for_selector("[data-testid=signals-tabs]")
+    env.page.wait_for_selector("[data-testid=signals-tabs]", state="attached")
     v2_side_click(env, "new-chat")
     env.page.wait_for_selector("[data-testid=chat-empty]")
     env.page.wait_for_timeout(500)
@@ -1912,6 +1931,13 @@ def v2_s_keyboard_a11y(env: Env) -> str:
     first = env.page.evaluate("document.activeElement && document.activeElement.textContent.trim()")
     if first != "Skip to content":
         raise AssertionError(f"first Tab stop is {first!r}, not the skip link")
+    url = env.page.url
+    env.page.keyboard.press("Enter")
+    env.page.wait_for_timeout(200)
+    if env.page.url != url or env.page.get_by_test_id("topbar-v2").count() == 0:
+        raise AssertionError("the skip link left the page")
+    if env.page.evaluate("document.activeElement && document.activeElement.id") != "main-v2":
+        raise AssertionError("the skip link did not move focus to the page")
     unnamed = env.page.evaluate(
         """[...document.querySelectorAll('button, a[href], select, input, textarea, [role=tab]')]
         .filter(e => e.offsetParent !== null && !e.closest('[aria-hidden=true]'))
@@ -1977,6 +2003,18 @@ def v2_s_layout_and_drawer(env: Env) -> str:
         ):
             raise AssertionError("the drawer did not open")
         env.shot("v2-phone-drawer")
+        if (
+            env.page.evaluate("document.getElementById('main-v2').hasAttribute('inert')")
+            is not True
+        ):
+            raise AssertionError("the page behind the drawer is not inert")
+        for _ in range(14):
+            env.page.keyboard.press("Tab")
+            inside = env.page.evaluate(
+                "!!(document.activeElement && document.activeElement.closest('#sidebar'))"
+            )
+            if not inside:
+                raise AssertionError("Tab left the open drawer")
         env.page.keyboard.press("Escape")
         env.page.wait_for_timeout(350)
         if env.page.get_by_test_id("new-chat").is_visible():
@@ -1990,30 +2028,43 @@ def v2_s_layout_and_drawer(env: Env) -> str:
     return "0 px sideways on every page; drawer / collapse work"
 
 
-def v2_s_themes(env: Env) -> str:
-    """Every theme applies (smoke) and nothing breaks; the top-bar switch cycles."""
-    v2_open(env)
-    v2_sidebar(env)
-    for t in V2_THEMES:
+def v2_pick_theme(env: Env, opener: str, theme: str) -> None:
+    """Choose a theme from the one theme menu (sidebar row or top-bar button)."""
+    if opener == "side-theme":
         v2_sidebar(env)
-        env.page.get_by_test_id("theme-select").select_option(t)
-        env.page.wait_for_timeout(150)
+    env.page.get_by_test_id(opener).click()
+    env.page.get_by_test_id(f"theme-{theme}").click()
+    env.page.wait_for_timeout(150)
+
+
+def v2_s_themes(env: Env) -> str:
+    """Every theme applies (smoke) from the one theme menu (sidebar and top bar) and is kept after reload."""
+    v2_open(env)
+    for t in V2_THEMES:
+        v2_pick_theme(env, "side-theme", t)
         got = env.page.evaluate("document.documentElement.getAttribute('data-theme')")
         if got != t:
             raise AssertionError(f"theme {t} gave data-theme={got}")
         v2_close_drawer(env)
         env.shot(f"v2-theme-{t}")
-    v2_sidebar(env)
-    env.page.get_by_test_id("theme-select").select_option("system")
-    v2_close_drawer(env)
-    env.page.get_by_test_id("top-theme").click()
+    v2_pick_theme(env, "top-theme", "light")
     if env.page.evaluate("document.documentElement.getAttribute('data-theme')") != "light":
-        raise AssertionError("the top-bar switch did not move System -> Paper")
+        raise AssertionError("the top-bar theme menu did not apply Paper")
+    env.page.get_by_test_id("top-theme").click()
+    env.page.keyboard.press("Escape")
+    if env.page.locator("[role=menu][aria-label=Theme]").count():
+        raise AssertionError("Escape did not close the theme menu")
     env.page.reload(wait_until="load")
     env.page.wait_for_selector("[data-testid=topbar-v2]")
     if env.page.evaluate("document.documentElement.getAttribute('data-theme')") != "light":
         raise AssertionError("the theme was not kept after reload")
-    return f"themes {', '.join(V2_THEMES)} applied; top switch cycles and is kept"
+    v2_pick_theme(env, "top-theme", "pink")
+    env.page.goto(env.args.url.rstrip("/") + "/?layout=classic", wait_until="load")
+    env.page.wait_for_selector(COMPOSER, timeout=30_000)
+    classic = env.page.evaluate("document.documentElement.getAttribute('data-theme')")
+    if classic in V2_THEMES:
+        raise AssertionError(f"the classic layout shows the v2-only theme {classic}")
+    return f"themes {', '.join(V2_THEMES)} applied; one menu from sidebar and top bar; kept; classic never shows them"
 
 
 def v2_s_fonts(env: Env) -> str:
@@ -2027,6 +2078,79 @@ def v2_s_fonts(env: Env) -> str:
     if not loaded or not str(family).startswith("Geist"):
         raise AssertionError(f"Geist loaded={loaded}, family={family}")
     return f"Geist loaded; shell font {family}"
+
+
+OLD_SHAPE_CHAT = {
+    "v": 1,
+    "fmt": 1,
+    "chats": [
+        {
+            "id": "coldshape1",
+            "title": "Old saved chat",
+            "createdAt": 1,
+            "updatedAt": 1,
+            "turns": [
+                {
+                    "id": 1,
+                    "via": "text",
+                    "question": "Old saved question",
+                    "status": "done",
+                    "resp": {"answer": {"speakable": [{"text": "Old saved answer."}]}},
+                }
+            ],
+        }
+    ],
+}
+
+
+def v2_s_saved_edge_cases(env: Env) -> str:
+    """A saved answer in an old shape still opens (never a blank page); storage refused says "Not saved"."""
+    seed = json.dumps(json.dumps(OLD_SHAPE_CHAT))
+    env.page.add_init_script(
+        f"if (!sessionStorage.getItem('seeded')) {{ localStorage.setItem('ms-chats-v1', {seed}); sessionStorage.setItem('seeded', '1') }}"
+    )
+    v2_open(env, "chat/coldshape1")
+    env.page.wait_for_selector("[data-testid=user-bubble]", timeout=15_000)
+    if (
+        env.page.get_by_test_id("chat-broken").count()
+        or "Old saved question" not in env.page.locator("#main-v2").inner_text()
+    ):
+        raise AssertionError("an old-shape saved chat did not open")
+    # Storage refused: a new chat is kept in the page and the sidebar says it is not saved.
+    p2 = env.page.context.new_page()
+    p2.add_init_script(
+        "const _set = Storage.prototype.setItem; Storage.prototype.setItem = function (k, v) {"
+        " if (k === 'ms-chats-v1') throw new DOMException('full', 'QuotaExceededError'); return _set.call(this, k, v) }"
+    )
+    env_page = env.page
+    env.page = p2
+    try:
+        env.page.goto(v2_url(env, "chat"), wait_until="load")
+        env.page.wait_for_selector("[data-testid=chat-screen]", timeout=30_000)
+        v2_ask(env, "Will this be saved?")
+        v2_sidebar(env)
+        note = env.page.get_by_test_id("saved-note").inner_text()
+        if "Not saved" not in note:
+            raise AssertionError(f"storage refused but the note says {note!r}")
+        v2_close_drawer(env)
+    finally:
+        env.page = env_page
+        p2.close()
+    # Opened from a v2 path without ?layout, Home and a refresh stay in v2.
+    p3 = env.page.context.new_page()
+    p3.goto(env.args.url.rstrip("/") + "/signals/trend", wait_until="load")
+    p3.wait_for_selector("[data-testid=topbar-v2]", timeout=30_000)
+    p3.locator(".ms2-topbar a").first.click()
+    p3.wait_for_timeout(300)
+    if "layout=v2" not in p3.url:
+        p3.close()
+        raise AssertionError(f"Home from a v2 path lost the layout: {p3.url}")
+    p3.reload(wait_until="load")
+    ok = p3.get_by_test_id("topbar-v2").count() == 1
+    p3.close()
+    if not ok:
+        raise AssertionError("a refresh of Home left v2")
+    return "old-shape chat opens; refused storage says 'Not saved'; Home and refresh stay in v2"
 
 
 V2_SCENARIOS: tuple[tuple[str, Callable[[Env], str]], ...] = (
@@ -2043,6 +2167,7 @@ V2_SCENARIOS: tuple[tuple[str, Callable[[Env], str]], ...] = (
     ("v2 no sideways scroll, drawer", v2_s_layout_and_drawer),
     ("v2 themes smoke", v2_s_themes),
     ("v2 interface font", v2_s_fonts),
+    ("v2 saved-chat edge cases, staying in v2", v2_s_saved_edge_cases),
 )
 
 

@@ -1,8 +1,9 @@
 // Saved chats (v2): save, restore, rename, delete, the caps, and storage that is corrupt or blocked.
 import { describe, expect, it } from 'vitest'
-import type { AskResponse } from '../live/api'
+import { parseAsk, type AskResponse } from '../live/api'
 import type { LiveTurn } from '../live/useLiveChat'
 import {
+  ANSWER_FORMAT,
   autoTitle,
   capChats,
   CHATS_KEY,
@@ -23,16 +24,16 @@ import {
   type SavedChat,
 } from './chatStore'
 
-const resp = (text: string, mode: 'recorded' | 'live' = 'live'): AskResponse => ({
-  mode,
-  not_medical_advice: true,
-  trace: [],
-  cost_usd: null,
-  limits: null,
-  answer: { speakable: [{ text, links: [{ label: 'openFDA', url: 'https://api.fda.gov/device/event.json' }] }], withheld: [], spoken_text: text },
-  suggestions: ['Next question?'],
-  research: { label: 'Web research', items: [{ title: 'A page', url: 'https://example.org/a', snippet: 's' }] } as unknown as AskResponse['research'],
-})
+/** An answer exactly as the API parser gives it (what the live chat holds); limits are never restored, so none here. */
+const resp = (text: string, mode: 'recorded' | 'live' = 'live'): AskResponse =>
+  parseAsk({
+    mode,
+    trace: [{ step: 'Muse Spark', model: 'muse-spark-1.3', ms: 10, status: 'ok' }],
+    cost_usd: 0.001,
+    answer: { speakable: [{ text, links: [{ label: 'openFDA', url: 'https://api.fda.gov/device/event.json' }] }], withheld: [], spoken_text: text },
+    suggestions: ['Next question?'],
+    research: { status: 'ok', label: 'Web research', items: [{ title: 'A page', url: 'https://example.org/a', date: null, source: 'example.org' }] },
+  }) as AskResponse
 
 const turn = (id: number, q: string, a = 'An answer.', extra: Partial<LiveTurn> = {}): LiveTurn => ({
   id,
@@ -168,6 +169,7 @@ describe('caps', () => {
 describe('corrupt or blocked storage', () => {
   it.each([
     ['not JSON', '{oops'],
+    ['an older answer format', JSON.stringify({ v: 1, chats: [] })],
     ['wrong version', JSON.stringify({ v: 2, chats: [] })],
     ['not an object', JSON.stringify([1, 2])],
     ['chats not a list', JSON.stringify({ v: 1, chats: 'x' })],
@@ -178,6 +180,7 @@ describe('corrupt or blocked storage', () => {
     const good = upsertChat([], 'ok', [turn(1, 'Fine?')], 1)[0]
     const raw = JSON.stringify({
       v: 1,
+      fmt: ANSWER_FORMAT,
       chats: [
         good,
         { id: 'no-turns', title: 't', turns: [] },
@@ -236,4 +239,30 @@ it('chat ids are URL-safe and different each time', () => {
   const b = newChatId()
   expect(a).toMatch(/^[a-z0-9]+$/)
   expect(a).not.toBe(b)
+})
+
+describe('only answers the view can read are restored', () => {
+  const save = (turns: unknown[]) => JSON.stringify({ v: 1, fmt: ANSWER_FORMAT, chats: [{ id: 'x', title: 'X', createdAt: 1, updatedAt: 1, turns }] })
+  it('an answer saved with speakable only (the shape that used to crash the chat view) comes back in the full shape', () => {
+    const bad = { id: 1, via: 'text', question: 'Q?', status: 'done', resp: { answer: { speakable: [{ text: 'Hi' }] } } }
+    const good = { id: 2, via: 'text', question: 'Q2?', status: 'done', resp: resp('Fine.') }
+    const back = parseChats(save([bad, good]))[0].turns
+    expect(back.map((t) => t.id)).toEqual([1, 2])
+    for (const t of back) {
+      expect(Array.isArray(t.resp?.trace)).toBe(true)
+      expect(Array.isArray(t.resp?.suggestions)).toBe(true)
+      expect(Array.isArray(t.resp?.answer.withheld)).toBe(true)
+      expect(typeof t.resp?.answer.spoken_text).toBe('string')
+    }
+  })
+  it('drops a done answer without its answer block, and a photo turn without a readable reading', () => {
+    const noAnswer = { id: 1, via: 'text', question: 'Q?', status: 'done', resp: { mode: 'live' } }
+    const badLabel = { id: 2, via: 'photo', question: null, status: 'done', label: { reading: {} } }
+    const doneNoResp = { id: 3, via: 'voice', question: 'Q?', status: 'done' }
+    expect(parseChats(save([noAnswer, badLabel, doneNoResp]))).toEqual([])
+  })
+  it('never restores the daily-limit count', () => {
+    const t = { id: 1, via: 'text', question: 'Q?', status: 'done', resp: { ...resp('A.'), limits: { remaining_today: 2, resets_utc: '' } } }
+    expect(parseChats(save([t]))[0].turns[0].resp?.limits).toBeNull()
+  })
 })

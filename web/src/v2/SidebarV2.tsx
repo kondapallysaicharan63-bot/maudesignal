@@ -4,7 +4,11 @@ import { useEffect, useRef, useState } from 'react'
 import { Icon } from '../icons'
 import type { SavedChat } from './chatStore'
 import type { Section } from './router'
-import { THEMES, type ThemeId } from './theme'
+import { ThemeMenu } from './ThemeMenu'
+import type { ThemeId } from './theme'
+
+export const SAVED_NOTE = 'Saved on this device only'
+export const NOT_SAVED_NOTE = 'Not saved: browser storage is full or blocked'
 
 export type NavId = 'home' | Section
 
@@ -14,6 +18,10 @@ interface Props {
   active: NavId | null
   activeChat: string | null
   chats: SavedChat[]
+  /** False when the browser refused to save (storage full or blocked). */
+  saved: boolean
+  /** The address of a saved chat (so a Recents row can open in a new tab). */
+  chatHref: (id: string) => string
   devicesLabel: string
   devicesToReview: number
   theme: ThemeId
@@ -30,12 +38,14 @@ interface Props {
 
 function RecentRow({
   c,
+  href,
   active,
   onOpen,
   onRename,
   onDelete,
 }: {
   c: SavedChat
+  href: string
   active: boolean
   onOpen: () => void
   onRename: (t: string) => void
@@ -125,16 +135,21 @@ function RecentRow({
     )
   return (
     <li className="ms2-recent" ref={wrap}>
-      <button
-        type="button"
+      <a
+        href={href}
         className="ms2-navitem ms2-recent-open"
         aria-current={active ? 'page' : undefined}
-        onClick={onOpen}
+        onClick={(e) => {
+          // A plain click opens the chat here; Ctrl / Cmd / Shift / middle click keep the browser's new tab or window.
+          if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+          e.preventDefault()
+          onOpen()
+        }}
         title={c.title}
         data-testid="recent-chat"
       >
         <span className="ms2-clip">{c.title}</span>
-      </button>
+      </a>
       <button
         ref={menuBtn}
         type="button"
@@ -181,8 +196,28 @@ export function SidebarV2(p: Props) {
   useEffect(() => {
     if (!p.open) return
     if (window.matchMedia('(max-width: 767px)').matches) closeRef.current?.focus()
+    const phone = window.matchMedia('(max-width: 767px)').matches
     const key = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && !document.querySelector('[data-popover-open]')) p.onClose()
+      // Phone drawer: Tab and Shift+Tab go round inside it (the page behind is inert as well).
+      if (e.key === 'Tab' && phone) {
+        const aside = document.getElementById('sidebar')
+        if (!aside) return
+        const f = Array.from(aside.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input, select, [tabindex="0"]')).filter(
+          (el) => el.offsetParent !== null,
+        )
+        if (f.length === 0) return
+        const first = f[0]
+        const last = f[f.length - 1]
+        const at = document.activeElement
+        if (e.shiftKey && (at === first || !aside.contains(at))) {
+          e.preventDefault()
+          last.focus()
+        } else if (!e.shiftKey && (at === last || !aside.contains(at))) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
     }
     window.addEventListener('keydown', key)
     return () => window.removeEventListener('keydown', key)
@@ -247,8 +282,8 @@ export function SidebarV2(p: Props) {
             ))}
           </ul>
           <h2 className="ms2-side-h">Recents</h2>
-          <p className="ms2-side-note" data-testid="saved-note">
-            Saved on this device only
+          <p className={['ms2-side-note', p.saved ? '' : 'is-bad'].join(' ')} data-testid="saved-note" role={p.saved ? undefined : 'status'}>
+            {p.saved ? SAVED_NOTE : NOT_SAVED_NOTE}
           </p>
           {p.chats.length === 0 ? (
             <p className="ms2-side-note">No saved chats yet.</p>
@@ -258,6 +293,7 @@ export function SidebarV2(p: Props) {
                 <RecentRow
                   key={c.id}
                   c={c}
+                  href={p.chatHref(c.id)}
                   active={p.activeChat === c.id}
                   onOpen={() => p.onChat(c.id)}
                   onRename={(t) => p.onRename(c.id, t)}
@@ -268,17 +304,8 @@ export function SidebarV2(p: Props) {
           )}
         </nav>
         <div className="ms2-side-foot">
-          <label className="flex items-center gap-2">
-            <span className="ms2-muted text-[14px]">Theme</span>
-            <select className="ms2-select" value={p.theme} onChange={(e) => p.onTheme(e.target.value as ThemeId)} data-testid="theme-select">
-              {THEMES.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button type="button" className="ms2-smalllink" onClick={p.onSchedules} data-testid="schedules-link">
+          <ThemeMenu theme={p.theme} onTheme={p.onTheme} placement="up" testid="side-theme" showLabel />
+          <button type="button" className="ms2-siderow" onClick={p.onSchedules} data-testid="schedules-link">
             Schedules and sources
           </button>
         </div>

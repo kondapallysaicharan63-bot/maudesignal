@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { isV2Path, layoutMode } from '../layoutFlag'
 import { stripChatId, stripRef } from '../analytics'
-import { appRoot, formatRoute, hrefFor, parseRoute, routeName, type Route } from './router'
+import { appRoot, formatRoute, hrefFor, parseRoute, routeName, withLayout, type Route } from './router'
 
 const ALL: Route[] = [
   { page: 'home' },
@@ -88,5 +88,16 @@ describe('layout switch', () => {
     expect(isV2Path('/chatter')).toBe(false)
     expect(layoutMode('classic', '', '/chat/abc')).toBe('v2')
     expect(layoutMode(undefined, '?r=TEST1', '/')).toBe('classic')
+  })
+})
+
+describe('staying in v2', () => {
+  it('adds layout=v2 when the build default is not v2 and the address does not say', () => {
+    expect(withLayout('', undefined)).toBe('?layout=v2')
+    expect(withLayout('?r=TEST1', 'classic')).toBe('?r=TEST1&layout=v2')
+    expect(withLayout('?layout=classic', undefined)).toBe('?layout=classic')
+    expect(withLayout('?r=TEST1', 'v2')).toBe('?r=TEST1')
+    expect(hrefFor({ page: 'home' }, { pathname: '/chat/abc', search: '' }, 'classic')).toBe('/?layout=v2')
+    expect(hrefFor({ page: 'chat', id: 'c1' }, { pathname: '/', search: '?r=X1' }, 'v2')).toBe('/chat/c1?r=X1')
   })
 })

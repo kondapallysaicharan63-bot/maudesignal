@@ -49,6 +49,8 @@ export interface LiveChat {
   turns: LiveTurn[]
   busy: boolean
   limitReached: boolean
+  /** Live questions left today, from the newest answer that arrived in this page (never from a restored chat). */
+  remaining: number | null
   speaker: boolean
   setSpeaker: (on: boolean) => void
   speakingId: number | null
@@ -102,6 +104,7 @@ export function useLiveChat(o: Options): LiveChat {
   const [speaker, setSpeaker] = useState(true)
   const [speakingId, setSpeakingId] = useState<number | null>(null)
   const [micNotice, setMicNotice] = useState<string | null>(null)
+  const [remaining, setRemaining] = useState<number | null>(null)
   const turnsRef = useRef<LiveTurn[]>([])
   const limitRef = useRef(false)
   const speakerRef = useRef(true)
@@ -115,6 +118,8 @@ export function useLiveChat(o: Options): LiveChat {
   }, [])
   const patch = useCallback(
     (id: number, p: Partial<LiveTurn>) => {
+      const left = p.resp?.limits?.remaining_today
+      if (typeof left === 'number') setRemaining(left)
       if (!turnsRef.current.some((t) => t.id === id)) {
         opts.current.onBackground?.(id, p)
         return
@@ -132,6 +137,7 @@ export function useLiveChat(o: Options): LiveChat {
   const fetcher: Fetcher = useCallback((u, i) => (opts.current.fetcher ?? ((a, b) => fetch(a, b)))(u, i), [])
 
   const say = useCallback((id: number, text: string) => {
+    if (!turnsRef.current.some((t) => t.id === id)) return // its chat is no longer on screen
     const ok = speak(text, { onStart: () => setSpeakingId(id), onEnd: () => setSpeakingId((c) => (c === id ? null : c)) })
     if (!ok) setSpeakingId(null)
   }, [])
@@ -257,6 +263,9 @@ export function useLiveChat(o: Options): LiveChat {
       // Turn ids stay unique in this page: new turns are numbered after every restored one (and after reserveUpTo).
       if (reserveUpTo >= nextId) nextId = reserveUpTo + 1
       for (const t of next) if (t.id >= nextId) nextId = t.id + 1
+      // Photo previews of the conversation leaving the screen are released (a saved chat keeps no picture).
+      for (const t of turnsRef.current)
+        if (t.image && !next.some((n) => n.image === t.image) && typeof URL.revokeObjectURL === 'function') URL.revokeObjectURL(t.image)
       put(next)
     },
     [put],
@@ -264,6 +273,7 @@ export function useLiveChat(o: Options): LiveChat {
 
   return {
     enabled: !!o.apiBase,
+    remaining,
     turns,
     busy: turns.some((t) => t.status === 'pending'),
     limitReached,
@@ -296,6 +306,7 @@ export const NO_LIVE: LiveChat = {
   turns: [],
   busy: false,
   limitReached: false,
+  remaining: null,
   speaker: false,
   setSpeaker: () => undefined,
   speakingId: null,

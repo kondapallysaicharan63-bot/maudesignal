@@ -1,15 +1,14 @@
 // The four sections of the v2 layout, each with subtabs (ARIA tabs, one open at a time). This is a reorganisation of
 // the existing views: every panel reuses an existing component or reads numbers straight from the stored exports.
 import { useEffect, useState } from 'react'
-import type { AlertDetail } from '../alerts'
 import { auditRunFor, capaDrafts } from '../artifacts'
 import { useAlertPanel } from '../alertPanelContext'
 import { configSnippets, EXAMPLE_QUESTIONS, fetchConnect, FALLBACK_INFO, type ConnectInfo } from '../connect'
+import { AlertRows, realRows } from './AlertRows'
 import { demoSnapshotLabel, WORKFLOWS } from '../data'
 import { Icon } from '../icons'
 import { useMine } from '../useMyCompany'
 import type { WorkflowId, WorkspaceData } from '../types'
-import { AlertList } from '../components/AlertBell'
 import { StoredList } from '../components/ChatPane'
 import { ConnectView, CopyButton } from '../components/ConnectView'
 import { MakeItYours, MineBar } from '../components/MakeItYours'
@@ -17,11 +16,10 @@ import { CompanyBanner, OurDevices } from '../components/OurDevices'
 import { SweepCard, SweepRules } from '../components/SweepCard'
 import { AuditTab, CapaTab } from '../components/artifacts/AuditCapaProtocol'
 import { BriefTab } from '../components/artifacts/BriefTabs'
-import { Pill } from '../components/artifacts/common'
 import { DossierTab } from '../components/artifacts/DossierVision'
-import { rankReal, realAlertItems, realDetails, sourceLine } from './realAlerts'
+import { rankReal, realDetails, sourceLine } from './realAlerts'
 import type { ConnectTab, DevicesTab, EvidenceTab, SignalsTab } from './router'
-import { SubTabs, type TabDef } from './SubTabs'
+import { SubTabs, type TabDef, type TabHow } from './SubTabs'
 
 export const SIGNALS_TAB_LABELS: TabDef<SignalsTab>[] = [
   { id: 'ranked', label: 'Ranked' },
@@ -45,9 +43,6 @@ export const CONNECT_TAB_LABELS: TabDef<ConnectTab>[] = [
   { id: 'api', label: 'API docs' },
 ]
 
-/** Exact wording of the Muse connector's status (HACKATHON.md). */
-export const MUSE_STATUS = "Submitted to Meta's Muse Connector Program — pending review"
-
 function PageHead({ title, lead }: { title: string; lead?: string }) {
   return (
     <header className="ms2-pagehead">
@@ -55,17 +50,6 @@ function PageHead({ title, lead }: { title: string; lead?: string }) {
       {lead && <p className="ms2-lead">{lead}</p>}
     </header>
   )
-}
-
-const ruleTone = (d: AlertDetail) => (d.rule === 'more serious than usual' ? 'bad' : 'warn') as 'bad' | 'warn'
-
-/** "33 this week · 8.75 a week before" from the stored window; null when it is not stored. */
-function windowLine(d: AlertDetail): string | null {
-  const w = d.window
-  if (!w || w.this_week.count == null) return null
-  const mean = w.baseline_4wk.weekly_mean
-  const where = d.source.kind === 'brief' ? 'that week' : 'this week'
-  return mean == null ? `${w.this_week.count} ${where}` : `${w.this_week.count} ${where} · ${mean} a week in the 4 weeks before`
 }
 
 function Related({ ids, onWorkflow, title = 'More ways in' }: { ids: WorkflowId[]; onWorkflow: (id: WorkflowId) => void; title?: string }) {
@@ -90,42 +74,10 @@ function Related({ ids, onWorkflow, title = 'More ways in' }: { ids: WorkflowId[
   )
 }
 
-/** Ranked: the real alerts, most important first, each opening its detail panel. */
+/** Ranked: the real alerts, most important first, each row opening its detail panel. */
 function Ranked({ data }: { data: WorkspaceData }) {
   const { openAlert } = useAlertPanel()
-  const ranked = rankReal(realDetails(data))
-  if (ranked.length === 0) {
-    const items = realAlertItems(data)
-    return <AlertList items={items} onOpen={(a) => openAlert(a.id, a.productCode)} />
-  }
-  return (
-    <ol className="m-0 list-none p-0" aria-label="Real FDA alerts, ranked" data-testid="ranked-list">
-      {ranked.map((d, i) => (
-        <li key={d.id} className="ms2-ranked" data-testid="ranked-row">
-          <span className="ms2-rank ms-num" aria-hidden="true">
-            {i + 1}
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="m-0 flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="ms-code">{d.product_code}</span>
-              {d.device_type && <span className="ws-wrap font-medium">{d.device_type}</span>}
-              {d.rule && <Pill tone={ruleTone(d)}>{d.rule[0].toUpperCase() + d.rule.slice(1)}</Pill>}
-            </p>
-            {windowLine(d) && <p className="ms2-muted m-0 mt-1 ms-num">{windowLine(d)}</p>}
-            <p className="ms2-muted m-0 text-[15px]">{sourceLine(d)}</p>
-          </div>
-          <button
-            type="button"
-            className="ms2-link shrink-0"
-            onClick={() => openAlert(d.id, d.product_code)}
-            aria-label={`Details for ${d.product_code}${d.rule ? `: ${d.rule}` : ''}`}
-          >
-            Details
-          </button>
-        </li>
-      ))}
-    </ol>
-  )
+  return <AlertRows rows={realRows(data)} onOpen={openAlert} ranked label="Real FDA alerts, ranked" testid="ranked-list" />
 }
 
 /** Trend: this week against the weekly average of the 4 weeks before, for each real alert (stored numbers only). */
@@ -272,15 +224,15 @@ function Unfiled({ data, onThread }: { data: WorkspaceData; onThread: (id: strin
 /** All alerts: every real alert, the full AI device sweep, then the daily briefs (demo snapshot). */
 function AllAlerts({ data, briefDate, onBriefDate }: { data: WorkspaceData; briefDate: string | null; onBriefDate: (d: string) => void }) {
   const { openAlert } = useAlertPanel()
-  const items = realAlertItems(data)
+  const rows = realRows(data)
   return (
     <div className="space-y-6">
       <section aria-label="Real FDA alerts" data-testid="all-alerts">
         <h2 className="ms2-h2">
-          Real FDA alerts · <span className="ms-num">{items.length}</span>
+          Real FDA alerts · <span className="ms-num">{rows.length}</span>
         </h2>
         <div className="mt-2">
-          <AlertList items={items} onOpen={(a) => openAlert(a.id, a.productCode)} />
+          <AlertRows rows={rows} onOpen={openAlert} label="Real FDA alerts" />
         </div>
       </section>
       <section aria-label="AI device sweep">
@@ -304,7 +256,7 @@ export function SignalsPage({
 }: {
   data: WorkspaceData
   tab: SignalsTab
-  onTab: (t: SignalsTab) => void
+  onTab: (t: SignalsTab, how?: TabHow) => void
   onWorkflow: (id: WorkflowId) => void
   onThread: (id: string) => void
   briefDate: string | null
@@ -312,7 +264,7 @@ export function SignalsPage({
 }) {
   return (
     <div>
-      <PageHead title="Signals" lead="Real FDA data only: the AI device sweep and the stored demo-snapshot brief. Signals for a person to review." />
+      <PageHead title="Signals" lead="Real FDA data only, for a person to review." />
       <SubTabs id="signals" label="Signals" tabs={SIGNALS_TAB_LABELS} value={tab} onChange={onTab}>
         {tab === 'ranked' && (
           <>
@@ -340,7 +292,7 @@ export function DevicesPage({
 }: {
   data: WorkspaceData
   tab: DevicesTab
-  onTab: (t: DevicesTab) => void
+  onTab: (t: DevicesTab, how?: TabHow) => void
   device: string | null
   onDevice: (id: string | null) => void
   filter: string | null
@@ -352,11 +304,11 @@ export function DevicesPage({
     <div>
       <PageHead
         title={yours ? 'Our devices (your company)' : 'Our devices (simulated)'}
-        lead={yours ? 'Devices you entered, kept in this browser only.' : 'A simulated company with fictional devices. The problem evidence next to each device is real FDA data.'}
+        lead={yours ? 'Devices you entered, kept in this browser only.' : 'Fictional devices; the problem evidence is real FDA data.'}
       />
       <SubTabs id="devices" label="Our devices" tabs={DEVICES_TAB_LABELS} value={tab} onChange={onTab}>
         {tab === 'apply' && (
-          <div className="ms2-nodup">
+          <div className="ms2-nodup ms2-devices">
           <OurDevices company={data.company} deviceId={device} onDevice={(x) => onDevice(x)} onBack={() => onDevice(null)} filter={filter} onFilter={onFilter} />
           </div>
         )}
@@ -391,7 +343,7 @@ export function EvidencePage({
 }: {
   data: WorkspaceData
   tab: EvidenceTab
-  onTab: (t: EvidenceTab) => void
+  onTab: (t: EvidenceTab, how?: TabHow) => void
   onThread: (id: string) => void
   onWorkflow: (id: WorkflowId) => void
 }) {
@@ -399,14 +351,14 @@ export function EvidencePage({
   const capaThread = data.threads.threads.find((t) => t.workflow === 'capa-need-evidence') ?? null
   return (
     <div>
-      <PageHead title="Evidence" lead="CAPA-need evidence, an independent Muse Wonder review, a named person's approval, and the verified audit trail. Drafts only; nothing is filed with FDA." />
+      <PageHead title="Evidence" lead="Evidence, an independent review, a named approval and the audit trail." />
       <SubTabs id="evidence" label="Evidence" tabs={EVIDENCE_TAB_LABELS} value={tab} onChange={onTab}>
         {tab === 'capa' && (
           <>
             <div className="ms2-nodup">
               <StoredList def={def} data={data} onThread={onThread} />
             </div>
-            <Related ids={['vision']} onWorkflow={onWorkflow} title="Also here" />
+            <Related ids={['vision']} onWorkflow={onWorkflow} title="Label and 510(k) vision" />
           </>
         )}
         {tab === 'review' && <DossierTab dossier={data.dossier} />}
@@ -433,14 +385,14 @@ function useConnectInfo(apiBase: string | null): ConnectInfo {
 
 function ClaudeConnector({ apiBase }: { apiBase: string | null }) {
   const info = useConnectInfo(apiBase)
-  const sn = configSnippets(info).find((s) => s.id === 'claude-desktop')
+  const snippets = configSnippets(info).filter((s) => s.id === 'claude-desktop' || s.id === 'cursor')
   return (
     <div className="space-y-4" data-testid="claude-connector">
       <p className="m-0">
-        Add MaudeSignal to Claude Desktop as an MCP server. It answers from stored public FDA records, read-only.
+        Add MaudeSignal to Claude Desktop (or Cursor) as an MCP server. It answers from stored public FDA records, read-only.
       </p>
-      {sn && (
-        <section className="ms2-card" aria-label={sn.title}>
+      {snippets.map((sn) => (
+        <section key={sn.id} className="ms2-card" aria-label={sn.title}>
           <div className="flex items-center justify-between gap-3">
             <h2 className="ms2-h2">{sn.title}</h2>
             <CopyButton text={sn.text} label={`${sn.title} config`} />
@@ -450,8 +402,10 @@ function ClaudeConnector({ apiBase }: { apiBase: string | null }) {
             {sn.text}
           </pre>
         </section>
-      )}
-      <p className="ms2-muted m-0">MCP address: <span className="ms-code ws-wrap">{info.mcp_url}</span></p>
+      ))}
+      <p className="ms2-muted m-0">
+        MCP address: <span className="ms-code ms2-url">{info.mcp_url}</span>
+      </p>
     </div>
   )
 }
@@ -494,13 +448,13 @@ function ApiDocs({ apiBase }: { apiBase: string | null }) {
   )
 }
 
-export function ConnectPage({ tab, onTab, apiBase }: { tab: ConnectTab; onTab: (t: ConnectTab) => void; apiBase: string | null }) {
+export function ConnectPage({ tab, onTab, apiBase }: { tab: ConnectTab; onTab: (t: ConnectTab, how?: TabHow) => void; apiBase: string | null }) {
   return (
     <div>
       <PageHead title="Connect" lead="Use MaudeSignal from Muse, Claude or your own code." />
       <SubTabs id="connect" label="Connect" tabs={CONNECT_TAB_LABELS} value={tab} onChange={onTab}>
         {tab === 'muse' && (
-          <ConnectView apiBase={apiBase} />
+          <ConnectView apiBase={apiBase} v2 />
         )}
         {tab === 'claude' && <ClaudeConnector apiBase={apiBase} />}
         {tab === 'api' && <ApiDocs apiBase={apiBase} />}

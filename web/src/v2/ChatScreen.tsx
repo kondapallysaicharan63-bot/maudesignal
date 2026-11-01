@@ -1,13 +1,13 @@
 // The chat screen chrome (v2): an empty chat is one greeting line and a few suggestion chips above the message box;
 // a chat with turns is the conversation column. The turns themselves come from ChatTurnSlot.
-import { useEffect, useRef } from 'react'
+import { Component, useEffect, useRef, type ErrorInfo, type ReactNode } from 'react'
 import { LIMIT_TEXT, VOICE_NOTE, type OpenView } from '../live/api'
 import type { LiveChat } from '../live/useLiveChat'
 import type { Thread } from '../types'
 import { ChatTurn } from './ChatTurnSlot'
 
 /** Suggestion chips of an empty chat: stored questions, in this order, when they exist. */
-export const CHIP_THREADS = ['01-what-changed', '10-recalls', '05-capa-need-evidence', '23-mhra']
+export const CHIP_THREADS = ['01-what-changed', '10-recalls', '05-capa-need-evidence']
 export const GREETING = 'What would you like to check today?'
 /** "Questions left" is shown only from this many down. */
 export const LEFT_FROM = 5
@@ -15,16 +15,52 @@ export const LEFT_FROM = 5
 export function chipQuestions(threads: Thread[]): string[] {
   return CHIP_THREADS.map((id) => threads.find((t) => t.id === id)?.question)
     .filter((q): q is string => !!q)
-    .slice(0, 4)
+    .slice(0, 3)
 }
 
-/** Live questions left today, from the newest answer that says so; null when unknown or more than LEFT_FROM. */
-export function questionsLeft(chat: Pick<LiveChat, 'turns'>): number | null {
-  for (let i = chat.turns.length - 1; i >= 0; i--) {
-    const n = chat.turns[i].resp?.limits?.remaining_today
-    if (typeof n === 'number') return n <= LEFT_FROM ? n : null
+/** Live questions left today, from the newest answer that arrived in this page; null when unknown or more than LEFT_FROM. */
+export function questionsLeft(chat: Pick<LiveChat, 'remaining'>): number | null {
+  const n = chat.remaining
+  return typeof n === 'number' && n <= LEFT_FROM ? n : null
+}
+
+/**
+ * A saved chat that cannot be drawn (an answer the view cannot read) shows this instead of a blank page, with a way
+ * out: delete that chat, or start a new one.
+ */
+export class ChatBoundary extends Component<
+  { resetKey: string; onDelete: (() => void) | null; onNewChat: () => void; children: ReactNode },
+  { failed: boolean; key: string }
+> {
+  state = { failed: false, key: this.props.resetKey }
+  static getDerivedStateFromError(): Partial<{ failed: boolean }> {
+    return { failed: true }
   }
-  return null
+  static getDerivedStateFromProps(p: { resetKey: string }, s: { failed: boolean; key: string }) {
+    return p.resetKey !== s.key ? { failed: false, key: p.resetKey } : null
+  }
+  componentDidCatch(e: Error, info: ErrorInfo): void {
+    console.error('chat could not be shown', e, info.componentStack)
+  }
+  render(): ReactNode {
+    if (!this.state.failed) return this.props.children
+    return (
+      <div className="ms2-empty" role="alert" data-testid="chat-broken">
+        <h1 className="ms2-h1">This chat could not be shown</h1>
+        <p className="ms2-muted m-0">Part of it was saved in a form this page cannot read.</p>
+        <p className="m-0 flex flex-wrap gap-2">
+          {this.props.onDelete && (
+            <button type="button" className="ms-btn ms-btn--secondary" style={{ height: 44 }} onClick={this.props.onDelete} data-testid="broken-delete">
+              Delete this chat
+            </button>
+          )}
+          <button type="button" className="ms-btn ws-btn-primary" style={{ height: 44 }} onClick={this.props.onNewChat} data-testid="broken-new">
+            New chat
+          </button>
+        </p>
+      </div>
+    )
+  }
 }
 
 export function ChatScreen({

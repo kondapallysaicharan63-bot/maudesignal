@@ -15,6 +15,7 @@
       })()
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
     <title>MaudeSignal workspace</title>
     <meta
       name="description"
@@ -23,9 +24,17 @@
     <script>
       // Apply the saved theme before first paint. "system" leaves data-theme unset so the
       // design-system tokens follow prefers-color-scheme.
+      // High contrast, Black and Pink are offered by the v2 layout only, so they are applied only when v2 will load
+      // (same rule as src/layoutFlag.ts); the classic layout never shows them, not even for one frame.
       try {
         var t = localStorage.getItem('ms-theme')
-        if (t === 'light' || t === 'dark' || t === 'contrast' || t === 'black' || t === 'pink')
+        var v2 = false
+        try {
+          var q = (new URLSearchParams(location.search).get('layout') || '').trim().toLowerCase()
+          var dflt = '__MS_LAYOUT_DEFAULT__'.trim().toLowerCase()
+          v2 = q === 'v2' || (q !== 'classic' && (/\/(chat|signals|devices|evidence|connect|workflow|thread|run|capture)(\/|$)/.test(location.pathname) || dflt === 'v2'))
+        } catch (e) {}
+        if (t === 'light' || t === 'dark' || (v2 && (t === 'contrast' || t === 'black' || t === 'pink')))
           document.documentElement.setAttribute('data-theme', t)
       } catch (e) {}
     </script>

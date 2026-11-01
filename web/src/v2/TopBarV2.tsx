@@ -3,14 +3,15 @@
 import type { AlertItem } from '../dashboard'
 import { Icon } from '../icons'
 import { AlertBell } from '../components/AlertBell'
-import { nextQuick, themeLabel, type ThemeId } from './theme'
-
-const QUICK_ICON = { system: 'auto', light: 'sun', dark: 'moon' } as const
+import { ThemeMenu } from './ThemeMenu'
+import type { ThemeId } from './theme'
 
 export const BELL_NOTE =
   'Real FDA alerts only: the AI device sweep and the stored demo-snapshot brief. Signals for a person to review. Simulated devices are listed under Our devices.'
 
 export function TopBarV2({
+  desktop,
+  homeHref,
   sidebarOpen,
   onToggleSidebar,
   onHome,
@@ -25,6 +26,9 @@ export function TopBarV2({
   theme,
   onTheme,
 }: {
+  /** From 768 px: the sidebar sits beside the page (the Search here is for phones only). */
+  desktop: boolean
+  homeHref: string
   sidebarOpen: boolean
   onToggleSidebar: () => void
   onHome: () => void
@@ -40,15 +44,13 @@ export function TopBarV2({
   theme: ThemeId
   onTheme: (t: ThemeId) => void
 }) {
-  const quick = theme === 'system' || theme === 'light' || theme === 'dark' ? theme : null
-  const next = nextQuick(quick ?? 'dark')
   return (
     <header className="ms2-topbar" data-testid="topbar-v2">
       <button
         type="button"
         className="ws-icon-btn"
         onClick={onToggleSidebar}
-        aria-label={sidebarOpen ? 'Hide the sidebar' : 'Show the sidebar'}
+        aria-label={desktop ? (sidebarOpen ? 'Hide the sidebar' : 'Show the sidebar') : 'Menu'}
         aria-controls="sidebar"
         aria-expanded={sidebarOpen}
         data-testid="sidebar-toggle"
@@ -56,7 +58,7 @@ export function TopBarV2({
         <Icon name={sidebarOpen ? 'sidebarOpen' : 'sidebarShut'} />
       </button>
       <a
-        href="./"
+        href={homeHref}
         className="t-wordmark mr-auto min-w-0 truncate pl-1 no-underline"
         style={{ fontSize: 21, color: 'var(--ink)' }}
         onClick={(e) => {
@@ -67,10 +69,11 @@ export function TopBarV2({
       >
         MaudeSignal
       </a>
-      <button type="button" className="ws-icon-btn" onClick={onSearch} aria-label="Search chats and pages (Ctrl or Cmd K)" aria-keyshortcuts="Control+K Meta+K" data-testid="top-search">
-        <Icon name="search" />
-        <span className="ms2-hide-sm text-[15px]">Search</span>
-      </button>
+      {!desktop && (
+        <button type="button" className="ws-icon-btn" onClick={onSearch} aria-label="Search chats and pages" data-testid="top-search">
+          <Icon name="search" />
+        </button>
+      )}
       <AlertBell
         items={alerts}
         onOpen={onAlert}
@@ -101,16 +104,7 @@ export function TopBarV2({
         <Icon name="chat" />
         <span className="ms2-hide-sm text-[15px]">Feedback</span>
       </button>
-      <button
-        type="button"
-        className="ws-icon-btn"
-        onClick={() => onTheme(next)}
-        aria-label={`Theme: ${themeLabel(theme)}. Switch to ${themeLabel(next)}`}
-        title={`Theme: ${themeLabel(theme)}`}
-        data-testid="top-theme"
-      >
-        <Icon name={quick ? QUICK_ICON[quick] : 'auto'} />
-      </button>
+      <ThemeMenu theme={theme} onTheme={onTheme} placement="down" testid="top-theme" />
     </header>
   )
 }

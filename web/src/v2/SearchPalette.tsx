@@ -60,17 +60,18 @@ export function SearchPalette({
     setQ('')
     setIdx(0)
     const t = window.setTimeout(() => input.current?.focus(), 0)
-    // Escape closes even before the input has focus.
+    // Escape closes this dialog only (the top-most layer), even before the input has focus; nothing under it sees it.
     const esc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault()
+        e.stopImmediatePropagation()
         onCloseRef.current()
       }
     }
-    window.addEventListener('keydown', esc)
+    window.addEventListener('keydown', esc, true)
     return () => {
       window.clearTimeout(t)
-      window.removeEventListener('keydown', esc)
+      window.removeEventListener('keydown', esc, true)
       back.current?.focus?.()
     }
   }, [open])
@@ -93,7 +94,11 @@ export function SearchPalette({
         aria-label="Search chats and pages"
         className="ms2-palette"
         onKeyDown={(e) => {
-          if (e.key === 'ArrowDown') {
+          if (e.key === 'Tab') {
+            // Focus stays in the dialog: the search box is its one control (results are picked with the arrows).
+            e.preventDefault()
+            input.current?.focus()
+          } else if (e.key === 'ArrowDown') {
             e.preventDefault()
             setIdx((i) => Math.min(i + 1, items.length - 1))
           } else if (e.key === 'ArrowUp') {
