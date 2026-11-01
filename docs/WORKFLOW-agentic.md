@@ -279,3 +279,10 @@ reasoning never reaches it.
    running the API next to the Streamlit app, or is cut. B1–B3 and B5 do not depend on it.
 5. **Deadline.** You said Nov 4 about 5 PM PT. `docs/hackathon/SUBMISSION_DRAFT.md`
    still says Oct 30; A1 fixes that.
+
+### 2026-11-01 00:20 UTC — deploy #1 path
+- Release check green on 0d7fe88 (release/m3: tracks A–E). Vercel refused the API-created production
+  deploy (free plan: more than 100 API deployments in 24 h). Owner chose: push release/m3 to `main`
+  so Vercel builds production from git. 7e82feb = 0d7fe88 + main's two merge commits (no file
+  difference). Smoke tests run after the production builds; rollback targets: API
+  dpl_2TWpkZKwNEnPyBAdUkoakvcoKMvf, web dpl_qEG9iLDgWRLRyND91skxNViMjSRs (both d4bea03).
