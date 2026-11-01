@@ -33,6 +33,8 @@ import { devicesToReview, realAlertItems } from './realAlerts'
 import { hrefFor, routeName, useRoute, type Route, type Section } from './router'
 import { pageItems, SearchPalette, type SearchItem } from './SearchPalette'
 import { ConnectPage, DevicesPage, EvidencePage, SignalsPage } from './Sections'
+import { DeviceProfilePage } from './DeviceProfile'
+import { useProfiles } from './profiles'
 import { SchedulesDialog } from './SchedulesDialog'
 import { SidebarV2, type NavId } from './SidebarV2'
 import { TopBarV2 } from './TopBarV2'
@@ -74,6 +76,7 @@ const SECTION_HOME: Record<Section, Route> = {
 export function navOf(r: Route): NavId | null {
   if (r.page === 'home') return 'home'
   if (r.page === 'signals' || r.page === 'devices' || r.page === 'evidence' || r.page === 'connect') return r.page
+  if (r.page === 'profile') return 'devices'
   if (r.page === 'workflow') {
     if (r.id === 'vision') return 'evidence'
     return 'signals'
@@ -111,6 +114,7 @@ export default function AppV2() {
     }
   }, [rawData, my])
   const { theme, setTheme } = useThemeV2()
+  const profiles = useProfiles()
   const { route, navigate } = useRoute()
   const desktop = useIsDesktop()
   const [drawer, setDrawer] = useState(false)
@@ -372,7 +376,9 @@ export default function AppV2() {
       ? route.page
       : route.page === 'devices'
         ? `devices:${route.device ?? ''}`
-        : page
+        : route.page === 'profile'
+          ? `profile:${route.id}`
+          : page
   useEffect(() => {
     if (first.current) {
       first.current = false
@@ -517,6 +523,19 @@ export default function AppV2() {
           onDevice={openDevice}
           filter={deviceFilter}
           onFilter={(l) => setDeviceFilter(l)}
+          onProfile={(id) => go({ page: 'profile', id, tab: 'overview' })}
+        />
+      )
+    else if (route.page === 'profile')
+      sectionBody = (
+        <DeviceProfilePage
+          file={profiles}
+          company={data.company}
+          id={route.id}
+          tab={route.tab}
+          onTab={(t, how) => tabGo({ page: 'profile', id: route.id, tab: t }, how)}
+          onBack={() => go({ page: 'devices', tab: 'apply' })}
+          onEvidence={(id) => go({ page: 'devices', tab: 'apply', device: id })}
         />
       )
     else if (route.page === 'evidence')
@@ -532,7 +551,7 @@ export default function AppV2() {
     else if (route.page === 'connect') sectionBody = <ConnectPage tab={route.tab} onTab={(t, how) => tabGo({ page: 'connect', tab: t }, how)} apiBase={API_BASE} />
     else if (route.page === 'pms') sectionBody = <PmsWorkflow onRoi={() => go({ page: 'roi' })} />
     else if (route.page === 'roi') sectionBody = <RoiPage />
-    const sectionLabel = route.page === 'pms' ? 'PMS workflow' : route.page === 'roi' ? 'Time and cost' : route.page[0].toUpperCase() + route.page.slice(1)
+    const sectionLabel = route.page === 'profile' ? 'Device profile' : route.page === 'pms' ? 'PMS workflow' : route.page === 'roi' ? 'Time and cost' : route.page[0].toUpperCase() + route.page.slice(1)
     content = (
       <main className="ms2-section" aria-label={sectionLabel}>
         <div className="ms2-section-inner">{sectionBody}</div>

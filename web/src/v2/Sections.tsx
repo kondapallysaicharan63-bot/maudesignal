@@ -22,6 +22,8 @@ import { rankReal, realDetails, sourceLine, sweepDetails } from './realAlerts'
 import { labelForWeek, sweepLabel } from '../sweepLabel'
 import type { ConnectTab, DevicesTab, EvidenceTab, SignalsTab } from './router'
 import { SubTabs, type TabDef, type TabHow } from './SubTabs'
+import { DeviceTiles } from './DeviceProfile'
+import { useProfiles } from './profiles'
 
 export const SIGNALS_TAB_LABELS: TabDef<SignalsTab>[] = [
   { id: 'ranked', label: 'Ranked' },
@@ -308,6 +310,7 @@ export function DevicesPage({
   onDevice,
   filter,
   onFilter,
+  onProfile,
 }: {
   data: WorkspaceData
   tab: DevicesTab
@@ -316,9 +319,14 @@ export function DevicesPage({
   onDevice: (id: string | null) => void
   filter: string | null
   onFilter: (label: string | null) => void
+  /** Opens a simulated device's lifecycle profile (/devices/<id>). */
+  onProfile?: (id: string) => void
 }) {
   const mine = useMine()
   const yours = data.company.mine === true
+  const profiles = useProfiles()
+  // The simulated company's rows open the device's lifecycle profile; the person's own devices keep the evidence page.
+  const openRow = (id: string) => (!yours && onProfile && profiles?.profiles[id] ? onProfile(id) : onDevice(id))
   return (
     <div>
       <PageHead
@@ -328,7 +336,8 @@ export function DevicesPage({
       <SubTabs id="devices" label="Our devices" tabs={DEVICES_TAB_LABELS} value={tab} onChange={onTab}>
         {tab === 'apply' && (
           <div className="ms2-nodup ms2-devices">
-          <OurDevices company={data.company} deviceId={device} onDevice={(x) => onDevice(x)} onBack={() => onDevice(null)} filter={filter} onFilter={onFilter} />
+          {!yours && !device && profiles && <DeviceTiles file={profiles} company={data.company} />}
+          <OurDevices company={data.company} deviceId={device} onDevice={openRow} onBack={() => onDevice(null)} filter={filter} onFilter={onFilter} />
           </div>
         )}
         {tab === 'yours' && (

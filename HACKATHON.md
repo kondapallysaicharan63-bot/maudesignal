@@ -146,6 +146,7 @@ Plus this manifest, the demo video, and the submission write-up.
 | `scripts/prepare_label_photo.py`, `.github/workflows/vision-labels.yml`, `demo/vision/labels/README.md` | Label photos: metadata stripped before commit; separate SAM + Spark run when photos are pushed |
 | `gate/gate.py` (number words) | Counts written in words or scientific notation are detected (found by exploratory testing) |
 | `docs/hackathon/SUBMISSION_DRAFT.md` | Submission draft and video script v3 — not submitted |
+| `scripts/build_company_profiles.py`, `web/public/data/company_profiles.json`, `web/src/v2/DeviceProfile.tsx`, `web/src/v2/profiles.ts` | Feedback window: a SIMULATED lifecycle profile per simulated device at `/devices/<id>` (v2 layout only): design, V&V, regulatory, launch, post-market, activity log; seeded and re-runnable; only the product code and its stored FDA name, class and regulation number are real |
 
 ## What is PRE-EXISTING (the base — NOT presented as hackathon work)
 
