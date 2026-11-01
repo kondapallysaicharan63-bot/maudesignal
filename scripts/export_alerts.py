@@ -264,7 +264,7 @@ def _reports(
     rule: str | None,
     gate: Gate,
 ) -> tuple[list[dict[str, Any]], dict[str, int] | None, int | None]:
-    """``(reports, who_filed, stored_in_window)`` for this week's window."""
+    """``(reports, who_filed, stored_in_window)`` for the alert's current window."""
     if ev is None or store is None:
         return [], None, None
     start, end = ymd(window["this_week"]["from"]), ymd(window["this_week"]["to"])
@@ -358,7 +358,7 @@ def _next_steps(rule: str | None, has_reports: bool) -> list[str]:
         )
     else:
         steps.append(
-            "Open the openFDA links above to read this week's reports; none are stored in this workspace."
+            "Open the openFDA links above to read the reports of that week; none are stored in this workspace."
         )
     if rule == "more serious than usual":
         steps.append("Read the injury and death reports first, then the others.")
@@ -454,6 +454,9 @@ def build_one(
     rule: str | None = spec["rule"]
     win = spec["window"]
     c = spec["counts"]
+    # openFDA lags real time, so the window is never "this week": the sweep's window is "the
+    # latest sweep week", any other stored window "the stored week".
+    wk = "the latest sweep week" if spec["source"].get("kind") == "sweep" else "the stored week"
     numbers: list[dict[str, Any]] = []
     if c is not None:
         this_s, this_e = ymd(win["this_week"]["from"]), ymd(win["this_week"]["to"])
@@ -470,7 +473,7 @@ def build_one(
         url_now = spec["urls"]["this"] or event_url(code, this_s, this_e)
         url_before = spec["urls"]["base"] or event_url(code, base_s, base_e)
         numbers = [
-            {"label": "Reports this week", "value": c["this"], "openfda_url": url_now},
+            {"label": f"Reports in {wk}", "value": c["this"], "openfda_url": url_now},
             {
                 "label": f"Reports in the {BASELINE_WEEKS} weeks before",
                 "value": c["base"],
@@ -485,7 +488,7 @@ def build_one(
         if rule == "reports suddenly increased" and c["base"] > 0:
             numbers.append(
                 {
-                    "label": "This week compared with the weekly average (times)",
+                    "label": f"{wk.capitalize()} compared with the weekly average (times)",
                     "value": round(c["this"] / (c["base"] / BASELINE_WEEKS), 2),
                     "openfda_url": url_now,
                 }
@@ -493,7 +496,7 @@ def build_one(
         if rule == "more serious than usual" and c.get("severe") is not None:
             numbers.append(
                 {
-                    "label": "Injury or death reports this week",
+                    "label": f"Injury or death reports in {wk}",
                     "value": c["severe"][0],
                     "openfda_url": url_now,
                 }
@@ -519,7 +522,7 @@ def build_one(
     total = c["this"] if c is not None else None
     if c is not None and stored_n is not None and stored_n != c["this"]:
         notes.append(
-            f"{stored_n} of the {c['this']} reports of this week are stored in this workspace; the rest are on openFDA."
+            f"{stored_n} of the {c['this']} reports of that week are stored in this workspace; the rest are on openFDA."
         )
     if c is not None and ev is None:
         notes.append(

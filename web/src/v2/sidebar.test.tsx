@@ -11,6 +11,7 @@ import manifest from '../../public/data/manifest.json'
 import sweep from '../../public/data/sweep.json'
 import { parseAlerts } from '../alerts'
 import { flaggedRows } from '../artifacts'
+import { sweepLabel } from '../sweepLabel'
 import type { WorkspaceData } from '../types'
 import type { SavedChat } from './chatStore'
 import { HomeV2 } from './HomeV2'
@@ -166,14 +167,21 @@ describe('sidebar', () => {
 })
 
 describe('real alerts are never mixed with simulated devices', () => {
-  it("the real list has only this week's sweep alerts (the demo brief and simulated devices are apart), more serious first", () => {
+  it("the real list has only the latest sweep's alerts (the demo brief and simulated devices are apart), more serious first", () => {
     const items = realAlertItems(DATA)
     expect(items.length).toBe(realDetails(DATA).filter((d) => d.source.kind === 'sweep').length)
     expect(items.every((a) => a.source === 'sweep')).toBe(true)
     const demo = demoRows(DATA)
     expect(demo.rows.map((r) => r.code)).toEqual(realDetails(DATA).filter((d) => d.source.kind === 'brief').map((d) => d.product_code))
-    const rows = realRows(DATA).rows
+    const real = realRows(DATA)
+    const rows = real.rows
     expect(rows.every((r) => r.name === null || r.name.length > 0)).toBe(true)
+    // The sweep is named by its stored run day and openFDA week, never "this week".
+    const label = sweepLabel(DATA.sweep)
+    expect(label).toMatch(/^Latest sweep · [A-Z][a-z]{2} \d{1,2} \(openFDA week [A-Z][a-z]{2} \d{1,2}–/)
+    expect(real.source).toBe(label)
+    expect(items.every((a) => a.detail.endsWith(` · ${label}`))).toBe(true)
+    expect(rows.every((r) => r.counts === null || !/this week/i.test(r.counts))).toBe(true)
     const llz = demo.rows.find((r) => r.code === 'LLZ')
     if (llz) expect(llz.counts).toBe('33 that week (8.75 before)')
     expect(items.length).toBeGreaterThan(0)

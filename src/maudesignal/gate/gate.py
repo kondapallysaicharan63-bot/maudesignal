@@ -108,6 +108,37 @@ _PMID_RE = re.compile(r"\bPMID\s*:?\s*(\d{1,9})\b", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
+class DateShift:
+    """A tool moved a requested date range (``YYYYMMDD``) to the one it actually used.
+
+    Done when the model asked for a year the stored data does not reach (see
+    ``copilot.dates.check_range``). The gate then refuses a sentence that still names the
+    requested year next to a claim for the used dates, and adds "Dates used" to a sentence
+    that names no year, so a user never reads the used dates as the requested ones.
+    """
+
+    requested_from: str
+    requested_to: str
+    used_from: str
+    used_to: str
+
+    @property
+    def requested_years(self) -> frozenset[str]:
+        """Years of the requested range not also in the used range."""
+        used = {self.used_from[:4], self.used_to[:4]}
+        return frozenset({self.requested_from[:4], self.requested_to[:4]} - used)
+
+    @property
+    def used_label(self) -> str:
+        """``2026-08-25 to 2026-08-31``."""
+
+        def iso(d: str) -> str:
+            return f"{d[:4]}-{d[4:6]}-{d[6:8]}"
+
+        return f"{iso(self.used_from)} to {iso(self.used_to)}"
+
+
+@dataclass(frozen=True)
 class ClaimVerdict:
     """Outcome for one claim."""
 
@@ -562,17 +593,74 @@ def _ungrounded_mentions(text: str, claims: list[Claim]) -> list[str]:
     return out
 
 
-def verify_sentence(text: str, claims: list[Claim], store: EvidenceStore) -> SentenceVerdict:
-    """Verify one sentence: all its claims must pass and nothing checkable may be untagged."""
+def _claim_range(c: Claim) -> tuple[str | None, str | None] | None:
+    """The date range of a count-like claim (None for claims without dates)."""
+    if isinstance(c, CountClaim | ShareClaim | SourceCountClaim):
+        return c.date_from, c.date_to
+    return None
+
+
+def _apply_shifts(
+    text: str, claims: list[Claim], shifts: tuple[DateShift, ...]
+) -> tuple[str, list[ClaimVerdict]]:
+    """Amended sentence text plus blocking verdicts for claims on a range a tool moved."""
+    blocks: list[ClaimVerdict] = []
+    used: DateShift | None = None
+    for c in claims:
+        rng = _claim_range(c)
+        if rng is None:
+            continue
+        for sh in shifts:
+            if rng != (sh.used_from, sh.used_to):
+                continue
+            used = sh
+            named = sorted(y for y in sh.requested_years if re.search(rf"\b{y}\b", text))
+            if named:
+                blocks.append(
+                    ClaimVerdict(
+                        c,
+                        "block",
+                        f"the dates were moved to {sh.used_label} (no stored report is dated "
+                        f"in {named[0]}), but the sentence names {named[0]}",
+                    )
+                )
+    if used is not None and not blocks:
+        years = {used.used_from[:4], used.used_to[:4]}
+        if not any(re.search(rf"\b{y}\b", text) for y in years):
+            base = text.rstrip()
+            sep = "" if base.endswith((".", "!", "?")) else "."
+            text = f"{base}{sep} (Dates used: {used.used_label}.)"
+    return text, blocks
+
+
+def verify_sentence(
+    text: str,
+    claims: list[Claim],
+    store: EvidenceStore,
+    shifts: tuple[DateShift, ...] = (),
+) -> SentenceVerdict:
+    """Verify one sentence: all its claims must pass and nothing checkable may be untagged.
+
+    ``shifts`` are the date ranges a tool moved during this answer (see :class:`DateShift`).
+    """
     verdicts = tuple(verify_claim(c, store) for c in claims)
     ungrounded = tuple(_ungrounded_mentions(text, claims))
-    ok = all(v.status == "pass" for v in verdicts) and not ungrounded
-    return SentenceVerdict(text, "pass" if ok else "block", verdicts, ungrounded)
+    extra: list[ClaimVerdict] = []
+    shown = text
+    if shifts:
+        shown, extra = _apply_shifts(text, claims, shifts)
+    all_verdicts = verdicts + tuple(extra)
+    ok = all(v.status == "pass" for v in all_verdicts) and not ungrounded
+    return SentenceVerdict(shown, "pass" if ok else "block", all_verdicts, ungrounded)
 
 
-def verify_answer(sentences: list[tuple[str, list[Claim]]], store: EvidenceStore) -> GateReport:
+def verify_answer(
+    sentences: list[tuple[str, list[Claim]]],
+    store: EvidenceStore,
+    shifts: tuple[DateShift, ...] = (),
+) -> GateReport:
     """Verify a structured answer: a list of (sentence, claims) pairs."""
-    return GateReport([verify_sentence(t, cs, store) for t, cs in sentences])
+    return GateReport([verify_sentence(t, cs, store, shifts) for t, cs in sentences])
 
 
 def verify(claims: list[Claim], store: EvidenceStore) -> list[ClaimVerdict]:

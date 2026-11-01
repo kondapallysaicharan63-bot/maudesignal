@@ -35,6 +35,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from maudesignal.copilot.dates import render_date_context, utc_today
 from maudesignal.copilot.meta_provider import SPARK_USD_PER_M_INPUT, SPARK_USD_PER_M_OUTPUT
 from maudesignal.copilot.protocol import ProtocolRow, protocol_from_calls
 from maudesignal.copilot.tools import TOOL_SCHEMAS, ToolContext, call_tool
@@ -62,13 +63,41 @@ COMPACT_START = "<!-- live-compact-prompt:start -->"
 COMPACT_END = "<!-- live-compact-prompt:end -->"
 
 
+#: Markers around the date-context template inside ``skills/safety-copilot/SKILL.md``.
+DATE_CONTEXT_START = "<!-- date-context:start -->"
+DATE_CONTEXT_END = "<!-- date-context:end -->"
+
+
+def _cut_block(text: str, start_marker: str, end_marker: str) -> tuple[str, str | None]:
+    """``(text without the block, block body)``; the body is None when the markers are absent."""
+    start, end = text.find(start_marker), text.find(end_marker)
+    if start < 0 or end < start:
+        return text, None
+    body = text[start + len(start_marker) : end].strip()
+    rest = (text[:start].rstrip() + "\n\n" + text[end + len(end_marker) :].lstrip()).strip()
+    return rest, body or None
+
+
+def date_context_template(skill_md: str) -> str | None:
+    """The date-context template of a SKILL.md text (None when it has none).
+
+    Its ``{today}``, ``{data_from}``, ``{data_to}``, ``{data_year}``, ``{code_windows}`` and
+    ``{sweep}`` placeholders are filled by :func:`maudesignal.copilot.dates.render_date_context`
+    on every question and appended to the system prompt (full or compact).
+    """
+    return _cut_block(skill_md, DATE_CONTEXT_START, DATE_CONTEXT_END)[1]
+
+
 def split_prompts(skill_md: str) -> tuple[str, str | None]:
     """``(full_prompt, compact_prompt)`` from a SKILL.md text.
 
     The compact prompt is the text between :data:`COMPACT_START` and :data:`COMPACT_END`
     (None when the markers are absent). The full prompt is the whole file without that block,
-    so other callers are never sent the compact text twice.
+    so other callers are never sent the compact text twice. The date-context template is
+    removed from both (it is filled and appended per question, see
+    :func:`date_context_template`).
     """
+    skill_md = _cut_block(skill_md, DATE_CONTEXT_START, DATE_CONTEXT_END)[0]
     start, end = skill_md.find(COMPACT_START), skill_md.find(COMPACT_END)
     if start < 0 or end < start:
         return skill_md, None
@@ -268,6 +297,7 @@ class CopilotAgent:
         self._allowed_tools = allowed_tools
         self._response_format = response_format_from_schema(self._skill.output_schema)
         self._system_prompt, self._compact_prompt = split_prompts(self._skill.system_prompt)
+        self._date_template = date_context_template(self._skill.system_prompt)
         self._repair_with_tools = True
         self._max_tool_result_chars: int | None = None
         self._history: list[dict[str, Any]] = []
@@ -306,6 +336,23 @@ class CopilotAgent:
     def system_prompt(self) -> str:
         """The system prompt sent with every call."""
         return self._system_prompt
+
+    def date_context(self) -> str:
+        """Today's date (UTC) and the stored data window, from the Skill's template.
+
+        Recomputed for every question, so "this week" or "last week of August" is read against
+        the stored data and today's date, never the model's own guess of the year (on the live
+        site the model once queried 2025 dates for 2026 data and answered "0 reports").
+        Empty when the Skill has no date-context block.
+        """
+        if not self._date_template:
+            return ""
+        return render_date_context(
+            self._date_template,
+            self._ctx.store,
+            today=self._ctx.today or utc_today(),
+            sweep_window=self._ctx.sweep_window,
+        )
 
     @property
     def context(self) -> ToolContext:
@@ -376,8 +423,10 @@ class CopilotAgent:
             self._on_event = None
 
     def _ask(self, question: str) -> CopilotResult:
+        dates = self.date_context()
+        system = f"{self._system_prompt}\n\n{dates}" if dates else self._system_prompt
         messages: list[dict[str, Any]] = [
-            {"role": "system", "content": self._system_prompt},
+            {"role": "system", "content": system},
             *self._history,
             {"role": "user", "content": question},
         ]
@@ -390,10 +439,15 @@ class CopilotAgent:
             model=self._model,
         )
         capa_start = len(self._ctx.created_capas)
+        self._ctx.date_shifts.clear()
         content = self._run_until_answer(messages, result)
         sentences, ok = self._parse_or_retry(content, messages, result)
         result.parse_failed = not ok
-        report = verify_answer(sentences, self._ctx.store) if ok else _unparsed(content)
+        report = (
+            verify_answer(sentences, self._ctx.store, tuple(self._ctx.date_shifts))
+            if ok
+            else _unparsed(content)
+        )
         result.first_pass_report = report
         self._emit("gate", stage="first pass", passed=report.passed, blocked=report.blocked)
 
@@ -409,7 +463,7 @@ class CopilotAgent:
             repaired, ok = self._parse_or_retry(content, messages, result)
             if not ok:
                 break
-            report = verify_answer(repaired, self._ctx.store)
+            report = verify_answer(repaired, self._ctx.store, tuple(self._ctx.date_shifts))
             self._emit("gate", stage="after repair", passed=report.passed, blocked=report.blocked)
             result.repaired = True
             result.parse_failed = False

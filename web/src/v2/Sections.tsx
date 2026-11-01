@@ -17,7 +17,8 @@ import { SweepCard, SweepRules } from '../components/SweepCard'
 import { AuditTab, CapaTab } from '../components/artifacts/AuditCapaProtocol'
 import { BriefTab } from '../components/artifacts/BriefTabs'
 import { DossierTab } from '../components/artifacts/DossierVision'
-import { rankReal, realDetails, sourceLine } from './realAlerts'
+import { rankReal, realDetails, sourceLine, sweepDetails } from './realAlerts'
+import { labelForWeek, sweepLabel } from '../sweepLabel'
 import type { ConnectTab, DevicesTab, EvidenceTab, SignalsTab } from './router'
 import { SubTabs, type TabDef, type TabHow } from './SubTabs'
 
@@ -86,8 +87,10 @@ function Ranked({ data }: { data: WorkspaceData }) {
   )
 }
 
-/** Trend: this week against the weekly average of the 4 weeks before, for each real alert (stored numbers only). */
+/** Trend: the latest sweep's openFDA week against the weekly average of the 4 weeks before (stored numbers only). */
 function Trend({ data }: { data: WorkspaceData }) {
+  const sw = sweepDetails(data)
+  const label = sw.length > 0 && sw.every((d) => labelForWeek(data.sweep, d.window?.this_week)) ? sweepLabel(data.sweep) : null
   const rows = rankReal(realDetails(data)).filter((d) => d.window && d.window.this_week.count != null)
   if (rows.length === 0) return <p className="ms2-muted">No weekly counts are stored.</p>
   const max = Math.max(...rows.map((d) => Math.max(d.window!.this_week.count ?? 0, d.window!.baseline_4wk.weekly_mean ?? 0)), 1)
@@ -95,7 +98,8 @@ function Trend({ data }: { data: WorkspaceData }) {
   return (
     <div>
       <p className="ms2-muted m-0">
-        Reports this week against the weekly average of the 4 weeks before. Stored numbers, each with its openFDA query.
+        {label ? `${label}. ` : ''}Reports in that week against the weekly average of the 4 weeks before. Stored numbers, each
+        with its openFDA query.
       </p>
       <ul className="m-0 mt-4 list-none space-y-5 p-0" data-testid="trend-list">
         {rows.map((d) => {
@@ -118,7 +122,7 @@ function Trend({ data }: { data: WorkspaceData }) {
                 {mean != null && <span className="ms2-bar ms2-bar--base" style={{ width: pct(mean) }} />}
               </div>
               <p className="m-0 mt-1 ms-num" data-testid="trend-numbers">
-                <strong>{now}</strong> {d.source.kind === 'brief' ? 'that week' : 'this week'}
+                <strong>{now}</strong> {d.source.kind === 'brief' ? 'that week' : 'in the latest sweep'}
                 {mean != null && (
                   <>
                     {' '}

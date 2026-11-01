@@ -23,8 +23,10 @@ from datetime import date, timedelta
 from typing import Any
 
 from maudesignal.copilot.actions import draft_capa
+from maudesignal.copilot.dates import RangeCheck, check_range, check_recall_range
 from maudesignal.gate.cfr import CFR_SECTIONS
 from maudesignal.gate.evidence import EvidenceStore
+from maudesignal.gate.gate import DateShift
 from maudesignal.monitor.deterioration import detect_from_database, parse_yyyymmdd
 from maudesignal.monitor.digest import digest_from_database, digest_to_dict
 from maudesignal.storage.database import Database
@@ -40,6 +42,14 @@ def _ymd(d: date) -> str:
     return d.strftime("%Y%m%d")
 
 
+def _noted(ctx: ToolContext, guard: RangeCheck) -> RangeCheck:
+    """Remember a moved range so the gate can check the sentences that repeat it."""
+    shift = guard.shift()
+    if shift is not None:
+        ctx.date_shifts.append(shift)
+    return guard
+
+
 @dataclass
 class ToolContext:
     """Everything a tool may read or write."""
@@ -48,6 +58,14 @@ class ToolContext:
     store: EvidenceStore
     actor: str = "copilot:muse-spark"
     created_capas: list[str] = field(default_factory=list)
+    #: Fixed "today" (UTC) for the date context; None means the real UTC date.
+    today: date | None = None
+    #: Window of the latest stored AI-device sweep (``current_start``, ``current_end``,
+    #: optional ``run_date``), shown in the date context; None when no sweep is stored.
+    sweep_window: dict[str, str] | None = None
+    #: Date ranges a tool moved during the current answer; the agent hands them to the claim
+    #: gate (see ``gate.DateShift``) and clears them for each question.
+    date_shifts: list[DateShift] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -108,6 +126,10 @@ def product_summary(
     date_to: str | None = None,
 ) -> dict[str, Any]:
     """Counts and event-type shares for one product code, plus its 510(k) device."""
+    guard = _noted(ctx, check_range(ctx.store, product_code, date_from, date_to))
+    if guard.no_data:
+        return {"product_code": product_code, **guard.fields()}
+    date_from, date_to = guard.date_from, guard.date_to
     rows = ctx.store.select(product_code=product_code, date_from=date_from, date_to=date_to)
     by_type = Counter((r.event_type or "Unknown") for r in rows)
     total = len(rows)
@@ -130,6 +152,7 @@ def product_summary(
         "latest_date_received": dates[-1] if dates else None,
         "devices_510k": devices,
         "example_report_ids": [r.report_id for r in rows[:MAX_IDS]],
+        **guard.fields(),
     }
 
 
@@ -147,7 +170,12 @@ def search_reports(
 
     ``date_from`` / ``date_to`` (YYYYMMDD, date received) narrow the search; ``offset``
     skips that many of the newest-first matches so a caller can read past the first page.
+    A range outside the stored data is moved or flagged (see ``copilot.dates.check_range``).
     """
+    guard = _noted(ctx, check_range(ctx.store, product_code, date_from, date_to))
+    if guard.no_data:
+        return {"reports": [], **guard.fields()}
+    date_from, date_to = guard.date_from, guard.date_to
     rows = ctx.store.select(
         product_code=product_code, event_type=event_type, date_from=date_from, date_to=date_to
     )
@@ -170,6 +198,7 @@ def search_reports(
             }
             for r in rows[start : start + limit]
         ],
+        **guard.fields(),
     }
 
 
@@ -257,6 +286,10 @@ def recalls(
     query: str | None = None,
 ) -> dict[str, Any]:
     """Stored openFDA device recalls for one product code, newest first (optional keywords)."""
+    guard = _noted(ctx, check_recall_range(ctx.store, product_code, date_from, date_to))
+    if guard.no_data:
+        return {"product_code": product_code, **guard.fields()}
+    date_from, date_to = guard.date_from, guard.date_to
     rows = ctx.store.select_recalls(product_code=product_code, date_from=date_from, date_to=date_to)
     total = len(rows)
     q = (query or "").strip().lower()
@@ -303,6 +336,7 @@ def recalls(
             }
             for r in rows[:limit]
         ],
+        **guard.fields(),
     }
 
 
@@ -396,6 +430,10 @@ def report_sources(
     date_to: str | None = None,
 ) -> dict[str, Any]:
     """Who filed the stored reports: counts by source, plus those not filed by a manufacturer."""
+    guard = _noted(ctx, check_range(ctx.store, product_code, date_from, date_to))
+    if guard.no_data:
+        return {"product_code": product_code, **guard.fields()}
+    date_from, date_to = guard.date_from, guard.date_to
     rows = ctx.store.select(product_code=product_code, date_from=date_from, date_to=date_to)
     stored = [r.date_received for r in ctx.store.select(product_code=product_code)]
     latest = max((d for d in stored if d), default=None)
@@ -411,11 +449,6 @@ def report_sources(
         "date_to": date_to,
         "report_count": len(rows),
         "latest_date_received": latest,
-        **(
-            {"note": f"no stored {product_code} report is dated after {latest}"}
-            if latest and date_from and date_from > latest
-            else {}
-        ),
         "source_counts": dict(sorted(by_source.items())),
         "non_manufacturer_count": len(others),
         "non_manufacturer_reports": [
@@ -429,6 +462,7 @@ def report_sources(
         ],
         "claim_hint": "state counts with source_count claims; source is one of manufacturer, "
         "user facility, voluntary, distributor, non-manufacturer",
+        **guard.fields(),
     }
 
 
@@ -457,7 +491,19 @@ def compare_signals(
             "error": "no device types given and none remembered; ask the user which "
             "product codes to compare"
         }
-    out = _compare(ctx.db, codes, parse_yyyymmdd(as_of) if as_of else None).to_dict()
+    as_of_date = parse_yyyymmdd(as_of) if as_of else None
+    latest = detect_from_database(ctx.db).window.as_of
+    note = None
+    if as_of_date is not None and as_of_date > latest:
+        # Same rule as overnight_signals: openFDA lags, a later as_of holds no reports.
+        note = (
+            f"requested as_of {_ymd(as_of_date)} is after the latest stored report "
+            f"({_ymd(latest)}); the window ends on {_ymd(latest)}"
+        )
+        as_of_date = None
+    out = _compare(ctx.db, codes, as_of_date).to_dict()
+    if note:
+        out["note"] = note
     out["claim_hint"] = (
         "state this-week counts with count claims (date_from/date_to = window) and "
         "shares with share claims; label each change with its `change` words"

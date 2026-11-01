@@ -148,8 +148,28 @@ class ConnectorData:
             return self._store
 
     def tool_context(self) -> ToolContext:
-        """Copilot tool context over the stored data."""
-        return ToolContext(db=self.db, store=self.store, actor="connector:muse-spark")
+        """Copilot tool context over the stored data (with the latest sweep's window)."""
+        return ToolContext(
+            db=self.db,
+            store=self.store,
+            actor="connector:muse-spark",
+            sweep_window=self.sweep_window(),
+        )
+
+    def sweep_window(self) -> dict[str, str] | None:
+        """The stored AI-device sweep's openFDA week and run date (None when absent)."""
+        meta = self.sweep().get("meta")
+        window = meta.get("window") if isinstance(meta, dict) else None
+        if not isinstance(window, dict):
+            return None
+        start, end = window.get("current_start"), window.get("current_end")
+        if not (isinstance(start, str) and isinstance(end, str)):
+            return None
+        out = {"current_start": start, "current_end": end}
+        run = meta.get("generated_utc") if isinstance(meta, dict) else None
+        if isinstance(run, str) and len(run) >= 10:
+            out["run_date"] = run[:10]
+        return out
 
     def digest(self) -> dict[str, Any]:
         """Latest stored digest (computed from the demo database if none is stored)."""

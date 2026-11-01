@@ -32,7 +32,9 @@ logger = get_logger(__name__)
 
 TTL = timedelta(hours=6)
 TTL_SECONDS = int(TTL.total_seconds())
-VERSION = "v1"
+#: v2 (2026-11-01): safety-copilot 1.3.3 reads dates against the stored data; v1 entries may
+#: hold an answer made with a wrongly guessed year ("0 reports"), so they are never reused.
+VERSION = "v2"
 
 
 def cache_key(

@@ -29,7 +29,7 @@ from tests.unit.test_connector_live import Env  # noqa: E402
 EXACT_LABEL = "Web research — not FDA records, not verified by the gate"
 INSTR = "test instructions"
 DAY = date(2026, 10, 30)
-HOLD = research.hold_usd(0.01)
+HOLD = research.hold_usd(research.DEFAULT_SEARCH_FEE_USD)
 
 
 def ok_reply(
@@ -90,9 +90,9 @@ def ok_reply(
     }
 
 
-#: A reply past every limit the hold assumes: 3 searches, 70k input, output at the cap.
-OVERSHOOT = ok_reply(searches=3, input_tokens=70_000, output_tokens=3_000)
-OVERSHOOT_USD = 70_000 * 1.25e-6 + 3_000 * 4.25e-6 + 3 * 0.01  # 0.13025 > HOLD
+#: A reply past every limit the hold assumes: 3 searches, 20k input, output at the cap.
+OVERSHOOT = ok_reply(searches=3, input_tokens=20_000, output_tokens=3_000)
+OVERSHOOT_USD = 20_000 * 1.25e-6 + 3_000 * 4.25e-6 + 3 * 0.05  # 0.18775 > HOLD
 
 
 class FakeTransport:
@@ -143,6 +143,7 @@ def _fresh(monkeypatch: pytest.MonkeyPatch) -> None:
         research.PER_DAY_ENV,
         research.HOLD_CAP_ENV,
         research.SAVE_PER_DAY_ENV,
+        research.DAY_USD_ENV,
     ):
         monkeypatch.delenv(name, raising=False)
 
@@ -169,19 +170,45 @@ def test_flag_default_off_and_values() -> None:
 
 
 def test_fee_and_hold() -> None:
-    assert research.search_fee_usd({}) == 0.01
+    assert research.search_fee_usd({}) == 0.05
     assert research.search_fee_usd({research.SEARCH_FEE_ENV: "0.02"}) == 0.02
-    assert research.search_fee_usd({research.SEARCH_FEE_ENV: "-1"}) == 0.01
-    assert research.search_fee_usd({research.SEARCH_FEE_ENV: "abc"}) == 0.01
-    # 60,000 x 1.25/M + 3,000 x 4.25/M + max(2, 2) x 0.01
-    assert pytest.approx(0.075 + 0.01275 + 0.02) == HOLD
+    assert research.search_fee_usd({research.SEARCH_FEE_ENV: "-1"}) == 0.05
+    assert research.search_fee_usd({research.SEARCH_FEE_ENV: "abc"}) == 0.05
+    assert research.RESEARCH_INPUT_TOKENS == 15_000
+    # 15,000 x 1.25/M + 3,000 x 4.25/M + max(2, 2) x 0.05
+    assert pytest.approx(0.01875 + 0.01275 + 0.10) == HOLD
+    assert pytest.approx(0.1315) == HOLD
     assert HOLD > MAX_CALL_HOLD_USD  # why research has its own per-call limit
-    assert research.hold_cap_usd({}) == 0.12
-    assert research.hold_cap_usd({research.HOLD_CAP_ENV: "0.5"}) == 0.12  # never above 0.12
-    assert research.hold_cap_usd({research.HOLD_CAP_ENV: "0.11"}) == 0.11
+    assert research.hold_cap_usd({}) == 0.14
+    assert research.hold_cap_usd({research.HOLD_CAP_ENV: "0.5"}) == 0.14  # never above 0.14
+    assert research.hold_cap_usd({research.HOLD_CAP_ENV: "0.13"}) == 0.13
     assert HOLD <= research.hold_cap_usd({})
-    assert research.research_cap(enforced_cap(3.0), 0.12) == pytest.approx(2.88)
     assert research.per_day({}) == 5
+    assert research.research_day_usd({}) == 0.30
+    assert research.research_day_usd({research.DAY_USD_ENV: "0.4"}) == 0.4
+    # a ceiling of $0.50, and a non-finite value is rejected (default)
+    assert research.MAX_DAY_USD == 0.50
+    for bad in ("5", "1.5", "0.51"):
+        assert research.research_day_usd({research.DAY_USD_ENV: bad}) == 0.50
+    for bad in ("inf", "-inf", "nan"):
+        assert research.research_day_usd({research.DAY_USD_ENV: bad}) == 0.30
+    assert research.clamp_day_usd(float("inf")) == 0.30 and research.clamp_day_usd(9.0) == 0.50
+    assert research.clamp_day_usd(-1.0) == 0.0
+    assert research.research_day_usd({research.DAY_USD_ENV: "-1"}) == 0.30
+
+
+def test_three_dollar_guarantee_math() -> None:
+    """The docstring's bound: research reserves against 3.00 - its per-call limit."""
+    cap = enforced_cap(3.0)
+    limit = research.hold_cap_usd({})
+    r_cap = research.research_cap(cap, limit)
+    assert cap == pytest.approx(2.90) and r_cap == pytest.approx(2.86)
+    # a research call racing a normal call, neither seeing the other
+    assert min(cap + limit, r_cap + MAX_CALL_HOLD_USD) == pytest.approx(2.96)
+    # two research calls racing (despite ``exclusive``)
+    assert r_cap + limit == pytest.approx(3.00)
+    # a normal call racing a normal call (the base rule)
+    assert cap + MAX_CALL_HOLD_USD == pytest.approx(3.00)
 
 
 def test_instructions_come_from_the_skill() -> None:
@@ -277,7 +304,7 @@ def test_success_reserves_then_settles_actual() -> None:
     led, store = ledger()
     t = FakeTransport((200, ok_reply()))
     out = run(led, t)
-    expected = 10_000 * 1.25e-6 + 1_000 * 4.25e-6 + 2 * 0.01
+    expected = 10_000 * 1.25e-6 + 1_000 * 4.25e-6 + 2 * 0.05
     assert out["status"] == "ok" and out["label"] == EXACT_LABEL
     assert out["summary_text"] is None
     assert set(out) == {"status", "label", "items", "summary_text", "cost_usd", "note"}
@@ -365,7 +392,7 @@ def test_overshoot_switches_research_off_for_process_and_day() -> None:
     [
         ok_reply(searches=3),
         ok_reply(output_tokens=3_001),
-        ok_reply(input_tokens=60_001),
+        ok_reply(input_tokens=15_001),
     ],
 )
 def test_each_overshoot_kind_trips_the_switch(reply: dict[str, Any]) -> None:
@@ -377,14 +404,14 @@ def test_each_overshoot_kind_trips_the_switch(reply: dict[str, Any]) -> None:
 def test_cost_above_hold_alone_trips_the_day_flag() -> None:
     led, _ = ledger()
     # within every token / search limit, but a fee allowance that makes the real cost > hold
-    reply = ok_reply(searches=2, input_tokens=60_000, output_tokens=3_000)
+    reply = ok_reply(searches=2, input_tokens=15_000, output_tokens=3_000)
     calls: list[float] = []
 
     def actual(_r: Any) -> float:
         calls.append(1)
         return HOLD + 0.001
 
-    led.metered(HOLD, lambda: reply, actual, kill_flag="research", max_hold_usd=0.12)
+    led.metered(HOLD, lambda: reply, actual, kill_flag="research", max_hold_usd=0.14)
     assert led.flag_set("research")
     # other routes are unaffected: same settle without kill_flag raises nothing
     led2, _ = ledger()
@@ -394,13 +421,13 @@ def test_cost_above_hold_alone_trips_the_day_flag() -> None:
 
 def test_exclusive_one_research_in_flight() -> None:
     led, _ = ledger()
-    first = led.reserve(HOLD, max_hold_usd=0.12, kind="research", exclusive=True)
+    first = led.reserve(HOLD, max_hold_usd=0.14, kind="research", exclusive=True)
     with pytest.raises(CallRefusedError) as exc:
-        led.reserve(HOLD, max_hold_usd=0.12, kind="research", exclusive=True)
+        led.reserve(HOLD, max_hold_usd=0.14, kind="research", exclusive=True)
     assert exc.value.cap == "busy"
     led.reserve(0.05)  # other calls still pass
     first.settle(0.05)
-    led.reserve(HOLD, max_hold_usd=0.12, kind="research", exclusive=True)  # free again
+    led.reserve(HOLD, max_hold_usd=0.14, kind="research", exclusive=True)  # free again
 
 
 def test_research_cap_is_lower_than_other_routes() -> None:
@@ -408,8 +435,8 @@ def test_research_cap_is_lower_than_other_routes() -> None:
     for _ in range(27):
         led.reserve(0.10)
     led.reserve(0.08)  # 2.78 held by normal calls
-    with pytest.raises(CallRefusedError):  # 2.78 + 0.10775 = 2.88775 > 2.88
-        led.reserve(HOLD, max_hold_usd=0.12, cap_usd=research.research_cap(led.cap_usd, 0.12))
+    with pytest.raises(CallRefusedError):  # 2.78 + 0.1315 = 2.9115 > 2.86
+        led.reserve(HOLD, max_hold_usd=0.14, cap_usd=research.research_cap(led.cap_usd, 0.14))
     led.reserve(0.10)  # 2.88 <= 2.90 for a normal call
 
 
@@ -425,7 +452,8 @@ def test_cap_reached_makes_no_call() -> None:
 def test_fee_too_big_for_one_call_is_refused() -> None:
     led, _ = ledger()
     t = FakeTransport()
-    assert run(led, t, fee_per_search=0.05)["status"] == "unavailable" and t.sent == []
+    # 0.06 per search: 0.0315 + 0.12 = 0.1515 > the 0.14 per-call limit
+    assert run(led, t, fee_per_search=0.06)["status"] == "unavailable" and t.sent == []
 
 
 def test_no_key_or_no_ledger_makes_no_call() -> None:
@@ -437,9 +465,10 @@ def test_no_key_or_no_ledger_makes_no_call() -> None:
 
 
 @pytest.mark.parametrize("round_", range(4))
-@pytest.mark.parametrize("reply", [ok_reply(input_tokens=60_000, output_tokens=3_000), OVERSHOOT])
+@pytest.mark.parametrize("day_cap", [None, 10.0])  # the default $0.30, and no research cap
+@pytest.mark.parametrize("reply", [ok_reply(input_tokens=15_000, output_tokens=3_000), OVERSHOOT])
 def test_day_total_never_passes_3_00_with_concurrent_research(
-    reply: dict[str, Any], round_: int
+    reply: dict[str, Any], day_cap: float | None, round_: int
 ) -> None:
     """N concurrent research calls (overshooting or at the hold) and normal calls near the cap."""
     store = MemoryStore()
@@ -449,7 +478,7 @@ def test_day_total_never_passes_3_00_with_concurrent_research(
     t = FakeTransport(default=reply)
 
     def research_call(_i: int) -> dict[str, Any]:
-        return run(led, t)
+        return run(led, t, day_cap=day_cap)
 
     def normal_call(_i: int) -> None:
         try:
@@ -467,6 +496,64 @@ def test_day_total_never_passes_3_00_with_concurrent_research(
     assert len(t.sent) == len(paid)
     if reply is OVERSHOOT:
         assert len(paid) <= 1 and led.flag_set(research.KILL_FLAG)
+    if day_cap is None:  # the research-only day cap holds under concurrency too
+        assert led.kind_total(research.KILL_FLAG, DAY.isoformat()) <= 0.30 + 0.06
+
+
+# --- research-only daily dollar cap --------------------------------------------------------
+
+
+def test_research_day_cap_allows_two_requests_by_default() -> None:
+    """$0.30: two requests (0.11675 settled each), the third (+0.1315 hold) is refused."""
+    led, store = ledger()
+    t = FakeTransport()
+    fetcher = FakeFetcher()
+    outs = [run(led, t, news_fetcher=lambda: fetcher) for _ in range(3)]
+    assert [o["status"] for o in outs] == ["ok", "ok", "news_only"]
+    assert len(t.sent) == 2  # no paid call for the third
+    each = 10_000 * 1.25e-6 + 1_000 * 4.25e-6 + 2 * 0.05
+    assert led.kind_total(research.KILL_FLAG, DAY.isoformat()) == pytest.approx(2 * each)
+    assert not led.flag_set(research.KILL_FLAG)  # a budget refusal is not a kill switch
+    # without the GDELT backup the note says why
+    again = run(led, t)
+    assert again["status"] == "unavailable" and again["note"] == research.NOTE_DAY_CAP
+    assert again["cost_usd"] == 0.0 and len(t.sent) == 2
+    # the refused reservations left nothing behind
+    assert len(store.list_prefix("ledger/")) == 2
+
+
+def test_research_day_cap_counts_holds_and_failures() -> None:
+    led, _ = ledger()
+    held = led.reserve(HOLD, max_hold_usd=0.14, kind=research.KILL_FLAG)  # unsettled: its hold
+    assert led.kind_total(research.KILL_FLAG) == pytest.approx(HOLD)
+    led.reserve(0.10)  # other kinds are not counted against the research cap
+    assert led.kind_total(research.KILL_FLAG) == pytest.approx(HOLD)
+    with pytest.raises(CallRefusedError) as exc:  # unsettled 0.1315 + 0.1315 > 0.20
+        led.reserve(HOLD, max_hold_usd=0.14, kind=research.KILL_FLAG, kind_cap_usd=0.20)
+    assert exc.value.cap == "kind_cap"
+    held.settle(0.02)  # settled cheaply: 0.02 + 0.1315 <= 0.20
+    led.reserve(HOLD, max_hold_usd=0.14, kind=research.KILL_FLAG, kind_cap_usd=0.20)
+
+
+def test_caller_passed_day_cap_is_clamped_too() -> None:
+    led, _ = ledger()
+    t = FakeTransport()
+    outs = [run(led, t, day_cap=float("inf")) for _ in range(3)]  # inf -> default $0.30
+    assert [o["status"] for o in outs] == ["ok", "ok", "unavailable"] and len(t.sent) == 2
+    led2, _ = ledger()
+    t2 = FakeTransport()
+    for _ in range(5):  # 99 -> $0.50: four requests at 0.11675 fit, a fifth does not
+        run(led2, t2, day_cap=99.0)
+    assert len(t2.sent) == 4
+    assert led2.kind_total(research.KILL_FLAG, DAY.isoformat()) <= research.MAX_DAY_USD
+
+
+def test_research_day_cap_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(research.DAY_USD_ENV, "0.10")  # below one hold: never a paid call
+    led, _ = ledger()
+    t = FakeTransport()
+    out = run(led, t)
+    assert t.sent == [] and out["note"] == research.NOTE_DAY_CAP
 
 
 # --- GDELT backup ------------------------------------------------------------------------
@@ -594,11 +681,23 @@ def test_no_research_for_patient_data(tmp_path: Path, monkeypatch: pytest.Monkey
 
 
 def test_per_visitor_research_limit(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # the dollar cap is tested on its own (its ceiling is lifted for this test only)
+    monkeypatch.setattr(research, "MAX_DAY_USD", 5.0)
+    monkeypatch.setenv(research.DAY_USD_ENV, "5")
     env, transport = make_env(tmp_path, monkeypatch, on=True)
     blocks = [env.ask(research=True).json()["research"] for _ in range(6)]
     assert [b["status"] for b in blocks[:5]] == ["ok"] * 5
     assert blocks[5]["status"] == "unavailable" and "Daily limit of 5" in blocks[5]["note"]
     assert len(transport.sent) == 5
+
+
+def test_route_research_day_cap_falls_back_to_news(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    env, transport = make_env(tmp_path, monkeypatch, on=True)
+    blocks = [env.ask(research=True).json()["research"] for _ in range(3)]
+    assert [b["status"] for b in blocks] == ["ok", "ok", "news_only"]
+    assert len(transport.sent) == 2
 
 
 def test_research_flag_must_be_boolean(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

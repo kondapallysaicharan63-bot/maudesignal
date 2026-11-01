@@ -25,6 +25,7 @@ import { ExpandButton } from './components/PanelBar'
 import { SweepFlagged, SweepRules } from './components/SweepCard'
 import { alertItems, miniStats, runMetrics, sweepRowId, SWEEP_RULES, sweepRuleText, sweepStats, sweepStatsText } from './dashboard'
 import { collapseOnEscape, toggleExpanded } from './layout'
+import { sweepLabel } from './sweepLabel'
 import type { Brief, Sweep, Thread, WorkspaceData } from './types'
 
 beforeAll(() => {
@@ -120,7 +121,9 @@ describe('sweep rules', () => {
     const none = rows.filter((r) => r.current_count === 0).length
     const st = sweepStats(SW)
     expect(st).toEqual({ total: rows.length, fewer, none })
-    expect(sweepStatsText(st)).toBe(`${fewer} of ${rows.length} codes had fewer than 3 reports this week (${none} had none).`)
+    expect(sweepStatsText(st)).toBe(
+      `${fewer} of ${rows.length} codes had fewer than 3 reports in the sweep's openFDA week (${none} had none).`,
+    )
     // a changed export changes the sentence
     const edited = { ...SW, rows: SW.rows.map((r) => ({ ...r, current_count: 9 })) }
     expect(sweepStats(edited)).toEqual({ total: rows.length, fewer: 0, none: 0 })
@@ -162,7 +165,9 @@ describe('alert bell', () => {
     expect(html).toContain('min-h-11')
     expect(html).toContain('text-[17px]')
     expect(html).toContain('<svg')
-    expect(html).toContain('whitespace-nowrap')
+    // Sweep rows name the sweep by its stored run day and openFDA week, never "this week".
+    expect(html).toContain(sweepLabel(SW)!)
+    expect(text(html)).not.toMatch(/this week/i)
   })
 
   it('shows the count in a red badge and in the aria-label', () => {

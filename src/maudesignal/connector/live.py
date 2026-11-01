@@ -1304,6 +1304,7 @@ def mount_live(
             fee_per_search=research.search_fee_usd(env),
             news_fetcher=be.research_fetcher,
             hold_cap=research.hold_cap_usd(env),
+            day_cap=research.research_day_usd(env),
         )
 
     async def research_for(request: Request, body: AskIn) -> dict[str, Any] | None:

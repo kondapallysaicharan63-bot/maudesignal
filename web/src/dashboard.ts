@@ -2,6 +2,7 @@
 // Every number is computed from the stored exports; thresholds mirror
 // src/maudesignal/monitor/deterioration.py (a test fails if they drift apart).
 import { capaDrafts, CLASS_LABEL, flaggedRows } from './artifacts'
+import { sweepDetail, sweepLabel } from './sweepLabel'
 import type { Brief, Company, CompanyDevice, Sweep, Thread, WorkflowId, WorkspaceData } from './types'
 
 /** Mirrors SPIKE_MIN_REPORTS, SPIKE_MULTIPLIER, BASELINE_WEEKS and SEVERITY_ESCALATION_PP in deterioration.py. */
@@ -40,7 +41,7 @@ export function sweepStats(sweep: Sweep, minReports: number = SWEEP_RULES.spikeM
 }
 
 export function sweepStatsText(s: SweepStats, minReports: number = SWEEP_RULES.spikeMinReports): string {
-  return `${s.fewer} of ${s.total} codes had fewer than ${minReports} reports this week (${s.none} had none).`
+  return `${s.fewer} of ${s.total} codes had fewer than ${minReports} reports in the sweep's openFDA week (${s.none} had none).`
 }
 
 // ── Alerts ──────────────────────────────────────────────────────────────
@@ -83,6 +84,7 @@ export function alertItems(sweep: Sweep, briefs: Brief[], company?: Company | nu
   const typeNames = new Map<string, string>()
   for (const b of briefs) for (const [c, n] of Object.entries(b.device_types ?? {})) if (!typeNames.has(c)) typeNames.set(c, n)
   const sweepDay = sweep.meta.generated_utc.slice(0, 10)
+  const label = sweepLabel(sweep)
   for (const r of flaggedRows(sweep))
     if (isRisky(r.classification))
       out.push({
@@ -93,7 +95,7 @@ export function alertItems(sweep: Sweep, briefs: Brief[], company?: Company | nu
         source: 'sweep',
         deviceName: typeNames.get(r.product_code),
         date: sweepDay,
-        detail: `${plural(r.current_count, 'report')} this week`,
+        detail: sweepDetail(r.current_count, label),
       })
   const newest = briefs[0]
   if (newest)

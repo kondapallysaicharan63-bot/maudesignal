@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_utc": "2026-10-31T09:41:04Z",
+  "generated_utc": "2026-11-01T06:59:34Z",
   "banner": "Simulated company — sample data. Problem evidence is real FDA data.",
   "alerts": [
     {
@@ -29,7 +29,7 @@
       },
       "numbers": [
         {
-          "label": "Reports this week",
+          "label": "Reports in the latest sweep week",
           "value": 10,
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADSI+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
         },
@@ -44,7 +44,7 @@
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADSI+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
         },
         {
-          "label": "Injury or death reports this week",
+          "label": "Injury or death reports in the latest sweep week",
           "value": 2,
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADSI+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
         },
@@ -238,7 +238,7 @@
       },
       "numbers": [
         {
-          "label": "Reports this week",
+          "label": "Reports in the latest sweep week",
           "value": 21,
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AIYN+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
         },
@@ -253,7 +253,7 @@
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AIYN+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
         },
         {
-          "label": "This week compared with the weekly average (times)",
+          "label": "The latest sweep week compared with the weekly average (times)",
           "value": 2.0,
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AIYN+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
         }
@@ -449,7 +449,7 @@
       },
       "numbers": [
         {
-          "label": "Reports this week",
+          "label": "Reports in the latest sweep week",
           "value": 4,
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMQB+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
         },
@@ -464,7 +464,7 @@
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMQB+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
         },
         {
-          "label": "Injury or death reports this week",
+          "label": "Injury or death reports in the latest sweep week",
           "value": 4,
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMQB+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
         },
@@ -483,7 +483,7 @@
       "k510_total": 2,
       "who_filed": null,
       "next_steps": [
-        "Open the openFDA links above to read this week's reports; none are stored in this workspace.",
+        "Open the openFDA links above to read the reports of that week; none are stored in this workspace.",
         "Read the injury and death reports first, then the others.",
         "Look at the recalls and 510(k) records listed for this device type.",
         "Ask the device owner to decide whether a review should be opened. A person decides; nothing is filed with FDA."
@@ -525,7 +525,7 @@
       },
       "numbers": [
         {
-          "label": "Reports this week",
+          "label": "Reports in the latest sweep week",
           "value": 3,
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMUD+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
         },
@@ -540,7 +540,7 @@
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMUD+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
         },
         {
-          "label": "This week compared with the weekly average (times)",
+          "label": "The latest sweep week compared with the weekly average (times)",
           "value": 2.4,
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMUD+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
         }
@@ -666,7 +666,7 @@
       },
       "numbers": [
         {
-          "label": "Reports this week",
+          "label": "Reports in the latest sweep week",
           "value": 15,
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOTE+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
         },
@@ -681,7 +681,7 @@
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOTE+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
         },
         {
-          "label": "This week compared with the weekly average (times)",
+          "label": "The latest sweep week compared with the weekly average (times)",
           "value": 2.61,
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOTE+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
         }
@@ -870,7 +870,7 @@
       },
       "numbers": [
         {
-          "label": "Reports this week",
+          "label": "Reports in the latest sweep week",
           "value": 1,
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ASIG+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
         },
@@ -899,7 +899,7 @@
       "k510_total": 0,
       "who_filed": null,
       "next_steps": [
-        "Open the openFDA links above to read this week's reports; none are stored in this workspace.",
+        "Open the openFDA links above to read the reports of that week; none are stored in this workspace.",
         "Check whether the new kind of event or the first reports match anything already known for this device type.",
         "Look at the recalls and 510(k) records listed for this device type.",
         "Ask the device owner to decide whether a review should be opened. A person decides; nothing is filed with FDA."
@@ -941,7 +941,7 @@
       },
       "numbers": [
         {
-          "label": "Reports this week",
+          "label": "Reports in the stored week",
           "value": 33,
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260825+TO+20260831%5D&count=event_type.exact"
         },
@@ -956,7 +956,7 @@
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260728+TO+20260824%5D&count=event_type.exact"
         },
         {
-          "label": "This week compared with the weekly average (times)",
+          "label": "The stored week compared with the weekly average (times)",
           "value": 3.77,
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260825+TO+20260831%5D&count=event_type.exact"
         }
@@ -1176,7 +1176,7 @@
       },
       "numbers": [
         {
-          "label": "Reports this week",
+          "label": "Reports in the stored week",
           "value": 0,
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AQIH+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
         },
@@ -1250,7 +1250,7 @@
         "other": 0
       },
       "next_steps": [
-        "Open the openFDA links above to read this week's reports; none are stored in this workspace.",
+        "Open the openFDA links above to read the reports of that week; none are stored in this workspace.",
         "Compare the device type's recent reports and recalls with what the owner already knows.",
         "Look at the recalls and 510(k) records listed for this device type.",
         "Ask the device owner to decide whether a review should be opened. A person decides; nothing is filed with FDA."
@@ -1294,7 +1294,7 @@
       },
       "numbers": [
         {
-          "label": "Reports this week",
+          "label": "Reports in the stored week",
           "value": 21,
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AIYN+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
         },
@@ -1309,7 +1309,7 @@
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AIYN+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
         },
         {
-          "label": "This week compared with the weekly average (times)",
+          "label": "The stored week compared with the weekly average (times)",
           "value": 2.0,
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AIYN+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
         }
@@ -1505,7 +1505,7 @@
       },
       "numbers": [
         {
-          "label": "Reports this week",
+          "label": "Reports in the stored week",
           "value": 15,
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOTE+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
         },
@@ -1520,7 +1520,7 @@
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOTE+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
         },
         {
-          "label": "This week compared with the weekly average (times)",
+          "label": "The stored week compared with the weekly average (times)",
           "value": 2.61,
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AOTE+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
         }
@@ -1709,7 +1709,7 @@
       },
       "numbers": [
         {
-          "label": "Reports this week",
+          "label": "Reports in the stored week",
           "value": 10,
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADSI+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
         },
@@ -1724,7 +1724,7 @@
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADSI+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
         },
         {
-          "label": "Injury or death reports this week",
+          "label": "Injury or death reports in the stored week",
           "value": 2,
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADSI+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
         },
@@ -1918,7 +1918,7 @@
       },
       "numbers": [
         {
-          "label": "Reports this week",
+          "label": "Reports in the stored week",
           "value": 3,
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMUD+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
         },
@@ -1933,7 +1933,7 @@
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMUD+AND+date_received%3A%5B20260827+TO+20260923%5D&count=event_type.exact"
         },
         {
-          "label": "This week compared with the weekly average (times)",
+          "label": "The stored week compared with the weekly average (times)",
           "value": 2.4,
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMUD+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
         }
@@ -2059,7 +2059,7 @@
       },
       "numbers": [
         {
-          "label": "Reports this week",
+          "label": "Reports in the stored week",
           "value": 19,
           "openfda_url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMWI+AND+date_received%3A%5B20260924+TO+20260930%5D&count=event_type.exact"
         },

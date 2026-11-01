@@ -30,19 +30,30 @@ Rules:
   web research off for this process (later questions skip the paid call) and the GDELT news
   index answers instead.
 * Spend, worst case per request (the hold, reserved in the daily per-call ledger before the
-  request is sent): 60,000 input tokens x $1.25/M + 3,000 output tokens x $4.25/M + the
-  search-fee allowance ``MAUDESIGNAL_RESEARCH_SEARCH_FEE_USD`` (default $0.01; Meta's fee is NOT
-  known to this repo, so this is a conservative stand-in) x max(``MAX_SEARCHES``, 2)
-  = $0.075 + $0.01275 + $0.02 = $0.10775. That is above the $0.10 per-call limit of the other
+  request is sent): ``RESEARCH_INPUT_TOKENS`` 15,000 input tokens x $1.25/M + 3,000 output
+  tokens x $4.25/M + the search-fee allowance ``MAUDESIGNAL_RESEARCH_SEARCH_FEE_USD`` (default
+  $0.05 per search; Meta's fee is NOT known to this repo, so this is a deliberately high
+  stand-in) x max(``MAX_SEARCHES``, 2) = $0.01875 + $0.01275 + $0.10 = $0.1315. Probe 2 used
+  5,411 input / 1,589 output tokens with ``max_tool_calls`` 2, so 15,000 input tokens is
+  about 2.8x what was seen; a reply above it (or above any other limit the hold assumes) is
+  flagged as an overshoot below. The hold is above the $0.10 per-call limit of the other
   routes, so Research has its own per-call limit ``MAUDESIGNAL_RESEARCH_HOLD_USD`` (default and
-  ceiling $0.12) and reserves against a lower cap: the enforced cap minus (research limit -
-  $0.10), 2.88 with the defaults. With list-after-put visibility the later of two concurrent
-  reservations sees the earlier one; if it did not, the day total is still at most
-  min(2.90 + 0.12, 2.88 + 0.10) = 2.98 for a research call racing another call, and
-  2.88 + 0.12 = 3.00 for two research calls racing. In addition only ONE research request may be
-  in flight at a time (``exclusive``), so overshoots cannot stack.
+  ceiling $0.14) and reserves against a lower cap: the enforced cap minus (research limit -
+  $0.10), 2.90 - 0.04 = 2.86 with the defaults, i.e. 3.00 - 0.14. With list-after-put
+  visibility the later of two concurrent reservations sees the earlier one; if it did not,
+  the day total is still at most min(2.90 + 0.14, 2.86 + 0.10) = 2.96 for a research call
+  racing another call, and 2.86 + 0.14 = 3.00 for two research calls racing. In addition only
+  ONE research request may be in flight at a time (``exclusive``), so overshoots cannot stack.
+* Research-only daily dollar cap ``MAUDESIGNAL_RESEARCH_DAY_USD`` (default $0.30): the day's
+  counted total of research ledger objects (``research-<uuid>.json``: settled at their real
+  cost, unsettled or failed at their hold), this request's hold included, may not go above
+  it; checked inside the same reservation as the global cap. With the defaults that is 2
+  requests a day at their holds (2 x 0.1315 = 0.263; a third would make 0.3945), more only
+  when earlier requests settled cheaper. Once reached, research is refused and the GDELT news
+  path (or a clear note) answers, as for the global cap. It only ever lowers spend, so the
+  $3.00 bound above is unchanged.
 * After each reply: if it made more than ``MAX_SEARCHES`` searches, used more than
-  ``MAX_OUTPUT_TOKENS`` output tokens or more than the 60,000 input-token allowance, or its
+  ``MAX_OUTPUT_TOKENS`` output tokens or more than the 15,000 input-token allowance, or its
   real cost is above the hold, web research is switched off for this process AND for the rest
   of the UTC day in the ledger (flag ``research``), with a warning; the real cost is still
   settled. A request that fails or times out after it was sent (Meta may still bill it) also
@@ -83,6 +94,7 @@ SEARCH_FEE_ENV = "MAUDESIGNAL_RESEARCH_SEARCH_FEE_USD"
 PER_DAY_ENV = "MAUDESIGNAL_RESEARCH_PER_DAY"
 SAVE_PER_DAY_ENV = "MAUDESIGNAL_RESEARCH_SAVE_PER_DAY"
 HOLD_CAP_ENV = "MAUDESIGNAL_RESEARCH_HOLD_USD"
+DAY_USD_ENV = "MAUDESIGNAL_RESEARCH_DAY_USD"
 KILL_FLAG = "research"
 
 LABEL = "Web research — not FDA records, not verified by the gate"
@@ -99,12 +111,20 @@ INCLUDE_SOURCES = "web_search_call.action.sources"
 TIMEOUT_S = 45.0
 MAX_REQUESTS = 1
 #: Input-token allowance for the hold. Search results are added to the input by the API, so
-#: the prompt size says nothing about it; probe 1 used 24,256 input tokens for 7 searches.
-RESEARCH_INPUT_TOKENS = 60_000
-DEFAULT_SEARCH_FEE_USD = 0.01
+#: the prompt size says nothing about it. Probe 1 used 24,256 input tokens for 7 searches
+#: (no ``max_tool_calls``); probe 2 used 5,411 with ``max_tool_calls`` 2 (about 2,700 per
+#: search plus the prompt). 15,000 is about 2.8x probe 2; a reply above it is an overshoot
+#: (research is switched off for the day, the real cost is still settled).
+RESEARCH_INPUT_TOKENS = 15_000
+#: Per-search fee allowance (Meta's fee is not published to this repo): deliberately high.
+DEFAULT_SEARCH_FEE_USD = 0.05
 #: Research's own per-call hold limit (default and ceiling); see the module docstring.
-DEFAULT_HOLD_CAP_USD = 0.12
-MAX_HOLD_CAP_USD = 0.12
+DEFAULT_HOLD_CAP_USD = 0.14
+MAX_HOLD_CAP_USD = 0.14
+#: Research-only daily dollar cap (counted from the ledger's research objects).
+DEFAULT_DAY_USD = 0.30
+#: Ceiling of ``MAUDESIGNAL_RESEARCH_DAY_USD`` and of any caller-passed day cap.
+MAX_DAY_USD = 0.50
 DEFAULT_PER_DAY = 5
 DEFAULT_SAVE_PER_DAY = 20
 MAX_ITEMS = 8
@@ -123,6 +143,7 @@ NOTE_UNAVAILABLE = "Web research is not available right now."
 NOTE_NEWS_ONLY = "Web search was not available; showing news links from the GDELT news index."
 NOTE_CAP = "Today's live-call budget is used up, so web search was not run."
 NOTE_OFF = "Web search is switched off for now; showing news links only."
+NOTE_DAY_CAP = "Today's web research budget is used up, so web search was not run."
 
 
 # ---------------------------------------------------------------------------
@@ -161,7 +182,7 @@ def _num_env(env: dict[str, str] | None, name: str, default: float) -> float:
 
 
 def search_fee_usd(env: dict[str, str] | None = None) -> float:
-    """Per-search fee allowance (``MAUDESIGNAL_RESEARCH_SEARCH_FEE_USD``, default $0.01)."""
+    """Per-search fee allowance (``MAUDESIGNAL_RESEARCH_SEARCH_FEE_USD``, default $0.05)."""
     return _num_env(env, SEARCH_FEE_ENV, DEFAULT_SEARCH_FEE_USD)
 
 
@@ -171,8 +192,20 @@ def per_day(env: dict[str, str] | None = None) -> int:
 
 
 def hold_cap_usd(env: dict[str, str] | None = None) -> float:
-    """Research's per-call hold limit (``MAUDESIGNAL_RESEARCH_HOLD_USD``; default/ceiling 0.12)."""
+    """Research's per-call hold limit (``MAUDESIGNAL_RESEARCH_HOLD_USD``; default/ceiling 0.14)."""
     return min(MAX_HOLD_CAP_USD, _num_env(env, HOLD_CAP_ENV, DEFAULT_HOLD_CAP_USD))
+
+
+def clamp_day_usd(value: float) -> float:
+    """A research day cap held to ``0 .. MAX_DAY_USD`` (a non-finite value gives the default)."""
+    if value != value or value in (float("inf"), float("-inf")):
+        return DEFAULT_DAY_USD
+    return max(0.0, min(MAX_DAY_USD, value))
+
+
+def research_day_usd(env: dict[str, str] | None = None) -> float:
+    """Research-only daily cap (``MAUDESIGNAL_RESEARCH_DAY_USD``): default $0.30, max $0.50."""
+    return clamp_day_usd(_num_env(env, DAY_USD_ENV, DEFAULT_DAY_USD))
 
 
 def save_per_day(env: dict[str, str] | None = None) -> int:
@@ -527,6 +560,7 @@ def run_research(
     news_fetcher: Callable[[], Fetcher] | None = None,
     instructions: str | None = None,
     hold_cap: float = DEFAULT_HOLD_CAP_USD,
+    day_cap: float | None = None,
 ) -> dict[str, Any]:
     """Run Research mode for one question and return the research block.
 
@@ -539,6 +573,7 @@ def run_research(
         news_fetcher: Factory for the GDELT backup's HTTP fetcher (``None``: no backup).
         instructions: Instructions text (tests); read from the Skill when omitted.
         hold_cap: Research's per-call hold limit (at most ``MAX_HOLD_CAP_USD``).
+        day_cap: Research-only daily dollar cap; ``None`` reads ``MAUDESIGNAL_RESEARCH_DAY_USD``.
 
     Returns:
         The research block. Never raises for a model, network or ledger failure.
@@ -549,7 +584,14 @@ def run_research(
         note = NOTE_OFF
     elif transport is not None and ledger is not None:
         result = _web_search(
-            question, product_code, transport, ledger, fee_per_search, instructions, hold_cap
+            question,
+            product_code,
+            transport,
+            ledger,
+            fee_per_search,
+            instructions,
+            hold_cap,
+            research_day_usd() if day_cap is None else clamp_day_usd(day_cap),
         )
         if isinstance(result, dict):
             return result
@@ -569,6 +611,7 @@ def _web_search(
     fee_per_search: float,
     instructions: str | None,
     hold_cap: float,
+    day_cap: float,
 ) -> dict[str, Any] | tuple[float, str]:
     """The one paid request: the ``ok`` block, or ``(counted_usd, note)`` when it failed."""
     try:
@@ -619,10 +662,13 @@ def _web_search(
             kind=KILL_FLAG,
             exclusive=True,
             blocked_by=KILL_FLAG,
+            kind_cap_usd=day_cap,
         )
     except CallRefusedError as exc:
         if exc.cap == "flag":
             return 0.0, NOTE_OFF
+        if exc.cap == "kind_cap":
+            return 0.0, NOTE_DAY_CAP
         return 0.0, NOTE_CAP if exc.cap == "cap" else NOTE_UNAVAILABLE
     except Exception as exc:  # noqa: BLE001 - the request was sent: its hold counts
         status = int(reply.get("status") or 0)
@@ -675,6 +721,7 @@ __all__ = [
     "hold_usd",
     "limit_block",
     "parse_reply",
+    "research_day_usd",
     "research_enabled",
     "run_research",
 ]
