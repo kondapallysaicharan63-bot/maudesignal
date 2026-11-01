@@ -2583,6 +2583,11 @@ V2_SCENARIOS: tuple[tuple[str, Callable[[Env], str]], ...] = (
     ("v2 saved-chat edge cases, staying in v2", v2_s_saved_edge_cases),
 )
 
+# F25 Investigate a complaint: its scenarios live in e2e_investigate.py (bound to this module's helpers).
+from e2e_investigate import make_scenarios as _investigate_scenarios  # noqa: E402
+
+V2_SCENARIOS = V2_SCENARIOS + _investigate_scenarios(sys.modules[__name__])
+
 
 # --- error states (route mocking) --------------------------------------------------------------
 

@@ -5,6 +5,7 @@ import { isoDay } from '../data'
 import { Icon } from '../icons'
 import type { WorkspaceData } from '../types'
 import { sweepDate } from '../components/SweepCard'
+import { InvestigateCard } from '../investigate/entry'
 import { AlertRows, demoRows, realRows, SourceCaption } from './AlertRows'
 import { devicesToReview } from './realAlerts'
 
@@ -16,6 +17,7 @@ export function HomeV2({
   onViewAll,
   onDevices,
   onAudit,
+  onInvestigate,
 }: {
   data: WorkspaceData
   onAlert: (id: string, code: string) => void
@@ -25,6 +27,8 @@ export function HomeV2({
   onDevices: () => void
   /** Evidence · Audit verified. */
   onAudit: () => void
+  /** Investigate a complaint (the one main button of its card). */
+  onInvestigate?: () => void
 }) {
   const real = realRows(data)
   const demo = demoRows(data)
@@ -37,6 +41,7 @@ export function HomeV2({
     <div className="ms2-home">
       <h1 className="sr-only">Home</h1>
       <div className="ms2-grid">
+        {onInvestigate && <InvestigateCard onOpen={onInvestigate} />}
         <section className="ms2-card ms2-span2" aria-labelledby="home-alerts-h" data-testid="home-alerts">
           <h2 id="home-alerts-h" className="ms2-h2">
             Real FDA alerts

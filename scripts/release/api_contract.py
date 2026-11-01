@@ -881,6 +881,87 @@ class Contract:
         )
         self.clean("outside_mentions: no key, test key or prompt text", r, d)
 
+    def check_investigate(self) -> None:
+        """POST /v1/investigate (F25): keyless, patient data refused, description never echoed."""
+        path = "/v1/investigate"
+        marker = "release-check-marker-qzv"
+        desc = f"The viewer froze when a clinician saved a study, {marker}"
+        body = {"product_code": "LLZ", "description": desc}
+        r = self.post(path, self.fresh({"Origin": self.origin}), json_body=body)
+        parsed = r.json()
+        b: dict[str, Any] = parsed if isinstance(parsed, dict) else {}
+        shape_ok = False
+        if r.status == 200:
+            months = b.get("months", [])
+            first = (b.get("total_code_wide") or {}).get("url", "")
+            shape_ok = (
+                len(months) == 12
+                and b.get("notice", "").startswith("This is evidence assembled from public FDA")
+                and b.get("not_medical_advice") is True
+                and all(
+                    m.get("code_wide_url", "").startswith("https://api.fda.gov/") for m in months
+                )
+                and first.startswith("https://api.fda.gov/")
+                and "description" not in b
+                and marker not in r.text
+                and r.headers.get("cache-control", "").lower() == "no-store"
+            )
+        self.rep.ok(
+            "investigate: keyless; 200 with the full shape, no description; 502 if openFDA is down",
+            shape_ok or r.status == 502,
+            f"HTTP {r.status}",
+            group="public",
+        )
+        phi = self.post(
+            path,
+            self.fresh(),
+            json_body={"product_code": "LLZ", "description": "Mrs. Jane Smith's viewer froze"},
+        )
+        self.rep.ok(
+            "investigate: patient details refused with 422 patient_data, nothing searched",
+            phi.status == 422 and (phi.json() or {}).get("code") == "patient_data",
+            f"HTTP {phi.status}",
+            group="public",
+        )
+        bad = [
+            self.post(path, self.fresh(), json_body={"product_code": "LL", "description": desc}),
+            self.post(path, self.fresh(), json_body={"product_code": "LLZ", "description": "abc"}),
+            self.post(
+                path, self.fresh(), json_body={"product_code": "LLZ", "description": "x" * 501}
+            ),
+            self.post(path, self.fresh(), body=b"{not json"),
+        ]
+        self.rep.ok(
+            "investigate: bad code, short, long and malformed bodies are 422",
+            all(x.status == 422 for x in bad),
+            ", ".join(str(x.status) for x in bad),
+            group="public",
+        )
+        listed = self.post(
+            path,
+            self.fresh({"Origin": self.origin}),
+            json_body={"product_code": "LL", "description": desc},
+        )
+        other = self.post(path, self.fresh({"Origin": "https://evil.example"}), json_body=body)
+        self.rep.ok(
+            "investigate: CORS echoes the listed origin only",
+            listed.headers.get("access-control-allow-origin") == self.origin
+            and other.status == 403
+            and "access-control-allow-origin" not in other.headers,
+            f"listed={listed.headers.get('access-control-allow-origin')!r} "
+            f"other=HTTP {other.status}",
+            group="public",
+        )
+        paths = (self.get("/openapi.json").json() or {}).get("paths") or {}
+        op = (paths.get(path) or {}).get("post")
+        self.rep.ok(
+            "investigate: in the OpenAPI document and needs no key",
+            op is not None and "security" not in op,
+            "listed" if op is not None else "missing",
+            group="public",
+        )
+        self.clean("investigate: no key, test key or prompt text", r, phi, *bad)
+
     def check_live_routes(self) -> None:
         """Live ask, voice and label: validation, size limits, EXIF, recorded fallback."""
         a = self.fresh()
@@ -1508,6 +1589,7 @@ def main(argv: list[str] | None = None) -> int:
         c.check_live_routes,
         c.check_research,
         c.check_outside_mentions,
+        c.check_investigate,
         c.check_feedback,
         c.check_injection,
     )

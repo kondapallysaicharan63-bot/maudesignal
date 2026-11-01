@@ -264,6 +264,95 @@
         "title": "CheckWindow",
         "type": "object"
       },
+      "ClearanceItem": {
+        "additionalProperties": false,
+        "description": "One 510(k) record.",
+        "properties": {
+          "applicant": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applicant"
+          },
+          "decision_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Date"
+          },
+          "device_name": {
+            "title": "Device Name",
+            "type": "string"
+          },
+          "k_number": {
+            "title": "K Number",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "k_number",
+          "device_name",
+          "applicant",
+          "decision_date",
+          "url"
+        ],
+        "title": "ClearanceItem",
+        "type": "object"
+      },
+      "ClearancesBlock": {
+        "additionalProperties": false,
+        "description": "510(k)s of the product code (all dates), newest five decisions.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ClearanceItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Counted"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "total",
+          "items"
+        ],
+        "title": "ClearancesBlock",
+        "type": "object"
+      },
       "ConnectInfo": {
         "description": "``GET /v1/connect`` body.",
         "properties": {
@@ -367,6 +456,26 @@
         "title": "ConnectPrompt",
         "type": "object"
       },
+      "Counted": {
+        "additionalProperties": false,
+        "description": "A number with the openFDA query that shows it.",
+        "properties": {
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "value",
+          "url"
+        ],
+        "title": "Counted",
+        "type": "object"
+      },
       "DemoLimits": {
         "description": "Limits of the public demo key.",
         "properties": {
@@ -394,6 +503,34 @@
           "note"
         ],
         "title": "DemoLimits",
+        "type": "object"
+      },
+      "Dropped": {
+        "additionalProperties": false,
+        "description": "What was left out and why (counted, never shown).",
+        "properties": {
+          "quote_not_verbatim": {
+            "default": 0,
+            "title": "Quote Not Verbatim",
+            "type": "integer"
+          },
+          "quote_personal_details": {
+            "default": 0,
+            "title": "Quote Personal Details",
+            "type": "integer"
+          },
+          "quote_wording": {
+            "default": 0,
+            "title": "Quote Wording",
+            "type": "integer"
+          },
+          "record_not_confirmed": {
+            "default": 0,
+            "title": "Record Not Confirmed",
+            "type": "integer"
+          }
+        },
+        "title": "Dropped",
         "type": "object"
       },
       "ErrorBody": {
@@ -528,6 +665,258 @@
           "feedback_store"
         ],
         "title": "Health",
+        "type": "object"
+      },
+      "InvestigateAnswer": {
+        "additionalProperties": false,
+        "description": "The whole investigation. It never holds the description the person typed.",
+        "properties": {
+          "clearances": {
+            "$ref": "#/components/schemas/ClearancesBlock"
+          },
+          "device_type_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Type Name"
+          },
+          "dropped": {
+            "$ref": "#/components/schemas/Dropped"
+          },
+          "keyword_rule": {
+            "title": "Keyword Rule",
+            "type": "string"
+          },
+          "keywords": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Keywords",
+            "type": "array"
+          },
+          "lag_note": {
+            "default": "openFDA runs weeks behind real time, so the newest months are incomplete.",
+            "title": "Lag Note",
+            "type": "string"
+          },
+          "mode": {
+            "default": "live",
+            "enum": [
+              "live",
+              "recorded"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "months": {
+            "items": {
+              "$ref": "#/components/schemas/MonthRow"
+            },
+            "title": "Months",
+            "type": "array"
+          },
+          "not_medical_advice": {
+            "default": true,
+            "title": "Not Medical Advice",
+            "type": "boolean"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "notice": {
+            "default": "This is evidence assembled from public FDA data to attach to your complaint record, your MDR-reportability assessment (21 CFR 803) and your PMS board. MaudeSignal does not decide reportability, similarity, or whether a CAPA is needed; your team does.",
+            "title": "Notice",
+            "type": "string"
+          },
+          "own_maker_note": {
+            "default": "Reports filed by your own company cannot be separated here: the form does not ask which company you are, and the maker name on a MAUDE report is free text that is spelled differently from report to report. Each quote shows the maker name as filed, so your team can set its own reports aside.",
+            "title": "Own Maker Note",
+            "type": "string"
+          },
+          "product_code": {
+            "title": "Product Code",
+            "type": "string"
+          },
+          "quotes": {
+            "items": {
+              "$ref": "#/components/schemas/Quote"
+            },
+            "title": "Quotes",
+            "type": "array"
+          },
+          "recalls": {
+            "$ref": "#/components/schemas/RecallsBlock"
+          },
+          "retrieved_date": {
+            "description": "YYYY-MM-DD of the retrieval.",
+            "title": "Retrieved Date",
+            "type": "string"
+          },
+          "retrieved_utc": {
+            "description": "When openFDA was asked (ISO 8601, UTC).",
+            "title": "Retrieved Utc",
+            "type": "string"
+          },
+          "source_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Recorded runs: where the numbers come from.",
+            "title": "Source Note"
+          },
+          "sources": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SourcesBlock"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "total_code_wide": {
+            "$ref": "#/components/schemas/Counted"
+          },
+          "total_keyword_matched": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Counted"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "window_end": {
+            "description": "YYYYMMDD.",
+            "title": "Window End",
+            "type": "string"
+          },
+          "window_start": {
+            "description": "YYYYMMDD.",
+            "title": "Window Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_code",
+          "device_type_name",
+          "retrieved_utc",
+          "retrieved_date",
+          "window_start",
+          "window_end",
+          "keywords",
+          "keyword_rule",
+          "months",
+          "total_code_wide",
+          "total_keyword_matched",
+          "quotes",
+          "sources",
+          "recalls",
+          "clearances",
+          "dropped"
+        ],
+        "title": "InvestigateAnswer",
+        "type": "object"
+      },
+      "InvestigateRequest": {
+        "additionalProperties": false,
+        "description": "Body of ``POST /v1/investigate``. The description is used once and never stored.",
+        "properties": {
+          "description": {
+            "description": "The device problem in a few words. No patient details.",
+            "maxLength": 500,
+            "minLength": 5,
+            "title": "Description",
+            "type": "string"
+          },
+          "product_code": {
+            "description": "Three-letter FDA code.",
+            "pattern": "^[A-Za-z]{3}$",
+            "title": "Product Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_code",
+          "description"
+        ],
+        "title": "InvestigateRequest",
+        "type": "object"
+      },
+      "ListedReport": {
+        "additionalProperties": false,
+        "description": "A report listed without a quote.",
+        "properties": {
+          "date_received": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Received"
+          },
+          "maker": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maker"
+          },
+          "mdr_report_key": {
+            "title": "Mdr Report Key",
+            "type": "string"
+          },
+          "report_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Number"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "report_number",
+          "mdr_report_key",
+          "date_received",
+          "source",
+          "maker",
+          "url"
+        ],
+        "title": "ListedReport",
         "type": "object"
       },
       "LiveCheckData": {
@@ -1076,6 +1465,64 @@
         "title": "LookupMatch",
         "type": "object"
       },
+      "MonthRow": {
+        "additionalProperties": false,
+        "description": "One calendar month of the window.",
+        "properties": {
+          "code_wide": {
+            "description": "Reports received that month for the whole product code.",
+            "title": "Code Wide",
+            "type": "integer"
+          },
+          "code_wide_url": {
+            "title": "Code Wide Url",
+            "type": "string"
+          },
+          "keyword_matched": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Of those, reports whose narrative mentions a keyword (null: no keywords).",
+            "title": "Keyword Matched"
+          },
+          "keyword_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keyword Url"
+          },
+          "month": {
+            "description": "YYYY-MM.",
+            "title": "Month",
+            "type": "string"
+          },
+          "partial": {
+            "description": "The window starts or ends inside this month.",
+            "title": "Partial",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "month",
+          "code_wide",
+          "code_wide_url",
+          "keyword_matched",
+          "keyword_url",
+          "partial"
+        ],
+        "title": "MonthRow",
+        "type": "object"
+      },
       "Provenance": {
         "additionalProperties": false,
         "description": "Where the data came from and how fresh it is.",
@@ -1197,6 +1644,155 @@
         "title": "PublicCheckAnswer",
         "type": "object"
       },
+      "Quote": {
+        "additionalProperties": false,
+        "description": "One verbatim sentence from a report narrative.",
+        "properties": {
+          "date_received": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Received"
+          },
+          "gate": {
+            "description": "What the claim gate checked, e.g. 'verbatim match'.",
+            "title": "Gate",
+            "type": "string"
+          },
+          "keywords_in_quote": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Keywords In Quote",
+            "type": "array"
+          },
+          "maker": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Maker name as written on the report (free text).",
+            "title": "Maker"
+          },
+          "mdr_report_key": {
+            "title": "Mdr Report Key",
+            "type": "string"
+          },
+          "quote": {
+            "title": "Quote",
+            "type": "string"
+          },
+          "report_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Number"
+          },
+          "source": {
+            "description": "Who filed it: manufacturer, user facility, ... or ''.",
+            "title": "Source",
+            "type": "string"
+          },
+          "truncated": {
+            "description": "The sentence continues after the quote.",
+            "title": "Truncated",
+            "type": "boolean"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "report_number",
+          "mdr_report_key",
+          "date_received",
+          "source",
+          "maker",
+          "quote",
+          "truncated",
+          "keywords_in_quote",
+          "url",
+          "gate"
+        ],
+        "title": "Quote",
+        "type": "object"
+      },
+      "RecallItem": {
+        "additionalProperties": false,
+        "description": "One FDA recall record.",
+        "properties": {
+          "date_initiated": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Initiated"
+          },
+          "firm": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Firm"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "recall_number": {
+            "title": "Recall Number",
+            "type": "string"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "recall_number",
+          "firm",
+          "status",
+          "date_initiated",
+          "reason",
+          "url"
+        ],
+        "title": "RecallItem",
+        "type": "object"
+      },
       "RecallsAnswer": {
         "additionalProperties": false,
         "description": "``recalls``: the normal answer plus the close known codes, when the code is unknown.",
@@ -1248,6 +1844,131 @@
           "provenance"
         ],
         "title": "RecallsAnswer",
+        "type": "object"
+      },
+      "RecallsBlock": {
+        "additionalProperties": false,
+        "description": "Recalls of the product code (all dates), newest five.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RecallItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Counted"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "total",
+          "items"
+        ],
+        "title": "RecallsBlock",
+        "type": "object"
+      },
+      "SourceBucket": {
+        "additionalProperties": false,
+        "description": "Reports of one filer type in the window.",
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "normalized": {
+            "description": "manufacturer, user facility, voluntary, distributor.",
+            "title": "Normalized",
+            "type": "string"
+          },
+          "source": {
+            "description": "As openFDA wrote it, e.g. 'User facility report'.",
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "normalized",
+          "count"
+        ],
+        "title": "SourceBucket",
+        "type": "object"
+      },
+      "SourcesBlock": {
+        "additionalProperties": false,
+        "description": "Who filed the reports about the product code in the window (F12).",
+        "properties": {
+          "buckets": {
+            "items": {
+              "$ref": "#/components/schemas/SourceBucket"
+            },
+            "title": "Buckets",
+            "type": "array"
+          },
+          "buckets_url": {
+            "title": "Buckets Url",
+            "type": "string"
+          },
+          "manufacturer_count": {
+            "title": "Manufacturer Count",
+            "type": "integer"
+          },
+          "no_source_count": {
+            "description": "Reports with no filer type on them.",
+            "title": "No Source Count",
+            "type": "integer"
+          },
+          "non_manufacturer": {
+            "$ref": "#/components/schemas/Counted"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "reports": {
+            "description": "Newest non-manufacturer reports, at most 5.",
+            "items": {
+              "$ref": "#/components/schemas/ListedReport"
+            },
+            "title": "Reports",
+            "type": "array"
+          }
+        },
+        "required": [
+          "buckets",
+          "buckets_url",
+          "manufacturer_count",
+          "non_manufacturer",
+          "no_source_count",
+          "reports"
+        ],
+        "title": "SourcesBlock",
         "type": "object"
       },
       "ToolAnswer": {
@@ -1479,6 +2200,49 @@
         "tags": [
           "service"
         ]
+      }
+    },
+    "/v1/investigate": {
+      "post": {
+        "description": "Body: `product_code` (three letters) and `description` (the device problem, 5 to 500 characters, no patient details). Returns, from openFDA only: MAUDE report counts by month for the last 12 months for the whole product code and, separately, for reports whose narrative mentions the description's keywords (deterministic keywords, no model); up to 5 verbatim narrative quotes, each checked by the claim gate against its own record; the reports not filed by a manufacturer; and the recalls and 510(k)s of the code. Every number carries its openFDA query URL. The description is never stored or logged (only its SHA-256 and length reach the audit chain) and is not in the answer. Reports of the caller's own company cannot be separated (the answer says so). Needs no API key; limits per address (default 6 per hour, 20 per day); browsers may call it only from origins listed by the operator. Patient details are refused with 422 `patient_data`. Not medical advice; nothing is filed with FDA.",
+        "operationId": "investigate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvestigateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvestigateAnswer"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Input not usable, or it looks like patient details."
+          },
+          "429": {
+            "description": "Per-address limit reached; see Retry-After."
+          },
+          "502": {
+            "description": "openFDA unreachable."
+          }
+        },
+        "summary": "Investigate a complaint against public FDA data (no key, no model)",
+        "tags": [
+          "public"
+        ],
+        "x-maudesignal-read-only": true,
+        "x-maudesignal-scope": "read"
       }
     },
     "/v1/public/check_device_type": {
