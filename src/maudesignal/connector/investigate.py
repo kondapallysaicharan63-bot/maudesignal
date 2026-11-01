@@ -27,7 +27,10 @@ URL that shows it.
 from __future__ import annotations
 
 import re
+import time
 from collections import defaultdict
+from collections.abc import Callable
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass, replace
 from datetime import date, datetime, timedelta
 from typing import Any, Literal, Protocol
@@ -114,6 +117,21 @@ _SENTENCE = re.compile(r".+?(?:[.!?](?=\s|$)|$)", re.DOTALL)
 # ---------------------------------------------------------------------------
 
 
+_AFTER_NAME = re.compile(r"\bname\s*[:=]\s*\S+(?:\s+[A-Z][a-z]+)?", re.IGNORECASE)
+_CAP_PAIR = re.compile(r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\b")
+
+
+def scrub_names(text: str) -> str:
+    """Drop what looks like a person's name before keywords are taken.
+
+    The words after ``name:`` and runs of two or more Capitalised words are removed. This is a
+    second line behind the patient-data guard, so a name that slipped past it is not sent to
+    openFDA as a keyword. It can also drop a Capitalised product name; the keywords are fewer then,
+    never wrong.
+    """
+    return _CAP_PAIR.sub(" ", _AFTER_NAME.sub(" ", text))
+
+
 def extract_keywords(text: str, limit: int = MAX_KEYWORDS) -> list[str]:
     """Lowercased content words of ``text`` in order of first appearance, at most ``limit``.
 
@@ -121,7 +139,7 @@ def extract_keywords(text: str, limit: int = MAX_KEYWORDS) -> list[str]:
     not in the fixed stop-word list. No stemming, no synonyms, no model.
     """
     seen: list[str] = []
-    for word in _WORD.findall(text.lower()):
+    for word in _WORD.findall(scrub_names(text).lower()):
         if len(word) < MIN_WORD or word.isdigit() or word in _STOP_WORDS or word in seen:
             continue
         seen.append(word)
@@ -241,7 +259,7 @@ class Reply:
 class Source(Protocol):
     """Where the facts come from (tests and the recorded example inject a stored one)."""
 
-    def run(self, query: Query) -> Reply:
+    def run(self, query: Query, *, timeout_s: float | None = None) -> Reply:
         """Answer one query; an empty result is ``Reply(0, ())``; failures raise."""
         ...
 
@@ -266,13 +284,17 @@ class OpenFdaSource:
         """Close the HTTP client."""
         self._client.close()
 
-    def run(self, query: Query) -> Reply:
+    def run(self, query: Query, *, timeout_s: float | None = None) -> Reply:
         """One GET; 404 is an empty answer, 403 / 429 / 5xx raise a named error."""
         params = dict(query.params)
         if self._key:
             params["api_key"] = self._key
         try:
-            resp = self._client.get(query.endpoint, params=params)
+            resp = self._client.get(
+                query.endpoint,
+                params=params,
+                timeout=timeout_s if timeout_s is not None else httpx.USE_CLIENT_DEFAULT,
+            )
         except httpx.HTTPError as exc:  # class name only: the message can hold a URL
             raise OpenFDAAPIError(f"HTTP error contacting openFDA ({type(exc).__name__})") from exc
         if resp.status_code == 404:
@@ -459,6 +481,42 @@ class InvestigateAnswer(_M):
 class InvestigateError(MaudeSignalError):
     """The investigation cannot run (openFDA gave nothing usable for the main count)."""
 
+    def __init__(self, message: str, *, limited: bool = False) -> None:
+        """Create the error; ``limited`` is True when openFDA answered 429."""
+        super().__init__(message)
+        self.limited = limited
+
+
+class DeadlineExceededError(MaudeSignalError):
+    """The overall time limit of one investigation ran out before this call could start."""
+
+
+DEFAULT_DEADLINE_S = 40.0
+MAX_DEADLINE_S = 45.0
+CALL_TIMEOUT_S = 10.0
+
+
+class Budget:
+    """The overall time limit: every openFDA call asks it for its own timeout."""
+
+    def __init__(self, deadline_s: float, clock: Callable[[], float] = time.monotonic) -> None:
+        """Start the clock now; ``deadline_s`` is clamped to 45 seconds."""
+        self._clock = clock
+        self._end = clock() + min(max(deadline_s, 1.0), MAX_DEADLINE_S)
+        self.expired = False
+
+    def left(self) -> float:
+        """Seconds left (never negative)."""
+        return max(0.0, self._end - self._clock())
+
+    def call(self, source: Source, query: Query) -> Reply:
+        """Run one query with min(10 s, time left) as its timeout; skip it when no time is left."""
+        left = self.left()
+        if left <= 0.05:
+            self.expired = True
+            raise DeadlineExceededError("time limit")
+        return source.run(query, timeout_s=min(CALL_TIMEOUT_S, left))
+
 
 # ---------------------------------------------------------------------------
 # The run
@@ -616,6 +674,8 @@ def run_investigation(
     description: str,
     *,
     now: datetime,
+    deadline_s: float = DEFAULT_DEADLINE_S,
+    clock: Callable[[], float] = time.monotonic,
 ) -> InvestigateAnswer:
     """Assemble the investigation for one complaint.
 
@@ -624,6 +684,9 @@ def run_investigation(
         product_code: Three-letter FDA product code, upper case.
         description: The device problem as typed. Used for keywords only; not kept.
         now: The retrieval time (UTC).
+        deadline_s: Overall time limit in seconds (at most 45). After it, the calls not yet
+            started are skipped and the page says so.
+        clock: Monotonic clock (tests).
 
     Returns:
         The answer. Every number has an openFDA URL; the description is not in it.
@@ -631,6 +694,7 @@ def run_investigation(
     Raises:
         InvestigateError: openFDA could not give the code-wide monthly counts.
     """
+    budget = Budget(deadline_s, clock)
     code = product_code.upper()
     start, end = window_for(now)
     keywords = extract_keywords(description)
@@ -641,17 +705,63 @@ def run_investigation(
     months = _months(start, end)
 
     try:
-        days_all = source.run(event_query(base, count="date_received"))
+        days_all = budget.call(source, event_query(base, count="date_received"))
+    except OpenFDARateLimitError as exc:
+        raise InvestigateError("openFDA is limiting requests", limited=True) from exc
     except MaudeSignalError as exc:
         raise InvestigateError(f"openFDA could not be reached ({type(exc).__name__})") from exc
     per_month = _by_month(days_all.rows, months)
-    per_month_kw: dict[str, int] | None = None
-    if with_kw is not None:
-        try:
-            kw_days = source.run(event_query(with_kw, count="date_received"))
-            per_month_kw = _by_month(kw_days.rows, months)
-        except MaudeSignalError:
-            notes.append("The keyword-matched counts could not be read: openFDA was not reached.")
+
+    # The independent calls run side by side: keyword counts, who filed, recalls, 510(k)s, name.
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        f_kw = (
+            pool.submit(budget.call, source, event_query(with_kw, count="date_received"))
+            if with_kw is not None
+            else None
+        )
+        f_src = pool.submit(
+            budget.call, source, event_query(base, count="report_source_code.exact")
+        )
+        f_rec = pool.submit(budget.call, source, recall_query(code, MAX_LISTED))
+        f_k = pool.submit(budget.call, source, k510_query(code, MAX_LISTED))
+        f_name = pool.submit(budget.call, source, classification_query(code))
+        per_month_kw: dict[str, int] | None = None
+        if f_kw is not None:
+            try:
+                per_month_kw = _by_month(f_kw.result().rows, months)
+            except MaudeSignalError:
+                notes.append("The keyword-matched counts could not be read.")
+        total_all = Counted(value=sum(per_month.values()), url=event_query(base).url)
+        total_kw = (
+            Counted(value=sum(per_month_kw.values()), url=event_query(with_kw).url)
+            if with_kw is not None and per_month_kw is not None
+            else None
+        )
+        # Quotes and the list of non-manufacturer reports depend on the answers above.
+        f_quotes = (
+            pool.submit(
+                budget.call,
+                source,
+                event_query(with_kw, limit=CANDIDATE_REPORTS, sort="date_received:desc"),
+            )
+            if with_kw is not None and total_kw is not None and total_kw.value
+            else None
+        )
+        sources_block = _sources(budget, source, code, base, total_all.value, dropped, notes, f_src)
+        quotes: list[Quote] = []
+        if f_quotes is not None:
+            try:
+                quotes = _quotes(f_quotes.result().rows, keywords, code, dropped)
+            except MaudeSignalError:
+                notes.append("Quotes could not be read.")
+        recalls = _recalls(f_rec, code, dropped)
+        clearances = _clearances(f_k, code, dropped)
+        type_name = _device_type_name(f_name, code, total_all.value, notes)
+    if budget.expired:
+        notes.append(
+            "The time limit of this search was reached, so some sections are missing. "
+            "Run it again to fill them in."
+        )
 
     rows_out: list[MonthRow] = []
     for name, a, b in months:
@@ -666,27 +776,6 @@ def run_investigation(
                 partial=(a != date(a.year, a.month, 1)) or b < _month_end(a),
             )
         )
-    total_all = Counted(value=sum(per_month.values()), url=event_query(base).url)
-    total_kw = (
-        Counted(value=sum(per_month_kw.values()), url=event_query(with_kw).url)
-        if with_kw is not None and per_month_kw is not None
-        else None
-    )
-
-    quotes: list[Quote] = []
-    if with_kw is not None and per_month_kw is not None and total_kw and total_kw.value:
-        try:
-            found = source.run(
-                event_query(with_kw, limit=CANDIDATE_REPORTS, sort="date_received:desc")
-            )
-            quotes = _quotes(found.rows, keywords, code, dropped)
-        except MaudeSignalError:
-            notes.append("Quotes could not be read: openFDA was not reached.")
-
-    sources_block = _sources(source, code, base, total_all.value, dropped, notes)
-    recalls = _recalls(source, code, dropped)
-    clearances = _clearances(source, code, dropped)
-    type_name = _device_type_name(source, code, total_all.value, notes)
 
     stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
     return InvestigateAnswer(
@@ -715,9 +804,9 @@ def _month_end(d: date) -> date:
     return nxt - timedelta(days=1)
 
 
-def _device_type_name(source: Source, code: str, reports: int, notes: list[str]) -> str | None:
+def _device_type_name(fut: Future[Reply], code: str, reports: int, notes: list[str]) -> str | None:
     try:
-        r = source.run(classification_query(code))
+        r = fut.result()
     except MaudeSignalError:
         return None
     if not r.rows:
@@ -731,14 +820,21 @@ def _device_type_name(source: Source, code: str, reports: int, notes: list[str])
 
 
 def _sources(
-    source: Source, code: str, base: EventFilter, all_total: int, dropped: Dropped, notes: list[str]
+    budget: Budget,
+    source: Source,
+    code: str,
+    base: EventFilter,
+    all_total: int,
+    dropped: Dropped,
+    notes: list[str],
+    fut: Future[Reply],
 ) -> SourcesBlock | None:
     """Counts by filer type and the newest reports not filed by a manufacturer (F12)."""
     q = event_query(base, count="report_source_code.exact")
     try:
-        got = source.run(q)
+        got = fut.result()
     except MaudeSignalError:
-        notes.append("Who filed the reports could not be read: openFDA was not reached.")
+        notes.append("Who filed the reports could not be read.")
         return None
     buckets = [
         SourceBucket(
@@ -750,19 +846,31 @@ def _sources(
         if b.get("term")
     ]
     buckets.sort(key=lambda b: (-b.count, b.source))
-    non_terms = tuple(b.source for b in buckets if b.normalized not in ("", "manufacturer"))
+    # Only terms that really go into the query are counted, so the number and its link agree.
+    non_terms = tuple(
+        b.source
+        for b in buckets
+        if b.normalized not in ("", "manufacturer") and _SAFE_SOURCE.match(b.source)
+    )
+    skipped = [
+        b for b in buckets if b.normalized not in ("", "manufacturer") and b.source not in non_terms
+    ]
     non_n = sum(b.count for b in buckets if b.source in non_terms)
     mfr_n = sum(b.count for b in buckets if b.normalized == "manufacturer")
     total = sum(b.count for b in buckets)
     note: str | None = None
+    if skipped:
+        note = "Some filer types could not be put into a query and are not in the count above."
     listed: list[ListedReport] = []
     only = EventFilter(code, base.start, base.end, sources=non_terms)
     if non_terms and non_n:
         try:
-            rows = source.run(event_query(only, limit=MAX_LISTED, sort="date_received:desc")).rows
+            rows = budget.call(
+                source, event_query(only, limit=MAX_LISTED, sort="date_received:desc")
+            ).rows
         except MaudeSignalError:
             rows = ()
-            note = "The newest of these reports could not be listed: openFDA was not reached."
+            note = "The newest of these reports could not be listed."
         store = EvidenceStore.from_iterables(
             EvidenceRecord(report_id=str(r["mdr_report_key"]), product_code=code)
             for r in rows
@@ -783,25 +891,25 @@ def _sources(
                     url=links.report_link(key),
                 )
             )
+    # With no such filer type there is no query that returns "0 reports", so the figure is not
+    # linked; the by-filer-type query (buckets_url) is what shows it.
     return SourcesBlock(
         buckets=buckets,
         buckets_url=q.url,
         manufacturer_count=mfr_n,
-        non_manufacturer=Counted(value=non_n, url=event_query(only).url),
+        non_manufacturer=Counted(value=non_n, url=event_query(only).url if non_terms else ""),
         no_source_count=max(0, all_total - total),
         reports=listed,
         note=note,
     )
 
 
-def _recalls(source: Source, code: str, dropped: Dropped) -> RecallsBlock:
+def _recalls(fut: Future[Reply], code: str, dropped: Dropped) -> RecallsBlock:
     q = recall_query(code, MAX_LISTED)
     try:
-        got = source.run(q)
+        got = fut.result()
     except MaudeSignalError:
-        return RecallsBlock(
-            total=None, items=[], note="Recalls could not be read: openFDA was not reached."
-        )
+        return RecallsBlock(total=None, items=[], note="Recalls could not be read.")
     refs = [
         RecallRef(
             recall_number=str(r.get("product_res_number") or ""),
@@ -827,21 +935,19 @@ def _recalls(source: Source, code: str, dropped: Dropped) -> RecallsBlock:
                 firm=ref.recalling_firm,
                 status=ref.recall_status,
                 date_initiated=ref.date_initiated,
-                reason=ref.reason_for_recall[:LIST_NOTE_CHARS],
+                reason=_cut(ref.reason_for_recall, LIST_NOTE_CHARS),
                 url=links.recall_link(ref.recall_number),
             )
         )
     return RecallsBlock(total=Counted(value=got.total, url=_one_url(q)), items=items)
 
 
-def _clearances(source: Source, code: str, dropped: Dropped) -> ClearancesBlock:
+def _clearances(fut: Future[Reply], code: str, dropped: Dropped) -> ClearancesBlock:
     q = k510_query(code, MAX_LISTED)
     try:
-        got = source.run(q)
+        got = fut.result()
     except MaudeSignalError:
-        return ClearancesBlock(
-            total=None, items=[], note="510(k)s could not be read: openFDA was not reached."
-        )
+        return ClearancesBlock(total=None, items=[], note="510(k)s could not be read.")
     refs = [
         DeviceRef(
             k_number=str(r.get("k_number") or "").upper(),
@@ -869,6 +975,13 @@ def _clearances(source: Source, code: str, dropped: Dropped) -> ClearancesBlock:
             )
         )
     return ClearancesBlock(total=Counted(value=got.total, url=_one_url(q)), items=items)
+
+
+def _cut(text: str, limit: int) -> str:
+    """``text`` cut at a word boundary with an ellipsis when it is longer than ``limit``."""
+    if len(text) <= limit:
+        return text
+    return text[:limit].rsplit(" ", 1)[0].rstrip(".,;: ") + "\u2026"
 
 
 def _one_url(q: Query) -> str:

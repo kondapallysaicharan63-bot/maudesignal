@@ -553,7 +553,7 @@ export default function AppV2() {
         />
       )
     else if (route.page === 'investigate')
-      sectionBody = <InvestigatePage key={`${route.code ?? ''}|${route.device ?? ''}`} apiBase={API_BASE} code={route.code} device={route.device} />
+      sectionBody = <InvestigatePage key={`${route.code ?? ''}|${route.device ?? ''}`} apiBase={API_BASE} code={route.code} device={route.device} onCheckDevice={() => go({ page: 'workflow', id: 'check-device' })} />
     else if (route.page === 'connect') sectionBody = <ConnectPage tab={route.tab} onTab={(t, how) => tabGo({ page: 'connect', tab: t }, how)} apiBase={API_BASE} />
     else if (route.page === 'pms') sectionBody = <PmsWorkflow onRoi={() => go({ page: 'roi' })} onHome={() => go({ page: 'home' })} />
     else if (route.page === 'roi') sectionBody = <RoiPage onHome={() => go({ page: 'home' })} />

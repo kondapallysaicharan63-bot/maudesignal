@@ -8,7 +8,7 @@ per hour and per day (the address is only ever seen as a peppered hash), CORS fo
 per-call cost ledger is never touched). What differs, by design:
 
 * the problem description is **never stored or logged**. The audit entry and the log line carry
-  its SHA-256 and length only; the response is ``Cache-Control: no-store`` and is not cached;
+  a keyed hash (HMAC) of it and its length only; the response is ``Cache-Control: no-store`` and is not cached;
 * the patient-data guard of ``/v1/live/ask`` runs first (``422 patient_data``) and nothing is
   searched.
 """
@@ -16,6 +16,7 @@ per-call cost ledger is never touched). What differs, by design:
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 import logging
 import os
@@ -31,6 +32,8 @@ from starlette.concurrency import run_in_threadpool
 
 from maudesignal.common.logging import get_logger
 from maudesignal.connector.investigate import (
+    DEFAULT_DEADLINE_S,
+    MAX_DEADLINE_S,
     InvestigateAnswer,
     InvestigateError,
     InvestigateRequest,
@@ -47,6 +50,7 @@ logger = get_logger(__name__)
 
 INVESTIGATE_PATH = "/v1/investigate"
 PER_HOUR_ENV = "MAUDESIGNAL_INVESTIGATE_PER_HOUR"
+DEADLINE_ENV = "MAUDESIGNAL_INVESTIGATE_DEADLINE_S"
 PER_DAY_ENV = "MAUDESIGNAL_INVESTIGATE_PER_DAY"
 DEFAULT_PER_HOUR = 6
 DEFAULT_PER_DAY = 20
@@ -84,12 +88,18 @@ def _err(
     )
 
 
-def audit_inputs(code: str, description: str) -> dict[str, str]:
-    """What the audit chain keeps of a request: the code, and the description's hash and length."""
+def audit_inputs(code: str, description: str, pepper: bytes) -> dict[str, str]:
+    """What the audit chain keeps: the code, a keyed hash of the description and its length.
+
+    The hash is an HMAC with the server's pepper (the one the limiters use), so a short
+    description cannot be recovered by hashing guesses.
+    """
     normalised = " ".join(description.split()).lower()
     return {
         "product_code": code,
-        "description_sha256": hashlib.sha256(normalised.encode("utf-8")).hexdigest(),
+        "description_hmac": hmac.new(
+            pepper, normalised.encode("utf-8"), hashlib.sha256
+        ).hexdigest(),
         "description_length": str(len(normalised)),
         "keyword_count": str(len(extract_keywords(description))),
     }
@@ -101,6 +111,7 @@ def mount_investigate(
     state: ConnectorState,
     web_origins: frozenset[str],
     caller_id: Callable[[Request], str],
+    pepper: bytes = b"",
     source_factory: SourceFactory | None = None,
     now: Callable[[], datetime],
     env: dict[str, str] | None = None,
@@ -116,6 +127,7 @@ def mount_investigate(
         source_factory: Builds the openFDA source for one request (tests pass a fake).
         now: UTC clock.
         env: Environment (tests).
+        pepper: Secret for the keyed description hash in the audit entry.
         make_hourly: ``(name, limit, window_seconds)`` limiter factory (default: the state's).
     """
     e = env if env is not None else dict(os.environ)
@@ -124,6 +136,10 @@ def mount_investigate(
     hourly = (make_hourly or state.rate_limiter)("investigate", per_hour, 3600.0)
     daily = state.daily_counter("investigate", per_day, today=lambda: now().date())
     factory = source_factory or default_source
+    try:
+        deadline_s = min(MAX_DEADLINE_S, max(5.0, float(e.get(DEADLINE_ENV, ""))))
+    except ValueError:
+        deadline_s = DEFAULT_DEADLINE_S
 
     @app.middleware("http")
     async def _investigate_cors(
@@ -154,7 +170,13 @@ def mount_investigate(
     def run(body: InvestigateRequest) -> InvestigateAnswer:
         source = factory()
         try:
-            return run_investigation(source, body.product_code.upper(), body.description, now=now())
+            return run_investigation(
+                source,
+                body.product_code.upper(),
+                body.description,
+                now=now(),
+                deadline_s=deadline_s,
+            )
         finally:
             closer = getattr(source, "close", None)
             if callable(closer):
@@ -197,7 +219,7 @@ def mount_investigate(
             "keywords, no model); up to 5 verbatim narrative quotes, each checked by the claim "
             "gate against its own record; the reports not filed by a manufacturer; and the "
             "recalls and 510(k)s of the code. Every number carries its openFDA query URL. "
-            "The description is never stored or logged (only its SHA-256 and length reach the "
+            "The description is never stored or logged (only a keyed hash and its length reach the "
             "audit chain) and is not in the answer. Reports of the caller's own company cannot "
             "be separated (the answer says so). Needs no API key; limits per address (default "
             "6 per hour, 20 per day); browsers may call it only from origins listed by the "
@@ -240,10 +262,19 @@ def mount_investigate(
                 {"Retry-After": str(wait)},
                 retry_after_s=wait,
             )
-        inputs = audit_inputs(body.product_code.upper(), body.description)
+        inputs = audit_inputs(body.product_code.upper(), body.description, pepper)
         try:
             answer = await run_in_threadpool(run, body)
-        except InvestigateError:
+        except InvestigateError as exc:
+            if exc.limited:
+                append_audit(inputs, None, "openfda_limited")
+                logger.info("investigate_request", status=503, outcome="openfda_limited")
+                return _err(
+                    503,
+                    "openfda_limited",
+                    "openFDA is limiting requests just now. Try again in a few minutes.",
+                    {"Retry-After": "120"},
+                )
             append_audit(inputs, None, "source_unavailable")
             logger.info("investigate_request", status=502, outcome="unavailable")
             return _err(

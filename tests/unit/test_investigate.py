@@ -143,7 +143,9 @@ def test_every_number_has_an_openfda_link(stored: StoredSource) -> None:
     urls = [m.code_wide_url for m in ans.months] + [m.keyword_url or "" for m in ans.months]
     urls += [ans.total_code_wide.url, ans.recalls.total.url if ans.recalls.total else ""]
     urls += [ans.clearances.total.url if ans.clearances.total else ""]
-    urls += [ans.sources.buckets_url if ans.sources else "", ans.sources.non_manufacturer.url]  # type: ignore[union-attr]
+    urls += [ans.sources.buckets_url if ans.sources else ""]
+    assert ans.sources and ans.sources.non_manufacturer.value == 0
+    assert ans.sources.non_manufacturer.url == ""  # a zero is shown by the filer-type query
     assert all(u.startswith("https://api.fda.gov/") for u in urls)
     assert all("api_key" not in u for u in urls)
 
@@ -264,15 +266,15 @@ def test_recalls_and_clearances_come_with_links_and_totals(stored: StoredSource)
 
 
 class _Down:
-    def run(self, query: inv.Query) -> inv.Reply:
+    def run(self, query: inv.Query, *, timeout_s: float | None = None) -> inv.Reply:
         raise OpenFDAAPIError("boom")
 
 
 class _PartlyDown(StoredSource):
-    def run(self, query: inv.Query) -> inv.Reply:
+    def run(self, query: inv.Query, *, timeout_s: float | None = None) -> inv.Reply:
         if query.endpoint.endswith("recall.json"):
             raise OpenFDARateLimitError("429")
-        return super().run(query)
+        return super().run(query, timeout_s=timeout_s)
 
 
 def test_main_count_failure_raises() -> None:
@@ -381,9 +383,9 @@ def test_patient_data_is_refused_and_nothing_is_searched(
     calls: list[inv.Query] = []
 
     class Spy:
-        def run(self, query: inv.Query) -> inv.Reply:
+        def run(self, query: inv.Query, *, timeout_s: float | None = None) -> inv.Reply:
             calls.append(query)
-            return stored.run(query)
+            return stored.run(query, timeout_s=timeout_s)
 
     c = make_client(Spy(), tmp=tmp_path)
     r = c.post("/v1/investigate", json={"product_code": "LLZ", "description": description})
@@ -457,9 +459,9 @@ def test_description_is_in_no_log_audit_entry_or_stored_record(
     seen: list[str] = []
 
     class Spy:
-        def run(self, query: inv.Query) -> inv.Reply:
+        def run(self, query: inv.Query, *, timeout_s: float | None = None) -> inv.Reply:
             seen.append(query.url)
-            return stored.run(query)
+            return stored.run(query, timeout_s=timeout_s)
 
     state = ConnectorState()
     c = make_client(Spy(), tmp=tmp_path, state=state)
@@ -479,11 +481,11 @@ def test_description_is_in_no_log_audit_entry_or_stored_record(
     payload = json.loads(rows[0]["payload_json"])
     assert set(payload["inputs"]) == {
         "product_code",
-        "description_sha256",
+        "description_hmac",
         "description_length",
         "keyword_count",
     }
-    assert re.fullmatch(r"[0-9a-f]{64}", payload["inputs"]["description_sha256"])
+    assert re.fullmatch(r"[0-9a-f]{64}", payload["inputs"]["description_hmac"])
     assert payload["inputs"]["description_length"].isdigit()
     for p in tmp_path.rglob("*"):
         if p.is_file() and p.stat().st_size < 5_000_000:
@@ -503,3 +505,124 @@ def test_recorded_example_fixture_is_current() -> None:
     assert on_disk == json.loads(json.dumps(mod.build()))
     assert on_disk["answer"]["mode"] == "recorded"
     assert mod.DESCRIPTION not in json.dumps(on_disk["answer"])
+
+
+# --- review fixes ---------------------------------------------------------------------------
+
+
+def test_zero_not_filed_by_manufacturer_is_not_linked_to_a_query_that_returns_reports() -> None:
+    src = StoredSource([_event("1", "20260701", "Screen freeze on open.")])
+    ans = inv.run_investigation(src, "LLZ", "screen freeze", now=NOW)
+    s = ans.sources
+    assert s is not None and s.non_manufacturer.value == 0 and s.non_manufacturer.url == ""
+    assert s.manufacturer_count == 1 and s.buckets_url.startswith("https://api.fda.gov/")
+    assert s.reports == []
+
+
+def test_filer_type_that_cannot_go_into_a_query_is_not_counted_in_the_linked_number() -> None:
+    odd = "User facility report 2"  # a digit: not allowed in a query value
+    src = StoredSource(
+        [
+            _event("1", "20260701", "Screen freeze.", source="Voluntary report"),
+            _event("2", "20260702", "Screen freeze.", source=odd),
+        ]
+    )
+    s = inv.run_investigation(src, "LLZ", "screen freeze", now=NOW).sources
+    assert s is not None and s.non_manufacturer.value == 1
+    assert "Voluntary" in inv.event_search(
+        inv.EventFilter("LLZ", "20251101", "20261027", sources=("Voluntary report",))
+    )
+
+
+class _Slow(StoredSource):
+    """Every call takes 'seconds' of a fake clock."""
+
+    def __init__(self, base: StoredSource, clock: list[float], per_call: float) -> None:
+        super().__init__(base.events, base.recalls, base.k510)
+        self.clock, self.per_call, self.timeouts = clock, per_call, []  # type: ignore[var-annotated]
+
+    def run(self, query: inv.Query, *, timeout_s: float | None = None) -> inv.Reply:
+        self.timeouts.append(timeout_s)
+        self.clock[0] += self.per_call
+        return super().run(query, timeout_s=timeout_s)
+
+
+def test_time_limit_skips_the_calls_not_started_and_says_so(stored: StoredSource) -> None:
+    clock = [0.0]
+    slow = _Slow(stored, clock, per_call=30.0)
+    ans = inv.run_investigation(slow, "LLZ", DESC, now=NOW, deadline_s=40.0, clock=lambda: clock[0])
+    assert ans.total_code_wide.value > 0  # the first count ran
+    assert any("time limit" in n for n in ans.notes)
+    assert ans.recalls.total is None or ans.clearances.total is None or ans.sources is None
+    assert all(t is not None and t <= inv.CALL_TIMEOUT_S for t in slow.timeouts)
+
+
+def test_first_count_failing_is_the_only_hard_error() -> None:
+    clock = [100.0]
+    with pytest.raises(inv.InvestigateError):
+        inv.run_investigation(_Down(), "LLZ", DESC, now=NOW, clock=lambda: clock[0])
+
+
+def test_deadline_is_clamped_to_45_seconds() -> None:
+    b = inv.Budget(500.0, clock=lambda: 0.0)
+    assert b.left() == inv.MAX_DEADLINE_S
+
+
+class _Limited:
+    def run(self, query: inv.Query, *, timeout_s: float | None = None) -> inv.Reply:
+        raise OpenFDARateLimitError("429")
+
+
+def test_openfda_429_is_its_own_message(tmp_path: Path) -> None:
+    c = make_client(_Limited(), tmp=tmp_path)
+    r = c.post("/v1/investigate", json={"product_code": "LLZ", "description": DESC})
+    assert r.status_code == 503 and r.json()["code"] == "openfda_limited"
+    assert "limiting requests just now" in r.json()["message"]
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["Patient name: Bob Jones viewer froze", "patient Name = Bob viewer froze", "Pt name Bob"],
+)
+def test_name_labels_are_refused(client: TestClient, text: str) -> None:
+    r = client.post("/v1/investigate", json={"product_code": "LLZ", "description": text})
+    assert r.status_code == 422 and r.json()["code"] == "patient_data"
+
+
+def test_capitalised_name_pairs_never_become_keywords() -> None:
+    got = inv.extract_keywords("viewer froze for Bob Jones during saving")
+    assert "bob" not in got and "jones" not in got and "viewer" in got
+    assert "smith" not in inv.extract_keywords("name: Smith viewer froze")
+
+
+def test_audit_hash_is_keyed(stored: StoredSource) -> None:
+    from maudesignal.connector.investigate_route import audit_inputs
+
+    a = audit_inputs("LLZ", DESC, b"one")
+    b = audit_inputs("LLZ", DESC, b"two")
+    assert a["description_hmac"] != b["description_hmac"]
+    import hashlib
+
+    assert (
+        a["description_hmac"] != hashlib.sha256(" ".join(DESC.split()).lower().encode()).hexdigest()
+    )
+
+
+def test_recall_reason_is_cut_on_a_word_boundary() -> None:
+    assert inv._cut("alpha beta gamma delta", 12) == "alpha beta\u2026"
+    assert inv._cut("short", 12) == "short"
+
+
+def test_privacy_page_mentions_the_complaint_description() -> None:
+    from maudesignal.connector.legal_pages import render_privacy
+
+    html = render_privacy(
+        rate_per_min=60,
+        public_per_hour=10,
+        shared_store=False,
+        live_on=False,
+        audit_full_text=False,
+        clients_on=False,
+        research_on=False,
+    )
+    assert "up to 6 words" in html and "keyed" in html

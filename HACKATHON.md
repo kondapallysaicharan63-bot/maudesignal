@@ -116,7 +116,7 @@ tables in `app.py` show the brand written on each report.
 |---|---|
 | `monitor/sources.py`, `gate` `source_count` claim, `copilot/tools.py` `report_sources` | F12 report-source filter: openFDA `report_source_code` stored on every event (backfilled from stored raw records), counts per device type, the reports not filed by a manufacturer, a gated claim kind and 10 adversarial cases |
 | `scripts/check_source_counts.py`, `docs/hackathon/SOURCE_COUNTS.md` | Stored source counts compared with openFDA's own counts each recording run |
-| `connector/investigate.py`, `investigate_route.py`, `investigate_stored.py`, `web/src/investigate/`, `scripts/record_investigate_example.py` | F25 Investigate a complaint (reactive PMS): `POST /v1/investigate` (no key, no model, description never stored) returns similar MAUDE events by month (whole code and keyword-matched, never mixed), gate-checked verbatim quotes, reports not filed by a manufacturer, recalls and 510(k)s, every number with its openFDA query; the page `/investigate` builds the "Evidence for the complaint file" text. Recorded example (LLZ) when the build has no API address |
+| `connector/investigate.py`, `investigate_route.py`, `investigate_stored.py`, `web/src/investigate/`, `scripts/record_investigate_example.py` | F25 Investigate a complaint (reactive PMS): `POST /v1/investigate` (no key, no model, description never stored; its audit hash is keyed) returns MAUDE reports for the product code (any maker) by month (whole code and keyword-matched, never mixed), gate-checked verbatim quotes, reports not filed by a manufacturer, recalls and 510(k)s, every number with its openFDA query; the page `/investigate` builds the "Evidence for the complaint file" text. Recorded example (LLZ) when the build has no API address |
 | `docs/VALIDATION_EVIDENCE.md` | Intended use, deterministic vs model-generated, test evidence, known limits, what a manufacturer would still do |
 | `skills/safety-copilot` 1.2.2, `dossier-narrative` 1.1.1, `dossier-reviewer` 1.1.1 | "CAPA-need evidence pack" wording; the copilot never decides CAPA need, reportability or device similarity |
 
@@ -148,6 +148,14 @@ Plus this manifest, the demo video, and the submission write-up.
 | `gate/gate.py` (number words) | Counts written in words or scientific notation are detected (found by exploratory testing) |
 | `docs/hackathon/SUBMISSION_DRAFT.md` | Submission draft and video script v3 — not submitted |
 | `scripts/build_company_profiles.py`, `web/public/data/company_profiles.json`, `web/src/v2/DeviceProfile.tsx`, `web/src/v2/profiles.ts` | Feedback window: a SIMULATED lifecycle profile per simulated device at `/devices/<id>` (v2 layout only): design, V&V, regulatory, launch, post-market, activity log; seeded and re-runnable; only the product code and its stored FDA name, class and regulation number are real |
+
+### Deploy checklist note: Investigate a complaint (F25)
+
+- `OPENFDA_API_KEY` must be set on the API project. A run makes up to 8 openFDA requests; without a key the shared keyless
+  limit (240 a minute, 1,000 a day per IP) is used up fast and the page then says "openFDA is limiting requests just now".
+- `MAUDESIGNAL_WEB_ORIGINS` must list the website origin (CORS for `POST /v1/investigate`). Optional:
+  `MAUDESIGNAL_INVESTIGATE_PER_HOUR` (6), `MAUDESIGNAL_INVESTIGATE_PER_DAY` (20), `MAUDESIGNAL_INVESTIGATE_DEADLINE_S` (40, at most 45;
+  the function's `maxDuration` is 60).
 
 ## What is PRE-EXISTING (the base — NOT presented as hackathon work)
 

@@ -347,7 +347,7 @@ Request (JSON, no cookies, `credentials: "omit"`): `{product_code: 3 letters, de
 is the device problem in a few words; the page shows the banner "Do not enter patient data. Describe the device problem only."
 above the form. The server runs the `/v1/live/ask` patient-data guard first and refuses with `422 {code: "patient_data",
 message}` (nothing is searched). The description is used once to pick keywords and is never stored or logged: the audit entry
-holds only its SHA-256 and length, the response is `Cache-Control: no-store` and does not repeat it. Keywords are the
+holds only a keyed hash (HMAC) of it and its length, the response is `Cache-Control: no-store` and does not repeat it. Keywords are the
 lowercased content words of the description (at least 3 letters or digits, not a number, not in a fixed stop-word list, not the
 generic words device, problem, issue, report, event), the first 6 in order; no model, no synonyms, no stemming.
 
@@ -385,6 +385,20 @@ Answer (`InvestigateAnswer`, see `api/openapi.json`):
   `502 {code: "unavailable"}`. Other errors: `422 invalid_input`, `429 rate_limited` (per address, default 6 an hour and 20 a
   day; `Retry-After`).
 - CORS: only the origins in `MAUDESIGNAL_WEB_ORIGINS`, POST and OPTIONS, no credentials.
+
+- Review round (Nov 1): the section headings say "MAUDE reports for this product code (any maker)" and "Recalls and 510(k)s for
+  this product code" (the tool counts every maker and decides nothing about similarity). `sources.non_manufacturer.url` is `""`
+  when no filer type other than a manufacturer exists (no query returns "0 reports"); the page then writes "None of the 121
+  reports ..." and links `sources.buckets_url`, the by-filer-type query. A zero is never linked.
+- Time limit: the whole search has a deadline (`MAUDESIGNAL_INVESTIGATE_DEADLINE_S`, default 40, at most 45); each openFDA call
+  gets min(10 s, time left); keyword counts, filer types, recalls, 510(k)s and the type name run side by side. After the deadline
+  the calls not started are skipped and `notes` says so. `502` only when the first monthly count fails; `503
+  {code: "openfda_limited"}` when openFDA answers 429. The page gives up after 48 s with its own "took too long" message.
+- The patient-data guard also refuses `name:` / `patient name` labels, and keywords never come from words after `name:` or from runs
+  of two Capitalised words.
+- The audit entry holds `description_hmac` (HMAC-SHA256 with the server pepper), not a plain hash.
+- After a run the form collapses to "LLZ · your description · Edit" with jump links; the button becomes "Run again" and only Copy
+  stays filled. The recorded example shows the stored copy's own date ("stored copy of 2026-10-27"), not a search time.
 
 Without `VITE_MAUDESIGNAL_API_BASE` the page makes no request and shows the **Recorded example**: code LLZ and a sample
 description, run by `scripts/record_investigate_example.py` over the stored copy of openFDA records in the demo database

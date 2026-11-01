@@ -249,7 +249,11 @@ you use it.
 The website's outside-mentions search sends a product code and device search terms (no personal
 details; the route refuses text that looks like patient data) to public sources: GDELT, FDA
 press-release, recall, MedWatch and medical-device feeds, and MedTech Dive. No model is called
-for it.</p>
+for it.
+The website's Investigate a complaint page sends a product code and up to 6 words taken from the
+complaint description to api.fda.gov in query URLs (openFDA's own logs may hold them); the text is
+refused if it looks like patient data, is never stored here, and the audit chain keeps only a keyed
+hash of it and its length.</p>
 {research_section(research_on)}
 <h2>What is logged</h2>
 <ul>

@@ -72,7 +72,7 @@ class StoredSource:
             con.close()
         return cls(events, recalls, k510, fetched)
 
-    def run(self, query: Query) -> Reply:
+    def run(self, query: Query, *, timeout_s: float | None = None) -> Reply:
         """Answer an event, recall, 510(k) or classification query from the stored rows."""
         params = dict(query.params)
         if query.event is not None:

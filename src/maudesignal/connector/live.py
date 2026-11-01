@@ -651,7 +651,10 @@ def with_code(question: str, code: str | None) -> str:
 
 #: Extra patterns for the live routes, whose text goes to an external model: a patient title
 #: with a name ("Mrs. Jane Smith") and an age ("age 67", "67-year-old", "67 y/o").
-_PATIENT_NAME = re.compile(r"\b(?:Mr|Mrs|Ms|Miss|Mx)\.?\s+[A-Z][a-z]+")
+_PATIENT_NAME = re.compile(
+    r"\b(?:Mr|Mrs|Ms|Miss|Mx)\.?\s+[A-Z][a-z]+"
+    r"|(?i:\b(?:patient(?:'s)?|pt\.?)\s+name\b|\bname\s*[:=])",
+)
 _PATIENT_AGE = re.compile(
     r"\b(?:aged?\s*:?\s*\d{1,3}\b|\d{1,3}\s*-?\s*(?:year|yr)s?\s*-?\s*old\b|\d{1,3}\s*y/?o\b)",
     re.IGNORECASE,

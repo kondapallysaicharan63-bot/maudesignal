@@ -20,8 +20,8 @@ export function InvestigateCard({ onOpen }: { onOpen: () => void }) {
           A complaint came in?
         </h2>
         <p className="ms2-muted m-0 mt-1 text-[15px]">
-          See what FDA already holds for the device type: similar reports at other makers, recalls and 510(k)s, with every
-          number linked to its openFDA query.
+          See what FDA already holds for the device type: MAUDE reports for the product code (any maker), reports not filed by a
+          manufacturer, recalls and 510(k)s, with every number linked to its openFDA query.
         </p>
       </div>
       <button type="button" className="ms-btn ms-btn--primary" onClick={onOpen} data-testid="home-investigate-open">
