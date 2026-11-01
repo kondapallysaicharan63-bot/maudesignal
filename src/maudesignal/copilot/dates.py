@@ -220,9 +220,10 @@ def check_range(
 
     * No dates, or a range that overlaps the stored reports of the product code (of the
       whole store when the code has none): used as asked. ISO dates are normalised.
-    * Both bounds given, entirely outside the window, and neither bound's year is within the
-      years the data covers: moved to the same dates in the latest stored year when that
-      overlaps the data (``adjusted``), e.g. LLZ 20250825..20250831 -> 20260825..20260831.
+    * Both bounds given, entirely outside the window, neither bound's year within the years
+      the data covers, and both in the year before the data's latest year: moved forward by
+      exactly one year, only when the moved range lies fully inside the window
+      (``adjusted``), e.g. LLZ 20250825..20250831 -> 20260825..20260831.
     * Otherwise entirely outside (including any range in a year the data covers): ``no_data``,
       a truthful "no stored report is dated in that range; they run X to Y", never a count.
     """

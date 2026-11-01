@@ -26,7 +26,7 @@ from maudesignal.copilot.actions import draft_capa
 from maudesignal.copilot.dates import RangeCheck, check_range, check_recall_range
 from maudesignal.gate.cfr import CFR_SECTIONS
 from maudesignal.gate.evidence import EvidenceStore
-from maudesignal.gate.gate import DateShift
+from maudesignal.gate.gate import DateShift, NoData
 from maudesignal.monitor.deterioration import detect_from_database, parse_yyyymmdd
 from maudesignal.monitor.digest import digest_from_database, digest_to_dict
 from maudesignal.storage.database import Database
@@ -42,11 +42,17 @@ def _ymd(d: date) -> str:
     return d.strftime("%Y%m%d")
 
 
-def _noted(ctx: ToolContext, guard: RangeCheck) -> RangeCheck:
-    """Remember a moved range so the gate can check the sentences that repeat it."""
+def _noted(ctx: ToolContext, guard: RangeCheck, code: str | None = None) -> RangeCheck:
+    """Remember a moved range, or a range found empty (``code`` given: a report-date range).
+
+    The gate then checks the sentences that repeat the moved dates, and refuses a "0 reports"
+    claim on a range this answer's own tool call reported as holding no stored data.
+    """
     shift = guard.shift()
     if shift is not None:
         ctx.date_shifts.append(shift)
+    if guard.no_data and code:
+        ctx.no_data.append(NoData(code, guard.date_from, guard.date_to))
     return guard
 
 
@@ -75,6 +81,8 @@ class ToolContext:
     #: Date ranges a tool moved during the current answer; the agent hands them to the claim
     #: gate (see ``gate.DateShift``) and clears them for each question.
     date_shifts: list[DateShift] = field(default_factory=list)
+    #: Report-date ranges a tool found empty during the current answer (same lifetime).
+    no_data: list[NoData] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -135,7 +143,7 @@ def product_summary(
     date_to: str | None = None,
 ) -> dict[str, Any]:
     """Counts and event-type shares for one product code, plus its 510(k) device."""
-    guard = _noted(ctx, check_range(ctx.store, product_code, date_from, date_to))
+    guard = _noted(ctx, check_range(ctx.store, product_code, date_from, date_to), product_code)
     if guard.no_data:
         return {"product_code": product_code, **guard.fields()}
     date_from, date_to = guard.date_from, guard.date_to
@@ -182,7 +190,7 @@ def search_reports(
     skips that many of the newest-first matches so a caller can read past the first page.
     A range outside the stored data is moved or flagged (see ``copilot.dates.check_range``).
     """
-    guard = _noted(ctx, check_range(ctx.store, product_code, date_from, date_to))
+    guard = _noted(ctx, check_range(ctx.store, product_code, date_from, date_to), product_code)
     if guard.no_data:
         return {"reports": [], **guard.fields()}
     date_from, date_to = guard.date_from, guard.date_to
@@ -441,7 +449,7 @@ def report_sources(
     date_to: str | None = None,
 ) -> dict[str, Any]:
     """Who filed the stored reports: counts by source, plus those not filed by a manufacturer."""
-    guard = _noted(ctx, check_range(ctx.store, product_code, date_from, date_to))
+    guard = _noted(ctx, check_range(ctx.store, product_code, date_from, date_to), product_code)
     if guard.no_data:
         return {"product_code": product_code, **guard.fields()}
     date_from, date_to = guard.date_from, guard.date_to

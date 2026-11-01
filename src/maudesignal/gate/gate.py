@@ -142,6 +142,27 @@ class DateShift:
 
 
 @dataclass(frozen=True)
+class NoData:
+    """A tool answered "no stored data for that range" for this product code and range.
+
+    A later "0 reports" claim on the same (or a narrower) range of that code is then not a
+    true zero: the answer's own tool call said nothing is stored there.
+    """
+
+    product_code: str
+    date_from: str | None
+    date_to: str | None
+
+    def covers(self, code: str, date_from: str | None, date_to: str | None) -> bool:
+        """True when ``code`` and the claimed range lie inside this no-data range."""
+        if code != self.product_code:
+            return False
+        return (date_from or "00000000") >= (self.date_from or "00000000") and (
+            date_to or "99999999"
+        ) <= (self.date_to or "99999999")
+
+
+@dataclass(frozen=True)
 class ClaimVerdict:
     """Outcome for one claim."""
 
@@ -218,8 +239,29 @@ class GateReport:
 # ---------------------------------------------------------------------------
 
 
-def verify_claim(claim: Claim, store: EvidenceStore) -> ClaimVerdict:
-    """Verify one claim against the evidence store."""
+def _zero_on_no_data(claim: Claim, no_data: tuple[NoData, ...]) -> ClaimVerdict | None:
+    """A block for a zero count / source count / share on a range a tool said holds no data."""
+    zero = (isinstance(claim, CountClaim | SourceCountClaim) and claim.value == 0) or (
+        isinstance(claim, ShareClaim) and claim.value_pct == 0
+    )
+    if not zero or not isinstance(claim, CountClaim | SourceCountClaim | ShareClaim):
+        return None
+    for nd in no_data:
+        if nd.covers(claim.product_code, claim.date_from, claim.date_to):
+            return ClaimVerdict(
+                claim, "block", "no stored data for that range (a tool call said so): not 0 reports"
+            )
+    return None
+
+
+def verify_claim(
+    claim: Claim, store: EvidenceStore, no_data: tuple[NoData, ...] = ()
+) -> ClaimVerdict:
+    """Verify one claim against the evidence store (``no_data``: ranges a tool found empty)."""
+    if no_data:
+        blocked = _zero_on_no_data(claim, no_data)
+        if blocked is not None:
+            return blocked
     if isinstance(claim, QuoteClaim):
         return _verify_quote(claim, store)
     if isinstance(claim, CountClaim):
@@ -659,11 +701,19 @@ def _claim_report_ids(c: Claim) -> tuple[str, ...]:
     return ()
 
 
+_REPORT_NO = re.compile(r"\b\d{7}-\d{4}-\d{5}\b")
+
+
 def _names_year(text: str, year: str) -> bool:
-    """True when the sentence names ``year``: "2025", "'25", "FY25", "FY 2025", "CY25"."""
+    """True when the sentence names ``year``: "2025", "'25", "FY25", "FY 2025", "CY25", "20250825".
+
+    A MAUDE report number such as ``3012345-2025-00012`` carries a year but names none.
+    """
+    text = _REPORT_NO.sub(" ", text)
     short = year[2:]
     return bool(
         re.search(rf"(?<!\d){year}(?!\d)", text)
+        or re.search(rf"(?<!\d){year}(?:0[1-9]|1[0-2])[0-3]\d(?!\d)", text)
         or re.search(rf"['\u2018\u2019]{short}(?!\d)", text)
         or re.search(rf"\b(?:FY|CY)\s?{short}(?!\d)", text, re.IGNORECASE)
     )
@@ -715,12 +765,13 @@ def verify_sentence(
     claims: list[Claim],
     store: EvidenceStore,
     shifts: tuple[DateShift, ...] = (),
+    no_data: tuple[NoData, ...] = (),
 ) -> SentenceVerdict:
     """Verify one sentence: all its claims must pass and nothing checkable may be untagged.
 
     ``shifts`` are the date ranges a tool moved during this answer (see :class:`DateShift`).
     """
-    verdicts = tuple(verify_claim(c, store) for c in claims)
+    verdicts = tuple(verify_claim(c, store, no_data) for c in claims)
     ungrounded = tuple(_ungrounded_mentions(text, claims))
     issues: list[str] = []
     shown = text
@@ -734,9 +785,10 @@ def verify_answer(
     sentences: list[tuple[str, list[Claim]]],
     store: EvidenceStore,
     shifts: tuple[DateShift, ...] = (),
+    no_data: tuple[NoData, ...] = (),
 ) -> GateReport:
     """Verify a structured answer: a list of (sentence, claims) pairs."""
-    return GateReport([verify_sentence(t, cs, store, shifts) for t, cs in sentences])
+    return GateReport([verify_sentence(t, cs, store, shifts, no_data) for t, cs in sentences])
 
 
 def verify(claims: list[Claim], store: EvidenceStore) -> list[ClaimVerdict]:
