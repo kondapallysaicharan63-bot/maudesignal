@@ -47,7 +47,7 @@ QUESTIONS = (
 )
 BROWSER_QUESTION = "What problems were reported for LLZ devices in August 2026?"
 CHIP_TEXT = "Muse Spark 1.3 · Live"
-TEST_REF = "TEST-LIVE"
+TEST_REF = "TEST-9"  # matches /v1/admin/delete-test (TEST[0-9._~-]*)
 ASK_TIMEOUT_S = 75.0
 COMPOSER = "textarea[aria-label='Ask a question']"
 TOOL_CALLS = re.compile(r"(\d+) tool call")
@@ -193,6 +193,11 @@ def delete_test_entries(api: str, admin: str) -> dict[str, Any]:
     codes = (s.json() or {}).get("codes") if isinstance(s.json(), dict) else None
     left = [c for c in (codes or []) if isinstance(c, dict) and c.get("code") == TEST_REF]
     print(f"{TEST_REF} entries still listed after the delete: {len(left)}", flush=True)
+    if r.status != 200 or left:
+        print(
+            f"FAIL: TEST entries remain after the delete (HTTP {r.status}, {len(left)} left)",
+            flush=True,
+        )
     return {"delete_status": r.status, "left": len(left)}
 
 
@@ -230,7 +235,12 @@ def main(argv: list[str] | None = None) -> int:
     (args.out_dir / "live-check.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     ok_asks = all(r.get("http_status") == 200 or r.get("skipped") for r in rows)
     ok_browser = args.no_browser or bool(browser.get("chip_ok")) or "skipped" in browser
-    return 0 if ok_asks and ok_browser and snap["spent_usd"] <= args.max_usd + 1e-9 else 1  # type: ignore[operator]
+    cleaned = cleanup.get("deleted", True) is not None and (
+        "delete_status" not in cleanup or (cleanup["delete_status"] == 200 and cleanup["left"] == 0)
+    )
+    if not cleaned:
+        print("FAIL: TEST entries were not fully deleted", flush=True)
+    return 0 if cleaned and ok_asks and ok_browser and snap["spent_usd"] <= args.max_usd + 1e-9 else 1  # type: ignore[operator]
 
 
 if __name__ == "__main__":
