@@ -332,7 +332,7 @@ export function DevicesPage({
         {tab === 'apply' && (
           <div className="ms2-nodup ms2-devices">
           {!yours && !device && profiles && <DeviceTiles file={profiles} company={data.company} />}
-          <OurDevices company={data.company} deviceId={device} onDevice={openRow} onBack={() => onDevice(null)} filter={filter} onFilter={onFilter} />
+          <OurDevices company={data.company} deviceId={device} onDevice={openRow} onBack={() => onDevice(null)} filter={filter} onFilter={onFilter} v2 />
           </div>
         )}
         {tab === 'yours' && (

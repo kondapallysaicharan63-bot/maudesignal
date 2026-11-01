@@ -10,6 +10,8 @@
     { "source": "/workflow/:path*", "destination": "/index.html" },
     { "source": "/thread/:path*", "destination": "/index.html" },
     { "source": "/run/:path*", "destination": "/index.html" },
-    { "source": "/capture/:path*", "destination": "/index.html" }
+    { "source": "/capture/:path*", "destination": "/index.html" },
+    { "source": "/investigate", "destination": "/index.html" },
+    { "source": "/investigate/:path*", "destination": "/index.html" }
   ]
 }

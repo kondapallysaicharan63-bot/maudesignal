@@ -210,7 +210,9 @@ function AlertDetailsButton({ id, code, label }: { id: string; code: string; lab
   )
 }
 
-function DeviceTable({ rows, onDevice, mine = false }: { rows: CompanyDevice[]; onDevice: (id: string) => void; mine?: boolean }) {
+function DeviceTable({ rows, onDevice, mine = false, v2 = false }: { rows: CompanyDevice[]; onDevice: (id: string) => void; mine?: boolean; v2?: boolean }) {
+  // v2 only: the owner's "(simulated)" is dropped from every row (the page title says it), and the whole row opens the device.
+  const ownerOf = (o: string) => (v2 ? o.replace(/ \(simulated\)$/, '') : o)
   const th = 'sticky top-0 z-10 border-b border-rule bg-sunk px-2 py-2 font-semibold'
   const narrow = useNarrow()
   if (narrow)
@@ -219,23 +221,38 @@ function DeviceTable({ rows, onDevice, mine = false }: { rows: CompanyDevice[]; 
         {rows.map((d) => {
           const need = d.status?.label === NEEDS_REVIEW
           return (
-            <li key={d.id} className={['rounded-md border border-rule px-3 py-2', need ? 'bg-critical-soft shadow-[inset_6px_0_0_var(--critical)] pl-4' : 'bg-surface'].join(' ')} data-needs-review={need || undefined}>
+            <li key={d.id} className={['rounded-md border border-rule px-3 py-2', need ? 'bg-critical-soft shadow-[inset_6px_0_0_var(--critical)] pl-4' : 'bg-surface', v2 ? 'ms2-rowlink' : ''].join(' ')} data-needs-review={need || undefined}>
               <button
                 type="button"
                 className="block min-h-11 w-full text-left text-accent"
                 onClick={() => onDevice(d.id)}
                 aria-label={`${d.name} ${d.model}, ${d.status?.label ?? 'no status'}. Open.`}
               >
-                <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <span className={['ws-wrap min-w-0 underline', need ? 'font-semibold' : ''].join(' ')}>{d.name}</span>
-                  <span className="ms-code !text-[16px] !text-ink">{d.product_code}</span>
-                  {d.status ? <StatusChip label={d.status.label} /> : <span className="text-ink-2">none</span>}
-                </span>
-                <span className="mt-0.5 block text-[16px] text-ink-2">
-                  {d.model} · {d.owner}
-                </span>
+                {v2 ? (
+                  <>
+                    <span className={['ws-wrap block underline', need ? 'font-semibold' : ''].join(' ')}>{d.name}</span>
+                    <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="ms-code !text-[16px] !text-ink">{d.product_code}</span>
+                      {d.status ? <StatusChip label={d.status.label} /> : <span className="text-ink-2">none</span>}
+                    </span>
+                    <span className="mt-1 block text-[16px] text-ink-2">
+                      {d.model} · {ownerOf(d.owner)}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className={['ws-wrap min-w-0 underline', need ? 'font-semibold' : ''].join(' ')}>{d.name}</span>
+                      <span className="ms-code !text-[16px] !text-ink">{d.product_code}</span>
+                      {d.status ? <StatusChip label={d.status.label} /> : <span className="text-ink-2">none</span>}
+                    </span>
+                    <span className="mt-0.5 block text-[16px] text-ink-2">
+                      {d.model} · {d.owner}
+                    </span>
+                  </>
+                )}
               </button>
-              {need && <AlertDetailsButton id={`company:${d.id}`} code={d.product_code} label={`${d.name}`} />}
+              {need && !v2 && <AlertDetailsButton id={`company:${d.id}`} code={d.product_code} label={`${d.name}`} />}
             </li>
           )
         })}
@@ -255,7 +272,7 @@ function DeviceTable({ rows, onDevice, mine = false }: { rows: CompanyDevice[]; 
           {rows.map((d) => {
             const need = d.status?.label === NEEDS_REVIEW
             return (
-              <tr key={d.id} className={['border-t border-rule align-top', need ? 'bg-critical-soft' : ''].join(' ')} data-needs-review={need || undefined}>
+              <tr key={d.id} className={['border-t border-rule align-top', need ? 'bg-critical-soft' : '', v2 ? 'ms2-rowlink' : ''].join(' ')} data-needs-review={need || undefined} onClick={v2 ? () => onDevice(d.id) : undefined}>
                 <td className={['px-3 py-1', need ? 'pl-4 shadow-[inset_6px_0_0_var(--critical)]' : ''].join(' ')}>
                   <button
                     type="button"
@@ -265,14 +282,19 @@ function DeviceTable({ rows, onDevice, mine = false }: { rows: CompanyDevice[]; 
                   >
                     <span className={['underline', need ? 'font-semibold' : ''].join(' ')}>{d.name}</span>
                     <span className="block text-[16px] text-ink-2">
-                      {d.model} · {d.owner}
+                      {d.model} · {ownerOf(d.owner)}
                     </span>
                   </button>
                 </td>
                 <td className="ms-code px-2 py-3 !text-[17px]">{d.product_code}</td>
                 <td className="px-2 py-3">
                   {d.status ? <StatusChip label={d.status.label} /> : <span className="text-ink-2">none</span>}
-                  {need && <AlertDetailsButton id={`company:${d.id}`} code={d.product_code} label={`${d.name}`} />}
+                  {need && !v2 && <AlertDetailsButton id={`company:${d.id}`} code={d.product_code} label={`${d.name}`} />}
+                  {v2 && (
+                    <span className="ms2-chev" aria-hidden="true">
+                      ›
+                    </span>
+                  )}
                 </td>
               </tr>
             )
@@ -288,12 +310,15 @@ export function CompanyList({
   onDevice,
   filter = null,
   onFilter = () => undefined,
+  v2 = false,
 }: {
   company: Company
   onDevice: (id: string) => void
   /** Status the table is filtered to (null: all). Set from the chips, the left column, the bars or the bell. */
   filter?: string | null
   onFilter?: FilterFn
+  /** The v2 layout's list: whole row opens the device, no "Make it yours" bar (it has its own tab), no alert button. */
+  v2?: boolean
 }) {
   const need = company.devices.filter((d) => d.status?.label === NEEDS_REVIEW).length
   const rows = sortedDevices(company, filter)
@@ -310,7 +335,7 @@ export function CompanyList({
             : `Does this apply to us? ${company.company ?? 'A simulated company'} has ${company.devices.length} fictional devices. The real FDA reports and recalls on each product code are shown so a person can decide.`}
         </p>
       </div>
-      {api && (
+      {api && !v2 && (
         <MineBar
           open={editor}
           onOpen={() => {
@@ -331,7 +356,7 @@ export function CompanyList({
             <span className="ms-num font-semibold">{need}</span> {need === 1 ? 'device needs' : 'devices need'} review.<span className="max-sm:hidden"> Sorted by status, then by the date it was set.</span>
           </p>
           <FilterChips company={company} filter={filter} onFilter={onFilter} />
-          {rows.length === 0 ? <p className="text-ink-2">No device has this status.</p> : <DeviceTable rows={rows} onDevice={onDevice} mine={mine} />}
+          {rows.length === 0 ? <p className="text-ink-2">No device has this status.</p> : <DeviceTable rows={rows} onDevice={onDevice} mine={mine} v2={v2} />}
         </>
       )}
       {mine ? (
@@ -753,6 +778,7 @@ export function OurDevices({
   onBack,
   filter = null,
   onFilter,
+  v2 = false,
 }: {
   company: Company
   deviceId: string | null
@@ -760,6 +786,7 @@ export function OurDevices({
   onBack: () => void
   filter?: string | null
   onFilter?: FilterFn
+  v2?: boolean
 }) {
   const d = deviceId ? company.devices.find((x) => x.id === deviceId) : undefined
   if (deviceId && !d)
@@ -775,6 +802,6 @@ export function OurDevices({
   return d ? (
     <CompanyDeviceView company={company} device={d} onBack={onBack} />
   ) : (
-    <CompanyList company={company} onDevice={onDevice} filter={filter} onFilter={onFilter} />
+    <CompanyList company={company} onDevice={onDevice} filter={filter} onFilter={onFilter} v2={v2} />
   )
 }

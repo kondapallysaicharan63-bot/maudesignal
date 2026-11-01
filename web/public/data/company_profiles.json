@@ -1,7 +1,7 @@
 {
  "schema_version": "1.0",
  "simulated": true,
- "banner": "SIMULATED — sample data. A fictional company and fictional devices; only the product code, its FDA name, class and regulation number are real stored FDA data.",
+ "banner": "SIMULATED — sample data. Simulated company and devices. Only the product code, FDA name, class and regulation number are real FDA data.",
  "company": "Demo MedTech Co. (simulated)",
  "as_of": "2026-11-01",
  "seed": 20261101,
@@ -25,7 +25,7 @@
     "fda_name_source": "openFDA device classification (stored in the demo database)",
     "device_class": "2",
     "regulation_number": "892.2050",
-    "classification_source": "openFDA fields of 121 MAUDE reports stored in data/demo/maudesignal_demo.db",
+    "classification_source": "openFDA fields of 121 stored MAUDE reports",
     "classification_fetched": "2026-10-27T07:37:47Z",
     "pathway": "510(k)",
     "intended_use": "Software that displays, processes and helps trained clinicians report on medical images. It does not replace the clinician's reading. (Simulated intended use.)",
@@ -146,7 +146,7 @@
       "id": "HZ-02",
       "hazard": "Measurement shown with wrong scale",
       "harm": "Wrong size recorded",
-      "severity": "Moderate",
+      "severity": "Serious",
       "control": "Calibration shown on screen; unit test of every scale path",
       "residual": "Acceptable"
      },
@@ -338,7 +338,7 @@
     "complaints_by_month": [
      {
       "month": "2025-11",
-      "count": 3
+      "count": 2
      },
      {
       "month": "2025-12",
@@ -346,11 +346,11 @@
      },
      {
       "month": "2026-01",
-      "count": 4
+      "count": 3
      },
      {
       "month": "2026-02",
-      "count": 4
+      "count": 1
      },
      {
       "month": "2026-03",
@@ -358,68 +358,68 @@
      },
      {
       "month": "2026-04",
-      "count": 3
+      "count": 2
      },
      {
       "month": "2026-05",
-      "count": 3
+      "count": 4
      },
      {
       "month": "2026-06",
-      "count": 5
-     },
-     {
-      "month": "2026-07",
-      "count": 4
-     },
-     {
-      "month": "2026-08",
-      "count": 4
-     },
-     {
-      "month": "2026-09",
       "count": 3
      },
      {
+      "month": "2026-07",
+      "count": 3
+     },
+     {
+      "month": "2026-08",
+      "count": 2
+     },
+     {
+      "month": "2026-09",
+      "count": 4
+     },
+     {
       "month": "2026-10",
-      "count": 5
+      "count": 4
      }
     ],
     "categories": [
      {
       "name": "Software error or freeze",
-      "count": 15
+      "count": 12
      },
      {
       "name": "Login or connection",
-      "count": 9
+      "count": 7
      },
      {
       "name": "Display or measurement",
-      "count": 9
+      "count": 7
      },
      {
       "name": "Usability question",
-      "count": 6
+      "count": 5
      },
      {
       "name": "Other",
-      "count": 4
+      "count": 2
      }
     ],
     "capas": [
      {
       "id": "CAPA-SIM-0101",
       "title": "Recurring 'software error or freeze' complaints",
-      "owner": "Aoife Brennan (simulated)",
-      "opened": "2025-09-17",
-      "closed": "2026-01-18",
+      "owner": "Marisol Ortega (simulated)",
+      "opened": "2025-10-31",
+      "closed": "2026-03-08",
       "state": "closed"
      },
      {
       "id": "CAPA-SIM-0102",
       "title": "Prior images missing after a server error",
-      "owner": "Marisol Ortega (simulated)",
+      "owner": "Tobias Achterberg (simulated)",
       "opened": "2026-10-30",
       "closed": null,
       "state": "open"
@@ -438,7 +438,7 @@
       "state": "decided",
       "pre_market": false,
       "triage": {
-       "date": "2026-10-12",
+       "date": "2026-10-30",
        "planned": false,
        "owner": "Mara Ellison (simulated)",
        "role": "Post-Market Surveillance",
@@ -459,7 +459,7 @@
        ]
       },
       "board": {
-       "date": "2026-10-19",
+       "date": "2026-10-30",
        "planned": false,
        "held": true,
        "attendees": [
@@ -468,19 +468,19 @@
          "role": "Quality Engineering"
         },
         {
-         "name": "Gideon Mbeki-Hart (simulated)",
+         "name": "Priya Natarajan (simulated)",
          "role": "Regulatory Affairs"
         },
         {
-         "name": "Dr. Amara Okafor (simulated)",
+         "name": "Dr. Lukas Brandt (simulated)",
          "role": "Clinical"
         },
         {
-         "name": "Siddharth Rao (simulated)",
+         "name": "Freya Lindqvist (simulated)",
          "role": "Design Engineering"
         },
         {
-         "name": "Kofi Asante (simulated)",
+         "name": "Jonah Whitfield (simulated)",
          "role": "Post-Market Surveillance"
         }
        ],
@@ -499,7 +499,7 @@
       },
       "outcome": {
        "kind": "ntf",
-       "date": "2026-10-19",
+       "date": "2026-10-30",
        "planned": false,
        "rationale": "No matching complaint on our device in the last 12 months (simulated search). The failure described depends on a third-party server setup we do not ship.",
        "signed_by": "Aoife Brennan (simulated)",
@@ -536,7 +536,7 @@
        "after_is_expected": false,
        "risk_file": {
         "ref": "RMF-HV-200-rev3",
-        "date": "2026-10-21",
+        "date": "2026-11-01",
         "planned": false,
         "change": "Reviewed, no change"
        },
@@ -557,7 +557,7 @@
       "state": "decided",
       "pre_market": false,
       "triage": {
-       "date": "2026-10-12",
+       "date": "2026-10-30",
        "planned": false,
        "owner": "Mara Ellison (simulated)",
        "role": "Post-Market Surveillance",
@@ -578,28 +578,28 @@
        ]
       },
       "board": {
-       "date": "2026-10-26",
+       "date": "2026-10-31",
        "planned": false,
        "held": true,
        "attendees": [
         {
-         "name": "Tobias Achterberg (simulated)",
+         "name": "Aoife Brennan (simulated)",
          "role": "Quality Engineering"
         },
         {
-         "name": "Gideon Mbeki-Hart (simulated)",
+         "name": "Priya Natarajan (simulated)",
          "role": "Regulatory Affairs"
         },
         {
-         "name": "Dr. Selin Aydin (simulated)",
+         "name": "Dr. Lukas Brandt (simulated)",
          "role": "Clinical"
         },
         {
-         "name": "Freya Lindqvist (simulated)",
+         "name": "Oren Vasquez (simulated)",
          "role": "Design Engineering"
         },
         {
-         "name": "Jonah Whitfield (simulated)",
+         "name": "Kofi Asante (simulated)",
          "role": "Post-Market Surveillance"
         }
        ],
@@ -618,7 +618,8 @@
       },
       "outcome": {
        "kind": "escalation",
-       "date": "2026-10-26",
+       "follow_up_capa": null,
+       "date": "2026-10-31",
        "planned": false,
        "assessed_by": "the board",
        "mdr": {
@@ -631,9 +632,9 @@
        },
        "recall": {
         "result": "recall not warranted",
-        "rationale": "The board found no reasonable probability of serious adverse health consequences; the issue is an availability inconvenience with a workaround. Considered and ruled out; revisit if complaints rise."
+        "rationale": "The board identified no risk to health: a sign-in error delays access but changes no image or result, and the workaround is already in the labeling (simulated). Recall considered and ruled out; revisit if complaints rise."
        },
-       "signed_by": "Aoife Brennan (simulated)",
+       "signed_by": "Colette Duval (simulated)",
        "signed_role": "Regulatory Affairs",
        "tags": [
         {
@@ -675,7 +676,7 @@
        "after_is_expected": false,
        "risk_file": {
         "ref": "RMF-HV-200-rev4",
-        "date": "2026-10-28",
+        "date": "2026-10-31",
         "planned": false,
         "change": "Reviewed, no change"
        },
@@ -696,7 +697,7 @@
       "state": "decided",
       "pre_market": false,
       "triage": {
-       "date": "2026-10-12",
+       "date": "2026-10-30",
        "planned": false,
        "owner": "Mara Ellison (simulated)",
        "role": "Post-Market Surveillance",
@@ -717,16 +718,16 @@
        ]
       },
       "board": {
-       "date": "2026-10-23",
+       "date": "2026-10-30",
        "planned": false,
        "held": true,
        "attendees": [
         {
-         "name": "Tobias Achterberg (simulated)",
+         "name": "Aoife Brennan (simulated)",
          "role": "Quality Engineering"
         },
         {
-         "name": "Colette Duval (simulated)",
+         "name": "Gideon Mbeki-Hart (simulated)",
          "role": "Regulatory Affairs"
         },
         {
@@ -734,11 +735,11 @@
          "role": "Clinical"
         },
         {
-         "name": "Freya Lindqvist (simulated)",
+         "name": "Hana Kowalczyk (simulated)",
          "role": "Design Engineering"
         },
         {
-         "name": "Ines Carvalho (simulated)",
+         "name": "Kofi Asante (simulated)",
          "role": "Post-Market Surveillance"
         }
        ],
@@ -760,7 +761,7 @@
        "date": "2026-10-30",
        "planned": false,
        "capa_id": "CAPA-SIM-0102",
-       "owner": "Marisol Ortega (simulated)",
+       "owner": "Tobias Achterberg (simulated)",
        "due": "2026-12-18",
        "due_planned": true,
        "status": "Testing in progress: fix built, regression test running",
@@ -780,10 +781,10 @@
        "before": {
         "severity": 3,
         "severity_label": "Serious",
-        "probability": 4,
-        "probability_label": "Probable",
-        "score": 12,
-        "zone": "not acceptable"
+        "probability": 3,
+        "probability_label": "Occasional",
+        "score": 9,
+        "zone": "reduce as far as possible"
        },
        "after": {
         "severity": 3,
@@ -813,13 +814,55 @@
    "activity": [
     {
      "date": "2026-11-01",
+     "person": "Oren Vasquez (simulated)",
+     "role": "Design Engineering",
+     "action": "updated the risk file RMF-HV-200-rev3 after DP-DMC-01-1"
+    },
+    {
+     "date": "2026-11-01",
      "person": "Hana Kowalczyk (simulated)",
      "role": "Design Engineering",
      "action": "updated the risk file RMF-HV-200-rev2 after DP-DMC-01-3"
     },
     {
+     "date": "2026-10-31",
+     "person": "Colette Duval (simulated)",
+     "role": "Regulatory Affairs",
+     "action": "recorded the board's assessments (reportability, correction or removal, recall) for DP-DMC-01-2"
+    },
+    {
+     "date": "2026-10-31",
+     "person": "Wen Liang (simulated)",
+     "role": "Quality Engineering",
+     "action": "took part in the PMS review board for DP-DMC-01-2"
+    },
+    {
+     "date": "2026-10-31",
+     "person": "Siddharth Rao (simulated)",
+     "role": "Design Engineering",
+     "action": "updated the risk file RMF-HV-200-rev4 after DP-DMC-01-2"
+    },
+    {
+     "date": "2026-10-30",
+     "person": "Wen Liang (simulated)",
+     "role": "Quality Engineering",
+     "action": "took part in the PMS review board for DP-DMC-01-3"
+    },
+    {
      "date": "2026-10-30",
      "person": "Marisol Ortega (simulated)",
+     "role": "Quality Engineering",
+     "action": "took part in the PMS review board for DP-DMC-01-1"
+    },
+    {
+     "date": "2026-10-30",
+     "person": "Aoife Brennan (simulated)",
+     "role": "Quality Engineering",
+     "action": "signed the note to file for DP-DMC-01-1"
+    },
+    {
+     "date": "2026-10-30",
+     "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
      "action": "opened CAPA-SIM-0102"
     },
@@ -827,67 +870,25 @@
      "date": "2026-10-30",
      "person": "Mara Ellison (simulated)",
      "role": "Post-Market Surveillance",
-     "action": "set 'Does this apply to us?' to Testing in progress"
-    },
-    {
-     "date": "2026-10-28",
-     "person": "Siddharth Rao (simulated)",
-     "role": "Design Engineering",
-     "action": "updated the risk file RMF-HV-200-rev4 after DP-DMC-01-2"
-    },
-    {
-     "date": "2026-10-26",
-     "person": "Aoife Brennan (simulated)",
-     "role": "Regulatory Affairs",
-     "action": "recorded the board's assessments (reportability, correction or removal, recall) for DP-DMC-01-2"
-    },
-    {
-     "date": "2026-10-26",
-     "person": "Wen Liang (simulated)",
-     "role": "Quality Engineering",
-     "action": "took part in the PMS review board for DP-DMC-01-2"
-    },
-    {
-     "date": "2026-10-23",
-     "person": "Wen Liang (simulated)",
-     "role": "Quality Engineering",
-     "action": "took part in the PMS review board for DP-DMC-01-3"
-    },
-    {
-     "date": "2026-10-21",
-     "person": "Oren Vasquez (simulated)",
-     "role": "Design Engineering",
-     "action": "updated the risk file RMF-HV-200-rev3 after DP-DMC-01-1"
-    },
-    {
-     "date": "2026-10-19",
-     "person": "Marisol Ortega (simulated)",
-     "role": "Quality Engineering",
-     "action": "took part in the PMS review board for DP-DMC-01-1"
-    },
-    {
-     "date": "2026-10-19",
-     "person": "Aoife Brennan (simulated)",
-     "role": "Quality Engineering",
-     "action": "signed the note to file for DP-DMC-01-1"
-    },
-    {
-     "date": "2026-10-12",
-     "person": "Mara Ellison (simulated)",
-     "role": "Post-Market Surveillance",
      "action": "triaged the signal for DP-DMC-01-3"
     },
     {
-     "date": "2026-10-12",
+     "date": "2026-10-30",
      "person": "Mara Ellison (simulated)",
      "role": "Post-Market Surveillance",
      "action": "triaged the signal for DP-DMC-01-2"
     },
     {
-     "date": "2026-10-12",
+     "date": "2026-10-30",
      "person": "Mara Ellison (simulated)",
      "role": "Post-Market Surveillance",
      "action": "triaged the signal for DP-DMC-01-1"
+    },
+    {
+     "date": "2026-10-30",
+     "person": "Mara Ellison (simulated)",
+     "role": "Post-Market Surveillance",
+     "action": "set 'Does this apply to us?' to Testing in progress"
     },
     {
      "date": "2026-10-12",
@@ -908,14 +909,14 @@
      "action": "reviewed complaint trends and open CAPAs"
     },
     {
-     "date": "2026-01-18",
-     "person": "Aoife Brennan (simulated)",
+     "date": "2026-03-08",
+     "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
      "action": "closed CAPA-SIM-0101 after the effectiveness check"
     },
     {
-     "date": "2025-09-17",
-     "person": "Aoife Brennan (simulated)",
+     "date": "2025-10-31",
+     "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
      "action": "opened CAPA-SIM-0101"
     },
@@ -933,9 +934,9 @@
     },
     {
      "date": "2022-06-20",
-     "person": "Gideon Mbeki-Hart (simulated)",
+     "person": "Colette Duval (simulated)",
      "role": "Regulatory Affairs",
-     "action": "submitted the response to the AI request"
+     "action": "submitted the response to ai request"
     },
     {
      "date": "2022-04-22",
@@ -945,25 +946,25 @@
     },
     {
      "date": "2022-03-14",
-     "person": "Colette Duval (simulated)",
+     "person": "Gideon Mbeki-Hart (simulated)",
      "role": "Regulatory Affairs",
      "action": "submitted the 510(k) K-SIM-0001"
     },
     {
      "date": "2021-12-13",
-     "person": "Priya Natarajan (simulated)",
+     "person": "Colette Duval (simulated)",
      "role": "Regulatory Affairs",
      "action": "held the Pre-Sub meeting Q-SIM-0001 with FDA"
     },
     {
      "date": "2021-10-03",
-     "person": "Hana Kowalczyk (simulated)",
+     "person": "Oren Vasquez (simulated)",
      "role": "Design Engineering",
      "action": "held design review DR-3 (design transfer)"
     },
     {
      "date": "2021-07-31",
-     "person": "Tobias Achterberg (simulated)",
+     "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-222 (TP-122)"
     },
@@ -975,19 +976,19 @@
     },
     {
      "date": "2021-05-24",
-     "person": "Aoife Brennan (simulated)",
+     "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-220 (TP-120)"
     },
     {
      "date": "2021-02-22",
-     "person": "Tobias Achterberg (simulated)",
+     "person": "Aoife Brennan (simulated)",
      "role": "Quality Engineering",
      "action": "approved the risk management plan (ISO 14971)"
     },
     {
      "date": "2021-02-22",
-     "person": "Matteo Ferrante (simulated)",
+     "person": "Ruth Calloway (simulated)",
      "role": "Management review",
      "action": "approved design freeze at DR-2"
     },
@@ -999,7 +1000,7 @@
     },
     {
      "date": "2020-03-11",
-     "person": "Oren Vasquez (simulated)",
+     "person": "Freya Lindqvist (simulated)",
      "role": "Design Engineering",
      "action": "held design review DR-1 (design inputs)"
     },
@@ -1023,7 +1024,7 @@
     "fda_name_source": "openFDA device classification (stored in the demo database)",
     "device_class": "2",
     "regulation_number": "892.2050",
-    "classification_source": "openFDA fields of 121 MAUDE reports stored in data/demo/maudesignal_demo.db",
+    "classification_source": "openFDA fields of 121 stored MAUDE reports",
     "classification_fetched": "2026-10-27T07:37:47Z",
     "pathway": "510(k)",
     "intended_use": "Software that displays, processes and helps trained clinicians report on medical images. It does not replace the clinician's reading. (Simulated intended use.)",
@@ -1144,7 +1145,7 @@
       "id": "HZ-02",
       "hazard": "Measurement shown with wrong scale",
       "harm": "Wrong size recorded",
-      "severity": "Moderate",
+      "severity": "Serious",
       "control": "Calibration shown on screen; unit test of every scale path",
       "residual": "Acceptable"
      },
@@ -1340,47 +1341,47 @@
      },
      {
       "month": "2025-12",
-      "count": 4
+      "count": 2
      },
      {
       "month": "2026-01",
-      "count": 2
+      "count": 5
      },
      {
       "month": "2026-02",
-      "count": 5
+      "count": 6
      },
      {
       "month": "2026-03",
-      "count": 6
-     },
-     {
-      "month": "2026-04",
       "count": 7
      },
      {
-      "month": "2026-05",
+      "month": "2026-04",
       "count": 3
+     },
+     {
+      "month": "2026-05",
+      "count": 6
      },
      {
       "month": "2026-06",
-      "count": 6
-     },
-     {
-      "month": "2026-07",
       "count": 3
      },
      {
-      "month": "2026-08",
+      "month": "2026-07",
       "count": 6
      },
      {
-      "month": "2026-09",
+      "month": "2026-08",
       "count": 2
      },
      {
-      "month": "2026-10",
+      "month": "2026-09",
       "count": 5
+     },
+     {
+      "month": "2026-10",
+      "count": 4
      }
     ],
     "categories": [
@@ -1409,9 +1410,9 @@
      {
       "id": "CAPA-SIM-0201",
       "title": "Labeling clarification for 'usability question'",
-      "owner": "Tobias Achterberg (simulated)",
-      "opened": "2026-04-25",
-      "closed": "2026-06-11",
+      "owner": "Marisol Ortega (simulated)",
+      "opened": "2026-05-14",
+      "closed": "2026-09-18",
       "state": "closed"
      }
     ]
@@ -1428,7 +1429,7 @@
       "state": "decided",
       "pre_market": false,
       "triage": {
-       "date": "2026-10-12",
+       "date": "2026-10-30",
        "planned": false,
        "owner": "Devon Park (simulated)",
        "role": "Post-Market Surveillance",
@@ -1449,7 +1450,7 @@
        ]
       },
       "board": {
-       "date": "2026-10-21",
+       "date": "2026-10-30",
        "planned": false,
        "held": true,
        "attendees": [
@@ -1489,7 +1490,7 @@
       },
       "outcome": {
        "kind": "ntf",
-       "date": "2026-10-21",
+       "date": "2026-10-30",
        "planned": false,
        "rationale": "Already covered: our report workflow saves a local draft, so a failed finalise does not lose work (software verification, simulated).",
        "signed_by": "Aoife Brennan (simulated)",
@@ -1526,7 +1527,7 @@
        "after_is_expected": false,
        "risk_file": {
         "ref": "RMF-RD-110-rev3",
-        "date": "2026-10-23",
+        "date": "2026-11-01",
         "planned": false,
         "change": "Reviewed, no change"
        },
@@ -1547,7 +1548,7 @@
       "state": "decided",
       "pre_market": false,
       "triage": {
-       "date": "2026-10-12",
+       "date": "2026-10-30",
        "planned": false,
        "owner": "Devon Park (simulated)",
        "role": "Post-Market Surveillance",
@@ -1568,7 +1569,7 @@
        ]
       },
       "board": {
-       "date": "2026-10-21",
+       "date": "2026-10-30",
        "planned": false,
        "held": true,
        "attendees": [
@@ -1608,7 +1609,7 @@
       },
       "outcome": {
        "kind": "ntf",
-       "date": "2026-10-21",
+       "date": "2026-10-30",
        "planned": false,
        "rationale": "Already covered by the retry and error-message design and by the CAPA opened for the sister product.",
        "signed_by": "Marisol Ortega (simulated)",
@@ -1645,7 +1646,7 @@
        "after_is_expected": false,
        "risk_file": {
         "ref": "RMF-RD-110-rev4",
-        "date": "2026-10-23",
+        "date": "2026-11-01",
         "planned": false,
         "change": "Reviewed, no change"
        },
@@ -1666,7 +1667,7 @@
       "state": "decided",
       "pre_market": false,
       "triage": {
-       "date": "2026-10-12",
+       "date": "2026-10-30",
        "planned": false,
        "owner": "Devon Park (simulated)",
        "role": "Post-Market Surveillance",
@@ -1687,7 +1688,7 @@
        ]
       },
       "board": {
-       "date": "2026-10-28",
+       "date": "2026-10-30",
        "planned": false,
        "held": true,
        "attendees": [
@@ -1783,7 +1784,37 @@
      "date": "2026-11-01",
      "person": "Hana Kowalczyk (simulated)",
      "role": "Design Engineering",
+     "action": "updated the risk file RMF-RD-110-rev4 after DP-DMC-02-2"
+    },
+    {
+     "date": "2026-11-01",
+     "person": "Oren Vasquez (simulated)",
+     "role": "Design Engineering",
+     "action": "updated the risk file RMF-RD-110-rev3 after DP-DMC-02-1"
+    },
+    {
+     "date": "2026-11-01",
+     "person": "Hana Kowalczyk (simulated)",
+     "role": "Design Engineering",
      "action": "updated the risk file RMF-RD-110-rev2 after DP-DMC-02-3"
+    },
+    {
+     "date": "2026-10-30",
+     "person": "Tobias Achterberg (simulated)",
+     "role": "Quality Engineering",
+     "action": "took part in the PMS review board for DP-DMC-02-3"
+    },
+    {
+     "date": "2026-10-30",
+     "person": "Tobias Achterberg (simulated)",
+     "role": "Quality Engineering",
+     "action": "took part in the PMS review board for DP-DMC-02-2"
+    },
+    {
+     "date": "2026-10-30",
+     "person": "Marisol Ortega (simulated)",
+     "role": "Quality Engineering",
+     "action": "took part in the PMS review board for DP-DMC-02-1"
     },
     {
      "date": "2026-10-30",
@@ -1793,69 +1824,39 @@
     },
     {
      "date": "2026-10-30",
-     "person": "Devon Park (simulated)",
-     "role": "Post-Market Surveillance",
-     "action": "set 'Does this apply to us?' to Already covered"
-    },
-    {
-     "date": "2026-10-28",
-     "person": "Tobias Achterberg (simulated)",
-     "role": "Quality Engineering",
-     "action": "took part in the PMS review board for DP-DMC-02-3"
-    },
-    {
-     "date": "2026-10-23",
-     "person": "Hana Kowalczyk (simulated)",
-     "role": "Design Engineering",
-     "action": "updated the risk file RMF-RD-110-rev4 after DP-DMC-02-2"
-    },
-    {
-     "date": "2026-10-23",
-     "person": "Oren Vasquez (simulated)",
-     "role": "Design Engineering",
-     "action": "updated the risk file RMF-RD-110-rev3 after DP-DMC-02-1"
-    },
-    {
-     "date": "2026-10-21",
-     "person": "Tobias Achterberg (simulated)",
-     "role": "Quality Engineering",
-     "action": "took part in the PMS review board for DP-DMC-02-2"
-    },
-    {
-     "date": "2026-10-21",
-     "person": "Marisol Ortega (simulated)",
-     "role": "Quality Engineering",
-     "action": "took part in the PMS review board for DP-DMC-02-1"
-    },
-    {
-     "date": "2026-10-21",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
      "action": "signed the note to file for DP-DMC-02-2"
     },
     {
-     "date": "2026-10-21",
+     "date": "2026-10-30",
      "person": "Aoife Brennan (simulated)",
      "role": "Quality Engineering",
      "action": "signed the note to file for DP-DMC-02-1"
     },
     {
-     "date": "2026-10-12",
+     "date": "2026-10-30",
      "person": "Devon Park (simulated)",
      "role": "Post-Market Surveillance",
      "action": "triaged the signal for DP-DMC-02-3"
     },
     {
-     "date": "2026-10-12",
+     "date": "2026-10-30",
      "person": "Devon Park (simulated)",
      "role": "Post-Market Surveillance",
      "action": "triaged the signal for DP-DMC-02-2"
     },
     {
-     "date": "2026-10-12",
+     "date": "2026-10-30",
      "person": "Devon Park (simulated)",
      "role": "Post-Market Surveillance",
      "action": "triaged the signal for DP-DMC-02-1"
+    },
+    {
+     "date": "2026-10-30",
+     "person": "Devon Park (simulated)",
+     "role": "Post-Market Surveillance",
+     "action": "set 'Does this apply to us?' to Already covered"
     },
     {
      "date": "2026-10-12",
@@ -1870,20 +1871,20 @@
      "action": "published the monthly complaint trend for 2026-09"
     },
     {
+     "date": "2026-09-18",
+     "person": "Marisol Ortega (simulated)",
+     "role": "Quality Engineering",
+     "action": "closed CAPA-SIM-0201 after the effectiveness check"
+    },
+    {
      "date": "2026-09-03",
      "person": "Matteo Ferrante (simulated)",
      "role": "Management review",
      "action": "reviewed complaint trends and open CAPAs"
     },
     {
-     "date": "2026-06-11",
-     "person": "Tobias Achterberg (simulated)",
-     "role": "Quality Engineering",
-     "action": "closed CAPA-SIM-0201 after the effectiveness check"
-    },
-    {
-     "date": "2026-04-25",
-     "person": "Tobias Achterberg (simulated)",
+     "date": "2026-05-14",
+     "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
      "action": "opened CAPA-SIM-0201"
     },
@@ -1903,7 +1904,7 @@
      "date": "2024-08-04",
      "person": "Gideon Mbeki-Hart (simulated)",
      "role": "Regulatory Affairs",
-     "action": "submitted the response to the AI request"
+     "action": "submitted the response to ai request"
     },
     {
      "date": "2024-06-18",
@@ -1991,7 +1992,7 @@
     "fda_name_source": "device.openfda.device_name of a stored MAUDE report",
     "device_class": "2",
     "regulation_number": "892.2050",
-    "classification_source": "openFDA fields of 10 MAUDE reports stored in data/demo/maudesignal_demo.db",
+    "classification_source": "openFDA fields of 10 stored MAUDE reports",
     "classification_fetched": "2026-10-27T07:37:49Z",
     "pathway": "510(k)",
     "intended_use": "Software that displays, processes and helps trained clinicians report on medical images. It does not replace the clinician's reading. A machine-learning function marks areas for the clinician to look at; the clinician makes every finding. (Simulated intended use.)",
@@ -2100,7 +2101,7 @@
       "id": "HZ-02",
       "hazard": "Measurement shown with wrong scale",
       "harm": "Wrong size recorded",
-      "severity": "Moderate",
+      "severity": "Serious",
       "control": "Calibration shown on screen; unit test of every scale path",
       "residual": "Acceptable"
      },
@@ -2354,7 +2355,7 @@
          "role": "Post-Market Surveillance"
         }
        ],
-       "summary": "Agenda: does a pattern about patient data attached to the wrong study apply to the design under review?",
+       "summary": "Agenda: does a pattern about patient data attached to the wrong study (keyword match, unreviewed) apply to the design under review?",
        "decision": null,
        "tags": [
         {
@@ -2377,7 +2378,7 @@
      "date": "2026-10-26",
      "person": "Gideon Mbeki-Hart (simulated)",
      "role": "Regulatory Affairs",
-     "action": "submitted the response to the AI request"
+     "action": "submitted the response to ai request"
     },
     {
      "date": "2026-10-20",
@@ -2483,7 +2484,7 @@
     "fda_name_source": "openFDA device classification (stored in the demo database)",
     "device_class": "2",
     "regulation_number": "892.2070",
-    "classification_source": "openFDA fields of 5 MAUDE reports stored in data/demo/maudesignal_demo.db",
+    "classification_source": "openFDA fields of 5 stored MAUDE reports",
     "classification_fetched": "2026-10-27T07:37:50Z",
     "pathway": "510(k)",
     "intended_use": "Software that displays, processes and helps trained clinicians report on medical images. It does not replace the clinician's reading. A machine-learning function marks areas for the clinician to look at; the clinician makes every finding. (Simulated intended use.)",
@@ -2604,7 +2605,7 @@
       "id": "HZ-02",
       "hazard": "Measurement shown with wrong scale",
       "harm": "Wrong size recorded",
-      "severity": "Moderate",
+      "severity": "Serious",
       "control": "Calibration shown on screen; unit test of every scale path",
       "residual": "Acceptable"
      },
@@ -2904,15 +2905,7 @@
       "title": "Labeling clarification for 'usability question'",
       "owner": "Aoife Brennan (simulated)",
       "opened": "2026-02-26",
-      "closed": "2026-04-17",
-      "state": "closed"
-     },
-     {
-      "id": "CAPA-SIM-0402",
-      "title": "Corrective action: result disagreement on low-contrast slides",
-      "owner": "Tobias Achterberg (simulated)",
-      "opened": "2026-09-25",
-      "closed": "2026-10-27",
+      "closed": "2026-06-06",
       "state": "closed"
      }
     ]
@@ -2929,7 +2922,7 @@
       "state": "decided",
       "pre_market": false,
       "triage": {
-       "date": "2026-09-16",
+       "date": "2026-10-16",
        "planned": false,
        "owner": "Tomas Reyes (simulated)",
        "role": "Post-Market Surveillance",
@@ -2950,7 +2943,7 @@
        ]
       },
       "board": {
-       "date": "2026-09-23",
+       "date": "2026-10-21",
        "planned": false,
        "held": true,
        "attendees": [
@@ -2975,8 +2968,8 @@
          "role": "Post-Market Surveillance"
         }
        ],
-       "summary": "One complaint on our device (simulated) reported a result that disagreed with the reader's own finding. The board asked for a corrective action.",
-       "decision": "Open a CAPA.",
+       "summary": "The stored keyword-matched reports (unreviewed) are old, and no complaint on our device matches. Our device shows a result the reader must confirm before sign-off.",
+       "decision": "Note to file: no further action, rationale documented.",
        "tags": [
         {
          "tag": "ISO 13485 §8.2.2",
@@ -2989,18 +2982,16 @@
        ]
       },
       "outcome": {
-       "kind": "capa",
-       "date": "2026-09-25",
+       "kind": "ntf",
+       "date": "2026-10-21",
        "planned": false,
-       "capa_id": "CAPA-SIM-0402",
-       "owner": "Tobias Achterberg (simulated)",
-       "due": "2026-10-30",
-       "due_planned": false,
-       "status": "Closed 2026-10-27 after the effectiveness check",
+       "rationale": "No complaint on our device matches this pattern in the last 12 months (simulated search). A result is shown only for the reader to confirm, so a disagreement is caught before sign-off; the existing control is judged adequate.",
+       "signed_by": "Aoife Brennan (simulated)",
+       "signed_role": "Quality Engineering",
        "tags": [
         {
-         "tag": "ISO 13485 §8.5.2",
-         "why": "Corrective action: the cause is addressed, the action has an owner and a due date, and its effect is checked."
+         "tag": "ISO 13485 §8.2.2",
+         "why": "Complaint handling: each complaint is assessed, and a decision not to investigate is recorded with its reason."
         },
         {
          "tag": "21 CFR 820 (QMSR)",
@@ -3009,14 +3000,14 @@
        ]
       },
       "risk": {
-       "hhe_summary": "Health hazard evaluation (simulated): the worst credible harm is a delayed or repeated study; the corrective action is expected to lower the probability.",
+       "hhe_summary": "Health hazard evaluation not needed: no new hazard or harm was identified; the risk file was reviewed and left unchanged.",
        "before": {
         "severity": 4,
         "severity_label": "Critical",
-        "probability": 3,
-        "probability_label": "Occasional",
-        "score": 12,
-        "zone": "not acceptable"
+        "probability": 2,
+        "probability_label": "Remote",
+        "score": 8,
+        "zone": "reduce as far as possible"
        },
        "after": {
         "severity": 4,
@@ -3029,9 +3020,9 @@
        "after_is_expected": false,
        "risk_file": {
         "ref": "RMF-TSR-5-rev3",
-        "date": "2026-09-27",
+        "date": "2026-10-23",
         "planned": false,
-        "change": "Risk estimate updated"
+        "change": "Reviewed, no change"
        },
        "tags": [
         {
@@ -3045,10 +3036,28 @@
    },
    "activity": [
     {
-     "date": "2026-10-27",
+     "date": "2026-10-23",
+     "person": "Siddharth Rao (simulated)",
+     "role": "Design Engineering",
+     "action": "updated the risk file RMF-TSR-5-rev3 after DP-DMC-04-1"
+    },
+    {
+     "date": "2026-10-21",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
-     "action": "closed CAPA-SIM-0402 after the effectiveness check"
+     "action": "took part in the PMS review board for DP-DMC-04-1"
+    },
+    {
+     "date": "2026-10-21",
+     "person": "Aoife Brennan (simulated)",
+     "role": "Quality Engineering",
+     "action": "signed the note to file for DP-DMC-04-1"
+    },
+    {
+     "date": "2026-10-16",
+     "person": "Tomas Reyes (simulated)",
+     "role": "Post-Market Surveillance",
+     "action": "triaged the signal for DP-DMC-04-1"
     },
     {
      "date": "2026-10-14",
@@ -3058,42 +3067,18 @@
     },
     {
      "date": "2026-10-04",
-     "person": "Ines Carvalho (simulated)",
+     "person": "Kofi Asante (simulated)",
      "role": "Post-Market Surveillance",
      "action": "published the monthly complaint trend for 2026-09"
     },
     {
-     "date": "2026-09-27",
-     "person": "Siddharth Rao (simulated)",
-     "role": "Design Engineering",
-     "action": "updated the risk file RMF-TSR-5-rev3 after DP-DMC-04-1"
-    },
-    {
-     "date": "2026-09-25",
-     "person": "Tobias Achterberg (simulated)",
-     "role": "Quality Engineering",
-     "action": "opened CAPA-SIM-0402"
-    },
-    {
-     "date": "2026-09-23",
-     "person": "Marisol Ortega (simulated)",
-     "role": "Quality Engineering",
-     "action": "took part in the PMS review board for DP-DMC-04-1"
-    },
-    {
-     "date": "2026-09-16",
-     "person": "Tomas Reyes (simulated)",
-     "role": "Post-Market Surveillance",
-     "action": "triaged the signal for DP-DMC-04-1"
-    },
-    {
-     "date": "2026-09-07",
+     "date": "2026-08-26",
      "person": "Matteo Ferrante (simulated)",
      "role": "Management review",
      "action": "reviewed complaint trends and open CAPAs"
     },
     {
-     "date": "2026-04-17",
+     "date": "2026-06-06",
      "person": "Aoife Brennan (simulated)",
      "role": "Quality Engineering",
      "action": "closed CAPA-SIM-0401 after the effectiveness check"
@@ -3112,19 +3097,19 @@
     },
     {
      "date": "2025-04-06",
-     "person": "Gideon Mbeki-Hart (simulated)",
+     "person": "Priya Natarajan (simulated)",
      "role": "Regulatory Affairs",
      "action": "recorded the FDA decision: cleared"
     },
     {
      "date": "2025-02-22",
-     "person": "Priya Natarajan (simulated)",
+     "person": "Gideon Mbeki-Hart (simulated)",
      "role": "Regulatory Affairs",
-     "action": "submitted the response to the AI request"
+     "action": "submitted the response to ai request"
     },
     {
      "date": "2024-12-08",
-     "person": "Gideon Mbeki-Hart (simulated)",
+     "person": "Colette Duval (simulated)",
      "role": "Regulatory Affairs",
      "action": "logged the FDA Additional Information request"
     },
@@ -3136,13 +3121,13 @@
     },
     {
      "date": "2024-07-17",
-     "person": "Colette Duval (simulated)",
+     "person": "Gideon Mbeki-Hart (simulated)",
      "role": "Regulatory Affairs",
      "action": "held the Pre-Sub meeting Q-SIM-0004 with FDA"
     },
     {
      "date": "2024-05-24",
-     "person": "Siddharth Rao (simulated)",
+     "person": "Oren Vasquez (simulated)",
      "role": "Design Engineering",
      "action": "held design review DR-3 (design transfer)"
     },
@@ -3154,25 +3139,25 @@
     },
     {
      "date": "2024-03-08",
-     "person": "Tobias Achterberg (simulated)",
+     "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-282 (TP-182)"
     },
     {
      "date": "2024-02-28",
-     "person": "Marisol Ortega (simulated)",
+     "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-331 (TP-181R)"
     },
     {
      "date": "2024-01-29",
-     "person": "Hana Kowalczyk (simulated)",
+     "person": "Oren Vasquez (simulated)",
      "role": "Design Engineering",
      "action": "made the change for PR-181: made the marker larger, added a text label and a confirmation step"
     },
     {
      "date": "2024-01-22",
-     "person": "Tobias Achterberg (simulated)",
+     "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
      "action": "recorded a failed test in TR-281 (TP-181)"
     },
@@ -3184,7 +3169,7 @@
     },
     {
      "date": "2023-09-29",
-     "person": "Aoife Brennan (simulated)",
+     "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
      "action": "approved the risk management plan (ISO 14971)"
     },
@@ -3202,13 +3187,13 @@
     },
     {
      "date": "2022-10-09",
-     "person": "Oren Vasquez (simulated)",
+     "person": "Freya Lindqvist (simulated)",
      "role": "Design Engineering",
      "action": "held design review DR-1 (design inputs)"
     },
     {
      "date": "2022-09-25",
-     "person": "Freya Lindqvist (simulated)",
+     "person": "Oren Vasquez (simulated)",
      "role": "Design Engineering",
      "action": "opened the design history file and design plan"
     }
@@ -3226,9 +3211,9 @@
     "fda_name_source": "openFDA device classification (stored in the demo database)",
     "device_class": "2",
     "regulation_number": "892.2060",
-    "classification_source": "openFDA fields of 1 MAUDE reports stored in data/demo/maudesignal_demo.db",
+    "classification_source": "openFDA fields of 1 stored MAUDE reports",
     "classification_fetched": "2026-10-27T07:37:51Z",
-    "pathway": "De Novo",
+    "pathway": "510(k)",
     "intended_use": "Software that displays, processes and helps trained clinicians report on medical images. It does not replace the clinician's reading. A machine-learning function marks areas for the clinician to look at; the clinician makes every finding. (Simulated intended use.)",
     "stage": "on_market",
     "status_label": "On market",
@@ -3239,19 +3224,19 @@
     {
      "key": "design_start",
      "label": "Design started",
-     "date": "2021-08-17",
+     "date": "2021-09-06",
      "planned": false
     },
     {
      "key": "design_freeze",
      "label": "Design review DR-2 (design freeze)",
-     "date": "2022-07-23",
+     "date": "2022-08-20",
      "planned": false
     },
     {
      "key": "vv_start",
      "label": "V&V started",
-     "date": "2022-10-02",
+     "date": "2022-09-16",
      "planned": false
     },
     {
@@ -3263,37 +3248,37 @@
     {
      "key": "presub",
      "label": "Pre-Sub meeting",
-     "date": "2023-06-09",
+     "date": "2023-06-03",
      "planned": false
     },
     {
      "key": "submission",
-     "label": "De Novo submitted",
+     "label": "510(k) submitted",
      "date": "2023-09-11",
      "planned": false
     },
     {
      "key": "ai_request",
      "label": "FDA Additional Information request",
-     "date": "2023-10-31",
+     "date": "2023-11-02",
      "planned": false
     },
     {
      "key": "ai_response",
      "label": "Response to AI request",
-     "date": "2023-12-18",
+     "date": "2024-01-20",
      "planned": false
     },
     {
      "key": "decision",
-     "label": "Granted by FDA",
-     "date": "2024-04-04",
+     "label": "Cleared by FDA",
+     "date": "2024-03-02",
      "planned": false
     },
     {
      "key": "launch",
      "label": "Launch",
-     "date": "2024-06-09",
+     "date": "2024-04-14",
      "planned": false
     }
    ],
@@ -3347,7 +3332,7 @@
       "id": "HZ-02",
       "hazard": "Measurement shown with wrong scale",
       "harm": "Wrong size recorded",
-      "severity": "Moderate",
+      "severity": "Serious",
       "control": "Calibration shown on screen; unit test of every scale path",
       "residual": "Acceptable"
      },
@@ -3368,11 +3353,11 @@
      {
       "id": "DR-1",
       "name": "DR-1 Design input review",
-      "date": "2021-08-31",
+      "date": "2021-09-20",
       "planned": false,
       "attendees": [
        {
-        "name": "Siddharth Rao (simulated)",
+        "name": "Freya Lindqvist (simulated)",
         "role": "Design Engineering"
        },
        {
@@ -3380,7 +3365,7 @@
         "role": "Quality Engineering"
        },
        {
-        "name": "Priya Natarajan (simulated)",
+        "name": "Gideon Mbeki-Hart (simulated)",
         "role": "Regulatory Affairs"
        },
        {
@@ -3397,7 +3382,36 @@
      {
       "id": "DR-2",
       "name": "DR-2 Design output review (design freeze)",
-      "date": "2022-07-23",
+      "date": "2022-08-20",
+      "planned": false,
+      "attendees": [
+       {
+        "name": "Oren Vasquez (simulated)",
+        "role": "Design Engineering"
+       },
+       {
+        "name": "Wen Liang (simulated)",
+        "role": "Quality Engineering"
+       },
+       {
+        "name": "Colette Duval (simulated)",
+        "role": "Regulatory Affairs"
+       },
+       {
+        "name": "Dr. Selin Aydin (simulated)",
+        "role": "Clinical"
+       },
+       {
+        "name": "Freya Lindqvist (simulated)",
+        "role": "Independent reviewer"
+       }
+      ],
+      "outcome": "Approved with actions closed"
+     },
+     {
+      "id": "DR-3",
+      "name": "DR-3 Design transfer review",
+      "date": "2023-03-28",
       "planned": false,
       "attendees": [
        {
@@ -3422,35 +3436,6 @@
        }
       ],
       "outcome": "Approved with actions closed"
-     },
-     {
-      "id": "DR-3",
-      "name": "DR-3 Design transfer review",
-      "date": "2023-03-28",
-      "planned": false,
-      "attendees": [
-       {
-        "name": "Siddharth Rao (simulated)",
-        "role": "Design Engineering"
-       },
-       {
-        "name": "Marisol Ortega (simulated)",
-        "role": "Quality Engineering"
-       },
-       {
-        "name": "Gideon Mbeki-Hart (simulated)",
-        "role": "Regulatory Affairs"
-       },
-       {
-        "name": "Dr. Selin Aydin (simulated)",
-        "role": "Clinical"
-       },
-       {
-        "name": "Siddharth Rao (simulated)",
-        "role": "Independent reviewer"
-       }
-      ],
-      "outcome": "Approved with actions closed"
      }
     ]
    },
@@ -3460,7 +3445,7 @@
       "id": "TP-200",
       "title": "Software verification (unit and integration)",
       "standard": "IEC 62304",
-      "date": "2022-11-06",
+      "date": "2022-10-24",
       "planned": false,
       "result": "pass",
       "report": "TR-300"
@@ -3469,7 +3454,7 @@
       "id": "TP-201",
       "title": "Usability — summative evaluation",
       "standard": "IEC 62366-1",
-      "date": "2022-12-11",
+      "date": "2022-12-02",
       "planned": false,
       "result": "pass",
       "report": "TR-301"
@@ -3478,7 +3463,7 @@
       "id": "TP-202",
       "title": "Design validation — simulated use",
       "standard": null,
-      "date": "2023-01-16",
+      "date": "2023-01-09",
       "planned": false,
       "result": "pass",
       "report": "TR-302"
@@ -3489,55 +3474,55 @@
      "label": "Standalone performance study (SIMULATED results on a simulated test set)",
      "date": "2023-03-16",
      "planned": false,
-     "test_set": "720 cases from 3 sites not used in training (240 positive, 480 negative; simulated)",
-     "positives": 240,
-     "negatives": 480,
-     "true_positives": 214,
-     "true_negatives": 433,
-     "sensitivity": 0.892,
-     "specificity": 0.902,
+     "test_set": "630 cases from 3 sites not used in training (210 positive, 420 negative; simulated)",
+     "positives": 210,
+     "negatives": 420,
+     "true_positives": 188,
+     "true_negatives": 365,
+     "sensitivity": 0.895,
+     "specificity": 0.869,
      "reference": "Consensus of two readers (simulated)"
     }
    },
    "regulatory": {
-    "pathway": "De Novo",
-    "decision_verb": "granted",
+    "pathway": "510(k)",
+    "decision_verb": "cleared",
     "presub": {
      "number": "Q-SIM-0005",
-     "date": "2023-06-09",
+     "date": "2023-06-03",
      "planned": false,
      "feedback": [
-      "FDA discussed the De Novo evidence plan (simulated).",
+      "FDA agreed with the proposed predicate approach in principle (simulated).",
       "FDA asked for subgroup results by site and image vendor (simulated)."
      ]
     },
     "submission": {
-     "number": "DEN-SIM-0005",
+     "number": "K-SIM-0005",
      "date": "2023-09-11",
      "planned": false
     },
     "ai_request": {
-     "date": "2023-10-31",
+     "date": "2023-11-02",
      "planned": false,
      "summary": "FDA asked for more detail on the performance study test set (simulated)."
     },
     "ai_response": {
-     "date": "2023-12-18",
+     "date": "2024-01-20",
      "planned": false,
      "summary": "Regulatory Affairs sent the added analyses and updated labeling (simulated)."
     },
     "decision": {
-     "date": "2024-04-04",
+     "date": "2024-03-02",
      "planned": false,
-     "outcome": "granted"
+     "outcome": "cleared"
     },
-    "predicate": null,
-    "fda_days": 158,
-    "hold_days": 48
+    "predicate": "A legally marketed device of the same product code with the same intended use (described generically; no real K-number).",
+    "fda_days": 94,
+    "hold_days": 79
    },
    "market": {
     "launch": {
-     "date": "2024-06-09",
+     "date": "2024-04-14",
      "planned": false
     },
     "regions": [
@@ -3551,7 +3536,7 @@
     "complaints_by_month": [
      {
       "month": "2025-11",
-      "count": 6
+      "count": 8
      },
      {
       "month": "2025-12",
@@ -3563,45 +3548,45 @@
      },
      {
       "month": "2026-02",
-      "count": 7
+      "count": 6
      },
      {
       "month": "2026-03",
-      "count": 4
+      "count": 6
      },
      {
       "month": "2026-04",
-      "count": 3
+      "count": 7
      },
      {
       "month": "2026-05",
-      "count": 5
+      "count": 4
      },
      {
       "month": "2026-06",
-      "count": 6
+      "count": 3
      },
      {
       "month": "2026-07",
-      "count": 6
+      "count": 5
      },
      {
       "month": "2026-08",
-      "count": 4
+      "count": 6
      },
      {
       "month": "2026-09",
-      "count": 4
+      "count": 6
      },
      {
       "month": "2026-10",
-      "count": 6
+      "count": 4
      }
     ],
     "categories": [
      {
       "name": "Software error or freeze",
-      "count": 22
+      "count": 24
      },
      {
       "name": "Login or connection",
@@ -3613,11 +3598,11 @@
      },
      {
       "name": "Usability question",
-      "count": 9
+      "count": 10
      },
      {
       "name": "Other",
-      "count": 4
+      "count": 5
      }
     ],
     "capas": []
@@ -3635,36 +3620,36 @@
     },
     {
      "date": "2026-10-04",
-     "person": "Ines Carvalho (simulated)",
+     "person": "Kofi Asante (simulated)",
      "role": "Post-Market Surveillance",
      "action": "published the monthly complaint trend for 2026-09"
     },
     {
      "date": "2026-08-15",
-     "person": "Ruth Calloway (simulated)",
+     "person": "Matteo Ferrante (simulated)",
      "role": "Management review",
      "action": "reviewed complaint trends and open CAPAs"
     },
     {
-     "date": "2024-06-09",
+     "date": "2024-04-14",
      "person": "Matteo Ferrante (simulated)",
      "role": "Management review",
      "action": "approved the launch"
     },
     {
-     "date": "2024-04-04",
+     "date": "2024-03-02",
      "person": "Colette Duval (simulated)",
      "role": "Regulatory Affairs",
-     "action": "recorded the FDA decision: granted"
+     "action": "recorded the FDA decision: cleared"
     },
     {
-     "date": "2023-12-18",
+     "date": "2024-01-20",
      "person": "Gideon Mbeki-Hart (simulated)",
      "role": "Regulatory Affairs",
-     "action": "submitted the response to the AI request"
+     "action": "submitted the response to ai request"
     },
     {
-     "date": "2023-10-31",
+     "date": "2023-11-02",
      "person": "Colette Duval (simulated)",
      "role": "Regulatory Affairs",
      "action": "logged the FDA Additional Information request"
@@ -3673,11 +3658,11 @@
      "date": "2023-09-11",
      "person": "Gideon Mbeki-Hart (simulated)",
      "role": "Regulatory Affairs",
-     "action": "submitted the De Novo DEN-SIM-0005"
+     "action": "submitted the 510(k) K-SIM-0005"
     },
     {
-     "date": "2023-06-09",
-     "person": "Colette Duval (simulated)",
+     "date": "2023-06-03",
+     "person": "Priya Natarajan (simulated)",
      "role": "Regulatory Affairs",
      "action": "held the Pre-Sub meeting Q-SIM-0005 with FDA"
     },
@@ -3689,55 +3674,55 @@
     },
     {
      "date": "2023-03-16",
-     "person": "Dr. Amara Okafor (simulated)",
+     "person": "Dr. Lukas Brandt (simulated)",
      "role": "Clinical",
      "action": "signed the standalone performance study report (simulated results)"
     },
     {
-     "date": "2023-01-21",
-     "person": "Aoife Brennan (simulated)",
+     "date": "2023-01-14",
+     "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-302 (TP-202)"
     },
     {
-     "date": "2022-12-16",
-     "person": "Aoife Brennan (simulated)",
+     "date": "2022-12-07",
+     "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-301 (TP-201)"
     },
     {
-     "date": "2022-11-11",
-     "person": "Tobias Achterberg (simulated)",
+     "date": "2022-10-29",
+     "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-300 (TP-200)"
     },
     {
-     "date": "2022-07-23",
-     "person": "Wen Liang (simulated)",
+     "date": "2022-08-20",
+     "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
      "action": "approved the risk management plan (ISO 14971)"
     },
     {
-     "date": "2022-07-23",
-     "person": "Ruth Calloway (simulated)",
+     "date": "2022-08-20",
+     "person": "Matteo Ferrante (simulated)",
      "role": "Management review",
      "action": "approved design freeze at DR-2"
     },
     {
-     "date": "2022-07-23",
-     "person": "Dr. Lukas Brandt (simulated)",
+     "date": "2022-08-20",
+     "person": "Dr. Amara Okafor (simulated)",
      "role": "Clinical",
      "action": "reviewed the clinical hazards in the risk analysis"
     },
     {
-     "date": "2021-08-31",
-     "person": "Oren Vasquez (simulated)",
+     "date": "2021-09-20",
+     "person": "Freya Lindqvist (simulated)",
      "role": "Design Engineering",
      "action": "held design review DR-1 (design inputs)"
     },
     {
-     "date": "2021-08-17",
-     "person": "Freya Lindqvist (simulated)",
+     "date": "2021-09-06",
+     "person": "Oren Vasquez (simulated)",
      "role": "Design Engineering",
      "action": "opened the design history file and design plan"
     }
@@ -3755,7 +3740,7 @@
     "fda_name_source": "openFDA device classification (fetched)",
     "device_class": "2",
     "regulation_number": "892.1550",
-    "classification_source": "openFDA device classification, stored in demo/company/evidence/IYN.json",
+    "classification_source": "openFDA device classification",
     "classification_fetched": "2026-10-30T03:07:02Z",
     "pathway": "510(k)",
     "intended_use": "An imaging system used by trained operators to acquire images that clinicians then read. (Simulated intended use.)",
@@ -3768,25 +3753,25 @@
     {
      "key": "design_start",
      "label": "Design started",
-     "date": "2019-10-31",
+     "date": "2019-11-23",
      "planned": false
     },
     {
      "key": "design_freeze",
      "label": "Design review DR-2 (design freeze)",
-     "date": "2020-10-15",
+     "date": "2020-09-16",
      "planned": false
     },
     {
      "key": "vv_start",
      "label": "V&V started",
-     "date": "2020-11-20",
+     "date": "2020-12-06",
      "planned": false
     },
     {
      "key": "vv_end",
      "label": "V&V complete",
-     "date": "2021-06-01",
+     "date": "2021-05-23",
      "planned": false
     },
     {
@@ -3804,25 +3789,25 @@
     {
      "key": "ai_request",
      "label": "FDA Additional Information request",
-     "date": "2021-12-18",
+     "date": "2021-12-26",
      "planned": false
     },
     {
      "key": "ai_response",
      "label": "Response to AI request",
-     "date": "2022-02-27",
+     "date": "2022-02-18",
      "planned": false
     },
     {
      "key": "decision",
      "label": "Cleared by FDA",
-     "date": "2022-04-15",
+     "date": "2022-04-07",
      "planned": false
     },
     {
      "key": "launch",
      "label": "Launch",
-     "date": "2022-06-24",
+     "date": "2022-05-18",
      "planned": false
     }
    ],
@@ -3884,49 +3869,20 @@
       "id": "HZ-03",
       "hazard": "Electromagnetic interference with nearby equipment",
       "harm": "Other equipment malfunctions",
-      "severity": "Moderate",
+      "severity": "Minor",
       "control": "Shielding and filtering; tested to IEC 60601-1-2",
       "residual": "Acceptable"
      }
     ],
     "software": {
-     "iec62304_class": "B",
-     "documentation_level": "Basic"
+     "iec62304_class": "C",
+     "documentation_level": "Enhanced"
     },
     "reviews": [
      {
       "id": "DR-1",
       "name": "DR-1 Design input review",
-      "date": "2019-11-14",
-      "planned": false,
-      "attendees": [
-       {
-        "name": "Oren Vasquez (simulated)",
-        "role": "Design Engineering"
-       },
-       {
-        "name": "Marisol Ortega (simulated)",
-        "role": "Quality Engineering"
-       },
-       {
-        "name": "Gideon Mbeki-Hart (simulated)",
-        "role": "Regulatory Affairs"
-       },
-       {
-        "name": "Dr. Amara Okafor (simulated)",
-        "role": "Clinical"
-       },
-       {
-        "name": "Oren Vasquez (simulated)",
-        "role": "Independent reviewer"
-       }
-      ],
-      "outcome": "Approved with actions closed"
-     },
-     {
-      "id": "DR-2",
-      "name": "DR-2 Design output review (design freeze)",
-      "date": "2020-10-15",
+      "date": "2019-12-07",
       "planned": false,
       "attendees": [
        {
@@ -3935,6 +3891,35 @@
        },
        {
         "name": "Aoife Brennan (simulated)",
+        "role": "Quality Engineering"
+       },
+       {
+        "name": "Colette Duval (simulated)",
+        "role": "Regulatory Affairs"
+       },
+       {
+        "name": "Dr. Selin Aydin (simulated)",
+        "role": "Clinical"
+       },
+       {
+        "name": "Siddharth Rao (simulated)",
+        "role": "Independent reviewer"
+       }
+      ],
+      "outcome": "Approved with actions closed"
+     },
+     {
+      "id": "DR-2",
+      "name": "DR-2 Design output review (design freeze)",
+      "date": "2020-09-16",
+      "planned": false,
+      "attendees": [
+       {
+        "name": "Hana Kowalczyk (simulated)",
+        "role": "Design Engineering"
+       },
+       {
+        "name": "Wen Liang (simulated)",
         "role": "Quality Engineering"
        },
        {
@@ -3955,27 +3940,27 @@
      {
       "id": "DR-3",
       "name": "DR-3 Design transfer review",
-      "date": "2021-06-01",
+      "date": "2021-05-23",
       "planned": false,
       "attendees": [
        {
-        "name": "Hana Kowalczyk (simulated)",
+        "name": "Freya Lindqvist (simulated)",
         "role": "Design Engineering"
        },
        {
-        "name": "Tobias Achterberg (simulated)",
+        "name": "Marisol Ortega (simulated)",
         "role": "Quality Engineering"
        },
        {
-        "name": "Priya Natarajan (simulated)",
+        "name": "Gideon Mbeki-Hart (simulated)",
         "role": "Regulatory Affairs"
        },
        {
-        "name": "Dr. Selin Aydin (simulated)",
+        "name": "Dr. Amara Okafor (simulated)",
         "role": "Clinical"
        },
        {
-        "name": "Siddharth Rao (simulated)",
+        "name": "Freya Lindqvist (simulated)",
         "role": "Independent reviewer"
        }
       ],
@@ -3989,7 +3974,7 @@
       "id": "TP-220",
       "title": "Electrical safety",
       "standard": "IEC 60601-1",
-      "date": "2020-12-17",
+      "date": "2020-12-30",
       "planned": false,
       "result": "pass",
       "report": "TR-320"
@@ -3998,7 +3983,7 @@
       "id": "TP-221",
       "title": "Electromagnetic compatibility (EMC)",
       "standard": "IEC 60601-1-2",
-      "date": "2021-01-14",
+      "date": "2021-01-23",
       "planned": false,
       "result": "fail",
       "report": "TR-321"
@@ -4016,7 +4001,7 @@
       "id": "TP-222",
       "title": "Software verification (unit and integration)",
       "standard": "IEC 62304",
-      "date": "2021-02-10",
+      "date": "2021-02-16",
       "planned": false,
       "result": "pass",
       "report": "TR-322"
@@ -4025,7 +4010,7 @@
       "id": "TP-223",
       "title": "Usability — summative evaluation",
       "standard": "IEC 62366-1",
-      "date": "2021-03-10",
+      "date": "2021-03-12",
       "planned": false,
       "result": "pass",
       "report": "TR-323"
@@ -4034,7 +4019,7 @@
       "id": "TP-224",
       "title": "Design validation — simulated use",
       "standard": null,
-      "date": "2021-04-06",
+      "date": "2021-04-05",
       "planned": false,
       "result": "pass",
       "report": "TR-324"
@@ -4044,7 +4029,7 @@
      {
       "id": "PR-221",
       "found_in": "TP-221",
-      "date": "2021-01-14",
+      "date": "2021-01-23",
       "planned": false,
       "description": "Radiated emissions exceeded the limit at one frequency band during EMC testing.",
       "change": "Added a ferrite on the display cable and a shielding gasket on the rear panel (design change DC-21).",
@@ -4073,123 +4058,123 @@
      "planned": false
     },
     "ai_request": {
-     "date": "2021-12-18",
+     "date": "2021-12-26",
      "planned": false,
      "summary": "FDA asked for more detail on software anomaly assessment and labeling (simulated)."
     },
     "ai_response": {
-     "date": "2022-02-27",
+     "date": "2022-02-18",
      "planned": false,
      "summary": "Regulatory Affairs sent the added analyses and updated labeling (simulated)."
     },
     "decision": {
-     "date": "2022-04-15",
+     "date": "2022-04-07",
      "planned": false,
      "outcome": "cleared"
     },
     "predicate": "A legally marketed device of the same product code with the same intended use (described generically; no real K-number).",
-    "fda_days": 87,
-    "hold_days": 71
+    "fda_days": 96,
+    "hold_days": 54
    },
    "market": {
     "launch": {
-     "date": "2022-06-24",
+     "date": "2022-05-18",
      "planned": false
     },
     "regions": [
      "United States"
     ],
-    "sites": 150,
-    "units_shipped": 300,
+    "sites": 100,
+    "units_shipped": 200,
     "udi_di": "SIM-UDI-BS-600-006"
    },
    "postmarket": {
     "complaints_by_month": [
      {
       "month": "2025-11",
-      "count": 5
+      "count": 3
      },
      {
       "month": "2025-12",
-      "count": 4
+      "count": 8
      },
      {
       "month": "2026-01",
-      "count": 3
+      "count": 7
      },
      {
       "month": "2026-02",
-      "count": 1
+      "count": 6
      },
      {
       "month": "2026-03",
-      "count": 1
+      "count": 4
      },
      {
       "month": "2026-04",
-      "count": 2
+      "count": 4
      },
      {
       "month": "2026-05",
-      "count": 4
+      "count": 5
      },
      {
       "month": "2026-06",
-      "count": 1
+      "count": 7
      },
      {
       "month": "2026-07",
-      "count": 3
+      "count": 4
      },
      {
       "month": "2026-08",
-      "count": 0
+      "count": 6
      },
      {
       "month": "2026-09",
-      "count": 0
+      "count": 3
      },
      {
       "month": "2026-10",
-      "count": 4
+      "count": 3
      }
     ],
     "categories": [
      {
       "name": "Image quality",
-      "count": 10
+      "count": 21
      },
      {
       "name": "Hardware fault",
-      "count": 6
+      "count": 13
      },
      {
       "name": "Software error",
-      "count": 6
+      "count": 13
      },
      {
       "name": "Usability question",
-      "count": 4
+      "count": 9
      },
      {
       "name": "Other",
-      "count": 2
+      "count": 4
      }
     ],
     "capas": [
      {
       "id": "CAPA-SIM-0601",
       "title": "Recurring 'image quality' complaints",
-      "owner": "Aoife Brennan (simulated)",
-      "opened": "2025-12-31",
-      "closed": "2026-05-27",
+      "owner": "Marisol Ortega (simulated)",
+      "opened": "2025-10-01",
+      "closed": "2026-01-27",
       "state": "closed"
      },
      {
       "id": "CAPA-SIM-0602",
-      "title": "Trend review: 'hardware fault' above monthly limit",
+      "title": "Corrective action for system freeze during guided procedures",
       "owner": "Marisol Ortega (simulated)",
-      "opened": "2026-08-27",
+      "opened": "2026-10-30",
       "closed": null,
       "state": "open"
      }
@@ -4253,7 +4238,7 @@
          "role": "Post-Market Surveillance"
         }
        ],
-       "summary": "Agenda: images or data failing to load or transfer; two complaints on our device since the MDR assessment (simulated).",
+       "summary": "Agenda: images or data failing to load or transfer (keyword match, unreviewed); two complaints on our device since the MDR assessment (simulated).",
        "decision": null,
        "tags": [
         {
@@ -4278,7 +4263,7 @@
       "state": "decided",
       "pre_market": false,
       "triage": {
-       "date": "2026-09-03",
+       "date": "2026-10-30",
        "planned": false,
        "owner": "Noor Haddad (simulated)",
        "role": "Post-Market Surveillance",
@@ -4299,7 +4284,7 @@
        ]
       },
       "board": {
-       "date": "2026-09-10",
+       "date": "2026-10-30",
        "planned": false,
        "held": true,
        "attendees": [
@@ -4324,7 +4309,7 @@
          "role": "Post-Market Surveillance"
         }
        ],
-       "summary": "Complaint COMP-SIM-0309 (simulated): the system froze during a time-critical guided procedure; the procedure was finished on another system after a delay. No injury was reported.",
+       "summary": "The stored FDA pattern (keyword match, unreviewed) matched our own complaint COMP-SIM-0309 (simulated): the system froze during a time-critical guided procedure; the procedure was finished on another system after a delay. No injury was reported. An ad hoc board was called the day the signal was triaged.",
        "decision": "Escalation assessment recorded (reportability, correction or removal, recall).",
        "tags": [
         {
@@ -4339,27 +4324,34 @@
       },
       "outcome": {
        "kind": "escalation",
-       "date": "2026-09-10",
+       "follow_up_capa": {
+        "capa_id": "CAPA-SIM-0602",
+        "owner": "Marisol Ortega (simulated)",
+        "due": "2026-12-18",
+        "due_planned": true,
+        "status": "Root cause analysis in progress; software update planned"
+       },
+       "date": "2026-10-30",
        "planned": false,
        "assessed_by": "the board",
        "mdr": {
         "result": "reportable",
         "rationale": "No injury occurred, but the board assessed that a freeze in a time-critical procedure would be likely to cause or contribute to serious injury if it recurred, so it assessed the event as reportable.",
-        "receipt_date": "2026-09-02",
-        "due_date": "2026-10-02",
-        "submitted_date": "2026-09-24",
-        "day_of_30": 22,
-        "clock_note": "The 30 calendar days of 21 CFR 803 run from the day the company became aware of the event, here its receipt of complaint COMP-SIM-0309 (simulated) on 2 Sep 2026. They do not run from the date any report appears in FDA's database. Regulatory Affairs recorded the submission as made on a simulated date inside the 30 days; MaudeSignal files nothing."
+        "receipt_date": "2026-10-27",
+        "due_date": "2026-11-26",
+        "submitted_date": "2026-10-31",
+        "day_of_30": 4,
+        "clock_note": "The 30 calendar days of 21 CFR 803 run from the day the company became aware of the event, here its receipt of complaint COMP-SIM-0309 (simulated) on 27 Oct 2026. They do not run from the date any report appears in FDA's database. Regulatory Affairs recorded the submission as made on a simulated date inside the 30 days; MaudeSignal files nothing."
        },
        "correction_removal": {
-        "result": "not reportable",
-        "rationale": "A software update is planned in the normal release cycle; it is not a removal or correction made to reduce a risk to health."
+        "result": "reportable",
+        "rationale": "The software update is made to reduce a risk to health from freezes in time-critical procedures, so the board assessed it as a correction and as reportable: the report is due within 10 working days of initiating the correction (simulated)."
        },
        "recall": {
-        "result": "recall not warranted",
-        "rationale": "One event, the system recovers on restart, and the update is already scheduled. Considered and ruled out as not warranted."
+        "result": "correction handled as a recall action; classification left to FDA",
+        "rationale": "The board handled the correction as a recall action and left the classification to FDA (simulated). The board did not rule a recall out, and no recall classification is claimed here."
        },
-       "signed_by": "Marisol Ortega (simulated)",
+       "signed_by": "Colette Duval (simulated)",
        "signed_role": "Regulatory Affairs",
        "tags": [
         {
@@ -4381,7 +4373,7 @@
        ]
       },
       "risk": {
-       "hhe_summary": "Health hazard evaluation (simulated): a freeze during a time-critical procedure can delay care; the planned update lowers the probability of recurrence.",
+       "hhe_summary": "Health hazard evaluation (simulated): a freeze during a time-critical procedure can delay care; the corrective action and software update are expected to lower the probability of recurrence.",
        "before": {
         "severity": 4,
         "severity_label": "Critical",
@@ -4401,7 +4393,7 @@
        "after_is_expected": true,
        "risk_file": {
         "ref": "RMF-BS-600-rev3",
-        "date": "2026-09-12",
+        "date": "2026-11-01",
         "planned": false,
         "change": "Risk estimate updated"
        },
@@ -4422,7 +4414,7 @@
       "state": "decided",
       "pre_market": false,
       "triage": {
-       "date": "2026-09-03",
+       "date": "2026-10-30",
        "planned": false,
        "owner": "Noor Haddad (simulated)",
        "role": "Post-Market Surveillance",
@@ -4443,7 +4435,7 @@
        ]
       },
       "board": {
-       "date": "2026-09-10",
+       "date": "2026-10-30",
        "planned": false,
        "held": true,
        "attendees": [
@@ -4468,7 +4460,7 @@
          "role": "Post-Market Surveillance"
         }
        ],
-       "summary": "Display artefact reports concern a transducer type we do not ship with this system.",
+       "summary": "Display artefact reports (keyword match, unreviewed) concern a transducer type we do not ship with this system.",
        "decision": "Note to file: no further action, rationale documented.",
        "tags": [
         {
@@ -4483,9 +4475,9 @@
       },
       "outcome": {
        "kind": "ntf",
-       "date": "2026-09-10",
+       "date": "2026-10-30",
        "planned": false,
-       "rationale": "Not our configuration: the artefact described occurs with a transducer outside our labeled configuration. Daily phantom check remains the control.",
+       "rationale": "Not our configuration: the artefact described occurs with a transducer outside our labeled configuration. The daily phantom check remains the control.",
        "signed_by": "Tobias Achterberg (simulated)",
        "signed_role": "Quality Engineering",
        "tags": [
@@ -4520,7 +4512,7 @@
        "after_is_expected": false,
        "risk_file": {
         "ref": "RMF-BS-600-rev4",
-        "date": "2026-09-12",
+        "date": "2026-11-01",
         "planned": false,
         "change": "Reviewed, no change"
        },
@@ -4536,10 +4528,64 @@
    },
    "activity": [
     {
+     "date": "2026-11-01",
+     "person": "Oren Vasquez (simulated)",
+     "role": "Design Engineering",
+     "action": "updated the risk file RMF-BS-600-rev4 after DP-DMC-06-2"
+    },
+    {
+     "date": "2026-11-01",
+     "person": "Hana Kowalczyk (simulated)",
+     "role": "Design Engineering",
+     "action": "updated the risk file RMF-BS-600-rev3 after DP-DMC-06-1"
+    },
+    {
+     "date": "2026-10-30",
+     "person": "Colette Duval (simulated)",
+     "role": "Regulatory Affairs",
+     "action": "recorded the board's assessments (reportability, correction or removal, recall) for DP-DMC-06-1"
+    },
+    {
+     "date": "2026-10-30",
+     "person": "Wen Liang (simulated)",
+     "role": "Quality Engineering",
+     "action": "took part in the PMS review board for DP-DMC-06-2"
+    },
+    {
+     "date": "2026-10-30",
+     "person": "Wen Liang (simulated)",
+     "role": "Quality Engineering",
+     "action": "took part in the PMS review board for DP-DMC-06-1"
+    },
+    {
+     "date": "2026-10-30",
+     "person": "Tobias Achterberg (simulated)",
+     "role": "Quality Engineering",
+     "action": "signed the note to file for DP-DMC-06-2"
+    },
+    {
+     "date": "2026-10-30",
+     "person": "Marisol Ortega (simulated)",
+     "role": "Quality Engineering",
+     "action": "opened CAPA-SIM-0602"
+    },
+    {
      "date": "2026-10-30",
      "person": "Noor Haddad (simulated)",
      "role": "Post-Market Surveillance",
      "action": "triaged the signal for DP-DMC-06-3"
+    },
+    {
+     "date": "2026-10-30",
+     "person": "Noor Haddad (simulated)",
+     "role": "Post-Market Surveillance",
+     "action": "triaged the signal for DP-DMC-06-2"
+    },
+    {
+     "date": "2026-10-30",
+     "person": "Noor Haddad (simulated)",
+     "role": "Post-Market Surveillance",
+     "action": "triaged the signal for DP-DMC-06-1"
     },
     {
      "date": "2026-10-30",
@@ -4560,91 +4606,37 @@
      "action": "reviewed complaint trends and open CAPAs"
     },
     {
-     "date": "2026-09-12",
-     "person": "Oren Vasquez (simulated)",
-     "role": "Design Engineering",
-     "action": "updated the risk file RMF-BS-600-rev4 after DP-DMC-06-2"
-    },
-    {
-     "date": "2026-09-12",
-     "person": "Hana Kowalczyk (simulated)",
-     "role": "Design Engineering",
-     "action": "updated the risk file RMF-BS-600-rev3 after DP-DMC-06-1"
-    },
-    {
-     "date": "2026-09-10",
+     "date": "2026-01-27",
      "person": "Marisol Ortega (simulated)",
-     "role": "Regulatory Affairs",
-     "action": "recorded the board's assessments (reportability, correction or removal, recall) for DP-DMC-06-1"
-    },
-    {
-     "date": "2026-09-10",
-     "person": "Wen Liang (simulated)",
-     "role": "Quality Engineering",
-     "action": "took part in the PMS review board for DP-DMC-06-2"
-    },
-    {
-     "date": "2026-09-10",
-     "person": "Wen Liang (simulated)",
-     "role": "Quality Engineering",
-     "action": "took part in the PMS review board for DP-DMC-06-1"
-    },
-    {
-     "date": "2026-09-10",
-     "person": "Tobias Achterberg (simulated)",
-     "role": "Quality Engineering",
-     "action": "signed the note to file for DP-DMC-06-2"
-    },
-    {
-     "date": "2026-09-03",
-     "person": "Noor Haddad (simulated)",
-     "role": "Post-Market Surveillance",
-     "action": "triaged the signal for DP-DMC-06-2"
-    },
-    {
-     "date": "2026-09-03",
-     "person": "Noor Haddad (simulated)",
-     "role": "Post-Market Surveillance",
-     "action": "triaged the signal for DP-DMC-06-1"
-    },
-    {
-     "date": "2026-08-27",
-     "person": "Marisol Ortega (simulated)",
-     "role": "Quality Engineering",
-     "action": "opened CAPA-SIM-0602"
-    },
-    {
-     "date": "2026-05-27",
-     "person": "Aoife Brennan (simulated)",
      "role": "Quality Engineering",
      "action": "closed CAPA-SIM-0601 after the effectiveness check"
     },
     {
-     "date": "2025-12-31",
-     "person": "Aoife Brennan (simulated)",
+     "date": "2025-10-01",
+     "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
      "action": "opened CAPA-SIM-0601"
     },
     {
-     "date": "2022-06-24",
+     "date": "2022-05-18",
      "person": "Ruth Calloway (simulated)",
      "role": "Management review",
      "action": "approved the launch"
     },
     {
-     "date": "2022-04-15",
+     "date": "2022-04-07",
      "person": "Gideon Mbeki-Hart (simulated)",
      "role": "Regulatory Affairs",
      "action": "recorded the FDA decision: cleared"
     },
     {
-     "date": "2022-02-27",
+     "date": "2022-02-18",
      "person": "Colette Duval (simulated)",
      "role": "Regulatory Affairs",
-     "action": "submitted the response to the AI request"
+     "action": "submitted the response to ai request"
     },
     {
-     "date": "2021-12-18",
+     "date": "2021-12-26",
      "person": "Gideon Mbeki-Hart (simulated)",
      "role": "Regulatory Affairs",
      "action": "logged the FDA Additional Information request"
@@ -4662,19 +4654,19 @@
      "action": "held the Pre-Sub meeting Q-SIM-0006 with FDA"
     },
     {
-     "date": "2021-06-01",
+     "date": "2021-05-23",
      "person": "Siddharth Rao (simulated)",
      "role": "Design Engineering",
      "action": "held design review DR-3 (design transfer)"
     },
     {
-     "date": "2021-04-11",
+     "date": "2021-04-10",
      "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-324 (TP-224)"
     },
     {
-     "date": "2021-03-15",
+     "date": "2021-03-17",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-323 (TP-223)"
@@ -4686,55 +4678,55 @@
      "action": "approved test report TR-371 (TP-221R)"
     },
     {
-     "date": "2021-02-15",
+     "date": "2021-02-21",
      "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-322 (TP-222)"
     },
     {
-     "date": "2021-01-21",
+     "date": "2021-01-30",
      "person": "Hana Kowalczyk (simulated)",
      "role": "Design Engineering",
      "action": "made the change for PR-221: added a ferrite on the display cable and a shielding gasket on the rear panel"
     },
     {
-     "date": "2021-01-14",
+     "date": "2021-01-23",
      "person": "Aoife Brennan (simulated)",
      "role": "Quality Engineering",
      "action": "recorded a failed test in TR-321 (TP-221)"
     },
     {
-     "date": "2020-12-22",
+     "date": "2021-01-04",
      "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-320 (TP-220)"
     },
     {
-     "date": "2020-10-15",
+     "date": "2020-09-16",
      "person": "Aoife Brennan (simulated)",
      "role": "Quality Engineering",
      "action": "approved the risk management plan (ISO 14971)"
     },
     {
-     "date": "2020-10-15",
+     "date": "2020-09-16",
      "person": "Matteo Ferrante (simulated)",
      "role": "Management review",
      "action": "approved design freeze at DR-2"
     },
     {
-     "date": "2020-10-15",
+     "date": "2020-09-16",
      "person": "Dr. Lukas Brandt (simulated)",
      "role": "Clinical",
      "action": "reviewed the clinical hazards in the risk analysis"
     },
     {
-     "date": "2019-11-14",
+     "date": "2019-12-07",
      "person": "Siddharth Rao (simulated)",
      "role": "Design Engineering",
      "action": "held design review DR-1 (design inputs)"
     },
     {
-     "date": "2019-10-31",
+     "date": "2019-11-23",
      "person": "Siddharth Rao (simulated)",
      "role": "Design Engineering",
      "action": "opened the design history file and design plan"
@@ -4753,7 +4745,7 @@
     "fda_name_source": "openFDA device classification (fetched)",
     "device_class": "3",
     "regulation_number": null,
-    "classification_source": "openFDA device classification, stored in demo/company/evidence/OTE.json",
+    "classification_source": "openFDA device classification",
     "classification_fetched": "2026-10-30T03:07:08Z",
     "pathway": "PMA",
     "intended_use": "An imaging system used by trained operators to acquire images that clinicians then read. (Simulated intended use.)",
@@ -4801,13 +4793,13 @@
     },
     {
      "key": "ai_request",
-     "label": "FDA Additional Information request",
+     "label": "FDA major deficiency letter",
      "date": "2022-08-08",
      "planned": false
     },
     {
      "key": "ai_response",
-     "label": "Response to AI request",
+     "label": "Response to the deficiency letter",
      "date": "2022-10-16",
      "planned": false
     },
@@ -4864,10 +4856,10 @@
     "hazards": [
      {
       "id": "HZ-01",
-      "hazard": "Excess energy to the patient",
-      "harm": "Burn or tissue heating",
-      "severity": "Serious",
-      "control": "Hardware output limit independent of software; tested limits",
+      "hazard": "Excess radiation dose to the patient",
+      "harm": "Higher dose than intended",
+      "severity": "Critical",
+      "control": "Exposure limit enforced by hardware independent of software; dose shown after each exposure; tested limits",
       "residual": "Acceptable"
      },
      {
@@ -4882,7 +4874,7 @@
       "id": "HZ-03",
       "hazard": "Electromagnetic interference with nearby equipment",
       "harm": "Other equipment malfunctions",
-      "severity": "Moderate",
+      "severity": "Minor",
       "control": "Shielding and filtering; tested to IEC 60601-1-2",
       "residual": "Acceptable"
      }
@@ -5084,27 +5076,27 @@
     "complaints_by_month": [
      {
       "month": "2025-11",
-      "count": 5
+      "count": 4
      },
      {
       "month": "2025-12",
-      "count": 7
-     },
-     {
-      "month": "2026-01",
-      "count": 9
-     },
-     {
-      "month": "2026-02",
       "count": 6
      },
      {
+      "month": "2026-01",
+      "count": 3
+     },
+     {
+      "month": "2026-02",
+      "count": 5
+     },
+     {
       "month": "2026-03",
-      "count": 8
+      "count": 5
      },
      {
       "month": "2026-04",
-      "count": 8
+      "count": 3
      },
      {
       "month": "2026-05",
@@ -5112,11 +5104,11 @@
      },
      {
       "month": "2026-06",
-      "count": 9
+      "count": 5
      },
      {
       "month": "2026-07",
-      "count": 8
+      "count": 1
      },
      {
       "month": "2026-08",
@@ -5124,7 +5116,7 @@
      },
      {
       "month": "2026-09",
-      "count": 7
+      "count": 2
      },
      {
       "month": "2026-10",
@@ -5134,23 +5126,23 @@
     "categories": [
      {
       "name": "Image quality",
-      "count": 29
+      "count": 18
      },
      {
       "name": "Hardware fault",
-      "count": 18
+      "count": 10
      },
      {
       "name": "Software error",
-      "count": 18
+      "count": 10
      },
      {
       "name": "Usability question",
-      "count": 12
+      "count": 7
      },
      {
       "name": "Other",
-      "count": 5
+      "count": 4
      }
     ],
     "capas": []
@@ -5272,13 +5264,13 @@
      "date": "2022-10-16",
      "person": "Priya Natarajan (simulated)",
      "role": "Regulatory Affairs",
-     "action": "submitted the response to the AI request"
+     "action": "submitted the response to the deficiency letter"
     },
     {
      "date": "2022-08-08",
      "person": "Priya Natarajan (simulated)",
      "role": "Regulatory Affairs",
-     "action": "logged the FDA Additional Information request"
+     "action": "logged the FDA major deficiency letter"
     },
     {
      "date": "2022-06-27",
@@ -5372,7 +5364,7 @@
     "fda_name_source": "openFDA device classification (fetched)",
     "device_class": "2",
     "regulation_number": "870.1025",
-    "classification_source": "openFDA device classification, stored in demo/company/evidence/DSI.json",
+    "classification_source": "openFDA device classification",
     "classification_fetched": "2026-10-30T03:07:00Z",
     "pathway": "510(k)",
     "intended_use": "A monitoring device used by trained staff to observe patient measurements and be alerted to changes. (Simulated intended use.)",
@@ -5493,7 +5485,7 @@
       "id": "HZ-02",
       "hazard": "Reading drifts out of accuracy",
       "harm": "Wrong clinical picture",
-      "severity": "Moderate",
+      "severity": "Serious",
       "control": "Accuracy checked in V&V; sensor-fault message",
       "residual": "Acceptable"
      },
@@ -5742,69 +5734,69 @@
     "complaints_by_month": [
      {
       "month": "2025-11",
-      "count": 5
+      "count": 4
      },
      {
       "month": "2025-12",
-      "count": 3
+      "count": 8
      },
      {
       "month": "2026-01",
-      "count": 7
-     },
-     {
-      "month": "2026-02",
-      "count": 4
-     },
-     {
-      "month": "2026-03",
-      "count": 4
-     },
-     {
-      "month": "2026-04",
-      "count": 6
-     },
-     {
-      "month": "2026-05",
-      "count": 7
-     },
-     {
-      "month": "2026-06",
-      "count": 2
-     },
-     {
-      "month": "2026-07",
-      "count": 4
-     },
-     {
-      "month": "2026-08",
-      "count": 4
-     },
-     {
-      "month": "2026-09",
       "count": 5
      },
      {
-      "month": "2026-10",
+      "month": "2026-02",
+      "count": 5
+     },
+     {
+      "month": "2026-03",
       "count": 7
+     },
+     {
+      "month": "2026-04",
+      "count": 8
+     },
+     {
+      "month": "2026-05",
+      "count": 3
+     },
+     {
+      "month": "2026-06",
+      "count": 5
+     },
+     {
+      "month": "2026-07",
+      "count": 5
+     },
+     {
+      "month": "2026-08",
+      "count": 6
+     },
+     {
+      "month": "2026-09",
+      "count": 8
+     },
+     {
+      "month": "2026-10",
+      "count": 6
      }
     ],
     "categories": [
      {
       "name": "Alarm behaviour",
-      "count": 21
+      "count": 25
      },
      {
       "name": "Reading accuracy",
-      "count": 12
+      "count": 15
      },
      {
       "name": "Sensor or cable",
-      "count": 12
+      "count": 15
      },
      {
       "name": "Battery",
-      "count": 8
+      "count": 10
      },
      {
       "name": "Other",
@@ -5816,15 +5808,15 @@
       "id": "CAPA-SIM-0801",
       "title": "Recurring 'alarm behaviour' complaints",
       "owner": "Wen Liang (simulated)",
-      "opened": "2025-11-13",
-      "closed": "2026-03-02",
+      "opened": "2025-11-27",
+      "closed": "2026-03-06",
       "state": "closed"
      },
      {
       "id": "CAPA-SIM-0802",
       "title": "Trend review: 'reading accuracy' above monthly limit",
       "owner": "Tobias Achterberg (simulated)",
-      "opened": "2026-09-28",
+      "opened": "2026-09-22",
       "closed": null,
       "state": "open"
      }
@@ -5868,7 +5860,7 @@
        "held": false,
        "attendees": [
         {
-         "name": "Tobias Achterberg (simulated)",
+         "name": "Marisol Ortega (simulated)",
          "role": "Quality Engineering"
         },
         {
@@ -5876,11 +5868,11 @@
          "role": "Regulatory Affairs"
         },
         {
-         "name": "Dr. Amara Okafor (simulated)",
+         "name": "Dr. Lukas Brandt (simulated)",
          "role": "Clinical"
         },
         {
-         "name": "Siddharth Rao (simulated)",
+         "name": "Oren Vasquez (simulated)",
          "role": "Design Engineering"
         },
         {
@@ -5921,30 +5913,30 @@
     },
     {
      "date": "2026-10-04",
-     "person": "Ines Carvalho (simulated)",
+     "person": "Kofi Asante (simulated)",
      "role": "Post-Market Surveillance",
      "action": "published the monthly complaint trend for 2026-09"
     },
     {
-     "date": "2026-09-28",
+     "date": "2026-09-22",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
      "action": "opened CAPA-SIM-0802"
     },
     {
-     "date": "2026-09-21",
-     "person": "Matteo Ferrante (simulated)",
+     "date": "2026-08-28",
+     "person": "Ruth Calloway (simulated)",
      "role": "Management review",
      "action": "reviewed complaint trends and open CAPAs"
     },
     {
-     "date": "2026-03-02",
+     "date": "2026-03-06",
      "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
      "action": "closed CAPA-SIM-0801 after the effectiveness check"
     },
     {
-     "date": "2025-11-13",
+     "date": "2025-11-27",
      "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
      "action": "opened CAPA-SIM-0801"
@@ -5965,11 +5957,11 @@
      "date": "2023-01-10",
      "person": "Priya Natarajan (simulated)",
      "role": "Regulatory Affairs",
-     "action": "submitted the response to the AI request"
+     "action": "submitted the response to ai request"
     },
     {
      "date": "2022-10-31",
-     "person": "Priya Natarajan (simulated)",
+     "person": "Gideon Mbeki-Hart (simulated)",
      "role": "Regulatory Affairs",
      "action": "logged the FDA Additional Information request"
     },
@@ -5981,31 +5973,31 @@
     },
     {
      "date": "2022-06-18",
-     "person": "Colette Duval (simulated)",
+     "person": "Priya Natarajan (simulated)",
      "role": "Regulatory Affairs",
      "action": "held the Pre-Sub meeting Q-SIM-0008 with FDA"
     },
     {
      "date": "2022-04-06",
-     "person": "Oren Vasquez (simulated)",
+     "person": "Hana Kowalczyk (simulated)",
      "role": "Design Engineering",
      "action": "held design review DR-3 (design transfer)"
     },
     {
      "date": "2022-03-03",
-     "person": "Wen Liang (simulated)",
+     "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-366 (TP-266)"
     },
     {
      "date": "2022-02-12",
-     "person": "Tobias Achterberg (simulated)",
+     "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-365 (TP-265)"
     },
     {
      "date": "2022-01-27",
-     "person": "Aoife Brennan (simulated)",
+     "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-412 (TP-262R)"
     },
@@ -6017,7 +6009,7 @@
     },
     {
      "date": "2022-01-05",
-     "person": "Marisol Ortega (simulated)",
+     "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-363 (TP-263)"
     },
@@ -6029,31 +6021,31 @@
     },
     {
      "date": "2021-12-12",
-     "person": "Tobias Achterberg (simulated)",
+     "person": "Aoife Brennan (simulated)",
      "role": "Quality Engineering",
      "action": "recorded a failed test in TR-362 (TP-262)"
     },
     {
      "date": "2021-11-28",
-     "person": "Aoife Brennan (simulated)",
+     "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-361 (TP-261)"
     },
     {
      "date": "2021-11-09",
-     "person": "Marisol Ortega (simulated)",
+     "person": "Aoife Brennan (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-360 (TP-260)"
     },
     {
      "date": "2021-08-24",
-     "person": "Aoife Brennan (simulated)",
+     "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
      "action": "approved the risk management plan (ISO 14971)"
     },
     {
      "date": "2021-08-24",
-     "person": "Ruth Calloway (simulated)",
+     "person": "Matteo Ferrante (simulated)",
      "role": "Management review",
      "action": "approved design freeze at DR-2"
     },
@@ -6065,13 +6057,13 @@
     },
     {
      "date": "2020-09-06",
-     "person": "Siddharth Rao (simulated)",
+     "person": "Oren Vasquez (simulated)",
      "role": "Design Engineering",
      "action": "held design review DR-1 (design inputs)"
     },
     {
      "date": "2020-08-23",
-     "person": "Oren Vasquez (simulated)",
+     "person": "Siddharth Rao (simulated)",
      "role": "Design Engineering",
      "action": "opened the design history file and design plan"
     }
@@ -6089,7 +6081,7 @@
     "fda_name_source": "openFDA device classification (fetched)",
     "device_class": "2",
     "regulation_number": "870.2700",
-    "classification_source": "openFDA device classification, stored in demo/company/evidence/MUD.json",
+    "classification_source": "openFDA device classification",
     "classification_fetched": "2026-10-30T03:07:05Z",
     "pathway": "510(k)",
     "intended_use": "A monitoring device used by trained staff to observe patient measurements and be alerted to changes. (Simulated intended use.)",
@@ -6102,31 +6094,31 @@
     {
      "key": "design_start",
      "label": "Design started",
-     "date": "2024-02-08",
+     "date": "2024-01-13",
      "planned": false
     },
     {
      "key": "design_freeze",
      "label": "Design review DR-2 (design freeze)",
-     "date": "2025-01-21",
+     "date": "2024-12-28",
      "planned": false
     },
     {
      "key": "vv_start",
      "label": "V&V started",
-     "date": "2025-02-15",
+     "date": "2025-03-01",
      "planned": false
     },
     {
      "key": "vv_end",
      "label": "V&V complete",
-     "date": "2025-08-29",
+     "date": "2025-08-28",
      "planned": false
     },
     {
      "key": "presub",
      "label": "Pre-Sub meeting",
-     "date": "2025-10-27",
+     "date": "2025-10-30",
      "planned": false
     },
     {
@@ -6138,19 +6130,19 @@
     {
      "key": "ai_request",
      "label": "FDA Additional Information request",
-     "date": "2026-03-31",
+     "date": "2026-03-23",
      "planned": false
     },
     {
      "key": "ai_response",
      "label": "Response to AI request",
-     "date": "2026-06-04",
+     "date": "2026-05-23",
      "planned": false
     },
     {
      "key": "decision",
      "label": "Cleared by FDA",
-     "date": "2026-07-17",
+     "date": "2026-07-11",
      "planned": false
     },
     {
@@ -6210,7 +6202,7 @@
       "id": "HZ-02",
       "hazard": "Reading drifts out of accuracy",
       "harm": "Wrong clinical picture",
-      "severity": "Moderate",
+      "severity": "Serious",
       "control": "Accuracy checked in V&V; sensor-fault message",
       "residual": "Acceptable"
      },
@@ -6231,23 +6223,23 @@
      {
       "id": "DR-1",
       "name": "DR-1 Design input review",
-      "date": "2024-02-22",
+      "date": "2024-01-27",
       "planned": false,
       "attendees": [
        {
-        "name": "Siddharth Rao (simulated)",
+        "name": "Freya Lindqvist (simulated)",
         "role": "Design Engineering"
        },
        {
-        "name": "Aoife Brennan (simulated)",
+        "name": "Tobias Achterberg (simulated)",
         "role": "Quality Engineering"
        },
        {
-        "name": "Gideon Mbeki-Hart (simulated)",
+        "name": "Priya Natarajan (simulated)",
         "role": "Regulatory Affairs"
        },
        {
-        "name": "Dr. Selin Aydin (simulated)",
+        "name": "Dr. Lukas Brandt (simulated)",
         "role": "Clinical"
        },
        {
@@ -6260,36 +6252,7 @@
      {
       "id": "DR-2",
       "name": "DR-2 Design output review (design freeze)",
-      "date": "2025-01-21",
-      "planned": false,
-      "attendees": [
-       {
-        "name": "Hana Kowalczyk (simulated)",
-        "role": "Design Engineering"
-       },
-       {
-        "name": "Aoife Brennan (simulated)",
-        "role": "Quality Engineering"
-       },
-       {
-        "name": "Priya Natarajan (simulated)",
-        "role": "Regulatory Affairs"
-       },
-       {
-        "name": "Dr. Selin Aydin (simulated)",
-        "role": "Clinical"
-       },
-       {
-        "name": "Siddharth Rao (simulated)",
-        "role": "Independent reviewer"
-       }
-      ],
-      "outcome": "Approved with actions closed"
-     },
-     {
-      "id": "DR-3",
-      "name": "DR-3 Design transfer review",
-      "date": "2025-08-29",
+      "date": "2024-12-28",
       "planned": false,
       "attendees": [
        {
@@ -6297,11 +6260,11 @@
         "role": "Design Engineering"
        },
        {
-        "name": "Aoife Brennan (simulated)",
+        "name": "Tobias Achterberg (simulated)",
         "role": "Quality Engineering"
        },
        {
-        "name": "Priya Natarajan (simulated)",
+        "name": "Colette Duval (simulated)",
         "role": "Regulatory Affairs"
        },
        {
@@ -6310,6 +6273,35 @@
        },
        {
         "name": "Freya Lindqvist (simulated)",
+        "role": "Independent reviewer"
+       }
+      ],
+      "outcome": "Approved with actions closed"
+     },
+     {
+      "id": "DR-3",
+      "name": "DR-3 Design transfer review",
+      "date": "2025-08-28",
+      "planned": false,
+      "attendees": [
+       {
+        "name": "Freya Lindqvist (simulated)",
+        "role": "Design Engineering"
+       },
+       {
+        "name": "Marisol Ortega (simulated)",
+        "role": "Quality Engineering"
+       },
+       {
+        "name": "Colette Duval (simulated)",
+        "role": "Regulatory Affairs"
+       },
+       {
+        "name": "Dr. Selin Aydin (simulated)",
+        "role": "Clinical"
+       },
+       {
+        "name": "Hana Kowalczyk (simulated)",
         "role": "Independent reviewer"
        }
       ],
@@ -6323,7 +6315,7 @@
       "id": "TP-280",
       "title": "Electrical safety",
       "standard": "IEC 60601-1",
-      "date": "2025-03-08",
+      "date": "2025-03-21",
       "planned": false,
       "result": "pass",
       "report": "TR-380"
@@ -6332,7 +6324,7 @@
       "id": "TP-281",
       "title": "Electromagnetic compatibility (EMC)",
       "standard": "IEC 60601-1-2",
-      "date": "2025-03-30",
+      "date": "2025-04-10",
       "planned": false,
       "result": "pass",
       "report": "TR-381"
@@ -6341,7 +6333,7 @@
       "id": "TP-282",
       "title": "Software verification (unit and integration)",
       "standard": "IEC 62304",
-      "date": "2025-04-21",
+      "date": "2025-04-30",
       "planned": false,
       "result": "pass",
       "report": "TR-382"
@@ -6350,7 +6342,7 @@
       "id": "TP-283",
       "title": "Usability — summative evaluation",
       "standard": "IEC 62366-1",
-      "date": "2025-05-12",
+      "date": "2025-05-20",
       "planned": false,
       "result": "pass",
       "report": "TR-383"
@@ -6359,7 +6351,7 @@
       "id": "TP-284",
       "title": "Alarm system verification",
       "standard": "IEC 60601-1-8",
-      "date": "2025-06-03",
+      "date": "2025-06-09",
       "planned": false,
       "result": "pass",
       "report": "TR-384"
@@ -6368,7 +6360,7 @@
       "id": "TP-285",
       "title": "Biocompatibility (skin contact)",
       "standard": "ISO 10993-1",
-      "date": "2025-06-25",
+      "date": "2025-06-29",
       "planned": false,
       "result": "pass",
       "report": "TR-385"
@@ -6377,7 +6369,7 @@
       "id": "TP-286",
       "title": "Design validation — simulated use",
       "standard": null,
-      "date": "2025-07-16",
+      "date": "2025-07-19",
       "planned": false,
       "result": "pass",
       "report": "TR-386"
@@ -6391,7 +6383,7 @@
     "decision_verb": "cleared",
     "presub": {
      "number": "Q-SIM-0009",
-     "date": "2025-10-27",
+     "date": "2025-10-30",
      "planned": false,
      "feedback": [
       "FDA agreed with the proposed predicate approach in principle (simulated).",
@@ -6404,23 +6396,23 @@
      "planned": false
     },
     "ai_request": {
-     "date": "2026-03-31",
+     "date": "2026-03-23",
      "planned": false,
      "summary": "FDA asked for more detail on software anomaly assessment and labeling (simulated)."
     },
     "ai_response": {
-     "date": "2026-06-04",
+     "date": "2026-05-23",
      "planned": false,
      "summary": "Regulatory Affairs sent the added analyses and updated labeling (simulated)."
     },
     "decision": {
-     "date": "2026-07-17",
+     "date": "2026-07-11",
      "planned": false,
      "outcome": "cleared"
     },
     "predicate": "A legally marketed device of the same product code with the same intended use (described generically; no real K-number).",
-    "fda_days": 93,
-    "hold_days": 65
+    "fda_days": 91,
+    "hold_days": 61
    },
    "market": {
     "launch": {
@@ -6475,7 +6467,7 @@
        "held": false,
        "attendees": [
         {
-         "name": "Aoife Brennan (simulated)",
+         "name": "Wen Liang (simulated)",
          "role": "Quality Engineering"
         },
         {
@@ -6483,19 +6475,19 @@
          "role": "Regulatory Affairs"
         },
         {
-         "name": "Dr. Lukas Brandt (simulated)",
+         "name": "Dr. Amara Okafor (simulated)",
          "role": "Clinical"
         },
         {
-         "name": "Hana Kowalczyk (simulated)",
+         "name": "Oren Vasquez (simulated)",
          "role": "Design Engineering"
         },
         {
-         "name": "Jonah Whitfield (simulated)",
+         "name": "Kofi Asante (simulated)",
          "role": "Post-Market Surveillance"
         }
        ],
-       "summary": "Agenda: wrong-reading reports for this product code; pre-market, so the question is whether the design inputs and risk file already cover them.",
+       "summary": "Agenda: wrong-reading reports for this product code (keyword match, unreviewed); pre-market, so the question is whether the design inputs and risk file already cover them.",
        "decision": null,
        "tags": [
         {
@@ -6527,19 +6519,19 @@
      "action": "set 'Does this apply to us?' to Needs review"
     },
     {
-     "date": "2026-07-17",
+     "date": "2026-07-11",
      "person": "Gideon Mbeki-Hart (simulated)",
      "role": "Regulatory Affairs",
      "action": "recorded the FDA decision: cleared"
     },
     {
-     "date": "2026-06-04",
+     "date": "2026-05-23",
      "person": "Priya Natarajan (simulated)",
      "role": "Regulatory Affairs",
-     "action": "submitted the response to the AI request"
+     "action": "submitted the response to ai request"
     },
     {
-     "date": "2026-03-31",
+     "date": "2026-03-23",
      "person": "Priya Natarajan (simulated)",
      "role": "Regulatory Affairs",
      "action": "logged the FDA Additional Information request"
@@ -6551,85 +6543,85 @@
      "action": "submitted the 510(k) K-SIM-0009"
     },
     {
-     "date": "2025-10-27",
+     "date": "2025-10-30",
      "person": "Priya Natarajan (simulated)",
      "role": "Regulatory Affairs",
      "action": "held the Pre-Sub meeting Q-SIM-0009 with FDA"
     },
     {
-     "date": "2025-08-29",
+     "date": "2025-08-28",
      "person": "Freya Lindqvist (simulated)",
      "role": "Design Engineering",
      "action": "held design review DR-3 (design transfer)"
     },
     {
-     "date": "2025-07-21",
+     "date": "2025-07-24",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-386 (TP-286)"
     },
     {
-     "date": "2025-06-30",
+     "date": "2025-07-04",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-385 (TP-285)"
     },
     {
-     "date": "2025-06-08",
+     "date": "2025-06-14",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-384 (TP-284)"
     },
     {
-     "date": "2025-05-17",
+     "date": "2025-05-25",
      "person": "Wen Liang (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-383 (TP-283)"
     },
     {
-     "date": "2025-04-26",
+     "date": "2025-05-05",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-382 (TP-282)"
     },
     {
-     "date": "2025-04-04",
+     "date": "2025-04-15",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-381 (TP-281)"
     },
     {
-     "date": "2025-03-13",
+     "date": "2025-03-26",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-380 (TP-280)"
     },
     {
-     "date": "2025-01-21",
+     "date": "2024-12-28",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
      "action": "approved the risk management plan (ISO 14971)"
     },
     {
-     "date": "2025-01-21",
+     "date": "2024-12-28",
      "person": "Ruth Calloway (simulated)",
      "role": "Management review",
      "action": "approved design freeze at DR-2"
     },
     {
-     "date": "2025-01-21",
+     "date": "2024-12-28",
      "person": "Dr. Lukas Brandt (simulated)",
      "role": "Clinical",
      "action": "reviewed the clinical hazards in the risk analysis"
     },
     {
-     "date": "2024-02-22",
+     "date": "2024-01-27",
      "person": "Oren Vasquez (simulated)",
      "role": "Design Engineering",
      "action": "held design review DR-1 (design inputs)"
     },
     {
-     "date": "2024-02-08",
+     "date": "2024-01-13",
      "person": "Freya Lindqvist (simulated)",
      "role": "Design Engineering",
      "action": "opened the design history file and design plan"
@@ -6648,7 +6640,7 @@
     "fda_name_source": "openFDA device classification (fetched)",
     "device_class": "2",
     "regulation_number": "870.1425",
-    "classification_source": "openFDA device classification, stored in demo/company/evidence/DQK.json",
+    "classification_source": "openFDA device classification",
     "classification_fetched": "2026-10-30T03:06:58Z",
     "pathway": "510(k)",
     "intended_use": "A monitoring device used by trained staff to observe patient measurements and be alerted to changes. (Simulated intended use.)",
@@ -6745,7 +6737,7 @@
       "id": "HZ-02",
       "hazard": "Reading drifts out of accuracy",
       "harm": "Wrong clinical picture",
-      "severity": "Moderate",
+      "severity": "Serious",
       "control": "Accuracy checked in V&V; sensor-fault message",
       "residual": "Acceptable"
      },
@@ -6955,7 +6947,7 @@
     "capas": []
    },
    "decision": {
-    "none_reason": "No decision path: the owner recorded this product code as not applicable to our device.",
+    "none_reason": "No decision path. The owner's \"not applicable\" covers only the display pattern. The wrong-result pattern (29 stored reports) has no decision path yet and stays visible in the real FDA data below.",
     "paths": []
    },
    "activity": [
@@ -7057,7 +7049,7 @@
     "fda_name_source": "openFDA device classification (fetched)",
     "device_class": "2",
     "regulation_number": "892.1000",
-    "classification_source": "openFDA device classification, stored in demo/company/evidence/LNH.json",
+    "classification_source": "openFDA device classification",
     "classification_fetched": "2026-10-30T03:07:03Z",
     "pathway": "510(k)",
     "intended_use": "An imaging system used by trained operators to acquire images that clinicians then read. (Simulated intended use.)",
@@ -7186,7 +7178,7 @@
       "id": "HZ-03",
       "hazard": "Electromagnetic interference with nearby equipment",
       "harm": "Other equipment malfunctions",
-      "severity": "Moderate",
+      "severity": "Minor",
       "control": "Shielding and filtering; tested to IEC 60601-1-2",
       "residual": "Acceptable"
      }
@@ -7392,27 +7384,27 @@
      },
      {
       "month": "2025-12",
-      "count": 8
-     },
-     {
-      "month": "2026-01",
-      "count": 5
-     },
-     {
-      "month": "2026-02",
-      "count": 5
-     },
-     {
-      "month": "2026-03",
       "count": 4
      },
      {
+      "month": "2026-01",
+      "count": 4
+     },
+     {
+      "month": "2026-02",
+      "count": 3
+     },
+     {
+      "month": "2026-03",
+      "count": 5
+     },
+     {
       "month": "2026-04",
-      "count": 6
+      "count": 8
      },
      {
       "month": "2026-05",
-      "count": 9
+      "count": 4
      },
      {
       "month": "2026-06",
@@ -7420,41 +7412,41 @@
      },
      {
       "month": "2026-07",
-      "count": 6
+      "count": 3
      },
      {
       "month": "2026-08",
-      "count": 4
+      "count": 8
      },
      {
       "month": "2026-09",
-      "count": 9
+      "count": 3
      },
      {
       "month": "2026-10",
-      "count": 4
+      "count": 3
      }
     ],
     "categories": [
      {
       "name": "Image quality",
-      "count": 26
+      "count": 20
      },
      {
       "name": "Hardware fault",
-      "count": 15
+      "count": 12
      },
      {
       "name": "Software error",
-      "count": 15
+      "count": 12
      },
      {
       "name": "Usability question",
-      "count": 10
+      "count": 8
      },
      {
       "name": "Other",
-      "count": 6
+      "count": 5
      }
     ],
     "capas": []
@@ -7498,7 +7490,7 @@
      "date": "2023-06-07",
      "person": "Colette Duval (simulated)",
      "role": "Regulatory Affairs",
-     "action": "submitted the response to the AI request"
+     "action": "submitted the response to ai request"
     },
     {
      "date": "2023-03-28",
@@ -7556,7 +7548,7 @@
     },
     {
      "date": "2022-01-09",
-     "person": "Marisol Ortega (simulated)",
+     "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
      "action": "approved the risk management plan (ISO 14971)"
     },
@@ -7568,19 +7560,19 @@
     },
     {
      "date": "2022-01-09",
-     "person": "Dr. Amara Okafor (simulated)",
+     "person": "Dr. Selin Aydin (simulated)",
      "role": "Clinical",
      "action": "reviewed the clinical hazards in the risk analysis"
     },
     {
      "date": "2021-03-05",
-     "person": "Siddharth Rao (simulated)",
+     "person": "Oren Vasquez (simulated)",
      "role": "Design Engineering",
      "action": "held design review DR-1 (design inputs)"
     },
     {
      "date": "2021-02-19",
-     "person": "Hana Kowalczyk (simulated)",
+     "person": "Siddharth Rao (simulated)",
      "role": "Design Engineering",
      "action": "opened the design history file and design plan"
     }
@@ -7598,10 +7590,10 @@
     "fda_name_source": "openFDA device classification (fetched)",
     "device_class": "2",
     "regulation_number": "870.2300",
-    "classification_source": "openFDA device classification, stored in demo/company/evidence/MWI.json",
+    "classification_source": "openFDA device classification",
     "classification_fetched": "2026-10-30T03:07:06Z",
     "pathway": "510(k)",
-    "intended_use": "A monitoring device used by trained staff to observe patient measurements and be alerted to changes. (Simulated intended use.)",
+    "intended_use": "A monitoring device used by trained staff to observe patient measurements on its display. It has no alarms; staff watch the display. (Simulated intended use.)",
     "stage": "under_review",
     "status_label": "Submitted — under FDA review",
     "software": true,
@@ -7665,11 +7657,11 @@
      },
      {
       "id": "DI-02",
-      "text": "Raise an audible and visible alarm within 10 s of a limit being crossed"
+      "text": "Show every reading with its time, and a sensor-fault message when a reading is not valid"
      },
      {
       "id": "DI-03",
-      "text": "Run 4 h on battery with alarms active"
+      "text": "Run 4 h on battery"
      },
      {
       "id": "DI-04",
@@ -7683,7 +7675,7 @@
      },
      {
       "id": "DO-02",
-      "text": "Alarm system specification"
+      "text": "Display and user interface specification"
      },
      {
       "id": "DO-03",
@@ -7691,24 +7683,24 @@
      },
      {
       "id": "DO-04",
-      "text": "Labeling and instructions for use"
+      "text": "Labeling and instructions for use (states that the device has no alarms)"
      }
     ],
     "hazards": [
      {
       "id": "HZ-01",
-      "hazard": "Alarm not raised when a limit is crossed",
-      "harm": "Delayed treatment",
+      "hazard": "Reading drifts out of accuracy",
+      "harm": "Wrong clinical picture",
       "severity": "Serious",
-      "control": "Alarm self-test at start-up; independent watchdog; alarm tested at each limit",
+      "control": "Accuracy checked in V&V; sensor-fault message",
       "residual": "Acceptable"
      },
      {
       "id": "HZ-02",
-      "hazard": "Reading drifts out of accuracy",
-      "harm": "Wrong clinical picture",
-      "severity": "Moderate",
-      "control": "Accuracy checked in V&V; sensor-fault message",
+      "hazard": "Sensor fault not noticed by staff",
+      "harm": "Delayed recognition of a change",
+      "severity": "Serious",
+      "control": "Sensor-fault message and blank reading; labeling states the device has no alarms; staff training",
       "residual": "Acceptable"
      },
      {
@@ -7721,7 +7713,7 @@
      }
     ],
     "software": {
-     "iec62304_class": "C",
+     "iec62304_class": "B",
      "documentation_level": "Enhanced"
     },
     "reviews": [
@@ -7820,7 +7812,7 @@
       "id": "TP-340",
       "title": "Electrical safety",
       "standard": "IEC 60601-1",
-      "date": "2025-09-17",
+      "date": "2025-09-20",
       "planned": false,
       "result": "pass",
       "report": "TR-440"
@@ -7829,7 +7821,7 @@
       "id": "TP-341",
       "title": "Electromagnetic compatibility (EMC)",
       "standard": "IEC 60601-1-2",
-      "date": "2025-10-09",
+      "date": "2025-10-15",
       "planned": false,
       "result": "pass",
       "report": "TR-441"
@@ -7838,7 +7830,7 @@
       "id": "TP-342",
       "title": "Software verification (unit and integration)",
       "standard": "IEC 62304",
-      "date": "2025-10-31",
+      "date": "2025-11-08",
       "planned": false,
       "result": "pass",
       "report": "TR-442"
@@ -7847,37 +7839,28 @@
       "id": "TP-343",
       "title": "Usability — summative evaluation",
       "standard": "IEC 62366-1",
-      "date": "2025-11-22",
+      "date": "2025-12-03",
       "planned": false,
       "result": "pass",
       "report": "TR-443"
      },
      {
       "id": "TP-344",
-      "title": "Alarm system verification",
-      "standard": "IEC 60601-1-8",
-      "date": "2025-12-14",
+      "title": "Biocompatibility (skin contact)",
+      "standard": "ISO 10993-1",
+      "date": "2025-12-28",
       "planned": false,
       "result": "pass",
       "report": "TR-444"
      },
      {
       "id": "TP-345",
-      "title": "Biocompatibility (skin contact)",
-      "standard": "ISO 10993-1",
-      "date": "2026-01-05",
+      "title": "Design validation — simulated use",
+      "standard": null,
+      "date": "2026-01-21",
       "planned": false,
       "result": "pass",
       "report": "TR-445"
-     },
-     {
-      "id": "TP-346",
-      "title": "Design validation — simulated use",
-      "standard": null,
-      "date": "2026-01-27",
-      "planned": false,
-      "result": "pass",
-      "report": "TR-446"
      }
     ],
     "problems": [],
@@ -7985,7 +7968,7 @@
          "role": "Post-Market Surveillance"
         }
        ],
-       "summary": "Fifteen reports of wrong readings were reviewed against the accuracy verification. The board asked Clinical for a sensor-site comparison before deciding.",
+       "summary": "15 keyword-matched reports (unreviewed) were read against the accuracy verification. The board asked Clinical for a sensor-site comparison before deciding.",
        "decision": "Hold: reconvene on 2026-11-14 with the Clinical comparison.",
        "tags": [
         {
@@ -8006,7 +7989,7 @@
    "activity": [
     {
      "date": "2026-10-31",
-     "person": "Marisol Ortega (simulated)",
+     "person": "Aoife Brennan (simulated)",
      "role": "Quality Engineering",
      "action": "took part in the PMS review board for DP-DMC-12-1"
     },
@@ -8024,7 +8007,7 @@
     },
     {
      "date": "2026-09-30",
-     "person": "Gideon Mbeki-Hart (simulated)",
+     "person": "Priya Natarajan (simulated)",
      "role": "Regulatory Affairs",
      "action": "logged the FDA Additional Information request"
     },
@@ -8036,54 +8019,48 @@
     },
     {
      "date": "2026-05-02",
-     "person": "Priya Natarajan (simulated)",
+     "person": "Gideon Mbeki-Hart (simulated)",
      "role": "Regulatory Affairs",
      "action": "held the Pre-Sub meeting Q-SIM-0012 with FDA"
     },
     {
      "date": "2026-03-12",
-     "person": "Freya Lindqvist (simulated)",
+     "person": "Oren Vasquez (simulated)",
      "role": "Design Engineering",
      "action": "held design review DR-3 (design transfer)"
     },
     {
-     "date": "2026-02-01",
-     "person": "Tobias Achterberg (simulated)",
-     "role": "Quality Engineering",
-     "action": "approved test report TR-446 (TP-346)"
-    },
-    {
-     "date": "2026-01-10",
+     "date": "2026-01-26",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-445 (TP-345)"
     },
     {
-     "date": "2025-12-19",
+     "date": "2026-01-02",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-444 (TP-344)"
     },
     {
-     "date": "2025-11-27",
+     "date": "2025-12-08",
      "person": "Aoife Brennan (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-443 (TP-343)"
     },
     {
-     "date": "2025-11-05",
+     "date": "2025-11-13",
      "person": "Tobias Achterberg (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-442 (TP-342)"
     },
     {
-     "date": "2025-10-14",
+     "date": "2025-10-20",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-441 (TP-341)"
     },
     {
-     "date": "2025-09-22",
+     "date": "2025-09-25",
      "person": "Marisol Ortega (simulated)",
      "role": "Quality Engineering",
      "action": "approved test report TR-440 (TP-340)"
