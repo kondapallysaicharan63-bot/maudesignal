@@ -5,7 +5,7 @@ import { NOT_MEDICAL_ADVICE, type AskResponse, type LabelResponse, type LiveTrac
 
 /** Display names of the Meta models the API reports in trace[].model. An id not listed and not matched is not named. */
 const KNOWN: Record<string, string> = {
-  'muse-voice-transcribe-1.0': 'Voice Transcribe',
+  'muse-voice-transcribe-1.0': 'Muse Voice Transcribe',
 }
 
 /** The display name of one model id, or null when the id is unknown (never guessed). */
@@ -16,7 +16,7 @@ export function modelName(id: string | null | undefined): string | null {
   let m = /^muse-spark-(\d+(?:\.\d+)*)$/.exec(t)
   if (m) return `Muse Spark ${m[1]}`
   if (t === 'muse-spark') return 'Muse Spark'
-  if (/^muse-voice-transcribe(?:-\d+(?:\.\d+)*)?$/.test(t)) return 'Voice Transcribe'
+  if (/^muse-voice-transcribe(?:-\d+(?:\.\d+)*)?$/.test(t)) return 'Muse Voice Transcribe'
   if (/^muse-wonder(?:-\d+(?:\.\d+)*)?$/.test(t)) return 'Muse Wonder'
   m = /^sam-(\d+(?:\.\d+)*)$/.exec(t)
   if (m) return `SAM ${m[1]}`
@@ -43,11 +43,18 @@ export function fmtDate(iso: string | null | undefined): string | null {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
 }
 
-/** The date a recorded run was recorded: the response's own field, else "recorded YYYY-MM-DD" in its note. */
+/**
+ * The date a recorded run was recorded: the response's own field, else the note's own "recorded YYYY-MM-DD".
+ * Text inside quotes (the stored question the note names) is skipped, and the last remaining match wins.
+ */
 export function recordedDate(r: { recorded_at?: string; recorded_note?: string }): string | null {
-  if (r.recorded_at) return fmtDate(r.recorded_at)
-  const m = /recorded (\d{4}-\d{2}-\d{2})/i.exec(r.recorded_note ?? '')
-  return m ? fmtDate(m[1]) : null
+  if (r.recorded_at) {
+    const d = fmtDate(r.recorded_at)
+    if (d) return d
+  }
+  const note = (r.recorded_note ?? '').replace(/"[^"]*"|“[^”]*”/g, ' ')
+  const all = [...note.matchAll(/recorded (\d{4}-\d{2}-\d{2})/gi)]
+  return all.length ? fmtDate(all[all.length - 1][1]) : null
 }
 
 export type ChipKind = 'live' | 'instant' | 'cached' | 'recorded'
@@ -73,21 +80,46 @@ export const labelChip = (r: Pick<LabelResponse, 'mode' | 'trace' | 'recorded_no
 
 /** What the Details panel calls the route that answered. */
 export function tierLabel(r: Pick<AskResponse, 'tier' | 'mode'>): string {
-  if (r.tier === 'canned') return 'Tier 1 · fixed reply, no model call'
-  if (r.tier === 'direct') return 'Tier 2 · direct FDA lookup, no model call'
-  if (r.tier === 'cache') return 'Tier 3 · earlier answer reused, no model call'
-  if (r.mode === 'recorded') return 'Recorded run, no live model call'
-  return 'Tier 4 · live model call'
+  if (r.tier === 'canned') return 'Instant reply, no model call'
+  if (r.tier === 'direct') return 'Direct FDA lookup, no model call'
+  if (r.tier === 'cache') return 'Earlier answer reused, no model call'
+  if (r.mode === 'recorded') return 'Recorded answer, no live model call'
+  return 'Live model answer'
 }
+
+/** True for a trace note written by a test mock ("e2e route mock", "smoke-test route mock"); such notes are dev-only. */
+export const isDebugNote = (note: string | null | undefined): boolean => /\broute mock\b|\be2e\b|\bsmoke[- ]test\b|\bstub\b/i.test(note ?? '')
+
+/** The note shown for a step: none for a test mock's note unless this is a dev build. */
+export const stepNote = (note: string | null | undefined, dev: boolean = !!import.meta.env.DEV): string | null =>
+  !note ? null : isDebugNote(note) && !dev ? null : note
 
 /** Sum of the step times, in ms (null when there are no steps). */
 export const totalMs = (trace: LiveTraceStep[]): number | null => (trace.length ? trace.reduce((a, s) => a + (Number.isFinite(s.ms) ? s.ms : 0), 0) : null)
 
+/** "10:15" from an ISO time, or null. */
+const utcClock = (iso: string | undefined): string | null => {
+  const m = /T(\d{2}:\d{2})/.exec(iso ?? '')
+  return m ? m[1] : null
+}
+
 /**
- * The text Copy puts on the clipboard: the answer's sentences, then every FDA link under them as "label: url".
- * The question is never included, and neither is any sentence the gate held back.
+ * The text Copy puts on the clipboard. A recorded answer starts "Recorded answer · <date>" and its note (why it was
+ * shown and which stored run it is); a cached one says when it was first answered. Then the sentences, then every FDA
+ * link as "label: url". The question is never included, and neither is any sentence the gate held back.
  */
-export function copyText(r: Pick<AskResponse, 'answer'>): string {
+export function copyText(
+  r: Pick<AskResponse, 'answer'> & Partial<Pick<AskResponse, 'mode' | 'tier' | 'recorded_note' | 'answered_at' | 'recorded_at'>>,
+): string {
+  const head: string[] = []
+  if (r.mode === 'recorded') {
+    const d = recordedDate(r)
+    head.push(d ? `Recorded answer · ${d}` : 'Recorded answer')
+    if (r.recorded_note?.trim()) head.push(r.recorded_note.trim())
+  } else if (r.tier === 'cache') {
+    const t = utcClock(r.answered_at)
+    if (t) head.push(`First answered ${t} UTC`)
+  }
   const lines: string[] = []
   const links: string[] = []
   for (const s of r.answer.speakable) {
@@ -97,7 +129,7 @@ export function copyText(r: Pick<AskResponse, 'answer'>): string {
       if (!links.includes(row)) links.push(row)
     }
   }
-  const out = [lines.join('\n')]
+  const out = [head.join('\n'), lines.join('\n')]
   if (links.length) out.push(['FDA sources:', ...links.map((l) => `- ${l}`)].join('\n'))
   out.push(NOT_MEDICAL_ADVICE)
   return out.filter(Boolean).join('\n\n')
@@ -116,6 +148,15 @@ export function readableText(r: Pick<AskResponse, 'answer'>): string {
     .replace(/\s+([.,;:!?])/g, '$1')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+/** When the answer was given: the response's answered_at when it carries a valid time, else `fallback`. */
+export function answeredAt(r: Pick<AskResponse, 'answered_at'>, fallback: Date): Date {
+  if (r.answered_at && /T\d{2}:\d{2}/.test(r.answered_at)) {
+    const d = new Date(r.answered_at)
+    if (!Number.isNaN(d.getTime())) return d
+  }
+  return fallback
 }
 
 /** "11:42 PM" in the visitor's own time zone. */

@@ -1,7 +1,7 @@
-import { useId, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { apiBaseOrNull, resolveRef, sessionStore } from '../feedback'
-import { heldBackLine, NOT_MEDICAL_ADVICE, openLabel, type AskResponse, type OpenView, type ResearchItem, type SaveOutcome } from '../live/api'
-import { chipFor, copyText, newAnswerId, readableText } from '../live/answerMeta'
+import { heldBackLine, openLabel, type AskResponse, type OpenView, type ResearchItem, type SaveOutcome } from '../live/api'
+import { answeredAt, chipFor, copyText, newAnswerId, readableText } from '../live/answerMeta'
 import { AnswerActions, type RatingSink } from './AnswerActions'
 import { AnswerDetails } from './AnswerDetails'
 import { ModelChip } from './ModelChip'
@@ -46,8 +46,10 @@ interface Props {
   saveResearch: (item: ResearchItem) => Promise<SaveOutcome>
   /** Where a thumbs up / down is sent (tests pass a fake). */
   rating?: RatingSink
-  /** When the answer arrived; defaults to when this turn was first drawn. */
+  /** When the answer arrived; defaults to the response's answered_at, else when this turn was first drawn. */
   at?: Date
+  /** The read-aloud key of this turn (shared with the voice auto-read); defaults to one made here. */
+  readKey?: string
 }
 
 /**
@@ -55,43 +57,64 @@ interface Props {
  * Withheld mark, one quiet chip naming the route and model, and a small action bar. Steps, timings, cost, tokens and
  * the tier sit in Details, closed by default.
  */
-export function AnswerTurn({ resp, onAsk, onOpen, saveResearch, rating, at }: Props) {
+export function AnswerTurn({ resp, onAsk, onOpen, saveResearch, rating, at, readKey }: Props) {
   const [answerId] = useState(() => newAnswerId())
-  const [arrived] = useState(() => at ?? new Date())
+  const [arrived] = useState(() => at ?? answeredAt(resp, new Date()))
   const [sink] = useState<RatingSink>(() => rating ?? defaultRatingSink())
   const [detailsOpen, setDetailsOpen] = useState(false)
   const panelId = useId()
+  const toggleRef = useRef<HTMLButtonElement>(null)
   const sentences = resp.answer.speakable
   const held = heldBackLine(resp.answer.withheld)
   const recorded = resp.mode === 'recorded'
-  const linked = sentences.some((s) => s.links.length > 0)
+  const sources = sentences.flatMap((s) => s.links).filter((l, i, all) => all.findIndex((x) => x.url === l.url) === i)
+  const linked = sources.length > 0
   const open = openLabel(resp.open)
   const left = resp.limits?.remaining_today
   const showLeft = !recorded && typeof left === 'number' && left <= FEW_LEFT
   const free = resp.tier === 'canned' || resp.tier === 'direct' || resp.tier === 'cache'
   return (
-    <div className="ans-turn" data-testid="live-answer" data-layout="v2" data-mode={resp.mode} data-tier={resp.tier ?? 'live'}>
+    <div
+      className="ans-turn"
+      data-testid="live-answer"
+      data-layout="v2"
+      data-mode={resp.mode}
+      data-tier={resp.tier ?? 'live'}
+      onKeyDown={(e) => {
+        // Escape closes Details and puts focus back on its toggle.
+        if (e.key === 'Escape' && detailsOpen) {
+          e.stopPropagation()
+          setDetailsOpen(false)
+          toggleRef.current?.focus()
+        }
+      }}
+    >
       {sentences.length > 0 && (
         <div className="ans-text t-answer" data-testid="answer-sentences">
           {sentences.map((s, i) => (
             <div key={i} className="ans-sentence" data-testid="answer-sentence">
               <p className="ws-wrap">{s.text}</p>
-              {s.links.length > 0 && (
-                <span className="ans-sources" data-testid="sentence-links">
-                  {s.links.map((l) => (
-                    <a key={l.url} href={l.url} target="_blank" rel="noreferrer" className="ans-source">
-                      {l.label}
-                    </a>
-                  ))}
-                </span>
-              )}
             </div>
           ))}
         </div>
       )}
+      {sources.length > 0 && (
+        <div className="ans-sources" data-testid="answer-sources">
+          <p className="ans-sources-label">Sources</p>
+          <ul data-testid="sentence-links">
+            {sources.map((l) => (
+              <li key={l.url}>
+                <a href={l.url} target="_blank" rel="noreferrer" className="ans-source">
+                  {l.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {sentences.length === 0 && !held && !recorded && !free && <p className="ans-note">No sentence passed the claim gate for this question.</p>}
       {(linked || held) && (
-        <p className="ans-marks m-0" data-testid="answer-marks">
+        <p className="ans-marks" data-testid="answer-marks">
           {linked && <Verified />}
           {held && (
             <span className="ans-withheld" data-testid="held-back">
@@ -134,17 +157,15 @@ export function AnswerTurn({ resp, onAsk, onOpen, saveResearch, rating, at }: Pr
         )}
         <AnswerActions
           answerId={answerId}
+          readKey={readKey ?? answerId}
           copy={copyText(resp)}
           readable={readableText(resp)}
           at={arrived}
           rating={sink}
-          details={{ open: detailsOpen, onToggle: () => setDetailsOpen((o) => !o), panelId }}
+          details={{ open: detailsOpen, onToggle: () => setDetailsOpen((o) => !o), panelId, toggleRef }}
         />
       </div>
       {detailsOpen && <AnswerDetails resp={resp} id={panelId} />}
-      <p className="ans-advice" data-testid="not-advice">
-        {NOT_MEDICAL_ADVICE}
-      </p>
     </div>
   )
 }

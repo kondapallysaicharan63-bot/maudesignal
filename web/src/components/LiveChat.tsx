@@ -6,6 +6,7 @@ import type { LiveChat as Chat, LiveTurn } from '../live/useLiveChat'
 import type { Thread } from '../types'
 import { layoutMode, type LayoutMode } from '../layoutFlag'
 import { labelChip } from '../live/answerMeta'
+import { readKey } from '../live/readAloud'
 import type { RatingSink } from './AnswerActions'
 import { AnswerTurn } from './AnswerTurn'
 import { ModelChip } from './ModelChip'
@@ -301,7 +302,7 @@ function TurnView({ turn, chat, onRecordedVoice, onRecordedLabel, onAsk, onOpen,
         <>
           {turn.via === 'voice' && turn.resp.heard && <span className="sr-only">Heard: {turn.resp.heard}</span>}
           {v2 ? (
-            <AnswerTurn resp={turn.resp} onAsk={onAsk} onOpen={onOpen} saveResearch={chat.saveResearch} rating={rating} />
+            <AnswerTurn resp={turn.resp} onAsk={onAsk} onOpen={onOpen} saveResearch={chat.saveResearch} rating={rating} readKey={readKey(turn.id)} />
           ) : (
             <Answer turn={turn} chat={chat} onAsk={onAsk} onOpen={onOpen} />
           )}

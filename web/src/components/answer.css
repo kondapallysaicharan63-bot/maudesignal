@@ -1,41 +1,41 @@
-/* The v2 answer turn (?layout=v2): reading text, one quiet chip, small icon actions, a closed Details panel.
-   Design-system tokens only (tokens.css); the reading style is the .t-answer type style. */
+/* The v2 answer turn (?layout=v2): reading text, sources under it, one quiet chip, icon actions, a closed Details
+   panel. Design-system tokens only (tokens.css); the reading style is the .t-answer type style (17px / 1.65). */
 
 .ans-turn { min-width: 0; }
-.ans-text { max-width: 70ch; color: var(--ink); }
-.ans-text p { margin: 0; }
-.ans-text p + p,
-.ans-sentence + .ans-sentence { margin-top: var(--space-3); }
-.ans-sources { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); margin-top: var(--space-1); }
-.ans-source {
-  display: inline-flex; align-items: center; gap: 4px; max-width: 100%;
-  min-height: 24px; padding: 2px 8px; border: 1px solid var(--rule); border-radius: var(--radius-xs);
-  font: 500 12px/1.3 var(--font-sans); color: var(--accent); background: var(--surface); text-decoration: none;
-  overflow-wrap: anywhere;
-}
-.ans-source:hover { border-color: var(--rule-strong); text-decoration: underline; }
-.ans-marks { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); margin-top: var(--space-3); font: 400 13px/1.45 var(--font-sans); color: var(--ink-2); }
-.ans-withheld { display: inline-flex; align-items: flex-start; gap: 4px; color: var(--ink-2); overflow-wrap: anywhere; }
-.ans-withheld b { flex: none; white-space: nowrap; font-weight: 600; color: var(--warning); }
-.ans-note { margin: var(--space-2) 0 0; max-width: 70ch; font: 400 13px/1.5 var(--font-sans); color: var(--ink-2); overflow-wrap: anywhere; }
+.ans-text { max-width: 70ch; color: var(--ink); font-size: 17px; line-height: 1.65; }
+.ans-text p { margin: 0; font: inherit; }
+.ans-sentence + .ans-sentence { margin-top: var(--space-4); }
 
-.ans-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-3); }
-.ans-chip {
-  display: inline-flex; align-items: center; height: 24px; padding: 0 8px;
-  border: 1px solid var(--rule); border-radius: var(--radius-xs);
-  font: 500 12px/1 var(--font-sans); color: var(--ink-2); background: transparent; white-space: nowrap;
-}
-.ans-left { font: 400 12px/1 var(--font-sans); color: var(--ink-2); }
-.ans-actions { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 2px; margin-left: auto; }
+.ans-sources { max-width: 70ch; margin-top: var(--space-4); font: 400 14px/1.5 var(--font-sans); color: var(--ink-2); }
+.ans-sources-label { margin: 0; font: 600 14px/1.5 var(--font-sans); color: var(--ink-2); }
+.ans-sources ul { margin: var(--space-1) 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); }
+.ans-source { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
+
+.ans-marks { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); margin: var(--space-3) 0 0; font: 400 14px/1.5 var(--font-sans); color: var(--ink-2); }
+.ans-marks .ms-verified { font-size: 14px; }
+.ans-withheld { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 6px; color: var(--ink-2); overflow-wrap: anywhere; }
+/* `warning` text on `warning-soft`: the design system's AA pair for amber text. */
+.ans-withheld b { flex: none; white-space: nowrap; font-weight: 600; color: var(--warning); background: var(--warning-soft); padding: 0 6px; border-radius: var(--radius-xs); }
+.ans-note { margin: var(--space-3) 0 0; max-width: 70ch; font: 400 14px/1.5 var(--font-sans); color: var(--ink-2); overflow-wrap: anywhere; }
+
+.ans-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); margin-top: var(--space-3); }
+.ans-chip { font: 500 14px/1.4 var(--font-sans); color: var(--ink-2); white-space: nowrap; }
+.ans-left { font: 400 14px/1.4 var(--font-sans); color: var(--ink-2); }
+.ans-actions { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); margin-left: auto; }
+/* 44px hit area around an 18px icon. */
 .ans-ib {
-  width: 32px; height: 32px; display: inline-grid; place-items: center; padding: 0;
+  width: 44px; height: 44px; display: inline-grid; place-items: center; padding: 0;
   border: 1px solid transparent; border-radius: var(--radius-sm); background: transparent; color: var(--ink-2); cursor: pointer;
 }
 .ans-ib:hover { background: var(--surface-sunk); color: var(--ink); }
-.ans-ib[aria-pressed='true'] { color: var(--ink); background: var(--surface-sunk); border-color: var(--rule); }
-.ans-ib[aria-expanded='true'] { color: var(--ink); background: var(--surface-sunk); }
-.ans-time { font: 400 12px/1 var(--font-sans); color: var(--ink-3); padding: 0 6px; white-space: nowrap; }
-.ans-status { font: 400 12px/1.4 var(--font-sans); color: var(--ink-2); }
+/* Only the chosen thumb looks selected; an open reason box does not fill the thumbs-down. */
+.ans-ib--chosen { color: var(--ink); background: var(--surface-sunk); border-color: var(--rule-strong); }
+.ans-ib--toggle[aria-expanded='true'] { color: var(--ink); background: var(--surface-sunk); }
+.ans-ib[aria-disabled='true'] { cursor: default; }
+.ans-ib[aria-disabled='true']:not(.ans-ib--chosen) { opacity: .55; }
+.ans-ib[aria-disabled='true']:hover:not(.ans-ib--chosen) { background: transparent; }
+.ans-time { font: 400 14px/1 var(--font-sans); color: var(--ink-2); padding: 0 6px; white-space: nowrap; }
+.ans-status { font: 400 14px/1.4 var(--font-sans); color: var(--ink-2); }
 
 .ans-panel {
   margin-top: var(--space-2); padding: var(--space-3) var(--space-4); max-width: 70ch;
@@ -43,22 +43,29 @@
   font: 400 14px/1.5 var(--font-sans); color: var(--ink-2);
 }
 .ans-panel dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px var(--space-4); margin: 0; }
-.ans-panel dt { color: var(--ink-3); }
+.ans-panel dt { color: var(--ink-2); }
 .ans-panel dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
-.ans-panel .ans-sub { margin: var(--space-3) 0 var(--space-1); font: 600 11px/1.4 var(--font-sans); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+.ans-panel .ans-sub { margin: var(--space-3) 0 var(--space-1); font: 600 14px/1.4 var(--font-sans); color: var(--ink); }
+.ans-steps { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--space-2); }
+.ans-step { display: grid; grid-template-columns: 18px minmax(0, 1fr); column-gap: var(--space-2); }
+.ans-step-icon { grid-row: 1 / span 2; padding-top: 2px; color: var(--success); }
+.ans-step-icon--off { color: var(--ink-2); }
+.ans-step-name { color: var(--ink); font-weight: 500; overflow-wrap: anywhere; }
+.ans-step-meta { color: var(--ink-2); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .ans-reason { margin-top: var(--space-2); max-width: 70ch; }
-.ans-reason label { display: block; font: 600 13px/1.4 var(--font-sans); color: var(--ink); }
+.ans-reason label { display: block; font: 600 14px/1.4 var(--font-sans); color: var(--ink); }
 .ans-reason textarea {
   display: block; width: 100%; min-height: 72px; margin-top: var(--space-1); padding: var(--space-2) var(--space-3);
   border: 1px solid var(--rule-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink);
   font: 400 15px/1.5 var(--font-sans); resize: vertical;
 }
 .ans-reason-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-2); }
-.ans-count { font: 400 12px/1 var(--font-sans); color: var(--ink-3); margin-right: auto; }
-.ans-advice { margin: var(--space-2) 0 0; font: 400 12px/1.45 var(--font-sans); color: var(--ink-3); }
+.ans-count { font: 400 14px/1 var(--font-sans); color: var(--ink-2); margin-right: auto; }
 
 @media (max-width: 639px) {
   .ans-actions { margin-left: 0; width: 100%; }
-  .ans-time { margin-left: auto; }
+}
+@media (max-width: 479px) {
+  .ans-time { display: none; }
 }

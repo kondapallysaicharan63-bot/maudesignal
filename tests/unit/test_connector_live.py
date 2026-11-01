@@ -1308,3 +1308,13 @@ def test_live_fails_closed_without_a_shared_ledger(
     assert env.spark.requests == []
     monkeypatch.setenv("MAUDESIGNAL_ALLOW_PER_INSTANCE_CAP", "1")
     assert Env(tmp_path).ask().json()["mode"] == "live"
+
+
+def test_ask_trace_names_the_model_that_ran_else_the_default() -> None:
+    def outcome(model: str | None) -> Any:
+        return SimpleNamespace(live=True, tool_names=[], model_ms=10.0, total_ms=12.0, model=model)
+
+    assert live_module.ask_trace(outcome("muse-spark-1.4"))[0]["model"] == "muse-spark-1.4"
+    assert live_module.ask_trace(outcome(None))[0]["model"] == live_module.SPARK_MODEL
+    assert live_module.ask_trace(outcome("  "))[0]["model"] == live_module.SPARK_MODEL
+    assert live_module.ask_trace(outcome("bad id <x>"))[0]["model"] == live_module.SPARK_MODEL

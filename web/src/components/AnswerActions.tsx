@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState, type RefObject } from 'react'
 import { ANSWER_REASON_MAX, buildAnswerRating, submitAnswerRating, type FetchLike, type Thumb } from '../feedback'
 import { fmtClock } from '../live/answerMeta'
 import { currentSpeakingKey, startReading, stopReading, useCanReadAloud, useSpeakingKey } from '../live/readAloud'
@@ -56,22 +56,27 @@ export interface RatingSink {
 
 interface Props {
   answerId: string
+  /** The read-aloud key of this answer (shared with the voice auto-read, so its Stop shows here). */
+  readKey: string
   /** What Copy puts on the clipboard (answer and FDA links; never the question). */
   copy: string
   /** What Read aloud speaks; empty hides the button. */
   readable: string
-  /** When the answer arrived (shown as local time). */
+  /** When the answer was given (shown as local time). */
   at: Date
   rating: RatingSink
-  details: { open: boolean; onToggle: () => void; panelId: string }
+  details: { open: boolean; onToggle: () => void; panelId: string; toggleRef: RefObject<HTMLButtonElement> }
 }
 
-/** The small action bar under an answer: Copy, Read aloud / Stop, thumbs up / down (down asks an optional reason), Details, time. */
-export function AnswerActions({ answerId, copy, readable, at, rating, details }: Props) {
+/**
+ * The small action bar under an answer: Copy, Read aloud / Stop, thumbs up / down (down asks an optional reason),
+ * Details, time. One rating per answer: once one is sent, the thumbs keep showing it and ignore further clicks.
+ */
+export function AnswerActions({ answerId, readKey, copy, readable, at, rating, details }: Props) {
   const canRead = useCanReadAloud() && readable.trim() !== ''
-  const speaking = useSpeakingKey() === answerId
+  const speaking = useSpeakingKey() === readKey
   const [copied, setCopied] = useState<'idle' | 'ok' | 'fail'>('idle')
-  const [thumb, setThumb] = useState<Thumb | null>(null)
+  const [rated, setRated] = useState<Thumb | null>(null)
   const [reasonOpen, setReasonOpen] = useState(false)
   const [reason, setReason] = useState('')
   const [status, setStatus] = useState<string | null>(null)
@@ -79,29 +84,40 @@ export function AnswerActions({ answerId, copy, readable, at, rating, details }:
   const reasonId = useId()
   const box = useRef<HTMLTextAreaElement>(null)
   const downBtn = useRef<HTMLButtonElement>(null)
+  const locked = rated !== null || sending
 
   useEffect(() => {
     if (copied === 'idle') return
-    const t = window.setTimeout(() => setCopied('idle'), 2000)
+    const t = window.setTimeout(() => setCopied('idle'), copied === 'ok' ? 2000 : 4000)
     return () => window.clearTimeout(t)
   }, [copied])
   useEffect(() => {
     if (reasonOpen) box.current?.focus()
   }, [reasonOpen])
   // Stop reading when this answer leaves the page.
-  useEffect(() => () => {
-    if (currentSpeakingKey() === answerId) stopReading()
-  }, [answerId])
+  useEffect(
+    () => () => {
+      if (currentSpeakingKey() === readKey) stopReading()
+    },
+    [readKey],
+  )
 
   const send = async (t: Thumb, why: string) => {
+    if (locked) return
     setSending(true)
     const r = await submitAnswerRating(rating.apiBase, buildAnswerRating(answerId, t, why, rating.refCode), rating.fetcher)
     setSending(false)
-    if (r.ok) {
-      setThumb(t)
+    if (r.ok || r.already) {
+      setRated(t)
       setReasonOpen(false)
-      setStatus(t === 'up' ? 'Thanks for the rating.' : 'Thanks. Your rating was sent.')
+      setStatus(r.ok ? (t === 'up' ? 'Thanks for the rating.' : 'Thanks. Your rating was sent.') : r.message)
+      if (t === 'down') window.setTimeout(() => downBtn.current?.focus(), 0)
     } else setStatus(r.message)
+  }
+
+  const closeReason = () => {
+    setReasonOpen(false)
+    downBtn.current?.focus()
   }
 
   return (
@@ -123,22 +139,22 @@ export function AnswerActions({ answerId, copy, readable, at, rating, details }:
             className="ans-ib"
             aria-label={speaking ? 'Stop reading aloud' : 'Read aloud'}
             title={speaking ? 'Stop reading aloud' : 'Read aloud'}
-            aria-pressed={speaking}
             data-testid="action-read"
-            onClick={() => (speaking ? stopReading() : startReading(answerId, readable))}
+            onClick={() => (speaking ? stopReading() : startReading(readKey, readable))}
           >
             <Svg d={speaking ? ICON.stop : ICON.speaker} />
           </button>
         )}
         <button
           type="button"
-          className="ans-ib"
+          className={`ans-ib${rated === 'up' ? ' ans-ib--chosen' : ''}`}
           aria-label="Good answer"
-          title="Good answer"
-          aria-pressed={thumb === 'up'}
-          disabled={sending}
+          title={rated === 'up' ? 'You rated this answer good' : 'Good answer'}
+          aria-pressed={rated === 'up'}
+          aria-disabled={locked || undefined}
           data-testid="action-up"
           onClick={() => {
+            if (locked) return
             setReasonOpen(false)
             void send('up', '')
           }}
@@ -148,15 +164,16 @@ export function AnswerActions({ answerId, copy, readable, at, rating, details }:
         <button
           ref={downBtn}
           type="button"
-          className="ans-ib"
+          className={`ans-ib${rated === 'down' ? ' ans-ib--chosen' : ''}`}
           aria-label="Bad answer"
-          title="Bad answer"
-          aria-pressed={thumb === 'down'}
+          title={rated === 'down' ? 'You rated this answer bad' : 'Bad answer'}
           aria-expanded={reasonOpen}
           aria-controls={reasonOpen ? reasonId : undefined}
-          disabled={sending}
+          aria-disabled={locked || undefined}
           data-testid="action-down"
+          data-chosen={rated === 'down' || undefined}
           onClick={() => {
+            if (locked) return
             setStatus(null)
             setReasonOpen((o) => !o)
           }}
@@ -164,8 +181,9 @@ export function AnswerActions({ answerId, copy, readable, at, rating, details }:
           <Svg d={ICON.down} />
         </button>
         <button
+          ref={details.toggleRef}
           type="button"
-          className="ans-ib"
+          className="ans-ib ans-ib--toggle"
           aria-label="Details"
           title="Details: steps, timings, cost"
           aria-expanded={details.open}
@@ -180,8 +198,13 @@ export function AnswerActions({ answerId, copy, readable, at, rating, details }:
         </time>
       </span>
       <span className="sr-only" role="status" aria-live="polite">
-        {copied === 'ok' ? 'Copied the answer and its FDA links.' : copied === 'fail' ? 'Could not copy.' : ''}
+        {copied === 'ok' ? 'Copied the answer and its FDA links.' : ''}
       </span>
+      {copied === 'fail' && (
+        <p className="ans-status m-0 w-full" role="alert" data-testid="copy-failed">
+          Couldn't copy. Select the text and copy it instead.
+        </p>
+      )}
       {status && (
         <p className="ans-status m-0 w-full" role="status" data-testid="rating-status">
           {status}
@@ -198,8 +221,8 @@ export function AnswerActions({ answerId, copy, readable, at, rating, details }:
           }}
           onKeyDown={(e) => {
             if (e.key === 'Escape') {
-              setReasonOpen(false)
-              downBtn.current?.focus()
+              e.stopPropagation()
+              closeReason()
             }
           }}
         >
@@ -217,14 +240,7 @@ export function AnswerActions({ answerId, copy, readable, at, rating, details }:
             <span className="ans-count ms-num" id={`${reasonId}-c`}>
               {reason.length}/{ANSWER_REASON_MAX}
             </span>
-            <button
-              type="button"
-              className="ms-btn ms-btn--secondary ms-btn--sm"
-              onClick={() => {
-                setReasonOpen(false)
-                downBtn.current?.focus()
-              }}
-            >
+            <button type="button" className="ms-btn ms-btn--secondary ms-btn--sm" onClick={closeReason}>
               Cancel
             </button>
             <button type="submit" className="ms-btn ms-btn--primary ms-btn--sm" disabled={sending} data-testid="rating-send">

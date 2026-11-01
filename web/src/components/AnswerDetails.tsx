@@ -1,6 +1,5 @@
-import { fmtStepMs, type AskResponse } from '../live/api'
-import { tierLabel, totalMs } from '../live/answerMeta'
-import { LiveTrace } from './LiveTrace'
+import { fmtStepMs, type AskResponse, type LiveTraceStep } from '../live/api'
+import { modelName, stepNote, tierLabel, totalMs } from '../live/answerMeta'
 
 /** "$0.0123", "$0.0000 (no model call)" or "not reported" (the server sent null). */
 export function costText(resp: Pick<AskResponse, 'cost_usd' | 'tier'>): string {
@@ -9,9 +8,45 @@ export function costText(resp: Pick<AskResponse, 'cost_usd' | 'tier'>): string {
   return `$${resp.cost_usd.toFixed(4)}${free ? ' (no model call)' : ''}`
 }
 
+const STATUS_WORD: Record<LiveTraceStep['status'], string> = {
+  ok: 'done',
+  skipped: 'skipped',
+  failed: 'failed',
+  not_searched: 'not searched',
+  unknown: 'unknown',
+}
+
+function StepIcon({ status }: { status: LiveTraceStep['status'] }) {
+  const ok = status === 'ok'
+  return (
+    <span className={`ans-step-icon${ok ? '' : ' ans-step-icon--off'}`}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+        <path d={ok ? 'm5 12.5 4.5 4.5L19 7.5' : status === 'failed' ? 'M6 6l12 12M18 6 6 18' : 'M6 12h12'} />
+      </svg>
+      <span className="sr-only">{STATUS_WORD[status]}</span>
+    </span>
+  )
+}
+
+/** One step in two lines at most: its name, then model, time and outcome note (cut with an ellipsis, full text on hover). */
+function Step({ s }: { s: LiveTraceStep }) {
+  const meta = [modelName(s.model), fmtStepMs(s.ms), s.status !== 'ok' ? STATUS_WORD[s.status] : null, stepNote(s.note)]
+    .filter((x): x is string => !!x)
+    .join(' · ')
+  return (
+    <li className="ans-step" data-testid="trace-step">
+      <StepIcon status={s.status} />
+      <span className="ans-step-name">{s.step}</span>
+      <span className="ans-step-meta ms-num" title={meta}>
+        {meta}
+      </span>
+    </li>
+  )
+}
+
 /**
- * The closed-by-default Details of one answer: which route answered, the step trace with models and timings,
- * the total time, the cost and, when the server sends them, tokens. Nothing here is shown in the main view.
+ * The closed-by-default Details of one answer: which route answered, the steps with models and timings, the total
+ * time, the cost and, when the server sends them, tokens. Nothing here is shown in the main view.
  */
 export function AnswerDetails({ resp, id }: { resp: AskResponse; id: string }) {
   const total = totalMs(resp.trace)
@@ -21,12 +56,6 @@ export function AnswerDetails({ resp, id }: { resp: AskResponse; id: string }) {
       <dl>
         <dt>Route</dt>
         <dd data-testid="details-tier">{tierLabel(resp)}</dd>
-        {resp.badge && (
-          <>
-            <dt>Note</dt>
-            <dd>{resp.badge}</dd>
-          </>
-        )}
         <dt>Cost</dt>
         <dd className="ms-num" data-testid="details-cost">
           {costText(resp)}
@@ -59,7 +88,11 @@ export function AnswerDetails({ resp, id }: { resp: AskResponse; id: string }) {
       {resp.trace.length > 0 && (
         <>
           <p className="ans-sub">Steps</p>
-          <LiveTrace steps={resp.trace} />
+          <ol className="ans-steps" aria-label="Steps of this run" data-testid="live-trace">
+            {resp.trace.map((s, i) => (
+              <Step key={i} s={s} />
+            ))}
+          </ol>
         </>
       )}
     </div>

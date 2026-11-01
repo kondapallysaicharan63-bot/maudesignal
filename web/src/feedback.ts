@@ -293,13 +293,22 @@ export function buildAnswerRating(
   }
 }
 
-/** Sends an answer rating. Only a 2xx answer counts as sent; the result reuses the feedback form's messages. */
+/** The quiet line shown when a rating could not be stored (an older API answers 422 to kind / answer_id). */
+export const RATING_NOT_SAVED = 'Rating not saved.'
+export const RATING_ALREADY = 'This answer was already rated.'
+
+export type RatingResult = { ok: true } | { ok: false; already: boolean; message: string }
+
+/**
+ * Sends an answer rating. Only a 2xx answer counts as sent. Every failure is the same quiet line ("Rating not saved."),
+ * never the server's validation text, except 409 (this answer was already rated from here).
+ */
 export async function submitAnswerRating(
   apiBase: string | null,
   payload: AnswerRatingPayload,
   fetcher: (url: string, init: RequestInit) => Promise<FetchLike>,
-): Promise<SubmitResult> {
-  if (!apiBase) return { ok: false, kind: 'unavailable', message: MESSAGES.unavailable }
+): Promise<RatingResult> {
+  if (!apiBase) return { ok: false, already: false, message: RATING_NOT_SAVED }
   try {
     const res = await fetcher(`${apiBase}/v1/feedback`, {
       method: 'POST',
@@ -308,11 +317,10 @@ export async function submitAnswerRating(
       credentials: 'omit',
     })
     if (res.ok) return { ok: true }
-    if (res.status === 422) return { ok: false, kind: 'patient_data', message: await serverMessage(res) }
-    if (res.status === 429) return { ok: false, kind: 'rate_limited', message: MESSAGES.rate_limited }
-    return { ok: false, kind: 'server', message: MESSAGES.server }
+    if (res.status === 409) return { ok: false, already: true, message: RATING_ALREADY }
+    return { ok: false, already: false, message: RATING_NOT_SAVED }
   } catch {
-    return { ok: false, kind: 'network', message: MESSAGES.network }
+    return { ok: false, already: false, message: RATING_NOT_SAVED }
   }
 }
 

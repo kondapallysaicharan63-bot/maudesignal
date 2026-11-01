@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // The v2 answer turn (?layout=v2) mounted in jsdom with a fake fetch: the quiet chip per route, Details closed by
-// default, Copy, Read aloud (voice choice, Stop, hidden when unsupported), thumbs up / down with a reason, and the
-// classic layout left exactly as it was.
+// default, Copy, Read aloud (voice choice, one utterance per sentence, Stop, hidden when unsupported), thumbs up / down
+// with a reason (one rating per answer), and the classic layout left exactly as it was.
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -60,13 +60,26 @@ let fetcher: ReturnType<typeof vi.fn<(u: string, i?: RequestInit) => Promise<Res
 let rateFetch: ReturnType<typeof vi.fn<(u: string, i: RequestInit) => Promise<FetchLike>>>
 let chat: ReturnType<typeof useLiveChat> | null = null
 
+interface Utter {
+  text: string
+  rate: number
+  voice: { name: string } | null
+  onend: (() => void) | null
+  onerror: (() => void) | null
+}
 interface Synth {
-  spoken: { text: string; rate: number; voice: { name: string } | null }[]
+  spoken: Utter[]
   cancelled: number
-  voices: { name: string; lang: string; default?: boolean }[]
+  voices: { name: string; lang: string; default?: boolean; localService?: boolean }[]
   listeners: (() => void)[]
 }
 let synth: Synth
+
+const VOICES: Synth['voices'] = [
+  { name: 'Microsoft David - English (United States)', lang: 'en-US', default: true, localService: true },
+  { name: 'Microsoft Jenny Online (Natural) - English (United States)', lang: 'en-US', localService: false },
+  { name: 'Microsoft Aria (Natural) - English (United States)', lang: 'en-US', localService: true },
+]
 
 function installSpeech(voices: Synth['voices']) {
   synth = { spoken: [], cancelled: 0, voices, listeners: [] }
@@ -74,6 +87,8 @@ function installSpeech(voices: Synth['voices']) {
     this.text = t
     this.rate = 1
     this.voice = null
+    this.onend = null
+    this.onerror = null
   } as unknown
   ;(window as unknown as { SpeechSynthesisUtterance: unknown }).SpeechSynthesisUtterance = Utter
   ;(globalThis as unknown as { SpeechSynthesisUtterance: unknown }).SpeechSynthesisUtterance = Utter
@@ -82,7 +97,7 @@ function installSpeech(voices: Synth['voices']) {
     cancel: () => {
       synth.cancelled++
     },
-    speak: (u: { text: string; rate: number; voice: { name: string } | null }) => synth.spoken.push(u),
+    speak: (u: Utter) => synth.spoken.push(u),
     getVoices: () => synth.voices,
     addEventListener: (_: string, f: () => void) => synth.listeners.push(f),
     removeEventListener: () => undefined,
@@ -123,13 +138,16 @@ async function ask(body: unknown, question = QUESTION) {
   })
   await flush()
 }
+async function typeReason(box: HTMLTextAreaElement, value: string) {
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(box, value)
+    box.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+}
 
 beforeEach(() => {
   window.matchMedia = ((query: string) => ({ matches: query.includes('reduce'), addEventListener() {}, removeEventListener() {} })) as unknown as typeof window.matchMedia
-  installSpeech([
-    { name: 'Microsoft David - English (United States)', lang: 'en-US', default: true },
-    { name: 'Microsoft Jenny Online (Natural) - English (United States)', lang: 'en-US' },
-  ])
+  installSpeech(VOICES)
   host = document.createElement('div')
   document.body.appendChild(host)
   root = createRoot(host)
@@ -141,6 +159,7 @@ afterEach(async () => {
   await act(async () => root.unmount())
   host.remove()
   chat = null
+  window.history.replaceState(null, '', '/')
 })
 
 describe('v2 answer turn', () => {
@@ -155,14 +174,43 @@ describe('v2 answer turn', () => {
     expect(q('sentence-links')?.querySelector('a')?.getAttribute('href')).toBe('https://www.accessdata.fda.gov/r?id=50426770')
     expect(q('mark-verified')?.textContent).toContain('Verified')
     expect(q('held-back')?.textContent).toContain('1 sentence held back: a number did not match the stored data')
-    // removed from the main view
     expect(text()).not.toContain('Cost of this answer')
     expect(text()).not.toContain('812 ms')
     expect(q('live-trace')).toBeNull()
     expect(q('mode-badge')).toBeNull()
-    // 9 left is more than 5: not shown
     expect(q('limits')).toBeNull()
     expect(q('answer-time')?.textContent).toMatch(/^\d{1,2}:\d{2} (AM|PM)$/)
+  })
+
+  it('sources sit below the answer under "Sources"; no per-answer advice line (Copy keeps it)', async () => {
+    const written: string[] = []
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (s: string) => void written.push(s) } })
+    await mount('v2')
+    await ask(liveBody())
+    const ans = q('live-answer')!
+    const src = q('answer-sources')!
+    expect(src.querySelector('.ans-sources-label')?.textContent).toBe('Sources')
+    expect(q('answer-sentences')!.querySelector('a')).toBeNull()
+    expect(q('answer-sentences')!.compareDocumentPosition(src) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(src.querySelectorAll('a')).toHaveLength(1)
+    expect(ans.querySelector('[data-testid="not-advice"]')).toBeNull()
+    expect(ans.textContent).not.toContain('Not medical advice')
+    await act(async () => q('action-copy')!.click())
+    await flush()
+    expect(written[0]).toContain('Not medical advice')
+  })
+
+  it('only the chosen thumb looks selected; an open reason box does not', async () => {
+    await mount('v2')
+    await ask(liveBody())
+    await act(async () => q('action-down')!.click())
+    expect(q('action-down')!.className).not.toContain('ans-ib--chosen')
+    expect(q('action-up')!.className).not.toContain('ans-ib--chosen')
+    await act(async () => q('rating-send')!.click())
+    await flush()
+    expect(q('action-down')!.className).toContain('ans-ib--chosen')
+    expect(q('action-up')!.className).not.toContain('ans-ib--chosen')
+    expect(q('action-up')!.getAttribute('aria-pressed')).toBe('false')
   })
 
   it('a greeting is an "Instant answer" with no FDA-facts line and no cost line', async () => {
@@ -176,7 +224,7 @@ describe('v2 answer turn', () => {
     expect(host.querySelectorAll('[data-testid="suggestion-chip"]')).toHaveLength(1)
   })
 
-  it('direct, cached and recorded answers get their own chip', async () => {
+  it('direct, cached and recorded answers get their own chip; a cached answer shows when it was first answered', async () => {
     await mount('v2')
     await ask({ ...greeting, mode: 'direct', tier: 'direct', badge: 'Direct FDA lookup — no AI' }, 'Recalls for QIH')
     await ask({ ...liveBody(), tier: 'cache', answered_at: '2026-11-01T10:15:00Z' }, 'Again?')
@@ -190,9 +238,12 @@ describe('v2 answer turn', () => {
     expect(chips[1]).toBe('Cached')
     expect(chips[2]).toMatch(/^Recorded · [A-Z][a-z]{2} \d{1,2}, \d{4}$/)
     expect(q('recorded-note')).not.toBeNull()
+    const times = Array.from(host.querySelectorAll('[data-testid="answer-time"]'))
+    expect(times[1].getAttribute('datetime')).toBe('2026-11-01T10:15:00.000Z')
   })
 
-  it('a voice turn names Voice Transcribe', async () => {
+  it('a voice turn names Muse Voice Transcribe, and in v2 its auto-read goes through the answer\'s own button', async () => {
+    window.history.replaceState(null, '', '/?layout=v2')
     await mount('v2')
     const body = liveBody({ heard: 'what changed', trace: [{ step: 'Muse Voice Transcribe', model: 'muse-voice-transcribe-1.0', ms: 540, status: 'ok' }, ...liveBody().trace] })
     fetcher.mockResolvedValueOnce(res(200, body))
@@ -200,7 +251,23 @@ describe('v2 answer turn', () => {
       await chat!.askVoice(new Blob([new Uint8Array(44)], { type: 'audio/wav' }))
     })
     await flush()
-    expect(q('model-chip')?.textContent).toBe('Voice Transcribe + Muse Spark 1.3 · Live')
+    expect(q('model-chip')?.textContent).toBe('Muse Voice Transcribe + Muse Spark 1.3 · Live')
+    expect(synth.spoken.map((u) => u.text)).toEqual(['33 reports were stored for the week.', 'Two device types had more serious reports than usual.'])
+    expect(synth.spoken[0].voice?.name).toContain('Aria (Natural)')
+    expect(q('action-read')?.getAttribute('aria-label')).toBe('Stop reading aloud')
+    await act(async () => q('action-read')!.click())
+    expect(q('action-read')?.getAttribute('aria-label')).toBe('Read aloud')
+  })
+
+  it('classic voice auto-read keeps the old path (spoken_text as is)', async () => {
+    await mount('classic')
+    fetcher.mockResolvedValueOnce(res(200, liveBody({ heard: 'what changed' })))
+    await act(async () => {
+      await chat!.askVoice(new Blob([new Uint8Array(44)], { type: 'audio/wav' }))
+    })
+    await flush()
+    expect(synth.spoken).toHaveLength(1)
+    expect(synth.spoken[0].text).toContain('(report 50426770)')
   })
 
   it('"questions left" shows only when 5 or fewer remain', async () => {
@@ -209,7 +276,7 @@ describe('v2 answer turn', () => {
     expect(q('limits')?.textContent).toBe('5 live questions left today')
   })
 
-  it('Details is closed by default and opens the trace, cost, tokens, timings and tier', async () => {
+  it('Details is closed by default, opens the trace, cost, tokens, timings and tier; Escape closes it and returns focus', async () => {
     await mount('v2')
     await ask(liveBody())
     const t = q('details-toggle')!
@@ -220,14 +287,20 @@ describe('v2 answer turn', () => {
     expect(t.getAttribute('aria-expanded')).toBe('true')
     const panel = q('answer-details')!
     expect(t.getAttribute('aria-controls')).toBe(panel.id)
-    expect(q('details-tier')?.textContent).toMatch(/Tier 4/)
+    expect(q('details-tier')?.textContent).toBe('Live model answer')
     expect(q('details-cost')?.textContent).toBe('$0.0123')
     expect(q('details-tokens')?.textContent).toBe('1200 in · 140 out')
     expect(q('details-time')?.textContent).toBe('818 ms across 2 steps')
-    expect(panel.querySelectorAll('[data-testid="trace-step"]')).toHaveLength(2)
-    expect(panel.textContent).toContain('Muse Spark')
-    await act(async () => t.click())
+    const steps = panel.querySelectorAll('[data-testid="trace-step"]')
+    expect(steps).toHaveLength(2)
+    expect(steps[0].textContent).toContain('Muse Spark 1.3 · 812 ms')
+    expect(steps[0].querySelector('.sr-only')?.textContent).toBe('done')
+    expect(steps[0].querySelector('svg')).not.toBeNull()
+    expect(panel.querySelector('.ans-sub')?.textContent).toBe('Steps')
+    await act(async () => panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
     expect(q('answer-details')).toBeNull()
+    expect(t.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(t)
   })
 
   it('Copy puts the answer and its FDA links on the clipboard, not the question', async () => {
@@ -242,24 +315,66 @@ describe('v2 answer turn', () => {
     expect(written[0]).toContain('Report 50426770: https://www.accessdata.fda.gov/r?id=50426770')
     expect(written[0]).not.toContain(QUESTION)
     expect(q('action-copy')?.getAttribute('aria-label')).toBe('Copied')
+    expect(q('copy-failed')).toBeNull()
   })
 
-  it('Read aloud picks the most natural voice at 0.95, reads only the answer, and Stop cancels', async () => {
+  it('a recorded answer copies with its label and note first', async () => {
+    const written: string[] = []
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (s: string) => void written.push(s) } })
+    await mount('v2')
+    const note = 'No live model call was made. Shown instead: a recorded run that answered "What changed this week?" (recorded 2026-10-28).'
+    await ask({ ...liveBody(), mode: 'recorded', tier: undefined, recorded_note: note })
+    await act(async () => q('action-copy')!.click())
+    await flush()
+    expect(written[0].startsWith(`Recorded answer · Oct 28, 2026\n${note}\n\n`)).toBe(true)
+  })
+
+  it('a copy that fails says so in visible text', async () => {
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw new Error('denied') } } })
+    const exec = document.execCommand
+    ;(document as unknown as { execCommand: () => boolean }).execCommand = () => false
+    await mount('v2')
+    await ask(liveBody())
+    await act(async () => q('action-copy')!.click())
+    await flush()
+    expect(q('copy-failed')?.textContent).toContain("Couldn't copy")
+    ;(document as unknown as { execCommand: typeof exec }).execCommand = exec
+  })
+
+  it('Read aloud picks an on-device Natural voice at 0.95, one utterance per sentence, only the answer; Stop cancels', async () => {
     await mount('v2')
     await ask(liveBody())
     const b = q('action-read')!
     expect(b.getAttribute('aria-label')).toBe('Read aloud')
+    expect(b.hasAttribute('aria-pressed')).toBe(false)
     await act(async () => b.click())
-    expect(synth.spoken).toHaveLength(1)
-    expect(synth.spoken[0].voice?.name).toContain('Jenny Online (Natural)')
-    expect(synth.spoken[0].rate).toBe(0.95)
-    expect(synth.spoken[0].text).not.toMatch(/https?:|50426770/)
-    expect(synth.spoken[0].text).toContain('33 reports were stored for the week.')
+    expect(synth.spoken).toHaveLength(2)
+    for (const u of synth.spoken) {
+      expect(u.voice?.name).toContain('Aria (Natural)')
+      expect(u.rate).toBe(0.95)
+      expect(u.text).not.toMatch(/https?:|50426770/)
+    }
     expect(q('action-read')?.getAttribute('aria-label')).toBe('Stop reading aloud')
     const before = synth.cancelled
     await act(async () => q('action-read')!.click())
     expect(synth.cancelled).toBeGreaterThan(before)
     expect(q('action-read')?.getAttribute('aria-label')).toBe('Read aloud')
+  })
+
+  it('a late error from a cancelled reading does not clear the new one', async () => {
+    await mount('v2')
+    await ask(liveBody())
+    await ask(liveBody(), 'Second question?')
+    const reads = Array.from(host.querySelectorAll('[data-testid="action-read"]')) as HTMLButtonElement[]
+    await act(async () => reads[0].click())
+    const old = synth.spoken[0]
+    await act(async () => reads[1].click())
+    await act(async () => old.onerror?.())
+    expect(reads[1].getAttribute('aria-label')).toBe('Stop reading aloud')
+    expect(reads[0].getAttribute('aria-label')).toBe('Read aloud')
+    // the new reading ends normally on its last sentence
+    await act(async () => synth.spoken[synth.spoken.length - 1].onend?.())
+    expect(reads[1].getAttribute('aria-label')).toBe('Read aloud')
   })
 
   it('voices that load late show the button on voiceschanged', async () => {
@@ -280,7 +395,7 @@ describe('v2 answer turn', () => {
     expect(q('action-copy')).not.toBeNull()
   })
 
-  it('thumbs up posts a rating with the answer id and no question text', async () => {
+  it('thumbs up posts a rating with the answer id and no question text; further thumbs are ignored', async () => {
     await mount('v2')
     await ask(liveBody())
     await act(async () => q('action-up')!.click())
@@ -296,22 +411,26 @@ describe('v2 answer turn', () => {
     expect(init.body as string).not.toContain('33 reports')
     expect(q('action-up')?.getAttribute('aria-pressed')).toBe('true')
     expect(q('rating-status')?.textContent).toContain('Thanks')
+    await act(async () => q('action-down')!.click())
+    await act(async () => q('action-up')!.click())
+    await flush()
+    expect(q('rating-reason')).toBeNull()
+    expect(rateFetch).toHaveBeenCalledTimes(1)
+    expect(q('action-down')?.getAttribute('aria-disabled')).toBe('true')
   })
 
-  it('thumbs down opens an optional reason box (300 characters at most) and sends the reason', async () => {
+  it('thumbs down opens an optional reason box (300 characters at most), sends the reason, then focus returns to it', async () => {
     await mount('v2')
     await ask(liveBody())
     const down = q('action-down')!
+    expect(down.hasAttribute('aria-pressed')).toBe(false)
     await act(async () => down.click())
     expect(down.getAttribute('aria-expanded')).toBe('true')
     const box = q('rating-reason')!.querySelector('textarea')!
     expect(box.maxLength).toBe(300)
     expect(document.activeElement).toBe(box)
     expect(host.querySelector(`label[for="${box.id}"]`)?.textContent).toContain('What was wrong?')
-    await act(async () => {
-      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(box, 'The count looked off.' + 'x'.repeat(400))
-      box.dispatchEvent(new Event('input', { bubbles: true }))
-    })
+    await typeReason(box, 'The count looked off.' + 'x'.repeat(400))
     await act(async () => q('rating-send')!.click())
     await flush()
     const body = JSON.parse(rateFetch.mock.calls[0][1].body as string)
@@ -320,7 +439,30 @@ describe('v2 answer turn', () => {
     expect(body.comment.length).toBeLessThanOrEqual(300)
     expect(JSON.stringify(body)).not.toContain(QUESTION)
     expect(q('rating-reason')).toBeNull()
-    expect(q('action-down')?.getAttribute('aria-pressed')).toBe('true')
+    expect(down.getAttribute('aria-expanded')).toBe('false')
+    expect(down.getAttribute('data-chosen')).toBe('true')
+    expect(document.activeElement).toBe(down)
+  })
+
+  it('an older API (422 on kind / answer_id) shows only "Rating not saved."', async () => {
+    rateFetch = vi.fn(async () => ({ ok: false, status: 422, json: async () => ({ error: { code: 'invalid_input', message: 'Invalid input: answer_id, kind.' } }) }))
+    await mount('v2')
+    await ask(liveBody())
+    await act(async () => q('action-up')!.click())
+    await flush()
+    expect(q('rating-status')?.textContent).toBe('Rating not saved.')
+    expect(text()).not.toContain('Invalid input')
+    expect(q('action-up')?.getAttribute('aria-pressed')).toBe('false') // not saved: can try again
+  })
+
+  it('a second rating refused by the server (409) locks the thumbs', async () => {
+    rateFetch = vi.fn(async () => ({ ok: false, status: 409 }))
+    await mount('v2')
+    await ask(liveBody())
+    await act(async () => q('action-up')!.click())
+    await flush()
+    expect(q('rating-status')?.textContent).toBe('This answer was already rated.')
+    expect(q('action-up')?.getAttribute('aria-disabled')).toBe('true')
   })
 
   it('every action button has a label and a tooltip', async () => {

@@ -262,6 +262,9 @@ Calls made with the public demo key are logged the same way, with the label <cod
 no names and no email addresses. Feedback sent before 31 October 2026 could include a name the
 person typed; names are removed from those entries except where the person chose to be quoted by
 name and role.</li>
+<li>A thumbs up or down on a chat answer stores the thumb, a random answer id made in the page
+and an optional reason you type, with the referral code, page and time - never the question or
+the answer.</li>
 <li>Visits store: referral code, page and time.</li>
 {clients}
 <li>IP addresses are never stored by this code. Before any rate limit sees an address it is turned
