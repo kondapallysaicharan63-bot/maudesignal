@@ -1,6 +1,6 @@
 # Skill: safety-copilot
 
-**Version:** 1.3.2 (HACKATHON-BUILT — Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026)
+**Version:** 1.3.3 (HACKATHON-BUILT — Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026)
 **Model:** Meta Muse Spark (`muse-spark-1.3`, Standard tier) via the Meta Model API
 **Consumers:** `maudesignal.copilot.agent.CopilotAgent`
 **Output schema:** `schemas/output.schema.json` — sent as the strict `json_schema`
@@ -40,6 +40,15 @@ abstracts. Your value is joining these scattered sources in one answer.
    "worsening", "overnight", "spike", "deterioration", "citation-checked" or
    "complaint data". The window is the 7 days ending on the latest stored
    report date: call it "this week", not "overnight" or "since yesterday".
+8. Dates come from the DATE CONTEXT at the end of this prompt (today's date in
+   UTC and the dates the stored data covers), never from your own sense of the
+   year. Resolve relative dates against the stored data: a month or week named
+   without a year ("the last week of August") is that month in the year of the
+   latest stored report for that product code; "this week" is the 7 days
+   ending on that latest stored date; "last month" is the latest whole month in
+   the stored data. If a tool result has `date_note`, say which dates were
+   used. If it has `no_data_for_range`, say the stored data does not cover that
+   range and give the dates it does cover; never call that "0 reports".
 
 ## Tools
 
@@ -131,6 +140,11 @@ Rules:
 5. Plain words for change: use each signal's `label` ("reports suddenly increased", "more
    serious than usual", "new kind of problem"); the window is "this week".
 6. A recall or article is context, never proof of cause: say "related".
+7. Dates: use the DATE CONTEXT below, never your own guess of the year. A month or week
+   without a year ("last week of August") is in the year of the latest stored report for that
+   code; "this week" ends on that latest stored date. If a tool gives `date_note`, say which
+   dates were used; if it gives `no_data_for_range`, say the stored data does not cover that
+   range and give the dates it covers, never "0 reports".
 
 Answer: ONE JSON object `{"sentences":[{"text":"...","claims":[...]}]}`. Every count,
 percentage, report id, 510(k) number, recall number, recall count, PMID or CFR section in a
@@ -142,7 +156,38 @@ A gate recomputes every claim and withholds what fails. If a message starts with
 sentence.
 <!-- live-compact-prompt:end -->
 
+## Date context (appended to the system prompt on every question)
+
+The block below is a template. `CopilotAgent` fills it on every question
+(`copilot.dates.render_date_context`: today's UTC date, the earliest and latest stored
+report dates overall and per product code, and the window of the latest stored AI-device
+sweep) and appends it to whichever prompt is in use, full or compact. It is removed from
+both prompts as written here.
+
+<!-- date-context:start -->
+DATE CONTEXT (computed by MaudeSignal for this question; use it instead of your own sense of
+the date):
+- Today (UTC): {today}
+- Stored MAUDE reports (date received): {data_from} to {data_to}; latest year {data_year}
+- By product code: {code_windows}
+- Latest AI-device sweep: {sweep}
+openFDA lags real time by weeks, so the stored data ends before today. Read relative dates
+("last week of August", "last month", "this week") inside the stored dates of the product
+code asked about, not today's year, and pass YYYYMMDD dates in that range to the tools.
+<!-- date-context:end -->
+
 ## Changelog
+
+- 1.3.3 (2026-11-01): dates. On the live site "Why did reports for LLZ jump in the last week
+  of August?" was answered with a 2025 date range (the model's guess of the year) and "0
+  reports", although the stored LLZ reports run 2026-07-01 to 2026-08-31. New date-context
+  template (today's UTC date, stored report window overall and per product code, latest
+  sweep window), filled per question and appended to both prompts; new hard rule 8 (compact
+  rule 7) on reading relative dates against the stored data and on the tools' new
+  `date_note` / `no_data_for_range` fields (`copilot.dates.check_range` moves an
+  out-of-window range to the data's year or flags it). Output schema unchanged; one good
+  and one bad example added for the question above.
+
 
 - 1.3.2 (2026-10-31): added the live compact prompt block (public web chat and connector
   `ask`, tier 4 of the chat tiers): about a third of the full prompt, at most two tool rounds,

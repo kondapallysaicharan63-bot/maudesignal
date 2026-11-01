@@ -125,7 +125,10 @@ def test_tool_and_gate_claim(tmp_path: Path) -> None:
     later = call_tool(
         ctx, "report_sources", json.dumps({"product_code": "LLZ", "date_from": "20261001"})
     )
-    assert later["report_count"] == 0 and "dated after 20260829" in later["note"]
+    # After the stored data: flagged as not covered (copilot.dates), never a count of 0.
+    assert later["no_data_for_range"] is True and "report_count" not in later
+    assert later["data_covers"]["date_to"] == "20260829"
+    assert "do not report it as 0 reports" in later["date_note"]
     ok, bad = verify(
         [
             SourceCountClaim("LLZ", "non-manufacturer", 1),

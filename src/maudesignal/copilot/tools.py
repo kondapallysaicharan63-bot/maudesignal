@@ -23,6 +23,7 @@ from datetime import date, timedelta
 from typing import Any
 
 from maudesignal.copilot.actions import draft_capa
+from maudesignal.copilot.dates import check_range
 from maudesignal.gate.cfr import CFR_SECTIONS
 from maudesignal.gate.evidence import EvidenceStore
 from maudesignal.monitor.deterioration import detect_from_database, parse_yyyymmdd
@@ -48,6 +49,11 @@ class ToolContext:
     store: EvidenceStore
     actor: str = "copilot:muse-spark"
     created_capas: list[str] = field(default_factory=list)
+    #: Fixed "today" (UTC) for the date context; None means the real UTC date.
+    today: date | None = None
+    #: Window of the latest stored AI-device sweep (``current_start``, ``current_end``,
+    #: optional ``run_date``), shown in the date context; None when no sweep is stored.
+    sweep_window: dict[str, str] | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -108,6 +114,10 @@ def product_summary(
     date_to: str | None = None,
 ) -> dict[str, Any]:
     """Counts and event-type shares for one product code, plus its 510(k) device."""
+    guard = check_range(ctx.store, product_code, date_from, date_to)
+    if guard.no_data:
+        return {"product_code": product_code, **guard.fields()}
+    date_from, date_to = guard.date_from, guard.date_to
     rows = ctx.store.select(product_code=product_code, date_from=date_from, date_to=date_to)
     by_type = Counter((r.event_type or "Unknown") for r in rows)
     total = len(rows)
@@ -130,6 +140,7 @@ def product_summary(
         "latest_date_received": dates[-1] if dates else None,
         "devices_510k": devices,
         "example_report_ids": [r.report_id for r in rows[:MAX_IDS]],
+        **guard.fields(),
     }
 
 
@@ -147,7 +158,12 @@ def search_reports(
 
     ``date_from`` / ``date_to`` (YYYYMMDD, date received) narrow the search; ``offset``
     skips that many of the newest-first matches so a caller can read past the first page.
+    A range outside the stored data is moved or flagged (see ``copilot.dates.check_range``).
     """
+    guard = check_range(ctx.store, product_code, date_from, date_to)
+    if guard.no_data:
+        return {"reports": [], **guard.fields()}
+    date_from, date_to = guard.date_from, guard.date_to
     rows = ctx.store.select(
         product_code=product_code, event_type=event_type, date_from=date_from, date_to=date_to
     )
@@ -170,6 +186,7 @@ def search_reports(
             }
             for r in rows[start : start + limit]
         ],
+        **guard.fields(),
     }
 
 
@@ -396,6 +413,10 @@ def report_sources(
     date_to: str | None = None,
 ) -> dict[str, Any]:
     """Who filed the stored reports: counts by source, plus those not filed by a manufacturer."""
+    guard = check_range(ctx.store, product_code, date_from, date_to)
+    if guard.no_data:
+        return {"product_code": product_code, **guard.fields()}
+    date_from, date_to = guard.date_from, guard.date_to
     rows = ctx.store.select(product_code=product_code, date_from=date_from, date_to=date_to)
     stored = [r.date_received for r in ctx.store.select(product_code=product_code)]
     latest = max((d for d in stored if d), default=None)
@@ -411,11 +432,6 @@ def report_sources(
         "date_to": date_to,
         "report_count": len(rows),
         "latest_date_received": latest,
-        **(
-            {"note": f"no stored {product_code} report is dated after {latest}"}
-            if latest and date_from and date_from > latest
-            else {}
-        ),
         "source_counts": dict(sorted(by_source.items())),
         "non_manufacturer_count": len(others),
         "non_manufacturer_reports": [
@@ -429,6 +445,7 @@ def report_sources(
         ],
         "claim_hint": "state counts with source_count claims; source is one of manufacturer, "
         "user facility, voluntary, distributor, non-manufacturer",
+        **guard.fields(),
     }
 
 

@@ -128,7 +128,10 @@ def test_open_question_reaches_muse_spark_with_lean_settings(tmp_path: Path) -> 
     _full, compact = split_prompts(
         (Path(__file__).resolve().parents[2] / "skills/safety-copilot/SKILL.md").read_text()
     )
-    assert system == compact and len(system) < 2500
+    # The compact prompt plus the per-question date context (Skill 1.3.3).
+    assert compact and system.startswith(compact) and len(compact) < 2500
+    assert "Today (UTC): " in system and "Stored MAUDE reports" in system
+    assert len(system) < 3500
     assert isinstance(b["cost_usd"], float) and b["cost_usd"] > 0
     assert ledger_files(e) >= 1  # the per-call ledger was used for the model call
 
