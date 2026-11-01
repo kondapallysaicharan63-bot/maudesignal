@@ -708,3 +708,36 @@ describe('decision paths: rendering', () => {
     expect(html.match(/data-testid="protocol"/g)).toHaveLength(F.profiles['DMC-06'].vv.protocols.length - 1)
   })
 })
+
+describe('wording on sign-offs', () => {
+  it('uses "approved" only for the PMA device, and "design validation" only as a test name', () => {
+    for (const p of P) {
+      const t = JSON.stringify(p)
+      if (p.overview.pathway !== 'PMA') expect(t, p.id).not.toMatch(/approv/i)
+      const without = JSON.stringify({ ...p, vv: { ...p.vv, protocols: p.vv.protocols.map((x) => ({ ...x, title: '' })) } })
+      expect(without, p.id).not.toMatch(/design validation/i)
+    }
+    const pma = P.filter((p) => p.overview.pathway === 'PMA')
+    expect(pma.length).toBeGreaterThanOrEqual(1)
+    const reviews = P.flatMap((p) => p.design.reviews.map((r) => r.outcome))
+    expect(new Set(reviews)).toEqual(new Set(['Accepted, actions closed', 'Planned']))
+  })
+
+  it('puts "(simulated)" in the title of every card that holds simulated data', () => {
+    for (const tab of ['design', 'vv', 'regulatory', 'market'] as ProfileTab[]) {
+      const html = page('DMC-06', tab)
+      const titles = [...html.matchAll(/<section class="ms2-card[^"]*" aria-label="([^"]+)"/g)].map((m) => m[1])
+      expect(titles.length).toBeGreaterThan(0)
+      for (const t of titles) if (!/^Real FDA data/.test(t)) expect(t, `${tab}: ${t}`).toMatch(/\(simulated\)/)
+    }
+    expect(page('DMC-06', 'overview')).toContain('data-testid="sim-chip"')
+  })
+
+  it('shows the risk grid in every decided path without opening "Show details"', () => {
+    const html = page('DMC-01', 'postmarket')
+    const grids = html.match(/data-testid="risk-grid"/g) ?? []
+    expect(grids).toHaveLength(F.profiles['DMC-01'].decision.paths.filter((x) => x.risk).length)
+    const step4 = html.split('data-step="risk"')[1]
+    expect(step4.indexOf('data-testid="risk-grid"')).toBeLessThan(step4.indexOf('Show details'))
+  })
+})

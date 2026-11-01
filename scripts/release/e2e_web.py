@@ -2978,6 +2978,37 @@ def v2_s_profiles_paths(env: Env) -> str:
             total += 1
         if env.overflow() > 0:
             raise AssertionError(f"{did}: {env.overflow()} px sideways scroll with the paths open")
+        if (
+            env.width < 480
+        ):  # the decision-path text uses the full width, and the label stays on screen
+            narrow = env.page.evaluate(
+                "Math.min(...[...document.querySelectorAll('.ms2-step-body')].map(e => e.getBoundingClientRect().width))"
+            )
+            if narrow < 290:
+                raise AssertionError(f"{did}: a decision-path text column is {narrow:.0f}px wide")
+            env.page.evaluate("document.querySelector('.ms2-section').scrollTo(0, 99999)")
+            env.page.wait_for_timeout(150)
+            chip = env.page.get_by_test_id("sim-chip")
+            top = env.page.evaluate(
+                "(() => { const r = document.querySelector('[data-testid=sim-chip]').getBoundingClientRect();"
+                " const s = document.querySelector('.ms2-section').getBoundingClientRect(); return r.top - s.top })()"
+            )
+            if not chip.is_visible() or abs(top) > 2:
+                raise AssertionError(
+                    f"{did}: the sticky 'Simulated' chip is not at the top (top={top})"
+                )
+            env.page.evaluate("document.querySelector('.ms2-section').scrollTo(0, 0)")
+        else:  # the sidebar fills the viewport on a long page, its last links at the bottom
+            env.page.evaluate("document.querySelector('.ms2-section').scrollTo(0, 99999)")
+            env.page.wait_for_timeout(150)
+            side = env.page.evaluate(
+                "(() => { const r = document.getElementById('sidebar').getBoundingClientRect();"
+                " const t = document.querySelector('[data-testid=side-theme]').getBoundingClientRect();"
+                " return [r.top, r.bottom, innerHeight, t.bottom] })()"
+            )
+            if side[1] < side[2] - 2 or side[3] < side[2] - 140:
+                raise AssertionError(f"{did}: the sidebar does not fill the viewport: {side}")
+            env.page.evaluate("document.querySelector('.ms2-section').scrollTo(0, 0)")
         # The link from the history opens the first path.
         env.page.get_by_test_id("open-decision-path").click()
         if cards.first.get_attribute("open") is None:
