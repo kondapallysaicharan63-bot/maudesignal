@@ -252,6 +252,70 @@ export async function submitFeedback(
   }
 }
 
+// ---- answer ratings (v2 answer turn) ------------------------------------------------------
+
+/** The longest reason a thumbs-down may carry (the API refuses more). */
+export const ANSWER_REASON_MAX = 300
+
+export type Thumb = 'up' | 'down'
+
+/**
+ * Body of POST /v1/feedback for a thumbs up or down on one answer: an answer id made in this page, the thumb
+ * (5 = up, 1 = down) and an optional short reason. Never the question or the answer text.
+ */
+export interface AnswerRatingPayload {
+  kind: 'answer_rating'
+  answer_id: string
+  rating: 1 | 5
+  comment: string
+  consent: 'no_quote'
+  ref: string | null
+  page: 'live-answer'
+  client_ts: string
+}
+
+export function buildAnswerRating(
+  answerId: string,
+  thumb: Thumb,
+  reason: string,
+  ref: string | null,
+  now: () => Date = () => new Date(),
+): AnswerRatingPayload {
+  return {
+    kind: 'answer_rating',
+    answer_id: answerId,
+    rating: thumb === 'up' ? 5 : 1,
+    comment: thumb === 'down' ? reason.trim().slice(0, ANSWER_REASON_MAX) : '',
+    consent: 'no_quote',
+    ref,
+    page: 'live-answer',
+    client_ts: now().toISOString(),
+  }
+}
+
+/** Sends an answer rating. Only a 2xx answer counts as sent; the result reuses the feedback form's messages. */
+export async function submitAnswerRating(
+  apiBase: string | null,
+  payload: AnswerRatingPayload,
+  fetcher: (url: string, init: RequestInit) => Promise<FetchLike>,
+): Promise<SubmitResult> {
+  if (!apiBase) return { ok: false, kind: 'unavailable', message: MESSAGES.unavailable }
+  try {
+    const res = await fetcher(`${apiBase}/v1/feedback`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+      credentials: 'omit',
+    })
+    if (res.ok) return { ok: true }
+    if (res.status === 422) return { ok: false, kind: 'patient_data', message: await serverMessage(res) }
+    if (res.status === 429) return { ok: false, kind: 'rate_limited', message: MESSAGES.rate_limited }
+    return { ok: false, kind: 'server', message: MESSAGES.server }
+  } catch {
+    return { ok: false, kind: 'network', message: MESSAGES.network }
+  }
+}
+
 // ---- dialog keyboard ----------------------------------------------------------------------
 
 export interface KeyLike {

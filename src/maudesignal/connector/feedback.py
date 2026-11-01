@@ -38,7 +38,14 @@ from typing import Annotated, Any, Literal
 
 from fastapi import FastAPI, Query, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 from starlette.concurrency import run_in_threadpool
 from starlette.requests import ClientDisconnect
 
@@ -72,6 +79,13 @@ CLIENTS_PATH = "/v1/admin/clients"
 QUOTE_BY_NAME = "quote_name_role"
 FETCH_WORKERS = 8
 KINDS = ("feedback", "visits")
+# A thumbs up / down on one chat answer (web ?layout=v2). It rides the same route, storage and
+# retention as the survey; it carries a client-made answer id and an optional reason, never the
+# question or the answer text. rating 5 = thumbs up, 1 = thumbs down.
+ANSWER_RATING = "answer_rating"
+ANSWER_ID_PATTERN = r"^[A-Za-z0-9_-]{8,64}$"
+ANSWER_REASON_MAX = 300
+THUMB_RATINGS = (1, 5)
 
 FEEDBACK_COLUMNS = [
     "id",
@@ -85,6 +99,8 @@ FEEDBACK_COLUMNS = [
     "ref",
     "page",
     "client_ts",
+    "kind",
+    "answer_id",
 ]
 VISIT_COLUMNS = ["id", "received_utc", "ref", "page", "client_ts"]
 
@@ -139,11 +155,32 @@ class FeedbackIn(BaseModel):
     ref: str | None = Field(default=None, pattern=REF_PATTERN)
     page: str = Field(default="", max_length=64, pattern=r"^[A-Za-z0-9_:.-]*$")
     client_ts: str = Field(default="", max_length=40, pattern=r"^[0-9TZ:.+-]*$")
+    kind: Literal["survey", "answer_rating"] = "survey"
+    answer_id: str | None = Field(default=None, pattern=ANSWER_ID_PATTERN)
 
     @field_validator("ref", mode="before")
     @classmethod
     def _ref(cls, value: Any) -> Any:
         return clean_ref(value)
+
+    @model_validator(mode="after")
+    def _answer_rating_shape(self) -> FeedbackIn:
+        """An answer rating is a thumb (1 or 5), an answer id and at most a short reason."""
+        if self.kind != ANSWER_RATING:
+            if self.answer_id is not None:
+                raise ValueError("answer_id is only for kind answer_rating")
+            return self
+        if self.answer_id is None:
+            raise ValueError("answer_id is required for an answer rating")
+        if self.rating not in THUMB_RATINGS:
+            raise ValueError("an answer rating is 1 (down) or 5 (up)")
+        if len(self.comment) > ANSWER_REASON_MAX:
+            raise ValueError("the reason is limited to 300 characters")
+        if self.blocker or self.one_thing or self.name or self.role:
+            raise ValueError("an answer rating carries only a reason")
+        if self.consent != "no_quote":
+            raise ValueError("an answer rating is never quoted")
+        return self
 
 
 class VisitIn(BaseModel):
@@ -193,10 +230,17 @@ def summarize(feedback: list[dict[str, Any]], visits: list[dict[str, Any]]) -> d
     """Counts of visits and feedback per ref code and per page, plus average rating per ref."""
     by_ref: dict[str, dict[str, Any]] = defaultdict(lambda: {"visits": 0, "feedback": 0, "sum": 0})
     by_page: dict[str, dict[str, int]] = defaultdict(lambda: {"visits": 0, "feedback": 0})
+    thumbs = {"up": 0, "down": 0}
+    survey: list[dict[str, Any]] = []
+    for f in feedback:
+        if f.get("kind") == ANSWER_RATING:
+            thumbs["up" if f.get("rating") == 5 else "down"] += 1
+        else:
+            survey.append(f)
     for v in visits:
         by_ref[v.get("ref") or "(none)"]["visits"] += 1
         by_page[v.get("page") or "(none)"]["visits"] += 1
-    for f in feedback:
+    for f in survey:
         entry = by_ref[f.get("ref") or "(none)"]
         entry["feedback"] += 1
         entry["sum"] += int(f.get("rating") or 0)
@@ -212,7 +256,8 @@ def summarize(feedback: list[dict[str, Any]], visits: list[dict[str, Any]]) -> d
     ]
     pages = [{"page": p, **c} for p, c in sorted(by_page.items())]
     return {
-        "totals": {"visits": len(visits), "feedback": len(feedback)},
+        "totals": {"visits": len(visits), "feedback": len(survey)},
+        "answer_ratings": thumbs,
         "by_ref": refs,
         "by_page": pages,
         "codes": by_code(feedback, visits),
@@ -261,6 +306,7 @@ def by_code(feedback: list[dict[str, Any]], visits: list[dict[str, Any]]) -> lis
                 "one_thing": f.get("one_thing", ""),
                 "role": f.get("role") or "",
                 "consent": f.get("consent", ""),
+                "kind": f.get("kind") or "survey",
             }
         )
     out: list[dict[str, Any]] = []
@@ -628,7 +674,8 @@ def mount_feedback(
         except StoreError:
             return _err(503, "store_unavailable", "Feedback could not be saved. Try again later.")
         logger.info("feedback_stored", rating=body.rating, has_ref=body.ref is not None)
-        await run_in_threadpool(notifier.feedback, record)
+        if body.kind != ANSWER_RATING:  # a thumb on one answer is counted, not emailed
+            await run_in_threadpool(notifier.feedback, record)
         return JSONResponse(status_code=201, content={"status": "received", "id": rid})
 
     @app.post(VISIT_PATH, include_in_schema=False)

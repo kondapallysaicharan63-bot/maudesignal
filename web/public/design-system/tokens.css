@@ -285,6 +285,7 @@
 .t-title-lg { font: 500 26px/1.15 var(--font-serif); letter-spacing: -0.4px; }
 .t-title { font: 500 19px/1.25 var(--font-serif); }
 .t-deck { font: 400 18px/1.45 var(--font-serif); }
+.t-answer { font: 400 17px/1.65 var(--font-serif); }
 .t-index { font: 400 32px/1 var(--font-serif); }
 .t-wordmark { font: 600 24px/1 var(--font-serif); }
 .t-body { font: 400 15px/1.55 var(--font-sans); }

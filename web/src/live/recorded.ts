@@ -27,6 +27,7 @@ export function threadToResponse(t: Thread, ev: Evidence, note: string): AskResp
   return {
     mode: 'recorded',
     recorded_note: note,
+    ...(t.recorded_at_utc ? { recorded_at: t.recorded_at_utc } : {}),
     not_medical_advice: true,
     trace: [],
     cost_usd: null,

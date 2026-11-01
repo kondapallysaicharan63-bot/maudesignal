@@ -789,8 +789,10 @@ def test_summary_codes_grouped_sorted_and_labelled(
         "one_thing",
         "role",
         "consent",
+        "kind",
     }
     assert fb["consent"] == "no_quote" and fb["role"] == "RA lead" and fb["rating"] == 4
+    assert fb["kind"] == "survey"
     labels = {x["code"]: x["label"] for x in codes}
     assert labels == {
         "Alice1": "",
@@ -932,3 +934,87 @@ def test_vercel_blob_delete_posts_urls_with_auth_and_raises_on_error() -> None:
     down = VercelBlobStore("tok", client=httpx.Client(transport=httpx.MockTransport(boom)))
     with pytest.raises(StoreError):
         down.delete(BlobRef("p", "https://x/p"))
+
+
+# --- answer ratings (web ?layout=v2: thumbs up / down under one chat answer) ----------------
+
+THUMB: dict[str, Any] = {
+    "kind": "answer_rating",
+    "answer_id": "a-3f9c2b7d1e",
+    "rating": 1,
+    "comment": "The count looked off.",
+    "consent": "no_quote",
+    "ref": "dr-smith_1",
+    "page": "live-answer",
+    "client_ts": "2026-11-01T23:42:00Z",
+}
+
+
+def test_answer_rating_stored_with_id_and_reason_only_and_not_emailed(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    c, store, nt = make(data, monkeypatch)
+    r = c.post("/v1/feedback", json=THUMB, headers=H)
+    assert r.status_code == 201
+    [rec] = all_stored(store, "feedback")
+    assert rec["kind"] == "answer_rating" and rec["answer_id"] == "a-3f9c2b7d1e"
+    assert rec["rating"] == 1 and rec["comment"] == "The count looked off."
+    assert not {"question", "answer", "text"} & set(rec)
+    assert nt.sent == []  # counted, not emailed
+    up = c.post("/v1/feedback", json=THUMB | {"rating": 5, "comment": ""}, headers=H)
+    assert up.status_code == 201
+
+
+@pytest.mark.parametrize(
+    "patch",
+    [
+        {"answer_id": None},
+        {"answer_id": "short"},
+        {"answer_id": "has space in it"},
+        {"rating": 3},
+        {"comment": "x" * 301},
+        {"blocker": "something"},
+        {"role": "RA lead"},
+        {"consent": "quote_anonymous"},
+        {"question": "What changed?"},
+        {"answer": "33 reports"},
+        {"kind": "other"},
+        {"comment": "call me at 555-123-4567"},
+    ],
+)
+def test_answer_rating_validation_rejects(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch, patch: dict[str, Any]
+) -> None:
+    c, store, _ = make(data, monkeypatch)
+    r = c.post("/v1/feedback", json=THUMB | patch, headers=H)
+    assert r.status_code == 422
+    assert all_stored(store, "feedback") == []
+
+
+def test_survey_cannot_carry_an_answer_id(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    c, store, _ = make(data, monkeypatch)
+    r = c.post("/v1/feedback", json=GOOD | {"answer_id": "a-3f9c2b7d1e"}, headers=H)
+    assert r.status_code == 422 and all_stored(store, "feedback") == []
+    ok = c.post("/v1/feedback", json=GOOD | {"kind": "survey"}, headers=H)
+    assert ok.status_code == 201
+    [rec] = all_stored(store, "feedback")
+    assert rec["kind"] == "survey" and rec["answer_id"] is None
+
+
+def test_answer_ratings_kept_out_of_the_survey_average(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    c, _, _ = make(data, monkeypatch, per_hour=20)
+    seed(c)
+    c.post("/v1/feedback", json=THUMB, headers=H)
+    c.post("/v1/feedback", json=THUMB | {"rating": 5, "comment": ""}, headers=H)
+    c.post("/v1/feedback", json=THUMB | {"rating": 5, "comment": ""}, headers=H)
+    body = c.get("/v1/admin/summary", headers=A).json()
+    assert body["totals"] == {"visits": 3, "feedback": 3}
+    assert body["answer_ratings"] == {"up": 2, "down": 1}
+    refs = {x["ref"]: x for x in body["by_ref"]}
+    assert refs["dr-smith_1"]["avg_rating"] == 3.0
+    rows = list(csv.reader(io.StringIO(c.get("/v1/admin/export?kind=feedback", headers=A).text)))
+    assert rows[0][-2:] == ["kind", "answer_id"] and len(rows) == 7

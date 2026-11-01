@@ -1,0 +1,64 @@
+/* The v2 answer turn (?layout=v2): reading text, one quiet chip, small icon actions, a closed Details panel.
+   Design-system tokens only (tokens.css); the reading style is the .t-answer type style. */
+
+.ans-turn { min-width: 0; }
+.ans-text { max-width: 70ch; color: var(--ink); }
+.ans-text p { margin: 0; }
+.ans-text p + p,
+.ans-sentence + .ans-sentence { margin-top: var(--space-3); }
+.ans-sources { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); margin-top: var(--space-1); }
+.ans-source {
+  display: inline-flex; align-items: center; gap: 4px; max-width: 100%;
+  min-height: 24px; padding: 2px 8px; border: 1px solid var(--rule); border-radius: var(--radius-xs);
+  font: 500 12px/1.3 var(--font-sans); color: var(--accent); background: var(--surface); text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.ans-source:hover { border-color: var(--rule-strong); text-decoration: underline; }
+.ans-marks { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); margin-top: var(--space-3); font: 400 13px/1.45 var(--font-sans); color: var(--ink-2); }
+.ans-withheld { display: inline-flex; align-items: flex-start; gap: 4px; color: var(--ink-2); overflow-wrap: anywhere; }
+.ans-withheld b { flex: none; white-space: nowrap; font-weight: 600; color: var(--warning); }
+.ans-note { margin: var(--space-2) 0 0; max-width: 70ch; font: 400 13px/1.5 var(--font-sans); color: var(--ink-2); overflow-wrap: anywhere; }
+
+.ans-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-3); }
+.ans-chip {
+  display: inline-flex; align-items: center; height: 24px; padding: 0 8px;
+  border: 1px solid var(--rule); border-radius: var(--radius-xs);
+  font: 500 12px/1 var(--font-sans); color: var(--ink-2); background: transparent; white-space: nowrap;
+}
+.ans-left { font: 400 12px/1 var(--font-sans); color: var(--ink-2); }
+.ans-actions { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 2px; margin-left: auto; }
+.ans-ib {
+  width: 32px; height: 32px; display: inline-grid; place-items: center; padding: 0;
+  border: 1px solid transparent; border-radius: var(--radius-sm); background: transparent; color: var(--ink-2); cursor: pointer;
+}
+.ans-ib:hover { background: var(--surface-sunk); color: var(--ink); }
+.ans-ib[aria-pressed='true'] { color: var(--ink); background: var(--surface-sunk); border-color: var(--rule); }
+.ans-ib[aria-expanded='true'] { color: var(--ink); background: var(--surface-sunk); }
+.ans-time { font: 400 12px/1 var(--font-sans); color: var(--ink-3); padding: 0 6px; white-space: nowrap; }
+.ans-status { font: 400 12px/1.4 var(--font-sans); color: var(--ink-2); }
+
+.ans-panel {
+  margin-top: var(--space-2); padding: var(--space-3) var(--space-4); max-width: 70ch;
+  border: 1px solid var(--rule); border-radius: var(--radius-md); background: var(--surface);
+  font: 400 14px/1.5 var(--font-sans); color: var(--ink-2);
+}
+.ans-panel dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px var(--space-4); margin: 0; }
+.ans-panel dt { color: var(--ink-3); }
+.ans-panel dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+.ans-panel .ans-sub { margin: var(--space-3) 0 var(--space-1); font: 600 11px/1.4 var(--font-sans); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+
+.ans-reason { margin-top: var(--space-2); max-width: 70ch; }
+.ans-reason label { display: block; font: 600 13px/1.4 var(--font-sans); color: var(--ink); }
+.ans-reason textarea {
+  display: block; width: 100%; min-height: 72px; margin-top: var(--space-1); padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--rule-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink);
+  font: 400 15px/1.5 var(--font-sans); resize: vertical;
+}
+.ans-reason-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-2); }
+.ans-count { font: 400 12px/1 var(--font-sans); color: var(--ink-3); margin-right: auto; }
+.ans-advice { margin: var(--space-2) 0 0; font: 400 12px/1.45 var(--font-sans); color: var(--ink-3); }
+
+@media (max-width: 639px) {
+  .ans-actions { margin-left: 0; width: 100%; }
+  .ans-time { margin-left: auto; }
+}
