@@ -292,8 +292,10 @@ reasoning never reaches it.
   integrate/v2), each reviewed by the advisor (BLOCK → fixed) and ui-critic (two rounds). Read-aloud uses browser
   speechSynthesis: the Meta Model API lists no text-to-speech model (models.list, meta-smoke run 41232476267).
 - Research probe 2 (run 41265412828): 2 searches (max_tool_calls respected), 21 fda.gov sources, 0 url
-  citations, $0.0135 tokens + an unknown per-search fee. Per the owner's rule, `MAUDESIGNAL_RESEARCH` goes on in
-  deploy #2 as "Web research — not FDA records".
+  citations, $0.0135 tokens + an unknown per-search fee. The owner's rule would switch `MAUDESIGNAL_RESEARCH` on, but
+  at deploy time the coordinator found the hold reserves only $0.01 per search (Meta's fee is unknown) and
+  $0.12 is a per-request limit, not a daily research cap, so the $3/day cap could not be guaranteed. Research
+  stays OFF in deploy #2; the cap is reworked (reserve a per-search fee such as $0.05 x 2) before it goes on.
 - Owner's change of plan: after deploy #2 a feedback window runs until Nov 2, 9 PM PT (Nov 3 05:00 UTC). Only
   changes under half a day that make the demo clearer or more trustworthy, each reviewed, tested and deployed via
   `main` with the owner's yes. Bigger ideas go to README "Tomorrow — what testers asked for". Final freeze Nov 2,
