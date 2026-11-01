@@ -305,7 +305,7 @@ def make_scenarios(m: Any) -> tuple[tuple[str, Callable[[Any], str]], ...]:
             429,
             {
                 "code": "rate_limited",
-                "message": "Limit of 6 investigations per hour reached. Retry in 600 seconds.",
+                "message": "Limit of 6 investigations per hour reached. Retry in 10 minutes.",
             },
         )
         m.v2_open(env, "investigate", "code=LLZ")

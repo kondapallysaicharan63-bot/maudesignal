@@ -98,6 +98,7 @@ function Months({ a }: { a: Investigation }) {
         <summary className="ms2-smalllink cursor-pointer">How keywords are chosen</summary>
         <p className="ms2-inv-meta m-0 mt-1">{a.keyword_rule}</p>
       </details>
+      {a.total_code_wide.value > 0 && (
       <ul className="ms2-inv-legend" aria-label="Chart key">
         <li>
           <span className="ms2-bar ms2-bar--base ms2-inv-swatch" aria-hidden="true" /> All reports for the product code
@@ -106,6 +107,7 @@ function Months({ a }: { a: Investigation }) {
           <span className="ms2-bar ms2-bar--now ms2-inv-swatch" aria-hidden="true" /> Narrative mentions a keyword
         </li>
       </ul>
+      )}
       {a.total_code_wide.value === 0 && (
         <p className="ms2-inv-meta m-0 mt-2" data-testid="inv-zero-hint">
           No reports for this product code in these 12 months. Check the product code or widen the wording.
