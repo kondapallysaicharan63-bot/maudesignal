@@ -6,7 +6,7 @@
       // v2 layout pages have their own addresses (/chat/<id>, /signals/trend, ...). The built files are linked
       // relatively ("./assets/..."), so on such an address the base is set to the app's folder before anything loads.
       ;(function () {
-        var m = /^(.*?\/)(chat|signals|devices|evidence|connect|workflow|thread|run|capture)(\/|$)/.exec(location.pathname)
+        var m = /^(.*?\/)(chat|signals|devices|evidence|connect|workflow|thread|run|capture|pms-workflow|roi|investigate)(\/|$)/.exec(location.pathname)
         if (m) {
           var b = document.createElement('base')
           b.href = m[1]
@@ -32,7 +32,7 @@
         try {
           var q = (new URLSearchParams(location.search).get('layout') || '').trim().toLowerCase()
           var dflt = '__MS_LAYOUT_DEFAULT__'.trim().toLowerCase()
-          v2 = q === 'v2' || (q !== 'classic' && (/\/(chat|signals|devices|evidence|connect|workflow|thread|run|capture)(\/|$)/.test(location.pathname) || dflt === 'v2'))
+          v2 = q === 'v2' || (q !== 'classic' && (/\/(chat|signals|devices|evidence|connect|workflow|thread|run|capture|pms-workflow|roi|investigate)(\/|$)/.test(location.pathname) || dflt === 'v2'))
         } catch (e) {}
         if (t === 'light' || t === 'dark' || (v2 && (t === 'contrast' || t === 'black' || t === 'pink')))
           document.documentElement.setAttribute('data-theme', t)

@@ -32,20 +32,27 @@ logger = get_logger(__name__)
 
 TTL = timedelta(hours=6)
 TTL_SECONDS = int(TTL.total_seconds())
-#: v2 (2026-11-01): safety-copilot 1.3.3 reads dates against the stored data; v1 entries may
+#: v2 (2026-11-01): safety-copilot 1.3.3+ reads dates against the stored data; v1 entries may
 #: hold an answer made with a wrongly guessed year ("0 reports"), so they are never reused.
 VERSION = "v2"
 
 
 def cache_key(
-    namespace: str, question: str, product_code: str | None = None, version: str = ""
+    namespace: str,
+    question: str,
+    product_code: str | None = None,
+    version: str = "",
+    day: str = "",
 ) -> str:
-    """Store key: a hash of the normalised question, the product code and the data version.
+    """Store key: a hash of the normalised question, the product code, the data version and day.
 
     ``version`` names the stored data the answer was made from (``ConnectorData.version``), so
-    a new snapshot never reuses an answer about the old one.
+    a new snapshot never reuses an answer about the old one. ``day`` is the UTC date (the model
+    prompt carries today's date, so an answer made yesterday is not reused as "today's").
     """
     basis = f"{version}|{normalise(question)}|{(product_code or '').upper()}"
+    if day:
+        basis += f"|{day}"
     digest = hashlib.sha256(basis.encode("utf-8")).hexdigest()[:32]
     return f"chat-{VERSION}-{namespace}-{digest}"
 
@@ -89,10 +96,13 @@ class AnswerCache:
         self._now = now or (lambda: datetime.now(UTC))
         self._ttl = ttl
 
+    def _day(self) -> str:
+        return self._now().astimezone(UTC).strftime("%Y-%m-%d")
+
     def get(self, question: str, product_code: str | None = None) -> CachedAnswer | None:
         """The stored answer for this question if it is younger than the TTL, else None."""
         try:
-            key = cache_key(self._ns, question, product_code, self._version())
+            key = cache_key(self._ns, question, product_code, self._version(), self._day())
             raw = self._state.cache_get(key)
             if raw is None:
                 return None
@@ -114,7 +124,7 @@ class AnswerCache:
         try:
             value = json.dumps({"stored_at": self._now().isoformat(), "body": body})
             ttl = max(1, int(self._ttl.total_seconds()))
-            key = cache_key(self._ns, question, product_code, self._version())
+            key = cache_key(self._ns, question, product_code, self._version(), self._day())
             self._state.cache_set(key, value, ttl)
             return True
         except Exception as exc:  # noqa: BLE001 - a cache that cannot be written is skipped

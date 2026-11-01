@@ -1359,11 +1359,25 @@ def mount_live(
         if refused is not None:
             return refused
         deadline = started + cfg.ask_budget_s  # from the request start, not from the thread
+
+        async def bounded_research() -> dict[str, Any] | None:
+            """Research gets only the time left.
+
+            Slow research never turns a finished answer into a 504 (the answer is returned
+            without the research box).
+            """
+            left = max(0.0, deadline + ASK_HARD_GRACE_S - be.clock())
+            # stop a little before the outer limit so the answer, not the search, is what wins
+            own = left - min(1.0, left / 2)
+            try:
+                return await asyncio.wait_for(research_for(request, body), timeout=own)
+            except TimeoutError:
+                log("ask", "research_timeout", started, tier="live")
+                return None
+
         try:
             outcome, found = await asyncio.wait_for(
-                asyncio.gather(
-                    run_in_threadpool(do_ask, body, deadline), research_for(request, body)
-                ),
+                asyncio.gather(run_in_threadpool(do_ask, body, deadline), bounded_research()),
                 timeout=max(0.0, deadline + ASK_HARD_GRACE_S - be.clock()),
             )
         except (LiveTimeoutError, TimeoutError):

@@ -288,7 +288,7 @@ MaudeSignal does not handle PHI under any circumstances.
 | `psur-report-drafter` | ✅ v1.1.0 | Final composer; consumes everything |
 | `root-cause-analyzer` | ✅ v1.0.0 | Root-cause hypotheses for a signal (pre-existing pipeline) |
 | `trend-interpreter` | ✅ v1.0.0 | Plain-language reading of trend statistics (pre-existing pipeline) |
-| `safety-copilot` | ✅ v1.3.1 (hackathon, Oct 2026) | Copilot contract: tool use + structured claims checked by `gate/`; advisory only |
+| `safety-copilot` | ✅ v1.3.5 (hackathon, Oct 2026) | Copilot contract: tool use + structured claims checked by `gate/`; advisory only |
 | `fda-document-reader` | ✅ v1.0.0 (hackathon, Oct 2026) | Muse Spark reads 510(k) summary page images; checked by `vision/verify.py` (two reads + openFDA + text layer) |
 | `dossier-narrative` | ✅ v1.2.0 (hackathon, Oct 2026) | Muse Spark one-page dossier summary as gated claims |
 | `dossier-reviewer` | ✅ v1.1.1 (hackathon, Oct 2026) | Muse Wonder independent review of the dossier PDF; findings only |

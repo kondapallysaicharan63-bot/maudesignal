@@ -3,7 +3,7 @@
 // name, class and regulation number (stored openFDA data), and on Post-market the real MAUDE problem patterns already
 // stored in company.json for that product code. The two are kept visually apart. One banner per page says so (and the
 // document title); cards that mix real and simulated data carry the small "Simulated — sample data" tag.
-import { useEffect, type ReactNode } from 'react'
+import { Component, useEffect, type ErrorInfo, type ReactNode } from 'react'
 import type { Company, CompanyDevice } from '../types'
 import {
   DECISION_VERB,
@@ -11,6 +11,7 @@ import {
   investigateHref,
   niceDate,
   niceMonth,
+  profileOf,
   SIM_LABEL,
   SIM_TAG,
   summarize,
@@ -523,15 +524,46 @@ export function DeviceTiles({ file, company }: { file: ProfilesFile; company: Co
   )
 }
 
-export function DeviceProfilePage({
-  file,
-  company,
-  id,
-  tab,
-  onTab,
-  onBack,
-  onEvidence,
-}: {
+/** A profile page that cannot be drawn shows a message and a way back instead of a blank screen. */
+export class ProfileBoundary extends Component<
+  { resetKey: string; onBack: () => void; children: ReactNode },
+  { failed: boolean; key: string }
+> {
+  state = { failed: false, key: this.props.resetKey }
+  static getDerivedStateFromError(): Partial<{ failed: boolean }> {
+    return { failed: true }
+  }
+  static getDerivedStateFromProps(p: { resetKey: string }, s: { failed: boolean; key: string }) {
+    return p.resetKey !== s.key ? { failed: false, key: p.resetKey } : null
+  }
+  componentDidCatch(e: Error, info: ErrorInfo): void {
+    console.error('device profile could not be shown', e, info.componentStack)
+  }
+  render(): ReactNode {
+    if (!this.state.failed) return this.props.children
+    return (
+      <div className="ms2-empty" role="alert" data-testid="profile-broken">
+        <h1 className="ms2-h1">This device profile could not be shown</h1>
+        <p className="ms2-muted m-0">Part of the stored profile is in a form this page cannot read.</p>
+        <p className="m-0">
+          <button type="button" className="ms-btn ws-btn-primary" style={{ height: 44 }} onClick={this.props.onBack} data-testid="profile-broken-back">
+            Back to Our devices
+          </button>
+        </p>
+      </div>
+    )
+  }
+}
+
+export function DeviceProfilePage(props: ProfilePageProps) {
+  return (
+    <ProfileBoundary resetKey={`${props.id}|${props.tab}`} onBack={props.onBack}>
+      <DeviceProfileBody {...props} />
+    </ProfileBoundary>
+  )
+}
+
+interface ProfilePageProps {
   file: ProfilesFile | null | undefined
   company: Company
   id: string
@@ -539,8 +571,21 @@ export function DeviceProfilePage({
   onTab: (t: ProfileTab, how?: TabHow) => void
   onBack: () => void
   onEvidence: (id: string) => void
-}) {
-  const p = file?.profiles[id]
+  /** Opens the investigation page in the app (no page reload); without it the link is an ordinary address. */
+  onInvestigate?: (code: string, device: string) => void
+}
+
+function DeviceProfileBody({
+  file,
+  company,
+  id,
+  tab,
+  onTab,
+  onBack,
+  onEvidence,
+  onInvestigate,
+}: ProfilePageProps) {
+  const p = profileOf(file, id)
   const d = company.devices.find((x) => x.id === id)
   useEffect(() => {
     const before = document.title
@@ -583,7 +628,18 @@ export function DeviceProfilePage({
           <span className="ms-code !text-[15px] !text-ink">{p.product_code}</span> · {p.overview.pathway} · {p.overview.status_label} · owner {p.owner}
         </p>
         <p className="m-0 mt-1">
-          <a className="ms2-smalllink" href={investigateHref(p.product_code, p.id)} data-testid="investigate-link">
+          <a
+            className="ms2-smalllink"
+            href={investigateHref(p.product_code, p.id)}
+            data-testid="investigate-link"
+            onClick={(e) => {
+              // a plain click moves inside the app (keeps ?r= and ?layout); new-tab clicks keep the real address
+              if (onInvestigate && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+                e.preventDefault()
+                onInvestigate(p.product_code, p.id)
+              }
+            }}
+          >
             Investigate a complaint on this device
           </a>
         </p>

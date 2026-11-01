@@ -216,6 +216,17 @@ export const DECISION_VERB: Record<Pathway, 'cleared' | 'granted' | 'approved'> 
   PMA: 'approved',
 }
 
+/** One stored profile by id; ids such as "constructor" or "__proto__" never reach Object.prototype members. */
+export function profileOf(file: ProfilesFile | null | undefined, id: string): DeviceProfile | undefined {
+  const m = file?.profiles
+  return m && Object.prototype.hasOwnProperty.call(m, id) ? m[id] : undefined
+}
+
+/** The stored profiles as {id, name} (for search); empty until the file has loaded. */
+export function profileDevices(file: ProfilesFile | null | undefined): { id: string; name: string }[] {
+  return file ? Object.values(file.profiles).map((p) => ({ id: p.id, name: p.name })) : []
+}
+
 export type StageGroup = 'development' | 'review' | 'decided' | 'market'
 export const STAGE_GROUP: Record<Stage, StageGroup> = {
   development: 'development',
@@ -273,7 +284,7 @@ export interface DeviceSummary {
 export function summarize(file: ProfilesFile, company: Company): DeviceSummary {
   const out: DeviceSummary = { development: 0, review: 0, decided: 0, market: 0, openCapas: 0, needDecision: 0, needDecisionDevices: 0 }
   for (const d of company.devices) {
-    const p = file.profiles[d.id]
+    const p = profileOf(file, d.id)
     if (!p) continue
     const open = p.decision.paths.filter((x) => x.state === 'open').length
     out.needDecision += open

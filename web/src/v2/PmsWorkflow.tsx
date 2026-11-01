@@ -158,7 +158,7 @@ function Field({ label, children, id, className = '' }: { label: string; childre
   )
 }
 
-export function PmsWorkflow({ onRoi, onHome }: { onRoi?: () => void; onHome?: () => void }) {
+export function PmsWorkflow({ onRoi, onHome, onInvestigate }: { onRoi?: () => void; onHome?: () => void; onInvestigate?: () => void }) {
   const helped = STEPS.filter((s) => s.kind === 'assist').length
   const human = STEPS.length - helped
   return (
@@ -211,7 +211,17 @@ export function PmsWorkflow({ onRoi, onHome }: { onRoi?: () => void; onHome?: ()
                 <p>{s.does}</p>
                 {s.id === 'investigation' && (
                   <p>
-                    <a className="ms2-a" href={pageHref('investigate')} data-testid="pms-investigate-link">
+                    <a
+                      className="ms2-a"
+                      href={pageHref('investigate')}
+                      data-testid="pms-investigate-link"
+                      onClick={(e) => {
+                        if (onInvestigate && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+                          e.preventDefault()
+                          onInvestigate()
+                        }
+                      }}
+                    >
                       Open Investigate a complaint
                     </a>
                   </p>

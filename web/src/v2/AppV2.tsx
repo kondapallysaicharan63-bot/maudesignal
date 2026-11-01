@@ -36,7 +36,7 @@ import { hrefFor, routeName, useRoute, type Route, type Section } from './router
 import { pageItems, SearchPalette, type SearchItem } from './SearchPalette'
 import { ConnectPage, DevicesPage, EvidencePage, SignalsPage } from './Sections'
 import { DeviceProfilePage } from './DeviceProfile'
-import { useProfiles } from './profiles'
+import { profileDevices, useProfiles } from './profiles'
 import { SchedulesDialog } from './SchedulesDialog'
 import { SidebarV2, type NavId } from './SidebarV2'
 import { TopBarV2 } from './TopBarV2'
@@ -76,7 +76,8 @@ const SECTION_HOME: Record<Section, Route> = {
 
 /** The sidebar entry a page belongs to (null for a chat). */
 export function navOf(r: Route): NavId | null {
-  if (r.page === 'home' || r.page === 'pms' || r.page === 'roi') return 'home'
+  // Investigate is a stand-alone tool page; it sits under Home so one sidebar entry is always active.
+  if (r.page === 'home' || r.page === 'pms' || r.page === 'roi' || r.page === 'investigate') return 'home'
   if (r.page === 'signals' || r.page === 'devices' || r.page === 'evidence' || r.page === 'connect') return r.page
   if (r.page === 'profile') return 'devices'
   if (r.page === 'workflow') {
@@ -410,7 +411,7 @@ export default function AppV2() {
   const toReview = data ? devicesToReview(data) : 0
   const devicesLabel = data?.company.mine === true ? 'Our devices (yours)' : 'Our devices (simulated)'
   const runs = data?.investigations.investigations ?? []
-  const pages = pageItems(visibleWorkflows(runs), devicesLabel)
+  const pages = pageItems(visibleWorkflows(runs), devicesLabel, profileDevices(profiles))
   const withheld: WithheldNav | null =
     wIdx !== null && withheldRefs[wIdx]
       ? {
@@ -540,6 +541,7 @@ export default function AppV2() {
           onTab={(t, how) => tabGo({ page: 'profile', id: route.id, tab: t }, how)}
           onBack={() => go({ page: 'devices', tab: 'apply' })}
           onEvidence={(id) => go({ page: 'devices', tab: 'apply', device: id })}
+          onInvestigate={(code, device) => go({ page: 'investigate', code, device })}
         />
       )
     else if (route.page === 'evidence')
@@ -555,7 +557,7 @@ export default function AppV2() {
     else if (route.page === 'investigate')
       sectionBody = <InvestigatePage key={`${route.code ?? ''}|${route.device ?? ''}`} apiBase={API_BASE} code={route.code} device={route.device} onCheckDevice={() => go({ page: 'workflow', id: 'check-device' })} />
     else if (route.page === 'connect') sectionBody = <ConnectPage tab={route.tab} onTab={(t, how) => tabGo({ page: 'connect', tab: t }, how)} apiBase={API_BASE} />
-    else if (route.page === 'pms') sectionBody = <PmsWorkflow onRoi={() => go({ page: 'roi' })} onHome={() => go({ page: 'home' })} />
+    else if (route.page === 'pms') sectionBody = <PmsWorkflow onRoi={() => go({ page: 'roi' })} onHome={() => go({ page: 'home' })} onInvestigate={() => go({ page: 'investigate' })} />
     else if (route.page === 'roi') sectionBody = <RoiPage onHome={() => go({ page: 'home' })} />
     const sectionLabel = route.page === 'profile' ? 'Device profile' : route.page === 'pms' ? 'PMS workflow' : route.page === 'roi' ? 'Time and cost' : route.page[0].toUpperCase() + route.page.slice(1)
     content = (

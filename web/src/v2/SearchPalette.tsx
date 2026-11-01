@@ -12,7 +12,7 @@ export type SearchItem =
   | { kind: 'workflow'; key: string; title: string; hint: string; id: WorkflowId }
 
 /** Every page the palette can open, in sidebar order. */
-export function pageItems(workflows: WorkflowDef[], devicesTitle = 'Our devices (simulated)'): SearchItem[] {
+export function pageItems(workflows: WorkflowDef[], devicesTitle = 'Our devices (simulated)', devices: { id: string; name: string }[] = []): SearchItem[] {
   const out: SearchItem[] = [{ kind: 'page', key: 'home', title: 'Home', hint: 'Page', route: { page: 'home' } },
     { kind: 'page', key: 'investigate', title: 'Investigate a complaint', hint: 'Page', route: { page: 'investigate' } },
     { kind: 'page', key: 'pms', title: 'How MaudeSignal fits your PMS workflow', hint: 'Page', route: { page: 'pms' } },
@@ -22,6 +22,7 @@ export function pageItems(workflows: WorkflowDef[], devicesTitle = 'Our devices 
   for (const t of DEVICES_TAB_LABELS) out.push({ kind: 'page', key: `d-${t.id}`, title: `${devicesTitle} · ${t.label}`, hint: 'Page', route: { page: 'devices', tab: t.id } })
   for (const t of EVIDENCE_TAB_LABELS) out.push({ kind: 'page', key: `e-${t.id}`, title: `Evidence · ${t.label}`, hint: 'Page', route: { page: 'evidence', tab: t.id } })
   for (const t of CONNECT_TAB_LABELS) out.push({ kind: 'page', key: `c-${t.id}`, title: `Connect · ${t.label}`, hint: 'Page', route: { page: 'connect', tab: t.id } })
+  for (const d of devices) out.push({ kind: 'page', key: `p-${d.id}`, title: `${d.name} · simulated device`, hint: 'Page', route: { page: 'profile', id: d.id, tab: 'overview' } })
   for (const w of workflows) out.push({ kind: 'workflow', key: `w-${w.id}`, title: w.title, hint: 'Workflow', id: w.id })
   return out
 }

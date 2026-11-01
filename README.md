@@ -168,7 +168,8 @@ ROI and device-profile pages. What is NOT built yet:
 - **Your own complaint system.** "Investigate a complaint" searches public FDA data only. It does not hold your
   complaints, cannot separate your own company's reports from other makers' (maker names on MAUDE are free text),
   and has no MDR clock; reportability is assessed by your team.
-- **Investigate as a Muse connector tool.** The REST route exists; an MCP/OpenAPI tool for the Muse connector is next.
+- **Investigate as a Muse connector (MCP) tool.** `POST /v1/investigate` (REST, in the OpenAPI document) exists and the
+  website page uses it; the MCP tool for the Muse connector is next.
 - **Decision paths on every signal and on your own devices.** Decision paths exist for the simulated devices'
   stored signals; saving your own board decisions (with e-signatures) is not built.
 - **Photos in saved chats**, Firefox/Safari checks of the v2 live-check, and a sticky-composer option on the

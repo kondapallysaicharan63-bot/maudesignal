@@ -23,7 +23,7 @@ import { labelForWeek, sweepLabel } from '../sweepLabel'
 import type { ConnectTab, DevicesTab, EvidenceTab, SignalsTab } from './router'
 import { SubTabs, type TabDef, type TabHow } from './SubTabs'
 import { DeviceTiles } from './DeviceProfile'
-import { useProfiles } from './profiles'
+import { profileOf, useProfiles } from './profiles'
 
 export const SIGNALS_TAB_LABELS: TabDef<SignalsTab>[] = [
   { id: 'ranked', label: 'Ranked' },
@@ -326,7 +326,7 @@ export function DevicesPage({
   const yours = data.company.mine === true
   const profiles = useProfiles()
   // The simulated company's rows open the device's lifecycle profile; the person's own devices keep the evidence page.
-  const openRow = (id: string) => (!yours && onProfile && profiles?.profiles[id] ? onProfile(id) : onDevice(id))
+  const openRow = (id: string) => (!yours && onProfile && profileOf(profiles, id) ? onProfile(id) : onDevice(id))
   return (
     <div>
       <PageHead
