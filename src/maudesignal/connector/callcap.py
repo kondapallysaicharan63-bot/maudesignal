@@ -67,8 +67,9 @@ _READ_WORKERS = 8
 class CallRefusedError(SpendLimitError):
     """The call was not made: today's cap is reached, the ledger failed, or the hold is too big.
 
-    ``cap`` is ``"cap"``, ``"ledger"`` or ``"size"``. A subclass of ``SpendLimitError`` so every
-    existing caller already shows a recorded answer for it. The message holds no token.
+    ``cap`` is ``"cap"``, ``"ledger"`` or ``"size"`` (Research also: ``"flag"``, ``"busy"``,
+    ``"kind_cap"``). A subclass of ``SpendLimitError`` so every existing caller already shows a
+    recorded answer for it. The message holds no token.
     """
 
 
@@ -212,7 +213,21 @@ class CallLedger:
         d = day or self._today().isoformat()
         return self._sum(d)[0]
 
+    def kind_total(self, kind: str, day: str | None = None) -> float:
+        """The day's counted total of the objects of one ``kind`` (e.g. ``research``)."""
+        d = day or self._today().isoformat()
+        return self._kind_sum(self._sum_values(d), d, kind)
+
+    def _kind_sum(self, values: dict[str, float], day: str, kind: str) -> float:
+        marker = f"{self._prefix(day)}{kind}-"
+        return round(sum(v for p, v in values.items() if p.startswith(marker)), 6)
+
     def _sum(self, day: str) -> tuple[float, set[str]]:
+        values = self._sum_values(day)
+        return round(sum(values.values()), 6), set(values)
+
+    def _sum_values(self, day: str) -> dict[str, float]:
+        """Counted USD of every object listed for ``day``, by path."""
         try:
             refs = self._store.list_prefix(self._prefix(day), strict=True)
         except StoreError:
@@ -225,11 +240,11 @@ class CallLedger:
                 )
         else:
             values = {r.pathname: self._counted(r) for r in todo}
-        total = 0.0
+        out: dict[str, float] = {}
         for r in refs:
             v = values[r.pathname] if r.pathname in values else self._counted(r)
-            total += v or 0.0
-        return round(total, 6), {r.pathname for r in refs}
+            out[r.pathname] = v or 0.0
+        return out
 
     def _take_back(self, pathname: str) -> None:
         """Delete our own object after a refusal; if that fails it stays (only over-counts)."""
@@ -275,6 +290,7 @@ class CallLedger:
         kind: str | None = None,
         exclusive: bool = False,
         blocked_by: str | None = None,
+        kind_cap_usd: float | None = None,
     ) -> Reservation:
         """Hold ``hold_usd`` before a call, or raise :class:`CallRefusedError`.
 
@@ -286,7 +302,9 @@ class CallLedger:
         this call; ``cap_usd`` a lower cap for it; ``kind`` names the object
         (``<kind>-<uuid>.json``); ``exclusive`` refuses the call while another unsettled object
         of the same kind is listed (one such call in flight per day); ``blocked_by`` refuses
-        it while that day-level flag is raised.
+        it while that day-level flag is raised; ``kind_cap_usd`` refuses it (``cap`` =
+        ``"kind_cap"``) when the day's counted total of objects of that ``kind``, ours
+        included, would go above it (Research's own daily dollar cap).
         """
         hold = round(float(hold_usd), 6)
         if not math.isfinite(hold) or hold < 0:
@@ -306,15 +324,24 @@ class CallLedger:
         except StoreError:
             raise CallRefusedError("ledger", "The spend ledger could not be written.") from None
         try:
-            total, listed = self._sum(day)
+            values = self._sum_values(day)
         except CallRefusedError:
             self._take_back(path)
             raise
+        listed = set(values)
+        total = round(sum(values.values()), 6)
         if path not in listed:
             total = round(total + hold, 6)  # our write is not listed yet: count it anyway
         if total > cap + 1e-9:
             self._take_back(path)
             raise CallRefusedError("cap", "Today's live-call budget is used up.")
+        if kind_cap_usd is not None and kind:
+            kind_total = self._kind_sum(values, day, kind)
+            if path not in listed:
+                kind_total = round(kind_total + hold, 6)
+            if kind_total > kind_cap_usd + 1e-9:
+                self._take_back(path)
+                raise CallRefusedError("kind_cap", "Today's budget for this kind of call is used.")
         if exclusive and kind:
             marker = f"{self._prefix(day)}{kind}-"
             with self._lock:
