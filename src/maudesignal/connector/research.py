@@ -123,6 +123,8 @@ DEFAULT_HOLD_CAP_USD = 0.14
 MAX_HOLD_CAP_USD = 0.14
 #: Research-only daily dollar cap (counted from the ledger's research objects).
 DEFAULT_DAY_USD = 0.30
+#: Ceiling of ``MAUDESIGNAL_RESEARCH_DAY_USD`` and of any caller-passed day cap.
+MAX_DAY_USD = 0.50
 DEFAULT_PER_DAY = 5
 DEFAULT_SAVE_PER_DAY = 20
 MAX_ITEMS = 8
@@ -194,9 +196,16 @@ def hold_cap_usd(env: dict[str, str] | None = None) -> float:
     return min(MAX_HOLD_CAP_USD, _num_env(env, HOLD_CAP_ENV, DEFAULT_HOLD_CAP_USD))
 
 
+def clamp_day_usd(value: float) -> float:
+    """A research day cap held to ``0 .. MAX_DAY_USD`` (a non-finite value gives the default)."""
+    if value != value or value in (float("inf"), float("-inf")):
+        return DEFAULT_DAY_USD
+    return max(0.0, min(MAX_DAY_USD, value))
+
+
 def research_day_usd(env: dict[str, str] | None = None) -> float:
-    """Research-only daily dollar cap (``MAUDESIGNAL_RESEARCH_DAY_USD``, default $0.30)."""
-    return _num_env(env, DAY_USD_ENV, DEFAULT_DAY_USD)
+    """Research-only daily cap (``MAUDESIGNAL_RESEARCH_DAY_USD``): default $0.30, max $0.50."""
+    return clamp_day_usd(_num_env(env, DAY_USD_ENV, DEFAULT_DAY_USD))
 
 
 def save_per_day(env: dict[str, str] | None = None) -> int:
@@ -582,7 +591,7 @@ def run_research(
             fee_per_search,
             instructions,
             hold_cap,
-            research_day_usd() if day_cap is None else max(0.0, day_cap),
+            research_day_usd() if day_cap is None else clamp_day_usd(day_cap),
         )
         if isinstance(result, dict):
             return result

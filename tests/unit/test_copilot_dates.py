@@ -29,6 +29,7 @@ from maudesignal.copilot.tools import (
     report_sources,
     search_reports,
 )
+from maudesignal.gate import CountClaim, verify_sentence
 from maudesignal.gate.loader import store_from_database
 from maudesignal.storage.database import Database
 
@@ -248,3 +249,157 @@ def test_demo_snapshot_resolves_the_question_to_2026(tmp_path: Path) -> None:
     assert ctx.sweep_window["current_end"] == "2026-09-30"
     out = product_summary(ctx, "LLZ", "20250825", "20250831")
     assert out["date_from"] == "20260825" and out["report_count"] == 33
+
+
+# --- review fixes: the real demo store, the gate, ISO dates, recalls -----------------------
+
+
+def _demo_ctx(tmp_path: Path) -> ToolContext:
+    return ConnectorData(work_dir=tmp_path / "w").tool_context()
+
+
+def _recalls(ctx: ToolContext, **args: str) -> dict[str, Any]:
+    return call_tool(ctx, "recalls", json.dumps(args))
+
+
+def test_real_demo_store_never_moves_a_year_the_data_covers(tmp_path: Path) -> None:
+    """QIH runs 2024-07-29..2026-07-02 and MYN ..2025-03-13 in the demo store."""
+    ctx = _demo_ctx(tmp_path)
+    w = stored_window(ctx.store, "QIH")
+    assert w is not None and (w.earliest, w.latest) == ("20240729", "20260702")
+    # "last week" as of today (2026-11-01): a year the data covers, but after its last report
+    qih = product_summary(ctx, "QIH", "20261020", "20261026")
+    assert qih["no_data_for_range"] is True and "date_adjusted" not in qih
+    assert "report_count" not in qih
+    assert "No stored QIH report is dated in 2026-10-20 to 2026-10-26" in qih["date_note"]
+    assert "the stored QIH reports run 2024-07-29 to 2026-07-02" in qih["date_note"]
+    # a real 2026 week inside the overall window is never moved to 2025
+    # (QIH's last report is 2026-07-02, so that week is empty: said so, not shifted to 2025)
+    assert not check_range(ctx.store, "QIH", "20260801", "20260807").adjusted
+    after = product_summary(ctx, "QIH", "20260801", "20260807")
+    assert after["no_data_for_range"] is True and "date_adjusted" not in after
+    assert product_summary(ctx, "QIH", "20260101", "20260131")["report_count"] == 0
+    # MYN stops in 2025: 2026 is not a covered year and the shifted 2025 week is still empty
+    myn = product_summary(ctx, "MYN", "20261020", "20261026")
+    assert myn["no_data_for_range"] is True and "date_adjusted" not in myn
+    assert ctx.date_shifts == []  # nothing was moved, so the gate has nothing to check
+
+
+def test_year_boundary_note_names_the_new_range_only(tmp_path: Path) -> None:
+    ctx = _ctx(tmp_path)
+    qih = check_range(ctx.store, "QIH", "20261228", "20270103")
+    assert qih.no_data and not qih.adjusted  # 2026 is covered: never moved
+    db = Database(tmp_path / "ny.db")
+    for rid, d in (("N1", "20261230"), ("N2", "20270102")):
+        db.upsert_raw_report(
+            maude_report_id=rid,
+            product_code="NYE",
+            date_received=d,
+            date_of_event=None,
+            raw_payload={"report_number": rid},
+        )
+        db.upsert_normalized_event(
+            maude_report_id=rid,
+            product_code="NYE",
+            event_type="Malfunction",
+            event_date=None,
+            narrative="x",
+            mfr_narrative=None,
+            manufacturer="A",
+            brand_name="B",
+        )
+    moved = check_range(store_from_database(db), "NYE", "20241228", "20250103")
+    assert moved.adjusted and (moved.date_from, moved.date_to) == ("20261228", "20270103")
+    assert moved.note is not None
+    assert "same dates in 2027" in moved.note and "2025-12-28" not in moved.note
+
+
+def test_unscoped_note_says_stored_reports(tmp_path: Path) -> None:
+    out = product_summary(_ctx(tmp_path), "ZZZ", "20270101", "20270131")
+    assert out["no_data_for_range"] is True
+    assert "stored ZZZ" not in out["date_note"] and "stored report" in out["date_note"]
+
+
+def test_iso_dates_are_normalised(tmp_path: Path) -> None:
+    ctx = _ctx(tmp_path)
+    out = product_summary(ctx, "LLZ", "2026-08-25", "2026-08-31")
+    assert out["report_count"] == 3 and "no_data_for_range" not in out
+    assert (out["date_from"], out["date_to"]) == ("20260825", "20260831")
+    moved = product_summary(ctx, "LLZ", "2025-08-25", "2025-08-31")
+    assert moved["report_count"] == 3 and moved["date_adjusted"] is True
+
+
+def test_recall_dates_use_the_guard_only_outside_their_years(tmp_path: Path) -> None:
+    ctx = _demo_ctx(tmp_path)
+    old = _recalls(ctx, product_code="LLZ", date_from="20190101", date_to="20191231")
+    assert "date_note" not in old  # LLZ recalls run 2002..2026: untouched
+    myn = _recalls(ctx, product_code="MYN", date_from="20260101", date_to="20260131")
+    assert myn["no_data_for_range"] is True and "stored_recall_count" not in myn
+    assert "stored MYN recalls run 2006-05-04 to 2015-04-06" in myn["date_note"]
+    none = _recalls(ctx, product_code="ZZZ", date_from="20260101")
+    assert "date_note" not in none  # no stored recall window for the code: left alone
+
+
+def test_compare_signals_as_of_after_the_data_uses_the_latest_week(tmp_path: Path) -> None:
+    ctx = _demo_ctx(tmp_path)
+    args = {"product_codes": ["LLZ"], "as_of": "20261030"}
+    out = call_tool(ctx, "compare_signals", json.dumps(args))
+    assert "after the latest stored report" in out["note"]
+
+
+# --- the gate sees a moved range -----------------------------------------------------------
+
+
+def _count(code: str, n: int, frm: str | None, to: str | None) -> CountClaim:
+    return CountClaim(code, n, None, frm, to)
+
+
+def test_gate_blocks_a_sentence_naming_the_requested_year(tmp_path: Path) -> None:
+    ctx = _ctx(tmp_path)
+    product_summary(ctx, "LLZ", "20250825", "20250831")
+    shifts = tuple(ctx.date_shifts)
+    assert len(shifts) == 1 and shifts[0].used_label == "2026-08-25 to 2026-08-31"
+    claim = _count("LLZ", 3, "20260825", "20260831")
+    text = "LLZ had 3 reports in the last week of August 2025."
+    assert verify_sentence(text, [claim], ctx.store).status == "pass"  # blind without shifts
+    v = verify_sentence(text, [claim], ctx.store, shifts)
+    assert v.status == "block" and "names 2025" in " ".join(v.reasons)
+
+
+def test_gate_adds_dates_used_to_a_sentence_without_a_year(tmp_path: Path) -> None:
+    ctx = _ctx(tmp_path)
+    product_summary(ctx, "LLZ", "20250825", "20250831")
+    shifts = tuple(ctx.date_shifts)
+    claim = _count("LLZ", 3, "20260825", "20260831")
+    v = verify_sentence("LLZ had 3 reports in the last week of August.", [claim], ctx.store, shifts)
+    assert v.status == "pass"
+    assert v.text.endswith("(Dates used: 2026-08-25 to 2026-08-31.)")
+    # a sentence that names the used year is shown as written
+    ok = verify_sentence("LLZ had 3 reports on Aug 25-31, 2026.", [claim], ctx.store, shifts)
+    assert ok.status == "pass" and "Dates used" not in ok.text
+    # a claim on other dates is not touched
+    other = verify_sentence("LLZ had 5 reports.", [_count("LLZ", 5, None, None)], ctx.store, shifts)
+    assert other.status == "pass" and "Dates used" not in other.text
+
+
+def test_agent_answer_carries_the_dates_used(tmp_path: Path) -> None:
+    ctx = _ctx(tmp_path, today=date(2026, 11, 1))
+    claim = {
+        "kind": "count",
+        "product_code": "LLZ",
+        "value": 3,
+        "event_type": None,
+        "date_from": "20260825",
+        "date_to": "20260831",
+    }
+    sentence = {"text": "LLZ had 3 reports in the last week of August.", "claims": [claim]}
+    answer = json.dumps({"sentences": [sentence]})
+    guess = {"product_code": "LLZ", "date_from": "20250825", "date_to": "20250831"}
+    script = [_msg(tool_calls=[_call("product_summary", guess)]), _msg(answer), _msg(answer)]
+    res = CopilotAgent(FakeClient(script), ctx).ask(QUESTION)
+    assert res.report.blocked == 0
+    assert "(Dates used: 2026-08-25 to 2026-08-31.)" in res.answer
+    assert len(ctx.date_shifts) == 1
+    # the next question starts with no shifts
+    CopilotAgent(FakeClient([_msg(answer), _msg(answer)]), ctx).ask("again")
+    assert ctx.date_shifts == []

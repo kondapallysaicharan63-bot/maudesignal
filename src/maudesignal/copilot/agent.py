@@ -439,10 +439,15 @@ class CopilotAgent:
             model=self._model,
         )
         capa_start = len(self._ctx.created_capas)
+        self._ctx.date_shifts.clear()
         content = self._run_until_answer(messages, result)
         sentences, ok = self._parse_or_retry(content, messages, result)
         result.parse_failed = not ok
-        report = verify_answer(sentences, self._ctx.store) if ok else _unparsed(content)
+        report = (
+            verify_answer(sentences, self._ctx.store, tuple(self._ctx.date_shifts))
+            if ok
+            else _unparsed(content)
+        )
         result.first_pass_report = report
         self._emit("gate", stage="first pass", passed=report.passed, blocked=report.blocked)
 
@@ -458,7 +463,7 @@ class CopilotAgent:
             repaired, ok = self._parse_or_retry(content, messages, result)
             if not ok:
                 break
-            report = verify_answer(repaired, self._ctx.store)
+            report = verify_answer(repaired, self._ctx.store, tuple(self._ctx.date_shifts))
             self._emit("gate", stage="after repair", passed=report.passed, blocked=report.blocked)
             result.repaired = True
             result.parse_failed = False

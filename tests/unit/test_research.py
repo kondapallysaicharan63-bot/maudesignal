@@ -185,7 +185,15 @@ def test_fee_and_hold() -> None:
     assert HOLD <= research.hold_cap_usd({})
     assert research.per_day({}) == 5
     assert research.research_day_usd({}) == 0.30
-    assert research.research_day_usd({research.DAY_USD_ENV: "1.5"}) == 1.5
+    assert research.research_day_usd({research.DAY_USD_ENV: "0.4"}) == 0.4
+    # a ceiling of $0.50, and a non-finite value is rejected (default)
+    assert research.MAX_DAY_USD == 0.50
+    for bad in ("5", "1.5", "0.51"):
+        assert research.research_day_usd({research.DAY_USD_ENV: bad}) == 0.50
+    for bad in ("inf", "-inf", "nan"):
+        assert research.research_day_usd({research.DAY_USD_ENV: bad}) == 0.30
+    assert research.clamp_day_usd(float("inf")) == 0.30 and research.clamp_day_usd(9.0) == 0.50
+    assert research.clamp_day_usd(-1.0) == 0.0
     assert research.research_day_usd({research.DAY_USD_ENV: "-1"}) == 0.30
 
 
@@ -527,6 +535,19 @@ def test_research_day_cap_counts_holds_and_failures() -> None:
     led.reserve(HOLD, max_hold_usd=0.14, kind=research.KILL_FLAG, kind_cap_usd=0.20)
 
 
+def test_caller_passed_day_cap_is_clamped_too() -> None:
+    led, _ = ledger()
+    t = FakeTransport()
+    outs = [run(led, t, day_cap=float("inf")) for _ in range(3)]  # inf -> default $0.30
+    assert [o["status"] for o in outs] == ["ok", "ok", "unavailable"] and len(t.sent) == 2
+    led2, _ = ledger()
+    t2 = FakeTransport()
+    for _ in range(5):  # 99 -> $0.50: four requests at 0.11675 fit, a fifth does not
+        run(led2, t2, day_cap=99.0)
+    assert len(t2.sent) == 4
+    assert led2.kind_total(research.KILL_FLAG, DAY.isoformat()) <= research.MAX_DAY_USD
+
+
 def test_research_day_cap_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv(research.DAY_USD_ENV, "0.10")  # below one hold: never a paid call
     led, _ = ledger()
@@ -660,7 +681,9 @@ def test_no_research_for_patient_data(tmp_path: Path, monkeypatch: pytest.Monkey
 
 
 def test_per_visitor_research_limit(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv(research.DAY_USD_ENV, "5")  # the dollar cap is tested on its own
+    # the dollar cap is tested on its own (its ceiling is lifted for this test only)
+    monkeypatch.setattr(research, "MAX_DAY_USD", 5.0)
+    monkeypatch.setenv(research.DAY_USD_ENV, "5")
     env, transport = make_env(tmp_path, monkeypatch, on=True)
     blocks = [env.ask(research=True).json()["research"] for _ in range(6)]
     assert [b["status"] for b in blocks[:5]] == ["ok"] * 5

@@ -3,7 +3,7 @@
 // except ordering. Without alerts.json the risky sweep and brief items from the stored exports are used.
 import type { AlertDetail } from '../alerts'
 import { alertItems, groupAlerts, NEEDS_REVIEW, type AlertItem, type AlertItemKind } from '../dashboard'
-import { sweepDetail, sweepLabel } from '../sweepLabel'
+import { labelForWeek, sweepDetail, weekRange } from '../sweepLabel'
 import type { WorkspaceData } from '../types'
 
 const KIND_OF_RULE: Record<string, AlertItemKind> = {
@@ -30,13 +30,19 @@ const plural = (n: number, w: string): string => `${n} ${w}${n === 1 ? '' : 's'}
 
 /**
  * One stored alert as a list item (same shape the bell and the alert lists use). `label` is the stored sweep's
- * "Latest sweep · <run day> (openFDA week ...)" (see sweepLabel); the sweep is never called "this week".
+ * "Latest sweep · <run day> (openFDA week ...)" (see sweepLabel), given only when the alert's week is the sweep's
+ * week; otherwise the alert's own stored week is named. The sweep is never called "this week".
  */
 export function itemOf(d: AlertDetail, label: string | null = null): AlertItem {
   const kind = KIND_OF_RULE[d.rule ?? ''] ?? 'new_signal'
   const n = d.window?.this_week.count
+  const w = d.window?.this_week
   const detail =
-    n == null ? d.source.label : d.source.kind === 'brief' ? `${plural(n, 'report')} in the demo-snapshot week` : sweepDetail(n, label)
+    n == null
+      ? d.source.label
+      : d.source.kind === 'brief'
+        ? `${plural(n, 'report')} in the demo-snapshot week`
+        : sweepDetail(n, label, weekRange(w?.from, w?.to))
   return {
     id: d.id,
     kind,
@@ -76,8 +82,7 @@ export function demoDetails(data: Pick<WorkspaceData, 'alerts'>): AlertDetail[] 
 /** The latest sweep's real alerts as list items, ranked (the bell, Home, Signals). Without alerts.json: the risky sweep items. */
 export function realAlertItems(data: Pick<WorkspaceData, 'alerts' | 'sweep' | 'briefs'>): AlertItem[] {
   const details = sweepDetails(data)
-  const label = sweepLabel(data.sweep)
-  if (details.length > 0) return rankReal(details).map((d) => itemOf(d, label))
+  if (details.length > 0) return rankReal(details).map((d) => itemOf(d, labelForWeek(data.sweep, d.window?.this_week)))
   return groupAlerts(alertItems(data.sweep, data.briefs, null)).signals.filter((a) => a.source === 'sweep')
 }
 

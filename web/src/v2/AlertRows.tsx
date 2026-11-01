@@ -7,7 +7,7 @@ import type { AlertDetail } from '../alerts'
 import type { AlertItem } from '../dashboard'
 import { Icon } from '../icons'
 import { Pill } from '../components/artifacts/common'
-import { sweepLabel } from '../sweepLabel'
+import { labelForWeek, sweepLabel, weekRange } from '../sweepLabel'
 import type { WorkspaceData } from '../types'
 import { demoDetails, itemOf, rankReal, realAlertItems, sweepDetails } from './realAlerts'
 
@@ -37,12 +37,14 @@ function briefNames(data: Pick<WorkspaceData, 'briefs'>): Map<string, string> {
   return m
 }
 
-function fromDetail(d: AlertDetail, names: Map<string, string>): AlertRowModel {
-  const it = itemOf(d)
+function fromDetail(d: AlertDetail, names: Map<string, string>, sweep: WorkspaceData['sweep'] | undefined): AlertRowModel {
+  const it = itemOf(d, labelForWeek(sweep, d.window?.this_week))
   const w = d.window
   let counts: string | null = null
   if (w && w.this_week.count != null) {
-    const where = d.source.kind === 'brief' ? 'that week' : 'in the latest sweep'
+    const same = d.source.kind === 'sweep' && labelForWeek(sweep, w.this_week) !== null
+    const wk = weekRange(w.this_week.from, w.this_week.to)
+    const where = d.source.kind === 'brief' ? 'that week' : same ? 'in the latest sweep' : wk ? `in the week ${wk}` : 'in the stored week'
     counts = w.baseline_4wk.weekly_mean != null ? `${w.this_week.count} ${where} (${w.baseline_4wk.weekly_mean} before)` : `${w.this_week.count} ${where}`
   }
   return {
@@ -78,7 +80,11 @@ export function realRows(data: Pick<WorkspaceData, 'alerts' | 'sweep' | 'briefs'
   const names = briefNames(data)
   const details = sweepDetails(data)
   const label = sweepLabel(data.sweep)
-  if (details.length > 0) return { rows: rankReal(details).map((d) => fromDetail(d, names)), source: label ?? sourceOf(details) }
+  if (details.length > 0) {
+    // The sweep's label is the caption only when every alert is about the sweep's own week.
+    const all = details.every((d) => labelForWeek(data.sweep, d.window?.this_week) !== null)
+    return { rows: rankReal(details).map((d) => fromDetail(d, names, data.sweep)), source: all && label ? label : sourceOf(details) }
+  }
   return { rows: realAlertItems(data).map((a) => fromItem(a, names)), source: label ?? 'Stored · AI device sweep' }
 }
 
@@ -86,7 +92,7 @@ export function realRows(data: Pick<WorkspaceData, 'alerts' | 'sweep' | 'briefs'
 export function demoRows(data: Pick<WorkspaceData, 'alerts' | 'briefs'>): AlertRowList {
   const names = briefNames(data)
   const details = demoDetails(data)
-  return { rows: rankReal(details).map((d) => fromDetail(d, names)), source: sourceOf(details) }
+  return { rows: rankReal(details).map((d) => fromDetail(d, names, undefined)), source: sourceOf(details) }
 }
 
 export function AlertRows({

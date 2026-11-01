@@ -11,16 +11,25 @@ interface Ymd {
   d: number
 }
 
-/** "2026-09-24", "20260924" or "2026-10-30T02:55:38Z" as calendar parts (the UTC day as written); null otherwise. */
+const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$|^(\d{4})(\d{2})(\d{2})$/
+const UTC_STAMP = /^(\d{4})-(\d{2})-(\d{2})T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?Z$/
+
+/** True when y-m-d is a real calendar day (no Feb 31). */
+function real({ y, m, d }: Ymd): boolean {
+  const t = new Date(Date.UTC(y, m - 1, d))
+  return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d
+}
+
+/**
+ * "2026-09-24", "20260924" or a UTC timestamp "2026-10-30T02:55:38Z" as calendar parts (the UTC day as written).
+ * Anything else ("2026-0924", a timestamp with an offset, Feb 31) is null.
+ */
 export function ymdParts(raw: string | null | undefined): Ymd | null {
   const s = (raw ?? '').trim()
-  const m = /^(\d{4})-?(\d{2})-?(\d{2})/.exec(s)
+  const m = DATE_ONLY.exec(s) ?? UTC_STAMP.exec(s)
   if (!m) return null
-  const y = Number(m[1])
-  const mo = Number(m[2])
-  const d = Number(m[3])
-  if (mo < 1 || mo > 12 || d < 1 || d > 31) return null
-  return { y, m: mo, d }
+  const out = { y: Number(m[1] ?? m[4]), m: Number(m[2] ?? m[5]), d: Number(m[3] ?? m[6]) }
+  return real(out) ? out : null
 }
 
 /** "Oct 30". */
@@ -47,9 +56,31 @@ export function sweepWeek(sweep: Pick<Sweep, 'meta'> | null | undefined): string
 }
 
 /** Item detail for a sweep alert: "10 reports · Latest sweep · Oct 30 (openFDA week Sep 24–30)". */
-export function sweepDetail(n: number, label: string | null | undefined): string {
+export function sweepDetail(n: number, label: string | null | undefined, week: string | null = null): string {
   const reports = `${n} report${n === 1 ? '' : 's'}`
-  return label ? `${reports} · ${label}` : `${reports} in the latest sweep`
+  if (label) return `${reports} · ${label}`
+  return week ? `${reports} in the week ${week}` : `${reports} in the stored week`
+}
+
+/** True when an alert's stored week (from/to) is the very week of the sweep's window. */
+export function sameWeek(
+  sweep: Pick<Sweep, 'meta'> | null | undefined,
+  from: string | null | undefined,
+  to: string | null | undefined,
+): boolean {
+  const w = sweep?.meta?.window
+  const a = [ymdParts(from), ymdParts(to), ymdParts(w?.current_start), ymdParts(w?.current_end)]
+  if (a.some((x) => x === null)) return false
+  const k = (x: Ymd | null) => `${x!.y}-${x!.m}-${x!.d}`
+  return k(a[0]) === k(a[2]) && k(a[1]) === k(a[3])
+}
+
+/** The sweep's label for an alert, only when the alert's own week is the sweep's week; else null. */
+export function labelForWeek(
+  sweep: Pick<Sweep, 'meta'> | null | undefined,
+  win: { from?: string | null; to?: string | null } | null | undefined,
+): string | null {
+  return win && sameWeek(sweep, win.from, win.to) ? sweepLabel(sweep) : null
 }
 
 /** "Latest sweep · Oct 30 (openFDA week Sep 24–30)" from the stored sweep; null when a field is missing. */

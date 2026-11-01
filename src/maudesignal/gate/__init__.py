@@ -27,6 +27,7 @@ from maudesignal.gate.evidence import (
 )
 from maudesignal.gate.gate import (
     ClaimVerdict,
+    DateShift,
     GateReport,
     SentenceVerdict,
     verify,
@@ -39,6 +40,7 @@ __all__ = [
     "Claim",
     "ClaimParseError",
     "ClaimVerdict",
+    "DateShift",
     "CountClaim",
     "DeviceClaim",
     "GroupCountClaim",

@@ -17,8 +17,8 @@ import { SweepCard, SweepRules } from '../components/SweepCard'
 import { AuditTab, CapaTab } from '../components/artifacts/AuditCapaProtocol'
 import { BriefTab } from '../components/artifacts/BriefTabs'
 import { DossierTab } from '../components/artifacts/DossierVision'
-import { rankReal, realDetails, sourceLine } from './realAlerts'
-import { sweepLabel } from '../sweepLabel'
+import { rankReal, realDetails, sourceLine, sweepDetails } from './realAlerts'
+import { labelForWeek, sweepLabel } from '../sweepLabel'
 import type { ConnectTab, DevicesTab, EvidenceTab, SignalsTab } from './router'
 import { SubTabs, type TabDef, type TabHow } from './SubTabs'
 
@@ -89,7 +89,8 @@ function Ranked({ data }: { data: WorkspaceData }) {
 
 /** Trend: the latest sweep's openFDA week against the weekly average of the 4 weeks before (stored numbers only). */
 function Trend({ data }: { data: WorkspaceData }) {
-  const label = sweepLabel(data.sweep)
+  const sw = sweepDetails(data)
+  const label = sw.length > 0 && sw.every((d) => labelForWeek(data.sweep, d.window?.this_week)) ? sweepLabel(data.sweep) : null
   const rows = rankReal(realDetails(data)).filter((d) => d.window && d.window.this_week.count != null)
   if (rows.length === 0) return <p className="ms2-muted">No weekly counts are stored.</p>
   const max = Math.max(...rows.map((d) => Math.max(d.window!.this_week.count ?? 0, d.window!.baseline_4wk.weekly_mean ?? 0)), 1)

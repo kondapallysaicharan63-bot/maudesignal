@@ -222,8 +222,8 @@ def test_sweep_alert_is_built_from_stored_rows(fx: Path) -> None:
     assert a["window"]["baseline_4wk"]["weekly_mean"] == 2.0
     labels = {n["label"]: n["value"] for n in a["numbers"]}
     assert (
-        labels["Reports this week"] == 4
-        and labels["This week compared with the weekly average (times)"] == 2.0
+        labels["Reports in the latest sweep week"] == 4
+        and labels["The latest sweep week compared with the weekly average (times)"] == 2.0
     )
     assert all(n["openfda_url"].startswith("https://api.fda.gov/") for n in a["numbers"])
     assert a["reports_total"] == 4 == a["reports_stored"] == len(a["reports"])
@@ -283,7 +283,7 @@ def test_a_code_with_nothing_stored_invents_nothing(fx: Path) -> None:
     assert a["gate"] == {"checked": 0, "passed": 0, "withheld": 0}
     assert any("No reports are stored" in n for n in a["notes"])
     labels = {n["label"]: n["value"] for n in a["numbers"]}
-    assert labels["Injury or death reports this week"] == 2
+    assert labels["Injury or death reports in the latest sweep week"] == 2
 
 
 def test_company_alert_without_a_weekly_rule(fx: Path) -> None:

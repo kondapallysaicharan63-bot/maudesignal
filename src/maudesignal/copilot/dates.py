@@ -26,6 +26,7 @@ from datetime import UTC, date, datetime
 from typing import Any
 
 from maudesignal.gate.evidence import EvidenceStore
+from maudesignal.gate.gate import DateShift
 
 #: Most product codes listed one by one in the date context (the rest are counted).
 MAX_CONTEXT_CODES = 25
@@ -84,6 +85,19 @@ def code_windows(store: EvidenceStore) -> dict[str, Window]:
     return dict(sorted(out.items(), key=lambda kv: (-kv[1].reports, kv[0])))
 
 
+def recall_window(store: EvidenceStore, product_code: str | None) -> Window | None:
+    """Stored recall-date (``date_initiated``) window for one product code (None: no dates)."""
+    code = product_code.strip().upper() if product_code else None
+    dates = [
+        r.date_initiated
+        for r in store.recalls
+        if r.date_initiated and (code is None or r.product_code.upper() == code)
+    ]
+    if not dates:
+        return None
+    return Window(min(dates), max(dates), len(dates))
+
+
 @dataclass(frozen=True)
 class RangeCheck:
     """Outcome of :func:`check_range` for one tool call."""
@@ -113,12 +127,91 @@ class RangeCheck:
             out["no_data_for_range"] = True
         return out
 
+    def shift(self) -> DateShift | None:
+        """The moved range, for the claim gate (None unless the range was moved)."""
+        if not (self.adjusted and self.date_from and self.date_to):
+            return None
+        return DateShift(
+            self.requested_from or "", self.requested_to or "", self.date_from, self.date_to
+        )
+
 
 def _shift_year(d: date, year: int) -> date:
     try:
         return d.replace(year=year)
     except ValueError:  # 29 February in a non-leap year
         return d.replace(year=year, day=28)
+
+
+def _plain_ymd(value: str | None) -> str | None:
+    """``YYYYMMDD`` from ``YYYYMMDD`` or ``YYYY-MM-DD`` (anything else is returned as given)."""
+    if value is None:
+        return None
+    text = value.strip()
+    digits = text.replace("-", "")
+    return digits if len(digits) == 8 and digits.isdigit() else text
+
+
+def _check(
+    window: Window | None,
+    who: str,
+    date_from: str | None,
+    date_to: str | None,
+    *,
+    may_shift: bool = True,
+) -> RangeCheck:
+    """Core of the range guards (``who`` names the data in the plural: "stored LLZ reports")."""
+    date_from, date_to = _plain_ymd(date_from), _plain_ymd(date_to)
+    plain = RangeCheck(date_from, date_to)
+    if (not date_from and not date_to) or window is None:
+        return plain
+    lo, hi = window.earliest, window.latest
+    if (date_from or "00000000") <= hi and (date_to or "99999999") >= lo:
+        return plain  # overlaps the stored data
+    asked = f"{_iso(date_from) if date_from else '...'} to {_iso(date_to) if date_to else '...'}"
+    covers = f"{_iso(lo)} to {_iso(hi)}"
+    d_from = _parse(date_from) if date_from else None
+    d_to = _parse(date_to) if date_to else None
+    lo_year, hi_year = int(lo[:4]), int(hi[:4])
+    # Only a year the data does not reach is treated as a wrong year (the model's guess). A
+    # range in a year the data does cover is never moved: it is simply empty.
+    outside_years = (
+        d_from is not None
+        and d_to is not None
+        and d_from <= d_to
+        and not (lo_year <= d_from.year <= hi_year)
+        and not (lo_year <= d_to.year <= hi_year)
+    )
+    if may_shift and outside_years and d_from is not None and d_to is not None:
+        span = d_to.year - d_from.year
+        nf = _ymd(_shift_year(d_from, hi_year - span))
+        nt = _ymd(_shift_year(d_to, hi_year))
+        if nf <= hi and nt >= lo:
+            return RangeCheck(
+                nf,
+                nt,
+                adjusted=True,
+                window=window,
+                requested_from=date_from,
+                requested_to=date_to,
+                note=(
+                    f"No {who.removesuffix('s')} is dated in {asked}; the {who} run {covers}. "
+                    f"This result is for {_iso(nf)} to {_iso(nt)}, the same dates in {hi_year}. "
+                    "Say which dates were used."
+                ),
+            )
+    return RangeCheck(
+        date_from,
+        date_to,
+        no_data=True,
+        window=window,
+        requested_from=date_from,
+        requested_to=date_to,
+        note=(
+            f"No {who.removesuffix('s')} is dated in {asked}; the {who} run {covers}. "
+            "Say exactly that; do not report it as 0 reports."
+        ),
+    )
 
 
 def check_range(
@@ -130,64 +223,34 @@ def check_range(
     """Guard a report-date range against the stored data window.
 
     * No dates, or a range that overlaps the stored reports of the product code (of the
-      whole store when no code is given or the code has no reports): used as asked.
-    * Both bounds given, entirely outside the window, and the same month/day in the year of
-      the latest stored report (or the year before) overlaps the window: moved there
-      (``adjusted``), with a note the model must repeat
-      (e.g. 20250825..20250831 -> 20260825..20260831 for LLZ).
-    * Otherwise entirely outside: ``no_data`` with the dates the data covers, so the tool
-      says "no stored data for that range" instead of returning a count of 0.
+      whole store when the code has none): used as asked. ISO dates are normalised.
+    * Both bounds given, entirely outside the window, and neither bound's year is within the
+      years the data covers: moved to the same dates in the latest stored year when that
+      overlaps the data (``adjusted``), e.g. LLZ 20250825..20250831 -> 20260825..20260831.
+    * Otherwise entirely outside (including any range in a year the data covers): ``no_data``,
+      a truthful "no stored report is dated in that range; they run X to Y", never a count.
     """
-    plain = RangeCheck(date_from, date_to)
-    if not date_from and not date_to:
-        return plain
-    window = stored_window(store, product_code) or stored_window(store)
-    if window is None:
-        return plain
-    lo, hi = window.earliest, window.latest
-    start = date_from or "00000000"
-    end = date_to or "99999999"
-    if start <= hi and end >= lo:
-        return plain  # overlaps the stored data
-    covers = f"{_iso(lo)} to {_iso(hi)}"
-    who = f"stored {product_code} reports" if product_code else "stored reports"
-    asked = f"{_iso(date_from) if date_from else '...'} to {_iso(date_to) if date_to else '...'}"
-    d_from = _parse(date_from) if date_from else None
-    d_to = _parse(date_to) if date_to else None
-    hi_d = _parse(hi)
-    if d_from and d_to and hi_d and d_from <= d_to:
-        span = d_to.year - d_from.year
-        for year in (hi_d.year, hi_d.year - 1):
-            if d_to.year == year:
-                continue
-            nf = _ymd(_shift_year(d_from, year - span))
-            nt = _ymd(_shift_year(d_to, year))
-            if nf <= hi and nt >= lo:
-                return RangeCheck(
-                    nf,
-                    nt,
-                    adjusted=True,
-                    window=window,
-                    requested_from=date_from,
-                    requested_to=date_to,
-                    note=(
-                        f"No {who} fall in {asked}; the {who} cover {covers}. "
-                        f"This result is for the same dates in {year}: "
-                        f"{_iso(nf)} to {_iso(nt)}. Say which dates were used."
-                    ),
-                )
-    return RangeCheck(
-        date_from,
-        date_to,
-        no_data=True,
-        window=window,
-        requested_from=date_from,
-        requested_to=date_to,
-        note=(
-            f"No stored data for {asked}: the {who} cover {covers}. "
-            "Say that the stored data does not cover that range; do not report it as 0 reports."
-        ),
-    )
+    scoped = stored_window(store, product_code) if product_code else None
+    window = scoped or stored_window(store)
+    who = f"stored {product_code} reports" if scoped and product_code else "stored reports"
+    return _check(window, who, date_from, date_to, may_shift=scoped is not None)
+
+
+def check_recall_range(
+    store: EvidenceStore,
+    product_code: str | None,
+    date_from: str | None,
+    date_to: str | None,
+) -> RangeCheck:
+    """The same guard for recall dates (``date_initiated``); only a code with stored recalls.
+
+    Recall dates legitimately go back many years, so a range is flagged only when it lies
+    entirely outside the stored recall dates of that code, and it is never moved to another
+    year (a recall of 2015 is not an answer about 2026).
+    """
+    window = recall_window(store, product_code) if product_code else None
+    who = f"stored {product_code} recalls"
+    return _check(window, who, date_from, date_to, may_shift=False)
 
 
 def render_date_context(

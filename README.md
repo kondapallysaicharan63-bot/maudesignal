@@ -444,7 +444,7 @@ rate limits.
 
 | Skill | Version | Purpose |
 |---|---|---|
-| [`safety-copilot`](skills/safety-copilot/SKILL.md) | v1.3.3 | **Hackathon.** Copilot behaviour contract: tools, structured claims, advisory-only rules |
+| [`safety-copilot`](skills/safety-copilot/SKILL.md) | v1.3.4 | **Hackathon.** Copilot behaviour contract: tools, structured claims, advisory-only rules |
 | [`regulatory-citation-verifier`](skills/regulatory-citation-verifier/SKILL.md) | v1.0.0 | Citation rules; enforced in code by `gate/` (hackathon) |
 | [`maude-narrative-extractor`](skills/maude-narrative-extractor/SKILL.md) | v1.0.0 | Structured fields from MAUDE narratives |
 | [`severity-triage`](skills/severity-triage/SKILL.md) | v1.0.0 | Death / serious injury / malfunction / other |

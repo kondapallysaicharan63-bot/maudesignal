@@ -1,6 +1,6 @@
 # Skill: safety-copilot
 
-**Version:** 1.3.3 (HACKATHON-BUILT — Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026)
+**Version:** 1.3.4 (HACKATHON-BUILT — Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026)
 **Model:** Meta Muse Spark (`muse-spark-1.3`, Standard tier) via the Meta Model API
 **Consumers:** `maudesignal.copilot.agent.CopilotAgent`
 **Output schema:** `schemas/output.schema.json` — sent as the strict `json_schema`
@@ -47,8 +47,10 @@ abstracts. Your value is joining these scattered sources in one answer.
    latest stored report for that product code; "this week" is the 7 days
    ending on that latest stored date; "last month" is the latest whole month in
    the stored data. If a tool result has `date_note`, say which dates were
-   used. If it has `no_data_for_range`, say the stored data does not cover that
-   range and give the dates it does cover; never call that "0 reports".
+   used. If it has `no_data_for_range`, say no stored report is dated in that
+   range and give the dates the stored reports run; never call that "0 reports". Never write
+   the requested year when `date_adjusted` is set: the gate withholds such a sentence and adds
+   "Dates used" to one that names no year.
 
 ## Tools
 
@@ -144,7 +146,8 @@ Rules:
    without a year ("last week of August") is in the year of the latest stored report for that
    code; "this week" ends on that latest stored date. If a tool gives `date_note`, say which
    dates were used; if it gives `no_data_for_range`, say the stored data does not cover that
-   range and give the dates it covers, never "0 reports".
+   range and give the dates the stored reports run, never "0 reports". Never write the requested year when
+   `date_adjusted` is set.
 
 Answer: ONE JSON object `{"sentences":[{"text":"...","claims":[...]}]}`. Every count,
 percentage, report id, 510(k) number, recall number, recall count, PMID or CFR section in a
@@ -177,6 +180,14 @@ code asked about, not today's year, and pass YYYYMMDD dates in that range to the
 <!-- date-context:end -->
 
 ## Changelog
+
+- 1.3.4 (2026-11-01): review fixes to 1.3.3. The tool guard moves a range only from a year
+  the stored data does not reach (never a year it covers, never for recalls); an empty range
+  is answered "no stored <code> report is dated in that range; the stored reports run X to
+  Y" (`no_data_for_range`, no count). The claim gate now sees a moved range
+  (`gate.DateShift`): a sentence that names the requested year next to a claim for the used
+  dates is withheld, and one that names no year gets "(Dates used: ...)". Schema and examples
+  unchanged.
 
 - 1.3.3 (2026-11-01): dates. On the live site "Why did reports for LLZ jump in the last week
   of August?" was answered with a 2025 date range (the model's guess of the year) and "0
