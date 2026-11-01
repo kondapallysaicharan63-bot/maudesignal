@@ -252,6 +252,78 @@ export async function submitFeedback(
   }
 }
 
+// ---- answer ratings (v2 answer turn) ------------------------------------------------------
+
+/** The longest reason a thumbs-down may carry (the API refuses more). */
+export const ANSWER_REASON_MAX = 300
+
+export type Thumb = 'up' | 'down'
+
+/**
+ * Body of POST /v1/feedback for a thumbs up or down on one answer: an answer id made in this page, the thumb
+ * (5 = up, 1 = down) and an optional short reason. Never the question or the answer text.
+ */
+export interface AnswerRatingPayload {
+  kind: 'answer_rating'
+  answer_id: string
+  rating: 1 | 5
+  comment: string
+  consent: 'no_quote'
+  ref: string | null
+  page: 'live-answer'
+  client_ts: string
+}
+
+export function buildAnswerRating(
+  answerId: string,
+  thumb: Thumb,
+  reason: string,
+  ref: string | null,
+  now: () => Date = () => new Date(),
+): AnswerRatingPayload {
+  return {
+    kind: 'answer_rating',
+    answer_id: answerId,
+    rating: thumb === 'up' ? 5 : 1,
+    comment: thumb === 'down' ? reason.trim().slice(0, ANSWER_REASON_MAX) : '',
+    consent: 'no_quote',
+    ref,
+    page: 'live-answer',
+    client_ts: now().toISOString(),
+  }
+}
+
+/** The quiet line shown when a rating could not be stored (an older API answers 422 to kind / answer_id). */
+export const RATING_NOT_SAVED = 'Rating not saved.'
+export const RATING_ALREADY = 'This answer was already rated.'
+
+export type RatingResult = { ok: true } | { ok: false; already: boolean; message: string }
+
+/**
+ * Sends an answer rating. Only a 2xx answer counts as sent. Every failure is the same quiet line ("Rating not saved."),
+ * never the server's validation text, except 409 (this answer was already rated from here).
+ */
+export async function submitAnswerRating(
+  apiBase: string | null,
+  payload: AnswerRatingPayload,
+  fetcher: (url: string, init: RequestInit) => Promise<FetchLike>,
+): Promise<RatingResult> {
+  if (!apiBase) return { ok: false, already: false, message: RATING_NOT_SAVED }
+  try {
+    const res = await fetcher(`${apiBase}/v1/feedback`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+      credentials: 'omit',
+    })
+    if (res.ok) return { ok: true }
+    if (res.status === 409) return { ok: false, already: true, message: RATING_ALREADY }
+    return { ok: false, already: false, message: RATING_NOT_SAVED }
+  } catch {
+    return { ok: false, already: false, message: RATING_NOT_SAVED }
+  }
+}
+
 // ---- dialog keyboard ----------------------------------------------------------------------
 
 export interface KeyLike {

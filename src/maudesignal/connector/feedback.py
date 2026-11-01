@@ -38,7 +38,14 @@ from typing import Annotated, Any, Literal
 
 from fastapi import FastAPI, Query, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 from starlette.concurrency import run_in_threadpool
 from starlette.requests import ClientDisconnect
 
@@ -56,6 +63,11 @@ FEEDBACK_LIMIT_ENV = "MAUDESIGNAL_FEEDBACK_PER_HOUR"
 VISIT_LIMIT_ENV = "MAUDESIGNAL_VISIT_PER_HOUR"
 DEFAULT_FEEDBACK_PER_HOUR = 5
 DEFAULT_VISIT_PER_HOUR = 60
+# Answer ratings have their own per-address limiter, so a room full of thumbs never locks the
+# survey; and one rating per answer id per address (a second one is refused with 409).
+ANSWER_RATING_LIMIT_ENV = "MAUDESIGNAL_ANSWER_RATING_PER_HOUR"
+DEFAULT_ANSWER_RATING_PER_HOUR = 60
+ANSWER_ONCE_WINDOW_SECONDS = 24 * 3600.0
 WINDOW_SECONDS = 3600.0
 MAX_BODY_BYTES = 16 * 1024
 FEEDBACK_PATH = "/v1/feedback"
@@ -72,6 +84,13 @@ CLIENTS_PATH = "/v1/admin/clients"
 QUOTE_BY_NAME = "quote_name_role"
 FETCH_WORKERS = 8
 KINDS = ("feedback", "visits")
+# A thumbs up / down on one chat answer (web ?layout=v2). It rides the same route, storage and
+# retention as the survey; it carries a client-made answer id and an optional reason, never the
+# question or the answer text. rating 5 = thumbs up, 1 = thumbs down.
+ANSWER_RATING = "answer_rating"
+ANSWER_ID_PATTERN = r"^[A-Za-z0-9_-]{8,64}$"
+ANSWER_REASON_MAX = 300
+THUMB_RATINGS = (1, 5)
 
 FEEDBACK_COLUMNS = [
     "id",
@@ -85,6 +104,8 @@ FEEDBACK_COLUMNS = [
     "ref",
     "page",
     "client_ts",
+    "kind",
+    "answer_id",
 ]
 VISIT_COLUMNS = ["id", "received_utc", "ref", "page", "client_ts"]
 
@@ -139,11 +160,32 @@ class FeedbackIn(BaseModel):
     ref: str | None = Field(default=None, pattern=REF_PATTERN)
     page: str = Field(default="", max_length=64, pattern=r"^[A-Za-z0-9_:.-]*$")
     client_ts: str = Field(default="", max_length=40, pattern=r"^[0-9TZ:.+-]*$")
+    kind: Literal["survey", "answer_rating"] = "survey"
+    answer_id: str | None = Field(default=None, pattern=ANSWER_ID_PATTERN)
 
     @field_validator("ref", mode="before")
     @classmethod
     def _ref(cls, value: Any) -> Any:
         return clean_ref(value)
+
+    @model_validator(mode="after")
+    def _answer_rating_shape(self) -> FeedbackIn:
+        """An answer rating is a thumb (1 or 5), an answer id and at most a short reason."""
+        if self.kind != ANSWER_RATING:
+            if self.answer_id is not None:
+                raise ValueError("answer_id is only for kind answer_rating")
+            return self
+        if self.answer_id is None:
+            raise ValueError("answer_id is required for an answer rating")
+        if self.rating not in THUMB_RATINGS:
+            raise ValueError("an answer rating is 1 (down) or 5 (up)")
+        if len(self.comment) > ANSWER_REASON_MAX:
+            raise ValueError("the reason is limited to 300 characters")
+        if self.blocker or self.one_thing or self.name or self.role:
+            raise ValueError("an answer rating carries only a reason")
+        if self.consent != "no_quote":
+            raise ValueError("an answer rating is never quoted")
+        return self
 
 
 class VisitIn(BaseModel):
@@ -189,14 +231,26 @@ def to_csv(kind: str, rows: list[dict[str, Any]]) -> str:
     return out.getvalue()
 
 
+def answer_rating_counts(feedback: list[dict[str, Any]]) -> dict[str, int]:
+    """Thumbs up / down, counting only the latest rating stored for each answer id."""
+    latest: dict[str, dict[str, Any]] = {}
+    for f in sorted(feedback, key=lambda r: str(r.get("received_utc", ""))):
+        if f.get("kind") == ANSWER_RATING:
+            latest[str(f.get("answer_id") or f.get("id") or "")] = f
+    up = sum(1 for f in latest.values() if f.get("rating") == 5)
+    return {"up": up, "down": len(latest) - up}
+
+
 def summarize(feedback: list[dict[str, Any]], visits: list[dict[str, Any]]) -> dict[str, Any]:
     """Counts of visits and feedback per ref code and per page, plus average rating per ref."""
     by_ref: dict[str, dict[str, Any]] = defaultdict(lambda: {"visits": 0, "feedback": 0, "sum": 0})
     by_page: dict[str, dict[str, int]] = defaultdict(lambda: {"visits": 0, "feedback": 0})
+    survey = [f for f in feedback if f.get("kind") != ANSWER_RATING]
+    thumbs = answer_rating_counts(feedback)
     for v in visits:
         by_ref[v.get("ref") or "(none)"]["visits"] += 1
         by_page[v.get("page") or "(none)"]["visits"] += 1
-    for f in feedback:
+    for f in survey:
         entry = by_ref[f.get("ref") or "(none)"]
         entry["feedback"] += 1
         entry["sum"] += int(f.get("rating") or 0)
@@ -212,7 +266,8 @@ def summarize(feedback: list[dict[str, Any]], visits: list[dict[str, Any]]) -> d
     ]
     pages = [{"page": p, **c} for p, c in sorted(by_page.items())]
     return {
-        "totals": {"visits": len(visits), "feedback": len(feedback)},
+        "totals": {"visits": len(visits), "feedback": len(survey)},
+        "answer_ratings": thumbs,
         "by_ref": refs,
         "by_page": pages,
         "codes": by_code(feedback, visits),
@@ -261,6 +316,7 @@ def by_code(feedback: list[dict[str, Any]], visits: list[dict[str, Any]]) -> lis
                 "one_thing": f.get("one_thing", ""),
                 "role": f.get("role") or "",
                 "consent": f.get("consent", ""),
+                "kind": f.get("kind") or "survey",
             }
         )
     out: list[dict[str, Any]] = []
@@ -370,10 +426,14 @@ function render(){
     if(c.feedback.length){
       const w=document.createElement("div");w.className="scroll";
       const t=document.createElement("table");
-      const rows=c.feedback.map(f=>({time:f.received_utc,page:f.page,rating:f.rating,
+      const ar=f=>f.kind==="answer_rating";
+      const rows=c.feedback.map(f=>({time:f.received_utc,
+        kind:ar(f)?"answer rating":"survey",page:f.page,
+        rating:ar(f)?(f.rating===5?"up":"down"):f.rating,
         comment:f.comment,blocker:f.blocker,"one thing":f.one_thing,role:f.role,
         "quote consent":CONSENT[f.consent]||f.consent}));
-      table(t,["time","page","rating","comment","blocker","one thing","role","quote consent"],rows);
+      table(t,["time","kind","page","rating","comment","blocker","one thing","role",
+        "quote consent"],rows);
       w.appendChild(t);d.appendChild(w);
     }else{const n=document.createElement("p");n.textContent="No feedback yet.";d.appendChild(n);}
     box.appendChild(d);
@@ -387,7 +447,9 @@ async function load(){
     $("msg").textContent=m[r.status]||"Error "+r.status;return;}
   const d=await r.json();DATA=d;
   $("msg").textContent="";$("out").hidden=false;
-  $("tot").textContent=d.totals.visits+" visits, "+d.totals.feedback+" feedback";
+  const th=d.answer_ratings||{up:0,down:0};
+  $("tot").textContent=d.totals.visits+" visits, "+d.totals.feedback+" survey feedback, "+
+    "answer ratings: "+th.up+" up, "+th.down+" down (latest per answer)";
   table($("refs"),["ref","visits","feedback","avg_rating"],d.by_ref);
   table($("pages"),["page","visits","feedback"],d.by_page);
   render();
@@ -516,6 +578,12 @@ def mount_feedback(
     feedback_limiter = make_limiter(
         "feedback", limit_from(FEEDBACK_LIMIT_ENV, DEFAULT_FEEDBACK_PER_HOUR), WINDOW_SECONDS
     )
+    rating_limiter = make_limiter(
+        "answer_rating",
+        limit_from(ANSWER_RATING_LIMIT_ENV, DEFAULT_ANSWER_RATING_PER_HOUR),
+        WINDOW_SECONDS,
+    )
+    rating_once = make_limiter("answer_rating_once", 1, ANSWER_ONCE_WINDOW_SECONDS)
     visit_limiter = make_limiter(
         "visit", limit_from(VISIT_LIMIT_ENV, DEFAULT_VISIT_PER_HOUR), WINDOW_SECONDS
     )
@@ -603,15 +671,21 @@ def mount_feedback(
 
     @app.post(FEEDBACK_PATH, include_in_schema=False)
     async def post_feedback(request: Request) -> Response:
-        if (blocked := limited(request, feedback_limiter)) is not None:
-            return blocked
         payload, failure = await read_json(request)
+        rating = isinstance(payload, dict) and payload.get("kind") == ANSWER_RATING
+        limiter = rating_limiter if rating else feedback_limiter
+        if (blocked := limited(request, limiter)) is not None:
+            return blocked
         if failure is not None:
             return failure
         try:
             body = FeedbackIn.model_validate(without_empty_ref(payload))
         except ValidationError as exc:
             return bad_fields(exc)
+        if body.kind == ANSWER_RATING:
+            once_key = f"{limiter_id(request)}:{body.answer_id}"
+            if not rating_once.check(once_key)[0]:
+                return _err(409, "already_rated", "This answer was already rated.")
         free_text = (body.comment, body.blocker, body.one_thing, body.name or "", body.role or "")
         if any(looks_like_phi(t) for t in free_text):
             return _err(422, "possible_patient_details", PHI_MESSAGE)
@@ -628,7 +702,8 @@ def mount_feedback(
         except StoreError:
             return _err(503, "store_unavailable", "Feedback could not be saved. Try again later.")
         logger.info("feedback_stored", rating=body.rating, has_ref=body.ref is not None)
-        await run_in_threadpool(notifier.feedback, record)
+        if body.kind != ANSWER_RATING:  # a thumb on one answer is counted, not emailed
+            await run_in_threadpool(notifier.feedback, record)
         return JSONResponse(status_code=201, content={"status": "received", "id": rid})
 
     @app.post(VISIT_PATH, include_in_schema=False)

@@ -1249,6 +1249,387 @@ COMPOSER_SCENARIOS: tuple[tuple[str, Callable[[Env], str]], ...] = (
 )
 
 
+# --- v2 answer turn (?layout=v2): chip, Details, Copy, Read aloud, thumbs ----------------------
+
+V2_ANSWER = "[data-testid=live-answer][data-layout=v2]"
+V2_QUESTION = "Which kinds of problems do the LLZ reports describe this week?"
+V2_LIVE_TEXT = "This is a mocked live answer for the browser test, not about any device."
+# Stubbed speechSynthesis: voices arrive late (voiceschanged), every utterance is logged on window.
+SPEECH_STUB = """
+(() => {
+  const voices = [
+    {name: 'Microsoft David - English (United States)', lang: 'en-US', default: true, localService: true, voiceURI: 'd'},
+    {name: 'Microsoft Aria Online (Natural) - English (United States)', lang: 'en-US', default: false, localService: false, voiceURI: 'a'},
+    {name: 'Microsoft Jenny (Natural) - English (United States)', lang: 'en-US', default: false, localService: true, voiceURI: 'j'},
+  ];
+  let ready = false; const ls = [];
+  window.__spoken = []; window.__cancels = 0;
+  window.SpeechSynthesisUtterance = function (t) { this.text = t; this.rate = 1; this.voice = null; this.lang = ''; };
+  const synth = {
+    speaking: false,
+    getVoices: () => (ready ? voices : []),
+    addEventListener: (t, f) => { if (t === 'voiceschanged') ls.push(f); },
+    removeEventListener: () => {},
+    speak: (u) => { window.__spoken.push({text: u.text, rate: u.rate, voice: u.voice && u.voice.name}); },
+    cancel: () => { window.__cancels++; },
+  };
+  Object.defineProperty(window, 'speechSynthesis', {value: synth, configurable: true});
+  setTimeout(() => { ready = true; ls.forEach((f) => f()); }, 300);
+})();
+"""
+
+
+def v2_live_body() -> dict[str, Any]:
+    """A tier-4 answer with a source link, a withheld sentence, cost and tokens (mocked, $0 spent)."""
+    body = mocked_live_body()
+    body["answer"] = {
+        "speakable": [
+            {"text": V2_LIVE_TEXT, "links": [_MOCK_LINK]},
+            {"text": "A second mocked sentence with no figures.", "links": []},
+        ],
+        "withheld": [{"reason": "a number did not match the stored data"}],
+        "spoken_text": V2_LIVE_TEXT + " A second mocked sentence with no figures.",
+    }
+    body["trace"] = [
+        {**body["trace"][0], "ms": 812},
+        {"step": "Read-only tools and claim gate", "model": None, "ms": 6, "status": "ok"},
+    ]
+    body["cost_usd"] = 0.0
+    body["usage"] = {"input_tokens": 1200, "output_tokens": 140}
+    return body
+
+
+def v2_recorded_body() -> dict[str, Any]:
+    """A recorded answer that names its recording date (mocked)."""
+    body = recorded_body("ask")
+    body["recorded_note"] = (
+        "Recorded sample used by the browser test (recorded 2026-10-28): no live model call was made."
+    )
+    return body
+
+
+def open_v2(env: Env, speech: bool = True) -> None:
+    """Load the app with ?layout=v2 and wait for the composer.
+
+    ``speech`` installs the speechSynthesis stub (headless browsers have no voices, so Read aloud
+    would be hidden); the greeting scenario runs without it to check the button stays hidden.
+    """
+    if speech:
+        env.page.add_init_script(SPEECH_STUB)
+    sep = "&" if "?" in env.args.url else "?"
+    env.page.goto(env.args.url + sep + "layout=v2", wait_until="load")
+    env.page.wait_for_selector(COMPOSER, timeout=30_000)
+
+
+def mock_ask(env: Env, body: dict[str, Any]) -> list[dict[str, Any]]:
+    """Answer /v1/live/ask with ``body``; returns the request bodies seen."""
+    seen: list[dict[str, Any]] = []
+
+    def handler(route: Any) -> None:
+        with contextlib.suppress(ValueError):
+            seen.append(json.loads(route.request.post_data or "{}"))
+        route.fulfill(status=200, content_type="application/json", body=json.dumps(body))
+
+    env.page.route(ASK_PATH, handler)
+    return seen
+
+
+def v2_answer(env: Env) -> Any:
+    """Wait for the v2 answer turn and its action bar; return the answer locator."""
+    env.page.wait_for_selector(V2_ANSWER, timeout=45_000)
+    env.page.wait_for_selector(f"{V2_ANSWER} [data-testid=details-toggle]", timeout=10_000)
+    return env.page.locator(V2_ANSWER).first
+
+
+def visible_text(env: Env) -> str:
+    """Text the person can see in the conversation (hidden Details excluded)."""
+    log = env.page.locator("[role=log]")
+    return log.first.inner_text() if log.count() else env.page.locator("body").inner_text()
+
+
+def s_v2_live_chip(env: Env) -> str:
+    """A mocked live answer shows one quiet chip 'Muse Spark 1.3 · Live'; no cost or step lines."""
+    mock_ask(env, v2_live_body())
+    open_v2(env)
+    env.ask(V2_QUESTION)
+    ans = v2_answer(env)
+    chip = ans.get_by_test_id("model-chip").inner_text().strip()
+    if chip != "Muse Spark 1.3 · Live":
+        raise AssertionError(f"chip is {chip!r}")
+    seen = visible_text(env)
+    for noisy in ("Cost of this answer", "812 ms", "Fixed reply, no model call"):
+        if noisy in seen:
+            raise AssertionError(f"{noisy!r} is visible in the main view")
+    if (
+        ans.get_by_test_id("mark-verified").count() != 1
+        or ans.get_by_test_id("held-back").count() != 1
+    ):
+        raise AssertionError("Verified / Withheld marks missing")
+    if env.overflow() > 1:
+        raise AssertionError(f"sideways scroll of {env.overflow()} px")
+    env.shot("v2-live-answer")
+    axe = Path(env.args.axe)
+    if not axe.is_file():
+        return f"chip {chip!r}; no cost, no step timings; marks shown (axe-core not found)"
+    ans.get_by_test_id("details-toggle").click()
+    env.page.add_script_tag(path=str(axe))
+    results = env.page.evaluate(
+        "axe.run(document.querySelector('[data-testid=live-answer][data-layout=v2]'),"
+        " {resultTypes: ['violations']})"
+    )
+    counts = count_axe(results)
+    if axe_blocks(counts):
+        ids = [v.get("id") for v in results.get("violations", [])]
+        raise AssertionError(f"axe on the v2 answer (Details open): {ids} {counts}")
+    return (
+        f"chip {chip!r}; no cost, no step timings; Verified and Withheld marks shown; "
+        f"axe on the answer with Details open: {counts}"
+    )
+
+
+def s_v2_greeting(env: Env) -> str:
+    """A greeting (tier 1, from the local API, $0) shows 'Instant answer' and no cost line."""
+    open_v2(env, speech=False)
+    env.ask("namaste")
+    ans = v2_answer(env)
+    voices = int(
+        env.page.evaluate("window.speechSynthesis ? window.speechSynthesis.getVoices().length : 0")
+    )
+    if voices == 0 and ans.get_by_test_id("action-read").count():
+        raise AssertionError("Read aloud is shown although the browser has no voices")
+    chip = ans.get_by_test_id("model-chip").inner_text().strip()
+    if chip != "Instant answer":
+        raise AssertionError(f"chip is {chip!r}")
+    seen = visible_text(env)
+    for noisy in (
+        "Cost of this answer",
+        "$0.0000",
+        "No FDA facts in this message",
+        "no model call",
+    ):
+        if noisy in seen:
+            raise AssertionError(f"{noisy!r} is visible in the main view")
+    env.shot("v2-instant-answer")
+    return "Instant answer chip; no cost line, no 'No FDA facts' line"
+
+
+def s_v2_recorded(env: Env) -> str:
+    """A recorded answer shows 'Recorded · Oct 28, 2026'."""
+    mock_ask(env, v2_recorded_body())
+    open_v2(env)
+    env.ask(V2_QUESTION)
+    ans = v2_answer(env)
+    chip = ans.get_by_test_id("model-chip").inner_text().strip()
+    if chip != "Recorded · Oct 28, 2026":
+        raise AssertionError(f"chip is {chip!r}")
+    env.shot("v2-recorded-answer")
+    return f"chip {chip!r}"
+
+
+def s_v2_details(env: Env) -> str:
+    """Details is closed by default (aria-expanded false), opens by mouse and by keyboard."""
+    mock_ask(env, v2_live_body())
+    open_v2(env)
+    env.ask(V2_QUESTION)
+    ans = v2_answer(env)
+    toggle = ans.get_by_test_id("details-toggle")
+    if (
+        toggle.get_attribute("aria-expanded") != "false"
+        or ans.get_by_test_id("answer-details").count()
+    ):
+        raise AssertionError("Details is not closed by default")
+    if toggle.get_attribute("aria-label") != "Details":
+        raise AssertionError("Details toggle has no label")
+    toggle.focus()
+    env.page.keyboard.press("Enter")
+    env.page.wait_for_selector(f"{V2_ANSWER} [data-testid=answer-details]", timeout=5_000)
+    if toggle.get_attribute("aria-expanded") != "true":
+        raise AssertionError("aria-expanded did not change to true")
+    panel = ans.get_by_test_id("answer-details").inner_text()
+    for need in ("Live model answer", "Muse Spark 1.3", "818 ms", "1200 in", "Steps"):
+        if need not in panel:
+            raise AssertionError(f"{need!r} missing from Details")
+    if "route mock" in panel or "STEPS" in panel:
+        raise AssertionError("a test-mock note or an all-caps heading is shown in Details")
+    tall = env.page.evaluate(
+        "Math.max(...[...document.querySelectorAll('[data-testid=answer-details] .ans-step')]"
+        ".map(e => e.getBoundingClientRect().height / parseFloat(getComputedStyle(e).lineHeight || '21')))"
+    )
+    if float(tall) > 2.6:
+        raise AssertionError(f"a step row takes {tall:.1f} lines")
+    panel_el = ans.get_by_test_id("answer-details")
+    panel_el.scroll_into_view_if_needed()
+    env.shot("v2-details-open")
+    ans.get_by_test_id("action-copy").focus()  # focus elsewhere in the answer first
+    env.page.keyboard.press("Escape")
+    env.page.wait_for_timeout(200)
+    if ans.get_by_test_id("answer-details").count():
+        raise AssertionError("Escape did not close Details")
+    focused = env.page.evaluate("document.activeElement?.getAttribute('data-testid')")
+    if focused != "details-toggle":
+        raise AssertionError(f"focus went to {focused!r}, not the Details toggle")
+    return "closed by default; Enter opens with route, steps (2 lines max), time, tokens; Escape closes, focus back on toggle"
+
+
+def s_v2_copy(env: Env) -> str:
+    """Copy puts the answer and its FDA link on the clipboard, never the question (chromium reads it back)."""
+    if env.engine != "chromium":
+        raise SkipError(KNOWN_GAP, "clipboard read-back needs chromium permissions")
+    env.page.context.grant_permissions(["clipboard-read", "clipboard-write"])
+    mock_ask(env, v2_live_body())
+    open_v2(env)
+    env.ask(V2_QUESTION)
+    ans = v2_answer(env)
+    ans.get_by_test_id("action-copy").click()
+    env.page.wait_for_timeout(300)
+    got = str(env.page.evaluate("navigator.clipboard.readText()"))
+    if V2_LIVE_TEXT not in got or _MOCK_LINK["url"] not in got:
+        raise AssertionError(f"clipboard is {got[:160]!r}")
+    if V2_QUESTION in got:
+        raise AssertionError("the question was copied")
+    if ans.get_by_test_id("action-copy").get_attribute("aria-label") != "Copied":
+        raise AssertionError("no 'Copied' feedback")
+    return f"clipboard holds the answer and its link ({len(got)} chars), not the question"
+
+
+def s_v2_read_aloud(env: Env) -> str:
+    """Read aloud (stubbed speechSynthesis): the Natural voice at 0.95, only the answer; Stop cancels."""
+    mock_ask(env, v2_live_body())
+    open_v2(env)
+    env.ask(V2_QUESTION)
+    ans = v2_answer(env)
+    btn = ans.get_by_test_id("action-read")
+    btn.wait_for(timeout=5_000)
+    if btn.get_attribute("aria-label") != "Read aloud":
+        raise AssertionError(f"label is {btn.get_attribute('aria-label')!r}")
+    btn.click()
+    spoken = env.page.evaluate("window.__spoken")
+    if len(spoken) < 2 or any(
+        u.get("voice") != "Microsoft Jenny (Natural) - English (United States)"
+        or u.get("rate") != 0.95
+        for u in spoken
+    ):
+        raise AssertionError(f"expected one on-device Natural utterance per sentence: {spoken!r}")
+    said = " ".join(u["text"] for u in spoken)
+    if "http" in said or V2_QUESTION in said:
+        raise AssertionError("a link or the question was read")
+    if btn.get_attribute("aria-label") != "Stop reading aloud":
+        raise AssertionError("no Stop state")
+    before = int(env.page.evaluate("window.__cancels"))
+    btn.click()
+    if int(env.page.evaluate("window.__cancels")) <= before:
+        raise AssertionError("Stop did not cancel")
+    if btn.get_attribute("aria-label") != "Read aloud":
+        raise AssertionError("button did not return to Read aloud")
+    return f"{len(spoken)} sentences read with {spoken[0]['voice']!r} (on-device) at 0.95; Stop cancelled"
+
+
+def s_v2_rating(env: Env) -> str:
+    """Thumbs down opens a reason box and posts {kind, answer_id, rating 1, reason}; one rating per answer."""
+    posted: list[dict[str, Any]] = []
+
+    def feedback(route: Any) -> None:
+        with contextlib.suppress(ValueError):
+            posted.append(json.loads(route.request.post_data or "{}"))
+        route.fulfill(
+            status=201,
+            content_type="application/json",
+            headers={"access-control-allow-origin": "*"},
+            body='{"status": "received", "id": "x"}',
+        )
+
+    env.page.route("**/v1/feedback", feedback)
+    mock_ask(env, v2_live_body())
+    open_v2(env)
+    env.ask(V2_QUESTION)
+    ans = v2_answer(env)
+    for tid in ("action-copy", "action-read", "action-up", "action-down", "details-toggle"):
+        box_ = ans.get_by_test_id(tid).bounding_box() or {}
+        if min(box_.get("width", 0), box_.get("height", 0)) < 44:
+            raise AssertionError(f"{tid} hit area is smaller than 44 px: {box_}")
+    time_shown = ans.get_by_test_id("answer-time").is_visible()
+    if env.width < 480 and time_shown:
+        raise AssertionError("the timestamp is shown below 480 px")
+    down = ans.get_by_test_id("action-down")
+    up = ans.get_by_test_id("action-up")
+    down.click()
+    box = ans.locator("[data-testid=rating-reason] textarea")
+    box.wait_for(timeout=5_000)
+    if down.get_attribute("aria-expanded") != "true" or box.get_attribute("maxlength") != "300":
+        raise AssertionError("reason box not opened, or no 300-character limit")
+    if down.get_attribute("aria-pressed") is not None:
+        raise AssertionError("thumbs down should use aria-expanded only")
+    if "ans-ib--chosen" in (down.get_attribute("class") or "") + (up.get_attribute("class") or ""):
+        raise AssertionError("a thumb looks chosen before a rating was sent")
+    box.fill("The second sentence was not useful.")
+    box.scroll_into_view_if_needed()
+    env.shot("v2-thumbs-down-reason")
+    ans.get_by_test_id("rating-send").click()
+    env.page.wait_for_selector(f"{V2_ANSWER} [data-testid=rating-status]", timeout=5_000)
+    focused = env.page.evaluate("document.activeElement?.getAttribute('data-testid')")
+    if focused != "action-down":
+        raise AssertionError(f"focus went to {focused!r}, not the thumbs-down button")
+    if "ans-ib--chosen" not in (down.get_attribute("class") or "") or "ans-ib--chosen" in (
+        up.get_attribute("class") or ""
+    ):
+        raise AssertionError("only the chosen thumb (down) should look selected")
+    env.shot("v2-thumbs-down-sent")
+    up.click(force=True)  # aria-disabled: Playwright would wait for it to be enabled
+    env.page.wait_for_timeout(500)
+    if len(posted) != 1:
+        raise AssertionError(f"{len(posted)} rating requests, expected 1 (one rating per answer)")
+    [dn] = posted
+    blob = json.dumps(dn)
+    if V2_QUESTION in blob or V2_LIVE_TEXT in blob:
+        raise AssertionError("a rating carried question or answer text")
+    if dn.get("kind") != "answer_rating" or not re.fullmatch(
+        r"[A-Za-z0-9_-]{8,64}", str(dn.get("answer_id"))
+    ):
+        raise AssertionError(f"bad rating body {dn!r}")
+    if dn.get("rating") != 1 or dn.get("comment") != "The second sentence was not useful.":
+        raise AssertionError(f"rating {dn.get('rating')}, reason {dn.get('comment')!r}")
+    return (
+        "down (1) with reason posted once, focus back on the thumb, only it selected; a later "
+        f"thumbs-up sends nothing; 44 px hit areas; timestamp {'shown' if time_shown else 'hidden'}"
+    )
+
+
+def s_v2_rating_old_api(env: Env) -> str:
+    """An API without answer ratings (422 on kind / answer_id): the page says only 'Rating not saved.'."""
+
+    def old_api(route: Any) -> None:
+        route.fulfill(
+            status=422,
+            content_type="application/json",
+            headers={"access-control-allow-origin": "*"},
+            body='{"error": {"code": "invalid_input", "message": "Invalid input: answer_id, kind."}}',
+        )
+
+    env.page.route("**/v1/feedback", old_api)
+    mock_ask(env, v2_live_body())
+    open_v2(env)
+    env.ask(V2_QUESTION)
+    ans = v2_answer(env)
+    ans.get_by_test_id("action-up").click()
+    st = env.page.wait_for_selector(f"{V2_ANSWER} [data-testid=rating-status]", timeout=5_000)
+    said = st.inner_text().strip() if st else ""
+    if said != "Rating not saved." or "Invalid input" in visible_text(env):
+        raise AssertionError(f"status is {said!r}")
+    return "older API: quiet 'Rating not saved.', no validation text shown"
+
+
+V2_SCENARIOS: tuple[tuple[str, Callable[[Env], str]], ...] = (
+    ("v2: live answer chip, no cost line (mocked)", s_v2_live_chip),
+    ("v2: greeting is an Instant answer, no cost line", s_v2_greeting),
+    ("v2: recorded answer chip with date (mocked)", s_v2_recorded),
+    ("v2: Details toggle (mouse and keyboard)", s_v2_details),
+    ("v2: Copy answer and links", s_v2_copy),
+    ("v2: Read aloud start / stop (stubbed speech)", s_v2_read_aloud),
+    ("v2: thumbs down with reason, one rating per answer", s_v2_rating),
+    ("v2: older API without answer ratings", s_v2_rating_old_api),
+)
+
+
 def s_alert_bell(env: Env) -> str:
     """The alert bell opens the alert panel; Escape closes it."""
     env.open()
@@ -1426,6 +1807,7 @@ SCENARIOS: tuple[tuple[str, Callable[[Env], str]], ...] = (
     ("no sideways scroll", s_no_sideways_scroll),
     ("axe-core accessibility", s_axe),
     *COMPOSER_SCENARIOS,
+    *V2_SCENARIOS,
 )
 SMOKE = (
     "chat (recorded mode, two turns)",
@@ -2409,6 +2791,12 @@ def main(argv: list[str] | None = None) -> int:
         help="smoke suite: answer every /v1/live/* call with a recorded body through route "
         "mocking, so the browser pass spends $0 and uses none of the live budget",
     )
+    ap.add_argument(
+        "--only",
+        default="",
+        help="comma-separated parts of scenario names to run (for example 'v2:'); "
+        "error states are skipped when set",
+    )
     args = ap.parse_args(argv)
     args.budget = None
     if args.live_budget:
@@ -2440,10 +2828,13 @@ def main(argv: list[str] | None = None) -> int:
             for width in (int(w) for w in args.widths.split(",")):
                 for scheme in args.schemes.split(","):
                     scenarios = [s for s in SCENARIOS if args.suite == "full" or s[0] in SMOKE]
+                    if args.only:
+                        parts = [x.strip() for x in args.only.split(",") if x.strip()]
+                        scenarios = [s for s in scenarios if any(x in s[0] for x in parts)]
                     if smoke and width != first_width:  # live-spending scenarios: one width only
                         scenarios = [s for s in scenarios if s[0] not in SMOKE_LIVE]
                     todo = [("scenario", n, f) for n, f in scenarios]
-                    if args.suite == "full":
+                    if args.suite == "full" and not args.only:
                         todo += [("error state", n, f) for n, f in ERROR_SCENARIOS]
                     if (
                         args.layout == "v2"

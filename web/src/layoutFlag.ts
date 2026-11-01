@@ -32,3 +32,6 @@ export function layoutMode(
   if (isV2Path(pathname)) return 'v2'
   return norm(flag) ?? 'classic'
 }
+
+/** True when the v2 layout is shown. */
+export const isV2 = (search?: string): boolean => layoutMode(undefined, search) === 'v2'

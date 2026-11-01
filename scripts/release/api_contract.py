@@ -1131,6 +1131,31 @@ class Contract:
             self.rep.ok(
                 f"feedback: {label} is 422", r.status == 422, f"HTTP {r.status}", group="feedback"
             )
+        thumb = {
+            "kind": "answer_rating",
+            "answer_id": "a-releasecheck",
+            "rating": 1,
+            "comment": "TEST release-check answer rating",
+            "consent": "no_quote",
+            "ref": TEST_REF,
+            "page": "live-answer",
+        }
+        r = self.post("/v1/feedback", self.fresh({"Origin": self.origin}), json_body=thumb)
+        self.rep.ok(
+            "feedback: a TEST answer rating (id + reason, no question text) is stored (201)",
+            r.status == 201,
+            f"HTTP {r.status} {r.text[:100]}",
+            group="feedback",
+        )
+        for label, payload in (
+            ("answer rating with question text", {**thumb, "question": "What changed?"}),
+            ("answer rating of 3", {**thumb, "rating": 3}),
+            ("answer rating without an id", {k: v for k, v in thumb.items() if k != "answer_id"}),
+        ):
+            r = self.post("/v1/feedback", self.fresh(), json_body=payload)
+            self.rep.ok(
+                f"feedback: {label} is 422", r.status == 422, f"HTTP {r.status}", group="feedback"
+            )
         r = self.post("/v1/feedback", self.fresh(), json_body={**good, "ref": "a b/../c"})
         self.rep.ok(
             "feedback: a mangled ref is counted as invalid-code, never kept (201)",

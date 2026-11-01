@@ -790,13 +790,21 @@ def recorded_note(outcome: AskOutcome) -> str:
     return _safe_text(note)
 
 
+def ran_model(model: str | None) -> str:
+    """The model id the model response reported; the default id when unknown or unusual."""
+    text = (model or "").strip()
+    return text[:64] if text and re.fullmatch(r"[A-Za-z0-9._:/-]+", text) else SPARK_MODEL
+
+
 def ask_trace(outcome: AskOutcome) -> list[dict[str, Any]]:
     """Trace steps of an ask: model time and tool/gate time are measured, never typed in."""
     if outcome.live:
         tools = ", ".join(dict.fromkeys(outcome.tool_names)) or "no tools"
         model_ms = outcome.model_ms or 0.0
         return [
-            _step("Muse Spark answers from stored records", SPARK_MODEL, model_ms, "ok"),
+            _step(
+                "Muse Spark answers from stored records", ran_model(outcome.model), model_ms, "ok"
+            ),
             _step(
                 "Read-only tools and claim gate",
                 None,

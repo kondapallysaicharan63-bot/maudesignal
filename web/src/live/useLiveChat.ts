@@ -19,6 +19,9 @@ import {
   type TranscribeResult,
   type Turn,
 } from './api'
+import { layoutMode } from '../layoutFlag'
+import { readableText } from './answerMeta'
+import { readKey, startReading } from './readAloud'
 import { recordedFor } from './recorded'
 import { speak, stopSpeaking } from './speech'
 
@@ -188,7 +191,11 @@ export function useLiveChat(o: Options): LiveChat {
       try {
         const resp = await postVoice(wav, { history: past }, { apiBase, fetcher })
         patch(id, { status: 'done', question: resp.heard ?? null, resp })
-        if (speakerRef.current && resp.answer.spoken_text) say(id, resp.answer.spoken_text)
+        if (speakerRef.current && resp.answer.spoken_text) {
+          // v2: through the shared reader, so the answer's own button shows Stop and ids are not read out.
+          if (layoutMode() === 'v2') startReading(readKey(id), readableText(resp))
+          else say(id, resp.answer.spoken_text)
+        }
       } catch (e) {
         const err = e instanceof LiveError ? e : new LiveError('network', 'The live service could not be reached.')
         if (err.kind === 'rate_limited') {

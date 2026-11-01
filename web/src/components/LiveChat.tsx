@@ -4,6 +4,12 @@ import { badgeText, heldBackLine, isFreeTier, LIMIT_TEXT, NOT_MEDICAL_ADVICE, op
 import { speechSupported } from '../live/speech'
 import type { LiveChat as Chat, LiveTurn } from '../live/useLiveChat'
 import type { Thread } from '../types'
+import { layoutMode, type LayoutMode } from '../layoutFlag'
+import { labelChip } from '../live/answerMeta'
+import { readKey } from '../live/readAloud'
+import type { RatingSink } from './AnswerActions'
+import { AnswerTurn } from './AnswerTurn'
+import { ModelChip } from './ModelChip'
 import { LiveLabelResult } from './CameraPanel'
 import { LiveTrace } from './LiveTrace'
 import { ResearchSection } from './ResearchSection'
@@ -197,8 +203,24 @@ function Typing({ voice }: { voice: boolean }) {
   )
 }
 
+/** v2: a calm line while the model works; the steps and their timings are in Details once the answer arrives. */
+function TypingV2({ voice }: { voice: boolean }) {
+  return (
+    <div role="status" aria-live="polite" data-testid="typing" className="text-[15px] text-ink-2">
+      <p className="m-0 flex items-center gap-2">
+        <span className="inline-flex gap-1" aria-hidden="true">
+          <i className="ws-dot" />
+          <i className="ws-dot" />
+          <i className="ws-dot" />
+        </span>
+        <span>{voice ? 'Transcribing your question, then Muse Spark reads the stored records…' : 'Muse Spark is reading the stored records…'}</span>
+      </p>
+    </div>
+  )
+}
+
 /** A label photo sent from the message box: the picture, then the reading and the possible matches. */
-function PhotoTurn({ turn, onRecordedLabel }: { turn: LiveTurn; onRecordedLabel?: () => void }) {
+function PhotoTurn({ turn, onRecordedLabel, v2 = false }: { turn: LiveTurn; onRecordedLabel?: () => void; v2?: boolean }) {
   return (
     <article className="space-y-3" data-testid="live-turn" data-status={turn.status} data-via="photo">
       <div className="ml-auto w-fit max-w-[85%] rounded-md bg-sunk p-2" data-testid="user-bubble">
@@ -232,19 +254,27 @@ function PhotoTurn({ turn, onRecordedLabel }: { turn: LiveTurn; onRecordedLabel?
         </div>
       )}
       {turn.status === 'done' && turn.label && <LiveLabelResult res={turn.label} />}
+      {v2 && turn.status === 'done' && turn.label && (
+        <p className="m-0">
+          <ModelChip chip={labelChip(turn.label)} />
+        </p>
+      )}
     </article>
   )
 }
 
-export function TurnView({ turn, chat, onRecordedVoice, onRecordedLabel, onAsk, onOpen }: {
+export function TurnView({ turn, chat, onRecordedVoice, onRecordedLabel, onAsk, onOpen, v2 = false, rating }: {
   turn: LiveTurn
   chat: Chat
   onRecordedVoice: () => void
   onRecordedLabel?: () => void
   onAsk: (q: string) => void
   onOpen?: (o: OpenView) => void
+  /** The ?layout=v2 answer turn; classic (false) draws exactly what it drew before. */
+  v2?: boolean
+  rating?: RatingSink
 }) {
-  if (turn.via === 'photo') return <PhotoTurn turn={turn} onRecordedLabel={onRecordedLabel} />
+  if (turn.via === 'photo') return v2 ? <PhotoTurn turn={turn} onRecordedLabel={onRecordedLabel} v2 /> : <PhotoTurn turn={turn} onRecordedLabel={onRecordedLabel} />
   return (
     <article className="space-y-3" data-testid="live-turn" data-status={turn.status}>
       <div className="ml-auto max-w-[85%] rounded-md bg-sunk px-4 py-3" data-testid="user-bubble">
@@ -257,7 +287,7 @@ export function TurnView({ turn, chat, onRecordedVoice, onRecordedLabel, onAsk, 
           <p className="ws-wrap m-0 whitespace-pre-wrap">{turn.question}</p>
         )}
       </div>
-      {turn.status === 'pending' && <Typing voice={turn.via === 'voice'} />}
+      {turn.status === 'pending' && (v2 ? <TypingV2 voice={turn.via === 'voice'} /> : <Typing voice={turn.via === 'voice'} />)}
       {turn.status === 'error' && (
         <div role="alert" className="ms-banner ms-banner--warn" data-testid="turn-error">
           <span className="ws-wrap">{turn.error}</span>
@@ -271,7 +301,11 @@ export function TurnView({ turn, chat, onRecordedVoice, onRecordedLabel, onAsk, 
       {turn.status === 'done' && turn.resp && (
         <>
           {turn.via === 'voice' && turn.resp.heard && <span className="sr-only">Heard: {turn.resp.heard}</span>}
-          <Answer turn={turn} chat={chat} onAsk={onAsk} onOpen={onOpen} />
+          {v2 ? (
+            <AnswerTurn resp={turn.resp} onAsk={onAsk} onOpen={onOpen} saveResearch={chat.saveResearch} rating={rating} readKey={readKey(turn.id)} />
+          ) : (
+            <Answer turn={turn} chat={chat} onAsk={onAsk} onOpen={onOpen} />
+          )}
         </>
       )}
     </article>
@@ -279,7 +313,7 @@ export function TurnView({ turn, chat, onRecordedVoice, onRecordedLabel, onAsk, 
 }
 
 /** The conversation: your questions as bubbles, a typing indicator with the live steps, then the checked answer. */
-export function LiveChatView({ chat, threads, onStarter, onRecordedVoice, onRecordedLabel, onOpen }: {
+export function LiveChatView({ chat, threads, onStarter, onRecordedVoice, onRecordedLabel, onOpen, layout, rating }: {
   chat: Chat
   threads: Thread[]
   onStarter: (q: string) => void
@@ -288,7 +322,12 @@ export function LiveChatView({ chat, threads, onStarter, onRecordedVoice, onReco
   onRecordedLabel?: () => void
   /** Opens a page an answer points to (Check any device type, Our devices, the AI sweep). */
   onOpen?: (o: OpenView) => void
+  /** Test hook: forces the layout (default: ?layout= then VITE_LAYOUT_DEFAULT, see layoutFlag.ts). */
+  layout?: LayoutMode
+  /** Test hook (v2): where thumbs up / down are sent. */
+  rating?: RatingSink
 }) {
+  const [v2] = useState(() => (layout ?? layoutMode()) === 'v2')
   const end = useRef<HTMLDivElement>(null)
   useEffect(() => {
     end.current?.scrollIntoView?.({ block: 'end' })
@@ -360,7 +399,11 @@ export function LiveChatView({ chat, threads, onStarter, onRecordedVoice, onReco
       )}
       <div role="log" aria-live="polite" aria-label="Conversation" className="space-y-8">
         {chat.turns.map((t) => (
-          <TurnView key={t.id} turn={t} chat={chat} onRecordedVoice={onRecordedVoice} onRecordedLabel={onRecordedLabel} onAsk={onStarter} onOpen={onOpen} />
+          v2 ? (
+            <TurnView key={t.id} turn={t} chat={chat} onRecordedVoice={onRecordedVoice} onRecordedLabel={onRecordedLabel} onAsk={onStarter} onOpen={onOpen} v2 rating={rating} />
+          ) : (
+            <TurnView key={t.id} turn={t} chat={chat} onRecordedVoice={onRecordedVoice} onRecordedLabel={onRecordedLabel} onAsk={onStarter} onOpen={onOpen} />
+          )
         ))}
       </div>
       <div ref={end} />

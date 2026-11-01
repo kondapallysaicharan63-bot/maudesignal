@@ -104,6 +104,10 @@ export interface AskResponse extends Common {
   answered_at?: string
   /** Present only when web research was asked for and the server sent it. */
   research?: ResearchBlock
+  /** A stored run shown as an answer: when it was recorded (UTC, from the stored thread). */
+  recorded_at?: string
+  /** Token counts, only when the server sends them (shown in the v2 Details panel). */
+  usage?: { input_tokens?: number; output_tokens?: number }
 }
 export interface LiveField {
   value?: string | null
@@ -302,6 +306,14 @@ export function parseAsk(body: unknown): AskResponse | null {
   if (typeof body.answered_at === 'string' && body.answered_at) out.answered_at = body.answered_at.slice(0, 20)
   const research = parseResearch(body.research)
   if (research) out.research = research
+  if (isObj(body.usage)) {
+    const u: { input_tokens?: number; output_tokens?: number } = {}
+    for (const k of ['input_tokens', 'output_tokens'] as const) {
+      const v = body.usage[k]
+      if (typeof v === 'number' && Number.isFinite(v) && v >= 0) u[k] = Math.round(v)
+    }
+    if (Object.keys(u).length) out.usage = u
+  }
   return out
 }
 

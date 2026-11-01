@@ -188,11 +188,20 @@ you first)"), `quote_anonymous` or `no_quote`. No name, email, IP, user agent or
 is sent (fetch keepalive, credentials omit). The ref code is removed from the URL before it is sent to
 Web Analytics (`beforeSend` in `main.tsx`, `stripRef` in `analytics.ts`).
 
+Answer ratings (`?layout=v2` only) use the same `/v1/feedback` route with
+`{kind: "answer_rating", answer_id (random, made in the browser, ^[A-Za-z0-9_-]{8,64}$), rating: 1|5,
+comment (optional reason, ≤300 chars), consent: "no_quote", ref, page: "live-answer", client_ts}`. No question
+or answer text is sent; unknown fields are refused (422). One rating per answer_id per hashed IP per 24 h
+(a second gets 409 `already_rated`); ratings have their own limit (`MAUDESIGNAL_ANSWER_RATING_PER_HOUR`,
+default 60/hour) separate from the survey's 5/hour. Ratings are not emailed and are kept out of the survey
+average; admin shows them as up/down counts (latest per answer). Chat ids are removed from Web Analytics URLs.
+
 ## Live API (chat, voice, camera)
 
 Used only when the site is built with `VITE_MAUDESIGNAL_API_BASE` set. Without it nothing below is called and
-every screen shows the stored runs, labelled "Recorded run". The page never stores a question, an answer, audio
-or a photo (memory only; a reload starts clean) and sends no cookies or credentials (`credentials: "omit"`).
+every screen shows the stored runs, labelled "Recorded run". The server never stores a question, an answer,
+audio or a photo. Classic keeps them in memory only (a reload starts clean); `?layout=v2` saves chats in this
+browser's localStorage only ("Saved on this device only"; photos are not kept), never on our server and sends no cookies or credentials (`credentials: "omit"`).
 CORS on the server: only the origins in `MAUDESIGNAL_WEB_ORIGINS`, no credentials. Code: `src/live/`.
 
 | Call | Body |

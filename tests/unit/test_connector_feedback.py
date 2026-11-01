@@ -29,6 +29,8 @@ from maudesignal.connector.feedback import (  # noqa: E402
     FEEDBACK_COLUMNS,
     REF_PATTERN,
     VISIT_COLUMNS,
+    answer_rating_counts,
+    summarize,
 )
 from maudesignal.connector.notify import (
     NoopNotifier,
@@ -789,8 +791,10 @@ def test_summary_codes_grouped_sorted_and_labelled(
         "one_thing",
         "role",
         "consent",
+        "kind",
     }
     assert fb["consent"] == "no_quote" and fb["role"] == "RA lead" and fb["rating"] == 4
+    assert fb["kind"] == "survey"
     labels = {x["code"]: x["label"] for x in codes}
     assert labels == {
         "Alice1": "",
@@ -932,3 +936,165 @@ def test_vercel_blob_delete_posts_urls_with_auth_and_raises_on_error() -> None:
     down = VercelBlobStore("tok", client=httpx.Client(transport=httpx.MockTransport(boom)))
     with pytest.raises(StoreError):
         down.delete(BlobRef("p", "https://x/p"))
+
+
+# --- answer ratings (web ?layout=v2: thumbs up / down under one chat answer) ----------------
+
+THUMB: dict[str, Any] = {
+    "kind": "answer_rating",
+    "answer_id": "a-3f9c2b7d1e",
+    "rating": 1,
+    "comment": "The count looked off.",
+    "consent": "no_quote",
+    "ref": "dr-smith_1",
+    "page": "live-answer",
+    "client_ts": "2026-11-01T23:42:00Z",
+}
+
+
+def thumb(n: int, **kw: Any) -> dict[str, Any]:
+    """A rating for answer number ``n`` (each answer has its own id)."""
+    return THUMB | {"answer_id": f"a-answer{n:04d}"} | kw
+
+
+def test_answer_rating_stored_with_id_and_reason_only_and_not_emailed(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    c, store, nt = make(data, monkeypatch)
+    r = c.post("/v1/feedback", json=THUMB, headers=H)
+    assert r.status_code == 201
+    [rec] = all_stored(store, "feedback")
+    assert rec["kind"] == "answer_rating" and rec["answer_id"] == "a-3f9c2b7d1e"
+    assert rec["rating"] == 1 and rec["comment"] == "The count looked off."
+    assert not {"question", "answer", "text"} & set(rec)
+    assert nt.sent == []  # counted, not emailed
+    up = c.post("/v1/feedback", json=thumb(2, rating=5, comment=""), headers=H)
+    assert up.status_code == 201
+
+
+def test_one_rating_per_answer_id_per_address(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    c, store, _ = make(data, monkeypatch)
+    assert c.post("/v1/feedback", json=THUMB, headers=H).status_code == 201
+    again = c.post("/v1/feedback", json=THUMB | {"rating": 5, "comment": ""}, headers=H)
+    assert again.status_code == 409 and again.json()["error"]["code"] == "already_rated"
+    assert len(all_stored(store, "feedback")) == 1
+    # an invalid body does not use up the answer's one rating
+    c2, store2, _ = make(data, monkeypatch)
+    assert c2.post("/v1/feedback", json=thumb(7, rating=3), headers=H).status_code == 422
+    assert c2.post("/v1/feedback", json=thumb(7), headers=H).status_code == 201
+
+
+def test_answer_ratings_have_their_own_limiter_and_never_lock_the_survey(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    c, _, _ = make(data, monkeypatch)  # survey: 5 per hour
+    for i in range(30):
+        assert c.post("/v1/feedback", json=thumb(i), headers=H).status_code == 201
+    for _ in range(5):
+        assert c.post("/v1/feedback", json=GOOD, headers=H).status_code == 201
+    assert c.post("/v1/feedback", json=GOOD, headers=H).status_code == 429
+    assert c.post("/v1/feedback", json=thumb(99), headers=H).status_code == 201
+
+
+def test_answer_rating_limit_60_per_hour_and_env_override(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    c, _, _ = make(data, monkeypatch)
+    codes = [c.post("/v1/feedback", json=thumb(i), headers=H).status_code for i in range(61)]
+    assert codes[:60] == [201] * 60 and codes[60] == 429
+    monkeypatch.setenv("MAUDESIGNAL_ANSWER_RATING_PER_HOUR", "2")
+    c2, _, _ = make(data, monkeypatch)
+    codes = [c2.post("/v1/feedback", json=thumb(i), headers=H).status_code for i in range(3)]
+    assert codes == [201, 201, 429]
+
+
+@pytest.mark.parametrize(
+    "patch",
+    [
+        {"answer_id": None},
+        {"answer_id": "short"},
+        {"answer_id": "has space in it"},
+        {"rating": 3},
+        {"comment": "x" * 301},
+        {"blocker": "something"},
+        {"role": "RA lead"},
+        {"consent": "quote_anonymous"},
+        {"question": "What changed?"},
+        {"answer": "33 reports"},
+        {"kind": "other"},
+        {"comment": "call me at 555-123-4567"},
+    ],
+)
+def test_answer_rating_validation_rejects(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch, patch: dict[str, Any]
+) -> None:
+    c, store, _ = make(data, monkeypatch)
+    r = c.post("/v1/feedback", json=THUMB | patch, headers=H)
+    assert r.status_code == 422
+    assert all_stored(store, "feedback") == []
+
+
+def test_survey_cannot_carry_an_answer_id(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    c, store, _ = make(data, monkeypatch)
+    r = c.post("/v1/feedback", json=GOOD | {"answer_id": "a-3f9c2b7d1e"}, headers=H)
+    assert r.status_code == 422 and all_stored(store, "feedback") == []
+    ok = c.post("/v1/feedback", json=GOOD | {"kind": "survey"}, headers=H)
+    assert ok.status_code == 201
+    [rec] = all_stored(store, "feedback")
+    assert rec["kind"] == "survey" and rec["answer_id"] is None
+
+
+def test_answer_ratings_kept_out_of_the_survey_average(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    c, _, _ = make(data, monkeypatch)
+    seed(c)
+    c.post("/v1/feedback", json=thumb(1), headers=H)
+    c.post("/v1/feedback", json=thumb(2, rating=5, comment=""), headers=H)
+    c.post("/v1/feedback", json=thumb(3, rating=5, comment=""), headers=H)
+    body = c.get("/v1/admin/summary", headers=A).json()
+    assert body["totals"] == {"visits": 3, "feedback": 3}
+    assert body["answer_ratings"] == {"up": 2, "down": 1}
+    refs = {x["ref"]: x for x in body["by_ref"]}
+    assert refs["dr-smith_1"]["avg_rating"] == 3.0
+    pages = {x["page"]: x for x in body["by_page"]}
+    assert "live-answer" not in pages  # page counts stay survey-only, like the totals
+    rows = list(csv.reader(io.StringIO(c.get("/v1/admin/export?kind=feedback", headers=A).text)))
+    assert rows[0][-2:] == ["kind", "answer_id"] and len(rows) == 7
+
+
+def test_summary_counts_only_the_latest_rating_per_answer() -> None:
+    def rec(aid: str, rating: int, t: str) -> dict[str, Any]:
+        return {"kind": "answer_rating", "answer_id": aid, "rating": rating, "received_utc": t}
+
+    rows = [
+        rec("a-one000001", 5, "2026-11-01T10:00:00+00:00"),
+        rec("a-one000001", 1, "2026-11-01T10:05:00+00:00"),  # changed their mind: down
+        rec("a-two000002", 1, "2026-11-01T09:00:00+00:00"),
+        rec("a-two000002", 5, "2026-11-01T09:30:00+00:00"),  # latest: up
+        rec("a-three0003", 5, "2026-11-01T08:00:00+00:00"),
+        {"kind": "survey", "rating": 4, "received_utc": "2026-11-01T08:00:00+00:00"},
+    ]
+    assert answer_rating_counts(list(reversed(rows))) == {"up": 2, "down": 1}
+    assert summarize(rows, [])["answer_ratings"] == {"up": 2, "down": 1}
+    assert summarize(rows, [])["totals"]["feedback"] == 1
+
+
+def test_admin_page_shows_kind_and_answer_rating_totals(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    c, _, _ = make(data, monkeypatch)
+    page = c.get("/admin").text
+    assert '"kind"' in page and "answer ratings: " in page and "answer_ratings" in page
+
+
+def test_privacy_page_says_what_a_rating_stores(
+    data: ConnectorData, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    c, _, _ = make(data, monkeypatch)
+    text = c.get("/privacy").text
+    assert "random answer id" in text and "never the question or" in text
