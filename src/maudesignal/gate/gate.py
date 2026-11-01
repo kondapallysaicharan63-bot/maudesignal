@@ -121,6 +121,9 @@ class DateShift:
     requested_to: str
     used_from: str
     used_to: str
+    #: Ids of the reports the moved search returned, so a record / quote / group claim on one of
+    #: them counts as being on the used dates.
+    report_ids: tuple[str, ...] = ()
 
     @property
     def requested_years(self) -> frozenset[str]:
@@ -157,6 +160,9 @@ class SentenceVerdict:
     status: Status
     claim_verdicts: tuple[ClaimVerdict, ...]
     ungrounded: tuple[str, ...] = ()
+    #: Why a sentence was withheld for naming dates a tool moved (see :class:`DateShift`). Kept
+    #: apart from ``claim_verdicts`` so the claim totals count each claim once.
+    date_issues: tuple[str, ...] = ()
 
     @property
     def reasons(self) -> list[str]:
@@ -164,6 +170,7 @@ class SentenceVerdict:
         out = [
             f"{cv.claim.kind}: {cv.reason}" for cv in self.claim_verdicts if cv.status == "block"
         ]
+        out += [f"dates: {d}" for d in self.date_issues]
         out += [f"ungrounded: {u}" for u in self.ungrounded]
         return out
 
@@ -280,7 +287,43 @@ def _verify_source_quote(c: QuoteClaim, q: str, store: EvidenceStore) -> ClaimVe
     return ClaimVerdict(c, "block", f"quote not found verbatim in {label}")
 
 
+def _outside_stored_window(
+    store: EvidenceStore, product_code: str, date_from: str | None, date_to: str | None
+) -> str | None:
+    """Why a dated range holds no stored data (None: a zero over it can be true).
+
+    A count of 0 is refused when the range ends before the first stored report of the code
+    (the data does not go back that far) or starts after the last stored report of any code
+    (the data does not reach that far): nothing is stored there, so it is not a true zero. A
+    zero between a code's last report and the newest stored date (for example "no QIH report
+    this week" while other codes have reports that week) is a true zero and passes.
+    """
+    if not (date_from or date_to):
+        return None
+    all_dates = [r.date_received for r in store.records if r.date_received]
+    if not all_dates:
+        return None
+    code_dates = [
+        r.date_received for r in store.records if r.product_code == product_code and r.date_received
+    ]
+    lo, hi = min(code_dates or all_dates), max(all_dates)
+    ends_before = date_to is not None and date_to < lo
+    starts_after = date_from is not None and date_from > hi
+    if not (ends_before or starts_after):
+        return None
+    who = f"{product_code} reports" if code_dates else "reports"
+    return (
+        f"no stored data for that range: the stored {who} start "
+        f"{lo[:4]}-{lo[4:6]}-{lo[6:]} and the newest stored report is "
+        f"{hi[:4]}-{hi[4:6]}-{hi[6:]}"
+    )
+
+
 def _verify_count(c: CountClaim, store: EvidenceStore) -> ClaimVerdict:
+    if c.value == 0:
+        why = _outside_stored_window(store, c.product_code, c.date_from, c.date_to)
+        if why:
+            return ClaimVerdict(c, "block", why)
     rows = store.select(
         product_code=c.product_code,
         event_type=c.event_type,
@@ -298,6 +341,10 @@ def _verify_source_count(c: SourceCountClaim, store: EvidenceStore) -> ClaimVerd
     want = normalize_source(c.source)
     if not want:
         return ClaimVerdict(c, "block", f"unknown report source {c.source!r}")
+    if c.value == 0:
+        why = _outside_stored_window(store, c.product_code, c.date_from, c.date_to)
+        if why:
+            return ClaimVerdict(c, "block", why)
     rows = store.select(product_code=c.product_code, date_from=c.date_from, date_to=c.date_to)
     if want == NON_MANUFACTURER:
         # Reports whose source is unknown are not counted as "not filed by a manufacturer".
@@ -357,7 +404,8 @@ def _verify_share(c: ShareClaim, store: EvidenceStore) -> ClaimVerdict:
         return ClaimVerdict(c, "block", f"{c.value_pct}% is not a valid share")
     denom = store.select(product_code=c.product_code, date_from=c.date_from, date_to=c.date_to)
     if not denom:
-        return ClaimVerdict(c, "block", f"no records for {c.product_code}")
+        why = _outside_stored_window(store, c.product_code, c.date_from, c.date_to)
+        return ClaimVerdict(c, "block", why or f"no records for {c.product_code}")
     num = [r for r in denom if (r.event_type or "").lower() == c.event_type.lower()]
     pct = 100.0 * len(num) / len(denom)
     ids = tuple(r.report_id for r in num[:20])
@@ -595,42 +643,71 @@ def _ungrounded_mentions(text: str, claims: list[Claim]) -> list[str]:
 
 def _claim_range(c: Claim) -> tuple[str | None, str | None] | None:
     """The date range of a count-like claim (None for claims without dates)."""
-    if isinstance(c, CountClaim | ShareClaim | SourceCountClaim):
+    if isinstance(c, CountClaim | ShareClaim | SourceCountClaim | GroupCountClaim):
         return c.date_from, c.date_to
     return None
 
 
+def _claim_report_ids(c: Claim) -> tuple[str, ...]:
+    """MAUDE report ids a claim rests on (record, report quote, group)."""
+    if isinstance(c, RecordClaim):
+        return (c.report_id,)
+    if isinstance(c, QuoteClaim) and c.report_id:
+        return (c.report_id,)
+    if isinstance(c, GroupCountClaim):
+        return c.report_ids
+    return ()
+
+
+def _names_year(text: str, year: str) -> bool:
+    """True when the sentence names ``year``: "2025", "'25", "FY25", "FY 2025", "CY25"."""
+    short = year[2:]
+    return bool(
+        re.search(rf"(?<!\d){year}(?!\d)", text)
+        or re.search(rf"['\u2018\u2019]{short}(?!\d)", text)
+        or re.search(rf"\b(?:FY|CY)\s?{short}(?!\d)", text, re.IGNORECASE)
+    )
+
+
+def _on_shift(c: Claim, sh: DateShift) -> bool:
+    """True when the claim is about the dates a tool moved to (its range, or its report ids)."""
+    if _claim_range(c) == (sh.used_from, sh.used_to):
+        return True
+    ids = _claim_report_ids(c)
+    return bool(ids) and any(i in sh.report_ids for i in ids)
+
+
 def _apply_shifts(
     text: str, claims: list[Claim], shifts: tuple[DateShift, ...]
-) -> tuple[str, list[ClaimVerdict]]:
-    """Amended sentence text plus blocking verdicts for claims on a range a tool moved."""
-    blocks: list[ClaimVerdict] = []
-    used: DateShift | None = None
+) -> tuple[str, list[str]]:
+    """Amended sentence text plus the reasons it must be withheld, for moved date ranges.
+
+    Every moved range the sentence's claims rest on is collected (claim order, no repeats). A
+    sentence naming a requested year is withheld; one naming none of the used years gets
+    "(Dates used: ...)" listing all of them.
+    """
+    issues: list[str] = []
+    used: list[DateShift] = []
     for c in claims:
-        rng = _claim_range(c)
-        if rng is None:
-            continue
         for sh in shifts:
-            if rng != (sh.used_from, sh.used_to):
+            if not _on_shift(c, sh):
                 continue
-            used = sh
-            named = sorted(y for y in sh.requested_years if re.search(rf"\b{y}\b", text))
+            if all((sh.used_from, sh.used_to) != (u.used_from, u.used_to) for u in used):
+                used.append(sh)
+            named = sorted(y for y in sh.requested_years if _names_year(text, y))
             if named:
-                blocks.append(
-                    ClaimVerdict(
-                        c,
-                        "block",
-                        f"the dates were moved to {sh.used_label} (no stored report is dated "
-                        f"in {named[0]}), but the sentence names {named[0]}",
-                    )
+                issues.append(
+                    f"the dates were moved to {sh.used_label} (no stored report is dated "
+                    f"in {named[0]}), but the sentence names {named[0]}"
                 )
-    if used is not None and not blocks:
-        years = {used.used_from[:4], used.used_to[:4]}
-        if not any(re.search(rf"\b{y}\b", text) for y in years):
+    if used and not issues:
+        years = {y for u in used for y in (u.used_from[:4], u.used_to[:4])}
+        if not any(_names_year(text, y) for y in years):
             base = text.rstrip()
             sep = "" if base.endswith((".", "!", "?")) else "."
-            text = f"{base}{sep} (Dates used: {used.used_label}.)"
-    return text, blocks
+            labels = "; ".join(u.used_label for u in used)
+            text = f"{base}{sep} (Dates used: {labels}.)"
+    return text, list(dict.fromkeys(issues))
 
 
 def verify_sentence(
@@ -645,13 +722,12 @@ def verify_sentence(
     """
     verdicts = tuple(verify_claim(c, store) for c in claims)
     ungrounded = tuple(_ungrounded_mentions(text, claims))
-    extra: list[ClaimVerdict] = []
+    issues: list[str] = []
     shown = text
     if shifts:
-        shown, extra = _apply_shifts(text, claims, shifts)
-    all_verdicts = verdicts + tuple(extra)
-    ok = all(v.status == "pass" for v in all_verdicts) and not ungrounded
-    return SentenceVerdict(shown, "pass" if ok else "block", all_verdicts, ungrounded)
+        shown, issues = _apply_shifts(text, claims, shifts)
+    ok = all(v.status == "pass" for v in verdicts) and not ungrounded and not issues
+    return SentenceVerdict(shown, "pass" if ok else "block", verdicts, ungrounded, tuple(issues))
 
 
 def verify_answer(

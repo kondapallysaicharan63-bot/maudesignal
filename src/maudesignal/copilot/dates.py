@@ -25,6 +25,7 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from typing import Any
 
+from maudesignal.gate.claims import normalize_ymd
 from maudesignal.gate.evidence import EvidenceStore
 from maudesignal.gate.gate import DateShift
 
@@ -143,15 +144,6 @@ def _shift_year(d: date, year: int) -> date:
         return d.replace(year=year, day=28)
 
 
-def _plain_ymd(value: str | None) -> str | None:
-    """``YYYYMMDD`` from ``YYYYMMDD`` or ``YYYY-MM-DD`` (anything else is returned as given)."""
-    if value is None:
-        return None
-    text = value.strip()
-    digits = text.replace("-", "")
-    return digits if len(digits) == 8 and digits.isdigit() else text
-
-
 def _check(
     window: Window | None,
     who: str,
@@ -161,7 +153,7 @@ def _check(
     may_shift: bool = True,
 ) -> RangeCheck:
     """Core of the range guards (``who`` names the data in the plural: "stored LLZ reports")."""
-    date_from, date_to = _plain_ymd(date_from), _plain_ymd(date_to)
+    date_from, date_to = normalize_ymd(date_from), normalize_ymd(date_to)
     plain = RangeCheck(date_from, date_to)
     if (not date_from and not date_to) or window is None:
         return plain
@@ -173,20 +165,24 @@ def _check(
     d_from = _parse(date_from) if date_from else None
     d_to = _parse(date_to) if date_to else None
     lo_year, hi_year = int(lo[:4]), int(hi[:4])
-    # Only a year the data does not reach is treated as a wrong year (the model's guess). A
-    # range in a year the data does cover is never moved: it is simply empty.
-    outside_years = (
-        d_from is not None
+    # The one correction made is the model's usual slip: the year before the data's latest
+    # year. A range is moved forward by exactly one year, and only when the moved range lies
+    # fully inside the stored window and neither requested year is a year the data covers.
+    # Anything else (a later year, an older one, two or more years off) is answered "no stored
+    # report in that range".
+    if (
+        may_shift
+        and d_from is not None
         and d_to is not None
         and d_from <= d_to
         and not (lo_year <= d_from.year <= hi_year)
         and not (lo_year <= d_to.year <= hi_year)
-    )
-    if may_shift and outside_years and d_from is not None and d_to is not None:
-        span = d_to.year - d_from.year
-        nf = _ymd(_shift_year(d_from, hi_year - span))
-        nt = _ymd(_shift_year(d_to, hi_year))
-        if nf <= hi and nt >= lo:
+        and d_from.year + 1 == hi_year
+        and d_to.year + 1 == hi_year
+    ):
+        nf = _ymd(_shift_year(d_from, d_from.year + 1))
+        nt = _ymd(_shift_year(d_to, d_to.year + 1))
+        if lo <= nf <= nt <= hi:
             return RangeCheck(
                 nf,
                 nt,
@@ -196,8 +192,8 @@ def _check(
                 requested_to=date_to,
                 note=(
                     f"No {who.removesuffix('s')} is dated in {asked}; the {who} run {covers}. "
-                    f"This result is for {_iso(nf)} to {_iso(nt)}, the same dates in {hi_year}. "
-                    "Say which dates were used."
+                    f"This result is for {_iso(nf)} to {_iso(nt)}, the same dates one year "
+                    "later. Say which dates were used."
                 ),
             )
     return RangeCheck(

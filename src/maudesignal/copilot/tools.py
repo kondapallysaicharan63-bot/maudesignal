@@ -18,7 +18,7 @@ import json
 import re
 from collections import Counter
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, timedelta
 from typing import Any
 
@@ -48,6 +48,15 @@ def _noted(ctx: ToolContext, guard: RangeCheck) -> RangeCheck:
     if shift is not None:
         ctx.date_shifts.append(shift)
     return guard
+
+
+def _shift_ids(ctx: ToolContext, guard: RangeCheck, ids: list[str]) -> None:
+    """Attach the report ids a moved search returned to its shift (record / quote claims)."""
+    if guard.adjusted and ctx.date_shifts:
+        last = ctx.date_shifts[-1]
+        ctx.date_shifts[-1] = replace(
+            last, report_ids=tuple(dict.fromkeys(last.report_ids + tuple(ids)))
+        )
 
 
 @dataclass
@@ -131,6 +140,7 @@ def product_summary(
         return {"product_code": product_code, **guard.fields()}
     date_from, date_to = guard.date_from, guard.date_to
     rows = ctx.store.select(product_code=product_code, date_from=date_from, date_to=date_to)
+    _shift_ids(ctx, guard, [r.report_id for r in rows])
     by_type = Counter((r.event_type or "Unknown") for r in rows)
     total = len(rows)
     devices = [
@@ -179,6 +189,7 @@ def search_reports(
     rows = ctx.store.select(
         product_code=product_code, event_type=event_type, date_from=date_from, date_to=date_to
     )
+    _shift_ids(ctx, guard, [r.report_id for r in rows])
     if keyword:
         kw = keyword.lower()
         rows = [r for r in rows if kw in r.text.lower()]
@@ -435,6 +446,7 @@ def report_sources(
         return {"product_code": product_code, **guard.fields()}
     date_from, date_to = guard.date_from, guard.date_to
     rows = ctx.store.select(product_code=product_code, date_from=date_from, date_to=date_to)
+    _shift_ids(ctx, guard, [r.report_id for r in rows])
     stored = [r.date_received for r in ctx.store.select(product_code=product_code)]
     latest = max((d for d in stored if d), default=None)
     by_source = Counter(r.source or "unknown" for r in rows)

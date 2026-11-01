@@ -13,6 +13,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
+import pytest
+
 from maudesignal.connector.data import PROJECT_ROOT, ConnectorData
 from maudesignal.copilot.agent import (
     DATE_CONTEXT_END,
@@ -29,7 +31,17 @@ from maudesignal.copilot.tools import (
     report_sources,
     search_reports,
 )
-from maudesignal.gate import CountClaim, verify_sentence
+from maudesignal.gate import (
+    CountClaim,
+    GroupCountClaim,
+    RecordClaim,
+    ShareClaim,
+    SourceCountClaim,
+    claim_from_dict,
+    verify_answer,
+    verify_sentence,
+)
+from maudesignal.gate.claims import normalize_ymd
 from maudesignal.gate.loader import store_from_database
 from maudesignal.storage.database import Database
 
@@ -289,29 +301,11 @@ def test_year_boundary_note_names_the_new_range_only(tmp_path: Path) -> None:
     ctx = _ctx(tmp_path)
     qih = check_range(ctx.store, "QIH", "20261228", "20270103")
     assert qih.no_data and not qih.adjusted  # 2026 is covered: never moved
-    db = Database(tmp_path / "ny.db")
-    for rid, d in (("N1", "20261230"), ("N2", "20270102")):
-        db.upsert_raw_report(
-            maude_report_id=rid,
-            product_code="NYE",
-            date_received=d,
-            date_of_event=None,
-            raw_payload={"report_number": rid},
-        )
-        db.upsert_normalized_event(
-            maude_report_id=rid,
-            product_code="NYE",
-            event_type="Malfunction",
-            event_date=None,
-            narrative="x",
-            mfr_narrative=None,
-            manufacturer="A",
-            brand_name="B",
-        )
-    moved = check_range(store_from_database(db), "NYE", "20241228", "20250103")
-    assert moved.adjusted and (moved.date_from, moved.date_to) == ("20261228", "20270103")
-    assert moved.note is not None
-    assert "same dates in 2027" in moved.note and "2025-12-28" not in moved.note
+    # a year-crossing request never lands fully inside the data after a +1 year move: not moved
+    assert check_range(ctx.store, "LLZ", "20251228", "20260103").no_data
+    moved = check_range(ctx.store, "LLZ", "20250825", "20250831")
+    assert moved.adjusted and moved.note is not None
+    assert "2026-08-25 to 2026-08-31" in moved.note and "2025-08-25 to 2025-08-31" in moved.note
 
 
 def test_unscoped_note_says_stored_reports(tmp_path: Path) -> None:
@@ -403,3 +397,143 @@ def test_agent_answer_carries_the_dates_used(tmp_path: Path) -> None:
     # the next question starts with no shifts
     CopilotAgent(FakeClient([_msg(answer), _msg(answer)]), ctx).ask("again")
     assert ctx.date_shifts == []
+
+
+# --- round 2 review: several moved ranges, group counts, +1 year only, false zeros ----------
+
+
+def _moved_ctx(tmp_path: Path) -> ToolContext:
+    ctx = _ctx(tmp_path)
+    product_summary(ctx, "LLZ", "20250825", "20250831")  # -> 2026-08-25..31 (3 reports)
+    product_summary(ctx, "LLZ", "20250701", "20250731")  # -> 2026-07-01..31 (1 report)
+    assert len(ctx.date_shifts) == 2
+    return ctx
+
+
+def test_every_moved_range_in_a_year_less_sentence_is_listed(tmp_path: Path) -> None:
+    ctx = _moved_ctx(tmp_path)
+    shifts = tuple(ctx.date_shifts)
+    claims = [_count("LLZ", 3, "20260825", "20260831"), _count("LLZ", 1, "20260701", "20260731")]
+    text = "LLZ had 3 reports in late August and 1 report in July."
+    v = verify_sentence(text, claims, ctx.store, shifts)
+    assert v.status == "pass"
+    assert v.text.endswith("(Dates used: 2026-08-25 to 2026-08-31; 2026-07-01 to 2026-07-31.)")
+    # claim order decides the order; a repeated range is listed once
+    again = verify_sentence(text, [claims[1], claims[0], claims[0]], ctx.store, shifts)
+    assert again.text.endswith("(Dates used: 2026-07-01 to 2026-07-31; 2026-08-25 to 2026-08-31.)")
+    # either range named with its requested year withholds the sentence
+    bad = verify_sentence(
+        "LLZ had 3 reports in late August and 1 report in July 2025.", claims, ctx.store, shifts
+    )
+    assert bad.status == "block"
+
+
+def test_group_count_on_a_moved_range_is_checked(tmp_path: Path) -> None:
+    ctx = _ctx(tmp_path)
+    found = search_reports(ctx, product_code="LLZ", date_from="20250825", date_to="20250831")
+    ids = tuple(r["report_id"] for r in found["reports"])
+    assert len(ids) == 3
+    group = GroupCountClaim("LLZ", "display failure", ids, 3, "20260825", "20260831")
+    shifts = tuple(ctx.date_shifts)
+    text = "In the last week of August 2025, 3 reports describe display failure."
+    assert verify_sentence(text, [group], ctx.store).status == "pass"  # blind without shifts
+    v = verify_sentence(text, [group], ctx.store, shifts)
+    assert v.status == "block" and "names 2025" in " ".join(v.reasons)
+    ok = verify_sentence(
+        "In the last week of August, 3 reports describe display failure.",
+        [group],
+        ctx.store,
+        shifts,
+    )
+    assert ok.status == "pass" and "Dates used: 2026-08-25 to 2026-08-31" in ok.text
+    # a group with no dates, and a record claim, are tied to the moved search by their report ids
+    undated = GroupCountClaim("LLZ", "display failure", ids, 3)
+    assert verify_sentence(text, [undated], ctx.store, shifts).status == "block"
+    rec = RecordClaim(ids[0], "LLZ")
+    named = verify_sentence(f"In August 2025, report {ids[0]} was filed.", [rec], ctx.store, shifts)
+    assert named.status == "block"
+    plain = verify_sentence(f"Report {ids[0]} was filed.", [rec], ctx.store, shifts)
+    assert plain.status == "pass" and "Dates used: 2026-08-25 to 2026-08-31" in plain.text
+
+
+def test_only_the_one_year_slip_is_moved(tmp_path: Path) -> None:
+    ctx = _demo_ctx(tmp_path)
+    # LLZ: 2025 -> 2026 (33 reports) still works
+    ok = product_summary(ctx, "LLZ", "20250825", "20250831")
+    assert ok["date_adjusted"] is True and ok["report_count"] == 33
+    for code, frm, to in (
+        ("LLZ", "20270825", "20270831"),  # a later year is never moved backward
+        ("MYN", "19990601", "19990607"),  # MYN runs 2006..2025-03-13
+        ("MYN", "20050601", "20050607"),  # ... not 2025 either, and not a +1 move into 2006
+        ("QIH", "20230101", "20230107"),  # two or more years off
+        ("LLZ", "20240825", "20240831"),  # two years behind
+    ):
+        out = product_summary(ctx, code, frm, to)
+        assert out["no_data_for_range"] is True, (code, frm)
+        assert "date_adjusted" not in out and "report_count" not in out, (code, frm)
+
+
+def test_a_false_zero_outside_the_stored_window_is_blocked(tmp_path: Path) -> None:
+    ctx = _demo_ctx(tmp_path)
+    store = ctx.store
+    z = _count("LLZ", 0, "20250825", "20250831")
+    v = verify_sentence("LLZ had 0 reports in the last week of August 2025.", [z], store)
+    assert v.status == "block" and "no stored data for that range" in " ".join(v.reasons)
+    q = verify_sentence(
+        "QIH had 0 reports in October 2026.", [_count("QIH", 0, "20261001", "20261031")], store
+    )
+    assert q.status == "block" and "the newest stored report is 2026-08-31" in q.reasons[0]
+    src = SourceCountClaim("LLZ", "non-manufacturer", 0, "20250825", "20250831")
+    assert verify_sentence("0 LLZ reports came from users.", [src], store).status == "block"
+    share = ShareClaim("LLZ", "Injury", 0.0, "20250825", "20250831")
+    sv = verify_sentence("0% of LLZ reports were injuries.", [share], store)
+    assert sv.status == "block" and "no stored data for that range" in " ".join(sv.reasons)
+    # a true zero INSIDE the stored dates still passes: QIH has none in 2026-01, nor in the
+    # last week of August 2026 although LLZ has reports then
+    inside = verify_sentence(
+        "QIH had 0 reports in January 2026.", [_count("QIH", 0, "20260101", "20260131")], store
+    )
+    assert inside.status == "pass"
+    week = verify_sentence(
+        "QIH had 0 reports this week.", [_count("QIH", 0, "20260825", "20260831")], store
+    )
+    assert week.status == "pass"
+    assert verify_sentence("QIH had 0 deaths.", [_count("QIH", 0, None, None)], store).status in (
+        "pass",
+        "block",
+    )  # undated zero is judged by the count itself, not the window guard
+
+
+def test_claim_dates_are_normalised(tmp_path: Path) -> None:
+    ctx = _demo_ctx(tmp_path)
+    for frm, to in (("2026-08-25", "2026-08-31"), ("2026-8-25", "2026-8-31")):
+        c = claim_from_dict(
+            {"kind": "count", "product_code": "LLZ", "value": 33, "date_from": frm, "date_to": to}
+        )
+        assert isinstance(c, CountClaim) and (c.date_from, c.date_to) == ("20260825", "20260831")
+        assert verify_sentence("LLZ had 33 reports.", [c], ctx.store).status == "pass"
+    assert normalize_ymd("2025-8-5") == "20250805" and normalize_ymd("junk") == "junk"
+    assert normalize_ymd(None) is None
+
+
+@pytest.mark.parametrize("form", ["Aug '25", "FY25", "'25", "FY 2025", "Aug ’25", "CY25"])
+def test_short_year_forms_name_the_year(tmp_path: Path, form: str) -> None:
+    ctx = _ctx(tmp_path)
+    product_summary(ctx, "LLZ", "20250825", "20250831")
+    claim = _count("LLZ", 3, "20260825", "20260831")
+    v = verify_sentence(
+        f"LLZ had 3 reports in the week of {form}.", [claim], ctx.store, tuple(ctx.date_shifts)
+    )
+    assert v.status == "block", form
+
+
+def test_a_date_block_is_not_counted_as_a_claim(tmp_path: Path) -> None:
+    ctx = _ctx(tmp_path)
+    product_summary(ctx, "LLZ", "20250825", "20250831")
+    claim = _count("LLZ", 3, "20260825", "20260831")
+    report = verify_answer(
+        [("LLZ had 3 reports in August 2025.", [claim])], ctx.store, tuple(ctx.date_shifts)
+    )
+    assert report.blocked == 1
+    assert report.claim_counts == {"pass": 1, "block": 0}  # one claim, counted once
+    assert report.sentences[0].date_issues and "[Withheld" in report.render()

@@ -1,6 +1,6 @@
 # Skill: safety-copilot
 
-**Version:** 1.3.4 (HACKATHON-BUILT — Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026)
+**Version:** 1.3.5 (HACKATHON-BUILT — Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026)
 **Model:** Meta Muse Spark (`muse-spark-1.3`, Standard tier) via the Meta Model API
 **Consumers:** `maudesignal.copilot.agent.CopilotAgent`
 **Output schema:** `schemas/output.schema.json` — sent as the strict `json_schema`
@@ -180,6 +180,14 @@ code asked about, not today's year, and pass YYYYMMDD dates in that range to the
 <!-- date-context:end -->
 
 ## Changelog
+
+- 1.3.5 (2026-11-01): round-2 review fixes. A range is moved only one year forward (the year
+  before the data's latest year) and only when the moved range lies fully inside the code's
+  stored window; any other year (later, older, two or more off) is answered "no stored report
+  in that range". The gate lists every moved range in "(Dates used: ...)", checks group-count,
+  record and quote claims that rest on a moved search, treats "'25" / "FY25" as naming a year,
+  and blocks a "0 reports" claim over a range that ends before the code's first stored report or starts after the newest stored one. Claim dates
+  are normalised (`2026-08-25`, `2026-8-25`). Schema and examples unchanged.
 
 - 1.3.4 (2026-11-01): review fixes to 1.3.3. The tool guard moves a range only from a year
   the stored data does not reach (never a year it covers, never for recalls); an empty range
