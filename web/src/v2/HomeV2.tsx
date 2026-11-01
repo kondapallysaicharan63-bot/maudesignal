@@ -63,6 +63,27 @@ export function HomeV2({
           )}
         </section>
 
+        {(onPms || onRoi) && (
+          <section className="ms2-card ms2-span2" aria-label="Where MaudeSignal fits" data-testid="home-fit">
+            {onPms && (
+              <button type="button" className="ms2-row" onClick={onPms} data-testid="home-pms-link">
+                <span>
+                  <span className="font-medium">How MaudeSignal fits your PMS workflow</span> <span className="ms2-tag">New</span>
+                </span>
+                <Icon name="chevron" size={18} />
+              </button>
+            )}
+            {onRoi && (
+              <button type="button" className="ms2-row" onClick={onRoi} data-testid="home-roi-link">
+                <span>
+                  <span className="font-medium">Time and cost: measured, not claimed</span> <span className="ms2-tag">New</span>
+                </span>
+                <Icon name="chevron" size={18} />
+              </button>
+            )}
+          </section>
+        )}
+
         {demo.rows.length > 0 && (
           <section className="ms2-sim ms2-span2" aria-labelledby="home-demo-h" data-testid="home-demo">
             <h2 id="home-demo-h" className="ms2-h2">
@@ -85,23 +106,6 @@ export function HomeV2({
             <Icon name="chevron" size={18} />
           </button>
         </section>
-
-        {(onPms || onRoi) && (
-          <section className="ms2-card ms2-span2" aria-label="Where MaudeSignal fits" data-testid="home-fit">
-            {onPms && (
-              <button type="button" className="ms2-row" onClick={onPms} data-testid="home-pms-link">
-                <span className="font-medium">How MaudeSignal fits your PMS workflow</span>
-                <Icon name="chevron" size={18} />
-              </button>
-            )}
-            {onRoi && (
-              <button type="button" className="ms2-row" onClick={onRoi} data-testid="home-roi-link">
-                <span className="font-medium">Time and cost: measured, not claimed</span>
-                <Icon name="chevron" size={18} />
-              </button>
-            )}
-          </section>
-        )}
 
         <section className="ms2-card" aria-labelledby="home-sweep-h" data-testid="home-sweep">
           <h2 id="home-sweep-h" className="ms2-h2">

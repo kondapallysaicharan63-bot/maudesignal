@@ -435,15 +435,16 @@ until a person has actually timed a task.
     "who": "the person who timed it (required)",
     "when": "date of the test, YYYY-MM-DD (required)",
     "how": "how it was timed: stopwatch, screen recording, sample used (required)",
-    "manual_minutes": 0,
-    "maudesignal_minutes": 0,
+    "manual_minutes": "<number of minutes measured, more than 0 and at most 10000>",
+    "maudesignal_minutes": "<number of minutes measured, more than 0 and at most 10000>",
     "notes": "optional"}
  ]}
 ```
 
-Rules: `schema` is the integer `1`. `manual_minutes` and `maudesignal_minutes` are measured
-minutes, never estimates. The web app drops an entry that lacks `id`, `task`, `who`, `when`
-or `how`, or whose minutes are not non-negative numbers. Tasks: `similar-events` (complaint:
+Rules: `schema` is the integer `1`. `manual_minutes` and `maudesignal_minutes` are JSON numbers
+(the example shows placeholders, not values): measured minutes, never estimates. The web app drops an entry that lacks `id`, `task`, `who`, `when`
+or `how`, or whose minutes are not numbers above 0 and at most 10000. Only the tasks
+`similar-events` and `weekly-trend` can feed the calculator's "Use recorded measurements". Tasks: `similar-events` (complaint:
 find similar events at other makers in the last 12 months), `weekly-trend` (weekly trend for
 code X vs prior 4 weeks), `evidence-section` (assemble the evidence section for a PMS board
 or CAPA-need form).

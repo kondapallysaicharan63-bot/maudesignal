@@ -72,7 +72,7 @@ const SECTION_HOME: Record<Section, Route> = {
 
 /** The sidebar entry a page belongs to (null for a chat). */
 export function navOf(r: Route): NavId | null {
-  if (r.page === 'home') return 'home'
+  if (r.page === 'home' || r.page === 'pms' || r.page === 'roi') return 'home'
   if (r.page === 'signals' || r.page === 'devices' || r.page === 'evidence' || r.page === 'connect') return r.page
   if (r.page === 'workflow') {
     if (r.id === 'vision') return 'evidence'
@@ -530,8 +530,8 @@ export default function AppV2() {
         />
       )
     else if (route.page === 'connect') sectionBody = <ConnectPage tab={route.tab} onTab={(t, how) => tabGo({ page: 'connect', tab: t }, how)} apiBase={API_BASE} />
-    else if (route.page === 'pms') sectionBody = <PmsWorkflow onRoi={() => go({ page: 'roi' })} />
-    else if (route.page === 'roi') sectionBody = <RoiPage />
+    else if (route.page === 'pms') sectionBody = <PmsWorkflow onRoi={() => go({ page: 'roi' })} onHome={() => go({ page: 'home' })} />
+    else if (route.page === 'roi') sectionBody = <RoiPage onHome={() => go({ page: 'home' })} />
     const sectionLabel = route.page === 'pms' ? 'PMS workflow' : route.page === 'roi' ? 'Time and cost' : route.page[0].toUpperCase() + route.page.slice(1)
     content = (
       <main className="ms2-section" aria-label={sectionLabel}>

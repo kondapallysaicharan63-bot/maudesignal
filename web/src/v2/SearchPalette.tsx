@@ -13,7 +13,10 @@ export type SearchItem =
 
 /** Every page the palette can open, in sidebar order. */
 export function pageItems(workflows: WorkflowDef[], devicesTitle = 'Our devices (simulated)'): SearchItem[] {
-  const out: SearchItem[] = [{ kind: 'page', key: 'home', title: 'Home', hint: 'Page', route: { page: 'home' } }]
+  const out: SearchItem[] = [{ kind: 'page', key: 'home', title: 'Home', hint: 'Page', route: { page: 'home' } },
+    { kind: 'page', key: 'pms', title: 'How MaudeSignal fits your PMS workflow', hint: 'Page', route: { page: 'pms' } },
+    { kind: 'page', key: 'roi', title: 'Time and cost: measured, not claimed', hint: 'Page', route: { page: 'roi' } },
+  ]
   for (const t of SIGNALS_TAB_LABELS) out.push({ kind: 'page', key: `s-${t.id}`, title: `Signals · ${t.label}`, hint: 'Page', route: { page: 'signals', tab: t.id } })
   for (const t of DEVICES_TAB_LABELS) out.push({ kind: 'page', key: `d-${t.id}`, title: `${devicesTitle} · ${t.label}`, hint: 'Page', route: { page: 'devices', tab: t.id } })
   for (const t of EVIDENCE_TAB_LABELS) out.push({ kind: 'page', key: `e-${t.id}`, title: `Evidence · ${t.label}`, hint: 'Page', route: { page: 'evidence', tab: t.id } })
