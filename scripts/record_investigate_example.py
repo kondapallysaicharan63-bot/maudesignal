@@ -30,14 +30,15 @@ DB = ROOT / "data" / "demo" / "maudesignal_demo.db"
 OUT = ROOT / "web" / "src" / "fixtures" / "investigateExample.json"
 CODE = "LLZ"
 DESCRIPTION = "The report manager would not let users save a study, and images came up unreadable."
-#: The day the stored copy was fetched from openFDA; the 12-month window ends here.
-RETRIEVED = datetime(2026, 10, 27, 18, 0, 0, tzinfo=UTC)
 
 
 def build() -> dict[str, Any]:
     """The fixture: the example input and the recorded answer."""
     source = StoredSource.from_db(DB)
-    answer = run_investigation(source, CODE, DESCRIPTION, now=RETRIEVED)
+    # The 12-month window ends on the day the stored copy was fetched from openFDA (its own
+    # fetched_at, not a made-up search time).
+    fetched = datetime.fromisoformat(source.fetched).replace(tzinfo=UTC, microsecond=0)
+    answer = run_investigation(source, CODE, DESCRIPTION, now=fetched)
     n = sum(1 for e in source.events if CODE in json.dumps(e.get("device", "")))
     answer = answer.model_copy(
         update={

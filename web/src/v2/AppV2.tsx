@@ -530,7 +530,7 @@ export default function AppV2() {
         />
       )
     else if (route.page === 'investigate')
-      sectionBody = <InvestigatePage key={`${route.code ?? ''}|${route.device ?? ''}`} apiBase={API_BASE} code={route.code} device={route.device} />
+      sectionBody = <InvestigatePage key={`${route.code ?? ''}|${route.device ?? ''}`} apiBase={API_BASE} code={route.code} device={route.device} onCheckDevice={() => go({ page: 'workflow', id: 'check-device' })} />
     else if (route.page === 'connect') sectionBody = <ConnectPage tab={route.tab} onTab={(t, how) => tabGo({ page: 'connect', tab: t }, how)} apiBase={API_BASE} />
     content = (
       <main className="ms2-section" aria-label={route.page[0].toUpperCase() + route.page.slice(1)}>

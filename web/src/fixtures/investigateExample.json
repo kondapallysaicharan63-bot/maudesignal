@@ -7,7 +7,7 @@
     "mode": "recorded",
     "product_code": "LLZ",
     "device_type_name": null,
-    "retrieved_utc": "2026-10-27T18:00:00Z",
+    "retrieved_utc": "2026-10-27T07:37:46Z",
     "retrieved_date": "2026-10-27",
     "window_start": "20251101",
     "window_end": "20261027",
@@ -211,7 +211,7 @@
       "manufacturer_count": 121,
       "non_manufacturer": {
         "value": 0,
-        "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20251101+TO+20261027%5D&limit=1"
+        "url": ""
       },
       "no_source_count": 0,
       "reports": [],
@@ -236,7 +236,7 @@
           "firm": "GE Healthcare",
           "status": "Open, Classified",
           "date_initiated": "2026-07-31",
-          "reason": "Under certain conditions historical imaging data migrated from a legacy system may become incorrectly associated with a different patient. If this occurs, studies or images may be displayed under the wrong patient record, which could lead t",
+          "reason": "Under certain conditions historical imaging data migrated from a legacy system may become incorrectly associated with a different patient. If this occurs, studies or images may be displayed under the wrong patient record, which could lead…",
           "url": "https://api.fda.gov/device/recall.json?search=product_res_number%3A%22Z-3166-2026%22&limit=1"
         },
         {
@@ -244,7 +244,7 @@
           "firm": "GE Healthcare",
           "status": "Open, Classified",
           "date_initiated": "2026-07-31",
-          "reason": "Under certain conditions historical imaging data migrated from a legacy system may become incorrectly associated with a different patient. If this occurs, studies or images may be displayed under the wrong patient record, which could lead t",
+          "reason": "Under certain conditions historical imaging data migrated from a legacy system may become incorrectly associated with a different patient. If this occurs, studies or images may be displayed under the wrong patient record, which could lead…",
           "url": "https://api.fda.gov/device/recall.json?search=product_res_number%3A%22Z-3167-2026%22&limit=1"
         },
         {
@@ -252,7 +252,7 @@
           "firm": "GE Healthcare",
           "status": "Open, Classified",
           "date_initiated": "2026-07-31",
-          "reason": "Under certain conditions historical imaging data migrated from a legacy system may become incorrectly associated with a different patient. If this occurs, studies or images may be displayed under the wrong patient record, which could lead t",
+          "reason": "Under certain conditions historical imaging data migrated from a legacy system may become incorrectly associated with a different patient. If this occurs, studies or images may be displayed under the wrong patient record, which could lead…",
           "url": "https://api.fda.gov/device/recall.json?search=product_res_number%3A%22Z-3168-2026%22&limit=1"
         },
         {
@@ -260,7 +260,7 @@
           "firm": "GE Healthcare",
           "status": "Open, Classified",
           "date_initiated": "2026-07-31",
-          "reason": "Under certain conditions historical imaging data migrated from a legacy system may become incorrectly associated with a different patient. If this occurs, studies or images may be displayed under the wrong patient record, which could lead t",
+          "reason": "Under certain conditions historical imaging data migrated from a legacy system may become incorrectly associated with a different patient. If this occurs, studies or images may be displayed under the wrong patient record, which could lead…",
           "url": "https://api.fda.gov/device/recall.json?search=product_res_number%3A%22Z-3169-2026%22&limit=1"
         }
       ],

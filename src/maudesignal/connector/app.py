@@ -1370,11 +1370,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         config=cfg.live_config,
         now=cfg.now,
     )
+    # Importing investigate_route sets the httpx and httpcore loggers to WARNING for the whole
+    # process: httpx logs each request URL at INFO, and an investigate URL holds the keywords of
+    # a complaint description, which must not reach any log.
     mount_investigate(
         app,
         state=state,
         web_origins=web_origins,
         caller_id=limiter_id,
+        pepper=pepper,
         source_factory=cfg.investigate_source,
         now=cfg.now,
     )

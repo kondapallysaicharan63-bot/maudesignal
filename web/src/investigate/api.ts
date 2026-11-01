@@ -17,7 +17,8 @@ export { apiBaseFrom }
 export const INVESTIGATE_PATH = '/v1/investigate'
 export const MAX_DESCRIPTION = 500
 export const MIN_DESCRIPTION = 5
-export const INVESTIGATE_TIMEOUT_MS = 30_000
+/** Longer than the server's own time limit (about 40 s, never more than 45 s). */
+export const INVESTIGATE_TIMEOUT_MS = 48_000
 /** Always visible above the form. */
 export const BANNER = 'Do not enter patient data. Describe the device problem only.'
 /** Fixed notice, word for word; the last paragraph of the evidence text. */
@@ -112,7 +113,7 @@ export interface Investigation {
   notes: string[]
 }
 
-export type Failure = 'unconfigured' | 'patient_data' | 'invalid' | 'rate' | 'unavailable' | 'network' | 'bad-response'
+export type Failure = 'unconfigured' | 'timeout' | 'patient_data' | 'invalid' | 'rate' | 'unavailable' | 'network' | 'bad-response'
 export type Outcome = { ok: true; answer: Investigation } | { ok: false; kind: Failure; message: string }
 
 // ── parsing ──────────────────────────────────────────────────────────────────
@@ -296,7 +297,9 @@ export async function investigate(
       credentials: 'omit',
       signal: ctl.signal,
     })
-  } catch {
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'AbortError')
+      return { ok: false, kind: 'timeout', message: 'The search took too long and was stopped. Nothing is shown. Try again, or try a narrower description.' }
     return { ok: false, kind: 'network', message: 'The service could not be reached. Nothing was investigated; try again later.' }
   } finally {
     clearTimeout(timer)
@@ -338,9 +341,9 @@ export function evidenceText(a: Investigation, description: string): string {
   const L: string[] = []
   const h = (t: string) => L.push('', t.toUpperCase(), '')
   L.push('EVIDENCE FOR THE COMPLAINT FILE')
-  L.push(a.mode === 'recorded' ? 'RECORDED EXAMPLE (stored copy of FDA data, not a live search)' : 'Real FDA data (openFDA), retrieved live')
+  L.push(a.mode === 'recorded' ? 'RECORDED EXAMPLE (a stored copy of FDA data, not a live search)' : 'Real FDA data (openFDA), retrieved live')
   L.push('')
-  L.push(`Search date and time: ${stamp(a.retrieved_utc)}`)
+  L.push(a.mode === 'recorded' ? `Stored copy date: ${a.retrieved_date} (no live search was made)` : `Search date and time: ${stamp(a.retrieved_utc)}`)
   L.push(`Product code: ${a.product_code}`)
   L.push(`FDA device type name: ${a.device_type_name ?? 'not available'}`)
   L.push(`Window: reports received ${ymd(a.window_start)} to ${ymd(a.window_end)} (12 calendar months)`)
@@ -349,10 +352,10 @@ export function evidenceText(a: Investigation, description: string): string {
   L.push(`Keywords taken from it: ${a.keywords.length ? a.keywords.join(', ') : 'none'}`)
   if (a.source_note) L.push(a.source_note)
 
-  h('1. Similar MAUDE events at any maker, by month')
+  h('1. MAUDE reports for this product code (any maker), by month')
   L.push('Two different counts, never added together:')
   L.push('  A = reports for the whole product code')
-  L.push('  B = of those, reports whose narrative mentions at least one keyword')
+  L.push('  B = of those, reports whose narrative mentions at least one keyword (a text match; not a finding of similarity)')
   L.push('')
   for (const m of a.months) {
     L.push(`${m.month}${m.partial ? ' (partial month)' : ''}  A: ${n(m.code_wide)}${m.keyword_matched === null ? '' : `  B: ${n(m.keyword_matched)}`}`)
@@ -369,7 +372,7 @@ export function evidenceText(a: Investigation, description: string): string {
   L.push(a.lag_note)
   L.push(`Reports of your own company: ${a.own_maker_note}`)
 
-  h('Quotes from report narratives (verbatim, each checked against its own report)')
+  h('Quotes from report narratives (text as filed, not edited; each checked against its own report)')
   if (a.quotes.length === 0) L.push('None shown.')
   a.quotes.forEach((q, i) => {
     L.push(`${i + 1}. Report ${q.report_number ?? q.mdr_report_key} (MDR report key ${q.mdr_report_key}), received ${q.date_received ? ymd(q.date_received) : 'date not stated'}`)
@@ -392,7 +395,7 @@ export function evidenceText(a: Investigation, description: string): string {
     }
   }
 
-  h('3. Recalls and 510(k) clearances for this product code')
+  h('3. Recalls and 510(k)s for this product code')
   L.push('Recalls')
   if (!a.recalls.total) L.push(a.recalls.note ?? 'Could not be read.')
   else {

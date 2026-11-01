@@ -1,12 +1,14 @@
 // "Investigate a complaint" (v2, /investigate): a product code and a few words about the device problem go to
-// POST /v1/investigate, which answers from openFDA only (no model). The page shows similar MAUDE events at other makers by
-// month, verbatim quotes, reports not filed by a manufacturer, recalls and 510(k)s, and a plain-text "Evidence for the
-// complaint file" to copy or download. Without an API address it shows one recorded run (code LLZ) and calls nothing.
+// POST /v1/investigate, which answers from openFDA only (no model). The page shows the MAUDE reports for the product code
+// (any maker) by month, verbatim quotes, reports not filed by a manufacturer, recalls and 510(k)s, and a plain-text
+// "Evidence for the complaint file" to copy or download. Without an API address it shows one recorded run (code LLZ)
+// and calls nothing. It does not decide reportability, similarity or CAPA need.
 //
 // URL contract: /investigate?code=XXX&device=<simulated device id> (both optional); see ./api.ts.
 // The description lives in this component's state only: not in the address, storage, a cookie or any log.
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState, type ReactNode } from 'react'
 import example from '../fixtures/investigateExample.json'
+import { Icon } from '../icons'
 import {
   AS_ENTERED,
   BANNER,
@@ -23,6 +25,7 @@ import {
   type Investigation,
   type Outcome,
 } from './api'
+import { hrefFor } from '../v2/router'
 import './investigate.css'
 
 const RECORDED = parseInvestigation((example as { answer: unknown }).answer)
@@ -30,10 +33,11 @@ const RECORDED_INPUT = (example as { input: { product_code: string; description:
 
 const fmt = (x: number): string => x.toLocaleString('en-US')
 const day = (s: string | null): string => (s && /^\d{8}$/.test(s) ? `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}` : (s ?? 'date not stated'))
+const KEY_SENTENCE = 'MaudeSignal does not decide reportability, similarity, or whether a CAPA is needed; your team does.'
 
-/** A number that opens the openFDA query behind it (plain text when the answer carried no usable link). */
+/** A number that opens the openFDA query behind it. A zero or a number without a usable link is plain text. */
 function Figure({ value, url, label }: { value: number; url: string; label: string }) {
-  return url ? (
+  return url && value > 0 ? (
     <a className="ms2-a ms-num" href={url} target="_blank" rel="noreferrer" aria-label={`${fmt(value)} ${label}, open the openFDA query`}>
       {fmt(value)}
     </a>
@@ -42,14 +46,15 @@ function Figure({ value, url, label }: { value: number; url: string; label: stri
   )
 }
 
-function Provenance({ a }: { a: Investigation }) {
+/** "Real FDA data · retrieved ..." or "Recorded example · stored copy of ...", repeated on every section. */
+function Badge({ a }: { a: Investigation }) {
   return a.mode === 'recorded' ? (
-    <p className="ms2-inv-prov" data-testid="inv-provenance">
-      <span className="ms2-tag">Recorded example</span> <span>{a.source_note}</span>
+    <p className="ms2-inv-badge" data-testid="inv-badge">
+      <span className="ms2-tag">Recorded example</span> stored copy of {a.retrieved_date}
     </p>
   ) : (
-    <p className="ms2-inv-prov" data-testid="inv-provenance">
-      <span className="ms2-tag">Real FDA data</span> <span>Retrieved from openFDA on {stamp(a.retrieved_utc)}.</span>
+    <p className="ms2-inv-badge" data-testid="inv-badge">
+      <span className="ms2-tag">Real FDA data</span> retrieved {stamp(a.retrieved_utc)}
     </p>
   )
 }
@@ -59,24 +64,24 @@ function Months({ a }: { a: Investigation }) {
   const kw = a.total_keyword_matched
   return (
     <>
-      <dl className="ms2-stats ms2-inv-stats">
-        <div>
-          <dt>Whole product code, 12 months</dt>
-          <dd data-testid="inv-total-code">
+      <div className="ms2-inv-two ms2-inv-figs">
+        <div className="ms2-inv-fig" data-testid="inv-total-code">
+          <p className="ms2-inv-figlabel">All reports for {a.product_code}, 12 months</p>
+          <p className="ms2-inv-bigfig">
             <Figure value={a.total_code_wide.value} url={a.total_code_wide.url} label="reports for the product code" />
-          </dd>
+          </p>
         </div>
-        <div>
-          <dt>Narrative mentions a keyword</dt>
-          <dd data-testid="inv-total-kw">
+        <div className="ms2-inv-fig ms2-inv-fig--kw" data-testid="inv-total-kw">
+          <p className="ms2-inv-figlabel">&hellip;of those, the narrative mentions a keyword</p>
+          <p className="ms2-inv-bigfig">
             {kw ? <Figure value={kw.value} url={kw.url} label="reports that mention a keyword" /> : <span className="ms2-muted text-[15px]">no keywords</span>}
-          </dd>
+          </p>
         </div>
-      </dl>
-      <p className="ms2-muted m-0 mt-2 text-[15px]" data-testid="inv-keywords">
+      </div>
+      <p className="ms2-inv-meta m-0 mt-3" data-testid="inv-keywords">
         {a.keywords.length > 0 ? (
           <>
-            Keywords from the description:{' '}
+            Keywords taken from your description (a text match, not a finding of similarity):{' '}
             {a.keywords.map((k) => (
               <span key={k} className="ms2-tag mr-1">
                 {k}
@@ -84,31 +89,43 @@ function Months({ a }: { a: Investigation }) {
             ))}
           </>
         ) : (
-          'The description had no content words to match, so only the whole-code count is shown.'
+          'The description had no content words to match, so only the count for the whole product code is shown.'
         )}
       </p>
       <details className="mt-1">
         <summary className="ms2-smalllink cursor-pointer">How keywords are chosen</summary>
-        <p className="ms2-muted m-0 mt-1 text-[15px]">{a.keyword_rule}</p>
+        <p className="ms2-inv-meta m-0 mt-1">{a.keyword_rule}</p>
       </details>
-      <div className="ms2-inv-scroll mt-3">
+      <ul className="ms2-inv-legend" aria-label="Chart key">
+        <li>
+          <span className="ms2-bar ms2-bar--base ms2-inv-swatch" aria-hidden="true" /> All reports for the product code
+        </li>
+        <li>
+          <span className="ms2-bar ms2-bar--now ms2-inv-swatch" aria-hidden="true" /> Narrative mentions a keyword
+        </li>
+      </ul>
+      <div className="ms2-inv-scroll">
         <table className="ms2-table" data-testid="inv-months">
-          <caption className="sr-only">Reports received per month, whole product code and keyword-matched, last 12 months</caption>
+          <caption className="ms2-inv-caption">
+            Reports received per month, last 12 months. The table is the text version of the bars.
+          </caption>
           <thead>
             <tr>
               <th scope="col">Month</th>
               <th scope="col" className="ms2-num">
-                Whole code
+                All reports
               </th>
               <th scope="col" className="ms2-num">
                 Keyword
               </th>
-              <th scope="col" className="ms2-inv-barcol" aria-hidden="true" />
+              <th scope="col" className="ms2-inv-barcol">
+                <span className="sr-only">Bars</span>
+              </th>
             </tr>
           </thead>
           <tbody>
             {a.months.map((m) => (
-              <tr key={m.month} data-testid={`inv-month-${m.month}`}>
+              <tr key={m.month} data-testid={`inv-month-${m.month}`} className={m.code_wide === 0 ? 'ms2-inv-zero' : undefined}>
                 <th scope="row">
                   {m.month}
                   {m.partial && <span className="ms2-muted"> (partial)</span>}
@@ -123,10 +140,18 @@ function Months({ a }: { a: Investigation }) {
                     <Figure value={m.keyword_matched} url={m.keyword_url ?? ''} label={`reports in ${m.month} that mention a keyword`} />
                   )}
                 </td>
-                <td className="ms2-inv-barcol" aria-hidden="true">
+                <td className="ms2-inv-barcol" aria-hidden="true" data-bars={`${m.month}: ${m.code_wide} all reports${m.keyword_matched === null ? '' : `, ${m.keyword_matched} keyword`}`}>
                   <span className="ms2-bars">
-                    <span className="ms2-bar ms2-bar--base" style={{ width: `${(m.code_wide / max) * 100}%` }} />
-                    {m.keyword_matched !== null && <span className="ms2-bar ms2-bar--now" style={{ width: `${(m.keyword_matched / max) * 100}%` }} />}
+                    <span className="ms2-inv-barrow">
+                      <span className="ms2-bar ms2-bar--base" style={{ width: `${(m.code_wide / max) * 100}%` }} />
+                      {m.code_wide > 0 && <span className="ms2-inv-barval">{fmt(m.code_wide)}</span>}
+                    </span>
+                    {m.keyword_matched !== null && (
+                      <span className="ms2-inv-barrow">
+                        <span className="ms2-bar ms2-bar--now" style={{ width: `${(m.keyword_matched / max) * 100}%` }} />
+                        {m.keyword_matched > 0 && <span className="ms2-inv-barval">{fmt(m.keyword_matched)}</span>}
+                      </span>
+                    )}
                   </span>
                 </td>
               </tr>
@@ -134,9 +159,8 @@ function Months({ a }: { a: Investigation }) {
           </tbody>
         </table>
       </div>
-      <p className="ms2-muted m-0 mt-2 text-[15px]">
-        The two counts are different questions and are never added: the first is every report for the product code, the second is the
-        part of it whose narrative mentions at least one keyword. {a.lag_note}
+      <p className="ms2-inv-meta m-0 mt-2">
+        The two counts answer different questions and are never added. Months with no reports are dimmed and not linked. {a.lag_note}
       </p>
     </>
   )
@@ -146,8 +170,9 @@ function Quotes({ a }: { a: Investigation }) {
   return (
     <div className="mt-4" data-testid="inv-quotes">
       <h3 className="ms2-h3">Quotes from report narratives</h3>
+      <p className="ms2-inv-meta m-0 mb-2">Text as filed, not edited (older reports are often in capitals). Each was checked against its own report.</p>
       {a.quotes.length === 0 ? (
-        <p className="ms2-muted m-0 text-[15px]">No narrative sentence passed the checks, so none is shown.</p>
+        <p className="ms2-inv-meta m-0">No narrative sentence passed the checks, so none is shown.</p>
       ) : (
         <ul className="ms2-inv-quotes">
           {a.quotes.map((q) => (
@@ -155,7 +180,7 @@ function Quotes({ a }: { a: Investigation }) {
               <blockquote className="m-0">
                 &ldquo;{q.quote}&rdquo;{q.truncated ? ' …' : ''}
               </blockquote>
-              <p className="ms2-muted m-0 mt-1 text-[15px]">
+              <p className="ms2-inv-meta m-0 mt-1">
                 Report <span className="ms-num">{q.report_number ?? q.mdr_report_key}</span> · received {day(q.date_received)} · filed by{' '}
                 {sourceName(q.source)}
                 {q.maker ? ` · maker as written: ${q.maker}` : ''} · checked: {q.gate} in this report
@@ -172,7 +197,7 @@ function Quotes({ a }: { a: Investigation }) {
           ))}
         </ul>
       )}
-      <p className="ms2-muted m-0 mt-2 text-[15px]" data-testid="inv-own-maker">
+      <p className="ms2-inv-meta m-0 mt-2" data-testid="inv-own-maker">
         {a.own_maker_note}
       </p>
     </div>
@@ -181,14 +206,27 @@ function Quotes({ a }: { a: Investigation }) {
 
 function Sources({ a }: { a: Investigation }) {
   const s = a.sources
-  if (!s) return <p className="ms2-muted m-0">Who filed the reports could not be read just now.</p>
+  if (!s) return <p className="ms2-inv-meta m-0">Who filed the reports could not be read this time.</p>
+  const n = s.non_manufacturer.value
+  const total = a.total_code_wide.value
   return (
     <>
       <p className="m-0 text-[17px]" data-testid="inv-nonmfr">
-        <strong>
-          <Figure value={s.non_manufacturer.value} url={s.non_manufacturer.url} label="reports not filed by a manufacturer" />
-        </strong>{' '}
-        of <span className="ms-num">{fmt(a.total_code_wide.value)}</span> reports in these 12 months were not filed by a manufacturer.
+        {n > 0 ? (
+          <>
+            <strong>
+              <Figure value={n} url={s.non_manufacturer.url} label="reports not filed by a manufacturer" />
+            </strong>{' '}
+            of <span className="ms-num">{fmt(total)}</span> reports in these 12 months were not filed by a manufacturer.
+          </>
+        ) : s.manufacturer_count === total && total > 0 ? (
+          <>
+            None of the <span className="ms-num">{fmt(total)}</span> reports in these 12 months was filed by anyone but a manufacturer. All{' '}
+            <span className="ms-num">{fmt(total)}</span> were manufacturer reports.
+          </>
+        ) : (
+          <>None of the reports with a filer type on them was filed by anyone but a manufacturer.</>
+        )}
       </p>
       <ul className="ms2-inv-plain mt-2">
         {s.buckets.map((b) => (
@@ -230,7 +268,7 @@ function Sources({ a }: { a: Investigation }) {
           </ul>
         </>
       )}
-      {s.note && <p className="ms2-muted m-0 mt-2 text-[15px]">{s.note}</p>}
+      {s.note && <p className="ms2-inv-meta m-0 mt-2">{s.note}</p>}
     </>
   )
 }
@@ -250,21 +288,25 @@ function Related({ a }: { a: Investigation }) {
             <ul className="ms2-inv-plain mt-1">
               {recalls.items.map((r) => (
                 <li key={r.recall_number}>
-                  <a className="ms2-a" href={r.url || undefined} target="_blank" rel="noreferrer">
-                    {r.recall_number}
-                  </a>{' '}
-                  · {r.firm ?? 'firm not stated'} · {r.status ?? 'status not stated'} · started {r.date_initiated ?? 'date not stated'}
-                  {r.reason && <span className="ms2-muted block text-[15px]">{r.reason}</span>}
+                  <span className="ms-num">{r.recall_number}</span> · {r.firm ?? 'firm not stated'} · {r.status ?? 'status not stated'} · started{' '}
+                  {r.date_initiated ?? 'date not stated'}
+                  {r.reason && <span className="ms2-inv-meta block">{r.reason}</span>}
+                  {r.url && (
+                    <a className="ms2-a text-[15px]" href={r.url} target="_blank" rel="noreferrer" aria-label={`Full record of recall ${r.recall_number} on openFDA`}>
+                      Full record
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>
+            <p className="ms2-inv-meta m-0 mt-1">Numbers and dates are as filed with FDA.</p>
           </>
         ) : (
-          <p className="ms2-muted m-0">{recalls.note ?? 'Could not be read just now.'}</p>
+          <p className="ms2-inv-meta m-0">{recalls.note ?? 'Could not be read this time.'}</p>
         )}
       </div>
       <div data-testid="inv-clearances">
-        <h3 className="ms2-h3">510(k) clearances</h3>
+        <h3 className="ms2-h3">510(k)s</h3>
         {clearances.total ? (
           <>
             <p className="m-0">
@@ -284,7 +326,7 @@ function Related({ a }: { a: Investigation }) {
             </ul>
           </>
         ) : (
-          <p className="ms2-muted m-0">{clearances.note ?? 'Could not be read just now.'}</p>
+          <p className="ms2-inv-meta m-0">{clearances.note ?? 'Could not be read this time.'}</p>
         )}
       </div>
     </div>
@@ -303,20 +345,24 @@ async function copyText(text: string): Promise<boolean> {
 
 function Evidence({ a, description }: { a: Investigation; description: string }) {
   const text = useMemo(() => evidenceText(a, description), [a, description])
+  const lines = useMemo(() => text.split('\n').length, [text])
   const pre = useRef<HTMLPreElement>(null)
   const [copied, setCopied] = useState<'idle' | 'ok' | 'manual'>('idle')
+  const [all, setAll] = useState(false)
   const copy = async () => {
     if (await copyText(text)) setCopied('ok')
     else {
       setCopied('manual')
-      const el = pre.current
-      if (el) {
+      setAll(true)
+      window.setTimeout(() => {
+        const el = pre.current
+        if (!el) return
         const range = document.createRange()
         range.selectNodeContents(el)
         const sel = window.getSelection()
         sel?.removeAllRanges()
         sel?.addRange(range)
-      }
+      }, 0)
     }
   }
   const download = () => {
@@ -329,14 +375,18 @@ function Evidence({ a, description }: { a: Investigation; description: string })
     link.remove()
     window.setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
+  const [lead] = NOTICE.split(KEY_SENTENCE)
   return (
-    <section className="ms2-card" aria-labelledby="inv-evidence-h" data-testid="inv-evidence">
+    <section className="ms2-card" id="inv-evidence" aria-labelledby="inv-evidence-h" data-testid="inv-evidence">
       <h2 id="inv-evidence-h" className="ms2-h2">
         Evidence for the complaint file
       </h2>
-      <p className="ms2-muted m-0 mt-1 text-[15px]">
-        Plain text to paste into your complaint record. Your description is printed in it {AS_ENTERED}.
+      <Badge a={a} />
+      <p className="m-0 mt-2 text-[15px]" data-testid="inv-notice">
+        {lead}
+        <strong>{KEY_SENTENCE}</strong>
       </p>
+      <p className="ms2-inv-meta m-0 mt-1">Plain text to paste into your complaint record. Your description is printed in it {AS_ENTERED}.</p>
       <div className="ms2-inv-actions">
         <button type="button" className="ms-btn ms-btn--primary" onClick={() => void copy()} data-testid="inv-copy">
           Copy
@@ -344,58 +394,77 @@ function Evidence({ a, description }: { a: Investigation; description: string })
         <button type="button" className="ms-btn" onClick={download} data-testid="inv-download">
           Download .txt
         </button>
-        <span role="status" className="ms2-muted text-[15px]" data-testid="inv-copy-status">
+        <span role="status" className="ms2-inv-meta" data-testid="inv-copy-status">
           {copied === 'ok' ? 'Copied.' : copied === 'manual' ? 'Your browser blocked copying. The text is selected: press Ctrl+C.' : ''}
         </span>
       </div>
-      <pre ref={pre} className="ms2-inv-evidence" tabIndex={0} aria-label="Evidence text" data-testid="inv-evidence-text">
+      <pre ref={pre} className={`ms2-inv-evidence${all ? ' is-open' : ''}`} tabIndex={0} aria-label="Evidence text" data-testid="inv-evidence-text">
         {text}
       </pre>
-      <p className="m-0 mt-3 text-[15px]" data-testid="inv-notice">
-        {NOTICE}
-      </p>
+      <button type="button" className="ms2-link" onClick={() => setAll((v) => !v)} aria-expanded={all} data-testid="inv-evidence-toggle">
+        {all ? 'Show less' : `Show all ${fmt(lines)} lines`}
+      </button>
     </section>
   )
 }
 
+function Section({ id, title, a, children }: { id: string; title: string; a: Investigation; children: ReactNode }) {
+  return (
+    <section className="ms2-card" id={id} aria-labelledby={`${id}-h`} data-testid={id}>
+      <h2 id={`${id}-h`} className="ms2-h2">
+        {title}
+      </h2>
+      <Badge a={a} />
+      <div className="mt-2">{children}</div>
+    </section>
+  )
+}
+
+const JUMPS: [string, string][] = [
+  ['inv-similar', 'Reports'],
+  ['inv-sources', 'Not filed by a manufacturer'],
+  ['inv-related', 'Recalls and 510(k)s'],
+  ['inv-evidence', 'Evidence'],
+]
+
 function Results({ a, description }: { a: Investigation; description: string }) {
   return (
     <div className="ms2-inv-results" data-testid="inv-results">
-      <Provenance a={a} />
       <p className="m-0 text-[17px]" data-testid="inv-device">
         <strong>{a.product_code}</strong>
         {a.device_type_name ? <> · {a.device_type_name}</> : <span className="ms2-muted"> · FDA device type name not available</span>}
       </p>
       {a.notes.map((n) => (
-        <p key={n} className="ms-banner ms-banner--info m-0" role="note">
+        <p key={n} className="ms-banner ms-banner--info m-0" role="note" data-testid="inv-note">
           {n}
         </p>
       ))}
-      <section className="ms2-card" aria-labelledby="inv-similar-h" data-testid="inv-similar">
-        <h2 id="inv-similar-h" className="ms2-h2">
-          Similar MAUDE events at other makers
-        </h2>
+      <Section id="inv-similar" title="MAUDE reports for this product code (any maker)" a={a}>
+        <p className="ms2-inv-meta m-0 mb-1">With a second count for reports whose narrative mentions your keywords.</p>
         <Months a={a} />
         <Quotes a={a} />
-      </section>
-      <section className="ms2-card" aria-labelledby="inv-sources-h" data-testid="inv-sources">
-        <h2 id="inv-sources-h" className="ms2-h2">
-          Reports not filed by a manufacturer
-        </h2>
-        <p className="ms2-muted m-0 mt-1 mb-2 text-[15px]">
-          User facilities, voluntary reporters and distributors. A maker may not see these in its own complaint system.
-        </p>
+      </Section>
+      <Section id="inv-sources" title="Reports not filed by a manufacturer" a={a}>
+        <p className="ms2-inv-meta m-0 mb-2">User facilities, voluntary reporters and distributors. A maker may not see these in its own complaint system.</p>
         <Sources a={a} />
-      </section>
-      <section className="ms2-card" aria-labelledby="inv-related-h">
-        <h2 id="inv-related-h" className="ms2-h2">
-          Related recalls and 510(k)s
-        </h2>
+      </Section>
+      <Section id="inv-related" title="Recalls and 510(k)s for this product code" a={a}>
         <Related a={a} />
-      </section>
+      </Section>
       <Evidence a={a} description={description} />
     </div>
   )
+}
+
+function jump(id: string) {
+  const el = document.getElementById(id)
+  if (!el) return
+  el.scrollIntoView({ behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
+  const h = el.querySelector<HTMLElement>('h2')
+  if (h) {
+    h.setAttribute('tabindex', '-1')
+    h.focus({ preventScroll: true })
+  }
 }
 
 export function InvestigatePage({
@@ -403,6 +472,7 @@ export function InvestigatePage({
   code: initialCode,
   device,
   fetcher,
+  onCheckDevice,
 }: {
   /** Origin of the MaudeSignal API; null shows the one recorded run and calls nothing. */
   apiBase: string | null
@@ -410,6 +480,8 @@ export function InvestigatePage({
   /** Id of a simulated device the address came from (shown, never sent). */
   device?: string
   fetcher?: Fetcher
+  /** Opens "Check any device type" (a plain link is used when absent). */
+  onCheckDevice?: () => void
 }) {
   const live = apiBase !== null
   const [code, setCode] = useState(live ? (initialCode ?? '').replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase() : RECORDED_INPUT.product_code)
@@ -417,7 +489,11 @@ export function InvestigatePage({
   const [busy, setBusy] = useState(false)
   const [out, setOut] = useState<Outcome | null>(null)
   const [asked, setAsked] = useState('')
+  const [editing, setEditing] = useState(false)
   const ready = code.length === 3 && description.trim().length >= MIN_DESCRIPTION
+  const why = code.length !== 3 ? 'Enter the three-letter product code.' : `Describe the problem in at least ${MIN_DESCRIPTION} characters.`
+  const ran = out?.ok === true || !live
+  const collapsed = ran && !editing
   const run = async () => {
     if (!live || busy || !ready) return
     setBusy(true)
@@ -426,8 +502,11 @@ export function InvestigatePage({
     const o = await investigate(code, desc, { fetcher: fetcher ?? ((u, init) => fetch(u, init)), apiBase })
     setAsked(desc)
     setOut(o)
+    setEditing(!o.ok)
     setBusy(false)
   }
+  const shown = !live ? RECORDED_INPUT.description : asked
+  const summary = shown.length > 90 ? `${shown.slice(0, 90).trimEnd()}…` : shown
   return (
     <div className="ms2-inv" data-testid="investigate-page">
       <header className="ms2-pagehead">
@@ -438,7 +517,8 @@ export function InvestigatePage({
         </p>
       </header>
       <p className="ms-banner ms-banner--warn ms2-inv-banner" role="note" data-testid="inv-banner">
-        {BANNER}
+        <Icon name="warn" size={20} />
+        <span>{BANNER}</span>
       </p>
       {!live && (
         <p className="ms-banner ms-banner--info" role="note" data-testid="inv-recorded-note">
@@ -449,79 +529,125 @@ export function InvestigatePage({
         </p>
       )}
       {device && (
-        <p className="ms2-muted m-0 text-[15px]" data-testid="inv-device-note">
+        <p className="ms2-inv-meta m-0" data-testid="inv-device-note">
           From the simulated device <code>{device}</code> (a fictional device; its id is not sent anywhere).
         </p>
       )}
-      <form
-        className="ms2-inv-form"
-        onSubmit={(e) => {
-          e.preventDefault()
-          void run()
-        }}
-        aria-label="Complaint details"
-      >
-        <label htmlFor="inv-code" className="ms2-inv-label">
-          Product code
-          <input
-            id="inv-code"
-            data-testid="inv-code"
-            className="ms2-inv-input ms2-inv-code"
-            value={code}
-            readOnly={!live}
-            onChange={(e) => setCode(e.target.value.replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase())}
-            maxLength={3}
-            autoComplete="off"
-            autoCapitalize="characters"
-            spellCheck={false}
-            placeholder="e.g. LLZ"
-            aria-describedby="inv-code-hint"
-          />
-          <span id="inv-code-hint" className="ms2-muted block text-[14px]">
-            Three letters. Not sure? Use Check any device type first.
-          </span>
-        </label>
-        <label htmlFor="inv-desc" className="ms2-inv-label ms2-inv-grow">
-          What went wrong with the device
-          <textarea
-            id="inv-desc"
-            data-testid="inv-desc"
-            className="ms2-inv-input ms2-inv-text"
-            rows={4}
-            value={description}
-            readOnly={!live}
-            maxLength={MAX_DESCRIPTION}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="A few words about the problem with the device. No patient details."
-            aria-describedby="inv-desc-hint"
-          />
-          <span id="inv-desc-hint" className="ms2-muted block text-[14px]">
-            <span className="ms-num" data-testid="inv-count">
-              {description.length}
-            </span>{' '}
-            of {MAX_DESCRIPTION} characters. Used once to find similar reports; not stored.
-          </span>
-        </label>
-        {live && (
-          <div className="ms2-inv-submit">
-            <button type="submit" className="ms-btn ms-btn--primary" disabled={busy || !ready} data-testid="inv-run">
-              {busy ? 'Searching openFDA…' : 'Investigate'}
+      {collapsed ? (
+        <div className="ms2-inv-summary" data-testid="inv-summary">
+          <p className="m-0">
+            <strong>{code}</strong> · <span data-testid="inv-summary-text">{summary}</span>
+          </p>
+          {live && (
+            <button type="button" className="ms-btn ms-btn--sm" onClick={() => setEditing(true)} data-testid="inv-edit">
+              Edit
             </button>
+          )}
+        </div>
+      ) : (
+        <form
+          className="ms2-inv-form"
+          onSubmit={(e) => {
+            e.preventDefault()
+            void run()
+          }}
+          aria-label="Complaint details"
+        >
+          <div className="ms2-inv-field">
+            <label htmlFor="inv-code" className="ms2-inv-label">
+              Product code
+            </label>
+            <input
+              id="inv-code"
+              data-testid="inv-code"
+              className="ms2-inv-input ms2-inv-code"
+              value={code}
+              readOnly={!live}
+              onChange={(e) => setCode(e.target.value.replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase())}
+              maxLength={3}
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              placeholder="e.g. LLZ"
+              aria-describedby="inv-code-hint"
+            />
+            <span id="inv-code-hint" className="ms2-inv-hint">
+              Three letters. Not sure of the code?{' '}
+              <a
+                className="ms2-a"
+                href={hrefFor({ page: 'workflow', id: 'check-device' })}
+                data-testid="inv-check-link"
+                onClick={(e) => {
+                  if (onCheckDevice) {
+                    e.preventDefault()
+                    onCheckDevice()
+                  }
+                }}
+              >
+                Check any device type
+              </a>
+            </span>
           </div>
-        )}
-      </form>
-      <div aria-live="polite">
+          <div className="ms2-inv-field ms2-inv-grow">
+            <label htmlFor="inv-desc" className="ms2-inv-label">
+              What went wrong with the device
+            </label>
+            <textarea
+              id="inv-desc"
+              data-testid="inv-desc"
+              className="ms2-inv-input ms2-inv-text"
+              rows={4}
+              value={description}
+              readOnly={!live}
+              maxLength={MAX_DESCRIPTION}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="A few words about the problem with the device. No patient details."
+              aria-describedby="inv-desc-hint"
+            />
+            <span id="inv-desc-hint" className="ms2-inv-hint">
+              <span className="ms-num" data-testid="inv-count">
+                {description.length}
+              </span>{' '}
+              of {MAX_DESCRIPTION} characters. Used once to pick keywords for the search; not stored.
+            </span>
+          </div>
+          {live && (
+            <div className="ms2-inv-submit">
+              <button
+                type="submit"
+                className={`ms-btn ${ran ? '' : 'ms-btn--primary'}`}
+                disabled={busy || !ready}
+                aria-describedby={ready ? undefined : 'inv-why'}
+                data-testid="inv-run"
+              >
+                {busy ? 'Searching openFDA…' : ran ? 'Run again' : 'Investigate'}
+              </button>
+              {!ready && !busy && (
+                <span id="inv-why" className="ms2-inv-hint" data-testid="inv-why">
+                  {why}
+                </span>
+              )}
+            </div>
+          )}
+        </form>
+      )}
+      {ran && out?.ok !== false && (
+        <nav className="ms2-inv-jumps" aria-label="Jump to a section" data-testid="inv-jumps">
+          {JUMPS.map(([id, label]) => (
+            <button key={id} type="button" className="ms2-smalllink" onClick={() => jump(id)}>
+              {label}
+            </button>
+          ))}
+        </nav>
+      )}
+      <div>
         {busy && (
           <p className="ms2-muted" role="status" data-testid="inv-busy">
-            Asking openFDA. This takes a few seconds.
+            Asking openFDA. This can take up to 40 seconds.
           </p>
         )}
         {out && !out.ok && (
-          <p
-            role="alert"
-            className={`ms-banner ${out.kind === 'patient_data' ? 'ms-banner--warn' : 'ms-banner--err'}`}
-            data-testid={`inv-error-${out.kind}`}
-          >
+          <p role="alert" className={`ms-banner ${out.kind === 'patient_data' ? 'ms-banner--warn' : 'ms-banner--err'}`} data-testid={`inv-error-${out.kind}`}>
             {out.message}
           </p>
         )}

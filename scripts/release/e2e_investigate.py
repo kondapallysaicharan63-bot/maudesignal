@@ -15,6 +15,7 @@ scenarios then check that and that no ``/v1/investigate`` request is made.
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -76,11 +77,16 @@ def make_scenarios(m: Any) -> tuple[tuple[str, Callable[[Any], str]], ...]:
 
     def check_results(env: Any, *, recorded: bool) -> None:
         page = env.page
-        prov = page.get_by_test_id("inv-provenance").inner_text()
+        badges = page.get_by_test_id("inv-badge")
+        if badges.count() != 4:
+            raise AssertionError(
+                f"{badges.count()} provenance badges, not 4 (three sections and the evidence)"
+            )
+        prov = badges.first.inner_text()
         want = "Recorded example" if recorded else "Real FDA data"
         if want not in prov:
             raise AssertionError(f"provenance is {prov!r}, not {want!r}")
-        if not recorded and "Retrieved from openFDA on" not in prov:
+        if not recorded and "retrieved" not in prov:
             raise AssertionError("a live run does not say when it was retrieved")
         rows = page.locator("[data-testid=inv-months] tbody tr").count()
         if rows != 12:
@@ -88,7 +94,7 @@ def make_scenarios(m: Any) -> tuple[tuple[str, Callable[[Any], str]], ...]:
         links = page.locator(
             "[data-testid=inv-months] tbody a[href^='https://api.fda.gov/']"
         ).count()
-        if links < 12:
+        if links < 4:
             raise AssertionError(f"only {links} month figures link to openFDA")
         if (
             not page.get_by_test_id("inv-total-code").inner_text().strip()
@@ -100,6 +106,16 @@ def make_scenarios(m: Any) -> tuple[tuple[str, Callable[[Any], str]], ...]:
             raise AssertionError(f"{quotes} quotes")
         if "cannot be separated" not in page.get_by_test_id("inv-own-maker").inner_text():
             raise AssertionError("the own-company limit is not stated")
+        zero = page.locator("[data-testid=inv-months] tr.ms2-inv-zero a").count()
+        if zero:
+            raise AssertionError(f"{zero} links on months with no reports")
+        if (
+            page.get_by_test_id("inv-summary").count() == 0
+            or page.get_by_test_id("inv-jumps").locator("button").count() != 4
+        ):
+            raise AssertionError("the form did not collapse to a summary with jump links")
+        if re.search(r"other makers|Similar MAUDE", page.locator("body").inner_text()):
+            raise AssertionError("a heading says 'other makers' or 'Similar'")
         for tid in ("inv-sources", "inv-recalls", "inv-clearances", "inv-evidence"):
             if page.get_by_test_id(tid).count() == 0:
                 raise AssertionError(f"{tid} is missing")
@@ -282,10 +298,71 @@ def make_scenarios(m: Any) -> tuple[tuple[str, Callable[[Any], str]], ...]:
             raise AssertionError(f"axe: {ids} {counts}")
         return f"axe {counts}; no sideways scroll"
 
+    def s_states(env: Any) -> str:
+        """Limit, partial (time limit) and empty states: honest messages, no invented numbers."""
+        mock_api(
+            env,
+            429,
+            {
+                "code": "rate_limited",
+                "message": "Limit of 6 investigations per hour reached. Retry in 600 seconds.",
+            },
+        )
+        m.v2_open(env, "investigate", "code=LLZ")
+        if not is_live(env):
+            raise m.SkipError(m.NOT_PRESENT, "recorded build: no requests are made", required=False)
+        env.page.get_by_test_id("inv-desc").fill(DESCRIPTION)
+        env.page.get_by_test_id("inv-run").click()
+        env.page.wait_for_selector("[data-testid=inv-error-rate]", timeout=10_000)
+        if env.page.get_by_test_id("inv-results").count():
+            raise AssertionError("results after a limit")
+        env.shot("v2-investigate-limit")
+        partial = {
+            **answer,
+            "notes": [
+                "The time limit of this search was reached, so some sections are missing. Run it again to fill them in."
+            ],
+            "recalls": {"total": None, "items": [], "note": "Recalls could not be read."},
+            "clearances": {"total": None, "items": [], "note": "510(k)s could not be read."},
+            "sources": None,
+            "quotes": [],
+        }
+        env.page.context.unroute("**/v1/investigate")
+        mock_api(env, 200, partial)
+        env.page.get_by_test_id("inv-run").click()
+        env.page.wait_for_selector("[data-testid=inv-results]", timeout=10_000)
+        if "time limit" not in env.page.get_by_test_id("inv-note").first.inner_text():
+            raise AssertionError("the partial note is missing")
+        if "could not be read" not in env.page.get_by_test_id("inv-recalls").inner_text():
+            raise AssertionError("a missing section is not said to be missing")
+        env.shot("v2-investigate-partial")
+        empty = {
+            **answer,
+            "keywords": [],
+            "total_keyword_matched": None,
+            "quotes": [],
+            "months": [
+                {**mo, "keyword_matched": None, "keyword_url": None, "code_wide": 0}
+                for mo in answer["months"]
+            ],
+            "total_code_wide": {"value": 0, "url": answer["total_code_wide"]["url"]},
+        }
+        env.page.context.unroute("**/v1/investigate")
+        mock_api(env, 200, empty)
+        env.page.get_by_test_id("inv-edit").click()
+        env.page.get_by_test_id("inv-run").click()
+        env.page.wait_for_selector("[data-testid=inv-keywords]", timeout=10_000)
+        if "no content words" not in env.page.get_by_test_id("inv-keywords").inner_text():
+            raise AssertionError("the no-keywords state is not explained")
+        env.shot("v2-investigate-empty")
+        no_overflow(env, "states")
+        return "limit, partial and empty states shown honestly"
+
     return (
         ("v2 investigate: Home button, form, results, evidence, Copy", s_flow),
         ("v2 investigate: + menu item", s_menu),
         ("v2 investigate: ?code and ?device", s_deeplink),
         ("v2 investigate: patient data refused", s_patient),
         ("v2 investigate: labels and axe", s_a11y),
+        ("v2 investigate: limit, partial, empty states", s_states),
     )
