@@ -10,6 +10,7 @@ carry a number, a quote, a device id or a regulation reference.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Any, Literal
 
@@ -26,6 +27,29 @@ ClaimKind = Literal[
     "source_count",
     "group_count",
 ]
+
+
+_ISO_DAY = re.compile(r"^(\d{4})-(\d{1,2})-(\d{1,2})$")
+
+
+def normalize_ymd(value: str | None) -> str | None:
+    """``YYYYMMDD`` from ``YYYYMMDD``, ``YYYY-MM-DD`` or unpadded ``YYYY-M-D``.
+
+    Anything else is returned unchanged (the claim then fails to match, as before).
+    """
+    if value is None:
+        return None
+    text = str(value).strip()
+    m = _ISO_DAY.match(text)
+    if m:
+        return f"{m.group(1)}{int(m.group(2)):02d}{int(m.group(3)):02d}"
+    return text
+
+
+def _normalize_dates(claim: object) -> None:
+    """Rewrite a frozen claim's ``date_from`` / ``date_to`` as ``YYYYMMDD`` (at construction)."""
+    for name in ("date_from", "date_to"):
+        object.__setattr__(claim, name, normalize_ymd(getattr(claim, name)))
 
 
 @dataclass(frozen=True)
@@ -58,6 +82,10 @@ class CountClaim:
     date_to: str | None = None
     kind: ClaimKind = "count"
 
+    def __post_init__(self) -> None:
+        """Normalise the dates."""
+        _normalize_dates(self)
+
 
 @dataclass(frozen=True)
 class ShareClaim:
@@ -69,6 +97,10 @@ class ShareClaim:
     date_from: str | None = None
     date_to: str | None = None
     kind: ClaimKind = "share"
+
+    def __post_init__(self) -> None:
+        """Normalise the dates."""
+        _normalize_dates(self)
 
 
 @dataclass(frozen=True)
@@ -121,6 +153,10 @@ class RecallCountClaim:
     date_to: str | None = None
     kind: ClaimKind = "recall_count"
 
+    def __post_init__(self) -> None:
+        """Normalise the dates."""
+        _normalize_dates(self)
+
 
 @dataclass(frozen=True)
 class LiteratureClaim:
@@ -146,6 +182,10 @@ class SourceCountClaim:
     date_to: str | None = None
     kind: ClaimKind = "source_count"
 
+    def __post_init__(self) -> None:
+        """Normalise the dates."""
+        _normalize_dates(self)
+
 
 @dataclass(frozen=True)
 class GroupCountClaim:
@@ -163,6 +203,10 @@ class GroupCountClaim:
     date_from: str | None = None
     date_to: str | None = None
     kind: ClaimKind = "group_count"
+
+    def __post_init__(self) -> None:
+        """Normalise the dates."""
+        _normalize_dates(self)
 
 
 Claim = (

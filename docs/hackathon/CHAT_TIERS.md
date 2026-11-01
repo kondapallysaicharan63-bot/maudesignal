@@ -95,7 +95,7 @@ happen?") is not looked up or stored when history is sent.
 ## Tier 4: Muse Spark, cheaper
 
 * **Shorter system prompt**: the block between the `live-compact-prompt` markers in
-  `skills/safety-copilot/SKILL.md` (Skill 1.3.4), about 2 KB instead of about 9 KB. Other
+  `skills/safety-copilot/SKILL.md` (Skill 1.3.5), about 2 KB instead of about 9 KB. Other
   callers (recordings, Streamlit) keep the full prompt; the block is removed from it.
   Since 1.3.3 both prompts get a short per-question date context (today's UTC date, the
   stored report window overall and per product code, the latest sweep week) so relative

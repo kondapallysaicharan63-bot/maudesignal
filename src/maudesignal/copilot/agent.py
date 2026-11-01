@@ -220,6 +220,8 @@ def _repair_message(report: GateReport) -> str:
                     lines.append(f"    - {cv.claim.kind}: {cv.reason}{extra}")
             for u in s.ungrounded:
                 lines.append(f"    - ungrounded: {u}")
+            for d in s.date_issues:
+                lines.append(f"    - dates: {d}")
     lines.append("Return the full corrected answer as the same JSON object.")
     return "\n".join(lines)
 
