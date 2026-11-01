@@ -158,7 +158,7 @@
   margin-left: auto;
   flex: none;
   white-space: nowrap;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   padding: 1px 8px;
   border-radius: var(--radius-full);
@@ -168,7 +168,7 @@
 }
 .ms2-kbd {
   flex: none;
-  font: 500 12px/1 var(--font-mono);
+  font: 500 14px/1 var(--font-mono);
   color: var(--ink-2);
   border: 1px solid var(--rule);
   border-radius: var(--radius-xs);
@@ -176,13 +176,13 @@
 }
 .ms2-side-h {
   margin: 20px 10px 0;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--ink-2);
 }
 .ms2-side-note {
   margin: 2px 10px 6px;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--ink-2);
 }
 .ms2-side-note.is-bad {
@@ -294,7 +294,7 @@
 .ms2-smalllink {
   align-self: flex-start;
   min-height: 32px;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--ink-2);
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -370,7 +370,7 @@
 .ms2-tag {
   display: inline-block;
   padding: 0 6px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   border-radius: var(--radius-xs);
   background: var(--surface-sunk);
@@ -483,7 +483,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   border-radius: var(--radius-full);
   background: var(--surface-sunk);
@@ -496,7 +496,7 @@
   margin: 0;
 }
 .ms2-stats dt {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--ink-2);
 }
 .ms2-stats dd {
@@ -587,7 +587,7 @@
   max-width: 48rem;
   margin: 0 auto;
   padding: 0 16px 4px;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--ink-2);
   text-align: center;
 }
@@ -614,7 +614,7 @@
 .ms2-option-group {
   display: block;
   margin: 4px 0 4px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--ink-2);
 }
@@ -849,3 +849,84 @@
   background: var(--surface-sunk);
 }
 .ms2-main:focus { outline: none; }
+
+/* --- review round 2 ------------------------------------------------------------------------- */
+
+/* Simulated and demo-snapshot notes are neutral (grey surface, dashed edge); amber and red are for real alerts only.
+   Warnings that need action (an alert, the daily limit, a dialog's warning) keep their colour. */
+:is(.ms2-shell, .ms2-scope) .ms-banner--warn:not([role='alert']):not([data-testid='limit-banner']),
+:is(.ms2-shell, .ms2-scope) [data-testid='alert-simulated-banner'],
+:is(.ms2-shell, .ms2-scope) [data-testid='alert-group-banner'] {
+  background: var(--surface-sunk);
+  color: var(--ink);
+  border: 1px dashed var(--rule-strong);
+}
+.ms2-shell [role='dialog'] .ms-banner--warn:not([data-testid='alert-group-banner']) {
+  background: var(--warning-soft);
+  color: var(--warning);
+  border: 0;
+}
+:is(.ms2-shell, .ms2-scope) .ms-banner--warn span,
+:is(.ms2-shell, .ms2-scope) .ms-banner--warn strong {
+  color: var(--ink);
+}
+
+/* Selected segmented choices: a quiet filled pill, not a solid black block competing with the primary button. */
+.ms2-shell [aria-pressed='true'].bg-inverse {
+  background: var(--accent-soft);
+  color: var(--ink);
+  border-color: var(--accent);
+}
+
+/* One caption per list: where its rows come from. */
+.ms2-caption {
+  margin: 2px 0 4px;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.ms2-alertrow-l1 > .ws-pill {
+  margin-left: 2px;
+}
+
+/* Connect: the demo key sits under one rule. */
+.ms2-shell [data-testid='demo-key-block'] > div {
+  border-top: 0;
+}
+.ms2-shell [data-testid^='value-'] {
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+/* Count badge: outline only. */
+.ms2-badge {
+  background: transparent;
+  color: var(--ink-2);
+}
+
+/* Dossier: the document id one step lighter than the body text is too dark in the dark theme; keep it at ink-2. */
+.ms2-dossier .ms-code,
+.ms2-dossier .ms-kicker {
+  color: var(--ink-2);
+}
+.ms2-made {
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.ms2-made summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--ink);
+  font-weight: 500;
+}
+.ms2-made ul {
+  margin: 0;
+  padding-left: 20px;
+}
+/* Badges inside a demo or simulated card stay neutral: colour is for this week's real alerts only. */
+.ms2-sim .ws-pill {
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--rule-strong);
+}

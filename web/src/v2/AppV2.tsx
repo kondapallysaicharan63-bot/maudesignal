@@ -564,8 +564,6 @@ export default function AppV2() {
                 go({ page: 'devices', tab: 'apply' })
               }}
               onFeedback={() => setFeedback(true)}
-              theme={theme}
-              onTheme={setTheme}
             />
             <div className="ms2-body">
               <SidebarV2
@@ -623,6 +621,7 @@ export default function AppV2() {
             {data && <SchedulesDialog open={schedules} onClose={closeSchedules} schedules={data.schedules} sources={data.sources} />}
           </div>
           {panel && (
+            <div className="ms2-scope">
             <AlertPanel
               detail={findAlert(data?.alerts, panel.id, panel.code)}
               fallbackCode={panel.code}
@@ -637,6 +636,7 @@ export default function AppV2() {
               apiBase={API_BASE}
               mentions={storedMentions(data?.mentions, findAlert(data?.alerts, panel.id, panel.code)?.product_code ?? panel.code ?? '')}
             />
+            </div>
           )}
         </PanelNav.Provider>
       </AlertPanelContext.Provider>

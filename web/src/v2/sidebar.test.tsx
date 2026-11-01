@@ -15,6 +15,8 @@ import type { WorkspaceData } from '../types'
 import type { SavedChat } from './chatStore'
 import { HomeV2 } from './HomeV2'
 import { devicesToReview, realAlertItems, realDetails } from './realAlerts'
+import { demoRows, NO_NAME, realRows } from './AlertRows'
+import { plainDate, plainModel } from '../components/artifacts/DossierVision'
 import { NOT_SAVED_NOTE, SidebarV2 } from './SidebarV2'
 import { ChatBoundary, questionsLeft } from './ChatScreen'
 import { SubTabs } from './SubTabs'
@@ -164,9 +166,16 @@ describe('sidebar', () => {
 })
 
 describe('real alerts are never mixed with simulated devices', () => {
-  it('the real list has only sweep and brief alerts, ranked more serious first', () => {
+  it("the real list has only this week's sweep alerts (the demo brief and simulated devices are apart), more serious first", () => {
     const items = realAlertItems(DATA)
-    expect(items.length).toBe(realDetails(DATA).length)
+    expect(items.length).toBe(realDetails(DATA).filter((d) => d.source.kind === 'sweep').length)
+    expect(items.every((a) => a.source === 'sweep')).toBe(true)
+    const demo = demoRows(DATA)
+    expect(demo.rows.map((r) => r.code)).toEqual(realDetails(DATA).filter((d) => d.source.kind === 'brief').map((d) => d.product_code))
+    const rows = realRows(DATA).rows
+    expect(rows.every((r) => r.name === null || r.name.length > 0)).toBe(true)
+    const llz = demo.rows.find((r) => r.code === 'LLZ')
+    if (llz) expect(llz.counts).toBe('33 that week (8.75 before)')
     expect(items.length).toBeGreaterThan(0)
     expect(items.every((a) => a.source !== 'company' && !a.id.startsWith('company:'))).toBe(true)
     expect(items[0].kind).toBe('severity_escalation')
@@ -274,5 +283,26 @@ describe('review fixes', () => {
       sel.dispatchEvent(new Event('change', { bubbles: true }))
     })
     expect(onChange).toHaveBeenLastCalledWith('b', 'click')
+  })
+})
+
+describe('round 2', () => {
+  it('rows without a stored device name say so, never a made-up name', () => {
+    const rows = realRows(DATA).rows
+    for (const r of rows.filter((x) => x.name === null)) expect(r.code).toMatch(/^[A-Z]{3}$/)
+    act(() =>
+      root.render(<HomeV2 data={DATA} onAlert={() => undefined} onViewAll={() => undefined} onDevices={() => undefined} onAudit={() => undefined} />),
+    )
+    const home = q('[data-testid=home-alerts]')!.textContent ?? ''
+    for (const r of rows.slice(0, 3)) expect(home).toContain(r.name ?? NO_NAME)
+    expect(home).not.toMatch(/demo/i)
+    if (demoRows(DATA).rows.length) expect(q('[data-testid=home-demo]')?.textContent).toMatch(/Demo snapshot/)
+  })
+  it('plain model names and dates for "How this was made"', () => {
+    expect(plainModel('muse-spark-1.3')).toBe('Muse Spark 1.3')
+    expect(plainModel('muse-wonder-1.0')).toBe('Muse Wonder')
+    expect(plainModel('other-model')).toBe('other-model')
+    expect(plainDate('2026-10-31T03:30:21Z')).toBe('31 Oct 2026')
+    expect(plainDate('soon')).toBe('soon')
   })
 })

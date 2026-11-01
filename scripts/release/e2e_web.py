@@ -1357,7 +1357,13 @@ def s_v2_live_chip(env: Env) -> str:
     if chip != "Muse Spark 1.3 · Live":
         raise AssertionError(f"chip is {chip!r}")
     seen = visible_text(env)
-    for noisy in ("Cost of this answer", "812 ms", "Fixed reply, no model call"):
+    for noisy in (
+        "Cost of this answer",
+        "812 ms",
+        "818 ms",
+        "1200 in",
+        "Fixed reply, no model call",
+    ):
         if noisy in seen:
             raise AssertionError(f"{noisy!r} is visible in the main view")
     if (
@@ -2227,7 +2233,28 @@ def v2_s_sections(env: Env) -> str:
         raise AssertionError("the Muse connector status is not the exact text")
     env.page.goto(v2_url(env, "devices/apply"), wait_until="load")
     env.page.wait_for_selector("[data-testid=company-banner]", timeout=10_000)
-    return f"{len(seen)} subtabs: {', '.join(seen)}; LLZ 33 vs 8.75 (stored); Muse status exact"
+    bg = env.page.evaluate(
+        "getComputedStyle(document.querySelector('[data-testid=company-banner]')).borderTopStyle"
+    )
+    if bg != "dashed":
+        raise AssertionError(f"the simulated banner is not the neutral dashed style ({bg})")
+    # Evidence · Muse Wonder review: the dossier PDF renders on a v2 address (pdf.js got a relative URL before).
+    env.page.goto(v2_url(env, "evidence/review"), wait_until="load")
+    env.page.wait_for_selector(
+        ".ms2-dossier canvas, [data-testid=pdf-unavailable]", state="attached", timeout=30_000
+    )
+    if env.page.get_by_test_id("pdf-unavailable").count():
+        raise AssertionError("the dossier PDF did not render on /evidence/review")
+    made = env.page.get_by_test_id("how-made")
+    made.locator("summary").click()
+    made_text = made.inner_text()
+    if "Muse Spark" not in made_text or "Muse Wonder" not in made_text or "muse-spark" in made_text:
+        raise AssertionError(f"How this was made: {made_text[:160]!r}")
+    env.shot("v2-evidence-review")
+    return (
+        f"{len(seen)} subtabs: {', '.join(seen)}; LLZ 33 vs 8.75 (stored); Muse status exact; "
+        "simulated banner neutral; dossier PDF renders; plain model names"
+    )
 
 
 def v2_s_bell(env: Env) -> str:
@@ -2420,7 +2447,7 @@ def v2_pick_theme(env: Env, opener: str, theme: str) -> None:
 
 
 def v2_s_themes(env: Env) -> str:
-    """Every theme applies (smoke) from the one theme menu (sidebar and top bar) and is kept after reload."""
+    """Every theme applies (smoke) from the one theme control (the sidebar) and is kept after reload."""
     v2_open(env)
     for t in V2_THEMES:
         v2_pick_theme(env, "side-theme", t)
@@ -2429,24 +2456,28 @@ def v2_s_themes(env: Env) -> str:
             raise AssertionError(f"theme {t} gave data-theme={got}")
         v2_close_drawer(env)
         env.shot(f"v2-theme-{t}")
-    v2_pick_theme(env, "top-theme", "light")
+    if env.page.get_by_test_id("top-theme").count():
+        raise AssertionError("a second theme control is in the top bar")
+    v2_pick_theme(env, "side-theme", "light")
     if env.page.evaluate("document.documentElement.getAttribute('data-theme')") != "light":
-        raise AssertionError("the top-bar theme menu did not apply Paper")
-    env.page.get_by_test_id("top-theme").click()
+        raise AssertionError("the theme menu did not apply Paper")
+    v2_sidebar(env)
+    env.page.get_by_test_id("side-theme").click()
     env.page.keyboard.press("Escape")
     if env.page.locator("[role=menu][aria-label=Theme]").count():
         raise AssertionError("Escape did not close the theme menu")
+    v2_close_drawer(env)
     env.page.reload(wait_until="load")
     env.page.wait_for_selector("[data-testid=topbar-v2]")
     if env.page.evaluate("document.documentElement.getAttribute('data-theme')") != "light":
         raise AssertionError("the theme was not kept after reload")
-    v2_pick_theme(env, "top-theme", "pink")
+    v2_pick_theme(env, "side-theme", "pink")
     env.page.goto(env.args.url.rstrip("/") + "/?layout=classic", wait_until="load")
     env.page.wait_for_selector(COMPOSER, timeout=30_000)
     classic = env.page.evaluate("document.documentElement.getAttribute('data-theme')")
     if classic in V2_THEMES:
         raise AssertionError(f"the classic layout shows the v2-only theme {classic}")
-    return f"themes {', '.join(V2_THEMES)} applied; one menu from sidebar and top bar; kept; classic never shows them"
+    return f"themes {', '.join(V2_THEMES)} applied from the one sidebar control; kept; classic never shows them"
 
 
 def v2_s_fonts(env: Env) -> str:

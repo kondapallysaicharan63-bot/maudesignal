@@ -1,10 +1,8 @@
 // The one top bar of the v2 layout: menu, logo, search, alert bell (real alerts only, with a separate link to the
-// simulated devices), Feedback and the theme switch.
+// simulated devices) and Feedback. The theme is chosen in one place, the sidebar.
 import type { AlertItem } from '../dashboard'
 import { Icon } from '../icons'
 import { AlertBell } from '../components/AlertBell'
-import { ThemeMenu } from './ThemeMenu'
-import type { ThemeId } from './theme'
 
 export const BELL_NOTE =
   'Real FDA alerts only: the AI device sweep and the stored demo-snapshot brief. Signals for a person to review. Simulated devices are listed under Our devices.'
@@ -23,8 +21,6 @@ export function TopBarV2({
   devicesToReview,
   onDevices,
   onFeedback,
-  theme,
-  onTheme,
 }: {
   /** From 768 px: the sidebar sits beside the page (the Search here is for phones only). */
   desktop: boolean
@@ -41,8 +37,6 @@ export function TopBarV2({
   devicesToReview: number
   onDevices: () => void
   onFeedback: () => void
-  theme: ThemeId
-  onTheme: (t: ThemeId) => void
 }) {
   return (
     <header className="ms2-topbar" data-testid="topbar-v2">
@@ -51,6 +45,7 @@ export function TopBarV2({
         className="ws-icon-btn"
         onClick={onToggleSidebar}
         aria-label={desktop ? (sidebarOpen ? 'Hide the sidebar' : 'Show the sidebar') : 'Menu'}
+        title={desktop ? (sidebarOpen ? 'Hide the sidebar' : 'Show the sidebar') : 'Menu'}
         aria-controls="sidebar"
         aria-expanded={sidebarOpen}
         data-testid="sidebar-toggle"
@@ -70,7 +65,7 @@ export function TopBarV2({
         MaudeSignal
       </a>
       {!desktop && (
-        <button type="button" className="ws-icon-btn" onClick={onSearch} aria-label="Search chats and pages" data-testid="top-search">
+        <button type="button" className="ws-icon-btn" onClick={onSearch} aria-label="Search chats and pages" title="Search chats and pages" data-testid="top-search">
           <Icon name="search" />
         </button>
       )}
@@ -100,11 +95,10 @@ export function TopBarV2({
           </section>
         )}
       />
-      <button type="button" className="ws-icon-btn" onClick={onFeedback} aria-haspopup="dialog" aria-label="Give feedback" data-testid="top-feedback">
+      <button type="button" className="ws-icon-btn" onClick={onFeedback} aria-haspopup="dialog" aria-label="Give feedback" title="Give feedback" data-testid="top-feedback">
         <Icon name="chat" />
         <span className="ms2-hide-sm text-[15px]">Feedback</span>
       </button>
-      <ThemeMenu theme={theme} onTheme={onTheme} placement="down" testid="top-theme" />
     </header>
   )
 }

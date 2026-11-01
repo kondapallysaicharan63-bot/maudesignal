@@ -306,6 +306,7 @@ export function SidebarV2(p: Props) {
         <div className="ms2-side-foot">
           <ThemeMenu theme={p.theme} onTheme={p.onTheme} placement="up" testid="side-theme" showLabel />
           <button type="button" className="ms2-siderow" onClick={p.onSchedules} data-testid="schedules-link">
+            <Icon name="info" size={18} />
             Schedules and sources
           </button>
         </div>

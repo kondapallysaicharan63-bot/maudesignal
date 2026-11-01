@@ -13,7 +13,22 @@ const base = import.meta.env.BASE_URL
 const dataUrl = (p: string) => `${base}data/${p}`
 
 /** Draft and approved evidence-pack PDFs, embedded, with download. */
-export function DossierTab({ dossier }: { dossier: Dossier }) {
+/** "muse-spark-1.3" as "Muse Spark 1.3", "muse-wonder-1.0" as "Muse Wonder"; any other id as it is. */
+export function plainModel(id: string): string {
+  const spark = /^muse-spark-([\d.]+)$/i.exec(id)
+  if (spark) return `Muse Spark ${spark[1]}`
+  if (/^muse-wonder/i.test(id)) return 'Muse Wonder'
+  return id
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+/** "2026-10-31T03:30:21Z" as "31 Oct 2026"; anything else as it is. */
+export function plainDate(ts: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(ts)
+  return m ? `${Number(m[3])} ${MONTHS[Number(m[2]) - 1] ?? m[2]} ${m[1]}` : ts
+}
+
+export function DossierTab({ dossier, v2 = false }: { dossier: Dossier; v2?: boolean }) {
   const [which, setWhich] = useState<'draft' | 'approved'>('draft')
   const url = dataUrl(dossier.pdf[which])
   const r = dossier.review
@@ -29,7 +44,7 @@ export function DossierTab({ dossier }: { dossier: Dossier }) {
           value={which}
           options={[
             { id: 'draft', label: 'Draft PDF' },
-            { id: 'approved', label: 'Approved PDF (demo reviewer)' },
+            { id: 'approved', label: v2 ? 'Signed-off PDF (demo reviewer)' : 'Approved PDF (demo reviewer)' },
           ]}
           onChange={setWhich}
         />
@@ -40,7 +55,7 @@ export function DossierTab({ dossier }: { dossier: Dossier }) {
         </p>
       )}
       <div className="mt-3">
-        <PdfView url={url} title={`${which} evidence pack ${dossier.doc_id}`} />
+        <PdfView url={url} title={`${which} evidence pack ${dossier.doc_id}`} v2={v2} />
       </div>
       <div className="mt-2 flex flex-wrap gap-2">
         <a className="ms-chip" href={url} target="_blank" rel="noreferrer">
@@ -50,6 +65,24 @@ export function DossierTab({ dossier }: { dossier: Dossier }) {
           Download {which} PDF
         </a>
       </div>
+      {v2 ? (
+        <details className="ms2-made mt-4" data-testid="how-made">
+          <summary>How this was made</summary>
+          <ul>
+            {dossier.narrative && (
+              <li>
+                Summary written by {plainModel(dossier.narrative.model)}, {plainDate(dossier.narrative.created_at)}
+              </li>
+            )}
+            {r && (
+              <li>
+                Independent review by {plainModel(r.model)}:{' '}
+                {r.parse_error ? 'the review could not be read' : `${r.findings.length} ${r.findings.length === 1 ? 'finding' : 'findings'}`}
+              </li>
+            )}
+          </ul>
+        </details>
+      ) : (
       <dl className="m-0 mt-4 text-[17px] text-ink-2">
         {dossier.narrative && (
           <div>
@@ -68,6 +101,7 @@ export function DossierTab({ dossier }: { dossier: Dossier }) {
           </div>
         )}
       </dl>
+      )}
       {r && !r.parse_error && (
         <div className="mt-4">
           <TraceView trace={buildReviewTrace(r)} shown={99} label="Review steps" replayed={false} />

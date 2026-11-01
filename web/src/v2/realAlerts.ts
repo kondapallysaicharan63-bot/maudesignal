@@ -58,11 +58,21 @@ export function rankReal(details: AlertDetail[]): AlertDetail[] {
   })
 }
 
-/** Real alerts as list items, ranked. Falls back to the risky sweep / brief items when alerts.json is absent. */
+/** This week's real alerts: the AI device sweep only (the stored brief is a demo snapshot, listed apart). */
+export function sweepDetails(data: Pick<WorkspaceData, 'alerts'>): AlertDetail[] {
+  return realDetails(data).filter((d) => d.source.kind === 'sweep')
+}
+
+/** The demo-snapshot brief's alerts: real FDA reports, but from the demo database, not this week. */
+export function demoDetails(data: Pick<WorkspaceData, 'alerts'>): AlertDetail[] {
+  return realDetails(data).filter((d) => d.source.kind === 'brief')
+}
+
+/** This week's real alerts as list items, ranked (the bell, Home, Signals). Without alerts.json: the risky sweep items. */
 export function realAlertItems(data: Pick<WorkspaceData, 'alerts' | 'sweep' | 'briefs'>): AlertItem[] {
-  const details = realDetails(data)
+  const details = sweepDetails(data)
   if (details.length > 0) return rankReal(details).map(itemOf)
-  return groupAlerts(alertItems(data.sweep, data.briefs, null)).signals
+  return groupAlerts(alertItems(data.sweep, data.briefs, null)).signals.filter((a) => a.source === 'sweep')
 }
 
 /** Devices of the simulated (or the person's own) company that need review. Never a real alert. */

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { auditRunFor, capaDrafts } from '../artifacts'
 import { useAlertPanel } from '../alertPanelContext'
 import { configSnippets, EXAMPLE_QUESTIONS, fetchConnect, FALLBACK_INFO, type ConnectInfo } from '../connect'
-import { AlertRows, realRows } from './AlertRows'
+import { AlertRows, demoRows, realRows, SourceCaption } from './AlertRows'
 import { demoSnapshotLabel, WORKFLOWS } from '../data'
 import { Icon } from '../icons'
 import { useMine } from '../useMyCompany'
@@ -77,7 +77,13 @@ function Related({ ids, onWorkflow, title = 'More ways in' }: { ids: WorkflowId[
 /** Ranked: the real alerts, most important first, each row opening its detail panel. */
 function Ranked({ data }: { data: WorkspaceData }) {
   const { openAlert } = useAlertPanel()
-  return <AlertRows rows={realRows(data)} onOpen={openAlert} ranked label="Real FDA alerts, ranked" testid="ranked-list" />
+  const real = realRows(data)
+  return (
+    <>
+      <SourceCaption text={real.source} testid="ranked-source" />
+      <AlertRows rows={real.rows} onOpen={openAlert} ranked label="Real FDA alerts, ranked" testid="ranked-list" />
+    </>
+  )
 }
 
 /** Trend: this week against the weekly average of the 4 weeks before, for each real alert (stored numbers only). */
@@ -224,17 +230,25 @@ function Unfiled({ data, onThread }: { data: WorkspaceData; onThread: (id: strin
 /** All alerts: every real alert, the full AI device sweep, then the daily briefs (demo snapshot). */
 function AllAlerts({ data, briefDate, onBriefDate }: { data: WorkspaceData; briefDate: string | null; onBriefDate: (d: string) => void }) {
   const { openAlert } = useAlertPanel()
-  const rows = realRows(data)
+  const real = realRows(data)
+  const demo = demoRows(data)
   return (
     <div className="space-y-6">
       <section aria-label="Real FDA alerts" data-testid="all-alerts">
         <h2 className="ms2-h2">
-          Real FDA alerts · <span className="ms-num">{rows.length}</span>
+          Real FDA alerts · <span className="ms-num">{real.rows.length}</span>
         </h2>
-        <div className="mt-2">
-          <AlertRows rows={rows} onOpen={openAlert} label="Real FDA alerts" />
-        </div>
+        <SourceCaption text={real.source} />
+        <AlertRows rows={real.rows} onOpen={openAlert} label="Real FDA alerts" />
       </section>
+      {demo.rows.length > 0 && (
+        <section aria-label="Demo snapshot brief" className="ms2-sim" data-testid="demo-alerts">
+          <h2 className="ms2-h2">Demo snapshot brief</h2>
+          <p className="ms2-muted m-0 text-[15px]">Real FDA reports from the demo database, not this week's data.</p>
+          <SourceCaption text={demo.source} />
+          <AlertRows rows={demo.rows} onOpen={openAlert} label="Demo snapshot brief alerts" />
+        </section>
+      )}
       <section aria-label="AI device sweep">
         <SweepCard sweep={data.sweep} />
       </section>
@@ -351,7 +365,7 @@ export function EvidencePage({
   const capaThread = data.threads.threads.find((t) => t.workflow === 'capa-need-evidence') ?? null
   return (
     <div>
-      <PageHead title="Evidence" lead="Evidence, an independent review, a named approval and the audit trail." />
+      <PageHead title="Evidence" lead="From the reports to a reviewed, approved and audited decision. Drafts only." />
       <SubTabs id="evidence" label="Evidence" tabs={EVIDENCE_TAB_LABELS} value={tab} onChange={onTab}>
         {tab === 'capa' && (
           <>
@@ -361,7 +375,11 @@ export function EvidencePage({
             <Related ids={['vision']} onWorkflow={onWorkflow} title="Label and 510(k) vision" />
           </>
         )}
-        {tab === 'review' && <DossierTab dossier={data.dossier} />}
+        {tab === 'review' && (
+          <div className="ms2-dossier">
+            <DossierTab dossier={data.dossier} v2 />
+          </div>
+        )}
         {tab === 'approve' && <CapaTab drafts={capaDrafts(data.audit)} evidence={data.evidence} />}
         {tab === 'audit' && (
           <AuditTab audit={data.audit} activeRun={auditRunFor(data.audit, capaThread)?.run_label ?? null} generatedUtc={data.manifest.generated_utc} />

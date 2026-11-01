@@ -5,7 +5,7 @@ import { isoDay } from '../data'
 import { Icon } from '../icons'
 import type { WorkspaceData } from '../types'
 import { sweepDate } from '../components/SweepCard'
-import { AlertRows, realRows } from './AlertRows'
+import { AlertRows, demoRows, realRows, SourceCaption } from './AlertRows'
 import { devicesToReview } from './realAlerts'
 
 export const HOME_TOP = 3
@@ -27,6 +27,7 @@ export function HomeV2({
   onAudit: () => void
 }) {
   const real = realRows(data)
+  const demo = demoRows(data)
   const toReview = devicesToReview(data)
   const yours = data.company.mine === true
   const m = data.sweep.meta
@@ -34,22 +35,33 @@ export function HomeV2({
   const h = data.manifest.header
   return (
     <div className="ms2-home">
-      <h1 className="ms2-h1">Home</h1>
-      <div className="ms2-grid mt-5">
+      <h1 className="sr-only">Home</h1>
+      <div className="ms2-grid">
         <section className="ms2-card ms2-span2" aria-labelledby="home-alerts-h" data-testid="home-alerts">
           <h2 id="home-alerts-h" className="ms2-h2">
             Real FDA alerts
           </h2>
-          <p className="ms2-muted m-0 text-[15px]">AI device sweep and demo-snapshot brief</p>
-          <div className="mt-2">
-            <AlertRows rows={real.slice(0, HOME_TOP)} onOpen={onAlert} label="Top real FDA alerts" />
+          <SourceCaption text={real.source} testid="home-alerts-source" />
+          <div className="mt-1">
+            <AlertRows rows={real.rows.slice(0, HOME_TOP)} onOpen={onAlert} label="Top real FDA alerts" />
           </div>
-          {real.length > 0 && (
+          {real.rows.length > 0 && (
             <button type="button" className="ms2-link mt-2" onClick={onViewAll} data-testid="home-view-all">
-              View all&nbsp;<span className="ms-num">{real.length}</span>&nbsp;→
+              View all&nbsp;<span className="ms-num">{real.rows.length}</span>&nbsp;→
             </button>
           )}
         </section>
+
+        {demo.rows.length > 0 && (
+          <section className="ms2-sim ms2-span2" aria-labelledby="home-demo-h" data-testid="home-demo">
+            <h2 id="home-demo-h" className="ms2-h2">
+              Demo snapshot brief
+            </h2>
+            <p className="ms2-muted m-0 text-[15px]">Real FDA reports from the demo database, not this week's data.</p>
+            <SourceCaption text={demo.source} />
+            <AlertRows rows={demo.rows} onOpen={onAlert} label="Demo snapshot brief alerts" />
+          </section>
+        )}
 
         <section className="ms2-sim ms2-span2" aria-label={yours ? 'Our devices (your company)' : 'Our devices (simulated)'} data-testid="home-devices">
           <button type="button" className="ms2-row !py-1" onClick={onDevices} data-testid="home-devices-link">

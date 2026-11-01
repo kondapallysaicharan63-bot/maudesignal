@@ -55,10 +55,12 @@ export function ConnectView({ apiBase, fetcher, v2 = false }: { apiBase: string 
     <div className="space-y-4" data-testid="connect-view">
       <div>
         {!v2 && <p className="ms-kicker m-0">For reviewers</p>}
+        {!v2 && (
         <h1 className="t-headline m-0 mt-1" style={{ fontSize: 'clamp(24px, 4vw, 32px)' }}>
           Connect to Muse
         </h1>
-        <p className="mt-2 max-w-2xl text-ink-2">
+        )}
+        <p className={v2 ? 'm-0 max-w-2xl text-ink-2' : 'mt-2 max-w-2xl text-ink-2'}>
           Add MaudeSignal to Muse as a custom connector. It answers from stored public FDA records, read-only. Signals for a person to review; nothing is filed with FDA.
         </p>
         <p className="mt-2 max-w-2xl font-semibold text-ink" data-testid="connect-status">
