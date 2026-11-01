@@ -158,6 +158,23 @@ Today: U.S. FDA data (MAUDE, recalls, 510(k)). UK MHRA alerts appear as labelled
 Ideas from testers that are bigger than a half-day change are listed here instead of being built before the
 deadline. (Empty so far.)
 
+### Tomorrow — what a quality leader asked for next
+
+A medical-device quality leader's feedback (Oct 31 and Nov 1) shaped the complaint-investigation, workflow-map,
+ROI and device-profile pages. What is NOT built yet:
+
+- **Measured time savings.** The ROI page shows "measurement pending" until timing tests are recorded (three tasks,
+  by hand vs MaudeSignal, who/when/how). No time-saved number is shown before then.
+- **Your own complaint system.** "Investigate a complaint" searches public FDA data only. It does not hold your
+  complaints, cannot separate your own company's reports from other makers' (maker names on MAUDE are free text),
+  and has no MDR clock; reportability is assessed by your team.
+- **Investigate as a Muse connector tool.** The REST route exists; an MCP/OpenAPI tool for the Muse connector is next.
+- **Decision paths on every signal and on your own devices.** Decision paths exist for the simulated devices'
+  stored signals; saving your own board decisions (with e-signatures) is not built.
+- **Photos in saved chats**, Firefox/Safari checks of the v2 live-check, and a sticky-composer option on the
+  Investigate page for phones.
+- **EU / UK / Canada sources** (see Today / Tomorrow above).
+
 ---
 
 ## The problem

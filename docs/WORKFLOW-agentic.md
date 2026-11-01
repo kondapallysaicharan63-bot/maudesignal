@@ -300,3 +300,17 @@ reasoning never reaches it.
   changes under half a day that make the demo clearer or more trustworthy, each reviewed, tested and deployed via
   `main` with the owner's yes. Bigger ideas go to README "Tomorrow — what testers asked for". Final freeze Nov 2,
   9 PM PT. Video shot list after deploy #2, updated after the freeze if a screen changed.
+
+### 2026-11-01 overnight — scope, decisions and the single pre-approved deploy
+- Owner's overnight list: bugs (wrong-year dates; live chat "could not be reached"), v2 default, sweep wording,
+  research cap numbers (research stays OFF), new positioning headline (PRD §11b), F25 Investigate a complaint,
+  F26 workflow map, F27 ROI view, F21–F23 simulated device profiles + PMS decision path.
+- Branches (each reviewed by the advisor and ui-critic before merge; merged on integrate/overnight):
+  fw-copilot-dates (4 review rounds: date guard + claim-gate date shifts/no-data zeros; research hold $0.1315,
+  research-only day cap $0.30 ≤ $0.50; sweep wording from stored data), fw-live-chat-fix (40 s typed-ask deadline,
+  CORS on every error, 504 live_timeout; cause unconfirmed — platform kill at maxDuration or a CORS-less 500),
+  fw-positioning, fw-investigate, fw-device-profiles.
+- v2 becomes the default through the production build variable VITE_LAYOUT_DEFAULT=v2 on the web project (CI keeps
+  building classic as its default so both layouts stay tested); `?layout=classic` keeps the old layout.
+- Pre-approved: one production deploy via a single push to main, only if every gate passes (release check green in
+  3 browsers, advisor + ui-critic pass, live smoke passes, spend < $3/day, rollback targets recorded).
