@@ -1553,7 +1553,7 @@ def s_v2_rating(env: Env) -> str:
     ans = v2_answer(env)
     for tid in ("action-copy", "action-read", "action-up", "action-down", "details-toggle"):
         box_ = ans.get_by_test_id(tid).bounding_box() or {}
-        if min(box_.get("width", 0), box_.get("height", 0)) < 44:
+        if min(box_.get("width", 0), box_.get("height", 0)) < 43.5:  # sub-pixel layout (Firefox reports 43.9999) is still a 44 px target
             raise AssertionError(f"{tid} hit area is smaller than 44 px: {box_}")
     time_shown = ans.get_by_test_id("answer-time").is_visible()
     if env.width < 480 and time_shown:
