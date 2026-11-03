@@ -43,6 +43,7 @@ import { TopBarV2 } from './TopBarV2'
 import { storedAsOf } from '../pms/DataAsOf'
 import { BoardPage } from '../pms/BoardPage'
 import { buildLine } from '../pms/build'
+import { FallbackData } from '../pms/FallbackPanel'
 import { ValidationPage } from '../pms/ValidationPage'
 import { useThemeV2 } from './theme'
 import './v2.css'
@@ -581,6 +582,7 @@ export default function AppV2() {
   const navActive = navOf(route)
   return (
     <MineContext.Provider value={mineApi}>
+      <FallbackData.Provider value={data ? { evidence: data.evidence, alerts: data.alerts, threads: data.threads } : null}>
       <InvestigateEntry.Provider value={investigateApi}>
       <AlertPanelContext.Provider value={panelApi}>
         <PanelNav.Provider value={{ onHome: () => go({ page: 'home' }), workflow: null }}>
@@ -701,6 +703,7 @@ export default function AppV2() {
         </PanelNav.Provider>
       </AlertPanelContext.Provider>
       </InvestigateEntry.Provider>
+      </FallbackData.Provider>
     </MineContext.Provider>
   )
 }

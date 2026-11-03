@@ -244,3 +244,61 @@ describe('validation page', () => {
     expect(q('validation-sweep')?.textContent).toContain(sweep.meta.generated_utc.slice(0, 10))
   })
 })
+
+// ── F. live Q&A failure: forced 504 / 500 / network / cap, deterministic fallback, audit ─────────────────────────
+import evidenceFile from '../../public/data/evidence.json'
+import threadsFile from '../../public/data/threads.json'
+import { FallbackData, FallbackPanel, productSummary, searchStored, storedRecalls, type Fallback } from './FallbackPanel'
+import type { Evidence, Threads } from '../types'
+
+describe('F. live-model fallback', () => {
+  const FB_DATA = { evidence: evidenceFile as unknown as Evidence, alerts: ALERTS, threads: threadsFile as unknown as Threads }
+  const code = MIX.product_code
+  for (const kind of ['timeout', 'failure', 'cap'] as const) {
+    it(`${kind}: no invented answer; four no-model buttons return stored data; retry; audit`, async () => {
+      const fetchSpy = vi.spyOn(globalThis, 'fetch')
+      const retry = vi.fn()
+      const live = vi.fn()
+      const fb: Fallback = { kind, reason: 'forced', productCode: code }
+      act(() =>
+        root.render(
+          <FallbackData.Provider value={FB_DATA}>
+            <FallbackPanel fb={fb} question={`What changed for ${code} this week?`} recordedShown={false} onRetry={retry} onLive={live} />
+          </FallbackData.Provider>,
+        ),
+      )
+      await flush()
+      expect(q('fallback-recorded')?.textContent).toBe('No recorded answer is stored for this question.')
+      await click(q('fallback-recalls'))
+      const r = storedRecalls(FB_DATA, code)!
+      expect(q('fallback-out-recalls')?.textContent).toContain(`${r.total} recall records for ${code}`)
+      expect(q('fallback-out-recalls')?.textContent).toContain(r.items[0].id)
+      await click(q('fallback-summary'))
+      const p = productSummary(FB_DATA, code)
+      expect(q('fallback-out-summary')?.textContent).toContain(`${p.reports} stored reports`)
+      expect(q('fallback-out-summary')?.textContent).toContain(MIX.mix_sentence!)
+      await click(q('fallback-reports'))
+      expect(q('fallback-out-reports')).not.toBeNull()
+      await click(q('fallback-live'))
+      expect(live).toHaveBeenCalledWith(code)
+      await click(q('fallback-retry'))
+      if (kind === 'cap') expect(retry).not.toHaveBeenCalled()
+      else expect(retry).toHaveBeenCalledTimes(1)
+      expect(fetchSpy).not.toHaveBeenCalled() // no model call, no network call from any lookup
+      await flush()
+      const log = loadAudit()
+      expect(log[0]).toMatchObject({ action: 'live_failure', actor: 'system' })
+      expect(JSON.parse(log[0].payload_json).kind).toBe(kind)
+      expect(log.filter((e) => e.action === 'fallback_choice').map((e) => JSON.parse(e.payload_json).choice)).toEqual(
+        kind === 'cap' ? ['recalls', 'summary', 'reports', 'live'] : ['recalls', 'summary', 'reports', 'live', 'retry'],
+      )
+      expect((await verifyAudit(log)).ok).toBe(true)
+    })
+  }
+  it('stored search is a text match over the stored reports of that code', () => {
+    const s = searchStored(FB_DATA, 'LLZ', 'error loading images')
+    const all = Object.values(FB_DATA.evidence.reports).filter((r) => r.product_code === 'LLZ')
+    expect(s.total).toBe(all.length)
+    expect(s.matched).toBe(all.filter((r) => ['error', 'loading', 'images'].some((w) => r.excerpt.toLowerCase().includes(w))).length)
+  })
+})
