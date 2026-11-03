@@ -199,3 +199,24 @@ Required, and reported as PASS / FAIL / PENDING from what actually ran:
 
 **PENDING, not claimed:** UAT, Beta, Stress at live scale, Scalability at production
 scale, and a full WCAG audit. These need real users or real load.
+
+## Dropped as duplicates of P0 (rebase onto main 4f05682)
+
+The first version of this branch built a Board, a Validation page and a data banner before P0 was merged. P0 then shipped its own
+(`web/src/pms/`). Two boards would break the rule "Board = /board only, never two boards", so these were dropped, not merged:
+
+| Dropped (earlier branch, kept only as the local `ui/mascot-noctua-pre-rebase`) | Why | What is used instead |
+|---|---|---|
+| `web/src/v2/BoardPage.tsx`, `boardStore.ts`, `useBoard.tsx` (Board page, browser-local store, hash-chained rows) | P0's `/board` already exists with status transitions, owner, advisory MDR due date and the audit trail | `web/src/pms/BoardPage.tsx`, `board.ts`, `audit.ts` |
+| `web/src/v2/ValidationPage.tsx` | P0's `/validation` is the single source for what was tested and what was not | `web/src/pms/ValidationPage.tsx` |
+| `web/src/v2/DataBanner.tsx` (data-as-of banner and context) | P0's banner reads the manifest's `data_as_of`; a second banner would be a second source of dates | `web/src/pms/DataAsOf.tsx` |
+| `web/src/investigate/BoardParts.tsx`: "Board & decision" form, Send to Board, checklists | P0's evidence pack panel and decision flow cover the Note to File, QMS bundle and audit rows | `web/src/pms/EvidencePackPanel.tsx`, `pack.ts` |
+| `web/src/v2/postP0.test.tsx` | Tests of the dropped Board store, Board page, banner and Validation page | P0's `web/src/pms/pms.test.tsx` |
+| "Report mix changed" wording edits in `alerts.ts`, `AlertPanel`, `AlertBell`, `liveCheck.ts`, `realAlerts.ts`, `artifacts.ts`, `BriefTabs` | P0 already made the same wording change | P0's versions |
+| `vercel.json` and `index.html` route edits for `/board` and `/validation` | P0 already added both rewrites and route-list entries | P0's versions |
+
+Kept from the earlier branch: the sidebar order and Demo group (with the Board badge read from P0's board rows), the Signals
+button and caption, the known-effects note, "Why matched" tags, the 44px touch targets, and Noctua.
+
+Known, not changed: three radio inputs on Investigate (P0's "Note to file / Open a CAPA / Escalate" choice) are 13px native
+controls. Each sits inside a 44px-high label, so the tap target is 44px; the radio itself is left at its native size.
