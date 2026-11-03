@@ -1429,3 +1429,19 @@
     left: -21px;
   }
 }
+
+/* ── PMS board, evidence pack, data-as-of banner, validation (2026-11-03) ── */
+.ms2-asof { margin: 8px 0 12px; }
+.ms2-home-pitch { font-size: 17px; line-height: 1.45; margin-top: 8px; max-width: 70ch; }
+.ms2-pms-form { display: grid; gap: 10px; margin-top: 10px; max-width: 640px; }
+.ms2-pms-field { display: grid; gap: 4px; }
+.ms2-pms-fieldset { border: 1px solid var(--rule, currentColor); border-radius: 8px; padding: 8px 12px; }
+.ms2-pms-radio { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.ms2-pms-check { margin: 8px 0 0; padding-left: 1.25rem; display: grid; gap: 8px; }
+.ms2-pms-dl { display: grid; grid-template-columns: minmax(8rem, max-content) 1fr; gap: 6px 14px; margin: 8px 0 0; }
+.ms2-pms-dl dt { font-weight: 600; }
+.ms2-pms-dl dd { margin: 0; overflow-wrap: anywhere; }
+.ms2-board td, .ms2-board th { vertical-align: top; }
+.ms2-footer { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 16px; font-size: 15px; border-top: 1px solid var(--rule, currentColor); }
+.ms2-footer a { min-height: 44px; display: inline-flex; align-items: center; }
+@media (max-width: 640px) { .ms2-pms-dl { grid-template-columns: 1fr; } }

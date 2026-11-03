@@ -27,6 +27,8 @@ import {
 } from './api'
 import { hrefFor } from '../v2/router'
 import { DataAsOfBanner, inDelayWindow, investigationAsOf } from '../pms/DataAsOf'
+import { EvidencePackPanel } from '../pms/EvidencePackPanel'
+import { packFromInvestigation } from '../pms/pack'
 import './investigate.css'
 
 const RECORDED = parseInvestigation((example as { answer: unknown }).answer)
@@ -470,10 +472,11 @@ function Section({ id, title, a, children }: { id: string; title: string; a: Inv
 }
 
 const JUMPS: [string, string][] = [
-  ['inv-similar', 'Reports'],
   ['inv-sources', 'Not filed by a manufacturer'],
+  ['inv-similar', 'Reports'],
   ['inv-related', 'Recalls and 510(k)s'],
   ['inv-evidence', 'Evidence'],
+  ['evidence-pack', 'Evidence pack'],
 ]
 
 function Results({ a, description }: { a: Investigation; description: string }) {
@@ -489,21 +492,34 @@ function Results({ a, description }: { a: Investigation; description: string }) 
           {n}
         </p>
       ))}
+      <Section id="inv-sources" title="Reports NOT filed by a manufacturer — check these against your complaint log" a={a}>
+        <p className="ms2-inv-meta m-0 mb-2">
+          User facilities, voluntary reporters and distributors. A maker may not see these in its own complaint system. MAUDE alone cannot tell
+          which of these are about your own devices; match them against your complaint log.
+        </p>
+        <Sources a={a} />
+      </Section>
       <Section id="inv-similar" title="MAUDE reports for this product code (any maker)" a={a}>
         <p className="ms2-inv-meta m-0 mb-1">With a second count for reports whose narrative mentions your keywords.</p>
         <Months a={a} />
         <Quotes a={a} />
       </Section>
-      <Section id="inv-sources" title="Reports not filed by a manufacturer" a={a}>
-        <p className="ms2-inv-meta m-0 mb-2">User facilities, voluntary reporters and distributors. A maker may not see these in its own complaint system.</p>
-        <Sources a={a} />
-      </Section>
       <Section id="inv-related" title="Recalls and 510(k)s for this product code" a={a}>
         <Related a={a} />
       </Section>
       <Evidence a={a} description={description} />
+      <div id="evidence-pack">
+        <EvidencePackPanel pack={packFromInvestigation(a, investigationAsOf(a))} />
+      </div>
       <p className="ms2-muted m-0 text-[15px]" data-testid="inv-attach">
-        Attach to the complaint file / known-effects record. MaudeSignal never decides reportability.
+        Attach to the complaint file / known-effects record. MaudeSignal never decides reportability.{' '}
+        <a className="ms2-a" href={hrefFor({ page: 'pms' })} data-testid="inv-pms-link">
+          See how this maps to your PMS workflow
+        </a>{' '}
+        ·{' '}
+        <a className="ms2-a" href={hrefFor({ page: 'board' })} data-testid="inv-board-link">
+          PMS board
+        </a>
       </p>
     </div>
   )
@@ -568,7 +584,7 @@ export function InvestigatePage({
         <h1 className="ms2-h1">Investigate a complaint</h1>
         <p className="ms2-lead">
           Check a complaint against what FDA already holds for the device type. Everything below comes from public FDA data, each number has its
-          openFDA query, and no AI model is used. It is made for the complaints team: the evidence it produces feeds the
+          openFDA query, and no AI model is used. It is made for the complaints / PMS team: the evidence it produces feeds the
           company's known-effects record.
         </p>
       </header>

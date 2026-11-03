@@ -37,6 +37,10 @@ export type Route =
   | { page: 'roi' }
   /** Investigate a complaint. ?code=XXX&device=<simulated device id> prefill the form (see src/investigate/api.ts). */
   | { page: 'investigate'; code?: string; device?: string }
+  /** PRD-19: PMS board (status / owner / due date), kept in this browser. */
+  | { page: 'board' }
+  /** PRD-18: what is and is not validated, and the evidence lifecycle. */
+  | { page: 'validation' }
 
 export type Section = 'signals' | 'devices' | 'evidence' | 'connect'
 
@@ -108,6 +112,10 @@ export function parseRoute(pathname: string, search = ''): Route {
       return { page: 'roi' }
     case 'investigate':
       return investigateRoute(search)
+    case 'board':
+      return { page: 'board' }
+    case 'validation':
+      return { page: 'validation' }
     default:
       return { page: 'home' }
   }
@@ -162,6 +170,10 @@ export function formatRoute(r: Route): string {
       return 'roi'
     case 'investigate':
       return 'investigate'
+    case 'board':
+      return 'board'
+    case 'validation':
+      return 'validation'
   }
 }
 
@@ -236,6 +248,10 @@ export function routeName(r: Route): string {
       return 'roi'
     case 'investigate':
       return 'investigate'
+    case 'board':
+      return 'board'
+    case 'validation':
+      return 'validation'
   }
 }
 

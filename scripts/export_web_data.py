@@ -603,6 +603,43 @@ def data_as_of(db_path: Path, sweep: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def build_lifecycle(root: Path, sweep: dict[str, Any]) -> dict[str, Any]:
+    """``lifecycle.json``: what a re-validation trigger watches (PRD-18 e).
+
+    Model ids, every Skill's VERSION, the gate's allowed 21 CFR sections (and the superseded
+    ones it blocks), the sweep date and the build. Any change here is a change-control event.
+    """
+    sys.path.insert(0, str(root / "src"))
+    from maudesignal.gate.cfr import CFR_SECTIONS, SUPERSEDED_SECTIONS  # noqa: PLC0415
+
+    skills = {
+        d.name: (d / "VERSION").read_text("utf-8").strip()
+        for d in sorted((root / "skills").iterdir())
+        if (d / "VERSION").is_file()
+    }
+    meta = sweep.get("meta", {}) if isinstance(sweep, dict) else {}
+    return {
+        "schema_version": "1.0",
+        "build": {"version": package_version(root), "commit": git_sha(root)},
+        "models": {
+            "chat_and_vision": "muse-spark-1.3",
+            "review": "muse-wonder-1.0",
+            "segmentation": "sam-3.1",
+            "voice": "muse-voice-transcribe-1.0",
+            "tier": "Meta Standard tier only (no Contributor variants)",
+        },
+        "skills": skills,
+        "gate_cfr_sections": sorted(CFR_SECTIONS),
+        "gate_superseded_sections": sorted(SUPERSEDED_SECTIONS),
+        "sweep": {"checked_utc": meta.get("generated_utc"), "window": meta.get("window")},
+        "revalidation_trigger": (
+            "Re-run the full test suite, the 130-case gate set and the hand-check after any "
+            "change to a model id, a Skill VERSION, the gate CFR list, the detector rules or "
+            "the data source; record the run here before the build is used."
+        ),
+    }
+
+
 def build_sources(conn: sqlite3.Connection) -> dict[str, Any]:
     """``sources.json``: record counts straight from the demo database tables."""
     maude_n, maude_last = conn.execute(
@@ -1440,6 +1477,7 @@ def export(root: Path, out: Path, *, generated_utc: str | None = None) -> dict[s
         "schedules.json": build_schedules(root, briefs, sweep),
         "alerts.json": export_alerts.build_alerts(root, generated_utc, company),
         "mentions.json": export_alerts.build_mentions(root),
+        "lifecycle.json": build_lifecycle(root, sweep),
     }
     for name, doc in files.items():
         write_json(out / name, doc)

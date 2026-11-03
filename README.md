@@ -206,13 +206,16 @@ ROI and device-profile pages. What is NOT built yet:
 
 ## The problem
 
-- Device makers already know their own complaints: they file them. What is
-  hard to see is **problems reported on other makers' devices of the same type**
-  and the reports about **their own device filed by someone else** — a user
-  facility such as a hospital, a voluntary reporter, a distributor. Those sit
-  among tens of thousands of public MAUDE reports. openFDA's counts by report
-  source for the demo device types are in
+- **Companies know their competitors. What they cannot see is: (1) reports about
+  their own device filed by hospitals, users or distributors that never reached
+  their complaint team, and (2) the same failure mode emerging on other makers'
+  devices of the same type before it hits their device.** Those sit among tens of
+  thousands of public MAUDE reports. openFDA's counts by report source for the
+  demo device types are in
   [docs/hackathon/SOURCE_COUNTS.md](docs/hackathon/SOURCE_COUNTS.md).
+- PMS is reactive first. MaudeSignal does not replace complaint handling; it
+  speeds the investigation step after a complaint arrives, and flags a code
+  before the next complaint arrives.
 - Reading MAUDE by hand is slow; a general-purpose chatbot is faster but can
   make up numbers, quotes and regulation citations, which a regulated
   workflow cannot accept.

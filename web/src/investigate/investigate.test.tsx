@@ -351,7 +351,7 @@ describe('review fixes', () => {
     await flush()
     expect(q('inv-summary')?.textContent).toContain('LLZ')
     expect(q('inv-summary-text')?.textContent).toBe('the viewer froze on save')
-    expect(q('inv-jumps')?.querySelectorAll('button').length).toBe(4)
+    expect(q('inv-jumps')?.querySelectorAll('button').length).toBe(5)
     expect(q('inv-run')).toBeNull()
     expect([...document.querySelectorAll('.ms-btn--primary')].map((b) => b.textContent)).toEqual(['Copy'])
     await click(q('inv-edit'))
