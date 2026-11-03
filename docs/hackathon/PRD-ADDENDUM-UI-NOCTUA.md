@@ -76,7 +76,7 @@ logic. Complaint first.
    "not live" banner and fallback buttons, never a blank and never an invented date.
    The stored Oct 30 sweep and the stored Aug 31 demo snapshot stay labelled Stored
    until a new Actions sweep produces a new date. No fresh sweep date is claimed.
-5. **Copy rules:** "Report mix changed", never "more serious than usual" (first use:
+5. **Copy rules:** "Report mix changed", never the older severity-sounding label that P0 retired (first use:
    "Injury/Death share rose from X% to Y% (N of M reports). This is a change in report
    mix, not proof of increased device risk."); "Companies know their competitors";
    "Complaints / PMS team"; every decision surface says "MaudeSignal does not decide
