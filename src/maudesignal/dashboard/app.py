@@ -51,11 +51,6 @@ _PAGES: list[tuple[str, str, str]] = [
         "510(k) summary reader and device-label camera (Muse Spark + SAM)",
     ),
     (
-        "view_kanban",
-        "Board",
-        "PMS board: flagged code, status, owner, advisory due date. Not a QMS.",
-    ),
-    (
         "verified_user",
         "Audit",
         "Every decision and model answer, in one tamper-evident trail",
@@ -1807,7 +1802,7 @@ def _settings_sources(db: Database) -> None:
 
 
 #: Pages in the top navigation (built during the hackathon); the rest sit in the sidebar.
-_TOP_PAGES: tuple[str, ...] = ("Signals", "Board", "Copilot", "Vision", "Audit")
+_TOP_PAGES: tuple[str, ...] = ("Signals", "Copilot", "Vision", "Audit")
 
 _WORDMARK = (
     '<a class="ms-wordmark" href="?" aria-label="MaudeSignal home">'
@@ -1949,7 +1944,6 @@ def _render_app(db: Database) -> None:  # noqa: PLR0912
 
     # ── Page routing ──────────────────────────────────────────────────────────
     from maudesignal.dashboard.copilot_pages import page_audit, page_copilot
-    from maudesignal.dashboard.pms_pages import page_board
     from maudesignal.dashboard.vision_pages import page_vision
     from maudesignal.dashboard.workspace import page_signals
 
@@ -1957,7 +1951,6 @@ def _render_app(db: Database) -> None:  # noqa: PLR0912
         "Signals": lambda: page_signals(db),
         "Copilot": lambda: page_copilot(db),
         "Audit": lambda: page_audit(db),
-        "Board": lambda: page_board(db),
         "Vision": lambda: page_vision(db),
         "Dashboard": lambda: _page_dashboard(db),
         "Signal Explorer": lambda: _page_signal_explorer(db),

@@ -75,7 +75,7 @@ class TestHackathonNav:
     def test_top_bar_lists_the_product_pages(self, ms_page: Page) -> None:
         bar = ms_page.locator(TOPBAR_SELECTOR)
         expect(bar).to_contain_text("MaudeSignal")
-        for name in ("Signals", "Board", "Copilot", "Vision", "Audit"):
+        for name in ("Signals", "Copilot", "Vision", "Audit"):
             expect(bar.get_by_role("radio", name=name, exact=False).first).to_be_visible()
         expect(bar.get_by_role("radio", name="Signals", exact=False)).to_have_attribute(
             "aria-checked", "true"
@@ -108,7 +108,7 @@ class TestHackathonNav:
         expect(page.locator(SIDEBAR_SELECTOR)).to_have_count(want)
         ctx.close()
 
-    @pytest.mark.parametrize("nav", ["Signals", "Board", "Copilot", "Vision", "Audit"])
+    @pytest.mark.parametrize("nav", ["Signals", "Copilot", "Vision", "Audit"])
     def test_page_loads_with_framing_and_no_exception(self, ms_page: Page, nav: str) -> None:
         _open(ms_page, nav)
 
@@ -509,7 +509,7 @@ _UNNAMED_CONTROLS_JS = """
 
 
 class TestAccessibility:
-    @pytest.mark.parametrize("nav", ["Signals", "Board", "Copilot", "Vision", "Audit"])
+    @pytest.mark.parametrize("nav", ["Signals", "Copilot", "Vision", "Audit"])
     def test_every_visible_control_has_a_name(self, ms_page: Page, nav: str) -> None:
         _open(ms_page, nav)
         unnamed = ms_page.evaluate(_UNNAMED_CONTROLS_JS)

@@ -78,6 +78,11 @@ def page_signals(db: Database) -> None:
         st.session_state["sig_code"] = rows[0].product_code
 
     st.info(as_of_text(stored_as_of(db)))
+    st.caption(
+        "PMS board (status, owner, due date, note to file): "
+        "[open it on the website](https://maudesignal-app.vercel.app/board). "
+        "This app has no second board."
+    )
     render_live_check()
     render_sweep()
     left, right = st.columns([1, 2.7], gap="large")
