@@ -358,10 +358,16 @@ class Env:
 
 
 def turn_state(env: Env) -> dict[str, Any]:
-    """The first chat turn as the person sees it: badge, note, error text, gated sentences."""
+    """The first chat turn as the person sees it: mode, badge, note, error text, gated sentences.
+
+    Works in both layouts. The classic answer carries a ``mode-badge`` pill; the v2 answer has no
+    such pill, but both mark the answer element ``live-answer`` with ``data-mode`` / ``data-tier``.
+    So the wait is for ``live-answer`` (or an error / limit banner), the mode comes from the
+    attribute, and ``badge`` is the pill's text when there is one, else derived from the mode.
+    """
     page = env.page
     page.wait_for_selector(
-        "[data-testid=mode-badge], [data-testid=turn-error], [data-testid=limit-banner]",
+        "[data-testid=live-answer], [data-testid=turn-error], [data-testid=limit-banner]",
         timeout=45_000,
     )
 
@@ -369,8 +375,19 @@ def turn_state(env: Env) -> dict[str, Any]:
         loc = page.locator(f"[data-testid={testid}]")
         return loc.first.inner_text().strip() if loc.count() else ""
 
+    answer = page.locator("[data-testid=live-answer]")
+    mode = (answer.first.get_attribute("data-mode") or "") if answer.count() else ""
+    tier = (answer.first.get_attribute("data-tier") or "") if answer.count() else ""
+    badge = text("mode-badge")
+    if not badge:
+        if mode == "recorded":
+            badge = "Recorded run"
+        elif mode == "live" and tier == "live":
+            badge = "Live answer"
     return {
-        "badge": text("mode-badge"),
+        "mode": mode,
+        "tier": tier,
+        "badge": badge,
         "note": text("recorded-note"),
         "error": text("turn-error") or text("limit-banner"),
         "sentences": page.locator("[data-testid=answer-sentences] li").count(),
@@ -479,9 +496,9 @@ def s_chat(env: Env) -> str:
     env.page.wait_for_selector("[data-testid=live-turn]", timeout=45_000)
     env.page.wait_for_function("!document.querySelector('[data-testid=typing]')", timeout=45_000)
     state = turn_state(env)
-    if not state["badge"] and not state["error"]:
-        raise AssertionError("the turn has no Recorded run / Live answer badge and no error")
-    if state["badge"] == "Recorded run" and not state["note"]:
+    if not state["mode"] and not state["error"]:
+        raise AssertionError("the turn's answer has no data-mode (recorded / live) and no error")
+    if state["mode"] == "recorded" and not state["note"]:
         raise AssertionError("a recorded run is shown without saying why")
     sentences, unlinked, held = chat_counts(env)
     ok, why = chat_verdict(sentences, unlinked, bool(state["error"]), held)
@@ -497,19 +514,29 @@ def s_chat(env: Env) -> str:
 
 
 def chat_counts(env: Env) -> tuple[int, int, bool]:
-    """Wait for the first answer to finish writing; return (sentences, unlinked, withheld line)."""
+    """Wait for the first answer to finish writing; return (sentences, unlinked, withheld line).
+
+    Layout-neutral. Both layouts mark each sentence ``answer-sentence`` (a list item in classic, a
+    block in v2). The classic answer links each sentence (``sentence-links`` inside it); the v2
+    answer lists its sources once, in ``answer-sources`` (the same ``sentence-links`` list, outside
+    the sentences). So in v2 a sentence counts as linked when the answer lists at least one source.
+    """
     page = env.page
     page.wait_for_selector(
-        "[data-testid=answer-sentences] li, [data-testid=turn-error], "
+        "[data-testid=answer-sentence], [data-testid=turn-error], "
         "[data-testid=held-back], [data-testid=limit-banner]",
         timeout=60_000,
     )
+    v2 = page.locator("[data-testid=live-answer][data-layout=v2]").count() > 0
     last, stable = (-1, -1), 0
     for _ in range(60):  # sentences are written word by word; wait until the count settles
-        sentences = page.locator("[data-testid=answer-sentences] li").count()
-        linked = page.locator(
-            "[data-testid=answer-sentences] li [data-testid=sentence-links]"
-        ).count()
+        sentences = page.locator("[data-testid=answer-sentence]").count()
+        if v2:
+            linked = sentences if page.locator("[data-testid=answer-sources] a").count() else 0
+        else:
+            linked = page.locator(
+                "[data-testid=answer-sentence] [data-testid=sentence-links]"
+            ).count()
         now = (sentences, linked)
         stable = stable + 1 if now == last else 0
         last = now
