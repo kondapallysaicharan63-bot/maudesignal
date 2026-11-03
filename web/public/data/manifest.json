@@ -1,7 +1,23 @@
 {
   "schema_version": "1.0",
-  "generated_utc": "2026-11-03T08:21:47Z",
-  "source_commit": "fd392352579d6d9782ec7936816cab9d4f792fbf",
+  "build": {
+    "version": "0.1.0",
+    "commit": "dd2cb8237b48b838d54f5e1081e5f57f46954dc3"
+  },
+  "data_as_of": {
+    "stored": {
+      "earliest": "2006-05-18",
+      "latest": "2026-08-31",
+      "reports": 137
+    },
+    "sweep": {
+      "checked_utc": "2026-10-30T02:55:38Z",
+      "week_start": "2026-09-24",
+      "week_end": "2026-09-30"
+    }
+  },
+  "generated_utc": "2026-11-03T08:29:08Z",
+  "source_commit": "dd2cb8237b48b838d54f5e1081e5f57f46954dc3",
   "files": [
     "threads.json",
     "evidence.json",

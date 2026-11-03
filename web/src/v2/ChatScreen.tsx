@@ -5,6 +5,7 @@ import { LIMIT_TEXT, VOICE_NOTE, type OpenView } from '../live/api'
 import type { LiveChat } from '../live/useLiveChat'
 import type { Thread } from '../types'
 import { ChatTurn } from './ChatTurnSlot'
+import { DataAsOfBanner, type AsOf } from '../pms/DataAsOf'
 
 /** Suggestion chips of an empty chat: stored questions, in this order, when they exist. */
 export const CHIP_THREADS = ['01-what-changed', '10-recalls', '05-capa-need-evidence']
@@ -72,7 +73,10 @@ export function ChatScreen({
   onRecordedVoice,
   onRecordedLabel,
   onOpen,
+  asOf,
 }: {
+  /** Dates behind the copilot's stored data (data-as-of banner over the answers). */
+  asOf?: AsOf
   chat: LiveChat
   threads: Thread[]
   /** The address names a chat that is not saved on this device. */
@@ -131,6 +135,7 @@ export function ChatScreen({
           <span className="ws-wrap">{chat.micNotice}</span>
         </p>
       )}
+      {chat.turns.length > 0 && asOf && <DataAsOfBanner asOf={asOf} testid="chat-asof" />}
       {chat.turns.length > 0 && (
         <div role="log" aria-live="polite" aria-label="Conversation" className="space-y-8" data-testid="live-chat">
           {chat.turns.map((t) => (

@@ -26,6 +26,7 @@ import {
   type Outcome,
 } from './api'
 import { hrefFor } from '../v2/router'
+import { DataAsOfBanner, inDelayWindow, investigationAsOf } from '../pms/DataAsOf'
 import './investigate.css'
 
 const RECORDED = parseInvestigation((example as { answer: unknown }).answer)
@@ -143,6 +144,11 @@ function Months({ a }: { a: Investigation }) {
                 <th scope="row">
                   {m.month}
                   {m.partial && <span className="ms2-muted"> (partial)</span>}
+                  {inDelayWindow(m.month, a.retrieved_utc) && (
+                    <span className="ms2-tag ml-1" data-testid="inv-delay-tag" title="Reports for this month are still arriving">
+                      reporting delay
+                    </span>
+                  )}
                 </th>
                 <td className="ms2-num">
                   <Figure value={m.code_wide} url={m.code_wide_url} label={`reports in ${m.month}, whole product code`} />
@@ -473,6 +479,7 @@ const JUMPS: [string, string][] = [
 function Results({ a, description }: { a: Investigation; description: string }) {
   return (
     <div className="ms2-inv-results" data-testid="inv-results">
+      <DataAsOfBanner asOf={investigationAsOf(a)} testid="inv-asof" />
       <p className="m-0 text-[17px]" data-testid="inv-device">
         <strong>{a.product_code}</strong>
         {a.device_type_name ? <> · {a.device_type_name}</> : <span className="ms2-muted"> · FDA device type name not available</span>}

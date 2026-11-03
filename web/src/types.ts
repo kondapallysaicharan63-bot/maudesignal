@@ -6,6 +6,13 @@ export interface Manifest {
   schema_version: string
   generated_utc: string
   source_commit: string | null
+  /** Build version + commit at export time (scripts/export_web_data.py). */
+  build?: { version: string; commit: string | null }
+  /** Dates behind every figure (data-as-of banner). */
+  data_as_of?: {
+    stored: { earliest: string | null; latest: string | null; reports: number }
+    sweep: { checked_utc: string | null; week_start: string | null; week_end: string | null }
+  }
   files: string[]
   header: {
     claims_verified: number

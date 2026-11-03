@@ -40,6 +40,7 @@ import { profileDevices, useProfiles } from './profiles'
 import { SchedulesDialog } from './SchedulesDialog'
 import { SidebarV2, type NavId } from './SidebarV2'
 import { TopBarV2 } from './TopBarV2'
+import { storedAsOf } from '../pms/DataAsOf'
 import { useThemeV2 } from './theme'
 import './v2.css'
 
@@ -454,6 +455,7 @@ export default function AppV2() {
       ) : route.page === 'chat' ? (
         <ChatBoundary resetKey={chatId ?? 'new'} onDelete={chatId ? () => deleteChat(chatId) : null} onNewChat={newChat}>
         <ChatScreen
+          asOf={storedAsOf(data.manifest)}
           chat={chatLive}
           threads={data.threads.threads}
           missing={missing}

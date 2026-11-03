@@ -565,6 +565,44 @@ def build_investigations(root: Path) -> dict[str, Any]:
 
 
 # ── sources, schedules ───────────────────────────────────────────────────────
+def iso_day(raw: str | None) -> str | None:
+    """``20260831`` or ``2026-08-31`` as ``2026-08-31`` (None stays None)."""
+    if not raw:
+        return None
+    d = raw.replace("-", "")[:8]
+    return f"{d[:4]}-{d[4:6]}-{d[6:8]}" if len(d) == 8 and d.isdigit() else raw
+
+
+def package_version(root: Path) -> str:
+    """The ``version`` in ``pyproject.toml`` (printed on every export)."""
+    m = re.search(r'^version\s*=\s*"([^"]+)"', (root / "pyproject.toml").read_text("utf-8"), re.M)
+    return m.group(1) if m else "unknown"
+
+
+def data_as_of(db_path: Path, sweep: dict[str, Any]) -> dict[str, Any]:
+    """The dates behind every figure: the stored snapshot window and the latest sweep week.
+
+    Shown in the data-as-of banner (PRD-23). Dates are ISO days; nothing is "today".
+    """
+    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    try:
+        lo, hi, n = conn.execute(
+            "select min(date_received), max(date_received), count(*) from raw_reports"
+        ).fetchone()
+    finally:
+        conn.close()
+    meta = sweep.get("meta", {}) if isinstance(sweep, dict) else {}
+    win = meta.get("window", {}) or {}
+    return {
+        "stored": {"earliest": iso_day(lo), "latest": iso_day(hi), "reports": n},
+        "sweep": {
+            "checked_utc": meta.get("generated_utc"),
+            "week_start": iso_day(win.get("current_start")),
+            "week_end": iso_day(win.get("current_end")),
+        },
+    }
+
+
 def build_sources(conn: sqlite3.Connection) -> dict[str, Any]:
     """``sources.json``: record counts straight from the demo database tables."""
     maude_n, maude_last = conn.execute(
@@ -1409,6 +1447,8 @@ def export(root: Path, out: Path, *, generated_utc: str | None = None) -> dict[s
         notes.append("no copilot transcripts found")
     manifest = {
         "schema_version": SCHEMA_VERSION,
+        "build": {"version": package_version(root), "commit": git_sha(root)},
+        "data_as_of": data_as_of(db_path, sweep),
         "generated_utc": generated_utc or datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "source_commit": git_sha(root),
         "files": list(files),
