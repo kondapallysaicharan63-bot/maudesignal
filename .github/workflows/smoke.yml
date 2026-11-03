@@ -44,7 +44,7 @@ jobs:
     timeout-minutes: 30
     env:
       API_URL: ${{ inputs.api_url || 'https://maudesignal-api.vercel.app' }}
-      WEB_URL: ${{ inputs.web_url || 'https://maudesignal-git-track-b-ui-kondapallysaicharan63-9868s-projects.vercel.app' }}
+      WEB_URL: ${{ inputs.web_url || 'https://maudesignal-app.vercel.app' }}
       LOAD_SECONDS: ${{ inputs.load_seconds || '120' }}
     steps:
       - uses: actions/checkout@v4
