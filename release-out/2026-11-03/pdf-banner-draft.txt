@@ -1,0 +1,3 @@
+   Data as of: 2026-08-31. OpenFDA republishes weekly and reports arrive with delay — recent months may show few or no reports because of
+   reporting delay, not because risk is zero. Stored snapshot: signal window 2026-07-28 to 2026-08-31 (stored openFDA MAUDE reports). Live
+   check: none in this document.

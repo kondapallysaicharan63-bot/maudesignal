@@ -92,7 +92,7 @@ sent to a server; values stay in your browser.
 | Recorded cost of a label photo: average $0.012 (7 photos; SAM 3.1 $0.0025 + Muse Spark read) | `trace[].cost_usd` in `demo/vision/label-match-*.json` ([`demo/vision/`](demo/vision/)) |
 | Chat answer tiers, estimate on a 20-question sample: $0.048 per question before, $0.012 after (upper bound; 5 of 20 reach Muse Spark) | [`docs/hackathon/CHAT_TIERS.md`](docs/hackathon/CHAT_TIERS.md) |
 | Recorded copilot answers: 31; sentences passing the gate on the first pass 71/73; replies that never parsed 0; hand-check: every sentence correct in 30 of 31 answers | [`docs/hackathon/HAND_CHECK.md`](docs/hackathon/HAND_CHECK.md) |
-| Gate adversarial set: 130 cases (84 must be withheld, 46 must pass), 0 false passes, 0 false blocks | [`tests/fixtures/gate/adversarial.jsonl`](tests/fixtures/gate/adversarial.jsonl), [`tests/unit/test_gate.py`](tests/unit/test_gate.py) |
+| Gate adversarial set: 139 cases (90 must be withheld, 49 must pass; 130 until 2026-11-02), 0 false passes, 0 false blocks | [`tests/fixtures/gate/adversarial.jsonl`](tests/fixtures/gate/adversarial.jsonl), [`tests/unit/test_gate.py`](tests/unit/test_gate.py) |
 | Weekly investigator, one recorded LLZ run: $0.224989 | [`demo/investigations/20261030T010942Z-weekly-llz.json`](demo/investigations/20261030T010942Z-weekly-llz.json) |
 | Daily ceiling on all live Meta calls together: $3.00 per UTC day | [`src/maudesignal/connector/callcap.py`](src/maudesignal/connector/callcap.py) (`MAUDESIGNAL_LIVE_DAILY_USD`) |
 
@@ -279,7 +279,7 @@ guidance, 510(k) history and MAUDE). MaudeSignal differs in three ways:
 - **It withholds what it cannot match.** Every number is recomputed, every
   quote matched word for word, every report id, 510(k), recall, PMID and CFR
   section checked against stored FDA records — or the sentence is not shown.
-  Adversarial set: 130 cases, 0 false passes, 0 false blocks.
+  Adversarial set: 139 cases, 0 false passes, 0 false blocks.
 - **It reads scanned 510(k) documents with a two-read accuracy check.**
 - **It is open source and self-hostable** (MIT), on public FDA data only.
 
@@ -408,7 +408,7 @@ model calls. For every sentence the copilot wants to show:
 - a sentence that mentions a number, K-number, report id or CFR section
   **without** a matching structured claim is blocked as ungrounded.
 
-**Adversarial test set:** [130 cases](tests/fixtures/gate/adversarial.jsonl)
+**Adversarial test set:** [139 cases](tests/fixtures/gate/adversarial.jsonl)
 (84 must block, 46 must pass): fabricated and drifted quotes, real quotes on
 the wrong report, stale / inflated counts, wrong shares, fake and mismatched
 K-numbers, hallucinated and superseded CFR sections, fake recall numbers and

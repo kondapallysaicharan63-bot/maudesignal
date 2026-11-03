@@ -137,10 +137,10 @@ Error: Uncaught [TypeError: Cannot read properties of undefined (reading 'pathwa
 
  Test Files  34 passed (34)
       Tests  722 passed (722)
-   Start at  09:18:06
-   Duration  9.41s (tests 54%, environment 30%, import 13%, transform 4%, worker 1%)
+   Start at  09:45:40
+   Duration  10.51s (tests 52%, environment 29%, import 12%, transform 6%)
 
-    Isolate  34 workers spawned · ~315ms startup each (spawn + environment, per file)
-             at least ~3.25s faster with isolate: false — reuses workers across files instead of one per file
+    Isolate  34 workers spawned · ~346ms startup each (spawn + environment, per file)
+             at least ~3.57s faster with isolate: false — reuses workers across files instead of one per file
 
 exit=0

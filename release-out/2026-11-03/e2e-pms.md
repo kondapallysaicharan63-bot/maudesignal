@@ -1,6 +1,6 @@
 # P0 browser run (Chromium, local)
 
-90 passed, 1 failed, 1 skipped
+94 passed, 1 failed, 1 skipped
 
 - PASS D page loads: Home (/)
 - PASS D page loads: Signals (/signals/ranked)
@@ -64,6 +64,8 @@
 - FAIL M no P0 control below 44px on Board / Validation / Investigate — /investigate BUTTON Not filed by a manufacturer h=40; /investigate BUTTON Reports h=40; /investigate BUTTON Recalls and 510(k)s h=40; /investigate BUTTON Evidence h=40; /investigate BUTTON Evidence pack h=40; /investigate BUTTON inv-allmonths h=40
 - PASS M Board controls reachable by keyboard (Review button)
 - SKIPPED M themes / AA contrast for all six themes — not run in this pass; existing contrast scripts (web/qa/contrast_*.py) not re-run against the new pages
+- PASS H recorded answer: banner shows the data date and the recording date
+- PASS H timeout: banner over the Copilot answer = stored dates
 - PASS F timeout: panel kind
 - PASS F timeout: no live answer was invented (any answer shown is mode=recorded)
 - PASS F timeout: four lookups + retry present
@@ -74,6 +76,7 @@
 - PASS F timeout: lookups made no model call
 - PASS F timeout: Retry live re-asks
 - PASS F timeout: failure + fallback choices are in the audit
+- PASS H failure: banner over the Copilot answer = stored dates
 - PASS F failure: panel kind
 - PASS F failure: no live answer was invented (any answer shown is mode=recorded)
 - PASS F failure: four lookups + retry present
@@ -84,6 +87,7 @@
 - PASS F failure: lookups made no model call
 - PASS F failure: Retry live re-asks
 - PASS F failure: failure + fallback choices are in the audit
+- PASS H cap: banner over the Copilot answer = stored dates
 - PASS F cap: panel kind
 - PASS F cap: no live answer was invented (any answer shown is mode=recorded)
 - PASS F cap: four lookups + retry present

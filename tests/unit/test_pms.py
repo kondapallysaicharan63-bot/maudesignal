@@ -338,3 +338,26 @@ def test_validation_page_gate_count_matches_the_fixture() -> None:
     block = sum(1 for r in rows if r["expect"] == "block")
     page = (ROOT / "web/src/pms/ValidationPage.tsx").read_text("utf-8")
     assert f"{len(rows)} cases ({block} must be withheld, {len(rows) - block} must pass)" in page
+
+
+@pytest.mark.parametrize("as_of", ["20260824", "20260831"])
+def test_committed_digests_equal_a_fresh_run_on_the_demo_db(tmp_path: Path, as_of: str) -> None:
+    """digests/ were regenerated, not hand-edited: same bytes as a no-fetch run."""
+    import shutil
+
+    from typer.testing import CliRunner
+
+    from maudesignal.cli import app
+
+    db = tmp_path / "demo.db"
+    shutil.copy(ROOT / "data" / "demo" / "maudesignal_demo.db", db)
+    out = tmp_path / "out"
+    res = CliRunner().invoke(
+        app, ["monitor", "--db", str(db), "--as-of", as_of, "--no-fetch", "--out-dir", str(out)]
+    )
+    assert res.exit_code == 0, res.output
+    day = f"{as_of[:4]}-{as_of[4:6]}-{as_of[6:]}"
+    for ext in ("md", "json"):
+        assert (out / f"{day}.{ext}").read_text("utf-8") == (
+            ROOT / "digests" / f"{day}.{ext}"
+        ).read_text("utf-8")

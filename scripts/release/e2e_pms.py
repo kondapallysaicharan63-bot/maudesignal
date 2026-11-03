@@ -116,6 +116,8 @@ def run(out: Path, shots: Path) -> int:
     exp = expected()
     r = Run()
     shots.mkdir(parents=True, exist_ok=True)
+    m0 = exp["manifest"]["data_as_of"]
+    latest_stored = max(x for x in [m0["stored"]["latest"], m0["sweep"]["week_end"]] if x)
     srv, base = serve(ROOT / "web" / "dist")
     srv2, base_live = serve(ROOT / "web" / "dist-live")
     with sync_playwright() as p:
@@ -517,6 +519,19 @@ def run(out: Path, shots: Path) -> int:
             "not run in this pass; existing contrast scripts (web/qa/contrast_*.py) not re-run against the new pages",
         )
 
+        # ---- H: banner over a recorded Copilot answer (thread page)
+        threads = json.loads((DATA / "threads.json").read_text("utf-8"))["threads"]
+        t0 = next(t for t in threads if t["id"] == "01-what-changed")
+        page.goto(base + "/thread/01-what-changed", wait_until="networkidle")
+        human_wait(page, 500)
+        tb = page.locator("[data-testid=thread-asof]").inner_text()
+        r.check(
+            "H recorded answer: banner shows the data date and the recording date",
+            f"Data as of: {latest}." in tb
+            and f"recorded answer of {t0['recorded_at_utc'][:10]}" in tb,
+            tb[:160],
+        )
+
         # ---- F: forced live failures (separate bundle with an API address; routes mocked)
         for kind, status, body in [
             (
@@ -565,6 +580,16 @@ def run(out: Path, shots: Path) -> int:
                 r.check(f"F {kind}: fallback screen appears", False, "no fallback panel")
                 c3.close()
                 continue
+            asof = (
+                p3.locator("[data-testid=chat-asof]").inner_text()
+                if p3.locator("[data-testid=chat-asof]").count()
+                else ""
+            )
+            r.check(
+                f"H {kind}: banner over the Copilot answer = stored dates",
+                f"Data as of: {latest_stored}." in asof and "not because risk is zero" in asof,
+                asof[:120],
+            )
             fb = p3.locator("[data-testid=fallback]")
             r.check(
                 f"F {kind}: panel kind",

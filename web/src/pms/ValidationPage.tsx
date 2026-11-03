@@ -12,7 +12,7 @@ export const NOT_VALIDATED =
 
 /** Measured on 2026-11-03 (outputs in release-out/2026-11-03/, see TEST-REPORT-2026-11-03.md). A test pins the gate count to the fixture. */
 export const TESTED: { what: string; result: string; how: string }[] = [
-  { what: 'Python unit tests', result: 'Python 3.12: 2,572 passed, 0 skipped, 85% line + branch coverage (pytest-cov, rounded). Python 3.11: 2,571 passed, 1 skipped (lxml not installed). Run 2026-11-03.', how: 'pytest tests/unit --cov=src/maudesignal --cov-branch' },
+  { what: 'Python unit tests', result: 'Python 3.12: 2,574 passed, 0 skipped, 85% line + branch coverage (pytest-cov, rounded). Python 3.11: 2,573 passed, 1 skipped (lxml not installed). Run 2026-11-03.', how: 'pytest tests/unit --cov=src/maudesignal --cov-branch' },
   { what: 'Web unit tests', result: '722 passed in 34 files (vitest, run 2026-11-03)', how: 'cd web && npx vitest run' },
   { what: 'Claim gate adversarial set', result: '139 cases (90 must be withheld, 49 must pass): 0 false passes, 0 false blocks. 9 were added on 2026-11-03: report-mix share, quote pinned to the wrong report, number with no claim, date-shifted year, zero on a no-data range.', how: 'tests/fixtures/gate/adversarial.jsonl via tests/unit/test_gate.py' },
   {

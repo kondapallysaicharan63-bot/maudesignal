@@ -1,0 +1,7 @@
+CLAUDE-ONLY CHECK, not an independent person check
+alert brief:2026-08-31:LLZ reports suddenly increased window 2026-08-25 2026-08-31 baseline 2026-07-28 2026-08-24
+app shows: week 33 baseline 35 mean 8.75 times [3.77]
+demo DB by hand: week 33 baseline 35 mean 8.75 times 3.77
+report 50515470 quote verbatim in demo DB narrative: True
+live openFDA: quote verbatim: True | date 20260831 | type Malfunction
+live openFDA counts: week 33 baseline 35

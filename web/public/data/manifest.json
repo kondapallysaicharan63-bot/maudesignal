@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "build": {
     "version": "0.1.0",
-    "commit": "d28405038a75f664088215947ddc971ab11b68b6"
+    "commit": "e8c6bac1d16f678444128804c1147c785672c097"
   },
   "data_as_of": {
     "stored": {
@@ -16,8 +16,8 @@
       "week_end": "2026-09-30"
     }
   },
-  "generated_utc": "2026-11-03T08:41:16Z",
-  "source_commit": "d28405038a75f664088215947ddc971ab11b68b6",
+  "generated_utc": "2026-11-03T09:32:58Z",
+  "source_commit": "e8c6bac1d16f678444128804c1147c785672c097",
   "files": [
     "threads.json",
     "evidence.json",

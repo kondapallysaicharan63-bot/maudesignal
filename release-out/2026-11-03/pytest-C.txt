@@ -5,4 +5,4 @@ tests/unit/test_compliance_journey.py::test_ingest_extract_dashboard_psur
     warnings.warn(
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-1 passed, 1 warning in 2.49s
+1 passed, 1 warning in 2.47s

@@ -132,7 +132,7 @@
   {
     "name": "D accept -> 'Evidence accepted by Ana Ruiz \u00b7 audit entry #1'",
     "status": "PASS",
-    "detail": "Evidence accepted by Ana Ruiz \u00b7 audit entry #1 \u00b7 2026-11-03T09:22:03Z"
+    "detail": "Evidence accepted by Ana Ruiz \u00b7 audit entry #1 \u00b7 2026-11-03T09:45:14Z"
   },
   {
     "name": "D Note to File export opens with the label",
@@ -310,6 +310,16 @@
     "detail": "not run in this pass; existing contrast scripts (web/qa/contrast_*.py) not re-run against the new pages"
   },
   {
+    "name": "H recorded answer: banner shows the data date and the recording date",
+    "status": "PASS",
+    "detail": "Data as of: 2026-09-30. OpenFDA republishes weekly and reports arrive with delay \u2014 recent months may show few or no reports because of reporting delay, not beca"
+  },
+  {
+    "name": "H timeout: banner over the Copilot answer = stored dates",
+    "status": "PASS",
+    "detail": "Data as of: 2026-09-30. OpenFDA republishes weekly and reports arrive with delay \u2014 recent months may show few or no repo"
+  },
+  {
     "name": "F timeout: panel kind",
     "status": "PASS",
     "detail": "timeout"
@@ -360,6 +370,11 @@
     "detail": "['live_failure', 'fallback_choice', 'fallback_choice', 'fallback_choice', 'fallback_choice', 'live_failure']"
   },
   {
+    "name": "H failure: banner over the Copilot answer = stored dates",
+    "status": "PASS",
+    "detail": "Data as of: 2026-09-30. OpenFDA republishes weekly and reports arrive with delay \u2014 recent months may show few or no repo"
+  },
+  {
     "name": "F failure: panel kind",
     "status": "PASS",
     "detail": "failure"
@@ -408,6 +423,11 @@
     "name": "F failure: failure + fallback choices are in the audit",
     "status": "PASS",
     "detail": "['live_failure', 'fallback_choice', 'fallback_choice', 'fallback_choice', 'fallback_choice', 'live_failure']"
+  },
+  {
+    "name": "H cap: banner over the Copilot answer = stored dates",
+    "status": "PASS",
+    "detail": "Data as of: 2026-09-30. OpenFDA republishes weekly and reports arrive with delay \u2014 recent months may show few or no repo"
   },
   {
     "name": "F cap: panel kind",

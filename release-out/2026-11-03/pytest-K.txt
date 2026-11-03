@@ -6,4 +6,4 @@ tests/unit/test_call_ledger.py::test_guarded_client_forces_no_sdk_retries_one_ht
     super().__init__(match=match, check=check)
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-94 passed, 1 warning in 8.11s
+94 passed, 1 warning in 8.98s

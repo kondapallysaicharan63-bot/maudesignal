@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "build": {
     "version": "0.1.0",
-    "commit": "d28405038a75f664088215947ddc971ab11b68b6"
+    "commit": "e8c6bac1d16f678444128804c1147c785672c097"
   },
   "models": {
     "chat_and_vision": "muse-spark-1.3",

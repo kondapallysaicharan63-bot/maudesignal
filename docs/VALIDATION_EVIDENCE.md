@@ -44,7 +44,7 @@ records and papers, each tied to the stored FDA record.
 
 | Check | Result | Source |
 |---|---|---|
-| Unit tests | 2572 pass on Python 3.12 (85% line + branch coverage, pytest-cov rounded); 2571 pass + 1 skipped (lxml not installed) on Python 3.11 (run 2026-11-03, `release-out/2026-11-03/`) | `pytest tests/unit --cov=src/maudesignal --cov-branch` |
+| Unit tests | 2574 pass on Python 3.12 (85% line + branch coverage, pytest-cov rounded); 2573 pass + 1 skipped (lxml not installed) on Python 3.11 (run 2026-11-03, `release-out/2026-11-03/`) | `pytest tests/unit --cov=src/maudesignal --cov-branch` |
 | Web unit tests | 722 pass in 34 files (vitest, run 2026-11-03); on 2026-11-01 706 passed in 33 files; the Release check Web job on release/m7 failed only because `npm test` exited 1 on 6 unhandled jsdom errors with every test passing; fixed in the same stretch | `cd web && npx vitest run` |
 | Release check (release/m7, 2026-11-01) | Python, API contract and Browser e2e (Chromium, Firefox, WebKit; 1440 and 390; light and dark; classic and v2 layouts) passed; Web failed as above; nothing was deployed from m7. The deployed candidate's run is recorded in the final report | `.github/workflows/release-check.yml` |
 | CI | ruff, black, `mypy --strict`, tests on Python 3.11 and 3.12 | `.github/workflows/ci.yml` |

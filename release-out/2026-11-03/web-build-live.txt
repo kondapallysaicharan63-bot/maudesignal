@@ -12,10 +12,10 @@ dist-live/assets/pdf.worker.min-yatZIOMy.mjs                  1,375.84 kB
 dist-live/assets/index-Dwj6DT4_.css                              89.68 kB │ gzip:  17.95 kB
 dist-live/assets/pdf.worker.min-DgRcL-GR.js                       0.09 kB │ gzip:   0.11 kB
 dist-live/assets/pdf-gh-BrLFn.js                                334.78 kB │ gzip:  98.61 kB
-dist-live/assets/index-CaTAYI1H.js                              737.64 kB │ gzip: 215.84 kB
+dist-live/assets/index-vnVyJWO7.js                              738.07 kB │ gzip: 216.04 kB
 
 (!) Some chunks are larger than 500 kB after minification. Consider:
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 3.63s
+✓ built in 3.52s

@@ -33,7 +33,7 @@ s....................................................................... [  2%]
 ........................................................................ [ 92%]
 ........................................................................ [ 95%]
 ........................................................................ [ 97%]
-....................................................                     [100%]
+......................................................                   [100%]
 =============================== warnings summary ===============================
 tests/unit/test_call_ledger.py::test_guarded_client_forces_no_sdk_retries_one_http_request_per_reservation
   /tmp/claude-0/v311/lib/python3.11/site-packages/_pytest/raises.py:613: PytestWarning: matching against an empty string will *always* pass. If you want to check for an empty message you need to pass '^$'. If you don't want to match you should pass `None` or leave out the parameter.
@@ -46,5 +46,5 @@ tests/unit/test_compliance_journey.py::test_ingest_extract_dashboard_psur
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 =========================== short test summary info ============================
 SKIPPED [1] tests/unit/test_ai_sweep.py:28: could not import 'lxml': No module named 'lxml'
-2571 passed, 1 skipped, 2 warnings in 105.93s (0:01:45)
+2573 passed, 1 skipped, 2 warnings in 113.23s (0:01:53)
 exit=0

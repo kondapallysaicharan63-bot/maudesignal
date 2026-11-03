@@ -21,6 +21,7 @@
     "spike_multiplier": 2,
     "spike_min_reports": 3,
     "severity_escalation_pp": 15,
+    "severity_min_reports": 3,
     "severe_event_types": [
       "death",
       "injury"
