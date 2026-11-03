@@ -324,7 +324,7 @@ def test_saved_json_shape_matches_data_contract(tmp_path: Path) -> None:
         assert key in d
     assert d["id"] == path.stem and d["kind"] == "weekly-investigator"
     assert d["product_code"] == "QIH" and d["recorded_at_utc"].endswith("Z")
-    assert d["skill_version"] == "1.0.0"
+    assert d["skill_version"] == "1.0.1"
     s0 = d["sentences"][1]
     assert set(s0) == {"text", "status", "reasons", "claims"}
     assert s0["claims"][0]["kind"] == "group_count"
