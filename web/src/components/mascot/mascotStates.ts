@@ -35,3 +35,6 @@ export const FORBIDDEN_CAPTION = /dangerous|must recall|recall this|medical advi
 /** The size classes: wings are dropped at 24px and below, where they turn to mud. */
 export const WINGS_MAX_DROP_PX = 24
 export const MASCOT_SIZES = { inline: 24, header: 32, empty: 48, hero: 96 } as const
+
+/** The alert caption with the real count: always shown beside the alert links, never alone. */
+export const alertCaption = (n: number): string => `${n} ${n === 1 ? 'code' : 'codes'} flagged. Here ${n === 1 ? 'is the link' : 'are the links'}.`

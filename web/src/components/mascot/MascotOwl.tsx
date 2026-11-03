@@ -99,3 +99,34 @@ export function MascotOwl({ state = 'idle', size = MASCOT_SIZES.header, logo = f
 }
 
 export default MascotOwl
+
+/** "Hide Noctua" lasts for the session (sessionStorage; if blocked, until the page reloads). "Show Noctua" is in the Theme menu. */
+export const NOCTUA_HIDDEN_KEY = 'ms-noctua-hidden-v1'
+const HIDDEN_EVENT = 'ms-noctua-visibility'
+let hiddenThisLoad = false
+export function noctuaHidden(): boolean {
+  try {
+    return sessionStorage.getItem(NOCTUA_HIDDEN_KEY) === '1' || hiddenThisLoad
+  } catch {
+    return hiddenThisLoad
+  }
+}
+export function setNoctuaHidden(v: boolean): void {
+  hiddenThisLoad = v
+  try {
+    if (v) sessionStorage.setItem(NOCTUA_HIDDEN_KEY, '1')
+    else sessionStorage.removeItem(NOCTUA_HIDDEN_KEY)
+  } catch {
+    /* blocked: the per-load flag still applies */
+  }
+  window.dispatchEvent(new Event(HIDDEN_EVENT))
+}
+export function useNoctuaHidden(): boolean {
+  const [h, setH] = useState(noctuaHidden)
+  useEffect(() => {
+    const on = () => setH(noctuaHidden())
+    window.addEventListener(HIDDEN_EVENT, on)
+    return () => window.removeEventListener(HIDDEN_EVENT, on)
+  }, [])
+  return h
+}

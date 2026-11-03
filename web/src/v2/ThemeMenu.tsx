@@ -1,6 +1,7 @@
 // One theme control for the v2 layout: the same small menu opens from the top bar and from the sidebar.
 import { useEffect, useRef, useState } from 'react'
 import { Icon } from '../icons'
+import { setNoctuaHidden, useNoctuaHidden } from '../components/mascot/MascotOwl'
 import { THEMES, themeLabel, type ThemeId } from './theme'
 
 const ICON: Partial<Record<ThemeId, 'sun' | 'moon' | 'auto'>> = { light: 'sun', dark: 'moon' }
@@ -20,6 +21,7 @@ export function ThemeMenu({
   showLabel?: boolean
 }) {
   const [open, setOpen] = useState(false)
+  const hidden = useNoctuaHidden()
   const wrap = useRef<HTMLDivElement>(null)
   const btn = useRef<HTMLButtonElement>(null)
   const items = useRef<(HTMLButtonElement | null)[]>([])
@@ -71,7 +73,7 @@ export function ThemeMenu({
             const i = items.current.findIndex((el) => el === document.activeElement)
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
               e.preventDefault()
-              const n = THEMES.length
+              const n = THEMES.length + 1
               items.current[(i + (e.key === 'ArrowDown' ? 1 : n - 1)) % n]?.focus()
             }
           }}
@@ -99,6 +101,24 @@ export function ThemeMenu({
               </button>
             </li>
           ))}
+          <li role="none" className="ms2-menu-sep">
+            <button
+              ref={(el) => {
+                items.current[THEMES.length] = el
+              }}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setNoctuaHidden(!hidden)
+                setOpen(false)
+                btn.current?.focus()
+              }}
+              data-testid="noctua-toggle"
+            >
+              <span className="ms2-check" aria-hidden="true" />
+              {hidden ? 'Show Noctua' : 'Hide Noctua'}
+            </button>
+          </li>
         </ul>
       )}
     </div>

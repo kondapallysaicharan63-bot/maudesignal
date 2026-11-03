@@ -103,7 +103,7 @@ function Trend({ data }: { data: WorkspaceData }) {
     <div>
       <p className="ms2-muted m-0">
         {label ? `${label}. ` : ''}Reports in that week against the weekly average of the 4 weeks before. Stored numbers, each
-        with its openFDA query.
+        with its openFDA query. <strong>Counts only, no denominator - not a rate.</strong>
       </p>
       <ul className="m-0 mt-4 list-none space-y-5 p-0" data-testid="trend-list">
         {rows.map((d) => {
@@ -157,8 +157,9 @@ function Trend({ data }: { data: WorkspaceData }) {
 /** Reports filed by someone other than the manufacturer (user facilities, others), from the stored "who filed" counts. */
 export const UNFILED_THREAD = '21-not-by-manufacturer'
 
-function Unfiled({ data, onThread }: { data: WorkspaceData; onThread: (id: string) => void }) {
+function Unfiled({ data, onThread, onInvestigate }: { data: WorkspaceData; onThread: (id: string) => void; onInvestigate?: (code: string) => void }) {
   const { openAlert } = useAlertPanel()
+  const [pick, setPick] = useState('')
   const rows = rankReal(realDetails(data)).filter((d) => d.who_filed)
   const recorded = data.threads.threads.find((t) => t.id === UNFILED_THREAD)
   const link = recorded && (
@@ -182,6 +183,21 @@ function Unfiled({ data, onThread }: { data: WorkspaceData; onThread: (id: strin
         Reports about these device types that a user facility or someone else filed, not the manufacturer. Counts are of the stored
         reports for the alert's week.
       </p>
+      {onInvestigate && (
+        <div className="mt-3 flex flex-wrap items-end gap-3" data-testid="unfiled-investigate">
+          <label className="ms2-field">
+            <span>Code from this table</span>
+            <select value={pick || rows[0].product_code} onChange={(e) => setPick(e.target.value)} data-testid="unfiled-code">
+              {[...new Set(rows.map((d) => d.product_code))].map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+          </label>
+          <button type="button" className="ms-btn ms-btn--primary" onClick={() => onInvestigate(pick || rows[0].product_code)} data-testid="unfiled-investigate-btn">
+            Investigate a code from this table
+          </button>
+        </div>
+      )}
       <div className="relative mt-4 overflow-x-auto">
         <table className="ms2-table" data-testid="unfiled-table">
           <caption className="sr-only">Who filed the stored reports, per real alert</caption>
@@ -275,6 +291,7 @@ export function SignalsPage({
   onThread,
   briefDate,
   onBriefDate,
+  onInvestigate,
 }: {
   data: WorkspaceData
   tab: SignalsTab
@@ -283,6 +300,8 @@ export function SignalsPage({
   onThread: (id: string) => void
   briefDate: string | null
   onBriefDate: (d: string) => void
+  /** Opens /investigate with the code prefilled. */
+  onInvestigate?: (code: string) => void
 }) {
   return (
     <div>
@@ -297,7 +316,7 @@ export function SignalsPage({
           </>
         )}
         {tab === 'trend' && <Trend data={data} />}
-        {tab === 'unfiled' && <Unfiled data={data} onThread={onThread} />}
+        {tab === 'unfiled' && <Unfiled data={data} onThread={onThread} onInvestigate={onInvestigate} />}
         {tab === 'alerts' && <AllAlerts data={data} briefDate={briefDate} onBriefDate={onBriefDate} />}
       </SubTabs>
     </div>

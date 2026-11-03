@@ -3,6 +3,31 @@
 import type { AlertItem } from '../dashboard'
 import { Icon } from '../icons'
 import { AlertBell } from '../components/AlertBell'
+import { MascotOwl, useMascotBubble, useNoctuaHidden } from '../components/mascot/MascotOwl'
+import { alertCaption } from '../components/mascot/mascotStates'
+
+/** The accessible name: the state in words (the owl itself is aria-hidden). */
+export const noctuaLabel = (n: number): string => `Noctua: ${n} real FDA ${n === 1 ? 'alert needs' : 'alerts need'} a look. Open the first one.`
+
+/** Branding only. Shown only while real alerts exist (a primary 44 x 44 button that opens the first alert); never a chat. */
+function NoctuaMark({ alerts, onAlert }: { alerts: AlertItem[]; onAlert: (a: AlertItem) => void }) {
+  const hidden = useNoctuaHidden()
+  const n = alerts.length
+  const [bubble, setBubble] = useMascotBubble(n > 0 && !hidden)
+  if (hidden || n === 0) return null
+  return (
+    <span className="relative inline-flex" onMouseEnter={() => setBubble('user')} onMouseLeave={() => setBubble(false)} onFocus={() => setBubble('user')} onBlur={() => setBubble(false)}>
+      <button type="button" className="ms-noctua-btn" aria-label={noctuaLabel(n)} onClick={() => alerts[0] && onAlert(alerts[0])} data-testid="noctua-top">
+        <MascotOwl state="alert" size={32} />
+      </button>
+      {bubble && (
+        <span className="ms-noctua-bubble" aria-hidden="true" data-testid="noctua-bubble">
+          {alertCaption(n)}
+        </span>
+      )}
+    </span>
+  )
+}
 
 export const BELL_NOTE =
   'Real FDA alerts only: the AI device sweep and the stored demo-snapshot brief. Signals for a person to review. Simulated devices are listed under Our devices.'
@@ -69,6 +94,7 @@ export function TopBarV2({
           <Icon name="search" />
         </button>
       )}
+      <NoctuaMark alerts={alerts} onAlert={onAlert} />
       <AlertBell
         items={alerts}
         onOpen={onAlert}

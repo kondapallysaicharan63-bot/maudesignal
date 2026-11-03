@@ -372,3 +372,19 @@
     display: none;
   }
 }
+
+/* Touch targets: every button and link on this page is at least 44px high. */
+.ms2-inv .ms-btn,
+.ms2-inv .ms-btn--sm,
+.ms2-inv .ms2-link,
+.ms2-inv .ms2-smalllink,
+.ms2-inv .ms2-inv-jumps .ms2-smalllink,
+.ms2-inv summary {
+  height: auto;
+  min-height: 44px;
+}
+.ms2-inv .ms2-link,
+.ms2-inv .ms2-smalllink {
+  display: inline-flex;
+  align-items: center;
+}

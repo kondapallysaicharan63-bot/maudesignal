@@ -10,7 +10,7 @@ import type { ThemeId } from './theme'
 export const SAVED_NOTE = 'Saved on this device only'
 export const NOT_SAVED_NOTE = 'Not saved: browser storage is full or blocked'
 
-export type NavId = 'home' | 'board' | 'validation' | Section
+export type NavId = 'home' | 'board' | 'validation' | 'investigate' | 'pms' | 'roi' | Section
 
 interface Props {
   open: boolean
@@ -24,6 +24,8 @@ interface Props {
   chatHref: (id: string) => string
   devicesLabel: string
   devicesToReview: number
+  /** PMS board rows that are New or Under review (the badge). */
+  boardCount?: number
   theme: ThemeId
   onTheme: (t: ThemeId) => void
   onNewChat: () => void
@@ -222,15 +224,42 @@ export function SidebarV2(p: Props) {
     window.addEventListener('keydown', key)
     return () => window.removeEventListener('keydown', key)
   }, [p.open]) // eslint-disable-line react-hooks/exhaustive-deps
-  const nav: { id: NavId; label: string; icon: Parameters<typeof Icon>[0]['name']; badge?: string }[] = [
+  type NavDef = { id: NavId; label: string; icon: Parameters<typeof Icon>[0]['name']; badge?: string; note?: string }
+  const top: NavDef[] = [
     { id: 'home', label: 'Home', icon: 'panel' },
-    { id: 'board', label: 'PMS board', icon: 'check' },
+    { id: 'board', label: 'Board', icon: 'check', badge: (p.boardCount ?? 0) > 0 ? `${p.boardCount}` : undefined, note: 'to review' },
     { id: 'signals', label: 'Signals', icon: 'bell' },
-    { id: 'devices', label: p.devicesLabel, icon: 'lock', badge: p.devicesToReview > 0 ? `${p.devicesToReview}` : undefined },
+    { id: 'investigate', label: 'Investigate a complaint', icon: 'search' },
     { id: 'evidence', label: 'Evidence', icon: 'check' },
-    { id: 'connect', label: 'Connect', icon: 'plug' },
     { id: 'validation', label: 'Validation', icon: 'info' },
   ]
+  const fits: NavDef[] = [
+    { id: 'pms', label: 'PMS workflow', icon: 'panel' },
+    { id: 'roi', label: 'Time & cost', icon: 'info' },
+  ]
+  const connect: NavDef[] = [{ id: 'connect', label: 'Connect', icon: 'plug' }]
+  const demo: NavDef = { id: 'devices', label: p.devicesLabel, icon: 'lock', badge: p.devicesToReview > 0 ? `${p.devicesToReview}` : undefined, note: 'to review' }
+  const item = (n: NavDef) => (
+    <li key={n.id}>
+      <button
+        type="button"
+        className="ms2-navitem"
+        aria-current={p.active === n.id ? 'page' : undefined}
+        onClick={() => p.onNav(n.id)}
+        title={n.badge ? `${n.label} · ${n.badge} ${n.note ?? ''}`.trim() : n.label}
+        data-testid={`nav-${n.id}`}
+      >
+        <Icon name={n.icon} size={18} />
+        <span className="ms2-clip">{n.label}</span>
+        {n.badge && (
+          <span className="ms2-badge" data-testid={`badge-${n.id}`}>
+            {n.badge}
+            <span className="sr-only"> {n.note}</span>
+          </span>
+        )}
+      </button>
+    </li>
+  )
   return (
     <>
       {p.open && <div className="ws-scrim z-30 md:hidden" onClick={p.onClose} aria-hidden="true" data-testid="drawer-scrim" />}
@@ -260,29 +289,12 @@ export function SidebarV2(p: Props) {
           </button>
         </div>
         <nav className="min-h-0 flex-1 overflow-y-auto px-2 pb-3" aria-label="Sections">
-          <ul className="m-0 mt-2 list-none space-y-0.5 p-0">
-            {nav.map((n) => (
-              <li key={n.id}>
-                <button
-                  type="button"
-                  className="ms2-navitem"
-                  aria-current={p.active === n.id ? 'page' : undefined}
-                  onClick={() => p.onNav(n.id)}
-                  title={n.badge ? `${n.label} · ${n.badge} to review` : n.label}
-                  data-testid={`nav-${n.id}`}
-                >
-                  <Icon name={n.icon} size={18} />
-                  <span className="ms2-clip">{n.label}</span>
-                  {n.badge && (
-                    <span className="ms2-badge" data-testid={`badge-${n.id}`}>
-                      {n.badge}
-                      <span className="sr-only"> to review</span>
-                    </span>
-                  )}
-                </button>
-              </li>
-            ))}
-          </ul>
+          <ul className="m-0 mt-2 list-none space-y-0.5 p-0">{top.map(item)}</ul>
+          <h2 className="ms2-side-divider" data-testid="side-fits">
+            How it fits
+          </h2>
+          <ul className="m-0 list-none space-y-0.5 p-0">{fits.map(item)}</ul>
+          <ul className="m-0 mt-2 list-none space-y-0.5 p-0">{connect.map(item)}</ul>
           <h2 className="ms2-side-h">Recents</h2>
           <p className={['ms2-side-note', p.saved ? '' : 'is-bad'].join(' ')} data-testid="saved-note" role={p.saved ? undefined : 'status'}>
             {p.saved ? SAVED_NOTE : NOT_SAVED_NOTE}
@@ -311,6 +323,10 @@ export function SidebarV2(p: Props) {
             <Icon name="info" size={18} />
             Schedules and sources
           </button>
+          <details className="ms2-demo" data-testid="side-demo">
+            <summary>Demo / Simulated</summary>
+            <ul className="m-0 list-none space-y-0.5 p-0">{item(demo)}</ul>
+          </details>
         </div>
       </aside>
     </>

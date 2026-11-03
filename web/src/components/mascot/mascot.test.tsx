@@ -199,7 +199,7 @@ describe('evidence rule: the mascot is branding only', () => {
     expect(offenders.map((p) => relative(REPO, p))).toEqual([])
   })
   it('only the TopBar and Home may import the mascot (allow-list)', () => {
-    const allowed = new Set(['v2/TopBarV2.tsx', 'v2/HomeV2.tsx', 'App.tsx', 'main.tsx'])
+    const allowed = new Set(['v2/TopBarV2.tsx', 'v2/HomeV2.tsx', 'v2/ThemeMenu.tsx'])
     const importers = walk(WEB_SRC)
       .filter((p) => !p.includes(`${join('components', 'mascot')}`))
       .filter((p) => !/\.test\.tsx?$/.test(p))
