@@ -514,19 +514,29 @@ def s_chat(env: Env) -> str:
 
 
 def chat_counts(env: Env) -> tuple[int, int, bool]:
-    """Wait for the first answer to finish writing; return (sentences, unlinked, withheld line)."""
+    """Wait for the first answer to finish writing; return (sentences, unlinked, withheld line).
+
+    Layout-neutral. Both layouts mark each sentence ``answer-sentence`` (a list item in classic, a
+    block in v2). The classic answer links each sentence (``sentence-links`` inside it); the v2
+    answer lists its sources once, in ``answer-sources`` (the same ``sentence-links`` list, outside
+    the sentences). So in v2 a sentence counts as linked when the answer lists at least one source.
+    """
     page = env.page
     page.wait_for_selector(
-        "[data-testid=answer-sentences] li, [data-testid=turn-error], "
+        "[data-testid=answer-sentence], [data-testid=turn-error], "
         "[data-testid=held-back], [data-testid=limit-banner]",
         timeout=60_000,
     )
+    v2 = page.locator("[data-testid=live-answer][data-layout=v2]").count() > 0
     last, stable = (-1, -1), 0
     for _ in range(60):  # sentences are written word by word; wait until the count settles
-        sentences = page.locator("[data-testid=answer-sentences] li").count()
-        linked = page.locator(
-            "[data-testid=answer-sentences] li [data-testid=sentence-links]"
-        ).count()
+        sentences = page.locator("[data-testid=answer-sentence]").count()
+        if v2:
+            linked = sentences if page.locator("[data-testid=answer-sources] a").count() else 0
+        else:
+            linked = page.locator(
+                "[data-testid=answer-sentence] [data-testid=sentence-links]"
+            ).count()
         now = (sentences, linked)
         stable = stable + 1 if now == last else 0
         last = now
