@@ -116,13 +116,14 @@ describe('PMS workflow map', () => {
     const items = [...host.querySelectorAll('[data-testid="pms-steps"] > li')]
     expect(items).toHaveLength(8)
     expect(STEPS.map((s) => s.title)).toEqual(['Complaint received', 'Investigation', 'FDA search', 'Trend review', 'PMS board', 'Decision', 'PSUR / PMSR', 'Audit'])
-    for (const li of items) {
+    items.forEach((li, i) => {
       const heads = [...li.querySelectorAll('h3')].map((h) => h.textContent)
-      expect(heads).toEqual(['Manual today', 'What MaudeSignal does', 'What stays human', 'Related clauses'])
+      const adv = STEPS[i].advantage ? ['Advantage'] : []
+      expect(heads).toEqual(['Manual today', 'What MaudeSignal does', ...adv, 'What stays human', 'Related clauses'])
       for (const g of li.querySelectorAll('[role="group"]')) expect(g.getAttribute('aria-labelledby')).toBeTruthy()
       expect(li.querySelector('[data-testid^="pms-kind-"]')!.textContent).toMatch(/^(MaudeSignal helps|Stays human)$/)
       expect(li.querySelector('.ms2-step-f--human')!.textContent).toContain('You decide:')
-    }
+    })
   })
   it('the summary counts are computed from the steps', () => {
     render(<PmsWorkflow />)

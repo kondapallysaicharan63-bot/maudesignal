@@ -3,7 +3,7 @@
 // Every "What MaudeSignal does" line names a function of the product; new ones are marked new. Every step where the
 // work is a decision, a signature or a filing says so. No number is typed on this page (counts are computed).
 import type { ReactNode } from 'react'
-import { HEADLINE } from '../positioning'
+import { HEADLINE, REACTIVE } from '../positioning'
 import { appRoot, withLayout } from './router'
 import './positioning.css'
 
@@ -24,6 +24,8 @@ export interface Step {
   doesNew?: { tag: string; text: string }
   /** What the person decides, written to follow "You decide:". */
   human: string
+  /** Advantage in plain words (traceability and rework, never invented minutes until /roi measures them). */
+  advantage?: string
   clauses: string[]
 }
 
@@ -47,6 +49,7 @@ export const STEPS: Step[] = [
     manual: 'Collect the facts by hand and ask around whether anyone else has seen the same problem.',
     does: 'Investigate a complaint (new): enter the product code and the problem; get the problems reported on devices of the same type (any maker) from FDA data, each fact with its FDA link. For the complaints team: the evidence feeds your known-effects record.',
     human: 'whether the events are really the same problem, and what the investigation concludes.',
+    advantage: "Manual: facts gathered from several places, no record of where each came from. MaudeSignal: one query; every count links to its openFDA query; reports not filed by a manufacturer listed first.",
     clauses: ['ISO 13485 §8.2.2 (complaint handling)', '21 CFR 820 (QMSR)', 'ISO 14971 (risk management)'],
   },
   {
@@ -57,6 +60,7 @@ export const STEPS: Step[] = [
     manual: 'Search MAUDE, recalls and 510(k) records one site at a time; copy counts and quotes into a document.',
     does: "Search of problems reported on other makers' devices of the same type: FDA reports, recalls and 510(k) records. The claim gate recomputes every number and matches every quote to its record; a sentence it cannot match is withheld.",
     human: 'the search terms, which reports to read, and which hits matter.',
+    advantage: "Manual: 3 sites, counts copied by hand, no audit. MaudeSignal: one query, gate-recomputed counts, every quote linked to its report, an audit row for each decision.",
     clauses: ['ISO 13485 §8.2.1 (feedback)', '21 CFR 7, Subpart C (recalls)'],
   },
   {
@@ -66,6 +70,7 @@ export const STEPS: Step[] = [
     manual: 'Rebuild the counts by hand for the period and compare them with earlier periods.',
     does: 'Weekly change check for each device type you choose: this week against the four weeks before, with fixed rules (reports suddenly increased, report mix changed, new kind of problem). The AI-device sweep runs the same check over FDA’s AI-enabled device list as the proactive extra.',
     human: 'whether a change matters for your device and your risk file.',
+    advantage: "Manual: counts rebuilt each period by hand. MaudeSignal: the same fixed rules every week with the openFDA query behind each figure; a flag says \"Report mix changed\" with its counts, never \"riskier\".",
     clauses: ['ISO 13485 §8.2.1 (feedback)', 'ISO 14971 (risk management)', '21 CFR 820 (QMSR)'],
   },
   {
@@ -73,8 +78,9 @@ export const STEPS: Step[] = [
     title: 'PMS board',
     kind: 'assist',
     manual: 'Assemble tables and slides for the board from separate sources.',
-    does: 'CAPA-need evidence PDF: the figures and quotes for the board, each checked by the claim gate, with an independent Muse Wonder review of the PDF (findings only; it never edits the record).',
+    does: 'PMS board page (new): each flagged code with why it was flagged, status (New, Under review, Note to file, Escalated, Closed), owner and advisory MDR due date; a named person changes a status and the change is audited. Plus the CAPA-need evidence PDF with an independent Muse Wonder review (findings only). This is not a QMS.',
     human: 'what the board assesses from the evidence and the review’s findings, and what it documents.',
+    advantage: "Manual: a spreadsheet tracker with no history. MaudeSignal: status, owner and advisory MDR due date per flagged code; every change by a named person in a hash-chained audit.",
     clauses: ['ISO 13485 §8.2.1 (feedback)', 'ISO 13485 §8.5.2 (corrective action)', 'ISO 14971 (risk management)'],
   },
   {
@@ -83,12 +89,13 @@ export const STEPS: Step[] = [
     detail: 'Note to file, CAPA or escalation',
     kind: 'human',
     manual: 'The board decides: note to file, CAPA, or escalation. Someone signs.',
-    does: 'Records which named person approved or rejected the evidence pack, in a hash-chained audit trail.',
+    does: 'Records which named person accepted or rejected the evidence pack, in a hash-chained audit trail, and drafts the note to file (Markdown + PDF) with escalation, risk and recall-check questions for you to answer. Draft note to file for your QMS; not filed with FDA.',
     doesNew: {
       tag: 'New, simulated',
       text: 'A decision path on simulated device profiles (F22), for fictional devices only.',
     },
     human: `the decision, the signature, and any report or filing (nothing is filed with FDA). ${HUMAN_ONLY}`,
+    advantage: "Manual: the note to file is retyped from the evidence. MaudeSignal: the note to file is drafted from the pack with report IDs, recalls, data-as-of, version and commit; you type the decision and rationale.",
     clauses: [
       'ISO 13485 §8.5.2 (corrective action)',
       'ISO 13485 §8.2.3 (reporting to regulators)',
@@ -114,6 +121,7 @@ export const STEPS: Step[] = [
     manual: 'Trace each number back to its source, one document at a time.',
     does: 'Every number and quote carries its FDA link and passed the claim gate; the audit trail can be re-verified.',
     human: 'the audit itself, and keeping your own quality records in your quality system.',
+    advantage: "Manual: trace each number back by hand. MaudeSignal: every figure carries its source link and the audit chain re-verifies on screen.",
     clauses: ['ISO 13485 §8.2.1–8.2.3', 'ISO 13485 §8.5.2 (corrective action)', '21 CFR 820 (QMSR)'],
   },
 ]
@@ -178,6 +186,17 @@ export function PmsWorkflow({ onRoi, onHome, onInvestigate }: { onRoi?: () => vo
         </p>
       </header>
 
+      <section className="ms2-card" aria-labelledby="pms-reactive-h" data-testid="pms-reactive">
+        <h2 id="pms-reactive-h" className="ms2-h2">
+          Step 0 — the reactive path
+        </h2>
+        <p className="m-0 mt-1">
+          {REACTIVE} A complaint arrives → <a className="ms2-a" href={pageHref('investigate')}>Investigate</a> (FDA evidence for that complaint) →{' '}
+          <a className="ms2-a" href={pageHref('board')}>PMS board</a> (status, owner, due date) → decision by a named person: note to file, CAPA or
+          escalation, in your own QMS.
+        </p>
+      </section>
+
       <Overview />
       <p className="ms2-muted ms2-step-sum" data-testid="pms-summary">
         {STEPS.length} steps · {helped} where MaudeSignal helps · {human} stay human
@@ -235,6 +254,11 @@ export function PmsWorkflow({ onRoi, onHome, onInvestigate }: { onRoi?: () => vo
                   </p>
                 )}
               </Field>
+              {s.advantage && (
+                <Field id={`pms-${s.id}-a`} label="Advantage" className="ms2-step-f--adv">
+                  <p data-testid={`pms-adv-${s.id}`}>{s.advantage}</p>
+                </Field>
+              )}
               <Field id={`pms-${s.id}-h2`} label="What stays human" className="ms2-step-f--human">
                 <p>
                   <strong>You decide:</strong> {s.human}
