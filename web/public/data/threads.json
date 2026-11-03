@@ -62,7 +62,7 @@
         {
           "name": "weekly_signals",
           "arguments": {},
-          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+          "summary": "weekly signals: New kind of problem: 0 · Report mix changed: 0 · Reports suddenly increased: 1"
         }
       ],
       "sentences": [
@@ -221,7 +221,7 @@
         {
           "name": "weekly_signals",
           "arguments": {},
-          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+          "summary": "weekly signals: New kind of problem: 0 · Report mix changed: 0 · Reports suddenly increased: 1"
         },
         {
           "name": "get_report",
@@ -477,7 +477,7 @@
         {
           "name": "weekly_signals",
           "arguments": {},
-          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+          "summary": "weekly signals: New kind of problem: 0 · Report mix changed: 0 · Reports suddenly increased: 1"
         },
         {
           "name": "get_report",
@@ -573,7 +573,7 @@
         {
           "name": "weekly_signals",
           "arguments": {},
-          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+          "summary": "weekly signals: New kind of problem: 0 · Report mix changed: 0 · Reports suddenly increased: 1"
         },
         {
           "name": "get_report",
@@ -782,7 +782,7 @@
         {
           "name": "weekly_signals",
           "arguments": {},
-          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+          "summary": "weekly signals: New kind of problem: 0 · Report mix changed: 0 · Reports suddenly increased: 1"
         },
         {
           "name": "product_summary",
@@ -1848,7 +1848,7 @@
         {
           "name": "weekly_signals",
           "arguments": {},
-          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+          "summary": "weekly signals: New kind of problem: 0 · Report mix changed: 0 · Reports suddenly increased: 1"
         },
         {
           "name": "product_summary",
@@ -2076,7 +2076,7 @@
         {
           "name": "weekly_signals",
           "arguments": {},
-          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+          "summary": "weekly signals: New kind of problem: 0 · Report mix changed: 0 · Reports suddenly increased: 1"
         },
         {
           "name": "search_reports",
@@ -2300,7 +2300,7 @@
         {
           "name": "weekly_signals",
           "arguments": {},
-          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+          "summary": "weekly signals: New kind of problem: 0 · Report mix changed: 0 · Reports suddenly increased: 1"
         },
         {
           "name": "deadline_check",
@@ -2774,7 +2774,7 @@
         {
           "name": "weekly_signals",
           "arguments": {},
-          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+          "summary": "weekly signals: New kind of problem: 0 · Report mix changed: 0 · Reports suddenly increased: 1"
         },
         {
           "name": "product_summary",
@@ -2874,7 +2874,7 @@
         {
           "name": "weekly_signals",
           "arguments": {},
-          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+          "summary": "weekly signals: New kind of problem: 0 · Report mix changed: 0 · Reports suddenly increased: 1"
         },
         {
           "name": "compare_signals",
@@ -3086,7 +3086,7 @@
         {
           "name": "weekly_signals",
           "arguments": {},
-          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+          "summary": "weekly signals: New kind of problem: 0 · Report mix changed: 0 · Reports suddenly increased: 1"
         },
         {
           "name": "product_summary",
@@ -3404,7 +3404,7 @@
         {
           "name": "weekly_signals",
           "arguments": {},
-          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+          "summary": "weekly signals: New kind of problem: 0 · Report mix changed: 0 · Reports suddenly increased: 1"
         }
       ],
       "sentences": [
@@ -3567,7 +3567,7 @@
         {
           "name": "weekly_signals",
           "arguments": {},
-          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+          "summary": "weekly signals: New kind of problem: 0 · Report mix changed: 0 · Reports suddenly increased: 1"
         },
         {
           "name": "get_report",
@@ -3846,7 +3846,7 @@
         {
           "name": "weekly_signals",
           "arguments": {},
-          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+          "summary": "weekly signals: New kind of problem: 0 · Report mix changed: 0 · Reports suddenly increased: 1"
         },
         {
           "name": "my_device_types",
@@ -4062,7 +4062,7 @@
         {
           "name": "weekly_signals",
           "arguments": {},
-          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+          "summary": "weekly signals: New kind of problem: 0 · Report mix changed: 0 · Reports suddenly increased: 1"
         },
         {
           "name": "product_summary",
@@ -4327,7 +4327,7 @@
         {
           "name": "weekly_signals",
           "arguments": {},
-          "summary": "weekly signals: New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+          "summary": "weekly signals: New kind of problem: 0 · Report mix changed: 0 · Reports suddenly increased: 1"
         },
         {
           "name": "compare_signals",

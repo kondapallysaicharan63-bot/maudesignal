@@ -2,7 +2,7 @@
 // Every number in the file was recomputed from stored rows by scripts/export_alerts.py; nothing here adds one.
 import type { AlertItem } from './dashboard'
 
-export type AlertRule = 'reports suddenly increased' | 'more serious than usual' | 'new kind of problem'
+export type AlertRule = 'reports suddenly increased' | 'report mix changed' | 'new kind of problem'
 
 export interface AlertNumber {
   label: string
@@ -58,6 +58,8 @@ export interface AlertDetail {
   device_type: string | null
   rule: AlertRule | null
   rule_words: string
+  /** "Report mix changed" only: "Injury/Death share rose from X% to Y% (N of M reports). This is a change in report mix, not proof of increased device risk." */
+  mix_sentence?: string | null
   source: { kind: 'sweep' | 'brief' | 'company'; label: string; as_of: string | null }
   window: AlertWindow | null
   numbers: AlertNumber[]

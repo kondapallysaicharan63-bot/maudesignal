@@ -5,7 +5,7 @@ import { Empty, Segmented } from './common'
 
 const COUNT_LABELS: [keyof Brief['counts'], string][] = [
   ['new', 'New kind of problem'],
-  ['more_serious_than_usual', 'More serious than usual'],
+  ['report_mix_changed', 'Report mix changed'],
   ['reports_suddenly_increased', 'Reports suddenly increased'],
   ['stable', 'No change'],
 ]

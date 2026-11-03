@@ -3342,7 +3342,7 @@
           "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMQB+AND+date_received%3A%5B19900101+TO+20260923%5D&count=event_type.exact"
         ]
       ],
-      "change": "more serious than usual",
+      "change": "report mix changed",
       "ai_devices_on_list": 3
     },
     {
@@ -3647,7 +3647,7 @@
           "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ADSI+AND+date_received%3A%5B19900101+TO+20260923%5D&count=event_type.exact"
         ]
       ],
-      "change": "more serious than usual",
+      "change": "report mix changed",
       "ai_devices_on_list": 2
     },
     {

@@ -146,6 +146,9 @@ def tool_count(name: str, preview: str) -> int | None:
     return None
 
 
+OLD_MIX_LABEL = "More serious " + "than usual"  # label before the 2026-11-03 rename
+
+
 def tool_summary(name: str, arguments: dict[str, Any], preview: str) -> str:
     """One line for a tool step, built only from the stored preview and arguments."""
     code = arguments.get("product_code")
@@ -167,7 +170,9 @@ def tool_summary(name: str, arguments: dict[str, Any], preview: str) -> str:
     if name == "weekly_signals":
         headline = string_in(preview, "headline")
         if headline:
-            return f"weekly signals: {headline}"
+            # Recorded runs before 2026-11-03 carry the old label in the stored tool output;
+            # the transcript stays verbatim, only this display line uses today's label.
+            return "weekly signals: " + headline.replace(OLD_MIX_LABEL, "Report mix changed")
     if name == "get_report" and arguments.get("report_id"):
         return f"read report {arguments['report_id']}"
     if name == "device_510k" and arguments.get("k_number"):

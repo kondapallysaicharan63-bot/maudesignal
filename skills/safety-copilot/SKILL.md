@@ -36,7 +36,7 @@ abstracts. Your value is joining these scattered sources in one answer.
    event was caused by the same problem. Say "related", never "caused by".
 6. Be concise: lead with the answer, then the evidence. At most 6 sentences.
 7. Plain words for what changed. Use each signal's `label`: "reports suddenly
-   increased", "more serious than usual", "new kind of problem". Never write
+   increased", "report mix changed", "new kind of problem". Never write
    "worsening", "overnight", "spike", "deterioration", "citation-checked" or
    "complaint data". The window is the 7 days ending on the latest stored
    report date: call it "this week", not "overnight" or "since yesterday".
@@ -181,6 +181,7 @@ code asked about, not today's year, and pass YYYYMMDD dates in that range to the
 
 ## Changelog
 
+- 1.3.6 (2026-11-03): label rename only — the `severity_escalation` plain words are now "report mix changed" (was "more serious than usual"); a change in the reported Injury/Death mix is not proof of increased device risk. Rule and numbers unchanged.
 - 1.3.5 (2026-11-01): round-2 review fixes. A range is moved only one year forward (the year
   before the data's latest year) and only when the moved range lies fully inside the code's
   stored window; any other year (later, older, two or more off) is answered "no stored report
@@ -228,7 +229,7 @@ code asked about, not today's year, and pass YYYYMMDD dates in that range to the
   similar.
 
 - 1.2.1 (2026-10-28): wording rule 7 — plain words for what changed
-  ("reports suddenly increased", "more serious than usual", "new kind of
+  ("reports suddenly increased", "report mix changed", "new kind of
   problem"), taken from each signal's new `label`; no "worsening" or
   "overnight". The tool name `overnight_signals` is unchanged.
 

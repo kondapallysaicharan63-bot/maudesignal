@@ -64,7 +64,7 @@ export const STEPS: Step[] = [
     title: 'Trend review',
     kind: 'assist',
     manual: 'Rebuild the counts by hand for the period and compare them with earlier periods.',
-    does: 'Weekly change check for each device type you choose: this week against the four weeks before, with fixed rules (reports suddenly increased, more serious than usual, new kind of problem). The AI-device sweep runs the same check over FDA’s AI-enabled device list as the proactive extra.',
+    does: 'Weekly change check for each device type you choose: this week against the four weeks before, with fixed rules (reports suddenly increased, report mix changed, new kind of problem). The AI-device sweep runs the same check over FDA’s AI-enabled device list as the proactive extra.',
     human: 'whether a change matters for your device and your risk file.',
     clauses: ['ISO 13485 §8.2.1 (feedback)', 'ISO 14971 (risk management)', '21 CFR 820 (QMSR)'],
   },

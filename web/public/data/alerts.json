@@ -1,14 +1,15 @@
 {
   "schema_version": "1.0",
-  "generated_utc": "2026-11-01T06:59:34Z",
+  "generated_utc": "2026-11-03T08:21:48Z",
   "banner": "Simulated company — sample data. Problem evidence is real FDA data.",
   "alerts": [
     {
       "id": "sweep:DSI",
       "product_code": "DSI",
       "device_type": "Detector And Alarm, Arrhythmia",
-      "rule": "more serious than usual",
-      "rule_words": "More serious than usual: the share of injury or death reports rose by 15 points or more compared with the 4 weeks before.",
+      "rule": "report mix changed",
+      "rule_words": "Report mix changed: the share of injury or death reports rose by 15 points or more compared with the 4 weeks before. This is a change in report mix, not proof of increased device risk.",
+      "mix_sentence": "Injury/Death share rose from 3% to 20% (2 of 10 reports). This is a change in report mix, not proof of increased device risk.",
       "source": {
         "kind": "sweep",
         "label": "AI device sweep",
@@ -218,6 +219,7 @@
       "device_type": "System, Imaging, Pulsed Doppler, Ultrasonic",
       "rule": "reports suddenly increased",
       "rule_words": "Reports suddenly increased: at least 3 reports this week and at least 2 times the weekly average of the 4 weeks before.",
+      "mix_sentence": null,
       "source": {
         "kind": "sweep",
         "label": "AI device sweep",
@@ -427,8 +429,9 @@
       "id": "sweep:MQB",
       "product_code": "MQB",
       "device_type": null,
-      "rule": "more serious than usual",
-      "rule_words": "More serious than usual: the share of injury or death reports rose by 15 points or more compared with the 4 weeks before.",
+      "rule": "report mix changed",
+      "rule_words": "Report mix changed: the share of injury or death reports rose by 15 points or more compared with the 4 weeks before. This is a change in report mix, not proof of increased device risk.",
+      "mix_sentence": "Injury/Death share rose from 0% to 100% (4 of 4 reports). This is a change in report mix, not proof of increased device risk.",
       "source": {
         "kind": "sweep",
         "label": "AI device sweep",
@@ -505,6 +508,7 @@
       "device_type": "Oximeter, Tissue Saturation",
       "rule": "reports suddenly increased",
       "rule_words": "Reports suddenly increased: at least 3 reports this week and at least 2 times the weekly average of the 4 weeks before.",
+      "mix_sentence": null,
       "source": {
         "kind": "sweep",
         "label": "AI device sweep",
@@ -646,6 +650,7 @@
       "device_type": "Digital Breast Tomosynthesis",
       "rule": "reports suddenly increased",
       "rule_words": "Reports suddenly increased: at least 3 reports this week and at least 2 times the weekly average of the 4 weeks before.",
+      "mix_sentence": null,
       "source": {
         "kind": "sweep",
         "label": "AI device sweep",
@@ -850,6 +855,7 @@
       "device_type": null,
       "rule": "new kind of problem",
       "rule_words": "New kind of problem: reports in a device type that had none before, or a kind of event never seen before for that device type.",
+      "mix_sentence": null,
       "source": {
         "kind": "sweep",
         "label": "AI device sweep",
@@ -921,6 +927,7 @@
       "device_type": "System, Image Processing, Radiological",
       "rule": "reports suddenly increased",
       "rule_words": "Reports suddenly increased: at least 3 reports this week and at least 2 times the weekly average of the 4 weeks before.",
+      "mix_sentence": null,
       "source": {
         "kind": "brief",
         "label": "Demo snapshot brief",
@@ -1156,6 +1163,7 @@
       "device_type": "Automated Radiological Image Processing Software",
       "rule": null,
       "rule_words": "No weekly rule fired for this device type. It is shown because the simulated owner marked the device Needs review.",
+      "mix_sentence": null,
       "source": {
         "kind": "company",
         "label": "Our devices (simulated)",
@@ -1274,6 +1282,7 @@
       "device_type": "System, Imaging, Pulsed Doppler, Ultrasonic",
       "rule": "reports suddenly increased",
       "rule_words": "Reports suddenly increased: at least 3 reports this week and at least 2 times the weekly average of the 4 weeks before.",
+      "mix_sentence": null,
       "source": {
         "kind": "company",
         "label": "Our devices (simulated)",
@@ -1485,6 +1494,7 @@
       "device_type": "Digital Breast Tomosynthesis",
       "rule": "reports suddenly increased",
       "rule_words": "Reports suddenly increased: at least 3 reports this week and at least 2 times the weekly average of the 4 weeks before.",
+      "mix_sentence": null,
       "source": {
         "kind": "company",
         "label": "Our devices (simulated)",
@@ -1687,8 +1697,9 @@
       "id": "company:DMC-08",
       "product_code": "DSI",
       "device_type": "Detector And Alarm, Arrhythmia",
-      "rule": "more serious than usual",
-      "rule_words": "More serious than usual: the share of injury or death reports rose by 15 points or more compared with the 4 weeks before.",
+      "rule": "report mix changed",
+      "rule_words": "Report mix changed: the share of injury or death reports rose by 15 points or more compared with the 4 weeks before. This is a change in report mix, not proof of increased device risk.",
+      "mix_sentence": "Injury/Death share rose from 3% to 20% (2 of 10 reports). This is a change in report mix, not proof of increased device risk.",
       "source": {
         "kind": "company",
         "label": "Our devices (simulated)",
@@ -1898,6 +1909,7 @@
       "device_type": "Oximeter, Tissue Saturation",
       "rule": "reports suddenly increased",
       "rule_words": "Reports suddenly increased: at least 3 reports this week and at least 2 times the weekly average of the 4 weeks before.",
+      "mix_sentence": null,
       "source": {
         "kind": "company",
         "label": "Our devices (simulated)",
@@ -2039,6 +2051,7 @@
       "device_type": "Monitor, Physiological, Patient (Without Arrhythmia Detection Or Alarms)",
       "rule": null,
       "rule_words": "No weekly rule fired for this device type. It is shown because the simulated owner marked the device Needs review.",
+      "mix_sentence": null,
       "source": {
         "kind": "company",
         "label": "Our devices (simulated)",

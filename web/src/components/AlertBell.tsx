@@ -236,7 +236,7 @@ export function AlertBell({
               />
               {extra?.(() => setOpen(false))}
               <p className="m-0 mt-2 text-[16px] leading-snug text-ink-2">
-                {note ?? <>Signals: a new kind of problem, or more serious than usual, in the AI device sweep and the newest demo-snapshot brief.
+                {note ?? <>Signals: a new kind of problem, or report mix changed, in the AI device sweep and the newest demo-snapshot brief.
                 Our devices: devices that need review (simulated, or yours in Make it yours). Signals for a person to review.</>}
               </p>
             </div>

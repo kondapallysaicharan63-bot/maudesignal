@@ -63,6 +63,43 @@ SPIKE_MIN_REPORTS = 3
 SEVERITY_MIN_REPORTS = SPIKE_MIN_REPORTS
 SEVERITY_ESCALATION_PP = 15
 SEVERE_EVENT_TYPES: frozenset[str] = frozenset({"injury", "death"})
+
+#: Plain-words label for ``severity_escalation`` (renamed 2026-11-03 from "more serious than
+#: usual" after a reviewer desktop check: a change in the reported mix does not establish
+#: increased device risk; MAUDE is passive reporting and counts are not rates).
+REPORT_MIX_LABEL = "Report mix changed"
+REPORT_MIX_LIMITATION = "This is a change in report mix, not proof of increased device risk."
+
+
+def _share_pct(share: float | None) -> str:
+    return "n/a" if share is None else f"{share * 100:.0f}%"
+
+
+def report_mix_sentence(
+    baseline_share: float | None,
+    current_share: float | None,
+    current_severe: int,
+    current_total: int,
+) -> str:
+    """The one sentence shown next to every "Report mix changed" flag.
+
+    Args:
+        baseline_share: Injury/Death share of the baseline window (0-1), None if empty.
+        current_share: Injury/Death share of the current window (0-1), None if empty.
+        current_severe: Injury + Death reports in the current window.
+        current_total: All reports in the current window.
+
+    Returns:
+        e.g. ``"Injury/Death share rose from 20% to 60% (3 of 5 reports). This is a change
+        in report mix, not proof of increased device risk."``
+    """
+    return (
+        f"Injury/Death share rose from {_share_pct(baseline_share)} to "
+        f"{_share_pct(current_share)} ({current_severe} of {current_total} reports). "
+        f"{REPORT_MIX_LIMITATION}"
+    )
+
+
 UNKNOWN_EVENT_TYPE = "unknown"
 
 

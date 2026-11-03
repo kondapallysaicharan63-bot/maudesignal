@@ -9,7 +9,7 @@ recorded run or a test in this repository (sources in brackets).
 - **Name:** MaudeSignal
 - **One line:** A safety copilot for medical-device quality and regulatory teams:
   every morning it shows, for the device types you choose, where FDA adverse-event
-  reports suddenly increased, are more serious than usual, or show a new kind of
+  reports suddenly increased, are report mix changed, or show a new kind of
   problem — and it only shows facts it can match to the FDA record. People make
   every decision.
 - **What it is not:** medical advice, clinical decision support or an FDA-cleared
@@ -61,7 +61,7 @@ recorded run or a test in this repository (sources in brackets).
 - AI device sweep (GitHub Actions run 40836844281, 2026-10-29): FDA's AI-Enabled
   Medical Device List has 1,614 devices across 181 product codes; all 181 checked on
   openFDA for 2026-09-24 – 09-30 (the latest week) against the 4 weeks before; 6
-  flagged: 3 reports suddenly increased, 2 more serious than usual, 1 new kind of
+  flagged: 3 reports suddenly increased, 2 report mix changed, 1 new kind of
   problem; 0 errors [`docs/hackathon/AI_SWEEP.md`, `demo/sweep/ai-device-sweep.json`].
 - Any device type can be checked live on the Signals page (openFDA counts, the same
   four rules; a 300-case test checks it agrees with the stored-records detector).

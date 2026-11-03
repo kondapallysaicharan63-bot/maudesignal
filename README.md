@@ -222,7 +222,7 @@ ROI and device-profile pages. What is NOT built yet:
 1. **What changed this week.** A deterministic monitor (no model) compares
    the last 7 days of openFDA reports with the 4 weeks before, for the device
    types (FDA product codes) you choose, and flags three things: **reports
-   suddenly increased**, **more serious than usual**, or a **new kind of
+   suddenly increased**, **report mix changed**, or a **new kind of
    problem**. On the demo data: *"LLZ: reports suddenly increased — 33 this
    week vs a weekly mean of 8.75 (3.77x)"*
    ([digests/2026-08-31.md](digests/2026-08-31.md)), with the reason it is
@@ -361,7 +361,7 @@ flowchart LR
     end
 
     subgraph changes["What changed (no LLM)"]
-        DB --> MON["monitor/<br/>reports suddenly increased ·<br/>more serious than usual ·<br/>new kind of problem"]
+        DB --> MON["monitor/<br/>reports suddenly increased ·<br/>report mix changed ·<br/>new kind of problem"]
         MON --> DIG["Digest<br/>digests/YYYY-MM-DD.md"]
     end
 

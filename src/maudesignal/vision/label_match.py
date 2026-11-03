@@ -1244,9 +1244,10 @@ def build_view_drafts(
                     "rules": [
                         "new kind of problem: reports this week and none before, or an event "
                         "type not seen before",
-                        f"more serious than usual: Injury/Death share up {SEVERITY_ESCALATION_PP} "
+                        f"report mix changed: Injury/Death share up {SEVERITY_ESCALATION_PP} "
                         f"points or more vs the 4 weeks before, with at least "
-                        f"{SEVERITY_MIN_REPORTS} reports this week",
+                        f"{SEVERITY_MIN_REPORTS} reports this week (a change in report mix, not "
+                        "proof of increased device risk)",
                         f"reports suddenly increased: at least {SPIKE_MIN_REPORTS} reports and "
                         f"{SPIKE_MULTIPLIER} times the 4-week weekly average",
                     ],

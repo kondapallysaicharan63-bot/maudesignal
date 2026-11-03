@@ -112,7 +112,7 @@ describe('sweep rules', () => {
   it('states the rules in the agreed words', () => {
     const r = sweepRuleText()
     expect(r.spike).toBe('Reports suddenly increased needs at least 3 reports this week and at least 2x the 4-week weekly mean.')
-    expect(r.serious).toBe('More serious than usual needs the injury/death share to rise 15 points or more.')
+    expect(r.serious).toBe('Report mix changed needs the injury/death share to rise 15 points or more.')
   })
 
   it('"N of M codes had fewer than 3 reports" is computed from the rows, not hardcoded', () => {

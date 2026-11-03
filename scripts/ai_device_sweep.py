@@ -131,7 +131,7 @@ def write_markdown(meta: dict[str, Any], rows: list[dict[str, Any]], path: Path)
         )
         + ".",
         "",
-        f'"Reports suddenly increased" and "more serious than usual" flags need at least '
+        f'"Reports suddenly increased" and "report mix changed" flags need at least '
         f"{SEVERITY_MIN_REPORTS} reports this week (a new kind of problem can be flagged "
         f"from 1); {count_skipped(rows)} code(s) held back for too few reports.",
         "",

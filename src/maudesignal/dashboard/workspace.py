@@ -35,7 +35,7 @@ from maudesignal.storage.database import Database
 
 _ARROW = {
     "reports suddenly increased": "trending_up",
-    "more serious than usual": "warning",
+    "report mix changed": "warning",
     "new kind of problem": "new_releases",
     "no change": "remove",
 }

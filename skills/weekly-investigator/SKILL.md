@@ -44,7 +44,7 @@ reports are the stored reports of `product_code` received inside `window`.
 5. A recall, a 510(k) record or a published article is context, not proof that a
    specific MAUDE event had the same cause. Say "related", never "caused by".
 6. Plain words for what changed. Use the check's `label` as given ("reports suddenly
-   increased", "more serious than usual", "new kind of problem"). Never write
+   increased", "report mix changed", "new kind of problem"). Never write
    "worsening", "overnight", "spike", "deterioration", "citation-checked" or
    "complaint data". Never write "FDA-approved", "validated" or "Part 11 compliant".
 7. Be concise: at most 10 sentences, and a sentence carries one idea.
@@ -97,6 +97,7 @@ carries `claims: []`.
 
 ## Changelog
 
+- 1.0.1 (2026-11-03): label rename only — the `severity_escalation` plain words are now "report mix changed" (was "more serious than usual"); a change in the reported Injury/Death mix is not proof of increased device risk. Rule and numbers unchanged.
 - 1.0.0 (2026-10-29): initial version. Weekly investigator (workflow 1): pulls the
   flagged device type's new reports, groups them by kind of problem with `group_count`
   claims the gate recomputes from report ids, checks recalls, 510(k)s and reports not

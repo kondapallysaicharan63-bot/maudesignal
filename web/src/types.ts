@@ -87,7 +87,7 @@ export interface Threads {
 export interface Brief {
   date: string
   headline: string
-  counts: { new: number; more_serious_than_usual: number; reports_suddenly_increased: number; stable: number }
+  counts: { new: number; report_mix_changed: number; reports_suddenly_increased: number; stable: number }
   window: { current_start: string; current_end: string; baseline_start: string; baseline_end: string }
   signals: { product_code: string; classification: string; label: string; current_count: number; baseline_count: number }[]
   footer: string | null

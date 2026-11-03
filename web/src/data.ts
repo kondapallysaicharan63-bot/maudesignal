@@ -110,7 +110,7 @@ export const WORKFLOWS: WorkflowDef[] = [
   {
     id: 'weekly-signals',
     title: 'What changed this week',
-    blurb: 'Recorded answers about which device types had a new kind of problem, more serious reports than usual, or a sudden rise in reports.',
+    blurb: 'Recorded answers about which device types had a new kind of problem, a changed report mix (Injury/Death share up), or a sudden rise in reports.',
   },
   {
     id: 'ask-copilot',

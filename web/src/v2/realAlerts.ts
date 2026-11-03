@@ -7,12 +7,12 @@ import { labelForWeek, sweepDetail, weekRange } from '../sweepLabel'
 import type { WorkspaceData } from '../types'
 
 const KIND_OF_RULE: Record<string, AlertItemKind> = {
-  'more serious than usual': 'severity_escalation',
+  'report mix changed': 'severity_escalation',
   'new kind of problem': 'new_signal',
   'reports suddenly increased': 'spike',
 }
 const LABEL_OF_KIND: Record<string, string> = {
-  severity_escalation: 'More serious than usual',
+  severity_escalation: 'Report mix changed',
   new_signal: 'New kind of problem',
   spike: 'Reports suddenly increased',
 }
@@ -55,7 +55,7 @@ export function itemOf(d: AlertDetail, label: string | null = null): AlertItem {
   }
 }
 
-/** Most important first: more serious, then a new kind of problem, then a rise; newest first; then the larger rise. */
+/** Most important first: report mix changed, then a new kind of problem, then a rise; newest first; then the larger rise. */
 export function rankReal(details: AlertDetail[]): AlertDetail[] {
   const ratio = (d: AlertDetail): number => {
     const w = d.window

@@ -142,7 +142,7 @@ per simulated device marked Needs review (`company:<DEVICE-ID>`); these ids are 
 
 ```json
 {"id": "sweep:IYN", "product_code": "IYN", "device_type": "name or null",
- "rule": "reports suddenly increased | more serious than usual | new kind of problem | null (a Needs review device with no weekly rule)",
+ "rule": "reports suddenly increased | report mix changed | new kind of problem | null (a Needs review device with no weekly rule)",
  "rule_words": "the rule in plain words (thresholds read from the detector's constants)",
  "source": {"kind": "sweep|brief|company", "label": "...", "as_of": "YYYY-MM-DD"},
  "window": {"this_week": {"from","to","count"}, "baseline_4wk": {"from","to","count","weekly_mean"}},
@@ -159,7 +159,7 @@ per simulated device marked Needs review (`company:<DEVICE-ID>`); these ids are 
 - Counts come from the stored sweep / digest file and are checked against the stored rows by the claim gate (`CountClaim`) whenever the
   stored rows hold the whole window (the digest's own database; a complete fetched evidence file). A count the rows do not support is held
   back (`gate.withheld`) and named in `notes`; `reports_total` is the file's count and `reports_stored` the rows kept here ("showing N of M").
-- Reports: this week's stored rows (injury and death first for "more serious than usual", then newest), at most 10, each with one sentence
+- Reports: this week's stored rows (injury and death first for "report mix changed", then newest), at most 10, each with one sentence
   of 40 to 220 characters copied word for word from the narrative and passed by the gate (`QuoteClaim`). A sentence with a person's details
   (title + name, "patient <Name>", age, email, phone) is skipped, and so is the fragment after "Dr."; a report with no usable sentence has
   `quote: null` and a `quote_note`. Recalls and 510(k) records are the latest 5 stored for the code; a recall excerpt and each 510(k)
@@ -445,7 +445,7 @@ history that goes backwards or does not end on the status); a valid file replace
 **Statuses** are the same five as the simulated company, with the same ranks, and only move forward (to a higher rank; never back, never
 sideways). They are set by the person and kept only in this browser; the history on the device page says "kept only in this browser, not
 hash-chained". A new device starts in "Needs review" only when its product code is flagged by the AI device sweep (a new kind of problem or
-more serious than usual; the same stored data that drives the bell), otherwise in "Monitoring — nothing open". Nothing is guessed beyond that.
+report mix changed; the same stored data that drives the bell), otherwise in "Monitoring — nothing open". Nothing is guessed beyond that.
 
 **Four ways to add a device.**
 1. Product code: exactly 3 letters (upper-cased). A code the site has stored data for (sweep, briefs, the simulated company) is accepted

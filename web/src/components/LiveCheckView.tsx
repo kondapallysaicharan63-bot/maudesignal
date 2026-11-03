@@ -169,7 +169,7 @@ export function LiveCheckView({ initialCode = '' }: { initialCode?: string }) {
       <h1 className="t-title-lg m-0">Check any device type</h1>
       <p className="mt-2 max-w-xl text-ink-2">
         Type any FDA product code. The MaudeSignal API reads report counts from openFDA (no report text, no AI model) and
-        applies the same four rules as the stored device types: a new kind of problem, more serious reports than usual, a
+        applies the same four rules as the stored device types: a new kind of problem, report mix changed (Injury/Death share up), a
         sudden rise in reports, or no change. Only the three-letter code is sent.
       </p>
       <form

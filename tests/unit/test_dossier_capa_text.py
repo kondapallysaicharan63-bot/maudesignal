@@ -70,7 +70,7 @@ def test_title_drops_the_parenthesis_when_not_backed() -> None:
 
 
 def test_title_untouched_for_other_changes_codes_and_wordings() -> None:
-    assert _title(change_label="more serious than usual") == TITLE
+    assert _title(change_label="report mix changed") == TITLE
     assert _title(product_code="LLZ") == TITLE
     assert _title("QIH alert failures") == "QIH alert failures"
     assert _title("") == ""

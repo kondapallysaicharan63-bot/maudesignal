@@ -277,7 +277,7 @@ def _mixed_result() -> Any:
 def test_digest_headline_and_counts() -> None:
     digest = build_digest(_mixed_result())
     assert digest.headline == (
-        "New kind of problem: 1 · More serious than usual: 0 · Reports suddenly increased: 1"
+        "New kind of problem: 1 · Report mix changed: 0 · Reports suddenly increased: 1"
     )
     assert (
         digest.new_count,
@@ -313,9 +313,7 @@ def test_render_markdown_sections_and_footer() -> None:
 def test_render_markdown_no_signals_and_new_event_type_line() -> None:
     stable = detect_deterioration(_many("b", "20260801", 8) + _many("c", "20260826", 1), AS_OF)
     md = render_markdown(build_digest(stable))
-    assert (
-        "New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 0" in md
-    )
+    assert "New kind of problem: 0 · Report mix changed: 0 · Reports suddenly increased: 0" in md
     assert "No product code crossed a rule threshold." in md
 
     facts = _many("b", "20260801", 8) + [
@@ -324,7 +322,7 @@ def test_render_markdown_no_signals_and_new_event_type_line() -> None:
         _f("c3", "20260828"),
     ]
     md = render_markdown(build_digest(detect_deterioration(facts, AS_OF)))
-    assert "Rules fired: new kind of problem, more serious than usual" in md
+    assert "Rules fired: new kind of problem, report mix changed" in md
     assert "never seen before for this code: death (8 earlier reports on file)" in md
 
 
