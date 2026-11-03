@@ -358,10 +358,16 @@ class Env:
 
 
 def turn_state(env: Env) -> dict[str, Any]:
-    """The first chat turn as the person sees it: badge, note, error text, gated sentences."""
+    """The first chat turn as the person sees it: mode, badge, note, error text, gated sentences.
+
+    Works in both layouts. The classic answer carries a ``mode-badge`` pill; the v2 answer has no
+    such pill, but both mark the answer element ``live-answer`` with ``data-mode`` / ``data-tier``.
+    So the wait is for ``live-answer`` (or an error / limit banner), the mode comes from the
+    attribute, and ``badge`` is the pill's text when there is one, else derived from the mode.
+    """
     page = env.page
     page.wait_for_selector(
-        "[data-testid=mode-badge], [data-testid=turn-error], [data-testid=limit-banner]",
+        "[data-testid=live-answer], [data-testid=turn-error], [data-testid=limit-banner]",
         timeout=45_000,
     )
 
@@ -369,8 +375,19 @@ def turn_state(env: Env) -> dict[str, Any]:
         loc = page.locator(f"[data-testid={testid}]")
         return loc.first.inner_text().strip() if loc.count() else ""
 
+    answer = page.locator("[data-testid=live-answer]")
+    mode = (answer.first.get_attribute("data-mode") or "") if answer.count() else ""
+    tier = (answer.first.get_attribute("data-tier") or "") if answer.count() else ""
+    badge = text("mode-badge")
+    if not badge:
+        if mode == "recorded":
+            badge = "Recorded run"
+        elif mode == "live" and tier == "live":
+            badge = "Live answer"
     return {
-        "badge": text("mode-badge"),
+        "mode": mode,
+        "tier": tier,
+        "badge": badge,
         "note": text("recorded-note"),
         "error": text("turn-error") or text("limit-banner"),
         "sentences": page.locator("[data-testid=answer-sentences] li").count(),
@@ -479,9 +496,9 @@ def s_chat(env: Env) -> str:
     env.page.wait_for_selector("[data-testid=live-turn]", timeout=45_000)
     env.page.wait_for_function("!document.querySelector('[data-testid=typing]')", timeout=45_000)
     state = turn_state(env)
-    if not state["badge"] and not state["error"]:
-        raise AssertionError("the turn has no Recorded run / Live answer badge and no error")
-    if state["badge"] == "Recorded run" and not state["note"]:
+    if not state["mode"] and not state["error"]:
+        raise AssertionError("the turn's answer has no data-mode (recorded / live) and no error")
+    if state["mode"] == "recorded" and not state["note"]:
         raise AssertionError("a recorded run is shown without saying why")
     sentences, unlinked, held = chat_counts(env)
     ok, why = chat_verdict(sentences, unlinked, bool(state["error"]), held)
