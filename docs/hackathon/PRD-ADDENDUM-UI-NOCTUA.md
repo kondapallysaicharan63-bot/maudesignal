@@ -7,6 +7,12 @@ touches `src/maudesignal/gate/`, `copilot/`, `monitor/`, `connector/`, dossier o
 logic, API logic, sweep logic, the `measurements.json` method, the secret scan, or any
 P0 file. Any such change is a scope violation: stop and show the diff.
 
+Build note (after P0 merged, main 4f05682): the Board (`/board`), Validation (`/validation`), data-as-of banner and chat fallback
+panel are P0's (`web/src/pms/`). This branch uses them as they are and adds only: the post-P0 sidebar order and collapsed Demo
+group, the Board badge in the sidebar, the Signals "Investigate a code from this table" button and trend caption, the
+known-effects note (PRD-30), "Why matched" tags and problem-term filter (PRD-29, display only), 44px touch targets, and Noctua
+(PRD-33). PRD-34 (dock, hero walk, idle movement) and PRD-28 (Morning Brief) are not built here.
+
 Status words: **P1** = after P0. **PENDING** = needs real users, real load or an
 independent check and is not claimed. Nothing in this addendum is reported as passed
 until the test named for it has actually run.
