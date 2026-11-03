@@ -18,7 +18,9 @@ import type { WorkspaceData } from '../types'
 import { HomeV2 } from './HomeV2'
 import { HUMAN_ONLY, PmsWorkflow, STEPS } from './PmsWorkflow'
 import { RoiPage } from './RoiPage'
-import { compute, EMPTY, parseMeasurements, recordedMeans, TASKS, type Measurement } from './roi'
+import { compute, EMPTY, parseMeasurements,
+  parseProtocol,
+  nLine, recordedMeans, TASKS, type Measurement } from './roi'
 import { formatRoute, parseRoute, routeName } from './router'
 import { pageItems } from './SearchPalette'
 
@@ -193,9 +195,14 @@ describe('Time and cost (empty measurements)', () => {
     expect(b.disabled).toBe(true)
     expect(b.getAttribute('aria-disabled')).toBe('true')
   })
-  it('the shipped measurements.json is empty and parses to nothing', () => {
-    expect(measurementsFile).toEqual({ schema: 1, measurements: [] })
+  it('the shipped measurements.json has the method but no timing yet (nothing invented), and parses to nothing', () => {
+    expect((measurementsFile as { measurements: unknown[] }).measurements).toEqual([])
     expect(parseMeasurements(measurementsFile)).toEqual([])
+    const p = parseProtocol(measurementsFile)!
+    expect(p.task).toBe("For product code LLZ, list this week's change, the non-manufacturer reports, and the recalls citing it, each with its FDA link.")
+    expect(p.status).toMatch(/^pending/)
+    expect(JSON.stringify(measurementsFile)).not.toMatch(/minutes"\s*:\s*\d/)
+    expect(nLine(1)).toBe('Timed on N=1 task, method on /roi. Not a general time-saving claim.')
   })
   it('the page source has none of the banned phrases', () => {
     for (const f of ['RoiPage.tsx', 'roi.ts', 'PmsWorkflow.tsx', 'HomeV2.tsx', '../positioning.ts']) {

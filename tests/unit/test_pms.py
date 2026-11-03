@@ -310,3 +310,20 @@ def test_export_bundle_prints_version_commit_date_and_blank_number(db: Database)
         )
         assert e["prev_hash"] == prev and e["entry_hash"] == h
         prev = h
+
+
+# ---------------------------------------------------------------- sweep date, one source of truth
+
+
+def test_sweep_date_is_one_source_of_truth() -> None:
+    stored = json.loads((ROOT / "demo" / "sweep" / "ai-device-sweep.json").read_text("utf-8"))
+    web = json.loads((ROOT / "web" / "public" / "data" / "sweep.json").read_text("utf-8"))
+    doc = (ROOT / "docs" / "hackathon" / "AI_SWEEP.md").read_text("utf-8")
+    sub = (ROOT / "docs" / "hackathon" / "SUBMISSION_DRAFT.md").read_text("utf-8")
+    gen = stored["meta"]["generated_utc"]
+    assert web["meta"]["generated_utc"] == gen
+    assert web["meta"]["window"] == stored["meta"]["window"]
+    assert f"at {gen}" in doc
+    run = str(stored["meta"].get("run_id"))
+    assert run in doc and run in sub and gen[:10] in sub
+    assert "40836844281" not in sub  # the Oct 29 run the docs used to cite

@@ -7,7 +7,29 @@ export const TASKS = [
   { id: 'similar-events', label: "Complaint: find problems reported on other makers' devices of the same type in the last 12 months" },
   { id: 'weekly-trend', label: 'Weekly trend for code X vs prior 4 weeks' },
   { id: 'evidence-section', label: 'Assemble the evidence section for a PMS board / CAPA-need form' },
+  { id: 'llz-weekly-pack', label: "For product code LLZ, list this week's change, the non-manufacturer reports, and the recalls citing it, each with its FDA link" },
 ] as const
+
+/** The fixed, reproducible timing task's method (measurements.json "protocol"); null when absent or malformed. */
+export interface Protocol {
+  task: string
+  who: string
+  manual_steps: string[]
+  maudesignal_steps: string[]
+  rules: string
+  status: string
+}
+export function parseProtocol(raw: unknown): Protocol | null {
+  const p = raw && typeof raw === 'object' ? (raw as { protocol?: unknown }).protocol : null
+  if (!p || typeof p !== 'object') return null
+  const o = p as Record<string, unknown>
+  const list = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [])
+  const out = { task: str(o.task), who: str(o.who), manual_steps: list(o.manual_steps), maudesignal_steps: list(o.maudesignal_steps), rules: str(o.rules), status: str(o.status) }
+  return out.task ? out : null
+}
+
+/** The line the submission must use while N is small. */
+export const nLine = (n: number): string => `Timed on N=${n} task${n === 1 ? '' : 's'}, method on /roi. Not a general time-saving claim.`
 export type TaskId = (typeof TASKS)[number]['id']
 
 export interface Measurement {

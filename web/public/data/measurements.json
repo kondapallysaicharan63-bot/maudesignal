@@ -1,1 +1,24 @@
-{ "schema": 1, "measurements": [] }
+{
+  "schema": 1,
+  "protocol": {
+    "id": "llz-weekly-pack",
+    "task": "For product code LLZ, list this week's change, the non-manufacturer reports, and the recalls citing it, each with its FDA link.",
+    "who": "Same person for both runs (Charan), screen-recorded.",
+    "manual_steps": [
+      "Open open.fda.gov device event search and accessdata.fda.gov MAUDE; filter product code LLZ, the latest week on openFDA and the 4 weeks before.",
+      "Copy counts by event type into Excel and work out the change.",
+      "Filter report source to non-manufacturer (user facility, voluntary, distributor); copy each report number and its MAUDE link.",
+      "Search the recall database for LLZ; copy recall numbers, reasons and links that cite the failure.",
+      "Stop the clock when the sheet holds all three lists with links."
+    ],
+    "maudesignal_steps": [
+      "Open /investigate, enter LLZ and the problem; read the non-manufacturer section and recalls.",
+      "Open /signals for this week's change for LLZ.",
+      "Export the note to file / CSV from the evidence pack.",
+      "Stop the clock when the export holds all three lists with links."
+    ],
+    "rules": "Timed twice, same person, same code, same day, screen-recorded; the recording file name goes in notes. If MaudeSignal is slower, record it as slower. Minutes are never turned into money here; the buyer types their own analyst cost in the calculator.",
+    "status": "pending — needs Charan's screen-recorded runs; no minutes are recorded until then"
+  },
+  "measurements": []
+}

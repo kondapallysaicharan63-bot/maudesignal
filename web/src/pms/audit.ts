@@ -115,8 +115,23 @@ export function loadAudit(store: AuditStore = browserStore()): AuditEntry[] {
   return memory ?? []
 }
 
-/** Append one entry (audit-first: callers change their own state only after this resolves). */
-export async function appendAudit(
+let queue: Promise<unknown> = Promise.resolve()
+
+/**
+ * Append one entry (audit-first: callers change their own state only after this resolves). Appends run one at a time,
+ * so two quick clicks can never both chain onto the same previous entry and lose one.
+ */
+export function appendAudit(
+  e: { actor: string; action: string; entity_id: string; payload: Record<string, unknown> },
+  store: AuditStore = browserStore(),
+  now?: Date,
+): Promise<AuditEntry> {
+  const run = queue.then(() => appendNow(e, store, now ?? new Date()))
+  queue = run.catch(() => undefined)
+  return run
+}
+
+async function appendNow(
   e: { actor: string; action: string; entity_id: string; payload: Record<string, unknown> },
   store: AuditStore = browserStore(),
   now: Date = new Date(),

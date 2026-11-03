@@ -3,6 +3,9 @@
 // person's own typed assumptions and labels its results that way. No figure on this page is written by the product.
 import { useEffect, useMemo, useState } from 'react'
 import {
+  nLine,
+  parseProtocol,
+  type Protocol,
   compute,
   EMPTY,
   fmt,
@@ -24,14 +27,14 @@ import './positioning.css'
 const PENDING = 'Measurement pending'
 
 /** Fetches measurements.json once; a failed or malformed file is the same as no measurements. */
-export function useMeasurements(): { list: Measurement[]; loaded: boolean } {
-  const [state, setState] = useState<{ list: Measurement[]; loaded: boolean }>({ list: [], loaded: false })
+export function useMeasurements(): { list: Measurement[]; loaded: boolean; protocol: Protocol | null } {
+  const [state, setState] = useState<{ list: Measurement[]; loaded: boolean; protocol: Protocol | null }>({ list: [], loaded: false, protocol: null })
   useEffect(() => {
     let live = true
     fetch(`${import.meta.env.BASE_URL}data/measurements.json`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((j: unknown) => live && setState({ list: parseMeasurements(j), loaded: true }))
-      .catch(() => live && setState({ list: [], loaded: true }))
+      .then((j: unknown) => live && setState({ list: parseMeasurements(j), loaded: true, protocol: parseProtocol(j) }))
+      .catch(() => live && setState({ list: [], loaded: true, protocol: null }))
     return () => {
       live = false
     }
@@ -286,6 +289,39 @@ export function RoiPage({ measurements, onHome }: { measurements?: Measurement[]
           })}
         </ul>
       </section>
+
+      {fetched.protocol && (
+        <section aria-labelledby="roi-method-h" className="ms2-card mt-4" data-testid="roi-method">
+          <h2 id="roi-method-h" className="ms2-h2">
+            The fixed timing task and its method
+          </h2>
+          <p className="m-0 mt-1">
+            <strong>{fetched.protocol.task}</strong>
+          </p>
+          <p className="ms2-muted m-0 mt-1">{fetched.protocol.who}</p>
+          <h3 className="ms2-h3 mt-2">Manual (openFDA website + Excel + copy/paste)</h3>
+          <ol className="m-0">
+            {fetched.protocol.manual_steps.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </ol>
+          <h3 className="ms2-h3 mt-2">MaudeSignal (Investigate + Signals)</h3>
+          <ol className="m-0">
+            {fetched.protocol.maudesignal_steps.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </ol>
+          <p className="m-0 mt-2">{fetched.protocol.rules}</p>
+          <p className="m-0 mt-1" data-testid="roi-method-status">
+            <span className="ms2-tag">Status</span> {fetched.protocol.status}
+          </p>
+          {forTask(list, 'llz-weekly-pack').length > 0 && (
+            <p className="m-0 mt-1" data-testid="roi-n-line">
+              <strong>{nLine(forTask(list, 'llz-weekly-pack').length)}</strong>
+            </p>
+          )}
+        </section>
+      )}
 
       <div className="mt-6">
         <Calculator measurements={list} />

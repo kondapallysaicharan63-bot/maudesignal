@@ -58,11 +58,16 @@ recorded run or a test in this repository (sources in brackets).
   test types reported, with the external ones marked PENDING
   [`docs/hackathon/TESTING.md`].
 - Spend so far: about $8.35 of the $150 credit (estimates) [`docs/hackathon/BUDGET.md`].
-- AI device sweep (GitHub Actions run 40836844281, 2026-10-29): FDA's AI-Enabled
+- AI device sweep (Stored; GitHub Actions run 40994117980, checked 2026-10-30): FDA's AI-Enabled
   Medical Device List has 1,614 devices across 181 product codes; all 181 checked on
   openFDA for 2026-09-24 – 09-30 (the latest week) against the 4 weeks before; 6
   flagged: 3 reports suddenly increased, 2 report mix changed, 1 new kind of
   problem; 0 errors [`docs/hackathon/AI_SWEEP.md`, `demo/sweep/ai-device-sweep.json`].
+  One source of truth: the app's sweep label is built from that stored file (sweepLabel.ts),
+  and a test checks the file, the doc and the web export carry the same run and date.
+  A fresh run was attempted on 2026-11-03 from the build container and refused by openFDA
+  (HTTP 403 API_KEY_MISSING: the key lives only in GitHub secrets), so the stored sweep is
+  shown as Stored with its date; no fresh date is claimed.
 - Any device type can be checked live on the Signals page (openFDA counts, the same
   four rules; a 300-case test checks it agrees with the stored-records detector).
 
@@ -74,7 +79,7 @@ published estimates disagree by almost three times.
 - FDA receives over two million medical device reports a year
   ([openFDA](https://open.fda.gov/apis/device/event), FDA).
 - FDA's AI-Enabled Medical Device List has 1,614 devices across 181 product codes (read
-  by our sweep on 2026-10-29), and grows by about 300 a year (third-party counts:
+  by our sweep on 2026-10-30), and grows by about 300 a year (third-party counts:
   [ai2.work](https://ai2.work/blog/fda-ai-device-list-hits-1-524-as-radiology-dominates-but-evidence-lags),
   [IntuitionLabs](https://intuitionlabs.ai/articles/fda-ai-medical-device-tracker)).
 - MAUDE has no field for an AI-specific failure such as drift; MaudeSignal adds an
