@@ -134,9 +134,11 @@ describe('profile error boundary and links', () => {
 })
 
 describe('sidebar and search', () => {
-  it('Investigate has an active sidebar entry (Home)', () => {
-    expect(navOf({ page: 'investigate' })).toBe('home')
-    expect(navOf({ page: 'investigate', code: 'QIH', device: 'DMC-01' })).toBe('home')
+  it('Investigate, PMS workflow and Time & cost each have their own active sidebar entry', () => {
+    expect(navOf({ page: 'investigate' })).toBe('investigate')
+    expect(navOf({ page: 'investigate', code: 'QIH', device: 'DMC-01' })).toBe('investigate')
+    expect(navOf({ page: 'pms' })).toBe('pms')
+    expect(navOf({ page: 'roi' })).toBe('roi')
   })
   it('device profiles are searchable as "<name> · simulated device"', () => {
     const items = pageItems([], 'Our devices (simulated)', profileDevices(F))

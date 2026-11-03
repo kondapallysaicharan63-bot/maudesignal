@@ -41,12 +41,15 @@ import { SchedulesDialog } from './SchedulesDialog'
 import { SidebarV2, type NavId } from './SidebarV2'
 import { TopBarV2 } from './TopBarV2'
 import { storedAsOf } from '../pms/DataAsOf'
-import { BoardPage } from '../pms/BoardPage'
+import { boardRows } from '../pms/board'
+import { useAudit } from '../pms/useAudit'
+import { BoardPage, flaggedFromData } from '../pms/BoardPage'
 import { buildLine } from '../pms/build'
 import { FallbackData } from '../pms/FallbackPanel'
 import { ValidationPage } from '../pms/ValidationPage'
 import { useThemeV2 } from './theme'
 import './v2.css'
+import './pages.css'
 
 const API_BASE = apiBaseOrNull(import.meta.env.VITE_MAUDESIGNAL_API_BASE)
 
@@ -79,12 +82,22 @@ const SECTION_HOME: Record<Section, Route> = {
   connect: { page: 'connect', tab: 'muse' },
 }
 
+/** Where a page-level sidebar entry goes (Home and the sections are handled apart). */
+const PAGE_NAV: Partial<Record<NavId, Route>> = {
+  board: { page: 'board' },
+  validation: { page: 'validation' },
+  investigate: { page: 'investigate' },
+  pms: { page: 'pms' },
+  roi: { page: 'roi' },
+}
+
 /** The sidebar entry a page belongs to (null for a chat). */
 export function navOf(r: Route): NavId | null {
   // Investigate is a stand-alone tool page; it sits under Home so one sidebar entry is always active.
   if (r.page === 'board') return 'board'
   if (r.page === 'validation') return 'validation'
-  if (r.page === 'home' || r.page === 'pms' || r.page === 'roi' || r.page === 'investigate') return 'home'
+  if (r.page === 'pms' || r.page === 'roi' || r.page === 'investigate') return r.page
+  if (r.page === 'home') return 'home'
   if (r.page === 'signals' || r.page === 'devices' || r.page === 'evidence' || r.page === 'connect') return r.page
   if (r.page === 'profile') return 'devices'
   if (r.page === 'workflow') {
@@ -414,6 +427,9 @@ export default function AppV2() {
       </div>
     )
 
+  const audit = useAudit()
+  // The sidebar badge counts only rows a person still has to review (New and Under review), from the same rows the Board shows.
+  const boardOpen = data ? boardRows(flaggedFromData(data), audit.entries).filter((r) => r.status === 'new' || r.status === 'under_review').length : 0
   const real = data ? realAlertItems(data) : []
   const toReview = data ? devicesToReview(data) : 0
   const devicesLabel = data?.company.mine === true ? 'Our devices (yours)' : 'Our devices (simulated)'
@@ -526,6 +542,7 @@ export default function AppV2() {
           onThread={(id) => go({ page: 'thread', id })}
           briefDate={briefDate}
           onBriefDate={setBriefDate}
+          onInvestigate={(code) => go({ page: 'investigate', code })}
         />
       )
     else if (route.page === 'devices')
@@ -624,6 +641,7 @@ export default function AppV2() {
                 chatHref={(id) => hrefFor({ page: 'chat', id })}
                 devicesLabel={devicesLabel}
                 devicesToReview={toReview}
+                boardCount={boardOpen}
                 theme={theme}
                 onTheme={setTheme}
                 onNewChat={newChat}
@@ -633,7 +651,7 @@ export default function AppV2() {
                 }}
                 onNav={(n) => {
                   if (n === 'devices') setDeviceFilter(null)
-                  go(n === 'home' ? { page: 'home' } : n === 'board' ? { page: 'board' } : n === 'validation' ? { page: 'validation' } : SECTION_HOME[n])
+                  go(n === 'home' ? { page: 'home' } : (PAGE_NAV[n] ?? SECTION_HOME[n as Section]))
                 }}
                 onChat={(id) => go({ page: 'chat', id })}
                 onRename={store.rename}

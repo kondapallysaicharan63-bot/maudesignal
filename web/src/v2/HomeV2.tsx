@@ -6,11 +6,12 @@ import { isoDay } from '../data'
 import { Icon } from '../icons'
 import { HEADLINE, PITCH, REACTIVE } from '../positioning'
 import { flaggedFromData } from '../pms/BoardPage'
+import { MascotOwl, useNoctuaHidden } from '../components/mascot/MascotOwl'
 import type { WorkspaceData } from '../types'
 import { sweepDate } from '../components/SweepCard'
 import { InvestigateCard } from '../investigate/entry'
 import { AlertRows, demoRows, realRows, SourceCaption } from './AlertRows'
-import { devicesToReview } from './realAlerts'
+import { devicesToReview, realAlertItems } from './realAlerts'
 import './positioning.css'
 
 export const HOME_TOP = 3
@@ -46,6 +47,9 @@ export function HomeV2({
   /** Investigate a complaint (the one main button of its card). */
   onInvestigate?: () => void
 }) {
+  const hiddenOwl = useNoctuaHidden()
+  // Decorative and calm only: the top bar owl shows while real alerts exist, so Home never shows a second one.
+  const calmOwl = !hiddenOwl && realAlertItems(data).length === 0
   const real = realRows(data)
   const demo = demoRows(data)
   const toReview = devicesToReview(data)
@@ -75,7 +79,7 @@ export function HomeV2({
         {onBoard && (
           <section className="ms2-card ms2-span2" aria-labelledby="home-board-h" data-testid="home-board">
             <h2 id="home-board-h" className="ms2-h2">
-              PMS board
+              {calmOwl && <MascotOwl size={64} className="ms-noctua-inline" />} PMS board
             </h2>
             <p className="ms2-muted m-0 mt-1 text-[15px]">
               Each flagged code with why it was flagged, its status (New, Under review, Note to file, Escalated, Closed), owner and advisory MDR due

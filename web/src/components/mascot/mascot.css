@@ -1,0 +1,274 @@
+/* Noctua, the watchful owl. Colours are design tokens only (no hex). Motion is CSS only and is switched off by
+   prefers-reduced-motion (a static idle owl; the paired text or badge still shows the state). The body never turns red:
+   success / warning / critical belong on the badge beside the owl. */
+.ms-noctua {
+  display: inline-block;
+  flex: none;
+  overflow: visible;
+  color: var(--ink);
+}
+.ms-noctua-all {
+  transform-box: view-box;
+  transform-origin: 50% 85%;
+}
+.ms-noctua-body {
+  fill: var(--ink);
+}
+.ms-noctua-eye {
+  fill: var(--surface);
+}
+.ms-noctua-pupil {
+  fill: var(--accent);
+}
+.ms-noctua-pupils,
+.ms-noctua-wing {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.ms-noctua-lid {
+  fill: var(--ink);
+  transform-box: fill-box;
+  transform-origin: 50% 0%;
+  transform: scaleY(0);
+}
+.ms-noctua-beak,
+.ms-noctua-wing {
+  fill: var(--ink-2);
+  stroke: var(--surface);
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+.ms-noctua--tiny .ms-noctua-wings {
+  display: none;
+}
+.ms-noctua-ring {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  opacity: 0;
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+}
+.ms-noctua-dots circle {
+  fill: var(--accent);
+  opacity: 0;
+}
+/* High contrast: a black owl, white eyes, black pupils, no accent. */
+[data-theme='contrast'] .ms-noctua-pupil,
+[data-theme='contrast'] .ms-noctua-dots circle {
+  fill: var(--ink);
+}
+[data-theme='contrast'] .ms-noctua-ring {
+  stroke: var(--ink);
+}
+
+/* Idle: breathing 1 to 1.03 over 4 s; blink 120 / 80 / 160 ms about every 5 s. */
+.ms-noctua[data-state='idle'] .ms-noctua-all {
+  animation: ms-noctua-breathe 4s ease-in-out infinite;
+}
+.ms-noctua[data-state='idle'] .ms-noctua-lid,
+.ms-noctua[data-state='watching'] .ms-noctua-lid,
+.ms-noctua[data-state='listening'] .ms-noctua-lid {
+  animation: ms-noctua-blink 5s linear infinite;
+}
+/* Watching / scanning: pupils look left, centre, right, slowly; a small head tilt. */
+.ms-noctua[data-state='watching'] .ms-noctua-pupils {
+  animation: ms-noctua-scan 6s ease-in-out infinite;
+}
+.ms-noctua[data-state='watching'] .ms-noctua-all {
+  animation: ms-noctua-tilt 6s ease-in-out infinite;
+}
+/* Alert: wings out 3 px, hold 1.2 s, once; head lifts 4 deg. The body keeps its colour. */
+.ms-noctua[data-state='alert'] .ms-noctua-wing--l {
+  animation: ms-noctua-wing-l 1.8s ease-in-out 1;
+}
+.ms-noctua[data-state='alert'] .ms-noctua-wing--r {
+  animation: ms-noctua-wing-r 1.8s ease-in-out 1;
+}
+.ms-noctua[data-state='alert'] .ms-noctua-all {
+  animation: ms-noctua-lift 1.8s ease-in-out 1;
+}
+/* Thinking: pupils up, no blink, head tilted 6 deg, three dots on a 1.2 s cycle (only while the call runs). */
+.ms-noctua[data-state='thinking'] .ms-noctua-pupils {
+  transform: translateY(-3px);
+}
+.ms-noctua[data-state='thinking'] .ms-noctua-all {
+  transform: rotate(6deg);
+}
+.ms-noctua[data-state='thinking'] .ms-noctua-dots circle {
+  animation: ms-noctua-dot 1.2s ease-in-out infinite;
+}
+.ms-noctua[data-state='thinking'] .ms-noctua-dots circle:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.ms-noctua[data-state='thinking'] .ms-noctua-dots circle:nth-child(3) {
+  animation-delay: 0.4s;
+}
+/* Success / verified: one nod (3 deg down 200 ms, back 300 ms) and one slow blink, 0.8 s in all. */
+.ms-noctua[data-state='success'] .ms-noctua-all {
+  animation: ms-noctua-nod 0.8s ease-in-out 1;
+}
+.ms-noctua[data-state='success'] .ms-noctua-lid {
+  animation: ms-noctua-slow-blink 0.8s ease-in-out 1;
+}
+/* Withheld / error: pupils narrow and look down, lids half-lowered, head down 6 deg, wings in 2 px.
+   One 400 ms move, then still for the 3 s, then back. No shake, no flash. */
+.ms-noctua[data-state='withheld'] .ms-noctua-pupils {
+  animation: ms-noctua-withheld-pupils 3s ease-out 1;
+}
+.ms-noctua[data-state='withheld'] .ms-noctua-lid {
+  animation: ms-noctua-withheld-lid 3s ease-out 1;
+}
+.ms-noctua[data-state='withheld'] .ms-noctua-all {
+  animation: ms-noctua-withheld-head 3s ease-out 1;
+}
+.ms-noctua[data-state='withheld'] .ms-noctua-wing--l {
+  animation: ms-noctua-withheld-wing-l 3s ease-out 1;
+}
+.ms-noctua[data-state='withheld'] .ms-noctua-wing--r {
+  animation: ms-noctua-withheld-wing-r 3s ease-out 1;
+}
+/* Listening: pupils toward the mic, an accent ring pulses every 2.4 s; it stops the moment recording stops. */
+.ms-noctua[data-state='listening'] .ms-noctua-pupils {
+  transform: translateX(3px);
+}
+.ms-noctua[data-state='listening'] .ms-noctua-ring {
+  animation: ms-noctua-ring 2.4s ease-in-out infinite;
+}
+
+@keyframes ms-noctua-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+@keyframes ms-noctua-blink {
+  0%, 92.8%, 100% { transform: scaleY(0); }
+  2.4%, 4% { transform: scaleY(1); }
+  7.2% { transform: scaleY(0); }
+}
+@keyframes ms-noctua-scan {
+  0%, 100% { transform: translateX(-3px); }
+  25%, 75% { transform: translateX(0); }
+  50% { transform: translateX(3px); }
+}
+@keyframes ms-noctua-tilt {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(5deg); }
+}
+@keyframes ms-noctua-wing-l {
+  0%, 100% { transform: translateX(0); }
+  17%, 83% { transform: translateX(-3px); }
+}
+@keyframes ms-noctua-wing-r {
+  0%, 100% { transform: translateX(0); }
+  17%, 83% { transform: translateX(3px); }
+}
+@keyframes ms-noctua-lift {
+  0%, 100% { transform: rotate(0deg); }
+  17%, 83% { transform: rotate(-4deg); }
+}
+@keyframes ms-noctua-dot {
+  0%, 60%, 100% { opacity: 0.25; }
+  30% { opacity: 1; }
+}
+@keyframes ms-noctua-nod {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(3deg); }
+}
+@keyframes ms-noctua-slow-blink {
+  0%, 100% { transform: scaleY(0); }
+  40% { transform: scaleY(1); }
+}
+@keyframes ms-noctua-withheld-pupils {
+  0%, 100% { transform: translateY(0) scale(1); }
+  13%, 87% { transform: translateY(2px) scale(0.9); }
+}
+@keyframes ms-noctua-withheld-lid {
+  0%, 100% { transform: scaleY(0); }
+  13%, 87% { transform: scaleY(0.5); }
+}
+@keyframes ms-noctua-withheld-head {
+  0%, 100% { transform: rotate(0deg); }
+  13%, 87% { transform: rotate(6deg); }
+}
+@keyframes ms-noctua-withheld-wing-l {
+  0%, 100% { transform: translateX(0); }
+  13%, 87% { transform: translateX(2px); }
+}
+@keyframes ms-noctua-withheld-wing-r {
+  0%, 100% { transform: translateX(0); }
+  13%, 87% { transform: translateX(-2px); }
+}
+@keyframes ms-noctua-ring {
+  0%, 100% { opacity: 0; transform: scale(0.96); }
+  50% { opacity: 0.8; transform: scale(1); }
+}
+
+/* The top-bar mark: a 44 x 44 button around a 32 px owl, with a short caption bubble (hidden on phones). */
+.ms-noctua-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  flex: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--ink);
+}
+.ms-noctua-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.ms-noctua-bubble {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 20;
+  max-width: min(16rem, 70vw);
+  padding: 4px 10px;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.3;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.ms-noctua-calm {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+@media (max-width: 767px) {
+  .ms-noctua-bubble {
+    display: none;
+  }
+}
+
+/* Reduced motion: a static idle owl everywhere (no blink, scan, pulse, nod or move). */
+@media (prefers-reduced-motion: reduce) {
+  .ms-noctua *,
+  .ms-noctua {
+    animation: none !important;
+    transition: none !important;
+  }
+  .ms-noctua .ms-noctua-all,
+  .ms-noctua .ms-noctua-pupils,
+  .ms-noctua .ms-noctua-wing {
+    transform: none !important;
+  }
+  .ms-noctua .ms-noctua-lid {
+    transform: scaleY(0) !important;
+  }
+  .ms-noctua .ms-noctua-ring,
+  .ms-noctua .ms-noctua-dots circle {
+    opacity: 0 !important;
+  }
+}
+.ms-noctua-inline {
+  vertical-align: middle;
+  margin-right: 12px;
+}

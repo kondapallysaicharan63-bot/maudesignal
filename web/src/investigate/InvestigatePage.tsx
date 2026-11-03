@@ -26,6 +26,7 @@ import {
   type Outcome,
 } from './api'
 import { hrefFor } from '../v2/router'
+import { KnownEffects } from './KnownEffects'
 import { DataAsOfBanner, inDelayWindow, investigationAsOf } from '../pms/DataAsOf'
 import { EvidencePackPanel } from '../pms/EvidencePackPanel'
 import { packFromInvestigation } from '../pms/pack'
@@ -196,19 +197,43 @@ function Months({ a }: { a: Investigation }) {
 }
 
 function Quotes({ a }: { a: Investigation }) {
+  // PRD-29, display only: "Why matched" tags come from the data (keywords_in_quote). The problem-term filter is on by default
+  // and only applies when the data carries a match reason for at least one quote; no reason is ever invented.
+  const [only, setOnly] = useState(true)
+  const hasReasons = a.quotes.some((q) => q.keywords_in_quote.length > 0)
+  const shown = hasReasons && only ? a.quotes.filter((q) => q.keywords_in_quote.length > 0) : a.quotes
   return (
     <div className="mt-4" data-testid="inv-quotes">
       <h3 className="ms2-h3">Quotes from report narratives</h3>
       <p className="ms2-inv-meta m-0 mb-2">Text as filed, not edited (older reports are often in capitals). Each was checked against its own report.</p>
+      {a.quotes.length > 0 && hasReasons && (
+        <p className="m-0 mb-2">
+          <button type="button" className="ms2-link" aria-pressed={only} onClick={() => setOnly((v) => !v)} data-testid="inv-problem-filter">
+            {only ? `Showing only quotes with a matched problem term (${shown.length} of ${a.quotes.length}). Show all` : 'Showing all quotes. Show only matched problem terms'}
+          </button>
+        </p>
+      )}
       {a.quotes.length === 0 ? (
         <p className="ms2-inv-meta m-0">No narrative sentence passed the checks, so none is shown.</p>
       ) : (
         <ul className="ms2-inv-quotes">
-          {a.quotes.map((q) => (
+          {shown.map((q) => (
             <li key={q.mdr_report_key} data-testid="inv-quote">
               <blockquote className="m-0">
                 &ldquo;{q.quote}&rdquo;{q.truncated ? ' …' : ''}
               </blockquote>
+              <p className="ms2-inv-meta m-0 mt-1" data-testid="inv-why-matched">
+                Why matched:{' '}
+                {q.keywords_in_quote.length > 0 ? (
+                  q.keywords_in_quote.map((k) => (
+                    <span key={k} className="ms2-tag" style={{ marginRight: 4 }}>
+                      {k}
+                    </span>
+                  ))
+                ) : (
+                  <span>not in this data</span>
+                )}
+              </p>
               <p className="ms2-inv-meta m-0 mt-1">
                 Report <span className="ms-num">{q.report_number ?? q.mdr_report_key}</span> · received {day(q.date_received)} · filed by{' '}
                 {sourceName(q.source)}
@@ -498,6 +523,7 @@ function Results({ a, description }: { a: Investigation; description: string }) 
           which of these are about your own devices; match them against your complaint log.
         </p>
         <Sources a={a} />
+        <KnownEffects a={a} />
       </Section>
       <Section id="inv-similar" title="MAUDE reports for this product code (any maker)" a={a}>
         <p className="ms2-inv-meta m-0 mb-1">With a second count for reports whose narrative mentions your keywords.</p>

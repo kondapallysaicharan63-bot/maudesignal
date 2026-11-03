@@ -10,6 +10,7 @@ import './styles/tokens.css'
 import './styles/maudesignal.css'
 import './index.css'
 import './buddy.css'
+import './components/mascot/mascot.css'
 
 // Vercel Web Analytics: page views only, no custom events; the personal ref code (and a v2 chat id) is stripped.
 inject({ beforeSend: (e) => ({ ...e, url: stripChatId(stripRef(e.url)) }) })
