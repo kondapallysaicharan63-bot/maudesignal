@@ -327,3 +327,14 @@ def test_sweep_date_is_one_source_of_truth() -> None:
     run = str(stored["meta"].get("run_id"))
     assert run in doc and run in sub and gen[:10] in sub
     assert "40836844281" not in sub  # the Oct 29 run the docs used to cite
+
+
+def test_validation_page_gate_count_matches_the_fixture() -> None:
+    rows = [
+        json.loads(line)
+        for line in (ROOT / "tests/fixtures/gate/adversarial.jsonl").read_text("utf-8").splitlines()
+        if line.strip()
+    ]
+    block = sum(1 for r in rows if r["expect"] == "block")
+    page = (ROOT / "web/src/pms/ValidationPage.tsx").read_text("utf-8")
+    assert f"{len(rows)} cases ({block} must be withheld, {len(rows) - block} must pass)" in page

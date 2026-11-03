@@ -1,0 +1,96 @@
+# P0 browser run (Chromium, local)
+
+90 passed, 1 failed, 1 skipped
+
+- PASS D page loads: Home (/)
+- PASS D page loads: Signals (/signals/ranked)
+- PASS D page loads: Copilot (/chat)
+- PASS D page loads: Vision (/workflow/vision)
+- PASS D page loads: Audit (/evidence/audit)
+- PASS D page loads: Board (/board)
+- PASS D page loads: Validation (/validation)
+- PASS D page loads: Investigate (/investigate)
+- PASS D page loads: PMS workflow (/pms-workflow)
+- PASS D page loads: ROI (/roi)
+- PASS A Home order: complaint < board < weekly sweep
+- PASS A pitch is the reviewer wording
+- PASS A no 'pharmacovigilance' / old label on Home
+- PASS A Home links to /pms-workflow and /validation
+- PASS A footer links to Validation
+- PASS A Home board count = flagged real codes from alerts.json
+- PASS H Signals banner: 'Data as of' = later of DB newest report and sweep week end
+- PASS H banner has the reporting-delay sentence
+- PASS H banner stored window equals the demo DB
+- PASS H sweep banner on All alerts
+- PASS H sweep banner date = sweep file week end
+- PASS A Investigate: non-manufacturer section is first
+- PASS A section title is the reviewer wording
+- PASS H Investigate banner present
+- PASS A Investigate links /pms-workflow
+- PASS D Investigate total equals the stored example
+- PASS D accept -> 'Evidence accepted by Ana Ruiz · audit entry #1'
+- PASS D Note to File export opens with the label
+- PASS D note contains: Decision: Open a CAPA (in your QMS)
+- PASS D note contains: Approver: Ana Ruiz
+- PASS D note contains: Company complaint / CAPA number: _______________
+- PASS D note contains: Build: MaudeSignal 0.1.0 · commit 
+- PASS D note contains: Data as of:
+- PASS D note contains: Does this meet your recall procedure?
+- PASS D note has no tool-made decision sentence
+- PASS D four exports downloaded (md, pdf, csv, audit json)
+- PASS D PDF is a PDF and prints the approver
+- PASS D CSV prints version, commit, data-as-of and a blank CAPA number field
+- PASS J export audit lists pack_accept then note_to_file
+- PASS D audit export has build + blank company number
+- PASS D note decision + approver match the audit row
+- PASS D Board rows = flagged real codes from alerts.json (exact set)
+- PASS D Board says 'This is not a QMS'
+- PASS D Board header columns
+- PASS A Board 'why flagged' for the mix code uses the new sentence
+- PASS J earlier audit rows are listed on the Board page
+- PASS D status change without a name is refused
+- PASS D Board: New -> Under review
+- PASS D Board: owner + advisory due date 2026-12-03 (30 days, 21 CFR 803.50)
+- PASS J Board change is in the audit table with name
+- PASS J chain re-verifies on display (3 entries)
+- PASS D status persists after reload
+- PASS D Board: Under review -> Note to file
+- PASS J tampered copy: chain breaks at entry #2 and is shown
+- PASS D Validation: says not validated
+- PASS D Validation: never says FDA validated / approved / AI validated
+- PASS D Validation lifecycle lists every Skill version from lifecycle.json
+- PASS D Validation shows the sweep date from the sweep file
+- PASS D Validation not hidden behind sweep/profile (sidebar entry)
+- FAIL M no P0 control below 44px on Board / Validation / Investigate — /investigate BUTTON Not filed by a manufacturer h=40; /investigate BUTTON Reports h=40; /investigate BUTTON Recalls and 510(k)s h=40; /investigate BUTTON Evidence h=40; /investigate BUTTON Evidence pack h=40; /investigate BUTTON inv-allmonths h=40
+- PASS M Board controls reachable by keyboard (Review button)
+- SKIPPED M themes / AA contrast for all six themes — not run in this pass; existing contrast scripts (web/qa/contrast_*.py) not re-run against the new pages
+- PASS F timeout: panel kind
+- PASS F timeout: no live answer was invented (any answer shown is mode=recorded)
+- PASS F timeout: four lookups + retry present
+- PASS F timeout: cost shown
+- PASS F timeout: Show recalls returns the stored total (82)
+- PASS F timeout: Show product summary returns stored data
+- PASS F timeout: Search stored reports counts match evidence.json (0 of 76 for LLZ)
+- PASS F timeout: lookups made no model call
+- PASS F timeout: Retry live re-asks
+- PASS F timeout: failure + fallback choices are in the audit
+- PASS F failure: panel kind
+- PASS F failure: no live answer was invented (any answer shown is mode=recorded)
+- PASS F failure: four lookups + retry present
+- PASS F failure: cost shown
+- PASS F failure: Show recalls returns the stored total (82)
+- PASS F failure: Show product summary returns stored data
+- PASS F failure: Search stored reports counts match evidence.json (0 of 76 for LLZ)
+- PASS F failure: lookups made no model call
+- PASS F failure: Retry live re-asks
+- PASS F failure: failure + fallback choices are in the audit
+- PASS F cap: panel kind
+- PASS F cap: no live answer was invented (any answer shown is mode=recorded)
+- PASS F cap: four lookups + retry present
+- PASS F cap: cost shown
+- PASS F cap: Show recalls returns the stored total (82)
+- PASS F cap: Show product summary returns stored data
+- PASS F cap: Search stored reports counts match evidence.json (0 of 76 for LLZ)
+- PASS F cap: lookups made no model call
+- PASS F cap: Retry is disabled while the cap is reached
+- PASS F cap: failure + fallback choices are in the audit

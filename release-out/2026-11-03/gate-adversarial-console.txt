@@ -1,0 +1,3 @@
+PASS        enough adversarial cases  <- 139 cases (need 50)
+PASS        false passes are 0  <- 0 of 90 must-block cases passed
+PASS        false blocks are 0  <- 0 of 49 must-pass cases were blocked

@@ -2,52 +2,38 @@
 ........................................................................ [  5%]
 ........................................................................ [  8%]
 ........................................................................ [ 11%]
-........................................................................ [ 14%]
+........................................................................ [ 13%]
 ........................................................................ [ 16%]
 ........................................................................ [ 19%]
 ........................................................................ [ 22%]
 ........................................................................ [ 25%]
-........................................................................ [ 28%]
+........................................................................ [ 27%]
 ........................................................................ [ 30%]
 ........................................................................ [ 33%]
 ........................................................................ [ 36%]
 ........................................................................ [ 39%]
-........................................................................ [ 42%]
+........................................................................ [ 41%]
 ........................................................................ [ 44%]
 ........................................................................ [ 47%]
 ........................................................................ [ 50%]
 ........................................................................ [ 53%]
-........................................................................ [ 56%]
+........................................................................ [ 55%]
 ........................................................................ [ 58%]
 ........................................................................ [ 61%]
 ........................................................................ [ 64%]
 ........................................................................ [ 67%]
-........................................................................ [ 70%]
+........................................................................ [ 69%]
 ........................................................................ [ 72%]
 ........................................................................ [ 75%]
 ........................................................................ [ 78%]
 ........................................................................ [ 81%]
-................................................F....................... [ 84%]
+........................................................................ [ 83%]
 ........................................................................ [ 86%]
 ........................................................................ [ 89%]
 ........................................................................ [ 92%]
 ........................................................................ [ 95%]
-........................................................................ [ 98%]
-..................................................                       [100%]
-=================================== FAILURES ===================================
-________ test_the_real_adversarial_set_has_no_false_pass_or_false_block ________
-
-    def test_the_real_adversarial_set_has_no_false_pass_or_false_block() -> None:
-        cases, statuses = gate_adversarial.run_gate()
-        out = gate_adversarial.confusion(cases, statuses)
-        assert out["cases"] >= 50
->       assert (out["false_pass"], out["false_block"]) == (0, 0)
-E       assert (1, 0) == (0, 0)
-E         
-E         At index 0 diff: 1 != 0
-E         Use -v to get more diff
-
-tests/unit/test_release_tools.py:380: AssertionError
+........................................................................ [ 97%]
+....................................................                     [100%]
 =============================== warnings summary ===============================
 tests/unit/test_call_ledger.py::test_guarded_client_forces_no_sdk_retries_one_http_request_per_reservation
   /tmp/claude-0/v312/lib/python3.12/site-packages/_pytest/raises.py:613: PytestWarning: matching against an empty string will *always* pass. If you want to check for an empty message you need to pass '^$'. If you don't want to match you should pass `None` or leave out the parameter.
@@ -63,19 +49,32 @@ _______________ coverage: platform linux, python 3.12.3-final-0 ________________
 
 Name                                                             Stmts   Miss Branch BrPart  Cover   Missing
 ------------------------------------------------------------------------------------------------------------
+src/maudesignal/__init__.py                                          2      0      0      0   100%
+src/maudesignal/alerting/__init__.py                                 3      0      0      0   100%
 src/maudesignal/alerting/checker.py                                 93     30     34      6    59%   47, 71->73, 117-134, 140-153, 171, 174, 176
+src/maudesignal/alerting/notifiers/__init__.py                       5      0      0      0   100%
+src/maudesignal/alerting/notifiers/base.py                           8      0      0      0   100%
+src/maudesignal/alerting/notifiers/console.py                       12      0      0      0   100%
 src/maudesignal/alerting/notifiers/email_notifier.py                38     27      6      0    25%   29-35, 40, 44-63
+src/maudesignal/alerting/notifiers/slack.py                         24      0      2      0   100%
 src/maudesignal/alerting/rules.py                                   27     11      4      0    65%   53-62, 66
 src/maudesignal/analysis/__init__.py                                 2      2      0      0     0%   3-5
 src/maudesignal/analysis/root_cause.py                              94     94     24      0     0%   7-200
+src/maudesignal/catalog/__init__.py                                  2      0      0      0   100%
 src/maudesignal/catalog/fetcher.py                                  95      3     32      3    95%   177, 203, 216
 src/maudesignal/catalog/names.py                                    28      2     10      1    92%   49-50, 52->51
 src/maudesignal/cli.py                                             723    473    154      7    32%   98-99, 145-147, 180, 215->203, 220-223, 259-346, 362-425, 457-491, 515-517, 556-558, 584, 610-671, 720-773, 786-821, 836-872, 884-896, 925-1005, 1028-1073, 1085-1114, 1136-1192, 1201-1235, 1381-1420, 1456-1481, 1518-1523
+src/maudesignal/common/__init__.py                                   0      0      0      0   100%
+src/maudesignal/common/device_ids.py                                32      0      4      0   100%
+src/maudesignal/common/exceptions.py                                12      0      0      0   100%
 src/maudesignal/common/logging.py                                   30      4      4      2    82%   32-34, 110, 112
 src/maudesignal/config.py                                           69     14     16      5    75%   26, 89, 121-139, 197
+src/maudesignal/connector/__init__.py                                0      0      0      0   100%
 src/maudesignal/connector/answer_cache.py                           63      1      8      1    97%   112
 src/maudesignal/connector/app.py                                   551     11    120      7    97%   576->578, 628-629, 632, 639, 706-707, 714, 805, 810, 848->843, 853, 1338
+src/maudesignal/connector/asgi.py                                   25      0      2      0   100%
 src/maudesignal/connector/ask.py                                   338      9     90     10    96%   193, 227, 317, 476, 478, 531->530, 694, 709, 788, 804->806, 815
+src/maudesignal/connector/audit_mode.py                             41      0     16      0   100%
 src/maudesignal/connector/blob_store.py                            127     10     24      1    93%   161-163, 178-180, 198-200, 202
 src/maudesignal/connector/callcap.py                               240     14     58      7    93%   201-202, 205, 255->exit, 270-272, 281-282, 311, 341, 391->393, 397-398, 418, 453
 src/maudesignal/connector/chat.py                                   77      2     20      2    96%   64->66, 245-246, 247->253
@@ -85,9 +84,12 @@ src/maudesignal/connector/direct.py                                257     18   
 src/maudesignal/connector/docs_page.py                              40      5      6      1    87%   42-43, 49-50, 85
 src/maudesignal/connector/errors.py                                 48      2      8      0    93%   141-142
 src/maudesignal/connector/feedback.py                              434     22    120      7    95%   137, 142, 303->305, 648, 650-651, 715, 729-730, 765-767, 769, 801-802, 817-818, 827-829, 845-846, 855
+src/maudesignal/connector/forbidden.py                               8      0      0      0   100%
 src/maudesignal/connector/globalcap.py                              22      1      0      0    95%   37
+src/maudesignal/connector/guidance.py                               37      0     10      0   100%
 src/maudesignal/connector/investigate.py                           469     20     92      7    95%   265, 286, 299-300, 313-314, 580, 676->674, 742-743, 829, 873, 881-883, 892-893, 940-941, 976-977
 src/maudesignal/connector/investigate_route.py                     144      4     28      2    97%   103, 180->196, 215, 238-239
+src/maudesignal/connector/investigate_stored.py                     61      0     16      0   100%
 src/maudesignal/connector/keygen.py                                100      1     24      1    98%   124
 src/maudesignal/connector/legal_pages.py                            61      2     12      2    95%   207, 326
 src/maudesignal/connector/links.py                                 125     12     56      8    87%   88, 90, 96, 106-110, 126->121, 164, 167-168, 206, 217->215
@@ -97,6 +99,7 @@ src/maudesignal/connector/manifest.py                               19      1   
 src/maudesignal/connector/mcp_server.py                             89      8     30      5    89%   119, 128-130, 142, 145, 148, 152
 src/maudesignal/connector/mentions.py                              351     20    104     15    92%   136-137, 143, 184->186, 198, 200, 248-249, 372->376, 377, 474, 532->531, 543, 547-549, 562-565, 586->584, 588->584, 614-615, 633, 636->635
 src/maudesignal/connector/models.py                                172      4     10      4    96%   42, 139, 357, 363
+src/maudesignal/connector/notify.py                                 41      0      4      0   100%
 src/maudesignal/connector/openapi.py                                18      1      0      0    94%   39
 src/maudesignal/connector/outside.py                                50      4      4      2    89%   80, 86, 122-123
 src/maudesignal/connector/prompts.py                                75      2     26      2    96%   111, 140
@@ -108,8 +111,10 @@ src/maudesignal/connector/speech.py                                 45      2   
 src/maudesignal/connector/store.py                                 300     24     56      4    92%   97, 102-103, 105, 170-172, 179-181, 216, 260-262, 269-276, 572-574
 src/maudesignal/connector/tiers.py                                 263      6    110      6    97%   436, 450, 513, 607, 733, 735
 src/maudesignal/connector/tools.py                                 202      5     58      6    96%   126->128, 173, 208-209, 260, 442->446, 546
+src/maudesignal/copilot/__init__.py                                  2      0      0      0   100%
 src/maudesignal/copilot/actions.py                                  51      5     18      3    88%   59, 82, 94, 97-98
 src/maudesignal/copilot/agent.py                                   283      7     68      9    95%   182, 186, 218->217, 224, 328, 329->331, 396->398, 536, 539-540, 576->exit
+src/maudesignal/copilot/audit_export.py                             30      0      6      0   100%
 src/maudesignal/copilot/dates.py                                   117      5     32      3    95%   44-45, 83->82, 143-144, 185->199, 268
 src/maudesignal/copilot/investigator.py                             97      5     22      5    92%   124, 212, 214, 218, 220
 src/maudesignal/copilot/memory.py                                   68      1     20      2    97%   93->79, 106
@@ -119,18 +124,21 @@ src/maudesignal/copilot/protocol.py                                120      6   
 src/maudesignal/copilot/recall_sweep.py                             82      1     10      1    98%   122
 src/maudesignal/copilot/spend.py                                   153      1     18      0    99%   143
 src/maudesignal/copilot/tools.py                                   222      1     62      1    99%   816
+src/maudesignal/copilot/transcript.py                               38      0      8      0   100%
 src/maudesignal/copilot/voice.py                                   209      2     42      4    98%   245->247, 248, 377->380, 422
 src/maudesignal/dashboard/__init__.py                                4      2      0      0    50%   10-12
-src/maudesignal/dashboard/app.py                                   727    610    172      5    15%   540, 543, 569, 579-582, 588, 593-594, 612->611, 618-619, 635-638, 656-657, 666-668, 675, 682-802, 822-961, 973-1061, 1070-1136, 1141-1148, 1153-1237, 1244-1256, 1260-1336, 1343-1416, 1425-1436, 1440-1471, 1479-1516, 1520-1539, 1546-1562, 1567-1569, 1573-1639, 1643-1686, 1690-1734, 1752-1803, 1824-1825, 1829-1831, 1835-1838, 1843-1869, 1891-1900, 1904-1987, 2000-2007, 2015-2016, 2040-2041
+src/maudesignal/dashboard/app.py                                   726    609    172      5    15%   535, 538, 564, 574-577, 583, 588-589, 607->606, 613-614, 630-633, 651-652, 661-663, 670, 677-797, 817-956, 968-1056, 1065-1131, 1136-1143, 1148-1232, 1239-1251, 1255-1331, 1338-1411, 1420-1431, 1435-1466, 1474-1511, 1515-1534, 1541-1557, 1562-1564, 1568-1634, 1638-1681, 1685-1729, 1747-1798, 1819-1820, 1824-1826, 1830-1833, 1838-1864, 1886-1895, 1899-1980, 1993-2000, 2008-2009, 2033-2034
 src/maudesignal/dashboard/copilot_pages.py                         279    178    104      2    34%   87-89, 141, 180-236, 240-278, 290-336, 381, 384, 404-409, 515-527, 532-560, 565-587, 608-659, 664-676
+src/maudesignal/dashboard/demo_db.py                                23      0      2      0   100%
 src/maudesignal/dashboard/dossier_pages.py                         132     36     38     13    68%   47, 58-59, 60->69, 73, 90-101, 110-111, 129->135, 138, 159-160, 165, 168-170, 191->197, 197->205, 206-211, 252-268, 271, 273, 275-276
 src/maudesignal/dashboard/live_check_ui.py                         108     71     24      0    28%   49-50, 60, 65-87, 94-96, 100-114, 134-159, 166-194, 220-243
-src/maudesignal/dashboard/pms_pages.py                              52     52      8      0     0%   11-122
 src/maudesignal/dashboard/spend_ui.py                               38     19      8      1    43%   26, 31-42, 47-54, 62-67, 76, 85
 src/maudesignal/dashboard/theme.py                                  72      1     14      1    98%   150
 src/maudesignal/dashboard/vision_pages.py                          234     38     82     15    80%   118-119, 125, 128-129, 145->150, 152, 165->167, 177, 179-180, 217-220, 230-238, 250-251, 265, 312->303, 322, 331, 365, 370-383, 391, 403->395
-src/maudesignal/dashboard/workspace.py                             134    134     24      0     0%   13-310
+src/maudesignal/dashboard/workspace.py                             135    135     24      0     0%   13-315
+src/maudesignal/dossier/__init__.py                                  4      0      0      0   100%
 src/maudesignal/dossier/builder.py                                 248     16     62     11    91%   98, 115->113, 149-150, 154, 170->152, 225, 354->361, 357-358, 412-415, 469, 485-486, 491, 523->543, 583
+src/maudesignal/dossier/capa_text.py                                44      0     14      0   100%
 src/maudesignal/dossier/chart.py                                    49      2     12      2    93%   28, 33
 src/maudesignal/dossier/figures.py                                 166      5     62      6    95%   177, 180, 201, 219, 223->236, 229
 src/maudesignal/dossier/illustration.py                             45      3     10      1    93%   41, 82-83
@@ -140,36 +148,56 @@ src/maudesignal/dossier/narrative.py                                88      1   
 src/maudesignal/dossier/render.py                                   55      1      4      1    97%   142
 src/maudesignal/dossier/review.py                                  166      6     36      2    96%   217-218, 299, 343, 359-360
 src/maudesignal/dossier/service.py                                  42      4      8      2    84%   57->55, 106-114
+src/maudesignal/drift/__init__.py                                    3      0      0      0   100%
 src/maudesignal/drift/calculator.py                                 30      1      8      1    95%   31
 src/maudesignal/drift/interpreter.py                                24      3      0      0    88%   54-56
+src/maudesignal/extraction/__init__.py                               3      0      0      0   100%
 src/maudesignal/extraction/extractor.py                             91     11     20      7    84%   86, 111, 138-146, 200, 231, 235, 238->247, 244->238, 248, 253-254
 src/maudesignal/extraction/llm_providers/__init__.py                32      5     18      4    82%   48, 76, 89, 99-101
 src/maudesignal/extraction/llm_providers/anthropic_provider.py      29     10      2      1    65%   59, 72, 84-102, 112-113
 src/maudesignal/extraction/llm_providers/base.py                    28      1      0      0    96%   101
+src/maudesignal/extraction/llm_providers/gemini_provider.py         41      0      6      0   100%
 src/maudesignal/extraction/llm_providers/groq_provider.py           33     11      6      1    59%   62, 87-111
 src/maudesignal/extraction/llm_providers/openai_provider.py         37     18      8      1    44%   61, 74, 85-113, 123-124
 src/maudesignal/extraction/llm_providers/provider_pool.py          134     21     44      6    80%   82, 113, 118-136, 149, 164, 192->194, 204, 209, 213, 244->291, 297
 src/maudesignal/extraction/pipeline.py                              62      3      2      0    95%   140-142
 src/maudesignal/extraction/skill_loader.py                          66     11     20      7    79%   85, 91, 94, 99, 102-103, 132, 139, 145, 148-149
+src/maudesignal/forecasting/__init__.py                              2      0      0      0   100%
 src/maudesignal/forecasting/trend_detector.py                       92      5     22      1    95%   65-68, 233
+src/maudesignal/gate/__init__.py                                     4      0      0      0   100%
+src/maudesignal/gate/cfr.py                                         12      0      4      0   100%
 src/maudesignal/gate/claims.py                                     148      1     36      1    99%   309
 src/maudesignal/gate/evidence.py                                   162      3     32      3    97%   228, 279, 311
 src/maudesignal/gate/gate.py                                       424      7    210      6    98%   248, 347, 571-572, 580, 667, 698
 src/maudesignal/gate/loader.py                                      46      3      4      1    92%   33-34, 41
+src/maudesignal/ingestion/__init__.py                                3      0      0      0   100%
 src/maudesignal/ingestion/openfda_client.py                        134     24     54     16    78%   97, 100->104, 106, 114-117, 149->151, 153-154, 158, 160, 231, 237, 240-241, 245, 247, 251, 278, 290-291, 295-296, 299-300, 310
 src/maudesignal/ingestion/pipeline.py                               63      2     24      2    95%   110, 164
+src/maudesignal/monitor/__init__.py                                  4      0      0      0   100%
+src/maudesignal/monitor/compare.py                                  48      0      4      0   100%
+src/maudesignal/monitor/deterioration.py                           142      0     18      0   100%
 src/maudesignal/monitor/digest.py                                  165      3     58      3    97%   165-166, 198, 386->388
+src/maudesignal/monitor/fetch.py                                    70      0     12      0   100%
 src/maudesignal/monitor/live_check.py                              139      2     28      2    98%   164, 310
 src/maudesignal/monitor/sources.py                                  27      1      6      1    94%   73
+src/maudesignal/pms/__init__.py                                      5      0      0      0   100%
 src/maudesignal/pms/asof.py                                         26      3      6      3    81%   24, 28, 72
 src/maudesignal/pms/board.py                                        67      3     22      3    93%   124, 187, 189
+src/maudesignal/pms/checklists.py                                   48      0      6      0   100%
 src/maudesignal/pms/note_to_file.py                                107      8     28      3    92%   56-57, 67-68, 143, 225, 231, 299
+src/maudesignal/pms/simple_pdf.py                                   65      0     14      0   100%
+src/maudesignal/report/__init__.py                                   2      0      0      0   100%
 src/maudesignal/report/generator.py                                100      2     24      1    98%   215-216, 326->323
 src/maudesignal/report/psur_generator.py                           108     26     14      4    72%   164-167, 254-258, 267-269, 277-278, 292-294, 348-361
+src/maudesignal/sources/__init__.py                                  3      0      0      0   100%
 src/maudesignal/sources/clinicaltrials.py                           69      4      6      1    93%   81, 108, 145-146
 src/maudesignal/sources/mhra.py                                     60      1     14      1    97%   156
+src/maudesignal/sources/openfda_sources.py                          92      0     18      0   100%
 src/maudesignal/sources/pubmed.py                                  130     11     36      7    89%   92, 120, 156, 175, 186, 192, 207-209, 223, 228
+src/maudesignal/storage/__init__.py                                  3      0      0      0   100%
 src/maudesignal/storage/database.py                                376     26     84     14    90%   89-90, 213, 258, 275, 500-514, 523->525, 565->567, 625, 647->660, 658, 697-710, 855-862, 930, 1120->1122, 1157, 1167
+src/maudesignal/storage/models.py                                  160      0      0      0   100%
+src/maudesignal/vision/__init__.py                                   4      0      0      0   100%
 src/maudesignal/vision/browser_fetch.py                             47      4      4      1    90%   50, 76, 108-109
 src/maudesignal/vision/fda_pdf.py                                  158     12     28      3    92%   121-122, 198-200, 222-226, 234, 289, 312
 src/maudesignal/vision/images.py                                    72      1     14      1    98%   54
@@ -177,14 +205,13 @@ src/maudesignal/vision/label.py                                    202      2   
 src/maudesignal/vision/label_match.py                              698     44    206     28    92%   160, 217-218, 225, 227, 229, 232-233, 316->318, 408, 490-491, 567, 589, 600->599, 609, 668, 675, 695, 719, 738-742, 790-791, 892, 934, 935->939, 938, 940->942, 945, 1058->1060, 1118, 1136, 1152->1168, 1165, 1455->1454, 1473->1477, 1502-1513, 1524->1529, 1704-1728, 1824-1828
 src/maudesignal/vision/openfda510k.py                               90      4     18      2    94%   50, 94, 141-142
 src/maudesignal/vision/pipeline.py                                  49      0      8      1    98%   105->98
+src/maudesignal/vision/reader.py                                    81      0     10      0   100%
 src/maudesignal/vision/sam.py                                      197     16     50      9    88%   159, 163, 216-222, 254-255, 260, 274->299, 279, 287->274, 291->293, 345, 375->377, 403, 405
 src/maudesignal/vision/spark.py                                     95      4     28      3    94%   85->84, 150, 179-180, 208
 src/maudesignal/vision/verify.py                                   258     13     92     14    92%   99, 133-134, 144->140, 152, 159, 178, 188, 225, 287, 331, 349, 356, 382, 439->443, 456->472
 ------------------------------------------------------------------------------------------------------------
-TOTAL                                                            18828   2599   4728    478    85%
-
-44 files skipped due to complete coverage.
+TOTAL                                                            18776   2547   4720    478    85%
 Coverage HTML written to dir htmlcov
-Required test coverage of 55% reached. Total coverage: 84.63%
-1 failed, 2569 passed, 2 warnings in 191.69s (0:03:11)
-exit=1
+Required test coverage of 55% reached. Total coverage: 84.84%
+2572 passed, 2 warnings in 181.00s (0:03:01)
+exit=0

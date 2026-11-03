@@ -10,11 +10,11 @@ import { DataAsOfBanner, storedAsOf } from './DataAsOf'
 export const NOT_VALIDATED =
   'This build is not validated. It is a hackathon trial build. Nothing on this page says it is fit for your quality system; that is your decision, made in your own environment.'
 
-/** Measured on 2026-11-03 (see TEST-REPORT-2026-11-03.md for the run and the command). Counts, not claims. */
+/** Measured on 2026-11-03 (outputs in release-out/2026-11-03/, see TEST-REPORT-2026-11-03.md). A test pins the gate count to the fixture. */
 export const TESTED: { what: string; result: string; how: string }[] = [
-  { what: 'Python unit tests', result: '2,587 passed, 1 skipped (lxml not installed); 85% line + branch coverage', how: 'pytest tests/unit --cov=src/maudesignal (Python 3.11 and 3.12)' },
-  { what: 'Web unit tests', result: '735 passed (vitest)', how: 'cd web && npx vitest run' },
-  { what: 'Claim gate adversarial set', result: '135 cases (89 must be withheld, 46 must pass): 0 false passes, 0 false blocks', how: 'tests/fixtures/gate/adversarial.jsonl via tests/unit/test_gate.py' },
+  { what: 'Python unit tests', result: 'Python 3.12: 2,572 passed, 0 skipped, 85% line + branch coverage (pytest-cov, rounded). Python 3.11: 2,571 passed, 1 skipped (lxml not installed). Run 2026-11-03.', how: 'pytest tests/unit --cov=src/maudesignal --cov-branch' },
+  { what: 'Web unit tests', result: '722 passed in 34 files (vitest, run 2026-11-03)', how: 'cd web && npx vitest run' },
+  { what: 'Claim gate adversarial set', result: '139 cases (90 must be withheld, 49 must pass): 0 false passes, 0 false blocks. 9 were added on 2026-11-03: report-mix share, quote pinned to the wrong report, number with no claim, date-shifted year, zero on a no-data range.', how: 'tests/fixtures/gate/adversarial.jsonl via tests/unit/test_gate.py' },
   {
     what: 'Hand-check of recorded answers',
     result:
@@ -22,7 +22,7 @@ export const TESTED: { what: string; result: string; how: string }[] = [
     how: 'docs/hackathon/HAND_CHECK.md',
   },
   { what: 'Audit tamper test', result: 'Editing one stored entry breaks the chain at that entry and is detected (database, exported trail, and this browser’s trail)', how: 'tests/unit/test_pms.py, test_copilot_agent.py; web/src/pms/pms.test.ts' },
-  { what: 'Spend caps', result: '$0.25 per call and $2.00 a day for asks, $1 and 20 calls per session, $10 a day overall; a cap hit makes no model call', how: 'tests/unit/test_spend.py, connector cap tests' },
+  { what: 'Spend caps', result: 'Code defaults (environment can override): keyed ask $0.25 per call and $2.00 a day; live website $3.00 a day in total; Streamlit copilot $1 and 20 calls per session and $10 a day. A cap hit makes no model call (94 cap and ledger tests passed 2026-11-03).', how: 'tests/unit/test_spend.py, test_call_ledger.py, test_connector_batch_o.py' },
 ]
 
 export const MANUFACTURER_MUST = [

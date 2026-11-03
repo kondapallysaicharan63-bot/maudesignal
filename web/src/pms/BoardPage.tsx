@@ -169,7 +169,7 @@ export function BoardPage({ data, onInvestigate, onValidation }: { data: Workspa
       <p className="ms2-inv-meta m-0">
         Rows: real FDA alerts only (AI device sweep and the stored brief); simulated devices are never on this board. Build {buildLine()}.{' '}
         {onValidation && (
-          <button type="button" className="ms2-link" onClick={onValidation}>
+          <button type="button" className="ms2-link" style={BTN} onClick={onValidation}>
             What is and is not validated
           </button>
         )}
@@ -246,7 +246,7 @@ export function BoardPage({ data, onInvestigate, onValidation }: { data: Workspa
                 <StatusForm key={`${r.code}-${r.status}-${r.audit_seq}`} row={r} onDone={() => setTick((t) => t + 1)} />
               </section>
               {f && <EvidencePackPanel pack={packFromAlert(f.alert, storedAsOf(data.manifest))} />}
-              <button type="button" className="ms2-link" onClick={onInvestigate}>
+              <button type="button" className="ms2-link" style={BTN} onClick={onInvestigate}>
                 Investigate a complaint for another code →
               </button>
             </div>

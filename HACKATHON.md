@@ -136,6 +136,23 @@ one-time `ALTER TABLE` + backfill in `Database`), `ingestion/pipeline.py` stores
 
 Plus this manifest, the demo video, and the submission write-up.
 
+### Added Nov 3 (reviewer feedback, PRD update 2026-11-03; local branch `ccr-7cf96849-d3onnc`, not yet pushed)
+
+New files (all created 2026-11-03):
+
+| File | What it is |
+|---|---|
+| `src/maudesignal/pms/` (`__init__`, `asof`, `board`, `checklists`, `note_to_file`, `simple_pdf`) | Reference implementation of the data-as-of text, the PMS board (status replayed from the hash-chained audit; allowed moves; named person only; advisory MDR clock), escalation / risk / recall-check sections that end in a human decision, the note to file (Markdown + dependency-free PDF) and the export bundle (CSV + PDF + Markdown + audit JSON, each printing version, commit, data-as-of and a blank complaint/CAPA number) |
+| `web/src/pms/` (`BoardPage`, `EvidencePackPanel`, `FallbackPanel`, `ValidationPage`, `DataAsOf`, `audit`, `board`, `pack`, `pdf`, `build`, `useAudit`, `pms.test.tsx`) and `web/src/build.d.ts` | The `/board` and `/validation` pages, the evidence pack with accept / reject and note to file, the live-model fallback panel, the data-as-of banner, a browser SHA-256 audit chain that hashes exactly like the Python trail (vector test), a text PDF writer, and 16 tests |
+| `web/public/data/lifecycle.json` | Generated lifecycle log (model ids, every Skill VERSION, gate CFR lists, sweep date, build) for the Validation page |
+| `tests/unit/test_pms.py` | 14 tests: board, tamper, checklists, note to file, export bundle, data-as-of, old-label grep, sweep-date source of truth, gate count on the Validation page |
+| `scripts/release/e2e_pms.py` | Playwright (Chromium) run of the P0 path and the forced live-failure test; expected values come from the demo DB and the stored exports |
+| `TEST-REPORT-2026-11-03.md`, `release-out/2026-11-03/` | Test report with traceability, IQ/OQ/PQ status and open limits, and the raw outputs |
+
+Existing files edited on 2026-11-03: `monitor/deterioration.py`, `monitor/digest.py` (label "Report mix changed" and its sentence), `copilot/tools.py`, `vision/label_match.py`, `dashboard/live_check_ui.py`, `dashboard/workspace.py`, `dashboard/copilot_pages.py` (data-as-of banner and board link), `dossier/render.py`, `dossier/templates/dossier.html.j2` (banner in the PDF source), `scripts/export_alerts.py`, `scripts/export_web_data.py` (manifest `build` + `data_as_of`, `lifecycle.json`), `scripts/release/gate_adversarial.py` (shifts / no_data), `tests/fixtures/gate/adversarial.jsonl` (130 → 139 cases), `tests/unit/test_gate.py`, `skills/safety-copilot` 1.3.6, `skills/dossier-narrative` 1.2.1, `skills/weekly-investigator` 1.0.1 (label rename only), `web/src/v2/HomeV2.tsx`, `AppV2.tsx`, `router.ts`, `SidebarV2.tsx`, `SearchPalette.tsx`, `Sections.tsx`, `ChatScreen.tsx`, `PmsWorkflow.tsx` (Step 0 reactive path), `RoiPage.tsx`, `roi.ts`, `web/src/investigate/InvestigatePage.tsx` (non-manufacturer reports first, evidence pack), `web/src/live/useLiveChat.ts`, `web/src/components/LiveChat.tsx`, `ChatPane.tsx`, `SweepCard.tsx`, `AlertPanel.tsx`, `web/public/data/measurements.json` (the fixed LLZ task and method; no minutes recorded), `README.md` (pitch), `docs/VALIDATION_EVIDENCE.md`, `docs/hackathon/SUBMISSION_DRAFT.md` (sweep date, test counts, gate count), `CLAUDE.md` (Skill versions). Generated files relabelled by text replacement: `digests/`, `data/monitor/digests/`, `demo/vision/label-match-*.json`, `web/public/data/*.json`. The recorded Muse Spark transcripts in `demo/transcripts/` are untouched.
+
+Not done: fresh AI-device sweep (openFDA refused the keyless request; the stored 2026-10-30 sweep stays labelled Stored), the timed ROI task (needs Charan), deployment and smoke runs, P1 items 12–14. The rename of "more serious than usual" to "Report mix changed" is a correctness fix; the old label survives only in this note and in Skill changelogs.
+
 ### Added Oct 28, later (design system, themes, memory, compare, MHRA)
 
 | File(s) | What |

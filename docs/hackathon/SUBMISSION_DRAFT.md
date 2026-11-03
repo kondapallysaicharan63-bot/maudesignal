@@ -49,7 +49,7 @@ recorded run or a test in this repository (sources in brackets).
   correct by Claude, Charan's check pending [`docs/hackathon/HAND_CHECK.md`].
   Voice Transcribe misheard the product code (LLG, LLC for LLZ); the screen says
   so and states the one-letter correction.
-- Adversarial gate set: 112 made-up or tricky sentences, 0 let through wrongly, 0
+- Adversarial gate set: 139 made-up or tricky sentences, 0 let through wrongly, 0
   blocked wrongly [`tests/unit/test_gate.py`].
 - 510(k) summaries: 5 of 5 read; two reads agree on 80–100% of fields (100% on 4 of
   5), the rest are flagged for a person [`demo/vision/`].
