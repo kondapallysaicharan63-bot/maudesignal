@@ -3,7 +3,7 @@
 // Every "What MaudeSignal does" line names a function of the product; new ones are marked new. Every step where the
 // work is a decision, a signature or a filing says so. No number is typed on this page (counts are computed).
 import type { ReactNode } from 'react'
-import { HEADLINE } from '../positioning'
+import { HEADLINE, REACTIVE } from '../positioning'
 import { appRoot, withLayout } from './router'
 import './positioning.css'
 
@@ -64,7 +64,7 @@ export const STEPS: Step[] = [
     title: 'Trend review',
     kind: 'assist',
     manual: 'Rebuild the counts by hand for the period and compare them with earlier periods.',
-    does: 'Weekly change check for each device type you choose: this week against the four weeks before, with fixed rules (reports suddenly increased, more serious than usual, new kind of problem). The AI-device sweep runs the same check over FDA’s AI-enabled device list as the proactive extra.',
+    does: 'Weekly change check for each device type you choose: this week against the four weeks before, with fixed rules (reports suddenly increased, report mix changed, new kind of problem). The AI-device sweep runs the same check over FDA’s AI-enabled device list as the proactive extra.',
     human: 'whether a change matters for your device and your risk file.',
     clauses: ['ISO 13485 §8.2.1 (feedback)', 'ISO 14971 (risk management)', '21 CFR 820 (QMSR)'],
   },
@@ -73,7 +73,7 @@ export const STEPS: Step[] = [
     title: 'PMS board',
     kind: 'assist',
     manual: 'Assemble tables and slides for the board from separate sources.',
-    does: 'CAPA-need evidence PDF: the figures and quotes for the board, each checked by the claim gate, with an independent Muse Wonder review of the PDF (findings only; it never edits the record).',
+    does: 'PMS board page (new): each flagged code with why it was flagged, status (New, Under review, Note to file, Escalated, Closed), owner and advisory MDR due date; a named person changes a status and the change is audited. Plus the CAPA-need evidence PDF with an independent Muse Wonder review (findings only). This is not a QMS.',
     human: 'what the board assesses from the evidence and the review’s findings, and what it documents.',
     clauses: ['ISO 13485 §8.2.1 (feedback)', 'ISO 13485 §8.5.2 (corrective action)', 'ISO 14971 (risk management)'],
   },
@@ -83,7 +83,7 @@ export const STEPS: Step[] = [
     detail: 'Note to file, CAPA or escalation',
     kind: 'human',
     manual: 'The board decides: note to file, CAPA, or escalation. Someone signs.',
-    does: 'Records which named person approved or rejected the evidence pack, in a hash-chained audit trail.',
+    does: 'Records which named person accepted or rejected the evidence pack, in a hash-chained audit trail, and drafts the note to file (Markdown + PDF) with escalation, risk and recall-check questions for you to answer. Draft note to file for your QMS; not filed with FDA.',
     doesNew: {
       tag: 'New, simulated',
       text: 'A decision path on simulated device profiles (F22), for fictional devices only.',
@@ -177,6 +177,17 @@ export function PmsWorkflow({ onRoi, onHome, onInvestigate }: { onRoi?: () => vo
           Post-market surveillance usually starts when a complaint arrives and is reviewed on a schedule: trend reviews, the PMS board, the PSUR or PMSR, management review and audits. This map follows that order. It shows what is done by hand today, what MaudeSignal does at each step, and what stays with your people.
         </p>
       </header>
+
+      <section className="ms2-card" aria-labelledby="pms-reactive-h" data-testid="pms-reactive">
+        <h2 id="pms-reactive-h" className="ms2-h2">
+          Step 0 — the reactive path
+        </h2>
+        <p className="m-0 mt-1">
+          {REACTIVE} A complaint arrives → <a className="ms2-a" href={pageHref('investigate')}>Investigate</a> (FDA evidence for that complaint) →{' '}
+          <a className="ms2-a" href={pageHref('board')}>PMS board</a> (status, owner, due date) → decision by a named person: note to file, CAPA or
+          escalation, in your own QMS.
+        </p>
+      </section>
 
       <Overview />
       <p className="ms2-muted ms2-step-sum" data-testid="pms-summary">

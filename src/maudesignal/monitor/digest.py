@@ -7,7 +7,7 @@ The digest is rendered twice — Markdown for humans and JSON for machines
 against the stored records). No LLM is involved: every sentence is a fixed
 template filled with numbers taken verbatim from the detector.
 
-Headline format: ``"New kind of problem: N · More serious than usual: M ·
+Headline format: ``"New kind of problem: N · Report mix changed: M ·
 Reports suddenly increased: K"`` (``new_signal``, ``severity_escalation`` and
 ``spike`` product codes, by their primary classification).
 
@@ -32,6 +32,7 @@ from maudesignal.monitor.deterioration import (
     SPIKE_MULTIPLIER,
     DetectionResult,
     ProductCodeSignal,
+    report_mix_sentence,
 )
 from maudesignal.monitor.sources import sourced_reports
 from maudesignal.storage.database import Database
@@ -46,7 +47,7 @@ MAX_EXAMPLE_IDS = 3
 #: How flagged product codes are ordered, most urgent first. Each step only
 #: breaks ties left by the steps before it.
 RANKING_ORDER: tuple[str, ...] = (
-    "rule precedence: new kind of problem, then more serious than usual, "
+    "rule precedence: new kind of problem, then report mix changed, "
     "then reports suddenly increased",
     "more Injury/Death reports this window",
     "higher ratio of this window's count to the baseline weekly mean",
@@ -57,7 +58,7 @@ RANKING_ORDER: tuple[str, ...] = (
 #: Plain words shown to people for each detector classification.
 CHANGE_LABELS: dict[str, str] = {
     "new_signal": "new kind of problem",
-    "severity_escalation": "more serious than usual",
+    "severity_escalation": "report mix changed",  # see deterioration.REPORT_MIX_LABEL
     "spike": "reports suddenly increased",
     "stable": "no change",
 }
@@ -69,11 +70,11 @@ class Digest:
 
     Attributes:
         result: The detection result the digest summarizes.
-        headline: e.g. ``"New kind of problem: 0 · More serious than usual: 0 ·
+        headline: e.g. ``"New kind of problem: 0 · Report mix changed: 0 ·
             Reports suddenly increased: 1"``.
         new_count: Product codes classified ``new_signal``.
         serious_count: Product codes classified ``severity_escalation``
-            ("more serious than usual").
+            ("report mix changed").
         increased_count: Product codes classified ``spike`` ("reports
             suddenly increased").
         stable_count: Product codes classified ``stable``.
@@ -163,11 +164,16 @@ def rule_evidence(signal: ProductCodeSignal) -> str:
     if signal.classification == "severity_escalation":
         delta = signal.severe_share_delta_pp or 0.0
         return (
-            f"more serious than usual: Injury/Death share {_pct(signal.current_severe_share)} "
-            f"({signal.current_severe_count}/{signal.current_count}) vs baseline "
-            f"{_pct(signal.baseline_severe_share)} "
-            f"({signal.baseline_severe_count}/{signal.baseline_count}), {delta:+.1f} pp; "
-            f"the rule needs >= +{SEVERITY_ESCALATION_PP} pp and >= {SEVERITY_MIN_REPORTS} reports"
+            "report mix changed: "
+            + report_mix_sentence(
+                signal.baseline_severe_share,
+                signal.current_severe_share,
+                signal.current_severe_count,
+                signal.current_count,
+            )
+            + f" ({delta:+.1f} pp vs baseline {signal.baseline_severe_count}/"
+            f"{signal.baseline_count}; the rule needs >= +{SEVERITY_ESCALATION_PP} pp and "
+            f">= {SEVERITY_MIN_REPORTS} reports.)"
         )
     return (
         f"reports suddenly increased: {signal.current_count} reports this window vs a "
@@ -291,7 +297,7 @@ def build_digest(
     return Digest(
         result=result,
         headline=(
-            f"New kind of problem: {new_count} · More serious than usual: {serious} · "
+            f"New kind of problem: {new_count} · Report mix changed: {serious} · "
             f"Reports suddenly increased: {increased}"
         ),
         new_count=new_count,
@@ -439,8 +445,9 @@ def render_markdown(digest: Digest) -> str:
         f"across {len(digest.result.signals)} product codes",
         f"- Rules: new kind of problem = first reports / never-seen event type; "
         f"reports suddenly increased = >= {SPIKE_MULTIPLIER}x baseline weekly mean and "
-        f">= {SPIKE_MIN_REPORTS} reports; more serious than usual = Injury/Death share up "
-        f">= {SEVERITY_ESCALATION_PP} pp and >= {SEVERITY_MIN_REPORTS} reports",
+        f">= {SPIKE_MIN_REPORTS} reports; report mix changed = Injury/Death share up "
+        f">= {SEVERITY_ESCALATION_PP} pp and >= {SEVERITY_MIN_REPORTS} reports "
+        f"(a change in report mix, not proof of increased device risk; counts are not rates)",
         f"- Ranking (most urgent first): {'; then '.join(RANKING_ORDER)}",
     ]
     if digest.fetch_summary:
@@ -524,7 +531,7 @@ def digest_to_dict(digest: Digest) -> dict[str, Any]:
         "headline": digest.headline,
         "counts": {
             "new": digest.new_count,
-            "more_serious_than_usual": digest.serious_count,
+            "report_mix_changed": digest.serious_count,
             "reports_suddenly_increased": digest.increased_count,
             "stable": digest.stable_count,
         },

@@ -235,6 +235,16 @@ def test_signal_numbers_match_the_monitor(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
+def test_dossier_carries_the_data_as_of_banner(tmp_path: Path) -> None:
+    from maudesignal.pms.asof import DELAY_SENTENCE
+
+    db = _db(tmp_path)
+    b = build_dossier(db, capa_id=_capa(db), awareness_date=date(2026, 10, 27))
+    html = render_html(b.data)
+    assert f"Data as of: {b.data.signal.as_of.isoformat()}." in html
+    assert DELAY_SENTENCE in html and "Live check: none in this document." in html
+
+
 def test_every_number_in_rendered_html_reverifies_through_gate(tmp_path: Path) -> None:
     db = _db(tmp_path)
     b = build_dossier(db, capa_id=_capa(db))

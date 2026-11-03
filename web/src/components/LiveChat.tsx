@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { FallbackPanel } from '../pms/FallbackPanel'
 import { Icon } from '../icons'
 import { badgeText, heldBackLine, isFreeTier, LIMIT_TEXT, NOT_MEDICAL_ADVICE, openLabel, VOICE_NOTE, type AskResponse, type OpenView } from '../live/api'
 import { speechSupported } from '../live/speech'
@@ -297,6 +298,15 @@ export function TurnView({ turn, chat, onRecordedVoice, onRecordedLabel, onAsk, 
             </button>
           )}
         </div>
+      )}
+      {turn.fallback && turn.question && (
+        <FallbackPanel
+          fb={turn.fallback}
+          question={turn.question}
+          recordedShown={turn.resp?.mode === 'recorded' && turn.resp.answer.speakable.length > 0}
+          onRetry={() => onAsk(turn.question ?? '')}
+          onLive={(code) => onOpen?.({ view: 'check-device', ...(code ? { code } : {}) } as OpenView)}
+        />
       )}
       {turn.status === 'done' && turn.resp && (
         <>

@@ -92,7 +92,7 @@ sent to a server; values stay in your browser.
 | Recorded cost of a label photo: average $0.012 (7 photos; SAM 3.1 $0.0025 + Muse Spark read) | `trace[].cost_usd` in `demo/vision/label-match-*.json` ([`demo/vision/`](demo/vision/)) |
 | Chat answer tiers, estimate on a 20-question sample: $0.048 per question before, $0.012 after (upper bound; 5 of 20 reach Muse Spark) | [`docs/hackathon/CHAT_TIERS.md`](docs/hackathon/CHAT_TIERS.md) |
 | Recorded copilot answers: 31; sentences passing the gate on the first pass 71/73; replies that never parsed 0; hand-check: every sentence correct in 30 of 31 answers | [`docs/hackathon/HAND_CHECK.md`](docs/hackathon/HAND_CHECK.md) |
-| Gate adversarial set: 130 cases (84 must be withheld, 46 must pass), 0 false passes, 0 false blocks | [`tests/fixtures/gate/adversarial.jsonl`](tests/fixtures/gate/adversarial.jsonl), [`tests/unit/test_gate.py`](tests/unit/test_gate.py) |
+| Gate adversarial set: 139 cases (90 must be withheld, 49 must pass; 130 until 2026-11-02), 0 false passes, 0 false blocks | [`tests/fixtures/gate/adversarial.jsonl`](tests/fixtures/gate/adversarial.jsonl), [`tests/unit/test_gate.py`](tests/unit/test_gate.py) |
 | Weekly investigator, one recorded LLZ run: $0.224989 | [`demo/investigations/20261030T010942Z-weekly-llz.json`](demo/investigations/20261030T010942Z-weekly-llz.json) |
 | Daily ceiling on all live Meta calls together: $3.00 per UTC day | [`src/maudesignal/connector/callcap.py`](src/maudesignal/connector/callcap.py) (`MAUDESIGNAL_LIVE_DAILY_USD`) |
 
@@ -206,13 +206,16 @@ ROI and device-profile pages. What is NOT built yet:
 
 ## The problem
 
-- Device makers already know their own complaints: they file them. What is
-  hard to see is **problems reported on other makers' devices of the same type**
-  and the reports about **their own device filed by someone else** — a user
-  facility such as a hospital, a voluntary reporter, a distributor. Those sit
-  among tens of thousands of public MAUDE reports. openFDA's counts by report
-  source for the demo device types are in
+- **Companies know their competitors. What they cannot see is: (1) reports about
+  their own device filed by hospitals, users or distributors that never reached
+  their complaint team, and (2) the same failure mode emerging on other makers'
+  devices of the same type before it hits their device.** Those sit among tens of
+  thousands of public MAUDE reports. openFDA's counts by report source for the
+  demo device types are in
   [docs/hackathon/SOURCE_COUNTS.md](docs/hackathon/SOURCE_COUNTS.md).
+- PMS is reactive first. MaudeSignal does not replace complaint handling; it
+  speeds the investigation step after a complaint arrives, and flags a code
+  before the next complaint arrives.
 - Reading MAUDE by hand is slow; a general-purpose chatbot is faster but can
   make up numbers, quotes and regulation citations, which a regulated
   workflow cannot accept.
@@ -222,7 +225,7 @@ ROI and device-profile pages. What is NOT built yet:
 1. **What changed this week.** A deterministic monitor (no model) compares
    the last 7 days of openFDA reports with the 4 weeks before, for the device
    types (FDA product codes) you choose, and flags three things: **reports
-   suddenly increased**, **more serious than usual**, or a **new kind of
+   suddenly increased**, **report mix changed**, or a **new kind of
    problem**. On the demo data: *"LLZ: reports suddenly increased — 33 this
    week vs a weekly mean of 8.75 (3.77x)"*
    ([digests/2026-08-31.md](digests/2026-08-31.md)), with the reason it is
@@ -276,7 +279,7 @@ guidance, 510(k) history and MAUDE). MaudeSignal differs in three ways:
 - **It withholds what it cannot match.** Every number is recomputed, every
   quote matched word for word, every report id, 510(k), recall, PMID and CFR
   section checked against stored FDA records — or the sentence is not shown.
-  Adversarial set: 130 cases, 0 false passes, 0 false blocks.
+  Adversarial set: 139 cases, 0 false passes, 0 false blocks.
 - **It reads scanned 510(k) documents with a two-read accuracy check.**
 - **It is open source and self-hostable** (MIT), on public FDA data only.
 
@@ -361,7 +364,7 @@ flowchart LR
     end
 
     subgraph changes["What changed (no LLM)"]
-        DB --> MON["monitor/<br/>reports suddenly increased ·<br/>more serious than usual ·<br/>new kind of problem"]
+        DB --> MON["monitor/<br/>reports suddenly increased ·<br/>report mix changed ·<br/>new kind of problem"]
         MON --> DIG["Digest<br/>digests/YYYY-MM-DD.md"]
     end
 
@@ -405,7 +408,7 @@ model calls. For every sentence the copilot wants to show:
 - a sentence that mentions a number, K-number, report id or CFR section
   **without** a matching structured claim is blocked as ungrounded.
 
-**Adversarial test set:** [130 cases](tests/fixtures/gate/adversarial.jsonl)
+**Adversarial test set:** [139 cases](tests/fixtures/gate/adversarial.jsonl)
 (84 must block, 46 must pass): fabricated and drifted quotes, real quotes on
 the wrong report, stale / inflated counts, wrong shares, fake and mismatched
 K-numbers, hallucinated and superseded CFR sections, fake recall numbers and

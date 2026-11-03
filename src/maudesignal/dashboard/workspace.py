@@ -31,11 +31,12 @@ from maudesignal.monitor.compare import CompareRow, compare_signals
 from maudesignal.monitor.deterioration import detect_from_database
 from maudesignal.monitor.digest import digest_from_database
 from maudesignal.monitor.sources import not_by_manufacturer, sourced_reports
+from maudesignal.pms.asof import as_of_text, stored_as_of
 from maudesignal.storage.database import Database
 
 _ARROW = {
     "reports suddenly increased": "trending_up",
-    "more serious than usual": "warning",
+    "report mix changed": "warning",
     "new kind of problem": "new_releases",
     "no change": "remove",
 }
@@ -76,6 +77,12 @@ def page_signals(db: Database) -> None:
     if st.session_state.get("sig_code") not in by_code:
         st.session_state["sig_code"] = rows[0].product_code
 
+    st.info(as_of_text(stored_as_of(db)))
+    st.caption(
+        "PMS board (status, owner, due date, note to file): "
+        "[open it on the website](https://maudesignal-app.vercel.app/board). "
+        "This app has no second board."
+    )
     render_live_check()
     render_sweep()
     left, right = st.columns([1, 2.7], gap="large")

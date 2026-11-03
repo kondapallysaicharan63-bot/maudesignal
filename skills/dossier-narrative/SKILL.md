@@ -21,7 +21,7 @@ The user message is ONE JSON object:
 - `figures` — every number you may use, each with `display` (how to write it)
   and `claim` (the structured claim to attach, copy it exactly)
 - `change` and `rules_fired` from the deterministic monitor, in plain words
-  ("reports suddenly increased", "more serious than usual", "new kind of problem")
+  ("reports suddenly increased", "report mix changed", "new kind of problem")
 - `evidence` — the cited MAUDE reports: `report_id`, `date_received`,
   `event_type`, `brand_name`, `narrative_excerpt`
 - `capa` — CAPA-need evidence pack id, title and status (may be null)
@@ -67,6 +67,7 @@ Claim kinds: `count`, `share`, `quote`, `record`, `device`, `regulation`
 
 ## Changelog
 
+- 1.2.1 (2026-11-03): label rename only — the `severity_escalation` plain words are now "report mix changed" (was "more serious than usual"); a change in the reported Injury/Death mix is not proof of increased device risk. Rule and numbers unchanged.
 - 1.2.0 (2026-10-28): input carries `change` / `rules_fired` in plain words instead of the internal classification labels; rule 7 (no "spike", "worsening", "overnight").
 - 1.1.1 (2026-10-28): wording — "CAPA-need evidence pack"; device types the user chooses, never "similar devices".
 - 1.1.0 (2026-10-28): wording: the record is "Signal Evaluation & CAPA-need Evidence"; never say a CAPA is needed, an event is reportable or devices are similar.

@@ -1,0 +1,15 @@
+...............s.............................                            [100%]
+=============================== warnings summary ===============================
+tests/e2e/test_08_hackathon_pages.py::TestDataAsOfBanner::test_banner_dates_equal_the_demo_db[chromium-Signals]
+  /tmp/claude-0/v312/lib/python3.12/site-packages/_pytest/fixtures.py:1392: PytestRemovedIn10Warning: Session-scoped fixtures defined as instance methods are deprecated.
+  Instance attributes set in the 'base_url' fixture will NOT be visible to test methods,
+  as each test gets a new instance while the fixture runs only once per class.
+  Use a @classmethod decorator below @pytest.fixture and set attributes on cls instead.
+  See https://docs.pytest.org/en/stable/deprecations.html#class-scoped-fixture-as-instance-method
+    fixturefunc = resolve_fixture_function(fixturedef, request)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [1] tests/e2e/test_08_hackathon_pages.py:246: keyless openFDA call refused from this network: openFDA refused the request (403). It can refuse calls without an API key from shared cloud networks; the site owner sets a free openFDA key as OPENFDA_API_KEY.
+44 passed, 1 skipped, 1 warning in 469.38s (0:07:49)
+exit=0

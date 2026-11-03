@@ -62,6 +62,7 @@ def run_gate(fixtures: Path = FIXTURES) -> tuple[list[dict[str, Any]], list[str]
         claim_from_dict,
         verify_sentence,
     )
+    from maudesignal.gate.gate import DateShift, NoData
 
     data = json.loads((fixtures / "store.json").read_text("utf-8"))
     store = EvidenceStore.from_iterables(
@@ -77,7 +78,13 @@ def run_gate(fixtures: Path = FIXTURES) -> tuple[list[dict[str, Any]], list[str]
     lines = (fixtures / "adversarial.jsonl").read_text("utf-8").splitlines()
     cases = [json.loads(line) for line in lines if line.strip()]
     statuses = [
-        verify_sentence(c["sentence"], [claim_from_dict(d) for d in c["claims"]], store).status
+        verify_sentence(
+            c["sentence"],
+            [claim_from_dict(d) for d in c["claims"]],
+            store,
+            tuple(DateShift(**s) for s in c.get("shifts", [])),
+            tuple(NoData(**n) for n in c.get("no_data", [])),
+        ).status
         for c in cases
     ]
     return cases, statuses

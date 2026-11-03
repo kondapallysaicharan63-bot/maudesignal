@@ -38,7 +38,7 @@ export function producedTabs(thread: Thread | null): TabId[] {
 
 export const CLASS_LABEL: Record<string, string> = {
   new_signal: 'New kind of problem',
-  severity_escalation: 'More serious than usual',
+  severity_escalation: 'Report mix changed',
   spike: 'Reports suddenly increased',
   stable: 'No change',
 }

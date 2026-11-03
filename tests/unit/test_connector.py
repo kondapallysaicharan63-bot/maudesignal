@@ -154,7 +154,7 @@ def test_check_device_type_live_counts_match_detector_rules(data: ConnectorData)
     assert "5 reports received" in texts and "4 reports received" in texts
     assert "100 reports received before" in texts
     # 5 reports >= 3 and 5 >= 2 x (4 / 4): spike; 1 of 5 severe vs 0 of 4: escalation.
-    assert "more serious than usual and reports suddenly increased" in a.speakable
+    assert "report mix changed and reports suddenly increased" in a.speakable
 
 
 def test_check_device_type_falls_back_to_stored_when_offline(data: ConnectorData) -> None:

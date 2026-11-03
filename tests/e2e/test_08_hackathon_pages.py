@@ -67,6 +67,31 @@ def _open(page: Page, nav: str) -> Locator:
 
 
 # ---------------------------------------------------------------------------
+# Data-as-of banner (2026-11-03) and the board link; the board itself is Vercel only
+# ---------------------------------------------------------------------------
+
+
+class TestDataAsOfBanner:
+    @pytest.mark.parametrize("nav", ["Signals", "Copilot"])
+    def test_banner_dates_equal_the_demo_db(self, ms_page: Page, db: Database, nav: str) -> None:
+        main = _open(ms_page, nav)
+        latest = db.max_date_received()
+        assert latest is not None
+        iso = f"{latest[:4]}-{latest[4:6]}-{latest[6:]}"
+        expect(main).to_contain_text(f"Data as of: {iso}.")
+        expect(main).to_contain_text("not because risk is zero")
+        expect(main).to_contain_text("Live check: none on this page.")
+
+    def test_signals_links_to_the_website_board_and_has_no_second_board(
+        self, ms_page: Page
+    ) -> None:
+        main = _open(ms_page, "Signals")
+        link = main.get_by_role("link", name="open it on the website")
+        expect(link).to_have_attribute("href", "https://maudesignal-app.vercel.app/board")
+        expect(ms_page.locator(TOPBAR_SELECTOR)).not_to_contain_text("Board")
+
+
+# ---------------------------------------------------------------------------
 # Navigation
 # ---------------------------------------------------------------------------
 

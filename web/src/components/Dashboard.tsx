@@ -31,7 +31,7 @@ function FlagsCard({ data, onBrief }: { data: WorkspaceData; onBrief: (date: str
             {(
               [
                 ['New kind of problem', b.counts.new],
-                ['More serious than usual', b.counts.more_serious_than_usual],
+                ['Report mix changed', b.counts.report_mix_changed],
                 ['Reports suddenly increased', b.counts.reports_suddenly_increased],
               ] as const
             ).map(([k, v]) => (

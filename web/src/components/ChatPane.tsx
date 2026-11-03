@@ -22,6 +22,7 @@ import { OurDevices } from './OurDevices'
 import { PanelBar } from './PanelBar'
 import { SweepCard } from './SweepCard'
 import { ThreadView } from './ThreadView'
+import { DataAsOfBanner, storedAsOf } from '../pms/DataAsOf'
 import { VisionWorkflow, type VisionSel } from './VisionWorkflow'
 
 export type View =
@@ -200,6 +201,8 @@ export function ChatPane(p: Props) {
     const siblings = group ? data.threads.threads.filter((x) => group.thread_ids.includes(x.id)) : []
     const hl = p.withheld && p.withheld.highlight.threadId === id ? p.withheld : null
     body = t ? (
+      <>
+      <DataAsOfBanner asOf={storedAsOf(data.manifest, `none (recorded answer of ${(t.recorded_at_utc ?? '').slice(0, 10) || 'date not stated'})`)} testid="thread-asof" />
       <ThreadView
         key={t.id}
         t={t}
@@ -210,6 +213,7 @@ export function ChatPane(p: Props) {
         withheldNav={hl ? { pos: hl.pos, total: hl.total, onNext: hl.onNext } : undefined}
         snapshot={demoSnapshotLabel(data.sources)}
       />
+      </>
     ) : (
       <p>That thread is not in the stored data.</p>
     )

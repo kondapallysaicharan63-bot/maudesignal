@@ -1,0 +1,21 @@
+Relabelled generated files: current file == original (origin/main fd39235) after the label substitution only
+IDENTICAL data/monitor/digests/2026-09-05.json
+IDENTICAL data/monitor/digests/2026-09-05.md
+IDENTICAL data/monitor/digests/2026-09-06.json
+IDENTICAL data/monitor/digests/2026-09-06.md
+IDENTICAL data/monitor/parked-digests/2026-09-05.json
+IDENTICAL data/monitor/parked-digests/2026-09-05.md
+IDENTICAL data/monitor/parked-digests/2026-09-06.json
+IDENTICAL data/monitor/parked-digests/2026-09-06.md
+IDENTICAL demo/vision/label-match-caresens-n.json
+IDENTICAL demo/vision/label-match-nomad-pro2.json
+IDENTICAL demo/vision/label-match-spot-vital-signs.json
+IDENTICAL demo/vision/label-match-thermometer-1.json
+IDENTICAL demo/vision/label-match-thermometer-2.json
+IDENTICAL demo/vision/label-match-welch-802-ltr.json
+IDENTICAL demo/vision/label-match-welch-module.json
+
+digests/2026-08-24|31 (.md .json): regenerated with `maudesignal monitor --no-fetch --as-of` on a copy of data/demo/maudesignal_demo.db;
+vs origin/main they differ only by: the renamed label, the added limitation text on the rule line, and the pre-existing field severity_min_reports.
+tests/unit/test_pms.py::test_committed_digests_equal_a_fresh_run_on_the_demo_db pins them to a fresh run (4 files).
+demo/transcripts/ (recorded Muse Spark runs): untouched: no diff

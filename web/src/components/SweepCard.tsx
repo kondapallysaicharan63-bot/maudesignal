@@ -1,4 +1,5 @@
 import { useAlertPanel } from '../alertPanelContext'
+import { DataAsOfBanner, sweepAsOf } from '../pms/DataAsOf'
 import { useState } from 'react'
 import { CLASS_LABEL, flaggedRows } from '../artifacts'
 import { isoDay } from '../data'
@@ -194,6 +195,7 @@ export function SweepFlagged({ sweep, focusCode = null }: { sweep: Sweep; focusC
 export function SweepCard({ sweep }: { sweep: Sweep }) {
   return (
     <div className="space-y-4">
+      <DataAsOfBanner asOf={sweepAsOf(sweep.meta)} testid="sweep-asof" />
       <SweepHead sweep={sweep} />
       <SweepRules sweep={sweep} />
       <SweepFlagged sweep={sweep} />

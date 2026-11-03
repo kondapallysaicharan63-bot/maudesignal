@@ -27,7 +27,7 @@ from maudesignal.common.exceptions import (
 )
 from maudesignal.config import openfda_api_key_from_env
 from maudesignal.ingestion.openfda_client import OpenFDAClient
-from maudesignal.monitor.deterioration import SEVERITY_MIN_REPORTS
+from maudesignal.monitor.deterioration import SEVERITY_MIN_REPORTS, report_mix_sentence
 from maudesignal.monitor.live_check import (
     LiveCheck,
     LiveCheckError,
@@ -73,10 +73,11 @@ def reason(r: LiveCheck) -> str:
             + "."
         )
     if r.classification == "severity_escalation":
-        return (
-            f"Injury or death in {_pct(r.current_severe_share)} of this week's reports "
-            f"against {_pct(r.baseline_severe_share)} in the 4 weeks before "
-            f"(+{r.severe_share_delta_pp:.0f} points)."
+        return "Report mix changed. " + report_mix_sentence(
+            r.baseline_severe_share,
+            r.current_severe_share,
+            r.current_severe_count,
+            r.current_count,
         )
     if r.classification == "spike":
         return (
@@ -233,7 +234,7 @@ def render_sweep() -> None:
             "finding about any device or company."
         )
         st.caption(
-            f'"Reports suddenly increased" and "more serious than usual" flags need at '
+            f'"Reports suddenly increased" and "report mix changed" flags need at '
             f"least {SEVERITY_MIN_REPORTS} reports this week (a new kind of problem can be "
             f"flagged from 1). {count_skipped(data['rows'])} of {len(data['rows'])} codes "
             "held back for having too few reports."

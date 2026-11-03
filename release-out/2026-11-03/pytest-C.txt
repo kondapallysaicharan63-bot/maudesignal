@@ -1,0 +1,8 @@
+.                                                                        [100%]
+=============================== warnings summary ===============================
+tests/unit/test_compliance_journey.py::test_ingest_extract_dashboard_psur
+  /tmp/claude-0/v312/lib/python3.12/site-packages/weasyprint/text/ffi.py:528: DeprecationWarning: HarfBuzz-Subset will be required by future versions of WeasyPrint. Please install this library with your package manager.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 1 warning in 2.47s

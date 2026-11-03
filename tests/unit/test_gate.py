@@ -30,6 +30,7 @@ from maudesignal.gate import (
     verify_sentence,
 )
 from maudesignal.gate.cfr import find_cfr_citations
+from maudesignal.gate.gate import DateShift, NoData
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "gate"
 
@@ -57,18 +58,26 @@ STORE = _load_store()
 CASES = _load_cases()
 
 
+def _verdict(case: dict[str, Any]) -> Any:
+    """One case through the gate; ``shifts`` / ``no_data`` are the tool notes of that answer."""
+    claims = [claim_from_dict(d) for d in case["claims"]]
+    shifts = tuple(DateShift(**s) for s in case.get("shifts", []))
+    no_data = tuple(NoData(**n) for n in case.get("no_data", []))
+    return verify_sentence(case["sentence"], claims, STORE, shifts, no_data)
+
+
 @pytest.mark.parametrize("case", CASES, ids=[c["id"] for c in CASES])
 def test_adversarial_case(case: dict[str, Any]) -> None:
-    claims = [claim_from_dict(d) for d in case["claims"]]
-    verdict = verify_sentence(case["sentence"], claims, STORE)
+    verdict = _verdict(case)
     assert verdict.status == case["expect"], (case["category"], verdict.reasons)
+    if "shown_contains" in case:
+        assert case["shown_contains"] in verdict.text
 
 
 def test_adversarial_set_confusion_matrix() -> None:
     false_pass = false_block = 0
     for case in CASES:
-        claims = [claim_from_dict(d) for d in case["claims"]]
-        status = verify_sentence(case["sentence"], claims, STORE).status
+        status = _verdict(case).status
         if status == "pass" and case["expect"] == "block":
             false_pass += 1
         if status == "block" and case["expect"] == "pass":

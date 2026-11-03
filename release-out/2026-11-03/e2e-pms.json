@@ -1,0 +1,482 @@
+[
+  {
+    "name": "D page loads: Home (/)",
+    "status": "PASS",
+    "detail": "console.error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+  },
+  {
+    "name": "D page loads: Signals (/signals/ranked)",
+    "status": "PASS",
+    "detail": "console.error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+  },
+  {
+    "name": "D page loads: Copilot (/chat)",
+    "status": "PASS",
+    "detail": "console.error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+  },
+  {
+    "name": "D page loads: Vision (/workflow/vision)",
+    "status": "PASS",
+    "detail": "console.error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+  },
+  {
+    "name": "D page loads: Audit (/evidence/audit)",
+    "status": "PASS",
+    "detail": "console.error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+  },
+  {
+    "name": "D page loads: Board (/board)",
+    "status": "PASS",
+    "detail": "console.error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+  },
+  {
+    "name": "D page loads: Validation (/validation)",
+    "status": "PASS",
+    "detail": "console.error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+  },
+  {
+    "name": "D page loads: Investigate (/investigate)",
+    "status": "PASS",
+    "detail": "console.error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+  },
+  {
+    "name": "D page loads: PMS workflow (/pms-workflow)",
+    "status": "PASS",
+    "detail": "console.error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+  },
+  {
+    "name": "D page loads: ROI (/roi)",
+    "status": "PASS",
+    "detail": "console.error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+  },
+  {
+    "name": "A Home order: complaint < board < weekly sweep",
+    "status": "PASS",
+    "detail": "[295.171875, 445.015625, 623.609375, 1449.734375]"
+  },
+  {
+    "name": "A pitch is the reviewer wording",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "A no 'pharmacovigilance' / old label on Home",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "A Home links to /pms-workflow and /validation",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "A footer links to Validation",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "A Home board count = flagged real codes from alerts.json",
+    "status": "PASS",
+    "detail": "7 vs 7"
+  },
+  {
+    "name": "H Signals banner: 'Data as of' = later of DB newest report and sweep week end",
+    "status": "PASS",
+    "detail": "Data as of: 2026-09-30. OpenFDA republishes weekly and reports arrive with delay \u2014 recent months may show few or no reports because of reporting delay, not beca"
+  },
+  {
+    "name": "H banner has the reporting-delay sentence",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "H banner stored window equals the demo DB",
+    "status": "PASS",
+    "detail": "db {'n': 137, 'lo': '20060518', 'hi': '20260831'}"
+  },
+  {
+    "name": "H sweep banner on All alerts",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "H sweep banner date = sweep file week end",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "A Investigate: non-manufacturer section is first",
+    "status": "PASS",
+    "detail": "['inv-sources', 'inv-similar', 'inv-related', 'inv-evidence']"
+  },
+  {
+    "name": "A section title is the reviewer wording",
+    "status": "PASS",
+    "detail": "Reports NOT filed by a manufacturer \u2014 check these against your complaint log"
+  },
+  {
+    "name": "H Investigate banner present",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "A Investigate links /pms-workflow",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "D Investigate total equals the stored example",
+    "status": "PASS",
+    "detail": "121"
+  },
+  {
+    "name": "D accept -> 'Evidence accepted by Ana Ruiz \u00b7 audit entry #1'",
+    "status": "PASS",
+    "detail": "Evidence accepted by Ana Ruiz \u00b7 audit entry #1 \u00b7 2026-11-03T09:45:14Z"
+  },
+  {
+    "name": "D Note to File export opens with the label",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "D note contains: Decision: Open a CAPA (in your QMS)",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "D note contains: Approver: Ana Ruiz",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "D note contains: Company complaint / CAPA number: _______________",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "D note contains: Build: MaudeSignal 0.1.0 \u00b7 commit ",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "D note contains: Data as of:",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "D note contains: Does this meet your recall procedure?",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "D note has no tool-made decision sentence",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "D four exports downloaded (md, pdf, csv, audit json)",
+    "status": "PASS",
+    "detail": "['LLZ-20261103-audit.json', 'LLZ-20261103-evidence-pack.pdf', 'LLZ-20261103-note-to-file.md', 'LLZ-20261103-reports.csv']"
+  },
+  {
+    "name": "D PDF is a PDF and prints the approver",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "D CSV prints version, commit, data-as-of and a blank CAPA number field",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "J export audit lists pack_accept then note_to_file",
+    "status": "PASS",
+    "detail": "['pack_accept', 'note_to_file']"
+  },
+  {
+    "name": "D audit export has build + blank company number",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "D note decision + approver match the audit row",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "D Board rows = flagged real codes from alerts.json (exact set)",
+    "status": "PASS",
+    "detail": "['DSI', 'IYN', 'MQB', 'MUD', 'OTE', 'SIG', 'LLZ']"
+  },
+  {
+    "name": "D Board says 'This is not a QMS'",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "D Board header columns",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "A Board 'why flagged' for the mix code uses the new sentence",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "J earlier audit rows are listed on the Board page",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "D status change without a name is refused",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "D Board: New -> Under review",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "D Board: owner + advisory due date 2026-12-03 (30 days, 21 CFR 803.50)",
+    "status": "PASS",
+    "detail": "DSI\tReport mix changed. Injury/Death share rose from 3% to 20% (2 of 10 reports). This is a change in report mix, not proof of increased device risk.\tUnder review\tBen Okafor\t2026-12-03\n30 calendar day"
+  },
+  {
+    "name": "J Board change is in the audit table with name",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "J chain re-verifies on display (3 entries)",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "D status persists after reload",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "D Board: Under review -> Note to file",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "J tampered copy: chain breaks at entry #2 and is shown",
+    "status": "PASS",
+    "detail": "Chain broken at entry #2. An entry was changed after it was written."
+  },
+  {
+    "name": "D Validation: says not validated",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "D Validation: never says FDA validated / approved / AI validated",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "D Validation lifecycle lists every Skill version from lifecycle.json",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "D Validation shows the sweep date from the sweep file",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "D Validation not hidden behind sweep/profile (sidebar entry)",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "M no P0 control below 44px on Board / Validation / Investigate",
+    "status": "FAIL",
+    "detail": "/investigate BUTTON Not filed by a manufacturer h=40; /investigate BUTTON Reports h=40; /investigate BUTTON Recalls and 510(k)s h=40; /investigate BUTTON Evidence h=40; /investigate BUTTON Evidence pack h=40; /investigate BUTTON inv-allmonths h=40"
+  },
+  {
+    "name": "M Board controls reachable by keyboard (Review button)",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "M themes / AA contrast for all six themes",
+    "status": "SKIPPED",
+    "detail": "not run in this pass; existing contrast scripts (web/qa/contrast_*.py) not re-run against the new pages"
+  },
+  {
+    "name": "H recorded answer: banner shows the data date and the recording date",
+    "status": "PASS",
+    "detail": "Data as of: 2026-09-30. OpenFDA republishes weekly and reports arrive with delay \u2014 recent months may show few or no reports because of reporting delay, not beca"
+  },
+  {
+    "name": "H timeout: banner over the Copilot answer = stored dates",
+    "status": "PASS",
+    "detail": "Data as of: 2026-09-30. OpenFDA republishes weekly and reports arrive with delay \u2014 recent months may show few or no repo"
+  },
+  {
+    "name": "F timeout: panel kind",
+    "status": "PASS",
+    "detail": "timeout"
+  },
+  {
+    "name": "F timeout: no live answer was invented (any answer shown is mode=recorded)",
+    "status": "PASS",
+    "detail": "['recorded']"
+  },
+  {
+    "name": "F timeout: four lookups + retry present",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "F timeout: cost shown",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "F timeout: Show recalls returns the stored total (82)",
+    "status": "PASS",
+    "detail": "82 recall records for DSI (stored); newest 5:\n\nZ-2052-2026 \u00b7 2026-03-26 \u00b7 reason"
+  },
+  {
+    "name": "F timeout: Show product summary returns stored data",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "F timeout: Search stored reports counts match evidence.json (0 of 76 for LLZ)",
+    "status": "PASS",
+    "detail": "0 of 76 stored reports for LLZ mention changed (a text match, not a finding). Newest first:"
+  },
+  {
+    "name": "F timeout: lookups made no model call",
+    "status": "PASS",
+    "detail": "1 -> 1"
+  },
+  {
+    "name": "F timeout: Retry live re-asks",
+    "status": "PASS",
+    "detail": "calls 2"
+  },
+  {
+    "name": "F timeout: failure + fallback choices are in the audit",
+    "status": "PASS",
+    "detail": "['live_failure', 'fallback_choice', 'fallback_choice', 'fallback_choice', 'fallback_choice', 'live_failure']"
+  },
+  {
+    "name": "H failure: banner over the Copilot answer = stored dates",
+    "status": "PASS",
+    "detail": "Data as of: 2026-09-30. OpenFDA republishes weekly and reports arrive with delay \u2014 recent months may show few or no repo"
+  },
+  {
+    "name": "F failure: panel kind",
+    "status": "PASS",
+    "detail": "failure"
+  },
+  {
+    "name": "F failure: no live answer was invented (any answer shown is mode=recorded)",
+    "status": "PASS",
+    "detail": "['recorded']"
+  },
+  {
+    "name": "F failure: four lookups + retry present",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "F failure: cost shown",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "F failure: Show recalls returns the stored total (82)",
+    "status": "PASS",
+    "detail": "82 recall records for DSI (stored); newest 5:\n\nZ-2052-2026 \u00b7 2026-03-26 \u00b7 reason"
+  },
+  {
+    "name": "F failure: Show product summary returns stored data",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "F failure: Search stored reports counts match evidence.json (0 of 76 for LLZ)",
+    "status": "PASS",
+    "detail": "0 of 76 stored reports for LLZ mention changed (a text match, not a finding). Newest first:"
+  },
+  {
+    "name": "F failure: lookups made no model call",
+    "status": "PASS",
+    "detail": "1 -> 1"
+  },
+  {
+    "name": "F failure: Retry live re-asks",
+    "status": "PASS",
+    "detail": "calls 2"
+  },
+  {
+    "name": "F failure: failure + fallback choices are in the audit",
+    "status": "PASS",
+    "detail": "['live_failure', 'fallback_choice', 'fallback_choice', 'fallback_choice', 'fallback_choice', 'live_failure']"
+  },
+  {
+    "name": "H cap: banner over the Copilot answer = stored dates",
+    "status": "PASS",
+    "detail": "Data as of: 2026-09-30. OpenFDA republishes weekly and reports arrive with delay \u2014 recent months may show few or no repo"
+  },
+  {
+    "name": "F cap: panel kind",
+    "status": "PASS",
+    "detail": "cap"
+  },
+  {
+    "name": "F cap: no live answer was invented (any answer shown is mode=recorded)",
+    "status": "PASS",
+    "detail": "['recorded']"
+  },
+  {
+    "name": "F cap: four lookups + retry present",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "F cap: cost shown",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "F cap: Show recalls returns the stored total (82)",
+    "status": "PASS",
+    "detail": "82 recall records for DSI (stored); newest 5:\n\nZ-2052-2026 \u00b7 2026-03-26 \u00b7 reason"
+  },
+  {
+    "name": "F cap: Show product summary returns stored data",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "F cap: Search stored reports counts match evidence.json (0 of 76 for LLZ)",
+    "status": "PASS",
+    "detail": "0 of 76 stored reports for LLZ mention changed (a text match, not a finding). Newest first:"
+  },
+  {
+    "name": "F cap: lookups made no model call",
+    "status": "PASS",
+    "detail": "1 -> 1"
+  },
+  {
+    "name": "F cap: Retry is disabled while the cap is reached",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "name": "F cap: failure + fallback choices are in the audit",
+    "status": "PASS",
+    "detail": "['live_failure', 'fallback_choice', 'fallback_choice', 'fallback_choice']"
+  }
+]

@@ -16,7 +16,7 @@ import { MentionsBox } from './MentionsBox'
 
 const FOCUSABLE = 'a[href], button:not([disabled]), summary, [tabindex]:not([tabindex="-1"])'
 
-const RULE_TONE = { 'more serious than usual': 'bad', 'new kind of problem': 'bad', 'reports suddenly increased': 'warn' } as const
+const RULE_TONE = { 'report mix changed': 'bad', 'new kind of problem': 'bad', 'reports suddenly increased': 'warn' } as const
 
 function Link({ href, children }: { href: string | null | undefined; children: string }) {
   const u = safeUrl(href)
@@ -127,6 +127,11 @@ export function AlertPanel({
 
               <H id="ap-changed">What changed</H>
               <p className="ws-wrap m-0 mt-2 text-[17px]" data-testid="alert-rule-words">{d.rule_words}</p>
+              {d.mix_sentence && (
+                <p className="ws-wrap m-0 mt-2 text-[17px]" data-testid="alert-mix-sentence">
+                  <strong>{d.mix_sentence}</strong>
+                </p>
+              )}
               {d.window && !(d.window.this_week.count === 0 && d.window.baseline_4wk.count === 0 && d.rule === null) ? (
                 <>
                   <dl className="m-0 mt-3 grid grid-cols-2 gap-2" data-testid="alert-window">

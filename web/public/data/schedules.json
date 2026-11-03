@@ -8,7 +8,7 @@
       "workflow": ".github/workflows/monitor.yml",
       "last_result": {
         "date": "2026-08-31",
-        "headline": "New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1"
+        "headline": "New kind of problem: 0 · Report mix changed: 0 · Reports suddenly increased: 1"
       }
     },
     {

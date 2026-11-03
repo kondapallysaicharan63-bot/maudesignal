@@ -1,5 +1,6 @@
 // The conversation state: typed and spoken turns, history for the next question, and the fall back to stored runs.
 // Nothing here stores a question, an answer, audio or a photo outside this page's memory; a reload starts clean.
+import type { Fallback, FailureKind } from '../pms/FallbackPanel'
 import { useCallback, useRef, useState } from 'react'
 import type { Evidence, Thread } from '../types'
 import {
@@ -45,6 +46,10 @@ export interface LiveTurn {
   offerRecordedLabel?: boolean
   /** A photo turn: the words typed with the photo, asked after the reading (shown in the bubble). */
   followUp?: string
+  /** A live text answer that failed, timed out or hit a cap: the fallback screen (PRD-22). */
+  fallback?: Fallback
+  /** The product code the question was asked about, if any. */
+  productCode?: string | null
 }
 
 export interface LiveChat {
@@ -155,23 +160,28 @@ export function useLiveChat(o: Options): LiveChat {
       }
       const id = nextId++
       const past = history()
-      put([...turnsRef.current, { id, via: 'text', question: q, status: 'pending' }])
+      put([...turnsRef.current, { id, via: 'text', question: q, status: 'pending', productCode: ask?.productCode ?? null }])
       const { apiBase, ref, threads, evidence } = opts.current
-      const recorded = (why: string) => patch(id, { status: 'done', resp: recordedFor(q, threads, evidence, why) })
+      const pc = ask?.productCode ?? null
+      const recorded = (why: string, kind: FailureKind) => {
+        const resp = recordedFor(q, threads, evidence, why)
+        patch(id, { status: 'done', resp, fallback: { kind, reason: why, productCode: pc } })
+      }
       if (limitRef.current) {
-        recorded(LIMIT_TEXT + '.')
+        recorded(LIMIT_TEXT + '.', 'cap')
         return null
       }
-      postAsk(q, { history: past, ref, productCode: ask?.productCode ?? null, research: ask?.research === true }, { apiBase, fetcher })
+      postAsk(q, { history: past, ref, productCode: pc, research: ask?.research === true }, { apiBase, fetcher })
         .then((resp) => patch(id, { status: 'done', resp }))
         .catch((e: unknown) => {
           const err = e instanceof LiveError ? e : new LiveError('network', 'The live service could not be reached.')
           if (err.kind === 'rate_limited') {
             limitRef.current = true
             setLimit(true)
-            recorded(LIMIT_TEXT + '.')
-          } else if (err.kind === 'patient_data' || err.kind === 'invalid_input' || err.kind === 'live_timeout') patch(id, { status: 'error', error: err.message })
-          else recorded(`${err.message}`)
+            recorded(LIMIT_TEXT + '.', 'cap')
+          } else if (err.kind === 'patient_data' || err.kind === 'invalid_input') patch(id, { status: 'error', error: err.message })
+          else if (err.kind === 'live_timeout' || err.kind === 'timeout') recorded(err.message, 'timeout')
+          else recorded(`${err.message}`, 'failure')
         })
       return null
     },

@@ -6,6 +6,13 @@ export interface Manifest {
   schema_version: string
   generated_utc: string
   source_commit: string | null
+  /** Build version + commit at export time (scripts/export_web_data.py). */
+  build?: { version: string; commit: string | null }
+  /** Dates behind every figure (data-as-of banner). */
+  data_as_of?: {
+    stored: { earliest: string | null; latest: string | null; reports: number }
+    sweep: { checked_utc: string | null; week_start: string | null; week_end: string | null }
+  }
   files: string[]
   header: {
     claims_verified: number
@@ -87,7 +94,7 @@ export interface Threads {
 export interface Brief {
   date: string
   headline: string
-  counts: { new: number; more_serious_than_usual: number; reports_suddenly_increased: number; stable: number }
+  counts: { new: number; report_mix_changed: number; reports_suddenly_increased: number; stable: number }
   window: { current_start: string; current_end: string; baseline_start: string; baseline_end: string }
   signals: { product_code: string; classification: string; label: string; current_count: number; baseline_count: number }[]
   footer: string | null

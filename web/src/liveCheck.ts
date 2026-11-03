@@ -26,7 +26,7 @@ export const PRECEDENCE: Classification[] = ['new_signal', 'severity_escalation'
 
 export const CHANGE_LABELS: Record<Classification, string> = {
   new_signal: 'new kind of problem',
-  severity_escalation: 'more serious than usual',
+  severity_escalation: 'report mix changed',
   spike: 'reports suddenly increased',
   stable: 'no change',
 }
@@ -355,6 +355,8 @@ export class LiveCheckFailure extends Error {
 }
 
 // ── plain words (dashboard/live_check_ui.reason) ─────────────────────────────
+/** Shown next to every "Report mix changed" flag (monitor/deterioration.py REPORT_MIX_LIMITATION). */
+export const REPORT_MIX_LIMITATION = 'This is a change in report mix, not proof of increased device risk.'
 const pct = (x: number | null): string => (x === null ? '—' : `${(x * 100).toFixed(0)}%`)
 
 export function reasonText(r: LiveCheckResult): string {
@@ -365,8 +367,8 @@ export function reasonText(r: LiveCheckResult): string {
   }
   if (r.classification === 'severity_escalation')
     return (
-      `Injury or death in ${pct(r.current_severe_share)} of this week's reports against ` +
-      `${pct(r.baseline_severe_share)} in the 4 weeks before (+${(r.severe_share_delta_pp ?? 0).toFixed(0)} points).`
+      `Report mix changed. Injury/Death share rose from ${pct(r.baseline_severe_share)} to ${pct(r.current_severe_share)} ` +
+      `(${r.current_severe_count} of ${r.current_count} reports). ${REPORT_MIX_LIMITATION}`
     )
   if (r.classification === 'spike')
     return (

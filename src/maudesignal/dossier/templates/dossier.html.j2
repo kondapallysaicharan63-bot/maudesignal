@@ -104,6 +104,8 @@ a { color: #1a5fb4; }
   <div class="stamp">{{ DRAFT_STAMP }} — prepared by software; not approved</div>
   {% endif %}
 
+  <div class="note" id="data-as-of"><b>Data as of: {{ d.signal.as_of.isoformat() }}.</b> {{ delay_sentence }} Stored snapshot: signal window {{ d.signal.baseline_start.isoformat() }} to {{ d.signal.current_end.isoformat() }} (stored openFDA MAUDE reports). Live check: none in this document.</div>
+
   <div class="note"><b>Whether a CAPA is required is decided by the company&#39;s own CAPA-need form. This document is evidence only.</b> MaudeSignal never decides whether a CAPA is needed, whether an event is reportable, or which devices are similar.</div>
 
   <h3>Document control</h3>
@@ -163,10 +165,10 @@ a { color: #1a5fb4; }
 <section class="newpage" id="sec-signal">
   <h2>2. Signal evaluation</h2>
   <h3>2.1 Method</h3>
-  <p>Deterministic detector <span class="mono">maudesignal.monitor.deterioration</span> over stored openFDA MAUDE reports, anchored on FDA <i>date_received</i>. Current window: the 7 days ending on the as-of date ({{ d.signal.current_start.isoformat() }} to {{ d.signal.current_end.isoformat() }}). Baseline: the 4 weeks before it ({{ d.signal.baseline_start.isoformat() }} to {{ d.signal.baseline_end.isoformat() }}). Rules (several may fire; precedence: new kind of problem, then more serious than usual, then reports suddenly increased):</p>
+  <p>Deterministic detector <span class="mono">maudesignal.monitor.deterioration</span> over stored openFDA MAUDE reports, anchored on FDA <i>date_received</i>. Current window: the 7 days ending on the as-of date ({{ d.signal.current_start.isoformat() }} to {{ d.signal.current_end.isoformat() }}). Baseline: the 4 weeks before it ({{ d.signal.baseline_start.isoformat() }} to {{ d.signal.baseline_end.isoformat() }}). Rules (several may fire; precedence: new kind of problem, then report mix changed, then reports suddenly increased):</p>
   <table class="kv small">
     <tr><th>Reports suddenly increased</th><td>current-window count ≥ {{ rules.spike_multiplier }}× the baseline weekly mean <b>and</b> ≥ {{ rules.spike_min }} reports</td></tr>
-    <tr><th>More serious than usual</th><td>Injury + Death share of the current window exceeds the baseline share by ≥ {{ rules.severity_pp }} percentage points (baseline non-empty)</td></tr>
+    <tr><th>Report mix changed</th><td>Injury + Death share of the current window exceeds the baseline share by ≥ {{ rules.severity_pp }} percentage points (baseline non-empty)</td></tr>
     <tr><th>New kind of problem</th><td>first-ever reports for the product code, or an event type never seen before the current window</td></tr>
   </table>
   <h3>2.2 Result: <span style="color:#b3261e">{{ change_labels[d.signal.classification]|upper }}</span>{% if d.signal.triggers %} <span class="small">(rules fired: {% for t in d.signal.triggers %}{{ change_labels[t] }}{% if not loop.last %}, {% endif %}{% endfor %})</span>{% endif %}</h3>

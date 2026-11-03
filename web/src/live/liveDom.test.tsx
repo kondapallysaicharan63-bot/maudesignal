@@ -219,9 +219,14 @@ describe('recorded, limit and refusal', () => {
     await type('What problems were reported for LLZ devices in August 2026?')
     await key('Enter')
     await flush()
-    expect(q('turn-error')?.textContent).toContain('That question took too long. Try a shorter or narrower question.')
+    // PRD-22: no dead end. The calm message, the recorded answer (labelled RECORDED with its date) if one exists, four
+    // no-model lookups, and Retry with its cost.
+    expect(q('fallback-reason')?.textContent).toContain('That question took too long. Try a shorter or narrower question.')
+    expect(q('fallback')?.getAttribute('data-kind')).toBe('timeout')
     expect(text()).not.toContain('could not be reached')
-    expect(q('live-answer')).toBeNull()
+    expect(q('fallback-recorded')?.textContent).toMatch(/RECORDED|No recorded answer/)
+    for (const id of ['live', 'reports', 'recalls', 'summary', 'retry']) expect(q(`fallback-${id}`)).not.toBeNull()
+    expect(q('fallback-cost')?.textContent).toContain('$0.25')
   })
 
   it('422 patient_data shows the server message and no answer', async () => {

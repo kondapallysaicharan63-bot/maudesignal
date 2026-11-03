@@ -3,10 +3,10 @@
   "briefs": [
     {
       "date": "2026-08-31",
-      "headline": "New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 1",
+      "headline": "New kind of problem: 0 · Report mix changed: 0 · Reports suddenly increased: 1",
       "counts": {
         "new": 0,
-        "more_serious_than_usual": 0,
+        "report_mix_changed": 0,
         "reports_suddenly_increased": 1,
         "stable": 3
       },
@@ -218,10 +218,10 @@
     },
     {
       "date": "2026-08-24",
-      "headline": "New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 0",
+      "headline": "New kind of problem: 0 · Report mix changed: 0 · Reports suddenly increased: 0",
       "counts": {
         "new": 0,
-        "more_serious_than_usual": 0,
+        "report_mix_changed": 0,
         "reports_suddenly_increased": 0,
         "stable": 4
       },

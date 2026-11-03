@@ -18,7 +18,7 @@
     "baseline_severe_count": 0,
     "baseline_severe_share": 0.0,
     "baseline_weekly_mean": 1.0,
-    "change": "more serious than usual",
+    "change": "report mix changed",
     "classification": "severity_escalation",
     "current_count": 5,
     "current_event_type_counts": [
@@ -101,7 +101,7 @@
     "queried_at_utc": "2026-10-29T12:00:00Z",
     "source": "openFDA device/event.json (counts only; no report text downloaded)"
    },
-   "speakable": "Live from openFDA as of September 7, 2026, QAS shows more serious than usual and reports suddenly increased. There were 5 reports in the 7 days ending that day, against a weekly average of 1 in the four weeks before. One of them was an injury or death report.",
+   "speakable": "Live from openFDA as of September 7, 2026, QAS shows report mix changed and reports suddenly increased. There were 5 reports in the 7 days ending that day, against a weekly average of 1 in the four weeks before. One of them was an injury or death report.",
    "tool": "check_device_type",
    "withheld": []
   },

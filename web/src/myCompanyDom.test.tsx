@@ -416,7 +416,7 @@ describe('device page: forward-only status, local only', () => {
 
 describe('alert buddy', () => {
   const items: AlertItem[] = [
-    { id: 'sweep:AAA', kind: 'severity_escalation', productCode: 'AAA', label: 'More serious than usual', source: 'sweep', date: '2026-10-30', detail: '5 reports this week' },
+    { id: 'sweep:AAA', kind: 'severity_escalation', productCode: 'AAA', label: 'Report mix changed', source: 'sweep', date: '2026-10-30', detail: '5 reports this week' },
     { id: 'sweep:BBB', kind: 'new_signal', productCode: 'BBB', label: 'New kind of problem', source: 'sweep', date: '2026-10-30', detail: '3 reports this week' },
   ]
   beforeEach(() => resetBubbleSeen())

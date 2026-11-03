@@ -300,7 +300,7 @@
             "as_of": null,
             "rules": [
               "new kind of problem: reports this week and none before, or an event type not seen before",
-              "more serious than usual: Injury/Death share up 15 points or more vs the 4 weeks before",
+              "report mix changed: Injury/Death share up 15 points or more vs the 4 weeks before",
               "reports suddenly increased: at least 3 reports and 2 times the 4-week weekly average"
             ]
           },
@@ -340,7 +340,7 @@
           "as_of": null,
           "rules": [
             "new kind of problem: reports this week and none before, or an event type not seen before",
-            "more serious than usual: Injury/Death share up 15 points or more vs the 4 weeks before",
+            "report mix changed: Injury/Death share up 15 points or more vs the 4 weeks before",
             "reports suddenly increased: at least 3 reports and 2 times the 4-week weekly average"
           ]
         }
@@ -436,7 +436,7 @@
             "as_of": null,
             "rules": [
               "new kind of problem: reports this week and none before, or an event type not seen before",
-              "more serious than usual: Injury/Death share up 15 points or more vs the 4 weeks before",
+              "report mix changed: Injury/Death share up 15 points or more vs the 4 weeks before",
               "reports suddenly increased: at least 3 reports and 2 times the 4-week weekly average"
             ]
           },
@@ -476,7 +476,7 @@
           "as_of": null,
           "rules": [
             "new kind of problem: reports this week and none before, or an event type not seen before",
-            "more serious than usual: Injury/Death share up 15 points or more vs the 4 weeks before",
+            "report mix changed: Injury/Death share up 15 points or more vs the 4 weeks before",
             "reports suddenly increased: at least 3 reports and 2 times the 4-week weekly average"
           ]
         }

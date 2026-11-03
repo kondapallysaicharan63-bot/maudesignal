@@ -23,6 +23,7 @@ import { labelForWeek, sweepLabel } from '../sweepLabel'
 import type { ConnectTab, DevicesTab, EvidenceTab, SignalsTab } from './router'
 import { SubTabs, type TabDef, type TabHow } from './SubTabs'
 import { DeviceTiles } from './DeviceProfile'
+import { DataAsOfBanner, storedAsOf } from '../pms/DataAsOf'
 import { profileOf, useProfiles } from './profiles'
 
 export const SIGNALS_TAB_LABELS: TabDef<SignalsTab>[] = [
@@ -286,6 +287,7 @@ export function SignalsPage({
   return (
     <div>
       <PageHead title="Signals" lead="Real FDA data only, for a person to review." />
+      <DataAsOfBanner asOf={storedAsOf(data.manifest)} testid="signals-asof" />
       <SubTabs id="signals" label="Signals" tabs={SIGNALS_TAB_LABELS} value={tab} onChange={onTab}>
         {tab === 'ranked' && (
           <>

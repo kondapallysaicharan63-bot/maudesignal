@@ -17,6 +17,8 @@ export function pageItems(workflows: WorkflowDef[], devicesTitle = 'Our devices 
     { kind: 'page', key: 'investigate', title: 'Investigate a complaint', hint: 'Page', route: { page: 'investigate' } },
     { kind: 'page', key: 'pms', title: 'How MaudeSignal fits your PMS workflow', hint: 'Page', route: { page: 'pms' } },
     { kind: 'page', key: 'roi', title: 'Time and cost: measured, not claimed', hint: 'Page', route: { page: 'roi' } },
+    { kind: 'page', key: 'board', title: 'PMS board', hint: 'Page', route: { page: 'board' } },
+    { kind: 'page', key: 'validation', title: 'Validation and evidence lifecycle', hint: 'Page', route: { page: 'validation' } },
   ]
   for (const t of SIGNALS_TAB_LABELS) out.push({ kind: 'page', key: `s-${t.id}`, title: `Signals · ${t.label}`, hint: 'Page', route: { page: 'signals', tab: t.id } })
   for (const t of DEVICES_TAB_LABELS) out.push({ kind: 'page', key: `d-${t.id}`, title: `${devicesTitle} · ${t.label}`, hint: 'Page', route: { page: 'devices', tab: t.id } })

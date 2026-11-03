@@ -40,6 +40,11 @@ import { profileDevices, useProfiles } from './profiles'
 import { SchedulesDialog } from './SchedulesDialog'
 import { SidebarV2, type NavId } from './SidebarV2'
 import { TopBarV2 } from './TopBarV2'
+import { storedAsOf } from '../pms/DataAsOf'
+import { BoardPage } from '../pms/BoardPage'
+import { buildLine } from '../pms/build'
+import { FallbackData } from '../pms/FallbackPanel'
+import { ValidationPage } from '../pms/ValidationPage'
 import { useThemeV2 } from './theme'
 import './v2.css'
 
@@ -77,6 +82,8 @@ const SECTION_HOME: Record<Section, Route> = {
 /** The sidebar entry a page belongs to (null for a chat). */
 export function navOf(r: Route): NavId | null {
   // Investigate is a stand-alone tool page; it sits under Home so one sidebar entry is always active.
+  if (r.page === 'board') return 'board'
+  if (r.page === 'validation') return 'validation'
   if (r.page === 'home' || r.page === 'pms' || r.page === 'roi' || r.page === 'investigate') return 'home'
   if (r.page === 'signals' || r.page === 'devices' || r.page === 'evidence' || r.page === 'connect') return r.page
   if (r.page === 'profile') return 'devices'
@@ -450,10 +457,13 @@ export default function AppV2() {
           onPms={() => go({ page: 'pms' })}
           onRoi={() => go({ page: 'roi' })}
           onInvestigate={() => go({ page: 'investigate' })}
+          onBoard={() => go({ page: 'board' })}
+          onValidation={() => go({ page: 'validation' })}
         />
       ) : route.page === 'chat' ? (
         <ChatBoundary resetKey={chatId ?? 'new'} onDelete={chatId ? () => deleteChat(chatId) : null} onNewChat={newChat}>
         <ChatScreen
+          asOf={storedAsOf(data.manifest)}
           chat={chatLive}
           threads={data.threads.threads}
           missing={missing}
@@ -559,7 +569,9 @@ export default function AppV2() {
     else if (route.page === 'connect') sectionBody = <ConnectPage tab={route.tab} onTab={(t, how) => tabGo({ page: 'connect', tab: t }, how)} apiBase={API_BASE} />
     else if (route.page === 'pms') sectionBody = <PmsWorkflow onRoi={() => go({ page: 'roi' })} onHome={() => go({ page: 'home' })} onInvestigate={() => go({ page: 'investigate' })} />
     else if (route.page === 'roi') sectionBody = <RoiPage onHome={() => go({ page: 'home' })} />
-    const sectionLabel = route.page === 'profile' ? 'Device profile' : route.page === 'pms' ? 'PMS workflow' : route.page === 'roi' ? 'Time and cost' : route.page[0].toUpperCase() + route.page.slice(1)
+    else if (route.page === 'board') sectionBody = <BoardPage data={data} onInvestigate={() => go({ page: 'investigate' })} onValidation={() => go({ page: 'validation' })} />
+    else if (route.page === 'validation') sectionBody = <ValidationPage data={data} onBoard={() => go({ page: 'board' })} />
+    const sectionLabel = route.page === 'profile' ? 'Device profile' : route.page === 'pms' ? 'PMS workflow' : route.page === 'roi' ? 'Time and cost' : route.page === 'board' ? 'PMS board' : route.page === 'validation' ? 'Validation' : route.page[0].toUpperCase() + route.page.slice(1)
     content = (
       <main className="ms2-section" aria-label={sectionLabel}>
         <div className="ms2-section-inner">{sectionBody}</div>
@@ -570,6 +582,7 @@ export default function AppV2() {
   const navActive = navOf(route)
   return (
     <MineContext.Provider value={mineApi}>
+      <FallbackData.Provider value={data ? { evidence: data.evidence, alerts: data.alerts, threads: data.threads } : null}>
       <InvestigateEntry.Provider value={investigateApi}>
       <AlertPanelContext.Provider value={panelApi}>
         <PanelNav.Provider value={{ onHome: () => go({ page: 'home' }), workflow: null }}>
@@ -620,7 +633,7 @@ export default function AppV2() {
                 }}
                 onNav={(n) => {
                   if (n === 'devices') setDeviceFilter(null)
-                  go(n === 'home' ? { page: 'home' } : SECTION_HOME[n])
+                  go(n === 'home' ? { page: 'home' } : n === 'board' ? { page: 'board' } : n === 'validation' ? { page: 'validation' } : SECTION_HOME[n])
                 }}
                 onChat={(id) => go({ page: 'chat', id })}
                 onRename={store.rename}
@@ -633,6 +646,20 @@ export default function AppV2() {
               />
               <div id="main-v2" ref={mainRef} className="ms2-main" tabIndex={-1}>
                 {data ? content : <p className="ms2-muted p-6" role="status">Loading stored data…</p>}
+                {route.page !== 'chat' && (
+                  <footer className="ms2-footer" data-testid="footer">
+                    <a className="ms2-a" href={hrefFor({ page: 'validation' })} onClick={(e) => { e.preventDefault(); go({ page: 'validation' }) }} data-testid="footer-validation">
+                      Validation (this build is not validated)
+                    </a>
+                    <a className="ms2-a" href={hrefFor({ page: 'board' })} onClick={(e) => { e.preventDefault(); go({ page: 'board' }) }} data-testid="footer-board">
+                      PMS board
+                    </a>
+                    <a className="ms2-a" href={hrefFor({ page: 'pms' })} onClick={(e) => { e.preventDefault(); go({ page: 'pms' }) }} data-testid="footer-pms">
+                      PMS workflow
+                    </a>
+                    <span className="ms2-muted">Not medical advice. Nothing is filed with FDA. Build {buildLine()}.</span>
+                  </footer>
+                )}
               </div>
               {data && (route.page === 'workflow' || route.page === 'thread' || route.page === 'capture') && (
                 <ArtifactsPane
@@ -676,6 +703,7 @@ export default function AppV2() {
         </PanelNav.Provider>
       </AlertPanelContext.Provider>
       </InvestigateEntry.Provider>
+      </FallbackData.Provider>
     </MineContext.Provider>
   )
 }

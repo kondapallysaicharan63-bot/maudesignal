@@ -57,6 +57,7 @@ from maudesignal.monitor.deterioration import (  # noqa: E402
     SEVERITY_ESCALATION_PP,
     SPIKE_MIN_REPORTS,
     SPIKE_MULTIPLIER,
+    report_mix_sentence,
 )
 
 SCHEMA_VERSION = "1.0"
@@ -65,7 +66,7 @@ MAX_RECALLS = 5
 MAX_K510 = 5
 RULE_BY_CLASS = {
     "spike": "reports suddenly increased",
-    "severity_escalation": "more serious than usual",
+    "severity_escalation": "report mix changed",
     "new_signal": "new kind of problem",
 }
 RULE_WORDS = {
@@ -73,9 +74,10 @@ RULE_WORDS = {
         f"Reports suddenly increased: at least {SPIKE_MIN_REPORTS} reports this week and at least "
         f"{SPIKE_MULTIPLIER} times the weekly average of the {BASELINE_WEEKS} weeks before."
     ),
-    "more serious than usual": (
-        f"More serious than usual: the share of injury or death reports rose by "
-        f"{SEVERITY_ESCALATION_PP} points or more compared with the {BASELINE_WEEKS} weeks before."
+    "report mix changed": (
+        f"Report mix changed: the share of injury or death reports rose by "
+        f"{SEVERITY_ESCALATION_PP} points or more compared with the {BASELINE_WEEKS} weeks before. "
+        "This is a change in report mix, not proof of increased device risk."
     ),
     "new kind of problem": (
         "New kind of problem: reports in a device type that had none before, or a kind of event "
@@ -282,7 +284,7 @@ def _reports(
 
     def priority(r: dict[str, Any]) -> int:
         et = str(r.get("event_type") or "").lower()
-        return 0 if rule == "more serious than usual" and et in SEVERE_TYPES else 1
+        return 0 if rule == "report mix changed" and et in SEVERE_TYPES else 1
 
     rows.sort(key=lambda r: (priority(r), -int(r.get("date_received") or 0), str(r["report_id"])))
     out = []
@@ -360,7 +362,7 @@ def _next_steps(rule: str | None, has_reports: bool) -> list[str]:
         steps.append(
             "Open the openFDA links above to read the reports of that week; none are stored in this workspace."
         )
-    if rule == "more serious than usual":
+    if rule == "report mix changed":
         steps.append("Read the injury and death reports first, then the others.")
     elif rule == "new kind of problem":
         steps.append(
@@ -493,7 +495,7 @@ def build_one(
                     "openfda_url": url_now,
                 }
             )
-        if rule == "more serious than usual" and c.get("severe") is not None:
+        if rule == "report mix changed" and c.get("severe") is not None:
             numbers.append(
                 {
                     "label": f"Injury or death reports in {wk}",
@@ -528,6 +530,15 @@ def build_one(
         notes.append(
             "No reports are stored for this device type in this workspace; use the openFDA links."
         )
+    mix_sentence = None
+    if rule == "report mix changed" and c is not None and c.get("severe") is not None:
+        sev_now, sev_before = c["severe"]
+        mix_sentence = report_mix_sentence(
+            (sev_before / c["base"]) if c["base"] else None,
+            (sev_now / c["this"]) if c["this"] else None,
+            sev_now,
+            c["this"],
+        )
     recalls, recalls_total = _recalls(store, ev, gate)
     k510 = _k510(store, k510_rows, code, gate)
     if recalls_total == 0:
@@ -538,6 +549,7 @@ def build_one(
         "device_type": spec["device_type"],
         "rule": rule,
         "rule_words": RULE_WORDS.get(rule or "", NO_RULE_WORDS),
+        "mix_sentence": mix_sentence,
         "source": spec["source"],
         "window": win if c is not None else None,
         "numbers": numbers,

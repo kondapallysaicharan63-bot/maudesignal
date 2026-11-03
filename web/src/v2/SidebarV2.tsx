@@ -10,7 +10,7 @@ import type { ThemeId } from './theme'
 export const SAVED_NOTE = 'Saved on this device only'
 export const NOT_SAVED_NOTE = 'Not saved: browser storage is full or blocked'
 
-export type NavId = 'home' | Section
+export type NavId = 'home' | 'board' | 'validation' | Section
 
 interface Props {
   open: boolean
@@ -224,10 +224,12 @@ export function SidebarV2(p: Props) {
   }, [p.open]) // eslint-disable-line react-hooks/exhaustive-deps
   const nav: { id: NavId; label: string; icon: Parameters<typeof Icon>[0]['name']; badge?: string }[] = [
     { id: 'home', label: 'Home', icon: 'panel' },
+    { id: 'board', label: 'PMS board', icon: 'check' },
     { id: 'signals', label: 'Signals', icon: 'bell' },
     { id: 'devices', label: p.devicesLabel, icon: 'lock', badge: p.devicesToReview > 0 ? `${p.devicesToReview}` : undefined },
     { id: 'evidence', label: 'Evidence', icon: 'check' },
     { id: 'connect', label: 'Connect', icon: 'plug' },
+    { id: 'validation', label: 'Validation', icon: 'info' },
   ]
   return (
     <>

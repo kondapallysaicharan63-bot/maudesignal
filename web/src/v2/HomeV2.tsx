@@ -4,7 +4,8 @@ import { VALIDATION_NOTE } from '../roadmap'
 import { flaggedRows } from '../artifacts'
 import { isoDay } from '../data'
 import { Icon } from '../icons'
-import { HEADLINE } from '../positioning'
+import { HEADLINE, PITCH, REACTIVE } from '../positioning'
+import { flaggedFromData } from '../pms/BoardPage'
 import type { WorkspaceData } from '../types'
 import { sweepDate } from '../components/SweepCard'
 import { InvestigateCard } from '../investigate/entry'
@@ -23,7 +24,13 @@ export function HomeV2({
   onPms,
   onRoi,
   onInvestigate,
+  onBoard,
+  onValidation,
 }: {
+  /** PMS board (PRD-19). */
+  onBoard?: () => void
+  /** Validation and evidence lifecycle (PRD-18). */
+  onValidation?: () => void
   data: WorkspaceData
   onAlert: (id: string, code: string) => void
   /** Signals · All alerts. */
@@ -52,12 +59,40 @@ export function HomeV2({
       <p className="ms2-home-intro" data-testid="home-headline">
         {HEADLINE}
       </p>
+      <p className="ms2-home-pitch m-0" data-testid="home-pitch">
+        {PITCH}
+      </p>
+      <p className="ms2-muted m-0 text-[15px]" data-testid="home-reactive">
+        {REACTIVE}{' '}
+        {onPms && (
+          <button type="button" className="ms2-link" onClick={onPms} data-testid="home-hero-pms">
+            See how this maps to your PMS workflow →
+          </button>
+        )}
+      </p>
       <div className="ms2-grid">
         {onInvestigate && <InvestigateCard onOpen={onInvestigate} />}
+        {onBoard && (
+          <section className="ms2-card ms2-span2" aria-labelledby="home-board-h" data-testid="home-board">
+            <h2 id="home-board-h" className="ms2-h2">
+              PMS board
+            </h2>
+            <p className="ms2-muted m-0 mt-1 text-[15px]">
+              Each flagged code with why it was flagged, its status (New, Under review, Note to file, Escalated, Closed), owner and advisory MDR due
+              date. Only a named person changes a status; every change is in the audit trail. This is not a QMS.
+            </p>
+            <button type="button" className="ms-btn mt-2" style={{ minHeight: 44 }} onClick={onBoard} data-testid="home-board-open">
+              Open the PMS board · <span className="ms-num" data-testid="home-board-count">{flaggedFromData(data).length}</span> flagged codes
+            </button>
+          </section>
+        )}
         <section className="ms2-card ms2-span2" aria-labelledby="home-alerts-h" data-testid="home-alerts">
           <h2 id="home-alerts-h" className="ms2-h2">
-            Real FDA alerts
+            Weekly sweep — only when a code flags
           </h2>
+          <p className="ms2-muted m-0 text-[15px]" data-testid="home-sweep-rule">
+            No flag = no action. Real FDA alerts from the latest AI device sweep and the stored brief.
+          </p>
           <SourceCaption text={real.source} testid="home-alerts-source" />
           <div className="mt-1">
             <AlertRows rows={real.rows.slice(0, HOME_TOP)} onOpen={onAlert} label="Top real FDA alerts" />
@@ -115,7 +150,7 @@ export function HomeV2({
 
         <section className="ms2-card" aria-labelledby="home-sweep-h" data-testid="home-sweep">
           <h2 id="home-sweep-h" className="ms2-h2">
-            AI device sweep
+            Weekly sweep (proactive extra)
           </h2>
           <p className="m-0 mt-2 text-[20px]">
             <strong className="ms-num">{flagged}</strong> flagged of <strong className="ms-num">{m.codes_on_list}</strong> product codes
@@ -167,6 +202,11 @@ export function HomeV2({
             </div>
           </dl>
           <p className="ms2-muted m-0 mt-2 text-[15px]" data-testid="trust-validation">{VALIDATION_NOTE}</p>
+          {onValidation && (
+            <button type="button" className="ms2-quietlink mt-1" onClick={onValidation} data-testid="trust-validation-link">
+              What is and is not validated →
+            </button>
+          )}
           <p className="ms2-muted m-0 mt-2 text-[15px]">Every sentence is checked against stored source records before it is shown.</p>
           <button type="button" className="ms2-quietlink mt-1" onClick={onAudit}>
             Audit trail →

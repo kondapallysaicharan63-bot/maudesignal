@@ -564,7 +564,7 @@ export function buildMyCompany(mine: MineCompany, demo: Company, sweep: Sweep | 
   }
 }
 
-/** Product codes the AI device sweep flags as risky (a new kind of problem or more serious than usual). */
+/** Product codes the AI device sweep flags as risky (a new kind of problem or report mix changed). */
 export function flaggedCodes(sweep: Sweep | null | undefined): Set<string> {
   return new Set((sweep?.rows ?? []).filter((r) => r.classification === 'new_signal' || r.classification === 'severity_escalation').map((r) => r.product_code))
 }

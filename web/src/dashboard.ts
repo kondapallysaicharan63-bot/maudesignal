@@ -19,7 +19,7 @@ export function sweepRuleText(r = SWEEP_RULES): { spike: string; serious: string
     newKind:
       'A new kind of problem means reports in a code that had none before, or a kind of event never seen for that code before.',
     spike: `Reports suddenly increased needs at least ${r.spikeMinReports} reports this week and at least ${r.spikeMultiplier}x the ${r.baselineWeeks}-week weekly mean.`,
-    serious: `More serious than usual needs the injury/death share to rise ${r.severityPoints} points or more.`,
+    serious: `Report mix changed needs the injury/death share to rise ${r.severityPoints} points or more.`,
   }
 }
 
@@ -76,7 +76,7 @@ const RISKY: string[] = ['new_signal', 'severity_escalation']
 const isRisky = (c: string): c is AlertKind => RISKY.includes(c)
 
 /**
- * Risky items: "new kind of problem" and "more serious than usual" from the AI device sweep and from
+ * Risky items: "new kind of problem" and "report mix changed" from the AI device sweep and from
  * the newest brief, then the "Needs review" devices of the simulated company.
  */
 export function alertItems(sweep: Sweep, briefs: Brief[], company?: Company | null): AlertItem[] {
@@ -130,7 +130,7 @@ export function alertItems(sweep: Sweep, briefs: Brief[], company?: Company | nu
 
 const KIND_RANK: Record<string, number> = { severity_escalation: 0, new_signal: 1, needs_review: 2 }
 
-/** Most important first (more serious, then new kind of problem, then needs review), newest date first within a kind. */
+/** Most important first (report mix changed, then new kind of problem, then needs review), newest date first within a kind. */
 export function sortAlerts(items: AlertItem[]): AlertItem[] {
   return [...items].sort(
     (a, b) => (KIND_RANK[a.kind] ?? 9) - (KIND_RANK[b.kind] ?? 9) || b.date.localeCompare(a.date) || a.productCode.localeCompare(b.productCode),
@@ -325,7 +325,7 @@ export function miniStats(workflow: WorkflowId, data: WorkspaceData): MiniStat[]
               {
                 label: 'Newest brief',
                 value: b.date,
-                note: `${b.counts.new} new kind, ${b.counts.more_serious_than_usual} more serious, ${b.counts.reports_suddenly_increased} rise`,
+                note: `${b.counts.new} new kind, ${b.counts.report_mix_changed} report mix changed, ${b.counts.reports_suddenly_increased} rise`,
               },
             ]
           : []),

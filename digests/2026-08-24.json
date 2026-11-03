@@ -1,10 +1,10 @@
 {
   "schema_version": "1.2",
   "as_of": "2026-08-24",
-  "headline": "New kind of problem: 0 · More serious than usual: 0 · Reports suddenly increased: 0",
+  "headline": "New kind of problem: 0 · Report mix changed: 0 · Reports suddenly increased: 0",
   "counts": {
     "new": 0,
-    "more_serious_than_usual": 0,
+    "report_mix_changed": 0,
     "reports_suddenly_increased": 0,
     "stable": 4
   },
@@ -21,12 +21,13 @@
     "spike_multiplier": 2,
     "spike_min_reports": 3,
     "severity_escalation_pp": 15,
+    "severity_min_reports": 3,
     "severe_event_types": [
       "death",
       "injury"
     ],
     "ranking_order": [
-      "rule precedence: new kind of problem, then more serious than usual, then reports suddenly increased",
+      "rule precedence: new kind of problem, then report mix changed, then reports suddenly increased",
       "more Injury/Death reports this window",
       "higher ratio of this window's count to the baseline weekly mean",
       "more reports this window",

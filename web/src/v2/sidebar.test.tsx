@@ -93,10 +93,10 @@ const qa = (sel: string) => Array.from(host.querySelectorAll<HTMLElement>(sel))
 const click = (el: Element | null) => act(() => (el as HTMLElement).click())
 
 describe('sidebar', () => {
-  it('lists New chat, Search, Home, Signals, Our devices, Evidence, Connect, then Recents', () => {
+  it('lists New chat, Search, Home, PMS board, Signals, Our devices, Evidence, Connect, Validation, then Recents', () => {
     renderSidebar()
     const labels = qa('.ms2-navitem').map((b) => b.textContent?.replace(/\s+/g, ' ').trim())
-    expect(labels.slice(0, 7)).toEqual(['New chat', 'SearchCtrl K', 'Home', 'Signals', 'Our devices (simulated)6 to review', 'Evidence', 'Connect'])
+    expect(labels.slice(0, 9)).toEqual(['New chat', 'SearchCtrl K', 'Home', 'PMS board', 'Signals', 'Our devices (simulated)6 to review', 'Evidence', 'Connect', 'Validation'])
     const text = host.textContent ?? ''
     expect(text.indexOf('Connect')).toBeLessThan(text.indexOf('Recents'))
     expect(text).toContain('Saved on this device only')

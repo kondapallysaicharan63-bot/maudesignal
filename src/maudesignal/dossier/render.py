@@ -32,6 +32,7 @@ from maudesignal.monitor.deterioration import (
     SPIKE_MULTIPLIER,
 )
 from maudesignal.monitor.digest import CHANGE_LABELS
+from maudesignal.pms.asof import DELAY_SENTENCE
 
 TEMPLATE_DIR = Path(__file__).resolve().parent / "templates"
 _ENV = Environment(
@@ -101,6 +102,7 @@ def template_context(d: DossierData) -> dict[str, Any]:
     return {
         "d": d,
         "css": css,
+        "delay_sentence": DELAY_SENTENCE,
         "status_label": STATUS_LABELS.get(d.status, d.status),
         "rules": {
             "spike_multiplier": SPIKE_MULTIPLIER,

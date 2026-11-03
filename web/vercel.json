@@ -1,21 +1,85 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/chat", "destination": "/index.html" },
-    { "source": "/chat/:path*", "destination": "/index.html" },
-    { "source": "/signals/:path*", "destination": "/index.html" },
-    { "source": "/devices/:path*", "destination": "/index.html" },
-    { "source": "/evidence/:path*", "destination": "/index.html" },
-    { "source": "/connect/:path*", "destination": "/index.html" },
-    { "source": "/workflow/:path*", "destination": "/index.html" },
-    { "source": "/thread/:path*", "destination": "/index.html" },
-    { "source": "/run/:path*", "destination": "/index.html" },
-    { "source": "/capture/:path*", "destination": "/index.html" },
-    { "source": "/pms-workflow", "destination": "/index.html" },
-    { "source": "/pms-workflow/:path*", "destination": "/index.html" },
-    { "source": "/roi", "destination": "/index.html" },
-    { "source": "/roi/:path*", "destination": "/index.html" },
-    { "source": "/investigate", "destination": "/index.html" },
-    { "source": "/investigate/:path*", "destination": "/index.html" }
+    {
+      "source": "/chat",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/chat/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/signals/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/devices/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/evidence/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/connect/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/workflow/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/thread/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/run/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/capture/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/pms-workflow",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/pms-workflow/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/roi",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/roi/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/investigate",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/investigate/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/board",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/board/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/validation",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/validation/:path*",
+      "destination": "/index.html"
+    }
   ]
 }

@@ -277,7 +277,7 @@ def test_a_count_the_stored_rows_do_not_support_is_held_back_and_noted(fx: Path)
 
 def test_a_code_with_nothing_stored_invents_nothing(fx: Path) -> None:
     a = _by_id(ea.build_alerts(fx, "2026-10-31T00:00:00Z", _company()))["sweep:BBB"]
-    assert a["rule"] == "more serious than usual"
+    assert a["rule"] == "report mix changed"
     assert a["reports"] == [] and a["recalls"] == [] and a["k510"] == [] and a["who_filed"] is None
     assert a["owner"] is None
     assert a["gate"] == {"checked": 0, "passed": 0, "withheld": 0}

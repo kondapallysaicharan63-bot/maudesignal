@@ -39,6 +39,7 @@ from maudesignal.gate import (
     verify_sentence,
 )
 from maudesignal.gate.loader import store_from_database
+from maudesignal.pms.asof import as_of_text, stored_as_of
 from maudesignal.sources.openfda_sources import k510_url
 from maudesignal.storage.database import Database
 
@@ -286,6 +287,7 @@ def _gate_playground(db: Database) -> None:
 
 def page_copilot(db: Database) -> None:
     """Copilot: recorded Muse Spark answers (list and detail), the gate playground, live mode."""
+    st.info(as_of_text(stored_as_of(db)))
     tab_replay, tab_gate, tab_live = st.tabs(
         ["Recorded Muse Spark answers", "Try to fool the gate", "Ask live"]
     )

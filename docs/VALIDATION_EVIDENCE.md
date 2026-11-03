@@ -29,7 +29,7 @@ records and papers, each tied to the stored FDA record.
 
 | Part | Deterministic (no model) | Model-generated |
 |---|---|---|
-| What-changed monitor: reports suddenly increased / more serious than usual / new kind of problem rules, ranking and its reason | yes (`src/maudesignal/monitor/`) | — |
+| What-changed monitor: reports suddenly increased / report mix changed / new kind of problem rules, ranking and its reason | yes (`src/maudesignal/monitor/`) | — |
 | Report-source counts and the "not filed by a manufacturer" list | yes (`src/maudesignal/monitor/sources.py`, stored openFDA `report_source_code`) | — |
 | Citation gate: recomputes every count and share, matches every quote word for word, checks every report id, 510(k), recall, PMID and CFR section | yes (`src/maudesignal/gate/`) | — |
 | Copilot answer text | — | Muse Spark 1.3; shown only sentence by sentence after the gate passes it |
@@ -44,11 +44,11 @@ records and papers, each tied to the stored FDA record.
 
 | Check | Result | Source |
 |---|---|---|
-| Unit tests | 2548 pass; 84.66% line + branch coverage (run 2026-11-01, integration branch) | `pytest tests/unit --cov=src/maudesignal --cov-branch` |
-| Web unit tests | 706 pass in 33 files (vitest, run 2026-11-01); the Release check Web job on release/m7 failed only because `npm test` exited 1 on 6 unhandled jsdom errors with every test passing; fixed in the same stretch | `cd web && npx vitest run` |
+| Unit tests | 2574 pass on Python 3.12 (85% line + branch coverage, pytest-cov rounded); 2573 pass + 1 skipped (lxml not installed) on Python 3.11 (run 2026-11-03, `release-out/2026-11-03/`) | `pytest tests/unit --cov=src/maudesignal --cov-branch` |
+| Web unit tests | 722 pass in 34 files (vitest, run 2026-11-03); on 2026-11-01 706 passed in 33 files; the Release check Web job on release/m7 failed only because `npm test` exited 1 on 6 unhandled jsdom errors with every test passing; fixed in the same stretch | `cd web && npx vitest run` |
 | Release check (release/m7, 2026-11-01) | Python, API contract and Browser e2e (Chromium, Firefox, WebKit; 1440 and 390; light and dark; classic and v2 layouts) passed; Web failed as above; nothing was deployed from m7. The deployed candidate's run is recorded in the final report | `.github/workflows/release-check.yml` |
 | CI | ruff, black, `mypy --strict`, tests on Python 3.11 and 3.12 | `.github/workflows/ci.yml` |
-| Adversarial gate set | 130 cases (84 must be withheld, 46 must pass): 0 false passes, 0 false blocks | `tests/fixtures/gate/adversarial.jsonl`, `tests/unit/test_gate.py` |
+| Adversarial gate set | 139 cases (90 must be withheld, 49 must pass): 0 false passes, 0 false blocks (130 until 2026-11-02; 9 added 2026-11-03) | `tests/fixtures/gate/adversarial.jsonl`, `tests/unit/test_gate.py` |
 | Gate on real model output | fifth 2026-10-28 recording (run 40764365995), 28 answers (22 typed, 6 text-to-speech): 63/65 sentences passed first time (96.9%), 64/65 after repair; the one withheld sentence was true (a false block: a year read as a count, fixed with cases dt03–dt05); 0 unparsed, 0 token-cap stops. Earlier runs that day: 49/50 (fourth), 52/53 (third, 1 unparsed), 45/48 (second), and the first exposed unparsed replies counted as passed (fixed) | `docs/hackathon/HAND_CHECK.md` |
 | Hand-check of the recorded answers | 27 of 28 answers fully correct (typed 21 of 22, text-to-speech 6 of 6; Oct-29 voice run 40965201781, Charan's takes 1/4/6: 3 of 3 answers, 8 of 8 sentences correct and gate 8/8); of 65 sentences 64 correct, 1 incomplete (wrongly withheld), 0 wrong; checked against the demo database by Claude; independent check by Charan pending. Fourth run: 24 of 24; third: 21 of 24; second: 19 of 21; first: 6 of 21 | `docs/hackathon/HAND_CHECK.md` |
 | Independent review of the evidence PDF | Muse Wonder 1.0: 0 findings on the current pack's PDF (SER-LLZ-20260831-001, recorded 2026-10-31; Muse Spark summary 5 sentences shown, 0 withheld). The previous recording had 2 findings (a high one on section 4.1 citing a report that does not mention error 500, a medium one on the section 4 title), both fixed by the reword. Earlier: 0 findings on the third, fourth and fifth recordings' PDFs (the second recording's 4 findings were fixed in code first) | `demo/dossier/*-review.json` |
