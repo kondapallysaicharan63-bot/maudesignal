@@ -1870,6 +1870,17 @@ V2_PAGES = (
     ("connect", ("muse", "claude", "api")),
 )
 V2_THEMES = ("contrast", "black", "pink")
+# The page-level sidebar entries (no subtabs): entry id, address, and a word of its page heading.
+V2_SIDE_PAGES = (
+    ("home", "", ""),
+    ("daily", "daily", "Morning brief"),
+    ("board", "board", ""),
+    ("investigate", "investigate", ""),
+    ("validation", "validation", ""),
+    ("pms", "pms-workflow", ""),
+    ("eu", "eu", "EU MDR"),
+    ("roi", "roi", ""),
+)
 
 
 def v2_url(env: Env, path: str = "", extra: str = "") -> str:
@@ -1949,9 +1960,17 @@ def v2_sidebar(env: Env) -> Any:
 
 
 def v2_side_click(env: Env, testid: str) -> None:
-    """Click a sidebar entry by its test id (drawer opened first on a phone)."""
+    """Click a sidebar entry by its test id (drawer opened first on a phone).
+
+    Entries in the collapsed "Demo / Simulated" group (Our devices) are reached the way a person
+    reaches them: the group's summary is opened first.
+    """
     v2_sidebar(env)
-    env.page.get_by_test_id(testid).first.click()
+    entry = env.page.get_by_test_id(testid).first
+    if not entry.is_visible() and entry.evaluate("e => !!e.closest('details:not([open])')"):
+        entry.locator("xpath=ancestor::details[1]/summary").click()
+        env.page.wait_for_timeout(200)
+    entry.click()
     env.page.wait_for_timeout(300)
 
 
@@ -2253,6 +2272,21 @@ def v2_s_sections(env: Env) -> str:
                 raise AssertionError(
                     f"{section}: focus left the tab row after ArrowRight ({focused})"
                 )
+    # Every page-level sidebar entry (Morning brief, Board, EU MDR, Validation, ...) opens its own page.
+    for nav, path, heading in V2_SIDE_PAGES:
+        v2_side_click(env, f"nav-{nav}")
+        env.page.wait_for_function(
+            "p => location.pathname.replace(/\\/+$/, '').endsWith('/' + p) || (!p && location.pathname === '/')",
+            arg=path,
+            timeout=10_000,
+        )
+        env.page.wait_for_selector("#main-v2 h1", timeout=10_000)
+        h1 = env.page.locator("#main-v2 h1").first.inner_text()
+        if heading and heading not in h1:
+            raise AssertionError(f"nav-{nav}: the page heading is {h1!r}, not {heading!r}")
+        if env.page.get_by_test_id(f"nav-{nav}").first.get_attribute("aria-current") != "page":
+            raise AssertionError(f"nav-{nav} is not marked as the current page")
+        seen.append(f"/{path}")
     env.page.goto(v2_url(env, "signals/trend"), wait_until="load")
     env.page.wait_for_selector("[data-testid=trend-row][data-code=LLZ]", timeout=10_000)
     llz = env.page.locator("[data-testid=trend-row][data-code=LLZ]").inner_text()

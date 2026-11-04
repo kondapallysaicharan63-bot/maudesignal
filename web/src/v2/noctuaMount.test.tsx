@@ -104,3 +104,13 @@ describe('no chat, no speech', () => {
     expect(src).not.toMatch(/fetch\(|XMLHttpRequest|speechSynthesis|new Audio|mousemove|pointermove/)
   })
 })
+
+describe('tab order', () => {
+  it('the skip link comes before the Noctua dock in the v2 shell, so it stays the first Tab stop', () => {
+    const src = readFileSync(resolve(__dirname, './AppV2.tsx'), 'utf8')
+    const skip = src.indexOf('data-testid="skip-link"')
+    const dock = src.indexOf('<NoctuaDock')
+    expect(skip).toBeGreaterThan(-1)
+    expect(dock).toBeGreaterThan(skip)
+  })
+})

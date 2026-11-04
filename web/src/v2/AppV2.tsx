@@ -611,13 +611,6 @@ export default function AppV2() {
       <AlertPanelContext.Provider value={panelApi}>
         <PanelNav.Provider value={{ onHome: () => go({ page: 'home' }), workflow: null }}>
           <div className="ms2-shell" data-layout="v2">
-            <NoctuaDock
-              page={route.page}
-              modalOpen={!!panel || search || schedules || feedback || (drawer && !desktop)}
-              homeCalmOwl={!!data && real.length === 0}
-              count={boardOpen}
-              onOpen={() => go({ page: 'board' })}
-            />
             <button
               type="button"
               className="ms2-skip"
@@ -713,6 +706,14 @@ export default function AppV2() {
             <FeedbackDialog open={feedback} onClose={() => setFeedback(false)} apiBase={API_BASE} refCode={refCode} page={page} />
             <SearchPalette open={search} onClose={() => setSearch(false)} chats={store.chats} pages={pages} onPick={pickSearch} />
             {data && <SchedulesDialog open={schedules} onClose={closeSchedules} schedules={data.schedules} sources={data.sources} />}
+            {/* Last in the shell: the skip link stays the first Tab stop (the dock is fixed, so its place in the DOM does not move it). */}
+            <NoctuaDock
+              page={route.page}
+              modalOpen={!!panel || search || schedules || feedback || (drawer && !desktop)}
+              homeCalmOwl={!!data && real.length === 0}
+              count={boardOpen}
+              onOpen={() => go({ page: 'board' })}
+            />
           </div>
           {panel && (
             <div className="ms2-scope">
