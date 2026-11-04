@@ -19,6 +19,7 @@ Built solo by Saicharan Kondapally for the Meta Global AI Developer Hackathon.
 - Live demo: <https://maudesignal-app.vercel.app> (no key needed; answers without a model
   key are recorded runs, labelled "recorded" with their date)
 - Demo video: _(link added at submission)_
+- User manual: [docs/USER_MANUAL.md](docs/USER_MANUAL.md)
 
 ## Pre-existing vs built Oct 26 – Nov 4, 2026
 
