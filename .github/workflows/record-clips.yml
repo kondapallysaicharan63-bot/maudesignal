@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write  # only to push the recorded clips to a throwaway media/<run id> branch
 
 jobs:
   record:
@@ -44,6 +44,20 @@ jobs:
               -crf 18 "${f%.webm}.mp4"
           done
           ls -la clips-out
+      - name: Push the clips to a throwaway media branch (fetchable with git)
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          B="media/${GITHUB_RUN_ID}"
+          mkdir -p /tmp/m
+          cp clips-out/*.mp4 clips-out/*.png clips-out/*.json /tmp/m/ 2>/dev/null || true
+          cd /tmp/m
+          git init -q -b "$B"
+          git add -A
+          git -c user.name=github-actions -c user.email=actions@github.com commit -qm "clips $GITHUB_RUN_ID"
+          git push -q "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$B:$B"
+          echo "pushed $B"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
