@@ -8,10 +8,10 @@ recorded run or a test in this repository (sources in brackets).
 
 - **Name:** MaudeSignal
 - **One line:** A safety copilot for medical-device quality and regulatory teams:
-  every morning it shows, for the device types you choose, where FDA adverse-event
-  reports suddenly increased, are report mix changed, or show a new kind of
-  problem — and it only shows facts it can match to the FDA record. People make
-  every decision.
+  its Morning brief shows, for the product codes on FDA's AI-Enabled Medical Device
+  List and the stored demo codes, where FDA adverse-event reports suddenly increased,
+  the report mix changed, or a new kind of problem appeared — and it only shows facts
+  it can match to the FDA record. People make every decision.
 - **What it is not:** medical advice, clinical decision support or an FDA-cleared
   device. It never decides reportability or whether a CAPA is needed, and does not
   define "similar devices". Demo data is public FDA data (MAUDE, recalls, 510(k))

@@ -34,6 +34,9 @@
 | | |
 |---|---|
 | Website | <https://maudesignal-app.vercel.app> |
+| Morning brief (stored exports, every number linked to its openFDA query) | <https://maudesignal-app.vercel.app/daily> |
+| EU MDR: workflow relevance only (FDA data only, no EUDAMED data) | <https://maudesignal-app.vercel.app/eu> |
+| Validation, limits and the LLZ keyword-matching measurement | <https://maudesignal-app.vercel.app/validation> |
 | API (read-only REST + MCP) | <https://maudesignal-api.vercel.app> (`/v1/health`, `/docs-page`, `/mcp`) |
 | Muse connector | Submitted to Meta's Muse Connector Program — pending review. Form answers: [docs/hackathon/MUSE_CONNECTOR.md](docs/hackathon/MUSE_CONNECTOR.md) |
 | Streamlit dashboard | <https://maudesignal-4vniqswm9ptaxqtf2iawox.streamlit.app/> |

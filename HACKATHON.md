@@ -218,3 +218,16 @@ The copilot reads from that pipeline. It does not claim it.
 
 The day-by-day planning docs are kept outside the public repo. This manifest
 describes what was actually built.
+
+## Final build (2026-11-04)
+
+| File | What it is |
+|---|---|
+| `web/src/v2/DailyBrief.tsx` | Morning brief, `/daily` (PRD-28): built from the stored exports only, dated by its data (latest sweep week), every number a link to its openFDA query, recalls per flagged code, the data-as-of banner and "a named person decides, nothing is filed with FDA". No model call |
+| `web/src/v2/EuWorkflow.tsx` | `/eu`: where the same steps would be read in an EU MDR PMS workflow (Regulation (EU) 2017/745, Articles 83–89, Annex III). Labelled "Demo data is FDA-only. No EUDAMED data in this build." No EU data coverage is claimed |
+| `scripts/keyword_measurement.py`, `web/public/data/keyword_measurement.json`, `tests/unit/test_keyword_measurement.py` | P1 item G: on the 121 stored LLZ reports, the word "image(s)" matched 11; 8 of 11 describe the complaint's problem (images would not load, display or be retrieved), 3 are too broad. Every match read by Claude (not a person). 441 of 561 stored LLZ recall records contain "image". Shown on `/validation` |
+| `web/src/pms/ValidationPage.tsx` | Keyword measurement card; limits: Muse Wonder is a model, not a human reviewer; the live path (openFDA check on Investigate) vs the stored snapshot; own devices; no "trial" wording |
+| `web/src/components/mascot/*`, `design-system/tokens.json` (`--noctua-*`), `web/src/v2/NoctuaDock.tsx` | Noctua redrawn as a brown tufted owl (cream belly, orange eyes); the tufted head path is unchanged. The dock opens the PMS board on click with the fixed caption "N to review"; still frozen on decision pages, under reduced motion and while typing, and hidden whenever it would cover something |
+| `web/src/v2/HomeV2.tsx`, `Sections.tsx`, `RoiPage.tsx`, `PmsWorkflow.tsx`, `ChatScreen.tsx`, `components/ChatPane.tsx` | The data-as-of banner on Home, Evidence (all tabs), Time and cost, PMS workflow, Chat and Vision |
+| `web/src/investigate/investigate.css` | Wide tables scroll inside their own box; the Board no longer widens the phone page |
+| README, TESTING, MUSE_CONNECTOR, SUBMISSION_DRAFT | Unbuilt claims deleted (ROI section, EU/Canada/Australia roadmap, pilot and pricing, UAT/Beta/stress/scalability rows, phone compatibility row, unconfirmed news feeds) |
