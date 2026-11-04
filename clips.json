@@ -1,0 +1,53 @@
+{
+  "tour": [
+    {
+      "stop": "home",
+      "path": "/?layout=v2&r=TEST-9",
+      "ok": true
+    },
+    {
+      "stop": "investigate",
+      "path": "/investigate?layout=v2&r=TEST-9",
+      "ok": true
+    },
+    {
+      "stop": "signals",
+      "path": "/signals?layout=v2&r=TEST-9",
+      "ok": true
+    },
+    {
+      "stop": "evidence",
+      "path": "/evidence?layout=v2&r=TEST-9",
+      "ok": true
+    },
+    {
+      "stop": "board",
+      "path": "/board?layout=v2&r=TEST-9",
+      "ok": true
+    },
+    {
+      "stop": "daily",
+      "path": "/daily?layout=v2&r=TEST-9",
+      "ok": true
+    },
+    {
+      "stop": "eu",
+      "path": "/eu?layout=v2&r=TEST-9",
+      "ok": true
+    },
+    {
+      "stop": "validation",
+      "path": "/validation?layout=v2&r=TEST-9",
+      "ok": true
+    },
+    {
+      "stop": "connect",
+      "path": "/connect?layout=v2&r=TEST-9",
+      "ok": true
+    }
+  ],
+  "cleanup": {
+    "delete_status": 200,
+    "left": 0
+  }
+}
