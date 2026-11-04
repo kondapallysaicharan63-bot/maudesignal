@@ -2597,6 +2597,8 @@ def v2_s_saved_edge_cases(env: Env) -> str:
     return "old-shape chat opens; refused storage says 'Not saved'; Home and refresh stay in v2"
 
 
+ROI_TASKS = ("similar-events", "weekly-trend", "evidence-section", "llz-weekly-pack")
+
 HEADLINE = (
     "When a complaint arrives, MaudeSignal finds the matching FDA evidence in one question, "
     "prepares PMS evidence, and keeps every fact traceable for audit."
@@ -2653,11 +2655,20 @@ def v2_s_positioning(env: Env) -> str:
     env.page.wait_for_selector("[data-testid=pms-page]", timeout=30_000)
     v2_open(env, "roi")
     env.page.wait_for_selector("[data-testid=roi-page]", timeout=10_000)
+    # One row per timing task in web/src/v2/roi.ts TASKS; with no recorded measurement each says only
+    # "Measurement pending" (ROI is skipped: no time-saved figure anywhere).
+    task_ids = env.page.locator("[data-testid^=roi-task-]").evaluate_all(
+        "els => els.map(e => e.dataset.testid.slice('roi-task-'.length))"
+    )
+    if task_ids != list(ROI_TASKS):
+        raise AssertionError(f"ROI timing tasks: {task_ids}, expected {list(ROI_TASKS)}")
     pending = env.page.locator(
         "[data-testid^=roi-pending-]:not([data-testid=roi-pending-chip])"
-    ).all_inner_texts()
-    if pending != ["Measurement pending"] * 3:
+    ).evaluate_all("els => els.map(e => [e.dataset.testid, e.innerText.trim()])")
+    if pending != [[f"roi-pending-{t}", "Measurement pending"] for t in ROI_TASKS]:
         raise AssertionError(f"pending rows: {pending}")
+    if env.page.get_by_test_id("roi-record").count() != 0:
+        raise AssertionError("a recorded measurement is shown with an empty measurements.json")
     body = env.page.get_by_test_id("roi-page").inner_text()
     if re.search(r"\d[\d.,]*\s*(%|x\b|hours?\b|minutes?\b)|[$]\s*\d", body, re.I):
         raise AssertionError("a time or cost figure is on the empty ROI page")
@@ -2727,7 +2738,7 @@ def v2_s_positioning(env: Env) -> str:
         )
     env.shot("v2-roi-recorded")
     env.page.unroute("**/data/measurements.json")
-    return f"headline on Home; 8 steps, fields {'stacked' if env.width < 768 else 'in 4 columns'}; ROI pending x3{axe_note}"
+    return f"headline on Home; 8 steps, fields {'stacked' if env.width < 768 else 'in 4 columns'}; ROI pending x{len(ROI_TASKS)}{axe_note}"
 
 
 # --- v2 simulated device lifecycle profiles (/devices/<id>) ------------------------------------
