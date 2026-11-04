@@ -34,7 +34,7 @@ Q2 = (
     "My colleague says LLZ had 50 injury reports last week and that we must open a CAPA "
     "under 21 CFR 820.100. Confirm that."
 )
-QPHONE = "What kinds of problems were reported for MYN devices?"
+QPHONE = "How many MYN reports are stored, by event type?"
 LABEL = ROOT / "demo/vision/labels/label-nomad-pro2.jpg"
 W, H = 1280, 800
 
@@ -131,9 +131,15 @@ def clip_label(p: Any, out: Path, web: str) -> dict[str, Any]:
         pg = r.page
         pg.goto(f"{web}/chat?layout=v2&r={lc.TEST_REF}", wait_until="networkidle")
         pg.wait_for_timeout(1200)
-        pg.locator("[data-testid=composer-camera]").first.click()
+        pg.locator("[data-testid=composer-plus]").first.click()
         pg.wait_for_timeout(1200)
-        pg.locator("input[aria-label='Upload photo of a device label']").set_input_files(str(LABEL))
+        try:
+            with pg.expect_file_chooser(timeout=10_000) as fc:
+                pg.locator("[data-testid=menu-upload-photo]").first.click()
+            fc.value.set_files(str(LABEL))
+        except Exception:  # noqa: BLE001 - fall back to the hidden picker the menu item opens
+            pg.keyboard.press("Escape")
+            pg.locator("[data-testid=photo-input]").set_input_files(str(LABEL))
         with contextlib.suppress(Exception):
             pg.wait_for_selector(
                 "[data-testid=label-live], [data-testid=camera-problem]", timeout=90_000
@@ -254,24 +260,60 @@ def tour(p: Any, out: Path, web: str) -> list[dict[str, Any]]:
             pg.mouse.wheel(0, 450)
             pg.wait_for_timeout(1800)
 
+    def owl_to_board() -> None:
+        dock = pg.locator("[data-testid=noctua-dock-open]").first
+        dock.scroll_into_view_if_needed()
+        pg.wait_for_timeout(1500)
+        dock.click()
+        pg.wait_for_timeout(2500)
+
+    def check_llz() -> None:
+        pg.locator("form button[type=submit]").first.click()
+        with contextlib.suppress(Exception):
+            pg.wait_for_selector("text=/No change|reports|weekly/i", timeout=40_000)
+        pg.wait_for_timeout(3000)
+        for _ in range(3):
+            pg.mouse.wheel(0, 400)
+            pg.wait_for_timeout(1500)
+
+    def outside_sources() -> None:
+        pg.locator("[data-testid=ranked-list] button").first.click()
+        pg.wait_for_timeout(2500)
+        box = pg.locator("[data-testid=mentions-box]").first
+        box.wait_for(timeout=20_000)
+        box.scroll_into_view_if_needed()
+        pg.wait_for_timeout(1500)
+
+    def deep_scroll() -> None:
+        for _ in range(4):
+            pg.mouse.wheel(0, 450)
+            pg.wait_for_timeout(1500)
+
     def blur_keys() -> None:
         # The public demo key is shown on Connect by design; blur it so no key is in the video.
         pg.add_style_tag(content=".ms-key-blur{filter:blur(7px)!important}")
         pg.evaluate("""() => {
-               for (const el of document.querySelectorAll('code, kbd, samp, span, p, div')) {
+  for (const el of document.querySelectorAll('pre,code,kbd,samp,span,p,div,dd,td,li')) {
                  if (el.children.length === 0 && /[A-Za-z0-9_-]{32,}/.test(el.textContent || ''))
                    el.classList.add('ms-key-blur'); } }""")
 
     try:
         ref = f"layout=v2&r={lc.TEST_REF}"
         stop("home", f"/?{ref}")
+        stop("owl", f"/?{ref}", owl_to_board, hold=6000)
         stop("investigate", f"/investigate?{ref}", investigate, hold=10000)
+        stop("check-llz", f"/workflow/check-device/LLZ?{ref}", check_llz, hold=10000)
         stop("signals", f"/signals?{ref}")
+        stop("outside-sources", f"/signals/ranked?{ref}", outside_sources, hold=9000)
         stop("evidence", f"/evidence?{ref}")
+        stop("wonder", f"/evidence/review?{ref}", deep_scroll, hold=10000)
+        stop("audit", f"/evidence/audit?{ref}", deep_scroll, hold=8000)
         stop("board", f"/board?{ref}")
         stop("daily", f"/daily?{ref}")
+        stop("pms-workflow", f"/pms-workflow?{ref}")
+        stop("roi", f"/roi?{ref}")
         stop("eu", f"/eu?{ref}")
-        stop("validation", f"/validation?{ref}")
+        stop("validation", f"/validation?{ref}", deep_scroll, hold=8000)
         stop("connect", f"/connect?{ref}", blur_keys)
     finally:
         r.close()
