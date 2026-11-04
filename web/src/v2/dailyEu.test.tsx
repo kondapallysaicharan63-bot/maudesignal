@@ -91,3 +91,32 @@ describe('EU MDR workflow relevance', () => {
     expect(host.textContent).not.toMatch(/Health Canada|TGA|EUDAMED data (is|are) (included|shown)|compliant|satisf(y|ies) Article/i)
   })
 })
+
+import kwFile from '../../public/data/keyword_measurement.json'
+import { KeywordMeasurementCard, KNOWN_LIMITS, NOT_VALIDATED, type KeywordMeasurement } from '../pms/ValidationPage'
+
+describe('Validation: keyword measurement and honest limits', () => {
+  it('shows the stored measurement as recorded (no number typed in the page) and the recall warning', () => {
+    const km = kwFile as unknown as KeywordMeasurement
+    act(() => root.render(<KeywordMeasurementCard km={km} />))
+    const s = q('validation-keyword-summary')?.textContent ?? ''
+    expect(s).toContain(`${km.same_problem} of ${km.matched} (${km.pct_same_problem}%)`)
+    expect(s).toContain('Claude (AI), not a person')
+    expect(q('validation-keyword-recalls')?.textContent).toContain(`${km.recalls.mention_image_any_field} of ${km.recalls.stored} stored LLZ recall records`)
+    expect(host.querySelectorAll('[data-testid="validation-keyword-rows"] tbody tr').length).toBe(km.matched)
+  })
+  it('says "measurement not shown" when the file is missing, never a number', () => {
+    act(() => root.render(<KeywordMeasurementCard km="error" />))
+    expect(q('validation-keyword-missing')?.textContent).toContain('Measurement not shown')
+    expect(host.textContent).not.toMatch(/\d+%/)
+  })
+  it('keeps the limits: not validated first, Muse Wonder not a human reviewer, live path, own devices, counts not rates', () => {
+    expect(NOT_VALIDATED.startsWith('This build is not validated.')).toBe(true)
+    expect(NOT_VALIDATED).not.toMatch(/trial/i)
+    const all = KNOWN_LIMITS.join(' ')
+    expect(all).toContain('not a human reviewer')
+    expect(all).toContain('MAUDE counts are not rates')
+    expect(all).toContain('Own-company separation is not possible from MAUDE alone')
+    expect(all).toContain('not refreshed by a scraper')
+  })
+})

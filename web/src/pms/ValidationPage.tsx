@@ -1,6 +1,6 @@
 // /validation (PRD-18, PRD-26): "This build is not validated", what is tested (measured, with the command), the FDA
 // AI/ML guidance path for a QMS software tool, what a manufacturer must still do, the evidence lifecycle log (read from
-// lifecycle.json, generated from the repo) and the prospective trial protocol. Never "FDA validated", "FDA approved"
+// lifecycle.json, generated from the repo), the LLZ keyword-matching measurement and the planned study protocol. Never "FDA validated", "FDA approved"
 // or "AI validated".
 import { useEffect, useState } from 'react'
 import type { WorkspaceData } from '../types'
@@ -8,7 +8,7 @@ import { BUILD_COMMIT, BUILD_VERSION } from './build'
 import { DataAsOfBanner, storedAsOf } from './DataAsOf'
 
 export const NOT_VALIDATED =
-  'This build is not validated. It is a hackathon trial build. Nothing on this page says it is fit for your quality system; that is your decision, made in your own environment.'
+  'This build is not validated. It is a hackathon build. Nothing on this page says it is fit for your quality system; that is your decision, made in your own environment.'
 
 /** Measured on 2026-11-03 (outputs in release-out/2026-11-03/, see TEST-REPORT-2026-11-03.md). A test pins the gate count to the fixture. */
 export const TESTED: { what: string; result: string; how: string }[] = [
@@ -42,7 +42,108 @@ export const KNOWN_LIMITS = [
   'Completeness is not gated: the gate checks what is said, not what was left out (one recall answer once missed three stored recalls).',
   'No denominator: MAUDE counts are not rates; units in use are not known.',
   'Own-company separation is not possible from MAUDE alone; a maker must match reports to its own complaint log.',
+  'The Muse Wonder review of the evidence pack is findings only. It is a model, not a human reviewer, and it decides nothing.',
+  'Live data: the stored snapshot (137 MAUDE reports, newest 2026-08-31) is not refreshed by a scraper. The live path is the openFDA check on Investigate, which shows its own check date on every run.',
+  'Own devices: there is no own-devices page from MAUDE alone. The closest paths are Signals (reports you did not file), Investigate by product code, and the PMS board.',
 ]
+
+export interface KeywordMeasurement {
+  product_code: string
+  term: string
+  match_rule: string
+  problem: string
+  stored_reports: number
+  matched: number
+  same_problem: number
+  different_image_problem: number
+  mention_only: number
+  pct_same_problem: number
+  pct_too_broad: number
+  adjudicator: string
+  sample: string
+  rows: { report_id: string; label: string; reason: string }[]
+  recalls: { stored: number; mention_image_any_field: number; mention_image_in_reason: number; mention_image_in_product_description: number }
+  limits: string[]
+  method: string
+}
+
+function useJson<T>(name: string): T | null | 'error' {
+  const [v, setV] = useState<T | null | 'error'>(null)
+  useEffect(() => {
+    let live = true
+    fetch(`${import.meta.env.BASE_URL ?? './'}data/${name}`)
+      .then((r) => (r.ok ? (r.json() as Promise<T>) : Promise.reject(new Error(String(r.status)))))
+      .then((d) => live && setV(d))
+      .catch(() => live && setV('error'))
+    return () => {
+      live = false
+    }
+  }, [name])
+  return v
+}
+
+/** P1 item G: how often a word match on stored LLZ narratives is about the complaint's problem. Read from keyword_measurement.json. */
+export function KeywordMeasurementCard({ km }: { km: KeywordMeasurement | null | 'error' }) {
+  return (
+    <section className="ms2-card mt-4" aria-labelledby="v-kw" data-testid="validation-keyword">
+      <h2 id="v-kw" className="ms2-h2">
+        Keyword matching: measured on stored LLZ reports
+      </h2>
+      {km === null ? (
+        <p className="ms2-muted">Loading keyword_measurement.json…</p>
+      ) : km === 'error' ? (
+        <p className="ms2-bad" data-testid="validation-keyword-missing">
+          Measurement not shown: keyword_measurement.json could not be loaded.
+        </p>
+      ) : (
+        <>
+          <p className="m-0 mt-2" data-testid="validation-keyword-summary">
+            Term <span className="ms-code">{km.term}</span> ({km.match_rule}) on {km.stored_reports} stored {km.product_code} reports: {km.matched} matched. Read
+            against the problem &ldquo;{km.problem}&rdquo;: <strong>{km.same_problem} of {km.matched} ({km.pct_same_problem}%)</strong> describe that problem;{' '}
+            {km.matched - km.same_problem} of {km.matched} ({km.pct_too_broad}%) are too broad ({km.different_image_problem} a different image problem,{' '}
+            {km.mention_only} a mention only). Sample: {km.sample}. Adjudicator: {km.adjudicator}.
+          </p>
+          <p className="ms-banner ms-banner--warn mt-2" role="note" data-testid="validation-keyword-recalls">
+            <span>
+              A word match alone is too broad: {km.recalls.mention_image_any_field} of {km.recalls.stored} stored {km.product_code} recall records contain
+              &ldquo;image&rdquo; somewhere in the record ({km.recalls.mention_image_in_product_description} in the product description,{' '}
+              {km.recalls.mention_image_in_reason} in the recall reason). Investigate shows &ldquo;Why matched&rdquo; on every result for this reason.
+            </span>
+          </p>
+          <div className="ms2-inv-scroll mt-2">
+            <table className="ms2-table" data-testid="validation-keyword-rows">
+              <caption className="sr-only">Each matched report and its label</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Report</th>
+                  <th scope="col">Label</th>
+                  <th scope="col">Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                {km.rows.map((r) => (
+                  <tr key={r.report_id}>
+                    <th scope="row" className="ms-code">
+                      {r.report_id}
+                    </th>
+                    <td>{r.label}</td>
+                    <td className="ws-wrap">{r.reason}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <ul className="m-0 mt-2" data-testid="validation-keyword-limits">
+            {km.limits.map((l) => (
+              <li key={l}>{l}</li>
+            ))}
+          </ul>
+          <p className="ms2-inv-meta m-0 mt-2">Method: {km.method}.</p>
+        </>
+      )}
+    </section>
+  )
+}
 
 interface Lifecycle {
   build: { version: string; commit: string | null }
@@ -55,22 +156,12 @@ interface Lifecycle {
 }
 
 function useLifecycle(): Lifecycle | null | 'error' {
-  const [v, setV] = useState<Lifecycle | null | 'error'>(null)
-  useEffect(() => {
-    let live = true
-    fetch(`${import.meta.env.BASE_URL ?? './'}data/lifecycle.json`)
-      .then((r) => (r.ok ? (r.json() as Promise<Lifecycle>) : Promise.reject(new Error(String(r.status)))))
-      .then((d) => live && setV(d))
-      .catch(() => live && setV('error'))
-    return () => {
-      live = false
-    }
-  }, [])
-  return v
+  return useJson<Lifecycle>('lifecycle.json')
 }
 
 export function ValidationPage({ data, onBoard }: { data: WorkspaceData; onBoard?: () => void }) {
   const lc = useLifecycle()
+  const km = useJson<KeywordMeasurement>('keyword_measurement.json')
   return (
     <div data-testid="validation-page">
       <header className="ms2-pagehead">
@@ -111,6 +202,8 @@ export function ValidationPage({ data, onBoard }: { data: WorkspaceData; onBoard
         </table>
       </section>
 
+      <KeywordMeasurementCard km={km} />
+
       <section className="ms2-card mt-4" aria-labelledby="v-path">
         <h2 id="v-path" className="ms2-h2">
           FDA AI/ML guidance path
@@ -119,7 +212,7 @@ export function ValidationPage({ data, onBoard }: { data: WorkspaceData; onBoard
           The validation path follows FDA&apos;s Good Machine Learning Practice (GMLP) guiding principles and its lifecycle and predetermined change
           control thinking for AI-enabled software, applied to MaudeSignal as a <strong>software tool used inside a quality system</strong>, not as a
           cleared device. MaudeSignal is not a medical device, not clinical decision support and not FDA-cleared. For a reviewer the answer is: not
-          validated; here is the evidence for a trial build, and here is what your QMS still has to do.
+          validated; here is the evidence for a hackathon build, and here is what your QMS still has to do.
         </p>
       </section>
 
@@ -178,14 +271,14 @@ export function ValidationPage({ data, onBoard }: { data: WorkspaceData; onBoard
 
       <section className="ms2-card mt-4" aria-labelledby="v-trial">
         <h2 id="v-trial" className="ms2-h2">
-          Next evidence step: a prospective trial on one real code
+          Next evidence step (planned, not run): a prospective study on one real code
         </h2>
         <p className="m-0 mt-2" data-testid="validation-protocol">
-          One product code the trial team owns, the same week: MaudeSignal&apos;s flags against the team&apos;s own complaint and MDR log, adjudicated
+          One product code the study team owns, the same week: MaudeSignal&apos;s flags against the team&apos;s own complaint and MDR log, adjudicated
           by a person, with rules for a hit, a miss and a false flag set before the week starts. Recorded: flags raised, flags accepted or rejected,
-          signals the team found that the tool missed, time per task, and every human correction (accept/reject, withheld sentences, overrides). The
-          retrospective hand-check above is the low end of the evidence hierarchy; this trial is a deployed-system study at N = 1 code, not a
-          randomised trial.
+          signals the team found that the tool missed, and every human correction (accept/reject, withheld sentences, overrides). The
+          retrospective hand-check above is the low end of the evidence hierarchy; this study would be a deployed-system study at N = 1 code, not a
+          randomised trial. It has not been run.
         </p>
         <p className="ms2-inv-meta m-0 mt-2">
           Framing: Themes in Clinical AI for 2025-2026, SAIL Year in Review, Table 1, as shared by a regulatory reviewer (themes 1, 2 and 4 only:

@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.0",
+  "product_code": "LLZ",
+  "term": "images",
+  "match_rule": "whole word 'image' or 'images', any case, in the report narrative or the manufacturer narrative",
+  "problem": "study images would not load, display or be retrieved",
+  "source": "data/demo/maudesignal_demo.db (stored demo snapshot)",
+  "stored_reports": 121,
+  "matched": 11,
+  "same_problem": 8,
+  "different_image_problem": 2,
+  "mention_only": 1,
+  "pct_same_problem": 72.7,
+  "pct_too_broad": 27.3,
+  "adjudicator": "Claude (AI), not a person; one reader, no second reader",
+  "sample": "all matched reports (no sampling)",
+  "rows": [
+    {
+      "report_id": "25675205",
+      "label": "same problem",
+      "reason": "images pulled by a third party were unreadable"
+    },
+    {
+      "report_id": "25676051",
+      "label": "different image problem",
+      "reason": "images stored in two locations; no failure to load is described"
+    },
+    {
+      "report_id": "25688996",
+      "label": "same problem",
+      "reason": "the corresponding images were not available"
+    },
+    {
+      "report_id": "25701855",
+      "label": "different image problem",
+      "reason": "no repository folder created for incoming images; storage, not loading"
+    },
+    {
+      "report_id": "25701859",
+      "label": "same problem",
+      "reason": "jerkiness in loading the web images"
+    },
+    {
+      "report_id": "25702620",
+      "label": "mention only",
+      "reason": "'Image Fusion' is a product name; the event is electrode placement depth"
+    },
+    {
+      "report_id": "25751634",
+      "label": "same problem",
+      "reason": "images were not transferred, so studies were incomplete"
+    },
+    {
+      "report_id": "25775519",
+      "label": "same problem",
+      "reason": "images were not displaying"
+    },
+    {
+      "report_id": "25839557",
+      "label": "same problem",
+      "reason": "query/retrieve of the images from PACS failed"
+    },
+    {
+      "report_id": "50515470",
+      "label": "same problem",
+      "reason": "unable to fetch images for some records"
+    },
+    {
+      "report_id": "50516613",
+      "label": "same problem",
+      "reason": "unable to retrieve images from PACS"
+    }
+  ],
+  "recalls": {
+    "stored": 561,
+    "mention_image_any_field": 441,
+    "mention_image_in_reason": 272,
+    "mention_image_in_product_description": 337
+  },
+  "limits": [
+    "One device type (LLZ), one term, one problem; N is small. Not a general precision figure.",
+    "Adjudicated by Claude, not a person, and by one reader only.",
+    "Recall (reports that describe the problem without the word) was not measured.",
+    "A word match is a text match, not a finding of similarity."
+  ],
+  "method": "scripts/keyword_measurement.py recomputes every count from the demo database"
+}
