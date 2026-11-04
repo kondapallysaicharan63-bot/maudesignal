@@ -247,14 +247,20 @@ def tour(p: Any, out: Path, web: str) -> list[dict[str, Any]]:
         pg.get_by_placeholder("e.g. LLZ").fill("LLZ")
         pg.locator("textarea").first.type("image not displaying", delay=40)
         pg.wait_for_timeout(600)
-        btn = pg.get_by_role("button", name="Investigate").first
-        if btn.count():
-            btn.click()
-        else:
-            pg.locator("textarea").first.press("Enter")
-        with contextlib.suppress(Exception):
-            pg.wait_for_selector("[data-testid=inv-total-code]", timeout=45_000)
+        pg.get_by_role("button", name="Investigate", exact=True).first.click()
+        pg.wait_for_selector("[data-testid=inv-total-code]", timeout=45_000)
         pg.wait_for_timeout(3000)
+        for _ in range(4):  # walk down through counts, months, quotes, recalls
+            pg.mouse.wheel(0, 450)
+            pg.wait_for_timeout(1800)
+
+    def blur_keys() -> None:
+        # The public demo key is shown on Connect by design; blur it so no key is in the video.
+        pg.add_style_tag(content=".ms-key-blur{filter:blur(7px)!important}")
+        pg.evaluate("""() => {
+               for (const el of document.querySelectorAll('code, kbd, samp, span, p, div')) {
+                 if (el.children.length === 0 && /[A-Za-z0-9_-]{32,}/.test(el.textContent || ''))
+                   el.classList.add('ms-key-blur'); } }""")
 
     try:
         ref = f"layout=v2&r={lc.TEST_REF}"
@@ -266,7 +272,7 @@ def tour(p: Any, out: Path, web: str) -> list[dict[str, Any]]:
         stop("daily", f"/daily?{ref}")
         stop("eu", f"/eu?{ref}")
         stop("validation", f"/validation?{ref}")
-        stop("connect", f"/connect?{ref}")
+        stop("connect", f"/connect?{ref}", blur_keys)
     finally:
         r.close()
     return stops
