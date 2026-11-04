@@ -140,8 +140,8 @@ key the closest recorded answer is shown, labelled "recorded".
 - Stored snapshot: the newest stored report was received Aug 31, 2026
   (`max_date_received` in [data/demo/SEED_MANIFEST.json](../data/demo/SEED_MANIFEST.json)).
 - The Investigate live openFDA check is separate from the snapshot and is dated when it runs.
-- openFDA has a reporting delay: reports reach MAUDE weeks to months after an event, so the
-  newest weeks are incomplete.
+- openFDA republishes weekly and reports arrive with delay, so recent weeks may show few or no
+  reports because of reporting delay, not because risk is zero.
 - No EUDAMED data. FDA data only (MHRA alerts appear only as labelled regulator context).
 - No live scraper or news feed. Outside web results are labelled unverified and kept apart
   from FDA records.
