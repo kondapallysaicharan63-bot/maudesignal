@@ -40,6 +40,7 @@ import { profileDevices, useProfiles } from './profiles'
 import { SchedulesDialog } from './SchedulesDialog'
 import { SidebarV2, type NavId } from './SidebarV2'
 import { TopBarV2 } from './TopBarV2'
+import { NoctuaDock } from './NoctuaDock'
 import { storedAsOf } from '../pms/DataAsOf'
 import { boardRows } from '../pms/board'
 import { useAudit } from '../pms/useAudit'
@@ -604,6 +605,11 @@ export default function AppV2() {
       <AlertPanelContext.Provider value={panelApi}>
         <PanelNav.Provider value={{ onHome: () => go({ page: 'home' }), workflow: null }}>
           <div className="ms2-shell" data-layout="v2">
+            <NoctuaDock
+              page={route.page}
+              modalOpen={!!panel || search || schedules || feedback || (drawer && !desktop)}
+              homeCalmOwl={!!data && real.length === 0}
+            />
             <button
               type="button"
               className="ms2-skip"
