@@ -98,6 +98,7 @@ def gate(drafts: list[Draft], data: ConnectorData) -> tuple[list[Shown], list[st
         many sentences were checked.
     """
     store = data.store
+    coverage = links.stored_coverage(data.manifest(), store)
     shown: list[Shown] = []
     withheld: list[str] = []
     for d in drafts:
@@ -110,7 +111,7 @@ def gate(drafts: list[Draft], data: ConnectorData) -> tuple[list[Shown], list[st
             continue
         found = list(d.links)
         for cv in verdict.claim_verdicts:
-            lk = links.claim_link(cv.claim)
+            lk = links.claim_link(cv.claim, coverage)
             if lk is not None:
                 found.append(lk)
         by_url: dict[str, str] = {}

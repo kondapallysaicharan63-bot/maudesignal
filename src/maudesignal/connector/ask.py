@@ -7,6 +7,9 @@ Rules this module enforces:
 * Only sentences the gate passed *and* that have an openFDA or record link go into
   ``speakable``. A withheld sentence is listed in ``withheld`` with the reason and is never
   spoken as fact; so is a passed sentence with no link (nothing to check it against).
+  Shares and counts by event type are linked to the openFDA count-by-event-type query for
+  the same code and window, but only where the stored snapshot holds every openFDA report
+  of that code in that window (``links.stored_coverage``), so the link shows the figure.
 * The copilot is read-only here: ``draft_capa`` and any other tool that writes is never
   offered to the model and never run (see ``readonly.py``).
 * The live path needs ``META_MODEL_API_KEY``. Without it, or once the key's daily cost
@@ -488,6 +491,9 @@ def _split(
 
 def _from_live(res: CopilotResult, data: ConnectorData, now: datetime) -> ToolAnswer:
     items: list[Item] = []
+    # Where the snapshot holds every openFDA report of a code: there a count by event type
+    # or a share is linked to the openFDA query that shows the same figure.
+    coverage = links.stored_coverage(data.manifest(), data.store)
     for s in res.report.sentences:
         if s.status != "pass":
             kinds: list[str] = [cv.claim.kind for cv in s.claim_verdicts if cv.status != "pass"]
@@ -496,7 +502,7 @@ def _from_live(res: CopilotResult, data: ConnectorData, now: datetime) -> ToolAn
         found = [
             lk
             for cv in s.claim_verdicts
-            if cv.status == "pass" and (lk := links.claim_link(cv.claim)) is not None
+            if cv.status == "pass" and (lk := links.claim_link(cv.claim, coverage)) is not None
         ]
         items.append((s.text, found, None, [str(cv.claim.kind) for cv in s.claim_verdicts]))
     passed, facts, withheld = _split(items, hide_withheld_text=True)
