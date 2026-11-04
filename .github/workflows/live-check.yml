@@ -1,11 +1,16 @@
 name: Live check (typed ask on the live site)
 
-# Asks the two questions that failed on Nov 1 (and one more) of the deployed API the way a
-# visitor does, then one question in a real browser. Prints HTTP status, latency, mode and tier,
-# model, trace steps, tool calls and the answer text; never a key. Spends a few cents of Meta
-# credit: one shared budget limits a run to $0.40 (scripts/release/budget.py, the class
-# smoke.py uses; every call is held at the deployed API's $0.25 cap until its real cost is
-# known). Runs on a push to a branch named live-check/** or by hand.
+# Asks four questions of the deployed API the way a visitor does (MYN injury share, a false
+# "50 LLZ injuries, open a CAPA" claim, and two LLZ questions), then one question in a real
+# browser. Prints HTTP status, latency, mode and tier, model, trace steps, tool calls, links
+# and the answer text; never a key. Each reply's full JSON is uploaded (live-check-out/).
+# A reply passes only when it is live, from Muse Spark, with no failed trace step, no
+# no-answer text and at least one linked sentence; a call the budget refused is a FAIL.
+# Spend: one shared budget limits a run to $0.75 (scripts/release/budget.py); every call is held
+# at $0.10 (about 3x the ~$0.03 a live ask costs) until its real cost is known, and a call with
+# no reported cost counts at the deployed $0.25 per-request cap. 5 calls fit at their holds
+# ($0.50); the worst case is $0.75 - $0.10 + $0.25 = $0.90 per run, under the $3/day cap.
+# Runs on a push to a branch named live-check/** or by hand.
 #
 # Optional repository secret:
 #   MAUDESIGNAL_ADMIN_KEY_SMOKE  the admin key, only to delete the TEST entries this run writes
@@ -48,12 +53,12 @@ jobs:
         run: |
           pip install "playwright==1.63.0"
           python -m playwright install --with-deps chromium
-      - name: Live asks and one browser question (budget $0.40)
+      - name: Live asks and one browser question (budget $0.75, hold $0.10 per call)
         env:
           MAUDESIGNAL_ADMIN_KEY_SMOKE: ${{ secrets.MAUDESIGNAL_ADMIN_KEY_SMOKE }}
         run: |
           python scripts/release/live_check.py --api "$API_URL" --web "$WEB_URL" \
-            --max-usd 0.40 --out-dir live-check-out
+            --max-usd 0.75 --hold-usd 0.10 --out-dir live-check-out
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -58,10 +58,16 @@ class Budget:
     used: dict[str, int] = field(default_factory=lambda: {"ask": 0, "photo": 0, "voice": 0})
     refused: list[str] = field(default_factory=list)
     _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
+    #: What one call of each kind is held at while in flight (default: ``HOLD_USD``).
+    holds: dict[str, float] = field(default_factory=lambda: dict(HOLD_USD))
+    #: What a call with no usable cost is settled at (default: ``HOLD_USD``). A caller with a
+    #: smaller, realistic hold (``live_check.py``) keeps this at the deployed per-request cap,
+    #: so an unknown cost is never under-counted.
+    unknown_usd: dict[str, float] = field(default_factory=lambda: dict(HOLD_USD))
 
     def reserve(self, kind: str) -> bool:
         """Reserve one call of ``kind``; False (and logged in ``refused``) when it does not fit."""
-        hold = HOLD_USD[kind]
+        hold = self.holds[kind]
         with self._lock:
             fits_usd = self.spent + self.held + hold <= self.max_usd + 1e-9
             fits_count = self.used[kind] < self.limits[kind]
@@ -76,11 +82,12 @@ class Budget:
         """Release the hold of a reserved call and add what it cost.
 
         ``cost_usd`` is None when no cost came back (timeout, non-200, missing field): the
-        server may still have spent up to the cap, so the full hold is recorded as spent.
+        server may still have spent up to the cap, so ``unknown_usd[kind]`` (by default the full
+        hold) is recorded as spent.
         """
         with self._lock:
-            self.held = max(0.0, self.held - HOLD_USD[kind])
-            self.spent += HOLD_USD[kind] if cost_usd is None else max(0.0, cost_usd)
+            self.held = max(0.0, self.held - self.holds[kind])
+            self.spent += self.unknown_usd[kind] if cost_usd is None else max(0.0, cost_usd)
 
     def absorb(self, cost_usd: float, counts: dict[str, int]) -> None:
         """Add calls made elsewhere (the browser pass): their counts and cost (incl. holds)."""
@@ -101,7 +108,7 @@ class Budget:
 
     def max_asks_by_dollars(self) -> int:
         """How many more asks fit in the dollars left, each at its full hold."""
-        return int((self.remaining_usd() + 1e-9) // HOLD_USD["ask"])
+        return int((self.remaining_usd() + 1e-9) // self.holds["ask"])
 
     def snapshot(self) -> dict[str, object]:
         """Numbers for the report."""

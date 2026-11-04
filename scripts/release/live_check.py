@@ -1,21 +1,41 @@
-"""Live check of the typed ask on the deployed API and web app (a few cents of Meta credit).
+"""Live check of the typed ask on the deployed API and web app (well under a dollar of credit).
 
 HACKATHON-BUILT - Meta Global AI Developer Hackathon (Oct 26 - Nov 4, 2026).
 
 Why: on Nov 1 two long, multi-tool questions showed "The live service could not be reached" on
-the live site. This script asks those two questions (and a third) the way a visitor does, then
-runs one browser question, and prints what happened: HTTP status, latency, mode and tier,
-model, trace steps, tool calls, and the answer text. It never prints a key.
+the live site, and on Nov 3 this check passed while its only answer was "I have no verified
+answer" with a failed Muse Spark trace step. It now asks ``QUESTIONS`` the way a visitor does,
+then one browser question, prints what happened (HTTP status, latency, mode and tier, model,
+trace steps, tool calls, links, the answer text) and judges each reply (``judge``). It never
+prints a key.
 
-Spend: one shared ``Budget`` (``budget.py``, the same class ``smoke.py`` uses) limited to
-``--max-usd`` (default $0.40, every call held at the deployed API's $0.25 per-request cap until
-its real ``cost_usd`` is known; a call with no usable reply is settled at the full hold). A call
-that does not fit is reported as ``skipped: budget``, never sent.
+An ask passes only when ALL hold: HTTP 200; ``mode`` is ``live`` (not recorded, direct or
+canned, no recorded note, no "Closest recorded answer" step); the trace names a ``muse-spark``
+model; no trace step failed; the answer is not a no-answer line ("I have no verified answer",
+"I could not verify an answer", ...); and at least one shown sentence has a link (sentences may
+be withheld only while a linked sentence is left). The reason for each FAIL is printed. A call
+the budget did not allow is a FAIL unless ``--allow-budget-skips`` is passed.
+
+Note: an answer reused from the API's same-day cache (tier ``cache``) made no Muse Spark call,
+so it FAILS with "no muse-spark model in the trace": this check is about the live model.
+
+Spend: one shared ``Budget`` (``budget.py``, the class ``smoke.py`` uses) limited to
+``--max-usd`` (default ``DEFAULT_MAX_USD``). Each call is held at ``--hold-usd`` (default
+``ASK_HOLD_USD`` = $0.10, about 3x the ~$0.03 a live ask was seen to cost, and the most one
+model call may hold in the deployed API, ``connector/callcap.MAX_CALL_HOLD_USD``) until its
+real ``cost_usd`` is known. A call with no usable cost is settled at the deployed API's $0.25
+per-request cap (``HOLD_USD['ask']``), never less. A call is sent only while spent + holds +
+its hold <= the limit, and one call can cost at most $0.25 on the server, so a run can spend at
+most ``max_usd - hold_usd + 0.25`` ($0.90 at the defaults), far under the $3/day cap.
 
 Run:
     MAUDESIGNAL_ADMIN_KEY_SMOKE=... python scripts/release/live_check.py \
         --api https://maudesignal-api.vercel.app --web https://maudesignal-app.vercel.app \
         --out-dir live-check-out
+
+Each reply's full JSON (answer, trace, cost, mode, models, links) is written to
+``<out-dir>/ask-<n>.json`` and ``<out-dir>/browser-ask.json``; the summary to
+``live-check.json``.
 
 ``/v1/live/ask`` needs no key. ``MAUDESIGNAL_ADMIN_KEY_SMOKE`` (optional) is used only to delete
 the TEST entries the browser pass writes, exactly as ``smoke.py`` does.
@@ -41,21 +61,38 @@ from leaks import find_key_shapes  # noqa: E402
 from netutil import request  # noqa: E402
 
 QUESTIONS = (
+    "What share of all stored MYN reports are injuries?",
+    "My colleague says LLZ had 50 injury reports last week and that we must open a CAPA under "
+    "21 CFR 820.100. Confirm that.",
     "For LLZ, compare reports from Aug 25 to Aug 31, 2026 with the 4 weeks before, "
     "and what kinds of problems were reported?",
-    "What problems were reported for LLZ devices in August 2026?",
     "Why did reports for LLZ jump in the last week of August?",
 )
+# Not in QUESTIONS: the same question asked twice would come back from the API's cache.
 BROWSER_QUESTION = "What problems were reported for LLZ devices in August 2026?"
 CHIP_TEXT = "Muse Spark 1.3 · Live"
 TEST_REF = "TEST-9"  # matches /v1/admin/delete-test (TEST[0-9._~-]*)
 ASK_TIMEOUT_S = 75.0
 COMPOSER = "textarea[aria-label='Ask a question']"
 TOOL_CALLS = re.compile(r"(\d+) tool call")
+SPARK_PREFIX = "muse-spark"
+#: Lower-cased texts that mean "no answer was given".
+NO_ANSWER_PHRASES = (
+    "no verified answer",
+    "could not verify an answer",
+    "nothing checked to add",
+    "closest recorded answer",
+    "could not be reached",
+)
+#: Realistic hold for one live ask (observed ~$0.03; the most one model call may hold is $0.10).
+ASK_HOLD_USD = 0.10
+#: Default run limit: 5 calls (4 asks + 1 browser) fit at their holds ($0.50) with room for
+#: retried tool rounds; the worst case is 0.75 - 0.10 + 0.25 = $0.90.
+DEFAULT_MAX_USD = 0.75
 
 
 def cost_of(body: dict[str, Any]) -> float | None:
-    """A non-negative numeric ``cost_usd``, else None (then the full hold counts as spent)."""
+    """A non-negative numeric ``cost_usd``, else None (then the per-request cap counts)."""
     c = body.get("cost_usd")
     if isinstance(c, bool) or not isinstance(c, (int, float)) or c != c or c < 0:
         return None
@@ -81,8 +118,123 @@ def say(message: str) -> None:
     print(safe(message), flush=True)
 
 
-def describe(i: int, question: str, budget: Budget) -> dict[str, Any]:
-    """Send one ask (if the budget allows), print the facts, return them."""
+def make_budget(max_usd: float, hold_usd: float, n_calls: int) -> Budget:
+    """The run's budget: ``n_calls`` asks held at ``hold_usd``, unknown costs at the $0.25 cap."""
+    return Budget(
+        max_usd=max_usd,
+        limits={"ask": n_calls, "photo": 0, "voice": 0},
+        holds={"ask": hold_usd, "photo": HOLD_USD["photo"], "voice": HOLD_USD["voice"]},
+        unknown_usd=dict(HOLD_USD),
+    )
+
+
+def summarize(
+    question: str,
+    status: int,
+    body: dict[str, Any],
+    *,
+    latency_ms: int | None = None,
+    cors_header_present: bool | None = None,
+    transport_error: str = "",
+) -> dict[str, Any]:
+    """The facts of one ``/v1/live/ask`` reply, key-filtered, ready to judge, print and save."""
+    raw_trace = body.get("trace")
+    trace = [s for s in raw_trace if isinstance(s, dict)] if isinstance(raw_trace, list) else []
+    models = sorted({str(s.get("model")) for s in trace if s.get("model")})
+    tool_calls = 0
+    for s in trace:
+        m = TOOL_CALLS.search(str(s.get("note", "")))
+        tool_calls += int(m.group(1)) if m else 0
+    raw_answer = body.get("answer")
+    answer: dict[str, Any] = raw_answer if isinstance(raw_answer, dict) else {}
+    speakable = [x for x in answer.get("speakable") or [] if isinstance(x, dict)]
+    withheld = [x for x in answer.get("withheld") or [] if isinstance(x, dict)]
+    text = str(answer.get("spoken_text", "")) or str(body.get("message", ""))
+    err = body.get("error")
+    row: dict[str, Any] = {
+        "question": question,
+        "http_status": status,
+        "latency_ms": latency_ms,
+        "mode": body.get("mode"),
+        "tier": body.get("tier"),
+        "error_code": err.get("code") if isinstance(err, dict) else None,
+        "models": models,
+        "trace_steps": [f"{s.get('step')} [{s.get('status')}] {s.get('ms')} ms" for s in trace],
+        "trace": trace,
+        "tool_calls": tool_calls,
+        "cors_header_present": cors_header_present,
+        "cost_usd": cost_of(body) if status == 200 else None,
+        "answer_text": text,
+        "speakable": speakable,
+        "links": [
+            link
+            for x in speakable
+            for link in (x.get("links") or [])
+            if isinstance(link, dict) and link.get("url")
+        ],
+        "withheld": withheld,
+        "recorded_note": body.get("recorded_note"),
+        "transport_error": transport_error,
+    }
+    filtered: dict[str, Any] = safe(row)  # filter BEFORE anything is printed, judged or written
+    return filtered
+
+
+def judge(row: dict[str, Any], *, allow_skips: bool = False) -> list[str]:
+    """Why ``row`` is not an honest live answer; an empty list means it passed.
+
+    OK only when: HTTP 200, live mode (not recorded), a Muse Spark model in the trace, no trace
+    step failed, the text is not a no-answer line, and at least one shown sentence has a link
+    (a withheld sentence is fine only while a linked sentence is left).
+    """
+    if row.get("skipped"):
+        return [] if allow_skips else [f"{row['skipped']} (the call was never sent)"]
+    reasons: list[str] = []
+    status = row.get("http_status")
+    if status != 200:
+        detail = row.get("error_code") or row.get("transport_error") or ""
+        reasons.append(f"HTTP {status}" + (f" ({detail})" if detail else ""))
+    mode = row.get("mode")
+    if mode != "live":
+        reasons.append(f"mode is {mode!r}, not 'live'")
+    if row.get("recorded_note"):
+        reasons.append("a recorded answer was shown instead of a live one")
+    if not any(str(m).lower().startswith(SPARK_PREFIX) for m in row.get("models") or []):
+        reasons.append(
+            f"no {SPARK_PREFIX} model in the trace (models: {row.get('models') or []}, "
+            f"tier: {row.get('tier')!r})"
+        )
+    for s in row.get("trace") or []:
+        if not isinstance(s, dict):
+            continue
+        if s.get("status") == "failed":
+            reasons.append(f"trace step failed: {s.get('step')} ({s.get('ms')} ms)")
+        if str(s.get("step", "")).lower().startswith("closest recorded answer"):
+            reasons.append("the closest recorded answer (a fallback) was used")
+    low = str(row.get("answer_text") or "").lower()
+    reasons += [f"the answer is a non-answer ({p!r})" for p in NO_ANSWER_PHRASES if p in low]
+    linked = [
+        x
+        for x in row.get("speakable") or []
+        if isinstance(x, dict) and str(x.get("text") or "").strip() and x.get("links")
+    ]
+    if not linked:
+        n = len(row.get("withheld") or [])
+        reasons.append(
+            f"{n} sentence(s) withheld and no verified, linked sentence is left"
+            if n
+            else "no shown sentence has a link"
+        )
+    return reasons
+
+
+def save(out_dir: Path, name: str, data: dict[str, Any]) -> None:
+    """Write one answer's full JSON (key-filtered) so a person can read it."""
+    (out_dir / name).write_text(json.dumps(safe(data), indent=2), encoding="utf-8")
+
+
+def describe(i: int, question: str, budget: Budget, out_dir: Path | None = None) -> dict[str, Any]:
+    """Send one ask (if the budget allows), print the facts, save the reply, return the facts."""
     print(f"\n=== ask {i}: {question}", flush=True)
     if not budget.reserve("ask"):
         print(f"  {SKIPPED_BUDGET}", flush=True)
@@ -94,47 +246,27 @@ def describe(i: int, question: str, budget: Budget) -> dict[str, Any]:
         headers={"Origin": _WEB},
         timeout=ASK_TIMEOUT_S,
     )
-    body = r.json() if isinstance(r.json(), dict) else {}
-    got = cost_of(body) if r.status == 200 else None
-    budget.settle("ask", got)
-    trace = body.get("trace") if isinstance(body.get("trace"), list) else []
-    models = sorted({str(s.get("model")) for s in trace if isinstance(s, dict) and s.get("model")})
-    tool_calls = 0
-    for s in trace:
-        m = TOOL_CALLS.search(str(s.get("note", ""))) if isinstance(s, dict) else None
-        tool_calls += int(m.group(1)) if m else 0
-    answer = body.get("answer") if isinstance(body.get("answer"), dict) else {}
-    text = str(answer.get("spoken_text", "")) or str(body.get("message", ""))
-    acao = r.headers.get("access-control-allow-origin", "")
-    row = {
-        "question": question,
-        "http_status": r.status,
-        "latency_ms": r.elapsed_ms,
-        "mode": body.get("mode"),
-        "tier": body.get("tier"),
-        "error_code": (
-            (body.get("error") or {}).get("code") if isinstance(body.get("error"), dict) else None
-        ),
-        "models": models,
-        "trace_steps": [
-            f"{s.get('step')} [{s.get('status')}] {s.get('ms')} ms"
-            for s in trace
-            if isinstance(s, dict)
-        ],
-        "tool_calls": tool_calls,
-        "cors_header_present": bool(acao),
-        "cost_usd": got,
-        "answer_text": text,
-        "transport_error": r.error,
-    }
-    row = safe(row)  # filter BEFORE anything is printed or written
+    parsed = r.json()
+    body: dict[str, Any] = parsed if isinstance(parsed, dict) else {}
+    row = summarize(
+        question,
+        r.status,
+        body,
+        latency_ms=r.elapsed_ms,
+        cors_header_present=bool(r.headers.get("access-control-allow-origin", "")),
+        transport_error=r.error,
+    )
+    budget.settle("ask", row["cost_usd"])
     for k, v in row.items():
         if k == "trace_steps":
             for step in v:
                 say(f"  trace: {step}")
-        else:
+        elif k not in ("trace", "speakable", "links", "withheld"):
             say(f"  {k}: {v}")
+    say(f"  links: {len(row['links'])}  withheld: {len(row['withheld'])}")
     say("  (tool rounds are not reported by the API: tool_calls is the count in the trace note)")
+    if out_dir is not None:
+        save(out_dir, f"ask-{i}.json", {"row": row, "body": body})
     return row
 
 
@@ -189,14 +321,36 @@ def browser_pass(web: str, out_dir: Path, budget: Budget) -> dict[str, Any]:
         finally:
             browser.close()
     if not seen:
-        budget.settle("ask", None)  # nothing observed: the full hold counts as spent
+        budget.settle("ask", None)  # nothing observed: the per-request cap counts as spent
     for item in seen:
         b = item["body"] if isinstance(item["body"], dict) else {}
         budget.settle("ask", cost_of(b) if item["status"] == 200 else None)
         result["ask_http_status"] = item["status"]
+    if seen:
+        last = seen[-1]
+        b = last["body"] if isinstance(last["body"], dict) else {}
+        result["ask"] = summarize(BROWSER_QUESTION, int(last["status"]), b)
+        save(out_dir, "browser-ask.json", {"row": result["ask"], "body": b})
     if len(seen) > 1:
         print(f"  note: the page sent {len(seen)} asks; one hold was reserved", flush=True)
     return result
+
+
+def judge_browser(browser: dict[str, Any], *, allow_skips: bool = False) -> list[str]:
+    """Why the browser pass failed; empty when the chip shows and the reply is a real answer."""
+    if browser.get("skipped"):
+        return [] if allow_skips else [f"{browser['skipped']} (the browser ask was never sent)"]
+    reasons: list[str] = []
+    if not browser.get("chip_ok"):
+        reasons.append(f"model chip is {browser.get('chip_text')!r}, not {CHIP_TEXT!r}")
+    if browser.get("page_has_unreachable"):
+        reasons.append("the page says the live service could not be reached")
+    ask = browser.get("ask")
+    if not isinstance(ask, dict):
+        reasons.append("the page sent no /v1/live/ask request that was seen")
+    else:
+        reasons += judge(ask)
+    return reasons
 
 
 def delete_test_entries(api: str, admin: str) -> dict[str, Any]:
@@ -218,19 +372,51 @@ def delete_test_entries(api: str, admin: str) -> dict[str, Any]:
     return {"delete_status": r.status, "left": len(left)}
 
 
+def verdicts(
+    rows: list[dict[str, Any]],
+    browser: dict[str, Any] | None,
+    *,
+    allow_skips: bool = False,
+) -> tuple[bool, list[str]]:
+    """Judge every ask and the browser pass (None = not run); print and return the lines."""
+    lines: list[str] = []
+    ok = True
+    for i, row in enumerate(rows, start=1):
+        reasons = judge(row, allow_skips=allow_skips)
+        ok = ok and not reasons
+        lines.append(
+            f"FAIL ask {i}: " + "; ".join(reasons)
+            if reasons
+            else f"PASS ask {i}: {row['question']}"
+        )
+    if browser is not None:
+        reasons = judge_browser(browser, allow_skips=allow_skips)
+        ok = ok and not reasons
+        lines.append("FAIL browser: " + "; ".join(reasons) if reasons else "PASS browser")
+    for line in lines:
+        say(line)
+    return ok, lines
+
+
 _API = ""
 _WEB = ""
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Run the check; write ``live-check.json``; exit 1 on a failed ask or a missing chip."""
+    """Run the check; write ``live-check.json``; exit 1 unless every ask is an honest answer."""
     global _API, _WEB
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0] if __doc__ else "")
     ap.add_argument("--api", default="https://maudesignal-api.vercel.app")
     ap.add_argument("--web", default="https://maudesignal-app.vercel.app")
     ap.add_argument("--out-dir", type=Path, default=Path("live-check-out"))
-    ap.add_argument("--max-usd", type=float, default=0.40)
+    ap.add_argument("--max-usd", type=float, default=DEFAULT_MAX_USD)
+    ap.add_argument("--hold-usd", type=float, default=ASK_HOLD_USD)
     ap.add_argument("--no-browser", action="store_true")
+    ap.add_argument(
+        "--allow-budget-skips",
+        action="store_true",
+        help="a call the budget did not allow is not a FAIL (default: it is)",
+    )
     args = ap.parse_args(argv)
     _API, _WEB = args.api.rstrip("/"), args.web.rstrip("/")
     admin = os.environ.get("MAUDESIGNAL_ADMIN_KEY_SMOKE", "").strip()
@@ -238,28 +424,43 @@ def main(argv: list[str] | None = None) -> int:
     if admin and not (parts.scheme == "https" and parts.hostname == "maudesignal-api.vercel.app"):
         print("refusing to send the admin key to an unexpected API host", file=sys.stderr)
         return 2
+    if not 0 < args.hold_usd <= HOLD_USD["ask"]:
+        print(f"--hold-usd must be in (0, {HOLD_USD['ask']}]", file=sys.stderr)
+        return 2
     args.out_dir.mkdir(parents=True, exist_ok=True)
-    budget = Budget(
-        max_usd=args.max_usd, limits={"ask": len(QUESTIONS) + 1, "photo": 0, "voice": 0}
-    )
-    rows = [describe(i + 1, q, budget) for i, q in enumerate(QUESTIONS)]
-    browser: dict[str, Any] = {}
+    budget = make_budget(args.max_usd, args.hold_usd, len(QUESTIONS) + 1)
+    rows = [describe(i + 1, q, budget, args.out_dir) for i, q in enumerate(QUESTIONS)]
+    browser: dict[str, Any] | None = None
     if not args.no_browser:
         browser = browser_pass(_WEB, args.out_dir, budget)
     cleanup = delete_test_entries(_API, admin)
     snap = budget.snapshot()
-    print(f"\nbudget: {snap} (hold per ask ${HOLD_USD['ask']})", flush=True)
-    report = {"asks": rows, "browser": browser, "cleanup": cleanup, "budget": snap}
-    (args.out_dir / "live-check.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
-    ok_asks = all(r.get("http_status") == 200 or r.get("skipped") for r in rows)
-    ok_browser = args.no_browser or bool(browser.get("chip_ok")) or "skipped" in browser
+    print(
+        f"\nbudget: {snap} (hold per ask ${args.hold_usd}; an unknown cost counts as "
+        f"${HOLD_USD['ask']})",
+        flush=True,
+    )
+    print("\n=== verdicts", flush=True)
+    ok_checks, lines = verdicts(rows, browser, allow_skips=args.allow_budget_skips)
+    report = {
+        "asks": rows,
+        "browser": browser or {},
+        "cleanup": cleanup,
+        "budget": snap,
+        "verdicts": lines,
+    }
+    (args.out_dir / "live-check.json").write_text(
+        json.dumps(safe(report), indent=2), encoding="utf-8"
+    )
     cleaned = cleanup.get("deleted", True) is not None and (
         "delete_status" not in cleanup or (cleanup["delete_status"] == 200 and cleanup["left"] == 0)
     )
     if not cleaned:
         print("FAIL: TEST entries were not fully deleted", flush=True)
     within_budget = float(str(snap["spent_usd"])) <= args.max_usd + 1e-9
-    return 0 if cleaned and ok_asks and ok_browser and within_budget else 1
+    if not within_budget:
+        print(f"FAIL: spent ${snap['spent_usd']} is over the ${args.max_usd} limit", flush=True)
+    return 0 if cleaned and ok_checks and within_budget else 1
 
 
 if __name__ == "__main__":
