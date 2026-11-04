@@ -2745,6 +2745,8 @@ def v2_s_positioning(env: Env) -> str:
 
 PROFILE_TABS = ("overview", "design", "vv", "regulatory", "market", "postmarket", "people")
 SIM_LABEL = "SIMULATED — sample data"
+# The owner-dictated disclaimer, the only allowed "validated" on a simulated profile page.
+PROFILE_NOT_VALIDATED = r"\bthis build is not validated\b"
 PROFILE_THEMES = ("light", "dark", "contrast", "black", "pink")
 
 
@@ -2794,12 +2796,21 @@ def profile_check(env: Env, did: str, tab: str) -> None:
         raise AssertionError(f"{did}/{tab}: {env.overflow()} px sideways scroll")
     text = env.page.locator("#main-v2").inner_text()
     sim = text.split("Real FDA data · MAUDE")[0]
-    if re.search(
+    # The one owner-approved use of the word: the "this build is not validated" disclaimer
+    # (the footer link and the validation note). Only that exact sentence is removed; any
+    # other "validated" (or safe, FDA-approved, ...) on a simulated page still fails.
+    sim_checked = re.sub(PROFILE_NOT_VALIDATED, " ", sim, flags=re.I)
+    banned = re.search(
         r"fda[- ]approved|\bvalidated\b|\bsafe\b|\bunsafe\b|draft capa|\btool (determined|decided)\b",
-        sim,
+        sim_checked,
         re.I,
-    ):
-        raise AssertionError(f"{did}/{tab}: banned wording on a simulated page")
+    )
+    if banned:
+        at = banned.start()
+        near = sim_checked[max(0, at - 60) : banned.end() + 30].replace("\n", " | ")
+        raise AssertionError(
+            f"{did}/{tab}: banned wording on a simulated page: {banned.group(0)!r} in {near!r}"
+        )
     if re.search(r"\bK\d{6}\b", sim):
         raise AssertionError(f"{did}/{tab}: a real-looking K-number is shown")
 
