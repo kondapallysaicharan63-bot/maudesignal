@@ -29,7 +29,6 @@ jobs:
         run: |
           pip install "playwright==1.63.0"
           python -m playwright install --with-deps chromium
-          sudo apt-get install -y ffmpeg
       - name: Record and judge the two live clips
         env:
           MAUDESIGNAL_ADMIN_KEY_SMOKE: ${{ secrets.MAUDESIGNAL_ADMIN_KEY_SMOKE }}
@@ -40,7 +39,7 @@ jobs:
         if: always()
         run: |
           for f in clips-out/*.webm; do
-            [ -f "$f" ] && ffmpeg -y -loglevel error -i "$f" -c:v libx264 -pix_fmt yuv420p \
+            command -v ffmpeg >/dev/null && [ -f "$f" ] && ffmpeg -y -loglevel error -i "$f" -c:v libx264 -pix_fmt yuv420p \
               -crf 18 "${f%.webm}.mp4"
           done
           ls -la clips-out
@@ -51,7 +50,7 @@ jobs:
         run: |
           B="media/${GITHUB_RUN_ID}"
           mkdir -p /tmp/m
-          cp clips-out/*.mp4 clips-out/*.png clips-out/*.json /tmp/m/ 2>/dev/null || true
+          cp clips-out/*.mp4 clips-out/*.webm clips-out/*.png clips-out/*.json /tmp/m/ 2>/dev/null || true
           cd /tmp/m
           git init -q -b "$B"
           git add -A
