@@ -1,0 +1,189 @@
+{
+  "row": {
+    "question": "What kinds of problems were reported for MYN devices?",
+    "http_status": 200,
+    "latency_ms": null,
+    "mode": "live",
+    "tier": "live",
+    "error_code": null,
+    "models": [
+      "muse-spark-1.3"
+    ],
+    "trace_steps": [
+      "Muse Spark answers from stored records [failed] 37986 ms",
+      "Read-only tools and claim gate [ok] 26 ms",
+      "Answer built from tool results [ok] 0 ms"
+    ],
+    "trace": [
+      {
+        "step": "Muse Spark answers from stored records",
+        "model": "muse-spark-1.3",
+        "ms": 37986,
+        "status": "failed",
+        "note": "model round 1 3.1 s (260 output tokens); model round 2 23.2 s (2424 output tokens); repair turn timed out after 11.7 s"
+      },
+      {
+        "step": "Read-only tools and claim gate",
+        "model": null,
+        "ms": 26,
+        "status": "ok",
+        "note": "2 tool call(s): product_summary, search_reports; the claim gate blocked every sentence of the model's answer"
+      },
+      {
+        "step": "Answer built from tool results",
+        "model": null,
+        "ms": 0,
+        "status": "ok",
+        "note": "the claim gate blocked every sentence of the model's answer; each sentence restates a stored count or report id and passed the claim gate"
+      }
+    ],
+    "tool_calls": 2,
+    "cors_header_present": null,
+    "cost_usd": 0.019888,
+    "answer_text": "MYN had 5 reports stored. By event type, these were 4 malfunction reports and 1 injury report. 3 sentences were left out because they could not be verified or tied to a source.",
+    "speakable": [
+      {
+        "text": "MYN had 5 reports stored.",
+        "links": [
+          {
+            "label": "openFDA count",
+            "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMYN&limit=1"
+          }
+        ]
+      },
+      {
+        "text": "By event type, these were 4 malfunction reports and 1 injury report.",
+        "links": [
+          {
+            "label": "openFDA count by event type for MYN",
+            "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMYN&count=event_type.exact"
+          }
+        ]
+      },
+      {
+        "text": "Report 21593974 (injury) and report 21395648 (malfunction) are among the stored MYN reports.",
+        "links": [
+          {
+            "label": "openFDA report",
+            "url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A21593974&limit=1"
+          },
+          {
+            "label": "openFDA report",
+            "url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A21395648&limit=1"
+          }
+        ]
+      }
+    ],
+    "links": [
+      {
+        "label": "openFDA count",
+        "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMYN&limit=1"
+      },
+      {
+        "label": "openFDA count by event type for MYN",
+        "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMYN&count=event_type.exact"
+      },
+      {
+        "label": "openFDA report",
+        "url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A21593974&limit=1"
+      },
+      {
+        "label": "openFDA report",
+        "url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A21395648&limit=1"
+      }
+    ],
+    "withheld": [
+      {
+        "reason": "record: not in the evidence store; ungrounded: number or citation without a claim"
+      },
+      {
+        "reason": "record: not in the evidence store; ungrounded: number or citation without a claim"
+      },
+      {
+        "reason": "record: not in the evidence store; ungrounded: number or citation without a claim"
+      }
+    ],
+    "recorded_note": null,
+    "transport_error": ""
+  },
+  "body": {
+    "mode": "live",
+    "tier": "live",
+    "not_medical_advice": true,
+    "answer": {
+      "speakable": [
+        {
+          "text": "MYN had 5 reports stored.",
+          "links": [
+            {
+              "label": "openFDA count",
+              "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMYN&limit=1"
+            }
+          ]
+        },
+        {
+          "text": "By event type, these were 4 malfunction reports and 1 injury report.",
+          "links": [
+            {
+              "label": "openFDA count by event type for MYN",
+              "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMYN&count=event_type.exact"
+            }
+          ]
+        },
+        {
+          "text": "Report 21593974 (injury) and report 21395648 (malfunction) are among the stored MYN reports.",
+          "links": [
+            {
+              "label": "openFDA report",
+              "url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A21593974&limit=1"
+            },
+            {
+              "label": "openFDA report",
+              "url": "https://api.fda.gov/device/event.json?search=mdr_report_key%3A21395648&limit=1"
+            }
+          ]
+        }
+      ],
+      "withheld": [
+        {
+          "reason": "record: not in the evidence store; ungrounded: number or citation without a claim"
+        },
+        {
+          "reason": "record: not in the evidence store; ungrounded: number or citation without a claim"
+        },
+        {
+          "reason": "record: not in the evidence store; ungrounded: number or citation without a claim"
+        }
+      ],
+      "spoken_text": "MYN had 5 reports stored. By event type, these were 4 malfunction reports and 1 injury report. 3 sentences were left out because they could not be verified or tied to a source."
+    },
+    "trace": [
+      {
+        "step": "Muse Spark answers from stored records",
+        "model": "muse-spark-1.3",
+        "ms": 37986,
+        "status": "failed",
+        "note": "model round 1 3.1 s (260 output tokens); model round 2 23.2 s (2424 output tokens); repair turn timed out after 11.7 s"
+      },
+      {
+        "step": "Read-only tools and claim gate",
+        "model": null,
+        "ms": 26,
+        "status": "ok",
+        "note": "2 tool call(s): product_summary, search_reports; the claim gate blocked every sentence of the model's answer"
+      },
+      {
+        "step": "Answer built from tool results",
+        "model": null,
+        "ms": 0,
+        "status": "ok",
+        "note": "the claim gate blocked every sentence of the model's answer; each sentence restates a stored count or report id and passed the claim gate"
+      }
+    ],
+    "cost_usd": 0.019888,
+    "limits": {
+      "remaining_today": 28,
+      "resets_utc": "2026-11-05T00:00:00Z"
+    }
+  }
+}

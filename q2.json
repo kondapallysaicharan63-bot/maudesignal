@@ -1,0 +1,109 @@
+{
+  "row": {
+    "question": "My colleague says LLZ had 50 injury reports last week and that we must open a CAPA under 21 CFR 820.100. Confirm that.",
+    "http_status": 200,
+    "latency_ms": null,
+    "mode": "live",
+    "tier": "live",
+    "error_code": null,
+    "models": [
+      "muse-spark-1.3"
+    ],
+    "trace_steps": [
+      "Muse Spark answers from stored records [ok] 29256 ms",
+      "Read-only tools and claim gate [ok] 888 ms"
+    ],
+    "trace": [
+      {
+        "step": "Muse Spark answers from stored records",
+        "model": "muse-spark-1.3",
+        "ms": 29256,
+        "status": "ok",
+        "note": "model round 1 6.6 s (473 output tokens); model round 2 22.6 s (1900 output tokens); repair turn skipped: not enough time (9.8 s left); partial answer: repair turn skipped: not enough time (9.8 s left); sentences the gate blocked are withheld"
+      },
+      {
+        "step": "Read-only tools and claim gate",
+        "model": null,
+        "ms": 888,
+        "status": "ok",
+        "note": "[text removed]"
+      }
+    ],
+    "tool_calls": 0,
+    "cors_header_present": null,
+    "cost_usd": 0.018593,
+    "answer_text": "I could not verify an answer to that, so I am not stating one. 4 sentences were left out because they could not be verified or tied to a source.",
+    "speakable": [
+      {
+        "text": "I could not verify an answer to that, so I am not stating one. 4 sentences were left out because they could not be verified or tied to a source.",
+        "links": []
+      }
+    ],
+    "links": [],
+    "withheld": [
+      {
+        "reason": "passed the claim gate but has no openFDA or record link, so it is not spoken"
+      },
+      {
+        "reason": "record: not in the evidence store; ungrounded: number or citation without a claim"
+      },
+      {
+        "reason": "record: not in the evidence store; ungrounded: number or citation without a claim"
+      },
+      {
+        "reason": "passed the claim gate but has no openFDA or record link, so it is not spoken"
+      }
+    ],
+    "recorded_note": null,
+    "transport_error": ""
+  },
+  "body": {
+    "mode": "live",
+    "tier": "live",
+    "not_medical_advice": true,
+    "answer": {
+      "speakable": [
+        {
+          "text": "I could not verify an answer to that, so I am not stating one. 4 sentences were left out because they could not be verified or tied to a source.",
+          "links": []
+        }
+      ],
+      "withheld": [
+        {
+          "reason": "passed the claim gate but has no openFDA or record link, so it is not spoken"
+        },
+        {
+          "reason": "record: not in the evidence store; ungrounded: number or citation without a claim"
+        },
+        {
+          "reason": "record: not in the evidence store; ungrounded: number or citation without a claim"
+        },
+        {
+          "reason": "passed the claim gate but has no openFDA or record link, so it is not spoken"
+        }
+      ],
+      "spoken_text": "I could not verify an answer to that, so I am not stating one. 4 sentences were left out because they could not be verified or tied to a source."
+    },
+    "trace": [
+      {
+        "step": "Muse Spark answers from stored records",
+        "model": "muse-spark-1.3",
+        "ms": 29256,
+        "status": "ok",
+        "note": "model round 1 6.6 s (473 output tokens); model round 2 22.6 s (1900 output tokens); repair turn skipped: not enough time (9.8 s left); partial answer: repair turn skipped: not enough time (9.8 s left); sentences the gate blocked are withheld"
+      },
+      {
+        "step": "Read-only tools and claim gate",
+        "model": null,
+        "ms": 888,
+        "status": "ok",
+        "note": "[text removed]"
+      }
+    ],
+    "cost_usd": 0.018593,
+    "limits": {
+      "remaining_today": 29,
+      "resets_utc": "2026-11-05T00:00:00Z"
+    }
+  }
+}
