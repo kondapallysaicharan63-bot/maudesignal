@@ -1,0 +1,33 @@
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "In the stored demo snapshot for August 25, 2026 to August 31, 2026, LLZ shows reports suddenly increased: 33 reports against a weekly average of 8.75 in the four weeks before."
+      }
+    ],
+    "structuredContent": {
+      "tool": "what_changed_this_week",
+      "speakable": "In the stored demo snapshot for August 25, 2026 to August 31, 2026, LLZ shows reports suddenly increased: 33 reports against a weekly average of 8.75 in the four weeks before.",
+      "facts": [
+        {
+          "text": "LLZ (System, Image Processing, Radiological): reports suddenly increased. 33 reports received August 25, 2026 to August 31, 2026, against a weekly average of 8.75 in the four weeks before.",
+          "link": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260825+TO+20260831%5D&limit=1",
+          "link_label": "openFDA: reports in this week"
+        }
+      ],
+      "advisory": "Advisory triage aid for quality and regulatory review; not medical advice; nothing is filed with FDA.",
+      "provenance": {
+        "kind": "stored_demo_snapshot",
+        "source": "Stored demo snapshot of openFDA device adverse-event reports",
+        "data_dates": "week August 25, 2026 to August 31, 2026; snapshot fetched 2026-10-27; latest stored report received August 31, 2026",
+        "queried_at_utc": null,
+        "note": "Not live data. The links open the live openFDA record or query for comparison."
+      },
+      "withheld": []
+    },
+    "isError": false
+  }
+}

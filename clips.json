@@ -1,0 +1,273 @@
+{
+  "q2": {
+    "question": "My colleague says LLZ had 50 injury reports last week and that we must open a CAPA under 21 CFR 820.100. Confirm that.",
+    "row": {
+      "question": "My colleague says LLZ had 50 injury reports last week and that we must open a CAPA under 21 CFR 820.100. Confirm that.",
+      "http_status": 200,
+      "latency_ms": null,
+      "mode": "live",
+      "tier": "live",
+      "error_code": null,
+      "models": [
+        "muse-spark-1.3"
+      ],
+      "trace_steps": [
+        "Muse Spark answers from stored records [failed] 37139 ms",
+        "Read-only tools and claim gate [ok] 863 ms",
+        "Answer built from tool results [ok] 0 ms"
+      ],
+      "trace": [
+        {
+          "step": "Muse Spark answers from stored records",
+          "model": "muse-spark-1.3",
+          "ms": 37139,
+          "status": "failed",
+          "note": "model round 1 5.4 s (461 output tokens); model round 2 18.8 s (1805 output tokens); repair turn timed out after 12.9 s"
+        },
+        {
+          "step": "Read-only tools and claim gate",
+          "model": null,
+          "ms": 863,
+          "status": "ok",
+          "note": "[text removed]"
+        },
+        {
+          "step": "Answer built from tool results",
+          "model": null,
+          "ms": 0,
+          "status": "ok",
+          "note": "no sentence of the model's answer carried a verified claim; each sentence restates a stored count or report id and passed the claim gate"
+        }
+      ],
+      "tool_calls": 0,
+      "cors_header_present": null,
+      "cost_usd": 0.018108,
+      "answer_text": "LLZ had 121 reports stored. By event type, these were 119 malfunction reports and 2 injury reports. 3 sentences were left out because they could not be verified or tied to a source.",
+      "speakable": [
+        {
+          "text": "LLZ had 121 reports stored.",
+          "links": [
+            {
+              "label": "openFDA count",
+              "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260701+TO+20260831%5D&limit=1"
+            }
+          ]
+        },
+        {
+          "text": "By event type, these were 119 malfunction reports and 2 injury reports.",
+          "links": [
+            {
+              "label": "openFDA count by event type for LLZ, July 1, 2026 to August 31, 2026",
+              "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260701+TO+20260831%5D&count=event_type.exact"
+            }
+          ]
+        }
+      ],
+      "links": [
+        {
+          "label": "openFDA count",
+          "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260701+TO+20260831%5D&limit=1"
+        },
+        {
+          "label": "openFDA count by event type for LLZ, July 1, 2026 to August 31, 2026",
+          "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260701+TO+20260831%5D&count=event_type.exact"
+        }
+      ],
+      "withheld": [
+        {
+          "reason": "record: not in the evidence store; ungrounded: number or citation without a claim"
+        },
+        {
+          "reason": "record: not in the evidence store; ungrounded: number or citation without a claim"
+        },
+        {
+          "reason": "passed the claim gate but has no openFDA or record link, so it is not spoken"
+        }
+      ],
+      "recorded_note": null,
+      "transport_error": ""
+    },
+    "reasons": [
+      "trace step failed: Muse Spark answers from stored records (37139 ms)"
+    ],
+    "asks_sent": 1
+  },
+  "phone": {
+    "question": "How many MYN reports are stored, by event type?",
+    "row": {
+      "question": "How many MYN reports are stored, by event type?",
+      "http_status": 200,
+      "latency_ms": null,
+      "mode": "live",
+      "tier": "live",
+      "error_code": null,
+      "models": [
+        "muse-spark-1.3"
+      ],
+      "trace_steps": [
+        "Muse Spark answers from stored records [ok] 30015 ms",
+        "Read-only tools and claim gate [ok] 25 ms"
+      ],
+      "trace": [
+        {
+          "step": "Muse Spark answers from stored records",
+          "model": "muse-spark-1.3",
+          "ms": 30015,
+          "status": "ok",
+          "note": "model round 1 1.7 s (78 output tokens); model round 2 20.6 s (2123 output tokens); repair turn 7.7 s (787 output tokens)"
+        },
+        {
+          "step": "Read-only tools and claim gate",
+          "model": null,
+          "ms": 25,
+          "status": "ok",
+          "note": "1 tool call(s): product_summary; the claim gate blocked every sentence of the model's answer"
+        }
+      ],
+      "tool_calls": 1,
+      "cors_header_present": null,
+      "cost_usd": 0.022968,
+      "answer_text": "Stored MYN reports total 5 from 2 0 0 6 0 5 1 8 to 20250313, with 4 malfunction (80.0 percent) and 1 injury (20.0 percent).",
+      "speakable": [
+        {
+          "text": "Stored MYN reports total 5 from 20060518 to 20250313, with 4 malfunction (80.0%) and 1 injury (20.0%).",
+          "links": [
+            {
+              "label": "openFDA count",
+              "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMYN+AND+date_received%3A%5B20060518+TO+20250313%5D&limit=1"
+            },
+            {
+              "label": "openFDA count by event type for MYN, May 18, 2006 to March 13, 2025",
+              "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMYN+AND+date_received%3A%5B20060518+TO+20250313%5D&count=event_type.exact"
+            }
+          ]
+        }
+      ],
+      "links": [
+        {
+          "label": "openFDA count",
+          "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMYN+AND+date_received%3A%5B20060518+TO+20250313%5D&limit=1"
+        },
+        {
+          "label": "openFDA count by event type for MYN, May 18, 2006 to March 13, 2025",
+          "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3AMYN+AND+date_received%3A%5B20060518+TO+20250313%5D&count=event_type.exact"
+        }
+      ],
+      "withheld": [],
+      "recorded_note": null,
+      "transport_error": ""
+    },
+    "reasons": [],
+    "asks_sent": 1
+  },
+  "label": {
+    "question": "label photo label-nomad-pro2.jpg",
+    "mode": null,
+    "text": null,
+    "http": [],
+    "reasons": [
+      "label reading mode is None, not 'live'",
+      "/v1/live/label status []"
+    ]
+  },
+  "mcp": {
+    "question": "MCP tools/call what_changed_this_week LLZ",
+    "tools": [
+      "what_changed_this_week",
+      "check_device_type",
+      "ask",
+      "get_report",
+      "recalls",
+      "lookup_device"
+    ],
+    "http": 200,
+    "tool_count": 6,
+    "reasons": []
+  },
+  "tour": [
+    {
+      "stop": "home",
+      "path": "/?layout=v2&r=TEST-9",
+      "ok": true
+    },
+    {
+      "stop": "owl",
+      "path": "/?layout=v2&r=TEST-9",
+      "ok": true
+    },
+    {
+      "stop": "investigate",
+      "path": "/investigate?layout=v2&r=TEST-9",
+      "ok": true
+    },
+    {
+      "stop": "check-llz",
+      "path": "/workflow/check-device/LLZ?layout=v2&r=TEST-9",
+      "ok": true
+    },
+    {
+      "stop": "signals",
+      "path": "/signals?layout=v2&r=TEST-9",
+      "ok": true
+    },
+    {
+      "stop": "outside-sources",
+      "path": "/signals/ranked?layout=v2&r=TEST-9",
+      "ok": true
+    },
+    {
+      "stop": "evidence",
+      "path": "/evidence?layout=v2&r=TEST-9",
+      "ok": true
+    },
+    {
+      "stop": "wonder",
+      "path": "/evidence/review?layout=v2&r=TEST-9",
+      "ok": true
+    },
+    {
+      "stop": "audit",
+      "path": "/evidence/audit?layout=v2&r=TEST-9",
+      "ok": true
+    },
+    {
+      "stop": "board",
+      "path": "/board?layout=v2&r=TEST-9",
+      "ok": true
+    },
+    {
+      "stop": "daily",
+      "path": "/daily?layout=v2&r=TEST-9",
+      "ok": true
+    },
+    {
+      "stop": "pms-workflow",
+      "path": "/pms-workflow?layout=v2&r=TEST-9",
+      "ok": true
+    },
+    {
+      "stop": "roi",
+      "path": "/roi?layout=v2&r=TEST-9",
+      "ok": true
+    },
+    {
+      "stop": "eu",
+      "path": "/eu?layout=v2&r=TEST-9",
+      "ok": true
+    },
+    {
+      "stop": "validation",
+      "path": "/validation?layout=v2&r=TEST-9",
+      "ok": true
+    },
+    {
+      "stop": "connect",
+      "path": "/connect?layout=v2&r=TEST-9",
+      "ok": true
+    }
+  ],
+  "cleanup": {
+    "delete_status": 200,
+    "left": 0
+  }
+}
