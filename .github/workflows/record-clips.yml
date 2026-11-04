@@ -39,7 +39,7 @@ jobs:
       - name: Convert clips to mp4
         if: always()
         run: |
-          for f in clips-out/clip-q*.webm; do
+          for f in clips-out/*.webm; do
             [ -f "$f" ] && ffmpeg -y -loglevel error -i "$f" -c:v libx264 -pix_fmt yuv420p \
               -crf 18 "${f%.webm}.mp4"
           done
