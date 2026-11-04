@@ -726,11 +726,20 @@ class CopilotAgent:
             result.repaired = True
             result.parse_failed = False
 
-        if self._budgeted and report.passed == 0 and not result.from_tool_results:
-            # Nothing the model wrote verified: add what the tool results show (gated too).
-            built = self._from_tools(
-                result, "the claim gate blocked every sentence of the model's answer"
+        facts_passed = sum(
+            1
+            for s in report.sentences
+            if s.status == "pass" and any(cv.status == "pass" for cv in s.claim_verdicts)
+        )
+        if self._budgeted and facts_passed == 0 and not result.from_tool_results:
+            # No verified fact from the model (every sentence blocked, or only sentences with
+            # no checkable claim passed): add what the tool results show (gated too).
+            why = (
+                "the claim gate blocked every sentence of the model's answer"
+                if report.passed == 0
+                else "no sentence of the model's answer carried a verified claim"
             )
+            built = self._from_tools(result, why)
             if built:
                 extra = self._gate(built, result, "claim gate (tool results)")
                 report = GateReport([*report.sentences, *extra.sentences])

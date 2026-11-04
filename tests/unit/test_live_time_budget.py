@@ -403,3 +403,34 @@ def test_a_busy_instance_does_not_wait_past_the_point_an_answer_still_fits(tmp_p
     assert _acquire(d, rt) is True  # free: taken at once
     assert _acquire(d, rt) is False  # held by the first ask: no wait, a clean timeout instead
     d.live_ask_lock.release()
+
+
+CLAIMLESS_ANSWER = json.dumps(
+    {
+        "sentences": [
+            {"text": "I cannot confirm your colleague's claim about LLZ.", "claims": []},
+            {"text": "Opening a CAPA is a decision for a named person.", "claims": []},
+            {"text": "LLZ had 99 reports from August 25 to August 31, 2026.", "claims": [BAD]},
+        ]
+    }
+)
+
+
+def test_only_claimless_sentences_passing_still_shows_the_tool_facts(tmp_path: Path) -> None:
+    """Live Q2 (2026-11-04): two claimless sentences passed, the counted one was blocked.
+
+    The connector cannot speak a sentence without a link, so the answer was empty
+    ("I could not verify an answer"). The gate-checked tool facts must be added instead.
+    """
+    env, _spark = timed_env(
+        tmp_path,
+        [(5.0, tool_round(("product_summary", WEEK))),
+         (5.0, answer(CLAIMLESS_ANSWER)),
+         (5.0, answer(CLAIMLESS_ANSWER))],  # the repair turn repeats it
+    )  # fmt: skip
+    body = post(env).json()
+    assert body["mode"] == "live"
+    assert "no sentence of the model's answer carried a verified claim" in json.dumps(body["trace"])
+    assert "LLZ had 33 reports received from August 25 to August 31, 2026." in spoken(body)
+    assert "99" not in json.dumps(body["answer"])
+    assert "could not verify an answer" not in json.dumps(body["answer"]).lower()
