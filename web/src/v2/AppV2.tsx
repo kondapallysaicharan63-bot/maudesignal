@@ -585,8 +585,8 @@ export default function AppV2() {
     else if (route.page === 'investigate')
       sectionBody = <InvestigatePage key={`${route.code ?? ''}|${route.device ?? ''}`} apiBase={API_BASE} code={route.code} device={route.device} onCheckDevice={() => go({ page: 'workflow', id: 'check-device' })} />
     else if (route.page === 'connect') sectionBody = <ConnectPage tab={route.tab} onTab={(t, how) => tabGo({ page: 'connect', tab: t }, how)} apiBase={API_BASE} />
-    else if (route.page === 'pms') sectionBody = <PmsWorkflow onRoi={() => go({ page: 'roi' })} onHome={() => go({ page: 'home' })} onInvestigate={() => go({ page: 'investigate' })} />
-    else if (route.page === 'roi') sectionBody = <RoiPage onHome={() => go({ page: 'home' })} />
+    else if (route.page === 'pms') sectionBody = <PmsWorkflow asOf={storedAsOf(data.manifest)} onRoi={() => go({ page: 'roi' })} onHome={() => go({ page: 'home' })} onInvestigate={() => go({ page: 'investigate' })} />
+    else if (route.page === 'roi') sectionBody = <RoiPage asOf={storedAsOf(data.manifest)} onHome={() => go({ page: 'home' })} />
     else if (route.page === 'board') sectionBody = <BoardPage data={data} onInvestigate={() => go({ page: 'investigate' })} onValidation={() => go({ page: 'validation' })} />
     else if (route.page === 'validation') sectionBody = <ValidationPage data={data} onBoard={() => go({ page: 'board' })} />
     const sectionLabel = route.page === 'profile' ? 'Device profile' : route.page === 'pms' ? 'PMS workflow' : route.page === 'roi' ? 'Time and cost' : route.page === 'board' ? 'PMS board' : route.page === 'validation' ? 'Validation' : route.page[0].toUpperCase() + route.page.slice(1)

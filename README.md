@@ -72,15 +72,6 @@ human approval and a hash-chained audit trail, and a decision path on simulated 
 (new, simulated). The decision, the signature and any filing stay human: MaudeSignal does not
 decide, and nothing is filed with FDA. The page does not say that any step satisfies a clause.
 
-## Time and cost: measured, not claimed (F27)
-
-The page `/roi` shows no time-saved or cost figure of its own. Timing tests are recorded in
-[`web/public/data/measurements.json`](web/public/data/measurements.json) with who ran them,
-when and how (schema in [`web/DATA_CONTRACT.md`](web/DATA_CONTRACT.md)); the file is empty
-today, so every row reads "Measurement pending". A calculator takes your own assumptions
-(volume, hourly cost, minutes) and labels its results "from your assumptions". Nothing is
-sent to a server; values stay in your browser.
-
 ## Numbers (each from a file in this repo)
 
 | Number | Source file |
@@ -151,7 +142,7 @@ see [Deploy your own copy](#deploy-your-own-copy).
 
 ## Today / Tomorrow
 
-Today: U.S. FDA data (MAUDE, recalls, 510(k)). UK MHRA alerts appear as labelled regulator context only, not counted. EU data is not included yet. Tomorrow: EU national safety notices (BfArM, ANSM), EUDAMED vigilance once the EU makes it public, Health Canada and Australia TGA recalls.
+Today: U.S. FDA data (MAUDE, recalls, 510(k)). UK MHRA alerts appear as labelled regulator context only, not counted. No EU, Canadian or Australian data is included.
 
 ### Tomorrow — what testers asked for
 
@@ -163,7 +154,7 @@ deadline. (Empty so far.)
 By reviewer. Reviewers are credited as individuals, in a personal capacity (see Acknowledgements below).
 
 - **Srinivas Sreepada (medical device quality leader):** a PMS board and note-to-file record you can sign, FDA
-  escalation and recall assessments, risk, measured ROI, and the workflow map. The map and a first decision path on
+  escalation and recall assessments, risk, and the workflow map. The map and a first decision path on
   simulated devices are built; saving your own decisions is not.
 - **Hemadri Doma (computer system validation / CSA quality manager):** a complaints-team record that Investigate a
   complaint can feed (the known-effects record), and validation to FDA AI standards before an auditor would accept
@@ -174,22 +165,19 @@ By reviewer. Reviewers are credited as individuals, in a personal capacity (see 
 
 ### Acknowledgements
 
-Feedback from these reviewers shaped the decision workflow, the complaint-investigation page, the workflow map and the
-ROI page. They are credited as individuals, in a personal capacity.
+Feedback from these reviewers shaped the decision workflow, the complaint-investigation page, and the workflow map. They are credited as individuals, in a personal capacity.
 
 - **Srinivas Sreepada**, Medical Device Quality Leader (ASQ CQA, CMQ-OE; ISO 13485 lead auditor): PMS board, note to
-  file, FDA escalation and recall assessment, risk; reactive PMS, measured ROI, workflow map.
+  file, FDA escalation and recall assessment, risk; reactive PMS, workflow map.
 - **Hemadri Doma**, Computer System Validation / CSA quality manager, author on FDA's CSA guidance: complaints-team /
   known-effects record; validation to FDA AI standards before auditor acceptance.
 - **A PMS practitioner (Oct 27)** (earlier feedback): who files the reports, and what a company's own CAPA form decides.
 
 ### Tomorrow — what a quality leader asked for next
 
-A medical-device quality leader's feedback (Oct 31 and Nov 1) shaped the complaint-investigation, workflow-map,
-ROI and device-profile pages. What is NOT built yet:
+A medical-device quality leader's feedback (Oct 31 and Nov 1) shaped the complaint-investigation, workflow-map
+and device-profile pages. What is NOT built yet:
 
-- **Measured time savings.** The ROI page shows "measurement pending" until timing tests are recorded (three tasks,
-  by hand vs MaudeSignal, who/when/how). No time-saved number is shown before then.
 - **Your own complaint system.** "Investigate a complaint" searches public FDA data only. It does not hold your
   complaints, cannot separate your own company's reports from other makers' (maker names on MAUDE are free text),
   and has no MDR clock; reportability is assessed by your team.
@@ -197,9 +185,6 @@ ROI and device-profile pages. What is NOT built yet:
   website page uses it; the MCP tool for the Muse connector is next.
 - **Decision paths on every signal and on your own devices.** Decision paths exist for the simulated devices'
   stored signals; saving your own board decisions (with e-signatures) is not built.
-- **Photos in saved chats**, Firefox/Safari checks of the v2 live-check, and a sticky-composer option on the
-  Investigate page for phones.
-- **EU / UK / Canada sources** (see Today / Tomorrow above).
 - **Validation.** Validation path to FDA AI/ML guidance (GMLP principles, lifecycle guidance) is on the roadmap; this build is not validated.
 
 ---
@@ -344,15 +329,6 @@ one question (`question-d`) that no recording of Charan's covers. The one incomp
 answer (06-trap) lost a true sentence because the gate read "August 31, 2026,
 all malfunction" as a count of 2026; the gate now treats a year after a month
 as a date (adversarial cases dt03–dt05).
-
-## Pilot and pricing
-
-- **Buyer:** PMS / RA teams at small and mid-size device makers.
-- **Open source, self-hosted:** free.
-- **Hosted plan:** priced in the range practitioners we spoke to quoted,
-  about $200–300/month, against existing tools from $499/month.
-- **Pilot metric:** time to prepare the signal-evidence section for the device types you choose
-  in a PMS report, with and without MaudeSignal.
 
 ## Architecture
 
@@ -557,7 +533,6 @@ and Markdown is still produced.
 | Vision & non-goals | [docs/01_vision_mission.md](docs/01_vision_mission.md) |
 | Requirements | [docs/03_requirements_spec.md](docs/03_requirements_spec.md) |
 | System design (pre-hackathon) | [docs/05_architecture.md](docs/05_architecture.md) |
-| Pilot findings | [v1](docs/00_pilot_findings.md) · [v2](docs/00_pilot_findings_v2.md) · [v3](docs/00_pilot_findings_v3.md) |
 | Repo conventions for AI assistants | [CLAUDE.md](CLAUDE.md) |
 | Disclaimer | [DISCLAIMER.md](DISCLAIMER.md) |
 

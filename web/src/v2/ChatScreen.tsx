@@ -135,7 +135,7 @@ export function ChatScreen({
           <span className="ws-wrap">{chat.micNotice}</span>
         </p>
       )}
-      {chat.turns.length > 0 && asOf && <DataAsOfBanner asOf={asOf} testid="chat-asof" />}
+      {asOf && <DataAsOfBanner asOf={asOf} testid="chat-asof" />}
       {chat.turns.length > 0 && (
         <div role="log" aria-live="polite" aria-label="Conversation" className="space-y-8" data-testid="live-chat">
           {chat.turns.map((t) => (

@@ -165,7 +165,7 @@ firsthand (the problem statement is "Build for Your World").
 Credited as individuals, in a personal capacity. No employer names, no endorsement wording, no quotes.
 
 - Srinivas Sreepada, Medical Device Quality Leader (ASQ CQA, CMQ-OE; ISO 13485 lead auditor): PMS board, note to file,
-  FDA escalation and recall assessment, risk; reactive PMS, measured ROI, workflow map.
+  FDA escalation and recall assessment, risk; reactive PMS, workflow map.
 - Hemadri Doma, Computer System Validation / CSA quality manager, author on FDA's CSA guidance: complaints-team /
   known-effects record; validation to FDA AI standards before auditor acceptance.
 - A PMS practitioner (Oct 27).

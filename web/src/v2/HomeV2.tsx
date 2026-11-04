@@ -12,6 +12,7 @@ import { sweepDate } from '../components/SweepCard'
 import { InvestigateCard } from '../investigate/entry'
 import { AlertRows, demoRows, realRows, SourceCaption } from './AlertRows'
 import { devicesToReview, realAlertItems } from './realAlerts'
+import { DataAsOfBanner, storedAsOf } from '../pms/DataAsOf'
 import './positioning.css'
 
 export const HOME_TOP = 3
@@ -74,6 +75,7 @@ export function HomeV2({
           </button>
         )}
       </p>
+      <DataAsOfBanner asOf={storedAsOf(data.manifest)} testid="home-asof" />
       <div className="ms2-grid">
         {onInvestigate && <InvestigateCard onOpen={onInvestigate} />}
         {onBoard && (

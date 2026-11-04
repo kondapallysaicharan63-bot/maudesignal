@@ -79,6 +79,10 @@
   margin-top: 12px;
 }
 .ms2-inv-scroll {
+  /* position: relative keeps absolutely positioned screen-reader labels (sr-only) inside the scroll box, so a wide
+     table scrolls in its own box and never widens the page on a phone. */
+  position: relative;
+  max-width: 100%;
   overflow-x: auto;
 }
 .ms2-inv-scroll .ms2-table th[scope='row'] {
