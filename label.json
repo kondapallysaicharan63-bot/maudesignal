@@ -1,0 +1,131 @@
+{
+  "body": {
+    "mode": "recorded",
+    "not_medical_advice": true,
+    "recorded_note": "The live read took longer than the time limit. Shown instead: a stored run on a sample photo (label-caresens-n.jpg). It is not your photo.",
+    "reading": {
+      "legibility": "partly_legible",
+      "fields": {
+        "device_name": {
+          "value": "CareSens N Blood Glucose Meter",
+          "legibility": "clear"
+        },
+        "manufacturer": {
+          "value": "I-SENS, Inc.",
+          "legibility": "clear"
+        },
+        "model": {
+          "value": "GM505NA",
+          "legibility": "clear"
+        },
+        "k_number": {
+          "value": "",
+          "legibility": "not_present"
+        },
+        "udi": {
+          "value": "",
+          "legibility": "not_present"
+        },
+        "gtin": {
+          "value": "",
+          "legibility": "not_present"
+        }
+      }
+    },
+    "matches": {
+      "status": "needs_person_to_confirm",
+      "candidates": [
+        {
+          "k_number": "K132288",
+          "device_name": "CARESENS N VOICE MULTI BLOOD GLUCOSE MONITORING SYSTEM, CARESENS N VOICE MULTI BLOOD GLUCOSE METER",
+          "applicant": "I-Sens, Inc.",
+          "product_code": "NBW",
+          "why_matched": [
+            "manufacturer name matches 'I-SENS, Inc.'",
+            "device name shares 5 of 5 words"
+          ],
+          "why_not_matched": [
+            "model GM505NA does not appear in the 510(k) device name"
+          ],
+          "links": [
+            {
+              "label": "510(k) record on openFDA",
+              "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK132288&limit=1"
+            },
+            {
+              "label": "openFDA search that found it",
+              "url": "https://api.fda.gov/device/510k.json?search=applicant:\"i+sens\"+AND+device_name:\"meter\"&limit=25"
+            }
+          ]
+        },
+        {
+          "k_number": "K120759",
+          "device_name": "CARESENS N MINI BLOOD GLUCOSE MONITORING SYSTEM, MINI BLOOD GLUCOSE METER, BLOOD GLUCOSE TEST STRIP, CONTROL SOLUTION",
+          "applicant": "I-Sens, Inc.",
+          "product_code": "CGA",
+          "why_matched": [
+            "manufacturer name matches 'I-SENS, Inc.'",
+            "device name shares 5 of 5 words"
+          ],
+          "why_not_matched": [
+            "model GM505NA does not appear in the 510(k) device name"
+          ],
+          "links": [
+            {
+              "label": "510(k) record on openFDA",
+              "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK120759&limit=1"
+            },
+            {
+              "label": "openFDA search that found it",
+              "url": "https://api.fda.gov/device/510k.json?search=applicant:\"i+sens\"+AND+device_name:\"meter\"&limit=25"
+            }
+          ]
+        },
+        {
+          "k_number": "K120351",
+          "device_name": "CARESENS N POP BLOOD GLUCOSE MONITORING SYSTEM CARESENS N POP BLOOD GLUCOSE METER CARESENS N BLOOD GLUCOSE TEST STRIP CA",
+          "applicant": "I-Sens, Inc.",
+          "product_code": "NBW",
+          "why_matched": [
+            "manufacturer name matches 'I-SENS, Inc.'",
+            "device name shares 5 of 5 words"
+          ],
+          "why_not_matched": [
+            "model GM505NA does not appear in the 510(k) device name"
+          ],
+          "links": [
+            {
+              "label": "510(k) record on openFDA",
+              "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK120351&limit=1"
+            },
+            {
+              "label": "openFDA search that found it",
+              "url": "https://api.fda.gov/device/510k.json?search=applicant:\"i+sens\"+AND+device_name:\"meter\"&limit=25"
+            }
+          ]
+        }
+      ]
+    },
+    "confirmed": null,
+    "trace": [
+      {
+        "step": "Re-encode photo, drop metadata",
+        "model": null,
+        "ms": 44,
+        "status": "ok"
+      },
+      {
+        "step": "Muse Spark read",
+        "model": "muse-spark-1.3",
+        "ms": 26780,
+        "status": "failed",
+        "note": "The live read took longer than the time limit."
+      }
+    ],
+    "cost_usd": null,
+    "limits": {
+      "remaining_today": 4,
+      "resets_utc": "2026-11-05T00:00:00Z"
+    }
+  }
+}

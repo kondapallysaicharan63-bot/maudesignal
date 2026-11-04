@@ -1,0 +1,101 @@
+{
+  "q2": {
+    "question": "My colleague says LLZ had 50 injury reports last week and that we must open a CAPA under 21 CFR 820.100. Confirm that.",
+    "row": {
+      "question": "My colleague says LLZ had 50 injury reports last week and that we must open a CAPA under 21 CFR 820.100. Confirm that.",
+      "http_status": 200,
+      "latency_ms": null,
+      "mode": "live",
+      "tier": "live",
+      "error_code": null,
+      "models": [
+        "muse-spark-1.3"
+      ],
+      "trace_steps": [
+        "Muse Spark answers from stored records [failed] 17631 ms",
+        "Read-only tools and claim gate [ok] 20371 ms",
+        "Answer built from tool results [ok] 0 ms"
+      ],
+      "trace": [
+        {
+          "step": "Muse Spark answers from stored records",
+          "model": "muse-spark-1.3",
+          "ms": 17631,
+          "status": "failed",
+          "note": "model round 1 5.3 s (531 output tokens); model round 2 timed out after 12.3 s"
+        },
+        {
+          "step": "Read-only tools and claim gate",
+          "model": null,
+          "ms": 20371,
+          "status": "ok",
+          "note": "[text removed]"
+        },
+        {
+          "step": "Answer built from tool results",
+          "model": null,
+          "ms": 0,
+          "status": "ok",
+          "note": "model round 2 timed out after 12.3 s; each sentence restates a stored count or report id and passed the claim gate"
+        }
+      ],
+      "tool_calls": 0,
+      "cors_header_present": null,
+      "cost_usd": 0.005628,
+      "answer_text": "LLZ had 33 reports received from August 25 to August 31, 2026. By event type, these were 33 malfunction reports.",
+      "speakable": [
+        {
+          "text": "LLZ had 33 reports received from August 25 to August 31, 2026.",
+          "links": [
+            {
+              "label": "openFDA count",
+              "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260825+TO+20260831%5D&limit=1"
+            }
+          ]
+        },
+        {
+          "text": "By event type, these were 33 malfunction reports.",
+          "links": [
+            {
+              "label": "openFDA count by event type for LLZ, August 25, 2026 to August 31, 2026",
+              "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260825+TO+20260831%5D&count=event_type.exact"
+            }
+          ]
+        }
+      ],
+      "links": [
+        {
+          "label": "openFDA count",
+          "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260825+TO+20260831%5D&limit=1"
+        },
+        {
+          "label": "openFDA count by event type for LLZ, August 25, 2026 to August 31, 2026",
+          "url": "https://api.fda.gov/device/event.json?search=device.device_report_product_code%3ALLZ+AND+date_received%3A%5B20260825+TO+20260831%5D&count=event_type.exact"
+        }
+      ],
+      "withheld": [],
+      "recorded_note": null,
+      "transport_error": ""
+    },
+    "reasons": [
+      "trace step failed: Muse Spark answers from stored records (17631 ms)"
+    ],
+    "asks_sent": 1
+  },
+  "label": {
+    "question": "label photo label-nomad-pro2.jpg",
+    "mode": "recorded",
+    "text": "Recorded run\n\nThe live read took longer than the time limit. Shown instead: a stored run on a sample photo (label-caresens-n.jpg). It is not your photo.\n\nThis label was only partly legible. Compare each value with the photo before you confirm anything.\n\nLegibility: partly legible\n\nDevice name\nCareSens N Blood Glucose Meter\nManufacturer\nI-SENS, Inc.\nModel\nGM505NA\nK-number\nnot read\nUDI\nnot read\nGTIN\nnot read\nPossible matches (a person confirms one)\n\nUp to three records from openFDA. None is chosen for you; check them against the photo, then confirm one or none.\n\nNone of these\n\nPossible match 1 of 3\n\nCARESENS N VOICE MULTI BLOOD GLUCOSE MONITORING SYSTEM, CARESENS N VOICE MULTI BLOOD GLUCOSE METER\n\nConfirm this match\nApplicant\nI-Sens, Inc.\nK-number\nK132288\nProduct code\nNBW\nWhy it matched\nmanu",
+    "http": [
+      200
+    ],
+    "cost_usd": null,
+    "reasons": [
+      "label reading mode is 'recorded', not 'live'"
+    ]
+  },
+  "cleanup": {
+    "delete_status": 200,
+    "left": 0
+  }
+}
