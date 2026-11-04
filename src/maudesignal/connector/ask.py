@@ -49,7 +49,7 @@ from maudesignal.connector.readonly import make_read_only
 from maudesignal.connector.speech import compose, plural, speak_date
 from maudesignal.connector.store import ConnectorState
 from maudesignal.connector.tools import Clock, _stamp, utc_now
-from maudesignal.copilot.agent import CopilotAgent, CopilotResult
+from maudesignal.copilot.agent import CopilotAgent, CopilotResult, failure_kind
 from maudesignal.copilot.spend import (
     DailyLedger,
     SpendCaps,
@@ -221,6 +221,11 @@ class AskRuntime:
     meter: CallMeter | None = None
     #: Cheaper tier-4 settings (compact prompt, low reasoning effort, two tool rounds).
     lean: bool = True
+    #: When the whole ask must end (a reading of ``clock``; the live website's budget). With
+    #: it the agent never starts a call it cannot finish and keeps a partial gated answer
+    #: (see ``CopilotAgent.configure_deadline``). None: no deadline (other callers).
+    deadline: float | None = None
+    clock: Callable[[], float] = time.monotonic
 
     def call_meter(self) -> CallMeter | None:
         """The per-call reservation every Meta call goes through (``None``: live is off)."""
@@ -619,6 +624,15 @@ class AskOutcome:
     recorded_at: str | None = None
     #: When a recording was used after a live attempt failed: time spent on the attempt.
     attempt_ms: float = 0.0
+    #: Why the live attempt failed, in fixed words ("model round 2 timed out after 25.3 s",
+    #: "tool error ...", "spend cap"); None when it did not fail.
+    failure: str | None = None
+    #: Why a live answer is partial (a step timed out or was skipped); None when complete.
+    partial: str | None = None
+    #: True when the live sentences were built from tool results, not written by the model.
+    from_tool_results: bool = False
+    #: Timed steps of the live attempt (``RunStep.to_dict``; never model or question text).
+    steps: list[dict[str, Any]] = field(default_factory=list)
 
 
 class _TimedCompletions:
@@ -708,7 +722,14 @@ def recorded_voice_answer(data: ConnectorData, reason: str = "no_transcript") ->
 
 
 def _fallback(
-    data: ConnectorData, q: str, spoken: bool, reason: str, started: float, attempt_ms: float
+    data: ConnectorData,
+    q: str,
+    spoken: bool,
+    reason: str,
+    started: float,
+    attempt_ms: float,
+    failure: str | None = None,
+    steps: list[dict[str, Any]] | None = None,
 ) -> AskOutcome:
     """The recorded answer for ``q`` (labelled with why), or an error when nothing is stored."""
     if not data.transcripts():
@@ -716,7 +737,40 @@ def _fallback(
             "No live answer is available and no recorded answers are stored."
         )
     best, _ = _recorded_pool(data, q, voice=spoken)
-    return _outcome_recorded(best, reason, data, started, attempt_ms)
+    out = _outcome_recorded(best, reason, data, started, attempt_ms)
+    out.failure = failure
+    out.steps = list(steps or [])
+    return out
+
+
+def _run_failure(agent: CopilotAgent | None, exc: BaseException) -> str:
+    """Fixed words for why a live attempt failed (the agent's failed step when it has one)."""
+    if agent is not None and agent.last_failure:
+        return agent.last_failure
+    if agent is not None:
+        failed = [s for s in agent.last_steps if s.status == "failed"]
+        if failed:
+            return failed[-1].describe()
+    return failure_kind(exc)
+
+
+LIVE_BUSY_MESSAGE = "That question took too long. Try a shorter or narrower question."
+#: Seconds a waiting live ask leaves itself after the lock (less is not worth starting).
+_MIN_AFTER_WAIT_S = 10.0
+
+
+def _acquire(data: ConnectorData, runtime: AskRuntime) -> bool:
+    """Take the one-live-ask lock; with a deadline wait only while an answer still fits."""
+    if runtime.deadline is None:
+        return data.live_ask_lock.acquire()
+    wait = runtime.deadline - runtime.clock() - _MIN_AFTER_WAIT_S
+    if data.live_ask_lock.acquire(blocking=False):
+        return True
+    return wait > 0 and data.live_ask_lock.acquire(timeout=wait)
+
+
+def _run_steps(agent: CopilotAgent | None) -> list[dict[str, Any]]:
+    return [s.to_dict() for s in agent.last_steps] if agent is not None else []
 
 
 def ask(
@@ -799,16 +853,23 @@ def ask_detailed(
             db=data.db,
             meter=meter,
         )
+        agent: CopilotAgent | None = None
         try:
             guard.check("connector.ask")
             # One live ask at a time per instance: the copilot appends to the audit chain on
             # its own connection, and the redaction below recomputes that chain. Every chat call
             # of the agent (tool rounds, final answer, repair) reserves its own worst case.
-            with data.live_ask_lock:
+            if not _acquire(data, runtime):
+                exc = LiveTimeoutError(LIVE_BUSY_MESSAGE)
+                exc.why = "waited for another live question on this server instance"
+                raise exc
+            try:
                 agent = runtime.agent_factory(data, guard)
                 make_read_only(agent)  # whatever the factory built: no tool that writes
                 if runtime.lean:
                     apply_lean(agent, q)
+                if runtime.deadline is not None:
+                    agent.configure_deadline(runtime.deadline, runtime.clock)
                 timed = _TimedClient(agent._client)
                 agent._client = timed
                 if history:
@@ -817,6 +878,8 @@ def ask_detailed(
                     res = agent.ask(q)
                 finally:
                     data.redact_audit_questions()  # question text is not kept, only its hash
+            finally:
+                data.live_ask_lock.release()
             if res.capa_ids or agent.context.created_capas:
                 raise RuntimeError("a read-only ask wrote a record")  # never shown; falls back
             return AskOutcome(
@@ -827,20 +890,33 @@ def ask_detailed(
                 model_ms=round(timed.ms, 1),
                 total_ms=round((time.perf_counter() - started) * 1000.0, 1),
                 tool_names=[t.name for t in res.tool_calls],
+                partial=res.partial_reason,
+                from_tool_results=res.from_tool_results,
+                steps=[s.to_dict() for s in res.steps],
             )
         except SpendLimitError:
             reason = "cap"
+            failure = "spend cap"
             attempt_ms = round((time.perf_counter() - started) * 1000.0, 1)
-        except LiveTimeoutError:
+        except LiveTimeoutError as exc:
+            if exc.why is None:
+                exc.why = _run_failure(agent, exc)
+            if not exc.steps:
+                exc.steps = list(_run_steps(agent))
             if raise_on_timeout:
                 raise  # the typed live route answers 504 live_timeout
             logger.warning("connector_ask_live_failed", error_type="LiveTimeoutError")
             reason = "model_error"
+            failure = exc.why
             attempt_ms = round((time.perf_counter() - started) * 1000.0, 1)
         except (
             Exception
         ) as exc:  # noqa: BLE001 - any model/network failure falls back to a recording
-            logger.warning("connector_ask_live_failed", error_type=type(exc).__name__)
+            failure = _run_failure(agent, exc)
+            logger.warning(
+                "connector_ask_live_failed", error_type=type(exc).__name__, failed_step=failure
+            )
             reason = "model_error"
             attempt_ms = round((time.perf_counter() - started) * 1000.0, 1)
+        return _fallback(data, q, spoken, reason, started, attempt_ms, failure, _run_steps(agent))
     return _fallback(data, q, spoken, reason, started, attempt_ms)

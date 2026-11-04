@@ -77,15 +77,21 @@ def post(env: Env) -> Any:
     return env.client.post(PATH_ASK, json={"question": QUESTION}, headers={"Origin": ORIGIN})
 
 
-def test_deadline_stop_is_a_clean_504_with_cors_and_no_further_model_call(tmp_path: Path) -> None:
-    env, slow = slow_env(tmp_path, step_s=45.0)  # the first call uses up the whole budget
+def test_deadline_stop_keeps_the_gated_reply_and_starts_no_further_model_call(
+    tmp_path: Path,
+) -> None:
+    # The first call uses up the whole budget but does return the answer JSON: it is gated
+    # and shown (it used to be thrown away for a 504); the repair turn is skipped and the
+    # trace says why. A refused or timed-out call is still a 504: test_live_time_budget.py.
+    env, slow = slow_env(tmp_path, step_s=45.0)
     r = post(env)
-    assert r.status_code == 504, r.text
+    assert r.status_code == 200, r.text
     body = r.json()
-    assert body["code"] == "live_timeout" and body["error"]["code"] == "live_timeout"
-    assert "answer" not in body and "trace" not in body  # no model text
+    assert body["mode"] == "live"
     assert r.headers["access-control-allow-origin"] == ORIGIN
     assert slow.calls == 1, "no model call may start after the deadline"
+    assert "repair turn skipped: not enough time" in body["trace"][0]["note"]
+    assert len(body["answer"]["withheld"]) == 1  # the blocked sentence stays withheld
 
 
 def test_a_fast_model_is_not_affected(tmp_path: Path) -> None:

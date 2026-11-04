@@ -30,6 +30,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -38,7 +39,8 @@ from typing import Any
 from maudesignal.copilot.dates import render_date_context, utc_today
 from maudesignal.copilot.meta_provider import SPARK_USD_PER_M_INPUT, SPARK_USD_PER_M_OUTPUT
 from maudesignal.copilot.protocol import ProtocolRow, protocol_from_calls
-from maudesignal.copilot.tools import TOOL_SCHEMAS, ToolContext, call_tool
+from maudesignal.copilot.tool_answer import ToolOutput, sentences_from_tools
+from maudesignal.copilot.tools import TOOL_SCHEMAS, TOOLS, ToolContext, call_tool
 from maudesignal.extraction.skill_loader import LoadedSkill, SkillLoader
 from maudesignal.gate import (
     Claim,
@@ -122,6 +124,93 @@ class ToolCallTrace:
     result_preview: str
 
 
+#: Time policy of a run with a deadline (the live website; see ``configure_deadline``).
+#: Each model call's timeout is ``min(cap, time left - END_MARGIN_S)``; the margin is kept for
+#: the claim gate, the audit entry and the response.
+END_MARGIN_S = 2.0
+#: A further tool round starts only with at least this much time left.
+MIN_ROUND_S = 8.0
+#: A final-answer (or parse-retry) call starts only with at least this much time left.
+MIN_FINAL_S = 8.0
+#: The repair turn starts only with at least this much time left.
+MIN_REPAIR_S = 10.0
+#: A call that failed this fast never reached the model (refused before it started).
+_NOT_STARTED_S = 0.05
+
+
+@dataclass
+class RunStep:
+    """One timed step of an answer: a model call, a tool call, a gate pass or a skip.
+
+    ``why`` says why a step failed or was skipped, in fixed words: ``timeout``,
+    ``model error (<type>)``, ``tool error (<type>)``, ``gate blocked all``, ``not enough
+    time (<n> s left)``, ``spend cap``. It never holds model or question text.
+    """
+
+    kind: str  # model | tool | gate | answer
+    label: str  # "model round 2", "final answer", "repair turn", "search_reports", ...
+    ms: float
+    status: str  # ok | failed | skipped
+    why: str | None = None
+    #: Output tokens (reasoning included) a finished model call reported: a slow round with
+    #: many of them points at ``max_tokens`` / reasoning effort, not at the tool payload.
+    out_tokens: int | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        """JSON-ready form (``ms`` rounded)."""
+        out: dict[str, Any] = {
+            "kind": self.kind,
+            "label": self.label,
+            "ms": int(round(self.ms)),
+            "status": self.status,
+        }
+        if self.why:
+            out["why"] = self.why
+        if self.out_tokens is not None:
+            out["out_tokens"] = self.out_tokens
+        return out
+
+    def describe(self) -> str:
+        """'model round 2 timed out after 25.3 s', 'repair turn skipped: not enough time ...'."""
+        secs = f"{self.ms / 1000.0:.1f} s"
+        if self.status == "ok":
+            tokens = f" ({self.out_tokens} output tokens)" if self.out_tokens else ""
+            return f"{self.label} {secs}{tokens}"
+        if self.status == "skipped":
+            return f"{self.label} skipped: {self.why or 'not run'}"
+        if self.why == "timeout":
+            return f"{self.label} timed out after {secs}"
+        if self.why and self.why.startswith("not started"):
+            return f"{self.label} {self.why}"
+        return f"{self.label} failed after {secs}: {self.why or 'error'}"
+
+
+def failure_kind(exc: BaseException) -> str:
+    """Fixed words for why a model call failed (no exception message: it can echo input).
+
+    A timeout is recognised by type (``TimeoutError`` and subclasses, or any class in its
+    hierarchy whose name contains ``Timeout``, such as the SDK's ``APITimeoutError``), so no
+    vendor SDK is imported here.
+    """
+    names = [k.__name__ for k in type(exc).__mro__]
+    if isinstance(exc, TimeoutError) or any("timeout" in n.lower() for n in names):
+        return "timeout"
+    status = getattr(exc, "status_code", None)
+    if isinstance(status, int):
+        return f"model error ({type(exc).__name__}, HTTP {status})"
+    return f"model error ({type(exc).__name__})"
+
+
+class ModelCallFailedError(Exception):
+    """A model call of a deadline-bound run failed; the run decides what it can still show."""
+
+    def __init__(self, step: RunStep, cause: BaseException) -> None:
+        """Keep the failed step and the original exception."""
+        super().__init__(step.describe())
+        self.step = step
+        self.cause = cause
+
+
 @dataclass
 class CopilotResult:
     """Everything the UI needs to show an answer honestly."""
@@ -138,6 +227,12 @@ class CopilotResult:
     model: str = ""
     parse_failed: bool = False
     length_stops: int = 0
+    #: Timed steps of this run (model calls, tool calls, gate passes, skips).
+    steps: list[RunStep] = field(default_factory=list)
+    #: Why the answer is partial (a step timed out, failed or was skipped), else None.
+    partial_reason: str | None = None
+    #: True when the sentences were built from tool results, not written by the model.
+    from_tool_results: bool = False
 
     @property
     def protocol(self) -> list[ProtocolRow]:
@@ -194,6 +289,14 @@ def parse_answer(content: str) -> list[tuple[str, list[Claim]]]:
                 claims.append(claim_from_dict({"kind": "record", "report_id": "<malformed>"}))
         out.append((s["text"].strip(), claims))
     return out
+
+
+def _parses(content: str) -> bool:
+    """True when ``content`` is an answer JSON with at least one sentence."""
+    try:
+        return bool(parse_answer(content))
+    except (ValueError, json.JSONDecodeError):
+        return False
 
 
 def response_format_from_schema(schema: dict[str, Any]) -> dict[str, Any]:
@@ -304,6 +407,43 @@ class CopilotAgent:
         self._max_tool_result_chars: int | None = None
         self._history: list[dict[str, Any]] = []
         self._on_event: EventFn | None = None
+        self._deadline: float | None = None
+        self._clock: Callable[[], float] = time.perf_counter
+        self._tool_outputs: list[ToolOutput] = []
+        #: Steps of the latest run, kept even when the run raised (for the caller's trace).
+        self.last_steps: list[RunStep] = []
+        #: Why the latest run raised, in fixed words (None when it returned).
+        self.last_failure: str | None = None
+
+    def configure_deadline(self, deadline: float, clock: Callable[[], float]) -> None:
+        """Bind the run to a deadline (a reading of ``clock``): the live website's budget.
+
+        With a deadline the run never starts a call it cannot finish and never throws away
+        work it already has:
+
+        * a further tool round needs :data:`MIN_ROUND_S` left, a final answer or parse retry
+          :data:`MIN_FINAL_S`, the repair turn :data:`MIN_REPAIR_S`; otherwise it is skipped
+          and the step says so;
+        * a no-tool reply that already parses as the answer JSON is used as is (one model
+          call fewer); it is gated exactly like the schema-constrained final answer;
+        * when a model call times out or fails, or no time is left for the answer, the
+          answer is built from the tool results already read (``tool_answer``) and checked
+          by the same claim gate; a failed repair turn keeps the first pass's gated answer.
+
+        Without a deadline nothing changes. Temperature stays 0 and the gate is unchanged.
+        """
+        self._deadline = deadline
+        self._clock = clock
+
+    @property
+    def _budgeted(self) -> bool:
+        return self._deadline is not None
+
+    def time_left(self) -> float:
+        """Seconds until the deadline (infinite without one)."""
+        if self._deadline is None:
+            return float("inf")
+        return self._deadline - self._clock()
 
     def configure_lean(
         self,
@@ -397,10 +537,67 @@ class CopilotAgent:
             kwargs["response_format"] = self._response_format
         return self._client.chat.completions.create(**kwargs)
 
-    def _final_answer(self, messages: list[dict[str, Any]], result: CopilotResult) -> str:
-        """Final-answer call: no tools, schema-constrained when structured output is on."""
-        resp = self._create(messages, tools=False)
+    def _step(
+        self,
+        result: CopilotResult,
+        kind: str,
+        label: str,
+        started: float | None,
+        status: str,
+        why: str | None = None,
+    ) -> RunStep:
+        ms = 0.0 if started is None else max(0.0, (self._clock() - started) * 1000.0)
+        step = RunStep(kind, label, ms, status, why)
+        result.steps.append(step)
+        return step
+
+    def _skip(self, result: CopilotResult, label: str) -> RunStep:
+        """Record a model call that was not started for lack of time."""
+        return self._step(
+            result,
+            "model",
+            label,
+            None,
+            "skipped",
+            f"not enough time ({self.time_left():.1f} s left)",
+        )
+
+    def _call(
+        self, label: str, messages: list[dict[str, Any]], result: CopilotResult, *, tools: bool
+    ) -> Any:
+        """One timed model call. With a deadline a failure becomes :class:`ModelCallFailedError`."""
+        # imported here: spend -> dossier -> narrative imports this module
+        from maudesignal.copilot.spend import SpendLimitError
+
+        t0 = self._clock()
+        try:
+            resp = self._create(messages, tools=tools)
+        except SpendLimitError:
+            self._step(result, "model", label, t0, "failed", "spend cap")
+            raise
+        except Exception as exc:
+            why = failure_kind(exc)
+            if why == "timeout" and self._clock() - t0 < _NOT_STARTED_S:
+                why = "not started: no time left"
+            step = self._step(result, "model", label, t0, "failed", why)
+            if not self._budgeted:
+                raise
+            raise ModelCallFailedError(step, exc) from exc
+        step = self._step(result, "model", label, t0, "ok")
+        usage = getattr(resp, "usage", None)
+        out_tokens = getattr(usage, "completion_tokens", None) if usage is not None else None
+        step.out_tokens = out_tokens if isinstance(out_tokens, int) else None
         self._count(resp, result)
+        return resp
+
+    def _final_answer(
+        self, messages: list[dict[str, Any]], result: CopilotResult, label: str = "final answer"
+    ) -> str:
+        """Final-answer call: no tools, schema-constrained when structured output is on."""
+        if self._budgeted and self.time_left() < MIN_FINAL_S:
+            step = self._skip(result, label)
+            raise ModelCallFailedError(step, TimeoutError(f"no time left for the {label}"))
+        resp = self._call(label, messages, result, tools=False)
         if getattr(resp.choices[0], "finish_reason", None) == "length":
             result.length_stops += 1  # hit max_tokens: the JSON is cut off
         return str(resp.choices[0].message.content or "")
@@ -424,6 +621,37 @@ class CopilotAgent:
         finally:
             self._on_event = None
 
+    def _gate(
+        self, sentences: list[tuple[str, list[Claim]]], result: CopilotResult, label: str
+    ) -> GateReport:
+        """One timed pass of the claim gate."""
+        t0 = self._clock()
+        report = verify_answer(
+            sentences,
+            self._ctx.store,
+            tuple(self._ctx.date_shifts),
+            tuple(self._ctx.no_data),
+        )
+        blocked_all = report.blocked > 0 and report.passed == 0
+        self._step(
+            result,
+            "gate",
+            label,
+            t0,
+            "failed" if blocked_all else "ok",
+            "gate blocked all" if blocked_all else None,
+        )
+        return report
+
+    def _from_tools(self, result: CopilotResult, reason: str) -> list[tuple[str, list[Claim]]]:
+        """Sentences built from the tool results read so far (empty when none fit)."""
+        built = sentences_from_tools(self._tool_outputs)
+        if built:
+            result.from_tool_results = True
+            result.partial_reason = reason
+            self._step(result, "answer", "answer built from tool results", None, "ok", reason)
+        return built
+
     def _ask(self, question: str) -> CopilotResult:
         dates = self.date_context()
         system = f"{self._system_prompt}\n\n{dates}" if dates else self._system_prompt
@@ -440,46 +668,72 @@ class CopilotAgent:
             repaired=False,
             model=self._model,
         )
+        self._tool_outputs = []
+        self.last_steps = result.steps
+        self.last_failure = None
         capa_start = len(self._ctx.created_capas)
         self._ctx.date_shifts.clear()
         self._ctx.no_data.clear()
-        content = self._run_until_answer(messages, result)
-        sentences, ok = self._parse_or_retry(content, messages, result)
+        try:
+            content = self._run_until_answer(messages, result)
+        except ModelCallFailedError as failed:
+            # No model answer in time: keep what the tools already returned, gated below.
+            sentences = self._from_tools(result, failed.step.describe())
+            if not sentences:
+                self.last_failure = failed.step.describe()
+                raise failed.cause from None
+            content, ok = "", True
+        else:
+            sentences, ok = self._parse_or_retry(content, messages, result)
+            if not ok and self._budgeted and self._tool_outputs:
+                built = self._from_tools(
+                    result, "the model did not return a structured answer in time"
+                )
+                if built:
+                    sentences, ok = built, True
         result.parse_failed = not ok
-        report = (
-            verify_answer(
-                sentences,
-                self._ctx.store,
-                tuple(self._ctx.date_shifts),
-                tuple(self._ctx.no_data),
-            )
-            if ok
-            else _unparsed(content)
-        )
+        report = self._gate(sentences, result, "claim gate") if ok else _unparsed(content)
         result.first_pass_report = report
         self._emit("gate", stage="first pass", passed=report.passed, blocked=report.blocked)
 
         repairs = 0
-        while report.blocked and repairs < self._max_repairs:
+        while report.blocked and repairs < self._max_repairs and not result.from_tool_results:
+            if self._budgeted and self.time_left() < MIN_REPAIR_S:
+                step = self._skip(result, "repair turn")
+                result.partial_reason = (
+                    f"{step.describe()}; sentences the gate blocked are withheld"
+                )
+                break
             repairs += 1
             self._emit("repair", blocked=report.blocked)
             messages.append({"role": "user", "content": _repair_message(report)})
-            if self._repair_with_tools:
-                content = self._run_until_answer(messages, result)
-            else:
-                content = self._final_answer(messages, result)
-            repaired, ok = self._parse_or_retry(content, messages, result)
+            try:
+                if self._repair_with_tools:
+                    content = self._run_until_answer(messages, result, label="repair round")
+                else:
+                    content = self._final_answer(messages, result, label="repair turn")
+                repaired, ok = self._parse_or_retry(content, messages, result)
+            except ModelCallFailedError as failed:
+                # The first pass's gate-verified sentences stay; the blocked ones stay withheld.
+                result.partial_reason = (
+                    f"{failed.step.describe()}; the first answer's checked sentences are shown"
+                )
+                break
             if not ok:
                 break
-            report = verify_answer(
-                repaired,
-                self._ctx.store,
-                tuple(self._ctx.date_shifts),
-                tuple(self._ctx.no_data),
-            )
+            report = self._gate(repaired, result, "claim gate after repair")
             self._emit("gate", stage="after repair", passed=report.passed, blocked=report.blocked)
             result.repaired = True
             result.parse_failed = False
+
+        if self._budgeted and report.passed == 0 and not result.from_tool_results:
+            # Nothing the model wrote verified: add what the tool results show (gated too).
+            built = self._from_tools(
+                result, "the claim gate blocked every sentence of the model's answer"
+            )
+            if built:
+                extra = self._gate(built, result, "claim gate (tool results)")
+                report = GateReport([*report.sentences, *extra.sentences])
 
         result.report = report
         result.answer = report.render()
@@ -493,19 +747,46 @@ class CopilotAgent:
         self._emit("done", passed=report.passed, blocked=report.blocked)
         return result
 
-    def _run_until_answer(self, messages: list[dict[str, Any]], result: CopilotResult) -> str:
+    def _run_tool(self, name: str, arguments: str, result: CopilotResult) -> dict[str, Any]:
+        """Run one tool call, timed; an unexpected error is returned to the model, not raised."""
+        t0 = self._clock()
+        why: str | None = None
+        if self._allowed_tools is not None and name not in self._allowed_tools:
+            out: dict[str, Any] = {"error": f"tool {name} is not available in this run"}
+            why = "tool error (not available)"
+        else:
+            try:
+                out = call_tool(self._ctx, name, arguments)
+            except Exception as exc:  # noqa: BLE001 - a broken tool must not end the answer
+                out = {"error": f"the tool failed ({type(exc).__name__})"}
+                why = f"tool error ({type(exc).__name__})"
+            if why is None and "error" in out:
+                why = "tool error"
+        label = name if name in TOOLS else "unknown tool"  # never model-made text in the trace
+        self._step(result, "tool", label, t0, "failed" if why else "ok", why)
+        return out
+
+    def _run_until_answer(
+        self, messages: list[dict[str, Any]], result: CopilotResult, label: str = "model round"
+    ) -> str:
         for n in range(self._max_tool_rounds):
+            if n > 0 and self._budgeted and self.time_left() < MIN_ROUND_S:
+                self._skip(result, f"{label} {n + 1}")
+                break
             self._emit("model", round=n + 1)
-            resp = self._create(messages, tools=True)
-            self._count(resp, result)
+            resp = self._call(f"{label} {n + 1}", messages, result, tools=True)
             msg = resp.choices[0].message
             tool_calls = getattr(msg, "tool_calls", None) or []
             if not tool_calls:
+                draft = str(msg.content or "")
+                if self._budgeted and _parses(draft):
+                    # The draft already is the answer JSON: no second call for the same text.
+                    return draft
                 if self._structured:
                     # The model is done with tools; ask again for the answer
                     # under the strict schema (its free-form draft is dropped).
                     return self._final_answer(messages, result)
-                return str(msg.content or "")
+                return draft
             messages.append(
                 {
                     "role": "assistant",
@@ -525,10 +806,7 @@ class CopilotAgent:
             )
             for tc in tool_calls:
                 self._emit("tool", name=tc.function.name, arguments=tc.function.arguments)
-                if self._allowed_tools is not None and tc.function.name not in self._allowed_tools:
-                    out = {"error": f"tool {tc.function.name} is not available in this run"}
-                else:
-                    out = call_tool(self._ctx, tc.function.name, tc.function.arguments)
+                out = self._run_tool(tc.function.name, tc.function.arguments, result)
                 payload = json.dumps(out, default=str)
                 cap = self._max_tool_result_chars
                 sent = payload
@@ -538,7 +816,10 @@ class CopilotAgent:
                     args = json.loads(tc.function.arguments or "{}")
                 except ValueError:
                     args = {"_raw": tc.function.arguments}
+                if not isinstance(args, dict):
+                    args = {"_raw": tc.function.arguments}
                 result.tool_calls.append(ToolCallTrace(tc.function.name, args, payload[:300]))
+                self._tool_outputs.append((tc.function.name, args, out))
                 messages.append({"role": "tool", "tool_call_id": tc.id, "content": sent})
         # Tool budget exhausted: ask for the answer without tools.
         messages.append({"role": "user", "content": "Answer now with the JSON object only."})
@@ -560,7 +841,10 @@ class CopilotAgent:
                     'Return only {"sentences": [{"text": ..., "claims": [...]}]}.',
                 }
             )
-            retry = self._final_answer(messages, result)
+            try:
+                retry = self._final_answer(messages, result, label="parse retry")
+            except ModelCallFailedError:
+                return [(content.strip(), [])], False  # gated as unparsed; the step says why
             try:
                 parsed = parse_answer(retry)
                 messages.append({"role": "assistant", "content": retry})

@@ -127,7 +127,7 @@ from maudesignal.connector.readonly import make_read_only
 from maudesignal.connector.security import RateLimiter
 from maudesignal.connector.store import ConnectorState, MemoryLedger
 from maudesignal.connector.tiers import cacheable, did_you_mean_codes
-from maudesignal.copilot.agent import CopilotAgent
+from maudesignal.copilot.agent import END_MARGIN_S, CopilotAgent, RunStep
 from maudesignal.copilot.spend import (
     DailyLedger,
     SpendCaps,
@@ -410,6 +410,17 @@ class LiveBackends:
     research_fetcher: Callable[[], Fetcher] = HttpFetcher  # GDELT backup of Research mode
 
 
+def call_timeout_s(left: float) -> float:
+    """Timeout of one model call with ``left`` seconds to the deadline.
+
+    ``min(CALL_TIMEOUT_S, left - END_MARGIN_S)``: a call can never run into the end of the
+    budget (a flat 25 s call started 20 s before the end used to; on 2026-11-03/04 model
+    round 2 died at the 25 s cap and the whole answer was lost). The margin is kept for the
+    claim gate, the answer built from tool results and the response. At least 1 s.
+    """
+    return max(1.0, min(CALL_TIMEOUT_S, left - END_MARGIN_S))
+
+
 class DeadlineClient:
     """Wraps an OpenAI-style client: each call gets the time left; none starts after the end."""
 
@@ -430,7 +441,7 @@ class DeadlineClient:
             raise LiveTimeoutError(LIVE_TIMEOUT_MESSAGE)
         client = self._inner
         if hasattr(client, "with_options"):
-            client = client.with_options(timeout=min(left, CALL_TIMEOUT_S), max_retries=0)
+            client = client.with_options(timeout=call_timeout_s(left), max_retries=0)
         try:
             return client.chat.completions.create(**kwargs)
         except LiveTimeoutError:
@@ -842,25 +853,83 @@ def ran_model(model: str | None) -> str:
     return text[:64] if text and re.fullmatch(r"[A-Za-z0-9._:/-]+", text) else SPARK_MODEL
 
 
+def _model_calls_note(steps: list[dict[str, Any]]) -> str:
+    """'model round 1 8.9 s; model round 2 timed out after 25.3 s' from the run's steps."""
+    return "; ".join(
+        RunStep(
+            "model",
+            str(s.get("label")),
+            float(s.get("ms") or 0),
+            str(s.get("status")),
+            s.get("why"),
+            s.get("out_tokens"),
+        ).describe()
+        for s in steps
+        if s.get("kind") == "model"
+    )
+
+
 def ask_trace(outcome: AskOutcome) -> list[dict[str, Any]]:
     """Trace steps of an ask: model time and tool/gate time are measured, never typed in."""
+    # read defensively: callers may pass an outcome-like object without the run details
+    run_steps: list[dict[str, Any]] = list(getattr(outcome, "steps", None) or [])
+    partial: str | None = getattr(outcome, "partial", None)
+    from_tools = bool(getattr(outcome, "from_tool_results", False))
+    failure: str | None = getattr(outcome, "failure", None)
+    model_note = _model_calls_note(run_steps)
     if outcome.live:
         tools = ", ".join(dict.fromkeys(outcome.tool_names)) or "no tools"
         model_ms = outcome.model_ms or 0.0
-        return [
+        tool_note = f"{len(outcome.tool_names)} tool call(s): {tools}"
+        tool_errors = [
+            f"{s['label']}: {s['why']}"
+            for s in run_steps
+            if s.get("kind") == "tool" and s.get("status") == "failed"
+        ]
+        if tool_errors:
+            tool_note += "; " + "; ".join(dict.fromkeys(tool_errors))
+        if any(s.get("why") == "gate blocked all" for s in run_steps):
+            tool_note += "; the claim gate blocked every sentence of the model's answer"
+        spark_note = model_note
+        if partial and not from_tools:
+            spark_note = f"{model_note}; partial answer: {partial}".lstrip("; ")
+        steps = [
             _step(
-                "Muse Spark answers from stored records", ran_model(outcome.model), model_ms, "ok"
+                "Muse Spark answers from stored records",
+                ran_model(outcome.model),
+                model_ms,
+                "failed" if from_tools else "ok",
+                _safe_text(spark_note) if spark_note else None,
             ),
             _step(
                 "Read-only tools and claim gate",
                 None,
                 max(0.0, outcome.total_ms - model_ms),
                 "ok",
-                f"{len(outcome.tool_names)} tool call(s): {tools}",
+                _safe_text(tool_note),
             ),
         ]
+        if from_tools:
+            steps.append(
+                _step(
+                    "Answer built from tool results",
+                    None,
+                    0,
+                    "ok",
+                    _safe_text(
+                        f"{partial or 'the model gave no answer in time'}; each "
+                        "sentence restates a stored count or report id and passed the claim gate"
+                    ),
+                )
+            )
+        return steps
     skipped = outcome.reason in ("no_model", "live_off", "cap", "no_transcript")
     note = _REASON_NOTES.get(outcome.reason or "", "")
+    if failure and not skipped:
+        # The failed step in fixed words first, so the answer itself says what went wrong.
+        note = f"Failed step: {failure}. {note}"
+        if model_note:
+            note += f" Model calls: {model_note}."
     found = outcome.recorded_question is not None
     return [
         _step(
@@ -868,7 +937,7 @@ def ask_trace(outcome: AskOutcome) -> list[dict[str, Any]]:
             SPARK_MODEL,
             outcome.attempt_ms,
             "skipped" if skipped else "failed",
-            note,
+            _safe_text(note) if note else note,
         ),
         _step(
             "Closest recorded answer",
@@ -1136,10 +1205,11 @@ def mount_live(
         ``deadline`` (a reading of the backend clock) is measured from the start of the
         request; without it the budget starts now.
         """
+        end = deadline if deadline is not None else be.clock() + budget_s
         return LiveAskRuntime(
-            agent_factory=be.agent_factory(
-                deadline if deadline is not None else be.clock() + budget_s, be.clock
-            ),
+            agent_factory=be.agent_factory(end, be.clock),
+            deadline=end,
+            clock=be.clock,
             live_enabled=lambda: be.live_enabled() and not no_shared_ledger,
             caps=SpendCaps(
                 session_usd=request_usd,
@@ -1380,17 +1450,30 @@ def mount_live(
                 asyncio.gather(run_in_threadpool(do_ask, body, deadline), bounded_research()),
                 timeout=max(0.0, deadline + ASK_HARD_GRACE_S - be.clock()),
             )
-        except (LiveTimeoutError, TimeoutError):
+        except (LiveTimeoutError, TimeoutError) as exc:
             # The model stopped at its budget, or something hung past it: a clean error, no
-            # model text. Each model call settled or kept its own hold already.
+            # model text. Each model call settled or kept its own hold already. ``why`` and
+            # ``timeline`` say which step ran out (fixed words and timings only).
+            why = getattr(exc, "why", None) or (
+                f"hard stop: the request ran past {cfg.ask_budget_s:.0f} s + "
+                f"{ASK_HARD_GRACE_S:.0f} s grace"
+            )
             log("ask", "timeout", started, status=504, tier="live")
-            return _err(504, "live_timeout", LIVE_TIMEOUT_MESSAGE)
+            logger.warning("live_ask_timeout", why=why)
+            return _err(
+                504,
+                "live_timeout",
+                LIVE_TIMEOUT_MESSAGE,
+                why=_safe_text(why),
+                timeline=list(getattr(exc, "steps", None) or []),
+            )
         except InvalidInputError as exc:
             return _err(422, "invalid_input", str(exc))
         except SourceUnavailableError:
             return _err(503, "unavailable", "No answer is available right now.")
         response = _ask_response(outcome, limits(remaining))
-        if tiers and outcome.live:
+        # a partial answer (a step timed out or was skipped) is shown once, never cached
+        if tiers and outcome.live and not outcome.partial and not outcome.from_tool_results:
             r = chat.route_for(
                 data, body.question, body.product_code, has_history=bool(body.history)
             )

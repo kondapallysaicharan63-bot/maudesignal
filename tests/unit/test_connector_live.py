@@ -619,13 +619,17 @@ def test_voice_slow_transcription_and_slow_spark_end_recorded_inside_the_vercel_
     tmp_path: Path,
 ) -> None:
     # transcription takes its 15 s, then every Spark call takes 24 s: before the single request
-    # deadline this took 63 s of fake time; now the answer is recorded, with a note, under 55 s.
+    # deadline this took 63 s of fake time. The first Spark reply already is the answer JSON,
+    # so it is gated and shown; the repair turn, which could not finish, is skipped and the
+    # trace says so. All under 55 s.
     env = _slow_voice_env(tmp_path, transcribe_s=15, spark_s=24)
     started = env.clock.mono
     body = env.voice().json()
     assert env.clock.mono - started < 55
     assert_contract(body)
-    assert body["mode"] == "recorded" and body["recorded_note"]
+    assert body["mode"] == "live"
+    assert len(env.spark.requests) == 1, "no Spark call started that could not finish"
+    assert any("repair turn skipped" in (s.get("note") or "") for s in body["trace"])
     assert body["heard"] == "What changed this week for LLZ?" or "heard" not in body
 
 

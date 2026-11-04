@@ -95,6 +95,16 @@ class LiveTimeoutError(ConnectorError, TimeoutError):
 
     code = "live_timeout"
 
+    def __init__(self, message: str = "", suggestions: list[str] | None = None) -> None:
+        """As :class:`ConnectorError`; ``why`` and ``steps`` may be filled in on the way up.
+
+        ``why`` is the failed step in fixed words ("model round 2 timed out after 25.3 s") and
+        ``steps`` the run's timed steps (kinds, labels, ms, status; never model text).
+        """
+        super().__init__(message, suggestions)
+        self.why: str | None = None
+        self.steps: list[dict[str, object]] = []
+
 
 class DemoKeyRefusedError(ConnectorError):
     """The public demo key may not use this tool (maps to 403)."""
