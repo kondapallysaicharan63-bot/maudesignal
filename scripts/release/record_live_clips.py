@@ -140,6 +140,8 @@ def clip_label(p: Any, out: Path, web: str) -> dict[str, Any]:
         except Exception:  # noqa: BLE001 - fall back to the hidden picker the menu item opens
             pg.keyboard.press("Escape")
             pg.locator("[data-testid=photo-input]").set_input_files(str(LABEL))
+        pg.wait_for_timeout(1500)
+        pg.locator("[data-testid=composer-send]").first.click()
         with contextlib.suppress(Exception):
             pg.wait_for_selector(
                 "[data-testid=label-live], [data-testid=camera-problem]", timeout=90_000
