@@ -93,10 +93,10 @@ const qa = (sel: string) => Array.from(host.querySelectorAll<HTMLElement>(sel))
 const click = (el: Element | null) => act(() => (el as HTMLElement).click())
 
 describe('sidebar', () => {
-  it('lists New chat, Search, Home, Board, Signals, Investigate, Evidence, Validation, How it fits (PMS workflow, Time & cost), Connect, then Recents; Our devices sits in the collapsed Demo group', () => {
+  it('lists New chat, Search, Home, Morning brief, Board, Signals, Investigate, Evidence, Validation, How it fits (PMS workflow, EU MDR workflow, Time & cost), Connect, then Recents; Our devices sits in the collapsed Demo group', () => {
     renderSidebar()
     const labels = qa('.ms2-navitem').map((b) => b.textContent?.replace(/\s+/g, ' ').trim())
-    expect(labels.slice(0, 11)).toEqual(['New chat', 'SearchCtrl K', 'Home', 'Board', 'Signals', 'Investigate a complaint', 'Evidence', 'Validation', 'PMS workflow', 'Time & cost', 'Connect'])
+    expect(labels.slice(0, 13)).toEqual(['New chat', 'SearchCtrl K', 'Home', 'Morning brief', 'Board', 'Signals', 'Investigate a complaint', 'Evidence', 'Validation', 'PMS workflow', 'EU MDR workflow', 'Time & cost', 'Connect'])
     expect(q('.ms2-demo')?.hasAttribute('open')).toBe(false)
     expect(q('.ms2-demo [data-testid=nav-devices]')?.textContent).toContain('Our devices (simulated)')
     expect(host.textContent ?? '').toContain('How it fits')

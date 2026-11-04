@@ -41,6 +41,10 @@ export type Route =
   | { page: 'board' }
   /** PRD-18: what is and is not validated, and the evidence lifecycle. */
   | { page: 'validation' }
+  /** PRD-28: the morning brief, built from the stored exports. */
+  | { page: 'daily' }
+  /** EU MDR workflow relevance only (FDA data only, no EU data). */
+  | { page: 'eu' }
 
 export type Section = 'signals' | 'devices' | 'evidence' | 'connect'
 
@@ -116,6 +120,10 @@ export function parseRoute(pathname: string, search = ''): Route {
       return { page: 'board' }
     case 'validation':
       return { page: 'validation' }
+    case 'daily':
+      return { page: 'daily' }
+    case 'eu':
+      return { page: 'eu' }
     default:
       return { page: 'home' }
   }
@@ -174,6 +182,10 @@ export function formatRoute(r: Route): string {
       return 'board'
     case 'validation':
       return 'validation'
+    case 'daily':
+      return 'daily'
+    case 'eu':
+      return 'eu'
   }
 }
 
@@ -252,6 +264,10 @@ export function routeName(r: Route): string {
       return 'board'
     case 'validation':
       return 'validation'
+    case 'daily':
+      return 'daily'
+    case 'eu':
+      return 'eu'
   }
 }
 
