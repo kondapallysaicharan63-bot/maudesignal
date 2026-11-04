@@ -26,6 +26,15 @@ FIXTURE = (
 BANNER = "Do not enter patient data. Describe the device problem only."
 NOTICE_START = "This is evidence assembled from public FDA data to attach to your complaint record"
 DESCRIPTION = "The viewer froze when a clinician saved a study, and images came up unreadable."
+# The jump links under the collapsed form, as JUMPS in web/src/investigate/InvestigatePage.tsx
+# (target id, label). "Evidence pack" was added with the PMS evidence pack (6ffa754).
+JUMPS = (
+    ("inv-sources", "Not filed by a manufacturer"),
+    ("inv-similar", "Reports"),
+    ("inv-related", "Recalls and 510(k)s"),
+    ("inv-evidence", "Evidence"),
+    ("evidence-pack", "Evidence pack"),
+)
 
 
 def make_scenarios(m: Any) -> tuple[tuple[str, Callable[[Any], str]], ...]:
@@ -111,9 +120,22 @@ def make_scenarios(m: Any) -> tuple[tuple[str, Callable[[Any], str]], ...]:
             raise AssertionError(f"{zero} links on months with no reports")
         if (
             page.get_by_test_id("inv-summary").count() == 0
-            or page.get_by_test_id("inv-jumps").locator("button").count() != 4
+            or page.get_by_test_id("inv-code").count()
         ):
-            raise AssertionError("the form did not collapse to a summary with jump links")
+            raise AssertionError("the form did not collapse to a summary")
+        jumps = page.get_by_test_id("inv-jumps").locator("button")
+        labels = [jumps.nth(i).inner_text().strip() for i in range(jumps.count())]
+        if labels != [label for _, label in JUMPS]:
+            raise AssertionError(f"the jump links are {labels}, not {[lb for _, lb in JUMPS]}")
+        for target, _ in JUMPS:
+            if page.locator(f"#{target}").count() != 1:
+                raise AssertionError(f"jump link target #{target} is missing")
+        jumps.last.click()
+        page.wait_for_function(
+            "() => { const r = document.getElementById('evidence-pack').getBoundingClientRect();"
+            " return r.top < window.innerHeight && r.bottom > 0 }",
+            timeout=5_000,
+        )
         if re.search(r"other makers|Similar MAUDE", page.locator("body").inner_text()):
             raise AssertionError("a heading says 'other makers' or 'Similar'")
         for tid in ("inv-sources", "inv-recalls", "inv-clearances", "inv-evidence"):
