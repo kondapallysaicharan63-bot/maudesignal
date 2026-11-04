@@ -80,6 +80,22 @@
     {
       "source": "/validation/:path*",
       "destination": "/index.html"
+    },
+    {
+      "source": "/daily",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/daily/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/eu",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/eu/:path*",
+      "destination": "/index.html"
     }
   ]
 }

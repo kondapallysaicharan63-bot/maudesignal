@@ -42,6 +42,8 @@ import { SidebarV2, type NavId } from './SidebarV2'
 import { TopBarV2 } from './TopBarV2'
 import { NoctuaDock } from './NoctuaDock'
 import { storedAsOf } from '../pms/DataAsOf'
+import { DailyBrief } from './DailyBrief'
+import { EuWorkflow } from './EuWorkflow'
 import { boardRows } from '../pms/board'
 import { useAudit } from '../pms/useAudit'
 import { BoardPage, flaggedFromData } from '../pms/BoardPage'
@@ -90,6 +92,8 @@ const PAGE_NAV: Partial<Record<NavId, Route>> = {
   investigate: { page: 'investigate' },
   pms: { page: 'pms' },
   roi: { page: 'roi' },
+  daily: { page: 'daily' },
+  eu: { page: 'eu' },
 }
 
 /** The sidebar entry a page belongs to (null for a chat). */
@@ -97,7 +101,7 @@ export function navOf(r: Route): NavId | null {
   // Investigate is a stand-alone tool page; it sits under Home so one sidebar entry is always active.
   if (r.page === 'board') return 'board'
   if (r.page === 'validation') return 'validation'
-  if (r.page === 'pms' || r.page === 'roi' || r.page === 'investigate') return r.page
+  if (r.page === 'pms' || r.page === 'roi' || r.page === 'investigate' || r.page === 'daily' || r.page === 'eu') return r.page
   if (r.page === 'home') return 'home'
   if (r.page === 'signals' || r.page === 'devices' || r.page === 'evidence' || r.page === 'connect') return r.page
   if (r.page === 'profile') return 'devices'
@@ -585,11 +589,13 @@ export default function AppV2() {
     else if (route.page === 'investigate')
       sectionBody = <InvestigatePage key={`${route.code ?? ''}|${route.device ?? ''}`} apiBase={API_BASE} code={route.code} device={route.device} onCheckDevice={() => go({ page: 'workflow', id: 'check-device' })} />
     else if (route.page === 'connect') sectionBody = <ConnectPage tab={route.tab} onTab={(t, how) => tabGo({ page: 'connect', tab: t }, how)} apiBase={API_BASE} />
-    else if (route.page === 'pms') sectionBody = <PmsWorkflow onRoi={() => go({ page: 'roi' })} onHome={() => go({ page: 'home' })} onInvestigate={() => go({ page: 'investigate' })} />
-    else if (route.page === 'roi') sectionBody = <RoiPage onHome={() => go({ page: 'home' })} />
+    else if (route.page === 'pms') sectionBody = <PmsWorkflow asOf={storedAsOf(data.manifest)} onRoi={() => go({ page: 'roi' })} onHome={() => go({ page: 'home' })} onInvestigate={() => go({ page: 'investigate' })} />
+    else if (route.page === 'roi') sectionBody = <RoiPage asOf={storedAsOf(data.manifest)} onHome={() => go({ page: 'home' })} />
     else if (route.page === 'board') sectionBody = <BoardPage data={data} onInvestigate={() => go({ page: 'investigate' })} onValidation={() => go({ page: 'validation' })} />
     else if (route.page === 'validation') sectionBody = <ValidationPage data={data} onBoard={() => go({ page: 'board' })} />
-    const sectionLabel = route.page === 'profile' ? 'Device profile' : route.page === 'pms' ? 'PMS workflow' : route.page === 'roi' ? 'Time and cost' : route.page === 'board' ? 'PMS board' : route.page === 'validation' ? 'Validation' : route.page[0].toUpperCase() + route.page.slice(1)
+    else if (route.page === 'daily') sectionBody = <DailyBrief data={data} onInvestigate={(code) => go({ page: 'investigate', code })} onBoard={() => go({ page: 'board' })} />
+    else if (route.page === 'eu') sectionBody = <EuWorkflow asOf={storedAsOf(data.manifest)} />
+    const sectionLabel = route.page === 'profile' ? 'Device profile' : route.page === 'pms' ? 'PMS workflow' : route.page === 'roi' ? 'Time and cost' : route.page === 'board' ? 'PMS board' : route.page === 'validation' ? 'Validation' : route.page === 'daily' ? 'Morning brief' : route.page === 'eu' ? 'EU MDR workflow' : route.page[0].toUpperCase() + route.page.slice(1)
     content = (
       <main className="ms2-section" aria-label={sectionLabel}>
         <div className="ms2-section-inner">{sectionBody}</div>
@@ -609,6 +615,8 @@ export default function AppV2() {
               page={route.page}
               modalOpen={!!panel || search || schedules || feedback || (drawer && !desktop)}
               homeCalmOwl={!!data && real.length === 0}
+              count={boardOpen}
+              onOpen={() => go({ page: 'board' })}
             />
             <button
               type="button"

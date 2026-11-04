@@ -5,20 +5,31 @@
   display: inline-block;
   flex: none;
   overflow: visible;
-  color: var(--ink);
+  color: var(--noctua-body);
 }
 .ms-noctua-all {
   transform-box: view-box;
   transform-origin: 50% 85%;
 }
 .ms-noctua-body {
-  fill: var(--ink);
+  fill: var(--noctua-body);
+}
+.ms-noctua-belly {
+  fill: var(--noctua-belly);
+}
+.ms-noctua-feet ellipse {
+  fill: var(--noctua-eye);
 }
 .ms-noctua-eye {
-  fill: var(--surface);
+  fill: var(--noctua-eye);
+  stroke: var(--noctua-beak);
+  stroke-width: 1;
 }
 .ms-noctua-pupil {
-  fill: var(--accent);
+  fill: var(--noctua-pupil);
+}
+.ms-noctua-glint {
+  fill: var(--noctua-belly);
 }
 .ms-noctua-pupils,
 .ms-noctua-wing {
@@ -26,15 +37,17 @@
   transform-origin: center;
 }
 .ms-noctua-lid {
-  fill: var(--ink);
+  fill: var(--noctua-body);
   transform-box: fill-box;
   transform-origin: 50% 0%;
   transform: scaleY(0);
 }
-.ms-noctua-beak,
+.ms-noctua-beak {
+  fill: var(--noctua-beak);
+}
 .ms-noctua-wing {
-  fill: var(--ink-2);
-  stroke: var(--surface);
+  fill: var(--noctua-wing);
+  stroke: var(--noctua-body);
   stroke-width: 1.2;
   stroke-linejoin: round;
 }
@@ -53,10 +66,15 @@
   fill: var(--accent);
   opacity: 0;
 }
-/* High contrast: a black owl, white eyes, black pupils, no accent. */
-[data-theme='contrast'] .ms-noctua-pupil,
+/* High contrast: the --noctua-* tokens give a black owl with white belly and eyes and black pupils. */
+[data-theme='contrast'] .ms-noctua-pupil {
+  fill: var(--noctua-pupil);
+}
 [data-theme='contrast'] .ms-noctua-dots circle {
   fill: var(--ink);
+}
+[data-theme='contrast'] .ms-noctua-wing {
+  stroke: var(--surface);
 }
 [data-theme='contrast'] .ms-noctua-ring {
   stroke: var(--ink);
@@ -248,14 +266,44 @@
   }
 }
 
-/* PRD-34 companion dock (bottom-right, inside the app only). Below modals and menus; never a click target except Hide. */
+/* PRD-34 companion dock (bottom-right, inside the app only). Below modals and menus. Click targets: the owl (opens the
+   PMS board) and Hide. The caption is the fixed "N to review" only. */
 .ms-noctua-dock {
   position: fixed;
   right: 24px;
   bottom: 24px;
   z-index: 25;
   pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
   transition: opacity 0.2s ease;
+}
+.ms-noctua-dock-open {
+  pointer-events: auto;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  border-radius: var(--radius-full);
+  min-width: 44px;
+  min-height: 44px;
+}
+.ms-noctua-dock-open:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.ms-noctua-dock-caption {
+  pointer-events: none;
+  padding: 1px 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: nowrap;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-full);
 }
 .ms-noctua-dock.is-away {
   opacity: 0;

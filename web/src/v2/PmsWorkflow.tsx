@@ -5,6 +5,7 @@
 import type { ReactNode } from 'react'
 import { HEADLINE, REACTIVE } from '../positioning'
 import { appRoot, withLayout } from './router'
+import { DataAsOfBanner, type AsOf } from '../pms/DataAsOf'
 import './positioning.css'
 
 export type StepKind = 'assist' | 'human'
@@ -158,7 +159,7 @@ function Field({ label, children, id, className = '' }: { label: string; childre
   )
 }
 
-export function PmsWorkflow({ onRoi, onHome, onInvestigate }: { onRoi?: () => void; onHome?: () => void; onInvestigate?: () => void }) {
+export function PmsWorkflow({ onRoi, onHome, onInvestigate, asOf }: { onRoi?: () => void; onHome?: () => void; onInvestigate?: () => void; asOf?: AsOf }) {
   const helped = STEPS.filter((s) => s.kind === 'assist').length
   const human = STEPS.length - helped
   return (
@@ -177,6 +178,7 @@ export function PmsWorkflow({ onRoi, onHome, onInvestigate }: { onRoi?: () => vo
           Post-market surveillance usually starts when a complaint arrives and is reviewed on a schedule: trend reviews, the PMS board, the PSUR or PMSR, management review and audits. This map follows that order. It shows what is done by hand today, what MaudeSignal does at each step, and what stays with your people.
         </p>
       </header>
+      {asOf && <DataAsOfBanner asOf={asOf} testid="pms-asof" />}
 
       <section className="ms2-card" aria-labelledby="pms-reactive-h" data-testid="pms-reactive">
         <h2 id="pms-reactive-h" className="ms2-h2">

@@ -22,6 +22,7 @@ import {
   type Measurement,
   type Source,
 } from './roi'
+import { DataAsOfBanner, type AsOf } from '../pms/DataAsOf'
 import './positioning.css'
 
 const PENDING = 'Measurement pending'
@@ -237,7 +238,7 @@ function Calculator({ measurements }: { measurements: Measurement[] }) {
 }
 
 /** The page. `measurements` is given by tests; otherwise measurements.json is fetched. */
-export function RoiPage({ measurements, onHome }: { measurements?: Measurement[]; onHome?: () => void }) {
+export function RoiPage({ measurements, onHome, asOf }: { measurements?: Measurement[]; onHome?: () => void; asOf?: AsOf }) {
   const fetched = useMeasurements()
   const list = measurements ?? fetched.list
   const any = TASKS.some((t) => forTask(list, t.id).length > 0)
@@ -256,6 +257,7 @@ export function RoiPage({ measurements, onHome }: { measurements?: Measurement[]
           A time or cost figure appears here only when a person typed it as their own assumption, or when a timing test was recorded with who ran it, when and how.
         </p>
       </header>
+      {asOf && <DataAsOfBanner asOf={asOf} testid="roi-asof" />}
 
       <section aria-labelledby="roi-rec-h" className="ms2-card">
         <div className="ms2-roi-head">

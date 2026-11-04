@@ -401,6 +401,7 @@ export function EvidencePage({
   return (
     <div>
       <PageHead title="Evidence" lead="From the reports to a reviewed, approved and audited decision. Drafts only." />
+      <DataAsOfBanner asOf={storedAsOf(data.manifest)} testid="evidence-asof" />
       <SubTabs id="evidence" label="Evidence" tabs={EVIDENCE_TAB_LABELS} value={tab} onChange={onTab}>
         {tab === 'capa' && (
           <>

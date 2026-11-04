@@ -961,12 +961,6 @@ file `demo/mentions/<CODE>.json` answers with `mode: "recorded"` and a `recorded
 file the lists are empty and the note says so. `.github/workflows/mentions-record.yml` writes
 `LLZ.json` (and any codes in the request) when `demo/mentions/REQUEST` changes on `track-c-live`;
 the file holds `0`, so nothing runs yet and **no stored mentions file exists yet**.
-**Unconfirmed feed addresses.** The `medwatch` and `medical-devices` FDA RSS addresses in
-`mentions.py` were not reachable from the build sandbox and are **not confirmed**. During the free
-recording, check that each returns HTTP 200 with RSS; any that does not is removed from `SOURCES`
-and from this page and the privacy page before the live route is turned on. Until then a wrong
-address shows as "failed: http 404" in the per-source status, never as a mention.
-
 ## Demo key, labelled keys and `GET /v1/connect`
 
 `MAUDESIGNAL_DEMO_KEYS` (same format as `MAUDESIGNAL_API_KEYS`) holds public demo keys. A demo key

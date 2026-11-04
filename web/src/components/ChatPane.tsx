@@ -175,7 +175,13 @@ export function ChatPane(p: Props) {
           onFilter={p.onDeviceFilter}
         />
       )
-    else if (id === 'vision') body = <VisionWorkflow vision={data.vision} onOpen={p.onVision} onCamera={() => p.onCapture('label')} />
+    else if (id === 'vision')
+      body = (
+        <>
+          <DataAsOfBanner asOf={storedAsOf(data.manifest)} testid="vision-asof" />
+          <VisionWorkflow vision={data.vision} onOpen={p.onVision} onCamera={() => p.onCapture('label')} />
+        </>
+      )
     else if (id === 'weekly-investigator' || id === 'recall-sweep')
       body = <RunList kind={id} runs={data.investigations.investigations} notes={data.investigations.notes} onRun={p.onRun} />
     else body = <StoredList def={def} data={data} onThread={p.onThread} />

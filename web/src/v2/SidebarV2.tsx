@@ -10,7 +10,7 @@ import type { ThemeId } from './theme'
 export const SAVED_NOTE = 'Saved on this device only'
 export const NOT_SAVED_NOTE = 'Not saved: browser storage is full or blocked'
 
-export type NavId = 'home' | 'board' | 'validation' | 'investigate' | 'pms' | 'roi' | Section
+export type NavId = 'home' | 'daily' | 'board' | 'validation' | 'investigate' | 'pms' | 'eu' | 'roi' | Section
 
 interface Props {
   open: boolean
@@ -227,6 +227,7 @@ export function SidebarV2(p: Props) {
   type NavDef = { id: NavId; label: string; icon: Parameters<typeof Icon>[0]['name']; badge?: string; note?: string }
   const top: NavDef[] = [
     { id: 'home', label: 'Home', icon: 'panel' },
+    { id: 'daily', label: 'Morning brief', icon: 'bell' },
     { id: 'board', label: 'Board', icon: 'check', badge: (p.boardCount ?? 0) > 0 ? `${p.boardCount}` : undefined, note: 'to review' },
     { id: 'signals', label: 'Signals', icon: 'bell' },
     { id: 'investigate', label: 'Investigate a complaint', icon: 'search' },
@@ -235,6 +236,7 @@ export function SidebarV2(p: Props) {
   ]
   const fits: NavDef[] = [
     { id: 'pms', label: 'PMS workflow', icon: 'panel' },
+    { id: 'eu', label: 'EU MDR workflow', icon: 'info' },
     { id: 'roi', label: 'Time & cost', icon: 'info' },
   ]
   const connect: NavDef[] = [{ id: 'connect', label: 'Connect', icon: 'plug' }]

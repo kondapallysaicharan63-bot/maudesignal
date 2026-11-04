@@ -13,6 +13,9 @@ group, the Board badge in the sidebar, the Signals "Investigate a code from this
 known-effects note (PRD-30), "Why matched" tags and problem-term filter (PRD-29, display only), 44px touch targets, and Noctua
 (PRD-33). PRD-34 (dock, hero walk, idle movement) and PRD-28 (Morning Brief) are not built here.
 
+Status 2026-11-04: PRD-34 (the dock) is merged (PR #22, main `154e4bf`). PRD-28 is built as one dated page, `/daily`, from the
+stored sweep and the stored brief (no date picker; stored data only, every number linked to its openFDA query).
+
 Status words: **P1** = after P0. **PENDING** = needs real users, real load or an
 independent check and is not claimed. Nothing in this addendum is reported as passed
 until the test named for it has actually run.

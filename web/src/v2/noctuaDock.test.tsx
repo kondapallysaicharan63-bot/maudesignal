@@ -135,3 +135,45 @@ describe('motion rules in CSS', () => {
     expect(css).not.toMatch(/mousemove|cursor/)
   })
 })
+
+import { dockCaption, dockLabel } from './NoctuaDock'
+
+describe('interactive dock (safe)', () => {
+  it('a click opens the PMS board; the only words are the fixed "N to review" caption; no speech, no input, no network', () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+    const speak = (globalThis as { speechSynthesis?: unknown }).speechSynthesis
+    const onOpen = vi.fn()
+    act(() => root.render(<NoctuaDock page="home" modalOpen={false} homeCalmOwl={false} count={7} onOpen={onOpen} />))
+    const d = dock()!
+    const open = d.querySelector('[data-testid=noctua-dock-open]') as HTMLButtonElement
+    expect(open.getAttribute('aria-label')).toBe(dockLabel(7))
+    expect(d.querySelector('[data-testid=noctua-dock-caption]')?.textContent).toBe(dockCaption(7))
+    expect(d.textContent?.replace('×', '').trim()).toBe('7 to review')
+    expect(d.querySelector('input,textarea,form,[aria-live],[role=status]')).toBeNull()
+    act(() => open.click())
+    expect(onOpen).toHaveBeenCalledTimes(1)
+    expect(fetchSpy).not.toHaveBeenCalled()
+    expect((globalThis as { speechSynthesis?: unknown }).speechSynthesis).toBe(speak)
+    fetchSpy.mockRestore()
+  })
+  it('hover or focus makes the owl look around, except on a frozen page; no caption when nothing is to review', () => {
+    act(() => root.render(<NoctuaDock page="home" modalOpen={false} homeCalmOwl={false} count={0} onOpen={() => undefined} />))
+    const open = dock()!.querySelector('[data-testid=noctua-dock-open]') as HTMLButtonElement
+    expect(dock()!.querySelector('[data-testid=noctua-dock-caption]')).toBeNull()
+    act(() => open.dispatchEvent(new FocusEvent('focus')))
+    act(() => open.focus())
+    expect(dock()!.querySelector('svg')?.getAttribute('data-state')).toBe('watching')
+    act(() => root.render(<NoctuaDock page="board" modalOpen={false} homeCalmOwl={false} count={3} onOpen={() => undefined} />))
+    const o2 = dock()!.querySelector('[data-testid=noctua-dock-open]') as HTMLButtonElement
+    act(() => o2.focus())
+    expect(dock()!.getAttribute('data-frozen')).toBe('true')
+    expect(dock()!.querySelector('svg')?.getAttribute('data-state')).toBe('idle')
+  })
+  it('the owl colours are --noctua-* design tokens and the tufted head path is unchanged', () => {
+    expect(css).toMatch(/\.ms-noctua-body \{\s*fill: var\(--noctua-body\)/)
+    expect(css).toMatch(/\.ms-noctua-eye \{\s*fill: var\(--noctua-eye\)/)
+    expect(css).toMatch(/\.ms-noctua-belly \{\s*fill: var\(--noctua-belly\)/)
+    const owl = readFileSync(resolve(__dirname, '../components/mascot/MascotOwl.tsx'), 'utf8')
+    expect(owl).toContain('d="M11 17 12 6l11 4h18l11-4 1 11v23q0 12-21 14Q11 52 11 40Z"')
+  })
+})
