@@ -1,4 +1,5 @@
-// Noctua, MaudeSignal's watchful owl. SVG + CSS only (mascot.css); colours come from design tokens.
+// Noctua, MaudeSignal's watchful owl. SVG + CSS only (mascot.css); colours come from design tokens (--noctua-*):
+// a brown tufted owl, standing, cream belly, big orange eyes with black pupils, small dark beak. The tufted head is locked.
 // Branding only: never import this into the dossier, artifacts, PdfView, audit export or connector API.
 // Mascot state changes are not audit events. In-UI instances are aria-hidden; the paired text or badge carries the meaning.
 import { useEffect, useState } from 'react'
@@ -74,6 +75,11 @@ export function MascotOwl({ state = 'idle', size = MASCOT_SIZES.header, logo = f
       {logo && <title>{NOCTUA_TITLE}</title>}
       <g className="ms-noctua-all">
         <path className="ms-noctua-body" d="M11 17 12 6l11 4h18l11-4 1 11v23q0 12-21 14Q11 52 11 40Z" />
+        <ellipse className="ms-noctua-belly" cx="32" cy="45" rx="12.5" ry="8.5" />
+        <g className="ms-noctua-feet">
+          <ellipse cx="26" cy="55" rx="3.4" ry="1.7" />
+          <ellipse cx="38" cy="55" rx="3.4" ry="1.7" />
+        </g>
         <g className="ms-noctua-wings">
           <path className="ms-noctua-wing ms-noctua-wing--l" d="M6 38q-1 9 4 15 3-2 3-7V38Z" />
           <path className="ms-noctua-wing ms-noctua-wing--r" d="M58 38q1 9-4 15-3-2-3-7V38Z" />
@@ -81,8 +87,10 @@ export function MascotOwl({ state = 'idle', size = MASCOT_SIZES.header, logo = f
         <circle className="ms-noctua-eye" cx="23" cy="29" r="9" />
         <circle className="ms-noctua-eye" cx="41" cy="29" r="9" />
         <g className="ms-noctua-pupils">
-          <circle className="ms-noctua-pupil" cx="23" cy="29" r="4" />
-          <circle className="ms-noctua-pupil" cx="41" cy="29" r="4" />
+          <circle className="ms-noctua-pupil" cx="23" cy="29" r="4.4" />
+          <circle className="ms-noctua-pupil" cx="41" cy="29" r="4.4" />
+          <circle className="ms-noctua-glint" cx="24.6" cy="27.4" r="1.4" />
+          <circle className="ms-noctua-glint" cx="42.6" cy="27.4" r="1.4" />
         </g>
         <rect className="ms-noctua-lid" x="13" y="20" width="20" height="18" />
         <rect className="ms-noctua-lid" x="31" y="20" width="20" height="18" />

@@ -615,6 +615,8 @@ export default function AppV2() {
               page={route.page}
               modalOpen={!!panel || search || schedules || feedback || (drawer && !desktop)}
               homeCalmOwl={!!data && real.length === 0}
+              count={boardOpen}
+              onOpen={() => go({ page: 'board' })}
             />
             <button
               type="button"

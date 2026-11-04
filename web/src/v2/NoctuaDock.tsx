@@ -1,5 +1,7 @@
-// PRD-34 companion movement: Noctua docks bottom-right of the web app (inside the browser only). Silent and decorative:
-// no caption, no click target except the 44px "Hide Noctua" button, no network, no cursor following, no roaming.
+// PRD-34 companion movement: Noctua docks bottom-right of the web app (inside the browser only). Silent: no speech, no
+// chat, no network, no cursor following, no roaming. With `onOpen` it is one safe control: a click opens the PMS board,
+// and a fixed caption shows the number of board rows to review (nothing else is ever written). Hover or focus: the owl
+// looks around. Without `onOpen` it is decorative (only the 44px "Hide Noctua" button).
 // - Hero walk: on Home, once per session, it walks a short way into its dock spot, then idles.
 // - Idle glide: a slow 12 px drift inside its dock area every ~25 s (CSS only).
 // - Paused (frozen in place) on reduced motion, while a modal / alert panel / menu is open, while a person types, and on
@@ -83,14 +85,23 @@ export interface DockProps {
   modalOpen: boolean
   /** Home is showing its own calm owl (no real alerts): the dock stays away so there are never two owls on Home. */
   homeCalmOwl: boolean
+  /** Board rows a person still has to review (New, Under review): the fixed caption "N to review". */
+  count?: number
+  /** Opens the PMS board. Without it the dock is decorative. */
+  onOpen?: () => void
 }
 
-export function NoctuaDock({ page, modalOpen, homeCalmOwl }: DockProps) {
+/** The only words the dock ever shows. */
+export const dockCaption = (n: number): string => `${n} to review`
+export const dockLabel = (n: number): string => `Noctua: open the PMS board, ${dockCaption(n)}`
+
+export function NoctuaDock({ page, modalOpen, homeCalmOwl, count = 0, onOpen }: DockProps) {
   const hidden = useNoctuaHidden()
   const ref = useRef<HTMLDivElement>(null)
   const [covering, setCovering] = useState(false)
   const [typing, setTyping] = useState(false)
   const [walk, setWalk] = useState(false)
+  const [look, setLook] = useState(false)
   const [phone, setPhone] = useState(() => typeof window !== 'undefined' && !!window.matchMedia?.('(max-width: 767px)').matches)
   const show = !hidden && !(page === 'home' && homeCalmOwl)
 
@@ -179,9 +190,31 @@ export function NoctuaDock({ page, modalOpen, homeCalmOwl }: DockProps) {
   const cls = ['ms-noctua-dock', frozen ? 'is-paused' : '', walk && !frozen ? 'is-walk' : '', covering ? 'is-away' : ''].filter(Boolean).join(' ')
   return (
     <div ref={ref} className={cls} style={walk ? ({ '--ms-walk': `${-walkPx}px` } as CSSProperties) : undefined} data-testid="noctua-dock" data-frozen={frozen ? 'true' : 'false'} data-away={covering ? 'true' : 'false'}>
-      <div className="ms-noctua-dock-body" aria-hidden="true">
-        <MascotOwl state="idle" size={phone ? DOCK_SIZE_PHONE : DOCK_SIZE} />
-      </div>
+      {onOpen && count > 0 && (
+        <span className="ms-noctua-dock-caption" aria-hidden="true" data-testid="noctua-dock-caption">
+          {dockCaption(count)}
+        </span>
+      )}
+      {onOpen ? (
+        <button
+          type="button"
+          className="ms-noctua-dock-body ms-noctua-dock-open"
+          aria-label={dockLabel(count)}
+          title={dockLabel(count)}
+          onClick={onOpen}
+          onMouseEnter={() => setLook(true)}
+          onMouseLeave={() => setLook(false)}
+          onFocus={() => setLook(true)}
+          onBlur={() => setLook(false)}
+          data-testid="noctua-dock-open"
+        >
+          <MascotOwl state={look && !frozen ? 'watching' : 'idle'} size={phone ? DOCK_SIZE_PHONE : DOCK_SIZE} />
+        </button>
+      ) : (
+        <div className="ms-noctua-dock-body" aria-hidden="true">
+          <MascotOwl state="idle" size={phone ? DOCK_SIZE_PHONE : DOCK_SIZE} />
+        </div>
+      )}
       <button type="button" className="ms-noctua-dock-hide" aria-label="Hide Noctua" title="Hide Noctua (Show Noctua is in the Theme menu)" onClick={() => setNoctuaHidden(true)} data-testid="noctua-dock-hide">
         <span aria-hidden="true">×</span>
       </button>
