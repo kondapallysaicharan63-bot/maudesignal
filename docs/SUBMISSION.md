@@ -26,7 +26,7 @@ MaudeSignal is a postmarket surveillance aid for quality and regulatory teams at
 ```text
 Live app: https://maudesignal-app.vercel.app
 Repo: https://github.com/kondapallysaicharan63-bot/maudesignal
-Demo video: _(paste the public video link)_
+Demo video: https://youtu.be/Q8bwdKgWYPM
 MCP: https://maudesignal-api.vercel.app/mcp (6 read-only tools). Submitted to Meta's Muse Connector Program — pending review.
 ```
 

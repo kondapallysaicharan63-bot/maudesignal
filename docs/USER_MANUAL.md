@@ -150,4 +150,4 @@ key the closest recorded answer is shown, labelled "recorded".
 
 ## 7. Video
 
-Demo video: _(link added once the video is ready)_
+Demo video: https://youtu.be/Q8bwdKgWYPM
