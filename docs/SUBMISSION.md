@@ -47,11 +47,12 @@ Code ids checked in `src/maudesignal/` (`copilot/agent.py`, `dossier/review.py`,
 ## What is live and what is recorded in the demo video
 
 ```text
-- Q1 (MYN): Muse Spark 1.3 · Live. Answer: 20.0% of stored MYN reports are injuries (1 of 5).
-- Q2 (LLZ trap question): Live. Muse Spark timed out, so the answer shown is the gate-checked tool facts: 121 stored LLZ reports, 2 of them injuries. The false claim in the question is not confirmed.
-- Phone: Muse Spark 1.3 · Live.
+- Q1 (MYN): Muse Spark 1.3 · Live. Answer: 20.0% of stored MYN reports are injuries (1 of 5). Cost shown: $0.0202.
+- Q2 (LLZ trap question): Live. Muse Spark timed out, so the answer shown is the gate-checked tool facts: 121 stored LLZ reports, 2 of them injuries. The false claim in the question is not confirmed. Cost shown: $0.0181.
+- Phone: Muse Spark 1.3 · Live. Cost shown: $0.0230.
 - MCP: a tools/call to the connector, live.
 - Label reading was cut from the video because the live read timed out.
+- Source for the live clips: the screen recordings and saved API replies from the 2026-11-04 recording runs on build 5fbdde1 (GitHub Actions workflow "Record live clips", branches `record/final` and `media/*`). The costs above are the ones the app showed on screen in those runs.
 Narration is my own voice cloned in ElevenLabs; it is not a live recording.
 ```
 
