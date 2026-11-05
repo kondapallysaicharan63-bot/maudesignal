@@ -113,6 +113,8 @@ Diagram source: [docs/architecture.mmd](docs/architecture.mmd).
 
 ## Tests
 
+- Python unit tests: **2627 passed, 0 skipped**, 84.92% line + branch coverage
+  (`pytest tests/unit`, 2026-11-05, on commit 6f390a6)
 - Release check: GitHub Actions run 41927046269 on commit 5fbdde1 passed all jobs on
   2026-11-04. It runs on every release candidate (see .github/workflows/release-check.yml).
   It covers lint, `mypy --strict`, unit tests, web tests, API contract and security
