@@ -20,6 +20,11 @@ Built solo by Saicharan Kondapally for the Meta Global AI Developer Hackathon.
   key are recorded runs, labelled "recorded" with their date)
 - Demo video: _(link added at submission)_
 - User manual: [docs/USER_MANUAL.md](docs/USER_MANUAL.md)
+- Submission form answers: [docs/SUBMISSION.md](docs/SUBMISSION.md)
+- Repo: <https://github.com/kondapallysaicharan63-bot/maudesignal>
+- Skills (versioned LLM behaviour contracts): [skills/](skills/)
+- API and MCP: <https://maudesignal-api.vercel.app/mcp> (6 read-only tools). Submitted to
+  Meta's Muse Connector Program — pending review.
 
 ## Pre-existing vs built Oct 26 – Nov 4, 2026
 
@@ -108,9 +113,8 @@ Diagram source: [docs/architecture.mmd](docs/architecture.mmd).
 
 ## Tests
 
-- Python unit tests: **2626 passed**, 84.92% line + branch coverage (`pytest tests/unit`, 2026-11-04)
-- Web unit tests: **777 passed in 39 files** (`cd web && npx vitest run`, 2026-11-04)
-- Release check: run on every release candidate (see .github/workflows/release-check.yml).
+- Release check: GitHub Actions run 41927046269 on commit 5fbdde1 passed all jobs on
+  2026-11-04. It runs on every release candidate (see .github/workflows/release-check.yml).
   It covers lint, `mypy --strict`, unit tests, web tests, API contract and security
   checks, and browser end-to-end tests (chromium, firefox, webkit; 1440 and 390 px; light
   and dark).
