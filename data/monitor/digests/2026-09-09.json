@@ -38,10 +38,10 @@
   "events_considered": 213,
   "events_after_as_of": 0,
   "events_skipped_missing_date": 0,
-  "fetch_summary": {
-    "LLZ": 18
-  },
-  "notes": [],
+  "fetch_summary": {},
+  "notes": [
+    "LLZ: 20260910 has 23 reports, more than the remaining budget of 20; skipped (raise --max-new)"
+  ],
   "signals": [
     {
       "product_code": "LLZ",
